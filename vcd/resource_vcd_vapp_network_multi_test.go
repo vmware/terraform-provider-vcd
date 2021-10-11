@@ -1,3 +1,4 @@
+//go:build multinetwork || functional
 // +build multinetwork functional
 
 package vcd
@@ -22,6 +23,7 @@ const (
 // go test -v -timeout 0 -tags multinetwork -run TestAccVcdVappNetworkMulti .
 //
 func TestAccVcdVappNetworkMulti(t *testing.T) {
+	preTestChecks(t)
 
 	const (
 		networkBaseIp1     = "192.168.11"
@@ -111,6 +113,7 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVappNetworkMultiExists(n string) resource.TestCheckFunc {

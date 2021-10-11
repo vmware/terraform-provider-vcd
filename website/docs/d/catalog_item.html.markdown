@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_catalog_item"
+page_title: "VMware Cloud Director: vcd_catalog_item"
 sidebar_current: "docs-vcd-data-source-catalog-item"
 description: |-
   Provides a catalog item data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_catalog\_item
 
-Provides a vCloud Director Catalog item data source. A Catalog item can be used to reference a catalog item and use its 
+Provides a VMware Cloud Director Catalog item data source. A Catalog item can be used to reference a catalog item and use its 
 data within other resources or data sources.
 
 Supported in provider *v2.5+*
@@ -27,17 +27,18 @@ resource "vcd_catalog_item" "my-second-item" {
   # used in this resource.
   # You can read it as "use the org from catalog item `my-first-item`"
   # and "use the catalog from catalog item `my-first-item`"
-  org     = "${data.vcd_catalog_item.my-first-item.org}"
-  catalog = "${data.vcd_catalog_item.my-first-item.catalog}"
+  org     = data.vcd_catalog_item.my-first-item.org
+  catalog = data.vcd_catalog_item.my-first-item.catalog
 
-  name                 = "my-second-item"
+  name = "my-second-item"
+
   # The description uses the data source to create a dynamic text
   # The description will become "Belongs to my-cat"
   description          = "Belongs to ${data.vcd_catalog_item.my-first-item.catalog}"
   ova_path             = "/path/to/test_vapp_template.ova"
   upload_piece_size    = 5
   show_upload_progress = "true"
-  metadata             = "${data.vcd_catalog_item.my-first-item.metadata}"
+  metadata             = data.vcd_catalog_item.my-first-item.metadata
 }
 ```
 
@@ -71,5 +72,5 @@ The following arguments are supported:
   are set, it retrieves the oldest item.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
 

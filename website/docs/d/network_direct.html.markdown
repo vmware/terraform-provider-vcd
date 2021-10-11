@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_direct"
+page_title: "VMware Cloud Director: vcd_network_direct"
 sidebar_current: "docs-vcd-data-source-network-direct"
 description: |-
-  Provides a vCloud Director Org VDC Network attached to an external one. This can be used to reference internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC Network attached to an external one. This can be used to reference internal networks for vApps to connect.
 ---
 
 # vcd\_network\_direct
 
-Provides a vCloud Director Org VDC Network data source directly connected to an external network. This can be used to reference
+Provides a VMware Cloud Director Org VDC Network data source directly connected to an external network. This can be used to reference
 internal networks for vApps to connect.
 
 Supported in provider *v2.5+*
@@ -85,4 +85,4 @@ The following arguments are supported:
 * `ip` (Optional) matches the IP of the resource using a regular expression.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.

@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp"
+page_title: "VMware Cloud Director: vcd_vapp"
 sidebar_current: "docs-vcd-resource-vapp"
 description: |-
-  Provides a vCloud Director vApp resource. This can be used to create, modify, and delete vApps.
+  Provides a VMware Cloud Director vApp resource. This can be used to create, modify, and delete vApps.
 ---
 
 # vcd\_vapp
 
-Provides a vCloud Director vApp resource. This can be used to create, modify, and delete vApps.
+Provides a VMware Cloud Director vApp resource. This can be used to create, modify, and delete vApps.
 
 ## Example of vApp with 2 VMs
 
@@ -29,19 +29,19 @@ resource "vcd_vapp" "web" {
 }
 
 resource "vcd_vapp_org_network" "direct-network" {
-  vapp_name         = vcd_vapp.web.name
-  org_network_name  = vcd_network_direct.direct-network.name
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = vcd_network_direct.direct-network.name
 }
 
 resource "vcd_vapp_vm" "web1" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "web1"
+  vapp_name = vcd_vapp.web.name
+  name      = "web1"
 
   catalog_name  = "my-catalog"
   template_name = "photon-os"
 
-  memory        = 2048
-  cpus          = 1
+  memory = 2048
+  cpus   = 1
 
   network {
     type               = "org"
@@ -50,20 +50,20 @@ resource "vcd_vapp_vm" "web1" {
   }
 
   guest_properties = {
-    "vapp.property1"   = "value1"
-    "vapp.property2"   = "value2"
+    "vapp.property1" = "value1"
+    "vapp.property2" = "value2"
   }
 }
 
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "web2"
+  vapp_name = vcd_vapp.web.name
+  name      = "web2"
 
   catalog_name  = "my-catalog"
   template_name = "photon-os"
 
-  memory        = 2048
-  cpus          = 1
+  memory = 2048
+  cpus   = 1
 
   network {
     type               = "org"
@@ -93,6 +93,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the vApp
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
+* `description` (Optional; *v3.3*) An optional description for the vApp, up to 256 characters.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
@@ -115,9 +116,9 @@ For example, using this structure, representing a vApp that was **not** created 
 
 ```hcl
 resource "vcd_vapp" "tf-vapp" {
-  name              = "my-vapp"
-  org               = "my-org"
-  vdc               = "my-vdc"
+  name = "my-vapp"
+  org  = "my-org"
+  vdc  = "my-vdc"
 }
 ```
 

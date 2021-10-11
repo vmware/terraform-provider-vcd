@@ -1,3 +1,4 @@
+//go:build gateway || lb || lbAppProfile || ALL || functional
 // +build gateway lb lbAppProfile ALL functional
 
 package vcd
@@ -15,6 +16,7 @@ import (
 )
 
 func TestAccVcdLBAppProfile(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
@@ -185,6 +187,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdLBAppProfileDestroy(appProfileName string) resource.TestCheckFunc {

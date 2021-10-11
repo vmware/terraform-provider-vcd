@@ -1,3 +1,4 @@
+//go:build gateway || lb || lbAppRule || ALL || functional
 // +build gateway lb lbAppRule ALL functional
 
 package vcd
@@ -16,6 +17,7 @@ import (
 )
 
 func TestAccVcdLBAppRule(t *testing.T) {
+	preTestChecks(t)
 	// The Script parameter must be sent as multiline string separated by newline (\n) characters.
 	// Terraform has a native HEREDOC format for sending raw strings (with newline characters).
 	// This variable is established for easier test comparison and is wrapped into HEREDOC syntax
@@ -117,6 +119,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdLBAppRuleDestroy(appRuleName string) resource.TestCheckFunc {

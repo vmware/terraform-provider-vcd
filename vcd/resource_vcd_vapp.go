@@ -92,23 +92,13 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vappName := d.Get("name").(string)
+	vappDescription := d.Get("description").(string)
 	vcdClient.lockVapp(d)
 	defer vcdClient.unLockVapp(d)
 
-	e := vdc.ComposeRawVApp(d.Get("name").(string))
-
-	if e != nil {
-		return fmt.Errorf("error: %#v", e)
-	}
-
-	e = vdc.Refresh()
-	if e != nil {
-		return fmt.Errorf("error: %#v", e)
-	}
-
-	vapp, err := vdc.GetVAppByName(vappName, true)
+	vapp, err := vdc.CreateRawVApp(vappName, vappDescription)
 	if err != nil {
-		return fmt.Errorf("unable to find vApp by name %s: %s", vappName, err)
+		return fmt.Errorf("error creating vApp %s: %s", vappName, err)
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
@@ -151,6 +141,12 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding VApp: %#v", err)
 	}
 
+	if d.HasChange("description") {
+		err = vapp.UpdateNameDescription(d.Get("name").(string), d.Get("description").(string))
+		if err != nil {
+			return fmt.Errorf("error updating VApp: %s", err)
+		}
+	}
 	if d.HasChange("guest_properties") {
 		vappProperties, err := getGuestProperties(d)
 		if err != nil {

@@ -1,3 +1,4 @@
+//go:build gateway || ALL || functional
 // +build gateway ALL functional
 
 package vcd
@@ -12,6 +13,7 @@ import (
 )
 
 func TestAccVcdNsxvDhcpRelay(t *testing.T) {
+	preTestChecks(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -95,6 +97,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // testAccCheckVcdDhcpRelaySettingsEmpty reads DHCP relay configuration and ensure it has no

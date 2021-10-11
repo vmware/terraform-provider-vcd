@@ -23,7 +23,7 @@ user and tests from dealing with hashed IDs and is easier to work with in genera
 TypeSet with more than one element blocks AND where vCD API returns them without a field to order on
 
 *Note*. The schema definition may optionally use a `Set` function of type `SchemaSetFunc`. It may be
-used when a default hashing function (which calcluates hash based on all fields) is not suitable.
+used when a default hashing function (which calculates hash based on all fields) is not suitable.
 
 ## Filtering
 
@@ -57,6 +57,16 @@ To add filtering for a new data source:
 ```
 
 5. Extend the test `TestAccSearchEngine` in `datasource_filter_test.go` to include the new type.
+
+
+## Listings
+
+Every new **resource** needs to have a listing function, to be added in `datasource_vcd_resource_list`, so that we can
+return a list of such resource entities.
+See `externalNetworkList`, `networkList`, and `lb{ServerPool|ServiceMonitor|VirtualServer}List` for examples.
+
+Once the listing function is ready, we need to add one `case` item to `datasourceVcdResourceListRead` and the name of
+the resource in the documentation (`website/docs/d/resource_list.html.markdown`)
 
 ## Testing
 

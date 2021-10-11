@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_catalog"
+page_title: "VMware Cloud Director: vcd_catalog"
 sidebar_current: "docs-vcd-data-source-catalog"
 description: |-
   Provides a catalog data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_catalog
 
-Provides a vCloud Director Catalog data source. A Catalog can be used to manage catalog items and media items.
+Provides a VMware Cloud Director Catalog data source. A Catalog can be used to manage catalog items and media items.
 
 Supported in provider *v2.5+*
 
@@ -21,8 +21,8 @@ data "vcd_catalog" "my-cat" {
 }
 
 resource "vcd_catalog_item" "myItem" {
-  org     = "${data.vcd_catalog.my-cat.org}"
-  catalog = "${data.vcd_catalog.my-cat.name}"
+  org     = data.vcd_catalog.my-cat.org
+  catalog = data.vcd_catalog.my-cat.name
 
   name                 = "myItem"
   description          = "Belongs to ${data.vcd_catalog.my-cat.id}"
@@ -60,5 +60,5 @@ The following arguments are supported:
   are set, it retrieves the oldest item.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
 

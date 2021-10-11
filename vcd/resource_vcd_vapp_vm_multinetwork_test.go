@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -10,11 +11,12 @@ import (
 )
 
 func TestAccVcdVAppVmMultiNIC(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
-		netVappName string = t.Name()
-		netVmName1  string = t.Name() + "VM"
+		netVappName = t.Name()
+		netVmName1  = t.Name() + "VM"
 	)
 
 	var params = StringMap{
@@ -252,6 +254,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVmNetworkShared = `

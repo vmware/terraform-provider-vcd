@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org"
+page_title: "VMware Cloud Director: vcd_org"
 sidebar_current: "docs-vcd-resource-org"
 description: |-
-  Provides a vCloud Director Organization resource. This can be used to create  delete, and update an organization.
+  Provides a VMware Cloud Director Organization resource. This can be used to create  delete, and update an organization.
 ---
 
 # vcd\_org
 
-Provides a vCloud Director Org resource. This can be used to create, update, and delete an organization.
+Provides a VMware Cloud Director Org resource. This can be used to create, update, and delete an organization.
 Requires system administrator privileges.
 
 Supported in provider *v2.0+*
@@ -32,14 +32,14 @@ resource "vcd_org" "my-org" {
   delete_force     = "true"
 
   vapp_lease {
-    maximum_runtime_lease_in_sec          = 3600  # 1 hour
+    maximum_runtime_lease_in_sec          = 3600 # 1 hour
     power_off_on_runtime_lease_expiration = true
-    maximum_storage_lease_in_sec          = 0     # never expires
+    maximum_storage_lease_in_sec          = 0 # never expires
     delete_on_storage_lease_expiration    = false
   }
   vapp_template_lease {
-    maximum_storage_lease_in_sec          = 604800 # 1 week
-    delete_on_storage_lease_expiration    = true
+    maximum_storage_lease_in_sec       = 604800 # 1 week
+    delete_on_storage_lease_expiration = true
   }
 }
 ```

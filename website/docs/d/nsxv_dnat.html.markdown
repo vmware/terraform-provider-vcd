@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_dnat"
+page_title: "VMware Cloud Director: vcd_nsxv_dnat"
 sidebar_current: "docs-vcd-data-source-nsxv-dnat"
 description: |-
-  Provides a vCloud Director DNAT data source for advanced edge gateways (NSX-V). This can be used to read
+  Provides a VMware Cloud Director DNAT data source for advanced edge gateways (NSX-V). This can be used to read
   existing rule by ID and use its attributes in other resources.
 ---
 
 # vcd\_nsxv\_dnat
 
-Provides a vCloud Director DNAT data source for advanced edge gateways (NSX-V). This can be used to
+Provides a VMware Cloud Director DNAT data source for advanced edge gateways (NSX-V). This can be used to
 read existing rule by ID and use its attributes in other resources.
 
 ~> **Note:** This data source requires advanced edge gateway.
@@ -18,9 +18,9 @@ read existing rule by ID and use its attributes in other resources.
 
 ```hcl
 data "vcd_nsxv_dnat" "my-rule" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
 
   rule_id = "197864"
 }

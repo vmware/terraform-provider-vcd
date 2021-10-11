@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_direct"
+page_title: "VMware Cloud Director: vcd_network_direct"
 sidebar_current: "docs-vcd-resource-network-direct"
 description: |-
-  Provides a vCloud Director Org VDC Network attached to an external one. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC Network attached to an external one. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
 # vcd\_network\_direct
 
-Provides a vCloud Director Org VDC Network directly connected to an external network. This can be used to create,
+Provides a VMware Cloud Director Org VDC Network directly connected to an external network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
 
 Supported in provider *v2.0+*
@@ -65,10 +65,10 @@ For example, using this structure, representing a direct network that was **not*
 
 ```hcl
 resource "vcd_network_direct" "tf-mynet" {
-  name              = "my-net"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  external_network  = "COMPUTE"
+  name             = "my-net"
+  org              = "my-org"
+  vdc              = "my-vdc"
+  external_network = "COMPUTE"
 }
 ```
 

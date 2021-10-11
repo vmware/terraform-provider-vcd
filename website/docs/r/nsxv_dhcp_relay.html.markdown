@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_dhcp_relay"
+page_title: "VMware Cloud Director: vcd_nsxv_dhcp_relay"
 sidebar_current: "docs-vcd-resource-nsxv-dhcp-relay"
 description: |-
   Provides an NSX edge gateway DHCP relay configuration resource.
@@ -8,9 +8,9 @@ description: |-
 
 # vcd\_nsxv\_dhcp\_relay
 
-Provides a vCloud Director Edge Gateway DHCP relay configuration resource. The DHCP relay capability
-provided by NSX in vCloud Director environment allows to leverage existing DHCP infrastructure from
-within vCloud Director environment without any interruption to the IP address management in existing
+Provides a VMware Cloud Director Edge Gateway DHCP relay configuration resource. The DHCP relay capability
+provided by NSX in VMware Cloud Director environment allows to leverage existing DHCP infrastructure from
+within VMware Cloud Director environment without any interruption to the IP address management in existing
 DHCP infrastructure. DHCP messages are relayed from virtual machines to the designated DHCP servers
 in your physical DHCP infrastructure, which allows IP addresses controlled by the NSX software to
 continue to be in sync with IP addresses in the rest of your DHCP-controlled environments. 
@@ -53,25 +53,25 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
   }
 
   relay_agent {
-    network_name        = vcd_network_routed.db-network.name
+    network_name       = vcd_network_routed.db-network.name
     gateway_ip_address = "10.201.1.1"
   }
 }
 
 resource "vcd_nsxv_ip_set" "myset1" {
-  org          = "my-org"
-  vdc          = "my-org-vdc"
+  org = "my-org"
+  vdc = "my-org-vdc"
 
-  name                   = "ipset-one"
-  ip_addresses           = ["10.10.10.1/24"]
+  name         = "ipset-one"
+  ip_addresses = ["10.10.10.1/24"]
 }
 
 resource "vcd_nsxv_ip_set" "myset2" {
-  org          = "my-org"
-  vdc          = "my-org-vdc"
+  org = "my-org"
+  vdc = "my-org-vdc"
 
-  name                   = "ipset-two"
-  ip_addresses           = ["20.20.20.1/24"]
+  name         = "ipset-two"
+  ip_addresses = ["20.20.20.1/24"]
 }
 ```
 

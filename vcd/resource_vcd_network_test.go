@@ -1,3 +1,4 @@
+//go:build network || ALL || functional
 // +build network ALL functional
 
 package vcd
@@ -58,6 +59,7 @@ const (
 )
 
 func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  isolatedStaticNetwork1,
 		gateway:               "192.168.2.1",
@@ -76,9 +78,11 @@ func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 	}
 
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  isolatedStaticNetwork2,
 		gateway:               "192.168.2.1",
@@ -100,9 +104,11 @@ func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
 		resourceName:          "vcd_network_isolated",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:               isolatedDhcpNetwork,
 		gateway:            "192.168.2.1",
@@ -124,9 +130,11 @@ func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
 		resourceName:       "vcd_network_isolated",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkIsolatedMixed1(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  isolatedMixedNetwork1,
 		gateway:               "192.168.2.1",
@@ -149,8 +157,10 @@ func TestAccVcdNetworkIsolatedMixed1(t *testing.T) {
 	}
 
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 func TestAccVcdNetworkIsolatedMixed2(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  isolatedMixedNetwork2,
 		gateway:               "192.168.2.1",
@@ -176,11 +186,13 @@ func TestAccVcdNetworkIsolatedMixed2(t *testing.T) {
 		resourceName:          "vcd_network_isolated",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 // TestAccVcdNetworkRoutedStatic1 tests a routed network with static IP pool
 // and implicit internal interface
 func TestAccVcdNetworkRoutedStatic1(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  routedStaticNetwork1,
 		gateway:               "10.10.102.1",
@@ -198,9 +210,11 @@ func TestAccVcdNetworkRoutedStatic1(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedStatic2(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  routedStaticNetwork2,
 		gateway:               "10.10.102.1",
@@ -224,9 +238,11 @@ func TestAccVcdNetworkRoutedStatic2(t *testing.T) {
 		interfaceName:         "internal",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedStaticSub2(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  routedStaticNetworkSub2,
 		gateway:               "10.10.102.1",
@@ -250,10 +266,12 @@ func TestAccVcdNetworkRoutedStaticSub2(t *testing.T) {
 		interfaceName:         "subinterface",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
-	if !testDistributedNetworks {
+	preTestChecks(t)
+	if !testDistributedNetworksEnabled() {
 		t.Skip("Distributed test skipped: not enabled")
 	}
 	var def = networkDef{
@@ -279,10 +297,12 @@ func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
 		interfaceName:         "distributed",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedStaticDist2(t *testing.T) {
-	if !testDistributedNetworks {
+	preTestChecks(t)
+	if !testDistributedNetworksEnabled() {
 		t.Skip("Distributed test skipped: not enabled")
 	}
 	var def = networkDef{
@@ -308,9 +328,11 @@ func TestAccVcdNetworkRoutedStaticDist2(t *testing.T) {
 		interfaceName:         "distributed",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:               routedDhcpNetwork,
 		gateway:            "10.10.102.1",
@@ -331,9 +353,11 @@ func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
 		interfaceName:      "internal",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:               routedDhcpNetworkSub,
 		gateway:            "10.10.102.1",
@@ -353,9 +377,11 @@ func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
 		interfaceName:      "subinterface",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedMixed(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  routedMixedNetwork,
 		gateway:               "10.10.102.1",
@@ -379,9 +405,11 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 		interfaceName:         "internal",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
+	preTestChecks(t)
 	var def = networkDef{
 		name:                  routedMixedNetworkSub,
 		gateway:               "10.10.102.1",
@@ -405,9 +433,11 @@ func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
 		interfaceName:         "subinterface",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkDirect(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdNetworkDirect requires system admin privileges")
 		return
@@ -426,6 +456,7 @@ func TestAccVcdNetworkDirect(t *testing.T) {
 		resourceName:    "vcd_network_direct",
 	}
 	runTest(def, updateDef, t)
+	postTestChecks(t)
 }
 
 func runTest(def, updateDef networkDef, t *testing.T) {
@@ -734,6 +765,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 // It tests some IP pairs with the hard coded hash result as of version 2.8.0
 // If this test fails, we may have introduced a breaking change that causes a plan update.
 func TestHashFunc(t *testing.T) {
+	preTestChecks(t)
 	var testsDhcp = []struct {
 		startIp      string
 		endIp        string
@@ -810,6 +842,7 @@ func TestHashFunc(t *testing.T) {
 			}
 		}
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdNetworkExists(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {

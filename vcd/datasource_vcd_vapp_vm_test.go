@@ -1,3 +1,4 @@
+//go:build vm || ALL || functional
 // +build vm ALL functional
 
 package vcd
@@ -10,6 +11,7 @@ import (
 
 // TestAccVcdVappDS tests a VM data source if a vApp + VM is found in the VDC
 func TestAccVcdVappVmDS(t *testing.T) {
+	preTestChecks(t)
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"VDC":         testConfig.VCD.Vdc,
@@ -45,6 +47,7 @@ func TestAccVcdVappVmDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const datasourceTestVappVm = `

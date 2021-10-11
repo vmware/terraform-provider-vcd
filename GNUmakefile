@@ -1,7 +1,7 @@
 TEST?=$$(go list ./... )
 GOFMT_FILES?=$$(find . -name '*.go' )
 WEBSITE_REPO=github.com/hashicorp/terraform-website
-GIT_DESCRIBE=$(shell git describe)
+GIT_DESCRIBE=$(shell git describe --tags)
 
 PKG_NAME=vcd
 

@@ -237,7 +237,9 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	_ = d.Set("is_locked", orgUser.User.IsLocked)
 	_ = d.Set("deployed_vm_quota", orgUser.User.DeployedVmQuota)
 	_ = d.Set("stored_vm_quota", orgUser.User.StoredVmQuota)
-	_ = d.Set("role", orgUser.User.Role.Name)
+	if orgUser.User.Role != nil {
+		_ = d.Set("role", orgUser.User.Role.Name)
+	}
 	return nil
 }
 

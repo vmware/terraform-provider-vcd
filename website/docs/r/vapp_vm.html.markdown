@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_vm"
+page_title: "VMware Cloud Director: vcd_vapp_vm"
 sidebar_current: "docs-vcd-resource-vapp-vm"
 description: |-
-  Provides a vCloud Director VM resource. This can be used to create, modify, and delete VMs within a vApp.
+  Provides a VMware Cloud Director VM resource. This can be used to create, modify, and delete VMs within a vApp.
 ---
 
 # vcd\_vapp\_vm
 
-Provides a vCloud Director VM resource. This can be used to create,
+Provides a VMware Cloud Director VM resource. This can be used to create,
 modify, and delete VMs within a vApp.
 
 ## Example Usage
@@ -19,21 +19,21 @@ resource "vcd_network_direct" "direct-external" {
   name             = "net"
   external_network = "my-ext-net"
 }
-​
+
 resource "vcd_vapp" "web" {
   name = "web"
 }
-​
+
 resource "vcd_vapp_org_network" "routed-net" {
   vapp_name        = vcd_vapp.web.name
   org_network_name = "my-vdc-int-net"
 }
-​
+
 resource "vcd_vapp_org_network" "direct-net" {
   vapp_name        = vcd_vapp.web.name
   org_network_name = vcd_network_direct.direct-external.name
 }
-​
+
 resource "vcd_vapp_network" "vapp-net" {
   name               = "my-vapp-net"
   vapp_name          = vcd_vapp.web.name
@@ -43,14 +43,14 @@ resource "vcd_vapp_network" "vapp-net" {
   dns2               = "192.168.2.2"
   dns_suffix         = "mybiz.biz"
   guest_vlan_allowed = true
-​
+
   static_ip_pool {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
   }
-​
+
 }
-​
+
 resource "vcd_vapp_vm" "web1" {
   vapp_name     = vcd_vapp.web.name
   name          = "web1"
@@ -59,19 +59,19 @@ resource "vcd_vapp_vm" "web1" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-​
+
   metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
     my_key  = "my value"
   }
-​
+
   guest_properties = {
     "guest.hostname"   = "my-host"
     "another.var.name" = "var-value"
   }
-​
+
   network {
     type               = "org"
     name               = vcd_vapp_org_network.direct-net.org_network_name
@@ -86,7 +86,7 @@ resource "vcd_independent_disk" "disk1" {
   bus_type     = "SCSI"
   bus_sub_type = "VirtualSCSI"
 }
-​
+
 resource "vcd_vapp_vm" "web2" {
   vapp_name     = vcd_vapp.web.name
   name          = "web2"
@@ -94,44 +94,44 @@ resource "vcd_vapp_vm" "web2" {
   template_name = "photon-os"
   memory        = 1024
   cpus          = 1
-​
+
   metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
     my_key  = "my value"
   }
-​
+
   guest_properties = {
     "guest.hostname" = "my-hostname"
     "guest.other"    = "another-setting"
   }
-​
+
   network {
     type               = "org"
     name               = vcd_vapp_org_network.routed-net.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
-​
+
   network {
     type               = "vapp"
     name               = vcd_vapp_network.vapp-net.name
     ip_allocation_mode = "POOL"
   }
-​
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
     connected          = false
   }
-​
+
   disk {
     name        = vcd_independent_disk.disk1.name
     bus_number  = 1
     unit_number = 0
   }
-​
+
 }
 ```
 
@@ -149,12 +149,12 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
   cpu_cores     = 1
 
   override_template_disk {
-    bus_type         = "paravirtual"
-    size_in_mb       = "22384"
-    bus_number       = 0
-    unit_number      = 0
-    iops             = 0
-    storage_profile  = "*"
+    bus_type        = "paravirtual"
+    size_in_mb      = "22384"
+    bus_number      = 0
+    unit_number     = 0
+    iops            = 0
+    storage_profile = "*"
   }
 }
 
@@ -184,8 +184,8 @@ resource "vcd_vapp_vm" "TestAccVcdVAppVmDhcpWaitVM" {
 }
 
 resource "vcd_nsxv_ip_set" "test-ipset" {
-  name                   = "ipset-with-dhcp-ip"
-  ip_addresses           = [vcd_vapp_vm.TestAccVcdVAppVmDhcpWaitVM.network.0.ip]
+  name         = "ipset-with-dhcp-ip"
+  ip_addresses = [vcd_vapp_vm.TestAccVcdVAppVmDhcpWaitVM.network.0.ip]
 }
 ```
 
@@ -200,11 +200,11 @@ resource "vcd_vapp_vm" "emptyVM" {
   memory        = 2048
   cpus          = 2
   cpu_cores     = 1
- 
-  os_type = "sles10_64Guest"
+
+  os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  catalog_name  = "my-catalog"
-  boot_image = "myMedia"
+  catalog_name     = "my-catalog"
+  boot_image       = "myMedia"
 }
 
 ```
@@ -232,16 +232,16 @@ This example shows how to create a VM using VM sizing policy.
 
 ```hcl
 data "vcd_vm_sizing_policy" "minSize" {
-	name = "minimum size"
+  name = "minimum size"
 }
 
 resource "vcd_vapp_vm" "secondVM" {
-  vapp_name           = vcd_vapp.web.name
-  name                = "secondVM"
-  computer_name       = "db-vm"
-  catalog_name        = "cat-where-is-template"
-  template_name       = "vappWithMultiVm"
-  sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
+  vapp_name        = vcd_vapp.web.name
+  name             = "secondVM"
+  computer_name    = "db-vm"
+  catalog_name     = "cat-where-is-template"
+  template_name    = "vappWithMultiVm"
+  sizing_policy_id = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
 }
 
 ```
@@ -287,11 +287,15 @@ example for usage details.
   Tools are not present on the VM.
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
-* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/docs/providers/vcd/r/inserted_media.html).  
+* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media).  
 * `cpu_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
 * `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC using `vcd_org_vdc.vm_sizing_policy_ids` and `vcd_org_vdc.default_vm_sizing_policy_id`.
+
+## Attribute reference
+
+* `vm_type` (*3.2+*) - type of the VM (either `vcd_vapp_vm` or `vcd_vm`)
 
 <a id="disk"></a>
 ## Disk
@@ -352,7 +356,7 @@ example for usage details.
 <a id="override-template-disk"></a>
 ## Override template disk
 Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
-Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource.
+Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/providers/vmware/vcd/latest/docs/resources/vm_internal_disk) resource.
  
 ~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
 
@@ -369,13 +373,13 @@ Changes are ignored on update. This part isn't reread on refresh. To manage inte
 
 When you customize your guest OS you can set up a virtual machine with the operating system that you want.
 
-vCloud Director can customize the network settings of the guest operating system of a virtual machine created from a
+VMware Cloud Director can customize the network settings of the guest operating system of a virtual machine created from a
 vApp template. When you customize your guest operating system, you can create and deploy multiple unique virtual
 machines based on the same vApp template without machine name or network conflicts.
 
 When you configure a vApp template with the prerequisites for guest customization and add a virtual machine to a vApp
-based on that template, vCloud Director creates a package with guest customization tools. When you deploy and power on
-the virtual machine for the first time, vCloud Director copies the package, runs the tools, and deletes the package from
+based on that template, VMware Cloud Director creates a package with guest customization tools. When you deploy and power on
+the virtual machine for the first time, VMware Cloud Director copies the package, runs the tools, and deletes the package from
 the virtual machine.
 
 ~> **Note:** The settings below work so that all values are inherited from template and only the specified fields are
@@ -453,7 +457,7 @@ customization on every `terraform apply` command:
 ```hcl
 resource "vcd_vapp_vm" "web2" {
   #...
-  
+
   network {
     type               = "org"
     name               = "net"
@@ -582,10 +586,10 @@ For example, using this structure, representing a VM that was **not** created us
 
 ```hcl
 resource "vcd_vapp_vm" "tf-vm" {
-  name              = "my-vm"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  vapp_name         = "my-vapp"
+  name      = "my-vm"
+  org       = "my-org"
+  vdc       = "my-vdc"
+  vapp_name = "my-vapp"
 }
 ```
 

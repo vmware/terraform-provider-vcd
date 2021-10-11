@@ -242,23 +242,81 @@ func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(key)
 }
 
-// function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters.
+// function lockParentEdgeGtw locks using edge_gateway or edge_gateway_id name existing in resource parameters.
+// If edge_gateway_id is present it is being looked up and stored as name in the lock so that resources that use ID
+// and resources that use name can acquire the same lock.
 // Parent means the resource belongs to the edge gateway being locked
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
-	edgeGtwName := d.Get("edge_gateway").(string)
-	if edgeGtwName == "" {
+	var edgeGtwIdValue string
+	var edgeGtwNameValue string
+
+	edgeGtwId := d.Get("edge_gateway_id")
+	if edgeGtwId != nil {
+		edgeGtwIdValue = edgeGtwId.(string)
+	}
+
+	edgeGtwName := d.Get("edge_gateway")
+	if edgeGtwName != nil {
+		edgeGtwNameValue = edgeGtwName.(string)
+	}
+
+	// If none are specified - panic
+	if edgeGtwIdValue == "" && edgeGtwNameValue == "" {
 		panic("edge gateway not found")
 	}
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
+
+	// Only Edge gateway name ('edge_gateway' field) was specified - need to lookup ID
+	if edgeGtwNameValue != "" && edgeGtwIdValue == "" {
+		egw, err := cli.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			panic(fmt.Sprintf("edge gateway '%s' not found: %s", edgeGtwNameValue, err))
+		}
+
+		edgeGtwIdValue = egw.EdgeGateway.ID
+	}
+
+	if edgeGtwIdValue == "" {
+		panic("edge gateway ID not found")
+	}
+
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwIdValue)
 	vcdMutexKV.kvLock(key)
 }
 
 func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
-	edgeGtwName := d.Get("edge_gateway").(string)
-	if edgeGtwName == "" {
+	var edgeGtwIdValue string
+	var edgeGtwNameValue string
+
+	edgeGtwId := d.Get("edge_gateway_id")
+	if edgeGtwId != nil {
+		edgeGtwIdValue = edgeGtwId.(string)
+	}
+
+	edgeGtwName := d.Get("edge_gateway")
+	if edgeGtwName != nil {
+		edgeGtwNameValue = edgeGtwName.(string)
+	}
+
+	// If none are specified - panic
+	if edgeGtwIdValue == "" && edgeGtwNameValue == "" {
 		panic("edge gateway not found")
 	}
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
+
+	// Only Edge gateway name ('edge_gateway' field) was specified - need to lookup ID
+	if edgeGtwNameValue != "" && edgeGtwIdValue == "" {
+		egw, err := cli.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			panic(fmt.Sprintf("edge gateway '%s' not found: %s", edgeGtwNameValue, err))
+		}
+
+		edgeGtwIdValue = egw.EdgeGateway.ID
+	}
+
+	if edgeGtwIdValue == "" {
+		panic("edge gateway ID not found")
+	}
+
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwIdValue)
 	vcdMutexKV.kvUnlock(key)
 }
 
@@ -334,6 +392,34 @@ func (cli *VCDClient) GetAdminOrg(orgName string) (org *govcd.AdminOrg, err erro
 	return org, err
 }
 
+// GetOrg finds org using the names provided in the args.
+// If the name is empty, it will use the default
+// org name from the provider.
+func (cli *VCDClient) GetOrg(orgName string) (org *govcd.Org, err error) {
+
+	if orgName == "" {
+		orgName = cli.Org
+	}
+	if orgName == "" {
+		return nil, fmt.Errorf("empty Org name provided")
+	}
+
+	org, err = cli.VCDClient.GetOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
+	}
+	if org.Org.Name == "" || org.Org.HREF == "" || org.Org.ID == "" {
+		return nil, fmt.Errorf("empty Org %s found", orgName)
+	}
+	return org, err
+}
+
+// Same as GetOrg, but using data from the resource, if available.
+func (cli *VCDClient) GetOrgFromResource(d *schema.ResourceData) (org *govcd.Org, err error) {
+	orgName := d.Get("org").(string)
+	return cli.GetOrg(orgName)
+}
+
 // Same as GetOrgAndVdc, but using data from the resource, if available.
 func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org *govcd.Org, vdc *govcd.Vdc, err error) {
 	orgName := d.Get("org").(string)
@@ -347,7 +433,7 @@ func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org *govc
 	return cli.GetAdminOrg(orgName)
 }
 
-// Gets an edge gateway when you don't need org or vdc for other purposes
+// GetEdgeGateway gets an NSX-V Edge Gateway when you don't need org or vdc for other purposes
 func (cli *VCDClient) GetEdgeGateway(orgName, vdcName, edgeGwName string) (eg *govcd.EdgeGateway, err error) {
 
 	if edgeGwName == "" {
@@ -355,13 +441,54 @@ func (cli *VCDClient) GetEdgeGateway(orgName, vdcName, edgeGwName string) (eg *g
 	}
 	_, vdc, err := cli.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving org and vdc: %s", err)
+		return nil, fmt.Errorf("error retrieving Org and VDC: %s", err)
 	}
 	eg, err = vdc.GetEdgeGatewayByName(edgeGwName, true)
 
 	if err != nil {
 		if os.Getenv("GOVCD_DEBUG") != "" {
 			return nil, fmt.Errorf(fmt.Sprintf("(%s) [%s] ", edgeGwName, callFuncName())+errorUnableToFindEdgeGateway, err)
+		}
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+	return eg, nil
+}
+
+// GetNsxtEdgeGateway gets an NSX-T Edge Gateway when you don't need Org or VDC for other purposes
+func (cli *VCDClient) GetNsxtEdgeGateway(orgName, vdcName, edgeGwName string) (eg *govcd.NsxtEdgeGateway, err error) {
+
+	if edgeGwName == "" {
+		return nil, fmt.Errorf("empty NSX-T Edge Gateway name provided")
+	}
+	_, vdc, err := cli.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Org and VDC: %s", err)
+	}
+	eg, err = vdc.GetNsxtEdgeGatewayByName(edgeGwName)
+
+	if err != nil {
+		if os.Getenv("GOVCD_DEBUG") != "" {
+			return nil, fmt.Errorf(fmt.Sprintf("(%s) [%s] ", edgeGwName, callFuncName())+errorUnableToFindEdgeGateway, err)
+		}
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+	return eg, nil
+}
+
+// GetNsxtEdgeGatewayById gets an NSX-T Edge Gateway when you don't need Org or VDC for other purposes
+func (cli *VCDClient) GetNsxtEdgeGatewayById(orgName, vdcName, edgeGwId string) (eg *govcd.NsxtEdgeGateway, err error) {
+	if edgeGwId == "" {
+		return nil, fmt.Errorf("empty NSX-T Edge Gateway ID provided")
+	}
+	_, vdc, err := cli.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Org and VDC: %s", err)
+	}
+	eg, err = vdc.GetNsxtEdgeGatewayById(edgeGwId)
+
+	if err != nil {
+		if os.Getenv("GOVCD_DEBUG") != "" {
+			return nil, fmt.Errorf(fmt.Sprintf("(%s) [%s] ", edgeGwId, callFuncName())+errorUnableToFindEdgeGateway, err)
 		}
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -385,10 +512,30 @@ func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGat
 	return egw, nil
 }
 
+// GetNsxtEdgeGatewayFromResource helps to retrieve NSX-T Edge Gateway when Org org VDC are not
+// needed. It performs a query By ID.
+func (cli *VCDClient) GetNsxtEdgeGatewayFromResourceById(d *schema.ResourceData, edgeGatewayFieldName string) (eg *govcd.NsxtEdgeGateway, err error) {
+	orgName := d.Get("org").(string)
+	vdcName := d.Get("vdc").(string)
+	edgeGatewayId := d.Get(edgeGatewayFieldName).(string)
+	egw, err := cli.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	if err != nil {
+		if os.Getenv("GOVCD_DEBUG") != "" {
+			return nil, fmt.Errorf("(%s) [%s] : %s", edgeGatewayId, callFuncName(), err)
+		}
+		return nil, err
+	}
+	return egw, nil
+}
+
 func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org string) error {
 	var err error
 	if token != "" {
-		err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		if len(token) > 32 {
+			err = client.SetToken(org, govcd.BearerTokenHeader, token)
+		} else {
+			err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		}
 		if err != nil {
 			err = fmt.Errorf("error during token-based authentication: %s", err)
 		}

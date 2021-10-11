@@ -1,3 +1,4 @@
+//go:build vapp || ALL || functional
 // +build vapp ALL functional
 
 package vcd
@@ -14,6 +15,7 @@ func init() {
 }
 
 func TestAccVcdVAppProperties(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 
 	var params = StringMap{
@@ -74,6 +76,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVApp_properties = `

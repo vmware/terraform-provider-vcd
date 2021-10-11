@@ -1,3 +1,4 @@
+//go:build network || vapp || ALL || functional
 // +build network vapp ALL functional
 
 package vcd
@@ -9,6 +10,7 @@ import (
 )
 
 func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
+	preTestChecks(t)
 	vappNetworkResourceName := "TestAccVcdVappOrgNetwork_NotFenced"
 
 	var params = StringMap{
@@ -27,9 +29,11 @@ func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 	}
 
 	runVappOrgNetworkTest(t, params)
+	postTestChecks(t)
 }
 
 func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
+	preTestChecks(t)
 	vappNetworkResourceName := "TestAccVcdVappOrgNetwork_Fenced"
 
 	var params = StringMap{
@@ -48,6 +52,7 @@ func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 	}
 
 	runVappOrgNetworkTest(t, params)
+	postTestChecks(t)
 }
 
 func runVappOrgNetworkTest(t *testing.T, params StringMap) {

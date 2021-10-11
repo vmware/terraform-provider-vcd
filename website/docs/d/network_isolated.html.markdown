@@ -1,17 +1,21 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_isolated"
+page_title: "VMware Cloud Director: vcd_network_isolated"
 sidebar_current: "docs-vcd-data-source-network-isolated"
 description: |-
-  Provides a vCloud Director Org VDC isolated Network. This can be used to reference internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC isolated Network. This can be used to reference internal networks for vApps to connect.
 ---
 
 # vcd\_network\_isolated
 
-Provides a vCloud Director Org VDC isolated Network data source. This can be used to reference
+Provides a VMware Cloud Director Org VDC isolated Network data source. This can be used to reference
 internal networks for vApps to connect. This network is not attached to external networks or routers.
 
 Supported in provider *v2.5+*
+
+~> **Note:** This data source supports only NSX-V backed Org VDC networks.
+Please use newer [`vcd_network_isolated_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_isolated_v2)
+data source which is compatible with NSX-T.
 
 ## Example Usage
 
@@ -20,7 +24,7 @@ data "vcd_network_isolated" "net" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
 
-  name    = "my-net"
+  name = "my-net"
 }
 
 output "gateway" {
@@ -60,7 +64,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [isolated network resource](/docs/providers/vcd/r/network_isolated.html#attribute-reference) are supported.
+All attributes defined in [isolated network resource](/providers/vmware/vcd/latest/docs/resources/network_isolated#attribute-reference) are supported.
 
 ## Filter arguments
 
@@ -70,4 +74,4 @@ All attributes defined in [isolated network resource](/docs/providers/vcd/r/netw
 * `ip` (Optional) matches the IP of the resource using a regular expression.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.

@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_external_network"
+page_title: "VMware Cloud Director: vcd_external_network"
 sidebar_current: "docs-vcd-data-source-external-network"
 description: |-
   Provides an external network data source.
@@ -8,7 +8,7 @@ description: |-
 
 # external\_network
 
-Provides a vCloud Director external network data source. This can be used to reference external networks and their properties.
+Provides a VMware Cloud Director external network data source. This can be used to reference external networks and their properties.
 
 Supported in provider *v2.5+*
 
@@ -20,12 +20,12 @@ data "vcd_external_network" "tf-external-network" {
 }
 
 resource "vcd_dnat" "tf-nat-rule" {
-  org             = "tf-org"
-  vdc             = "tf-vdc"
+  org = "tf-org"
+  vdc = "tf-vdc"
   # References the external network name from the data source
-  network_name    = "${data.vcd_external_network.tf-external-network.name}"
-  network_type    = "ext"
-  edge_gateway    = "tf-gw"
+  network_name = data.vcd_external_network.tf-external-network.name
+  network_type = "ext"
+  edge_gateway = "tf-gw"
   # References the first IP scope block. From that we extract the first static IP pool to retrieve the start address
   external_ip     = "${data.vcd_external_network.extnet-datacloud.ip_scope[0].static_ip_pool[0].start_address}"
   port            = 7777
@@ -45,11 +45,11 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `description` - Network friendly description
-* `ip_scope` -  A list of IP scopes for the network. See [IP Scope](/docs/providers/vcd/r/external_network.html#ipscope)
+* `ip_scope` -  A list of IP scopes for the network. See [IP Scope](/providers/vmware/vcd/latest/docs/resources/external_network#ipscope)
    for details.
 * `vsphere_network` -  A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced 
   DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.
-  See [vSphere Network](/docs/providers/vcd/r/external_network.html#vspherenetwork) for details.
+  See [vSphere Network](/providers/vmware/vcd/latest/docs/resources/external_network#vspherenetwork) for details.
 * `retain_net_info_across_deployments` -  Specifies whether the network resources such as IP/MAC of router will be 
   retained across deployments.
 

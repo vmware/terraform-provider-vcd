@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_catalog_media"
+page_title: "VMware Cloud Director: vcd_catalog_media"
 sidebar_current: "docs-vcd-data-source-catalog-media"
 description: |-
   Provides a catalog media data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_catalog\_media
 
-Provides a vCloud Director Catalog media data source. A Catalog media can be used to reference a catalog media and use its 
+Provides a VMware Cloud Director Catalog media data source. A Catalog media can be used to reference a catalog media and use its 
 data within other resources or data sources.
 
 Supported in provider *v2.5+*
@@ -44,7 +44,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [catalog_media](/docs/providers/vcd/r/catalog_media.html#attribute-reference) are supported.
+All attributes defined in [catalog_media](/providers/vmware/vcd/latest/docs/resources/catalog_media#attribute-reference) are supported.
 
 ## Filter arguments
 
@@ -62,5 +62,5 @@ All attributes defined in [catalog_media](/docs/providers/vcd/r/catalog_media.ht
   are set, it retrieves the oldest item.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
 

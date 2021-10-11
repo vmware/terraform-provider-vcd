@@ -1,3 +1,4 @@
+//go:build gateway || firewall || ALL || functional
 // +build gateway firewall ALL functional
 
 package vcd
@@ -13,6 +14,7 @@ import (
 )
 
 func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
@@ -482,6 +484,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // importStateFirewallUiNumberByResourceName constructs an import path (ID in Terraform import terms) in the format of:
@@ -876,6 +879,7 @@ resource "vcd_nsxv_firewall_rule" "rule6-6" {
 `
 
 func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
@@ -982,6 +986,7 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdEdgeFirewallRuleIpSets = `
@@ -1049,6 +1054,7 @@ resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
 `
 
 func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
@@ -1151,6 +1157,7 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdEdgeFirewallRuleVmsPrereqs = `

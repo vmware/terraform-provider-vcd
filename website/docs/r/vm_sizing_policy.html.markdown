@@ -1,20 +1,22 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vm_sizing_policy"
+page_title: "VMware Cloud Director: vcd_vm_sizing_policy"
 sidebar_current: "docs-vcd-resource-vm-sizing-policy"
 description: |-
-  Provides a vCloud Director VM sizing policy resource. This can be
+  Provides a VMware Cloud Director VM sizing policy resource. This can be
   used to create, modify, and delete VM sizing policy.
 ---
 
 # vcd\_vm\_sizing\_policy
 
-Provides a vCloud Director VM sizing policy resource. This can be
+Provides a VMware Cloud Director VM sizing policy resource. This can be
 used to create, modify, and delete VM sizing policy.
 
 Supported in provider *v3.0+* and requires VCD 10.0+
 
-~> **Note:** 
+-> **Note:** This resource requires system administrator privileges.
+
+-> **Note:** 
 CPU and memory properties of a VM sizing policy can't be updated in-place, so updating them will force a re-create. For such re-creation to succeed, the policy can't be used by VDC and VM. Hence, the policy usage has to be removed from VDC and VM beforehand. For the cases when that is not trivial, a two-step approach may be easier: to create a new policy with the new values, assign it to VDC and VM, and afterwards remove the old policy.
 
 ## Example Usage

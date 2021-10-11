@@ -55,6 +55,7 @@
       "//": "Provider VDC details are needed for creating organization VDC",
       "name": "Must-already-exist-provider-vdc-name",
       "storageProfile": "Must-already-exist-storage-profile-name",
+      "storageProfile2": "Must-already-exist-storage-profile-name2",
       "networkPool": "Must-already-exist-network-pool-name"
     },
     "nsxtProviderVdc": {
@@ -92,9 +93,20 @@
     "externalNetworkPortGroupType": "DV_PORTGROUP"
   },
   "nsxt": {
+    "//": "NSX-T manager name to be used as defined in VCD",
     "manager": "nsxManager1",
+    "//": "NSX-T tier-0 router used for external network tests",
     "tier0router": "tier-0-2",
-    "tier0routervrf": "tier-0-2"
+    "//": "NSX-T tier-0 VRF router used for external network tests",
+    "tier0routervrf": "tier-0-2",
+    "//": "Existing External Network with correct configuration",
+    "externalNetwork": "tier-0-backed-external-network",
+    "//": "Existing NSX-T based VDC",
+    "vdc": "nsxt-vdc-dainius",
+    "//": "Existing NSX-T Edge Gateway",
+    "edgeGateway": "nsxt-gw",
+    "//": "Existing NSX-T segment to test Org VDC Imported network",
+    "nsxtImportSegment": "import-segment"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",
@@ -124,6 +136,11 @@
     "uploadProgress": true,
     "//": "Already uploaded media name",
     "mediaName" : "linuxOS"
+  },
+  "misc": {
+    "//": "ldapContainer can be used to pull default LDAP testing container 'rroemhild/test-openldap' from a local",
+    "//": "Docker registry. This can help to overcome Docker registry throttling",
+    "ldapContainer": ""
   },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",

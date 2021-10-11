@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_org_network"
+page_title: "VMware Cloud Director: vcd_vapp_org_network"
 sidebar_current: "docs-vcd-datasource-vapp-org-network"
 description: |-
-  Provides a data source for vCloud director Org network attached to vApp. This can be used to access vApp Org network.
+  Provides a data source for VMware Cloud Director Org network attached to vApp. This can be used to access vApp Org network.
 ---
 
 # vcd\_vapp\_org\_network
 
-Provides a data source for vCloud director Org network attached to vApp. This can be used to access vApp Org VDC network.
+Provides a data source for VMware Cloud Director Org network attached to vApp. This can be used to access vApp Org VDC network.
 
 Supported in provider *v2.7+*
 
@@ -17,12 +17,12 @@ Supported in provider *v2.7+*
 ```hcl
 
 data "vcd_vapp" "web" {
-  name= "web"
+  name = "web"
 }
 
 data "vcd_vapp_org_network" "network1" {
-  vapp_name         = data.vcd_vapp.web.name
-  org_network_name  = "my-vapp-org-network"
+  vapp_name        = data.vcd_vapp.web.name
+  org_network_name = "my-vapp-org-network"
 }
 
 output "id" {
@@ -41,5 +41,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [`vcd_vapp_org_network`](/docs/providers/vcd/r/vapp_org_network.html#attribute-reference) are supported.
+All attributes defined in [`vcd_vapp_org_network`](/providers/vmware/vcd/latest/docs/resources/vapp_org_network#attribute-reference) are supported.
 

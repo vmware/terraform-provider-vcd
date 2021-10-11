@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_lb_server_pool"
+page_title: "VMware Cloud Director: vcd_lb_server_pool"
 sidebar_current: "docs-vcd-data-source-lb-server-pool"
 description: |-
   Provides an NSX edge gateway load balancer server pool data source.
@@ -8,11 +8,11 @@ description: |-
 
 # vcd\_lb\_server\_pool
 
-Provides a vCloud Director Edge Gateway Load Balancer Server Pool data source. A Server Pool defines
+Provides a VMware Cloud Director Edge Gateway Load Balancer Server Pool data source. A Server Pool defines
 a group of backend servers (defined as pool members), manages load balancer distribution methods, and has a service 
 monitor attached to it for health check parameters.
 
-~> **Note:** See additional support notes in [server pool resource page](/docs/providers/vcd/r/lb_server_pool.html).
+~> **Note:** See additional support notes in [server pool resource page](/providers/vmware/vcd/latest/docs/resources/lb_server_pool).
 
 Supported in provider *v2.4+*
 
@@ -20,9 +20,9 @@ Supported in provider *v2.4+*
 
 ```hcl
 data "vcd_lb_server_pool" "sp-ds" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
 
   name = "not-managed"
 }

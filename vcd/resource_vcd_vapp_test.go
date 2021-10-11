@@ -1,3 +1,4 @@
+//go:build vapp || ALL || functional
 // +build vapp ALL functional
 
 package vcd
@@ -13,25 +14,30 @@ import (
 )
 
 func TestAccVcdVApp_Basic(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 	var vappName = "TestAccVcdVAppVapp"
+	var vappDescription = "A long description containing some text."
+	var vappUpdateDescription = "A shorter description."
 
 	var params = StringMap{
-		"Org":          testConfig.VCD.Org,
-		"Vdc":          testConfig.VCD.Vdc,
-		"EdgeGateway":  testConfig.Networking.EdgeGateway,
-		"NetworkName":  "TestAccVcdVAppNet",
-		"NetworkName2": "TestAccVcdVAppNet2",
-		"NetworkName3": "TestAccVcdVAppNet3",
-		"Catalog":      testSuiteCatalogName,
-		"CatalogItem":  testSuiteCatalogOVAItem,
-		"VappName":     vappName,
-		"FuncName":     "TestAccCheckVcdVApp_PowerOff",
-		"Tags":         "vapp",
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.VCD.Vdc,
+		"EdgeGateway":     testConfig.Networking.EdgeGateway,
+		"NetworkName":     "TestAccVcdVAppNet",
+		"NetworkName2":    "TestAccVcdVAppNet2",
+		"NetworkName3":    "TestAccVcdVAppNet3",
+		"Catalog":         testSuiteCatalogName,
+		"CatalogItem":     testSuiteCatalogOVAItem,
+		"VappName":        vappName,
+		"VappDescription": vappDescription,
+		"FuncName":        "TestAccVcdVApp_Basic",
+		"Tags":            "vapp",
 	}
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
 
 	params["FuncName"] = "TestAccCheckVcdVApp_update"
+	params["VappDescription"] = vappUpdateDescription
 	configTextUpdate := templateFill(testAccCheckVcdVApp_update, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -50,6 +56,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "description", vappDescription),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "status", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestMatchResourceAttr("vcd_vapp."+vappName, "href",
@@ -64,6 +71,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "description", vappUpdateDescription),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "power_on", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "status", "4"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata updated"),
@@ -81,6 +89,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFunc {
@@ -147,6 +156,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   name          = "{{.VappName}}"
+  description   = "{{.VappDescription}}"
 
   metadata = {
     vapp_metadata = "vApp Metadata."
@@ -178,6 +188,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   name          = "{{.VappName}}"
+  description   = "{{.VappDescription}}"
 
   metadata = {
     vapp_metadata = "vApp Metadata updated"

@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_network"
+page_title: "VMware Cloud Director: vcd_vapp_network"
 sidebar_current: "docs-vcd-datasource-vapp-network"
 description: |-
-  Provides a vCloud Director vApp network data source. This can be used to access a vApp network.
+  Provides a VMware Cloud Director vApp network data source. This can be used to access a vApp network.
 ---
 
 # vcd\_vapp\_network
 
-Provides a vCloud Director vApp network data source. This can be used to access a vApp network.
+Provides a VMware Cloud Director vApp network data source. This can be used to access a vApp network.
 
 Supported in provider *v2.7+*
 
@@ -17,12 +17,12 @@ Supported in provider *v2.7+*
 ```hcl
 
 data "vcd_vapp" "web" {
-  name= "web"
+  name = "web"
 }
 
 data "vcd_vapp_network" "network1" {
-  vapp_name     = data.vcd_vapp.web.name
-  name          = "isolated-network"
+  vapp_name = data.vcd_vapp.web.name
+  name      = "isolated-network"
 }
 
 output "gateway" {
@@ -41,5 +41,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [`vcd_vapp_network`](/docs/providers/vcd/r/vapp_network.html#attribute-reference) are supported.
+All attributes defined in [`vcd_vapp_network`](/providers/vmware/vcd/latest/docs/resources/vapp_network#attribute-reference) are supported.
 

@@ -1,3 +1,4 @@
+//go:build functional || vapp || ALL
 // +build functional vapp ALL
 
 package vcd
@@ -11,6 +12,7 @@ import (
 )
 
 func TestAccVcdVappFirewallRules(t *testing.T) {
+	preTestChecks(t)
 	if testConfig.Networking.EdgeGateway == "" {
 		t.Skip("Variable testConfig.Networking.EdgeGateway must be configured")
 		return
@@ -198,7 +200,7 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 			},
 		},
 	})
-
+	postTestChecks(t)
 }
 
 func importStateVappFirewallRuleById(testConfig TestConfig, resourceName string) resource.ImportStateIdFunc {

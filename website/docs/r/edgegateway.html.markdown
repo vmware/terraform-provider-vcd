@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_edgegateway"
+page_title: "VMware Cloud Director: vcd_edgegateway"
 sidebar_current: "docs-vcd-resource-edgegateway"
 description: |-
-  Provides a vCloud Director edge gateway. This can be used to create and delete edge gateways connected to one or more external networks.
+  Provides a VMware Cloud Director edge gateway. This can be used to create and delete edge gateways connected to one or more external networks.
 ---
 
 # vcd\_edgegateway
 
-Provides a vCloud Director edge gateway directly connected to one or more external networks. This can be used to create
+Provides a VMware Cloud Director edge gateway directly connected to one or more external networks. This can be used to create
 and delete edge gateways for Org VDC networks to connect.
 
 Supported in provider *v2.4+*
@@ -17,11 +17,6 @@ Supported in provider *v2.4+*
 You must use `System Adminstrator` account in `provider` configuration
 and then provide `org` and `vdc` arguments for edge gateway to work.
 
-~> **Note:** Load balancing capabilities will work only when edge gateway is `advanced`. Load
-balancing settings will be **ignored** when it is not. Refer to [official vCloud Director documentation]
-(https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-7E082E77-B459-4CE7-806D-2769F7CB5624.html) 
-for more information.
-
 ## Example Usage
 
 ```hcl
@@ -29,10 +24,10 @@ resource "vcd_edgegateway" "egw" {
   org = "my-org"
   vdc = "my-vdc"
 
-  name                    = "my-egw"
-  description             = "new edge gateway"
-  configuration           = "compact"
-  
+  name          = "my-egw"
+  description   = "new edge gateway"
+  configuration = "compact"
+
   external_network {
     name = "my-ext-net1"
 
@@ -120,7 +115,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
-* `external_network` - (Optional, *v2.6+*) One or more blocks defining external networks, their
+* `external_network` - (Required, *v2.6+*) One or more blocks defining external networks, their
   subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
   in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").
@@ -206,22 +201,21 @@ For example, using this structure, representing an edge gateway that was **not**
 
 ```hcl
 resource "vcd_edgegateway" "tf-edgegateway" {
-  name              = "my-edge-gw"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  configuration     = "COMPUTE"
+  name          = "my-edge-gw"
+  org           = "my-org"
+  vdc           = "my-vdc"
+  configuration = "COMPUTE"
 
   external_network {
-      name = "my-ext-net1"
+    name = "my-ext-net1"
 
-      subnet {
-        ip_address            = "192.168.30.51"
-        gateway               = "192.168.30.49"
-        netmask               = "255.255.255.240"
-        use_for_default_route = true
-      }
+    subnet {
+      ip_address            = "192.168.30.51"
+      gateway               = "192.168.30.49"
+      netmask               = "255.255.255.240"
+      use_for_default_route = true
+    }
   }
-
 }
 ```
 

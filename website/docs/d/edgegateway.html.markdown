@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_edgegateway"
+page_title: "VMware Cloud Director: vcd_edgegateway"
 sidebar_current: "docs-vcd-data-source-edgegateway"
 description: |-
   Provides an edge gateway data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_edgegateway
 
-Provides a vCloud Director edge gateway data source, directly connected to one or more external networks. This can be used to reference
+Provides a VMware Cloud Director edge gateway data source, directly connected to one or more external networks. This can be used to reference
 edge gateways for Org VDC networks to connect.
 
 Supported in provider *v2.5+*
@@ -58,7 +58,7 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All attributes defined in [edge gateway resource](/docs/providers/vcd/r/edgegateway.html#attribute-reference) are supported.
+All attributes defined in [edge gateway resource](/providers/vmware/vcd/latest/docs/resources/edgegateway#attribute-reference) are supported.
 
 ## Filter arguments
 
@@ -66,5 +66,5 @@ All attributes defined in [edge gateway resource](/docs/providers/vcd/r/edgegate
 
 * `name_regex` (Optional) matches the name using a regular expression.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
 

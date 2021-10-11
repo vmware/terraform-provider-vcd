@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -11,6 +12,7 @@ import (
 )
 
 func TestAccVcdVAppVmDhcpWait(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -108,6 +110,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVmDhcpWaitShared = `

@@ -1,17 +1,21 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_routed"
+page_title: "VMware Cloud Director: vcd_network_routed"
 sidebar_current: "docs-vcd-resource-network-routed"
 description: |-
-  Provides a vCloud Director Org VDC routed Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC routed Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
 # vcd\_network\_routed
 
-Provides a vCloud Director Org VDC routed Network. This can be used to create,
+Provides a VMware Cloud Director Org VDC routed Network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
 
 Supported in provider *v2.0+*
+
+~> **Note:** This resource supports only NSX-V backed Org VDC networks.
+Please use newer [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/resources/network_routed_v2) resource
+which is compatible with NSX-T.
 
 ## Example Usage
 
@@ -85,11 +89,11 @@ For example, using this structure, representing a routed network that was **not*
 
 ```hcl
 resource "vcd_network_routed" "tf-mynet" {
-  name              = "my-net"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  edge_gateway      = "COMPUTE"
-  gateway           = "COMPUTE"
+  name         = "my-net"
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = "COMPUTE"
+  gateway      = "COMPUTE"
 }
 ```
 

@@ -20,7 +20,7 @@ requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks 
 
 Supported in provider *v3.0+*.
 
-## Example Usage (NSX-T backed external network)
+## Example Usage (NSX-T Tier 0 Router backed External Network)
 
 ```hcl
 data "vcd_nsxt_manager" "main" {
@@ -32,13 +32,62 @@ data "vcd_nsxt_tier0_router" "router" {
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
 }
 
-resource "vcd_external_network_v2" "ext-net-nsxt" {
+resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
   name        = "nsxt-external-network"
-  description = "First NSX-T backed network"
+  description = "First NSX-T Tier 0 router backed network"
 
   nsxt_network {
     nsxt_manager_id      = data.vcd_nsxt_manager.main.id
     nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    enabled       = false
+    gateway       = "88.88.88.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "88.88.88.88"
+      end_address   = "88.88.88.100"
+    }
+  }
+
+  ip_scope {
+    # enabled       = true # by default
+    gateway       = "14.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "14.14.14.10"
+      end_address   = "14.14.14.15"
+    }
+
+    static_ip_pool {
+      start_address = "14.14.14.20"
+      end_address   = "14.14.14.25"
+    }
+  }
+}
+```
+
+## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network [only VCD 10.3+])
+
+-> NSX-T **Segment backed External Network** is similar to **Imported Org VDC network**. The difference is that
+**External Network can consume one NSX-T Segment and then many VDCs can use it by using NSX-T Direct Network**, 
+while Org VDC Imported network directly requires one NSX-T Segment
+
+```hcl
+data "vcd_nsxt_manager" "main" {
+  name = "nsxManager"
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt-segment" {
+  name        = "nsxt-external-network"
+  description = "First NSX-T segment backed network"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "existing-nsxt-segment"
   }
 
   ip_scope {
@@ -68,6 +117,15 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
     }
   }
 }
+
+resource "vcd_network_direct" "net" {
+  vdc = "nsxt-vdc"
+
+  name             = "direct-net"
+  external_network = vcd_external_network_v2.ext-net-nsxt-segment.name
+
+  depends_on = [vcd_external_network_v2.ext-net-nsxt]
+}
 ```
 
 ## Example Usage (NSX-V backed external network)
@@ -86,8 +144,8 @@ resource "vcd_external_network_v2" "ext-net-nsxv" {
   description = "NSX-V based external network"
 
   vsphere_network {
-    vcenter_id     = data.vcd_vcenter.vc.id
-    portgroup_id   = data.vcd_portgroup.sw.id
+    vcenter_id   = data.vcd_vcenter.vc.id
+    portgroup_id = data.vcd_portgroup.sw.id
   }
 
   ip_scope {
@@ -135,15 +193,16 @@ The following arguments are supported:
 <a id="vspherenetwork"></a>
 ## vSphere Network
 
-* `vcenter_id` - (Required) vCenter ID. Can be looked up using [`vcd_vcenter`](/docs/providers/vcd/d/vcenter.html) data source.
-* `portgroup_id` - (Required) vSphere portgroup ID. Can be looked up using  [`vcd_portgroup`](/docs/providers/vcd/d/portgroup.html) data source.
+* `vcenter_id` - (Required) vCenter ID. Can be looked up using [`vcd_vcenter`](/providers/vmware/vcd/latest/docs/data-sources/vcenter) data source.
+* `portgroup_id` - (Required) vSphere portgroup ID. Can be looked up using  [`vcd_portgroup`](/providers/vmware/vcd/latest/docs/data-sources/portgroup) data source.
 
 <a id="nsxtnetwork"></a>
 ## NSX-T Network
 
-* `nsxt_manager_id` - (Required) NSX-T manager ID. Can be looked up using [`vcd_nsxt_manager`](/docs/providers/vcd/d/nsxt_manager.html) data source.
-* `nsxt_tier0_router_id` - (Required) NSX-T Tier-0 router ID. Can be looked up using
-  [`vcd_nsxt_tier0_router`](/docs/providers/vcd/d/nsxt_tier0_router.html) data source.
+* `nsxt_manager_id` - (Required) NSX-T manager ID. Can be looked up using [`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_manager) data source.
+* `nsxt_tier0_router_id` - (Optional) NSX-T Tier-0 router ID. Can be looked up using
+  [`vcd_nsxt_tier0_router`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router) data source.
+* `nsxt_segment_name` - (Optional; *v3.4+*; *VCD 10.3+*) Existing NSX-T segment name.
 
 ## Importing
 
@@ -173,4 +232,4 @@ NOTE: the default separator (.) can be changed using Provider.import_separator o
 While the above structure is the minimum needed to get an import, it is not sufficient to run `terraform plan`,
 as it lacks several mandatory fields. To use the imported resource, you will need to add the missing properties
 using the data in `terraform.tfstate` as a reference. If the resource does not need modifications, consider using
-an [external network data source](/docs/providers/vcd/d/external_network_v2.html) instead. 
+an [external network data source](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2) instead. 

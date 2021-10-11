@@ -1,3 +1,4 @@
+//go:build network || vapp || ALL || functional
 // +build network vapp ALL functional
 
 package vcd
@@ -21,6 +22,7 @@ const netmask = "255.255.255.0"
 const guestVlanAllowed = "true"
 
 func TestAccVcdVappNetwork_Isolated(t *testing.T) {
+	preTestChecks(t)
 	vappNetworkResourceName := "TestAccVcdVappNetwork_Isolated"
 
 	var params = StringMap{
@@ -66,9 +68,11 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	}
 
 	runVappNetworkTest(t, params)
+	postTestChecks(t)
 }
 
 func TestAccVcdVappNetwork_Nat(t *testing.T) {
+	preTestChecks(t)
 	vappNetworkResourceName := "TestAccVcdVappNetwork_Nat"
 
 	var params = StringMap{
@@ -115,6 +119,7 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 	}
 
 	runVappNetworkTest(t, params)
+	postTestChecks(t)
 }
 
 func runVappNetworkTest(t *testing.T, params StringMap) {

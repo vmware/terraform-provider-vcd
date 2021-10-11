@@ -1,26 +1,26 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_external_network"
+page_title: "VMware Cloud Director: vcd_external_network"
 sidebar_current: "docs-vcd-resource-external-network"
 description: |-
-  Provides a vCloud Director external network resource.  This can be used to create and delete external networks.
+  Provides a VMware Cloud Director external network resource.  This can be used to create and delete external networks.
 ---
 
 # vcd\_external\_network
 
-Provides a vCloud Director external network resource.  This can be used to create and delete external networks.
+Provides a VMware Cloud Director external network resource.  This can be used to create and delete external networks.
 Requires system administrator privileges.
 
 Supported in provider *v2.2+*
 
-~> **Note:** For NSX-T suported external network please use [vcd_external_network_v2](/docs/providers/vcd/r/external_network_v2.html)
+~> **Note:** For NSX-T suported external network please use [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/resources/external_network_v2)
 
 ## Example Usage
 
 ```hcl
 provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
+  user     = var.admin_user
+  password = var.admin_password
   org      = "System"
   url      = "https://Vcd/api"
 }
@@ -70,7 +70,7 @@ resource "vcd_external_network" "net" {
   # It's possible to define more than one vSphere network
   vsphere_network {
     name    = "myNetwork2"
-    type    = "DV_PORTGROUP"    
+    type    = "DV_PORTGROUP"
     vcenter = "vcenter-name2"
   }
 
@@ -81,9 +81,8 @@ resource "vcd_network_direct" "net" {
   org              = "my-org"
   vdc              = "my-vdc"
   name             = "my-net"
-  external_network = "${vcd_external_network.net.name}"
+  external_network = vcd_external_network.net.name
 }
-
 ```
 
 ## Argument Reference
@@ -132,7 +131,7 @@ For example, using this structure, representing an existing external network tha
 
 ```hcl
 resource "vcd_external_network" "tf-external-network" {
-  name             = "my-ext-net"
+  name = "my-ext-net"
 }
 ```
 
@@ -149,4 +148,4 @@ NOTE: the default separator (.) can be changed using Provider.import_separator o
 While the above structure is the minimum needed to get an import, it is not sufficient to run `terraform plan`,
 as it lacks several mandatory fields. To use the imported resource, you will need to add the missing properties
 using the data in `terraform.tfstate` as a reference. If the resource does not need modifications, consider using
-an [external network data source](/docs/providers/vcd/d/external_network.html) instead. 
+an [external network data source](/providers/vmware/vcd/latest/docs/data-sources/external_network) instead. 

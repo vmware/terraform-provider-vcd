@@ -1,3 +1,4 @@
+//go:build vm || ALL || functional
 // +build vm ALL functional
 
 package vcd
@@ -13,6 +14,7 @@ import (
 
 // TestAccVcdVappOrgNetworkDS tests a vApp org network data source if a vApp is found in the VDC
 func TestAccVcdVappOrgNetworkDS(t *testing.T) {
+	preTestChecks(t)
 	var retainIpMacEnabled = true
 
 	var params = StringMap{
@@ -46,6 +48,7 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled bool) resource.TestCheckFunc {

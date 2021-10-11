@@ -1,8 +1,10 @@
+//go:build ALL || functional
 // +build ALL functional
 
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -15,6 +17,7 @@ import (
 // sources defined in this provider always return error and substring 'govcd.ErrorEntityNotFound' in it when an object
 // is not found.
 func TestAccDataSourceNotFound(t *testing.T) {
+	preTestChecks(t)
 	// Exit the test early
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -28,6 +31,7 @@ func TestAccDataSourceNotFound(t *testing.T) {
 	for _, dataSource := range Provider().DataSources() {
 		t.Run(dataSource.Name, testSpecificDataSourceNotFound(t, dataSource.Name, vcdClient))
 	}
+	postTestChecks(t)
 }
 
 func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
@@ -35,14 +39,31 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 
 		// Skip sub-test if conditions are not met
 		switch {
-		case dataSourceName == "vcd_external_network" && !usingSysAdmin():
-			t.Skip(`Works only with system admin privileges`)
-		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33") &&
+		case (dataSourceName == "vcd_external_network" || dataSourceName == "vcd_vcenter" ||
+			dataSourceName == "vcd_portgroup" || dataSourceName == "vcd_global_role" ||
+			dataSourceName == "vcd_rights_bundle") &&
 			!usingSysAdmin():
+			t.Skip(`Works only with system admin privileges`)
+		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):
 			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
-		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" || dataSourceName == "vcd_nsxt_manager") &&
-			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "") || !usingSysAdmin():
-			t.Skip(`No NSX-T configuration detected`)
+		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster" ||
+			dataSourceName == "vcd_nsxt_security_group" || dataSourceName == "vcd_nsxt_nat_rule" ||
+			dataSourceName == "vcd_nsxt_app_port_profile" || dataSourceName == "vcd_nsxt_ip_set") &&
+			(vcdClient.Client.APIVCDMaxVersionIs("< 34") || testConfig.Nsxt.Vdc == ""):
+			t.Skip("this datasource requires at least API version 34 (VCD 10.1+) and NSX-T VDC specified in configuration")
+		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
+			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_nsxt_edge_cluster") &&
+			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "" || !usingSysAdmin()):
+			t.Skip(`No NSX-T configuration detected or not running as System user`)
+		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
+			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group":
+			skipNoNsxtAlbConfiguration(t)
+			if !usingSysAdmin() {
+				t.Skip(`Works only with system admin privileges`)
+			}
+		// vcd_resource_list and vcd_resource_schema don't search for real entities
+		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema":
+			t.Skip(`not a real data source`)
 		}
 
 		// Get list of mandatory fields in schema for a particular data source
@@ -50,6 +71,12 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		mandatoryRuntimeFields := getMandatoryDataSourceRuntimeFields(dataSourceName)
 		mandatoryFields = append(mandatoryFields, mandatoryRuntimeFields...)
 		addedParams := addMandatoryParams(dataSourceName, mandatoryFields, t, vcdClient)
+
+		// Inject NSX-T VDC for resources that are known to require it
+		switch dataSourceName {
+		case "vcd_nsxt_edgegateway":
+			addedParams += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
+		}
 
 		var params = StringMap{
 			"DataSourceName":  dataSourceName,
@@ -116,7 +143,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		// vcd_portgroup requires portgroup  type
 		if dataSourceName == "vcd_portgroup" && mandatoryFields[fieldIndex] == "type" {
 			templateFields = templateFields + `type = "` + testConfig.Networking.ExternalNetworkPortGroupType + `"` + "\n"
-			return templateFields
 		}
 
 		switch mandatoryFields[fieldIndex] {
@@ -125,6 +151,13 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `org = "` + testConfig.VCD.Org + `"` + "\n"
 		case "edge_gateway":
 			templateFields = templateFields + `edge_gateway = "` + testConfig.Networking.EdgeGateway + `"` + "\n"
+		case "edge_gateway_id":
+			nsxtEdgeGw, err := vcdClient.GetNsxtEdgeGateway(testConfig.VCD.Org, testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway)
+			if err != nil {
+				t.Skipf("Unable to lookup NSX-T Edge Gateway '%s' : %s", testConfig.Nsxt.EdgeGateway, err)
+				return ""
+			}
+			templateFields = templateFields + `edge_gateway_id = "` + nsxtEdgeGw.EdgeGateway.ID + `"` + "\n"
 		case "catalog":
 			templateFields = templateFields + `catalog = "` + testConfig.VCD.Catalog.Name + `"` + "\n"
 		case "vapp_name":
@@ -135,6 +168,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 		case "nsxt_manager_id":
+			skipNoNsxtConfiguration(t)
 			// This test needs a valid nsxt_manager_id
 			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {
@@ -153,6 +187,13 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `name = "does-not-exist"` + "\n"
 		case "org_network_name":
 			templateFields = templateFields + `org_network_name = "does-not-exist"` + "\n"
+		// OpenAPI requires org_network_id to be a valid URN - chances of duplicating it are close enough to zero
+		case "org_network_id":
+			templateFields = templateFields + `org_network_id = "urn:vcloud:network:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
+		case "scope":
+			templateFields = templateFields + `scope = "TENANT"` + "\n"
+		case "controller_id":
+			templateFields = templateFields + `controller_id = "urn:vcloud:loadBalancerController:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		}
 
 	}

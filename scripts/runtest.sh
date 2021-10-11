@@ -23,6 +23,15 @@ then
     VERBOSE=1
 fi
 
+function check_exit_code {
+    exit_code=$?
+    if [ "$exit_code" != "0" ]
+    then
+        echo "execution error"
+        exit 1
+    fi
+}
+
 accepted_commands=(static token short acceptance sequential-acceptance multiple binary
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
     short-provider lb user acceptance-orguser short-provider-orguser search binary-validate)
@@ -97,6 +106,7 @@ function short_test {
     then
         go test -race -i ${TEST} || exit 1
         VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 3m
+        check_exit_code
     fi
     if [ -n "$VCD_TEST_ORG_USER" ]
     then
@@ -121,6 +131,7 @@ function acceptance_test {
     then
         check_for_config_file
         TF_ACC=1 go test -tags "$tags" $testoptions -v -timeout $timeout
+        check_exit_code
     fi
 }
 
@@ -247,7 +258,15 @@ function make_token {
     echo "missing url from configuration file. Can't retrieve token"
     exit 1
   fi
-  auth=$(echo -n "$user@$sysorg:$password" |base64)
+
+  options=""
+  os=$(uname -s)
+  is_linux=$(echo "$os" | grep -i linux)
+  if [ -n "$is_linux" ]
+  then
+    options="-w 0"
+  fi
+  auth=$(echo -n "$user@$sysorg:$password" |base64 $options)
 
   echo "# Connecting to $url ($sysorg)"
   curl --silent --head --insecure \
@@ -258,7 +277,7 @@ function make_token {
 
 function check_static {
     static_check=$(exists_in_path staticcheck)
-    if [  -z "$staticcheck" -a -n "$TRAVIS" ]
+    if [  -z "$staticcheck" -a -n "$GITHUB_ACTIONS" ]
     then
         # Variables found in staticcheck-config.sh
         # STATICCHECK_URL
@@ -309,6 +328,7 @@ function check_static {
         echo "*** staticcheck executable not found - Check skipped"
     fi
 }
+
 case $wanted in
     static)
         check_static
@@ -398,3 +418,6 @@ case $wanted in
         echo "Accepted methods: $accepted"
         exit 1
 esac
+
+check_exit_code
+

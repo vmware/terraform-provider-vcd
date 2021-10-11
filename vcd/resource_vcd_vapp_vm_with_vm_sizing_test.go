@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -12,6 +13,7 @@ import (
 )
 
 func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vm            govcd.VM
 		netVappName   string = t.Name()
@@ -52,6 +54,10 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"FlexMemoryOverheadKey":        "include_vm_memory_overhead",
 		"FlexMemoryOverheadValue":      "false",
 		"MemoryOverheadValueForAssert": "false",
+	}
+
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
@@ -195,6 +201,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppVmExistsByVdc(vdcName, vappName, vmName, node string, vm *govcd.VM) resource.TestCheckFunc {

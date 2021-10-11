@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_vm"
+page_title: "VMware Cloud Director: vcd_vapp_vm"
 sidebar_current: "docs-vcd-datasource-vapp-vm"
 description: |-
-  Provides a vCloud Director VM data source. This can be used to access VMs within a vApp.
+  Provides a VMware Cloud Director VM data source. This can be used to access VMs within a vApp.
 ---
 
 # vcd\_vapp\_vm
 
-Provides a vCloud Director VM data source. This can be used to access VMs within a vApp.
+Provides a VMware Cloud Director VM data source. This can be used to access VMs within a vApp.
 
 Supported in provider *v2.6+*
 
@@ -17,12 +17,12 @@ Supported in provider *v2.6+*
 ```hcl
 
 data "vcd_vapp" "web" {
-  name= "web"
+  name = "web"
 }
 
 data "vcd_vapp_vm" "web1" {
-  vapp_name     = data.vcd_vapp.web.name
-  name          = "web1"
+  vapp_name = data.vcd_vapp.web.name
+  name      = "web1"
 }
 
 output "vm_id" {
@@ -88,6 +88,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
+* `vm_type` (*3.2+*) - type of the VM (either `vcd_vapp_vm` or `vcd_vm`)
 * `computer_name` -  Computer name to assign to this virtual machine. 
 * `catalog_name` -  The catalog name in which to find the given vApp Template
 * `template_name` -  The name of the vApp Template to use
@@ -107,4 +108,4 @@ The following arguments are supported:
 * `sizing_policy_id` (*v3.0+*, *vCD 10.0+*) VM sizing policy ID.
 
 
-See [VM resource](/docs/providers/vcd/r/vapp_vm.html#attribute-reference) for more info about VM attributes.
+See [VM resource](/providers/vmware/vcd/latest/docs/resources/vapp_vm#attribute-reference) for more info about VM attributes.

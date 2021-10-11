@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -12,12 +13,18 @@ import (
 )
 
 func TestAccVcdVmInternalDisk(t *testing.T) {
+	preTestChecks(t)
 
 	// In general VM internal disks works with Org users, but since we need to create VDC with disabled fast provisioning value, we have to be sys admins
 	if !usingSysAdmin() {
 		t.Skip("VM internal disks tests requires system admin privileges")
 		return
 	}
+
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	}
+
 	internalDiskSize := 20000
 	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile
 	diskResourceName := "disk1"
@@ -145,6 +152,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCheckFunc {

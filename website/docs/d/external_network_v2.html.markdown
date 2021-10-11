@@ -25,7 +25,6 @@ Supported in provider *v3.0+*.
 data "vcd_external_network_v2" "ext_net" {
   name = "my-nsxt-net"
 }
-
 ```
 
 ## Argument Reference
@@ -36,5 +35,5 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All properties defined in [vcd_external_network_v2](/docs/providers/vcd/r/external_network_v2.html)
+All properties defined in [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/resources/external_network_v2)
 resource are available.

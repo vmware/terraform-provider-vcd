@@ -1,3 +1,4 @@
+//go:build vdc || ALL || functional
 // +build vdc ALL functional
 
 package vcd
@@ -13,6 +14,7 @@ import (
 var vdcName = "TestAccVcdVdcDatasource"
 
 func TestAccVcdVdcDatasource(t *testing.T) {
+	preTestChecks(t)
 	validateConfiguration(t)
 
 	var params = StringMap{
@@ -70,7 +72,7 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 		validateResourceAndDataSource(t, configText, datasourceVdc)
 	}
-
+	postTestChecks(t)
 }
 
 func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string) {

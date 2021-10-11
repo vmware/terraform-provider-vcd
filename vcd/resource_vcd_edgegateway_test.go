@@ -1,3 +1,4 @@
+//go:build gateway || ALL || functional
 // +build gateway ALL functional
 
 package vcd
@@ -21,6 +22,7 @@ var (
 )
 
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
+	preTestChecks(t)
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_basic"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -72,9 +74,11 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdEdgeGatewayComplex(t *testing.T) {
+	preTestChecks(t)
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_basic"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -125,6 +129,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdEdgeGatewayDestroy(edgeName string) resource.TestCheckFunc {
@@ -158,6 +163,7 @@ func testAccCheckVcdEdgeGatewayDestroy(edgeName string) resource.TestCheckFunc {
 }
 
 func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
+	preTestChecks(t)
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_networks"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -319,6 +325,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // isPortGroupDistributed  checks if portgroup is defined in Distributed or Standard vSwitch
@@ -353,6 +360,7 @@ func isPortGroupDistributed(portGroupName string) (bool, error) {
 // network is of type "NETWORK" (standard switch portgroup) and only proceeds when it is of type
 // "DV_PORTGROUP" (Backed by distributed switch). Only "DV_PORTGROUP" support rate limiting.
 func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
+	preTestChecks(t)
 	isPgDistributed, err := isPortGroupDistributed(testConfig.Networking.ExternalNetworkPortGroup)
 	if err != nil {
 		t.Skipf("Skipping test because port group type could not be validated")
@@ -443,6 +451,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccEdgeGatewayRateLimits = testAccEdgeGatewayComplexNetwork + `
@@ -483,6 +492,7 @@ resource "vcd_edgegateway" "egw" {
 // same external network. If this test ever fails then it means locks have to be used on external
 // networks.
 func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
+	preTestChecks(t)
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_networks"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -532,6 +542,7 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // TODO external network has a bug that it uses a TypeList for `ip_scope` field. If the below two

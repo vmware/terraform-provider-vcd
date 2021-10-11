@@ -8,6 +8,14 @@ pause_file=$runtime_dir/pause
 dash_line="# ---------------------------------------------------------"
 export upgrading=""
 
+version_file=../../VERSION
+
+if [ ! -f $version_file ]
+then
+  echo "version file ${version_file} not found"
+  exit 1
+fi
+provider_version=$(cat $version_file | sed -e 's/^v//' | tr -d ' \t\n')
 # env script will only run if explicitly called.
 build_script=cust.full-env.tf
 unset in_building
@@ -76,119 +84,10 @@ function terraform_binary_path {
     echo $target_dir
 }
 
-# 'restore_environment' removes the effects of 'make_environment'
-function restore_environment {
-    [ -z "$from_path" ] && from_path=$(terraform_binary_path $from_version)
-    [ -z "$to_path" ] && from_path=$(terraform_binary_path $to_version)
-    if [ -n "$real_home" ]
-    then
-        export HOME=$real_home
-        unset real_home
-        # removes previous version plugin from testing environment
-        if [ -f $previous_version_plugin ]
-        then
-            rm -f $previous_version_plugin
-        fi
-
-        # Copies current version plugin to the testing environment
-        # The plugin is guaranteed to be there, as its existence
-        # was checked in 'make_environment'
-        cp $HOME/$to_path/terraform-provider-vcd_$to_version .
-        hash -r
-        terraform init
-    fi
-}
-
-
-# 'make_environment' creates a sandboxed environment where terraform uses
-# a specific plugin for it nexts operation
-function make_environment {
-
-    [ -z "$from_path" ] && from_path=$(terraform_binary_path $from_version)
-    [ -z "$to_path" ] && to_path=$(terraform_binary_path $to_version)
-    if [ ! -d fake_home ]
-    then
-        mkdir -p fake_home/$from_path
-        mkdir -p fake_home/$to_path
-    fi
-
-    # Checks that both plugins exist
-    origin_old_plugin=$HOME/$from_path/terraform-provider-vcd_$from_version
-    origin_new_plugin=$HOME/$to_path/terraform-provider-vcd_$to_version
-
-    if [ ! -f $origin_old_plugin ]
-    then
-        # Workaround for incompatible changes introduced in terraform 0.13
-        # If we don't find the old plugin in the new path
-        # we look at the old path, create the new path, and copy the plugin there
-        old_from_path=$(terraform_binary_path $from_version 0 12)
-        new_from_path=$(terraform_binary_path $from_version 0 13)
-        old_style_plugin=$HOME/$old_from_path/terraform-provider-vcd_$from_version
-        if [ -f $old_style_plugin ]
-        then
-            mkdir -p $HOME/$new_from_path
-            cp $old_style_plugin $origin_old_plugin
-        fi
-    fi
-
-    if [ ! -f $origin_old_plugin ]
-    then
-        echo " $origin_old_plugin not found - test interrupted"
-        exit 1
-    fi
-    if [ ! -f $origin_new_plugin ]
-    then
-        echo " $origin_new_plugin not found - test interrupted"
-        exit 1
-    fi
-
-    # Masks the real HOME, to prevent terraform executable from
-    # picking up plugins from there
-    export real_home=$HOME
-    export HOME=$PWD/fake_home
-    hash -r
-
-    previous_version_plugin=$PWD/terraform-provider-vcd_$from_version
-    latest_plugin=$PWD/terraform-provider-vcd_$to_version
-    destination=$PWD/fake_home/$from_path/terraform-provider-vcd_$from_version
-
-    # Adds the previous version plugin to the test environment in both the current path and the
-    # directory where terraform puts downloaded plugins. We want to give terraform a plugin to
-    # use and avoid unnecessary downloads.
-    if [ ! -f $destination ]
-    then
-        cp $origin_old_plugin $destination
-    fi
-    if [ ! -f $previous_version_plugin ]
-    then
-        cp $origin_old_plugin $previous_version_plugin
-    fi
-
-    # Removes the latest version plugin if found, as we're running this operation with the old one.
-    if [ -f $latest_plugin ]
-    then
-        rm -f $latest_plugin
-    fi
-
-    # This is an extra 'terraform init', needed for the tool to pick up the plugin we want tol run with
-    terraform init
-    terraform version
-}
-
-# 'custom_terraform' allows running terraform with a sandboxed environment
-# that exposes the previous version plugin
+# 'custom_terraform' allows to expose terraform version for logging and execute it
 function custom_terraform {
-    if [ -n "$upgrading" ]
-    then
-        terraform=$(which terraform)
-        make_environment $from_version
-        $terraform $*
-        exit_code=$?
-        restore_environment
-    else
-        terraform version
-        terraform $*
-    fi
+    terraform version
+    terraform $*
 }
 
 function remove_item_from_skipping {
@@ -245,29 +144,24 @@ function echo_verbose {
     fi
 }
 
-function check_terraform_version {
+function add_versions_config {
 
     fname=$1
     dir=$2
+    used_version=$3
     has_terraform=$(grep '^\s*terraform {' $fname)
-    if [ -z "$has_terraform" ]
-    then
-        if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor -gt 12 ]]
-        then
-            cat << EOF > $dir/versions.tf
+    cat << EOF > $dir/versions.tf
 terraform {
   required_providers {
     vcd = {
-      source = "vmware/vcd"
+      source  = "vmware/vcd"
+      version = "$used_version"
     }
   }
   # required_version = ">= 0.13"
 }
 
 EOF
-        fi
-    fi
-
 }
 
 
@@ -289,7 +183,7 @@ function validate_script {
     fi
     mkdir vtmp
     cp $script vtmp
-    check_terraform_version $script vtmp
+    add_versions_config $script vtmp $provider_version
     cd vtmp
     terraform init > init.out 2>&1
     exit_code=$?
@@ -365,20 +259,20 @@ do
         remove_item_from_skipping $build_script
         operations=(init plan)
         in_building=yes
-        test_names="$build_script" 
+        test_names="$build_script"
         ;;
     b|test-env-apply)
         remove_item_from_skipping $build_script
         operations=(plan apply)
         in_building=yes
-        test_names="$build_script" 
+        test_names="$build_script"
         ;;
     y|test-env-destroy)
         remove_item_from_skipping $build_script
         rm -f already_run.txt
         operations=(plan destroy)
         in_building=yes
-        test_names="$build_script" 
+        test_names="$build_script"
         ;;
     v|verbose)
         export VERBOSE=1
@@ -392,7 +286,7 @@ do
         fi
         ;;
     *)
-        get_help 
+        get_help
         ;;
   esac
   shift
@@ -527,7 +421,7 @@ function run_with_recover {
                 run terraform destroy -auto-approve
                 # if 'run' doesn't produce an error, we continue the tests,
                 # leaving behind the name of the test failed in failed_tests.txt
-                # otherwise, the test is definitely aborted
+                # otherwise, the test is definitely terminated
                 ;;
 
             *)
@@ -684,7 +578,7 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
-        check_terraform_version $CF $opsdir
+        add_versions_config $CF $opsdir $provider_version
     fi
     if [ -z "$DRY_RUN" ]
     then
@@ -692,10 +586,39 @@ do
     fi
     cd $opsdir
 
+
+    # Prepare variables for "upgrade" testing
+    if [ -n "$upgrading" ]
+    then
+        major_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
+        minor_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+        patch_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $3}')
+        major_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
+        minor_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+        patch_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $3}')
+        short_from="${major_from}.${minor_from}"
+        short_to="${major_to}.${minor_to}"
+        long_from="${major_from}.${minor_from}.${patch_from}"
+        long_to="${major_to}.${minor_to}.${patch_to}"
+    fi
+
     for phase in ${operations[*]}
     do
         case $phase in
             init)
+                if [ -n "$upgrading" ]
+                    then
+                    # Remove any version definition in config.tf because it is deprecated
+                    sed  -i -e '/^\s*version *=/d' config.tf
+
+                    # recreate versions.tf with "short_from" version
+                    add_versions_config "versions.tf" "${PWD}" "${long_from}"
+
+                    run terraform init
+                    run terraform version
+                fi
+
+
                 # 'custom_terraform' can process both regular and upgrade operations
                 run_with_recover $CF init custom_terraform init $init_options
                 ;;
@@ -715,22 +638,18 @@ do
                 then
                     echo "# $CF plan check skipped"
                 else
+                    # Explicitly change provider version and run `terraform init -upgrade`
+                    if [ -n "$upgrading" ]
+                    then
+                        # recreate versions.tf with "short_to" version
+                        add_versions_config "versions.tf" "${PWD}" "${long_to}"
+                        run terraform init -upgrade
+                        run terraform version
+                    fi
+
                     # -detailed-exitcode will return exit code 2 when the plan was not empty
                     # and this allows to validate if reads work properly and there is no immediate
                     # plan change right after apply succeeded
-                    if [ -n "$upgrading" ]
-                    then
-                        # Replace the version in HCL configuration file
-                        major_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
-                        minor_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
-                        major_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
-                        minor_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
-                        short_from="${major_from}.${minor_from}"
-                        short_to="${major_to}.${minor_to}"
-                        sed -i -e 's/version *= "~> '${short_from}'"/version = "~> '${short_to}'"/'  config.tf
-                        run terraform init
-                        run terraform version
-                    fi
                     run_with_recover $CF plancheck terraform plan -detailed-exitcode $plancheck_options
                 fi
                 ;;
@@ -738,7 +657,7 @@ do
                 # During upgrades, 'destroy' runs with the latest plugin
                 if [ ! -f terraform.tfstate ]
                 then
-                    echo "terraform.tfstate not found - aborting"
+                    echo "terraform.tfstate not found - exiting"
                     exit 1
                 fi
                 [ -n "$upgrading" ] && run terraform version
@@ -750,4 +669,3 @@ do
 done
 
 summary
-

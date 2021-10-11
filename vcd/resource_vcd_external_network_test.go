@@ -1,3 +1,4 @@
+//go:build functional || network || extnetwork || ALL
 // +build functional network extnetwork ALL
 
 package vcd
@@ -15,6 +16,7 @@ var TestAccVcdExternalNetwork = "TestAccVcdExternalNetworkBasic"
 var externalNetwork govcd.ExternalNetwork
 
 func TestAccVcdExternalNetworkBasic(t *testing.T) {
+	preTestChecks(t)
 
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
@@ -94,6 +96,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.ExternalNetwork) resource.TestCheckFunc {

@@ -1,4 +1,5 @@
-// +build vapp vm user nsxt extnetwork network gateway ALL functional
+//go:build vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || ALL || functional
+// +build vapp vm user nsxt extnetwork network gateway catalog standaloneVm alb ALL functional
 
 package vcd
 
@@ -56,6 +57,7 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 			return fmt.Errorf("field %s in resource %s does not exist", field, resource)
 		}
 
+		debugPrintf("# Comparing field %s '%s==%s' in resource '%s'", field, value, c.fieldValue, resource)
 		if value != c.fieldValue {
 			return fmt.Errorf("got '%s - %s' field value %s, expected: %s",
 				resource, field, value, c.fieldValue)
@@ -117,7 +119,7 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 
 		for fieldName := range resource1.Primary.Attributes {
 			// Do not validate the fields marked for exclusion
-			if stringInSlice(fieldName, excludeFields) {
+			if excludeFields != nil && stringInSlice(fieldName, excludeFields) {
 				continue
 			}
 

@@ -1,0 +1,1 @@
+* `resource/vcd_external_network_v2` may fail when creating NSX-V network backed by standard vSwitch port group [GH-600]

@@ -1,3 +1,4 @@
+//go:build ALL || nsxt || functional
 // +build ALL nsxt functional
 
 package vcd
@@ -12,13 +13,17 @@ import (
 // TestAccVcdDatasourceNsxtTier0Router checks if datasource can find existing regular Tier-0 router
 // provided it is specified in configuration
 func TestAccVcdDatasourceNsxtTier0Router(t *testing.T) {
+	preTestChecks(t)
 	testAccVcdDatasourceNsxtTier0Router(t, testConfig.Nsxt.Tier0router)
+	postTestChecks(t)
 }
 
 // TestAccVcdDatasourceNsxtTier0Router checks if datasource can find existing VRF Tier-0 router
 // provided it is specified in configuration
 func TestAccVcdDatasourceNsxtTier0RouterVrf(t *testing.T) {
+	preTestChecks(t)
 	testAccVcdDatasourceNsxtTier0Router(t, testConfig.Nsxt.Tier0routerVrf)
+	postTestChecks(t)
 }
 
 func testAccVcdDatasourceNsxtTier0Router(t *testing.T, tier0RouterName string) {

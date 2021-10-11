@@ -1,3 +1,4 @@
+//go:build catalog || ALL || functional
 // +build catalog ALL functional
 
 package vcd
@@ -19,6 +20,7 @@ var TestAccVcdCatalogMediaDescriptionForInsert = "TestAccVcdCatalogMediaBasicDes
 var TestAccVcdVAppVmNetForInsert = "TestAccVcdVAppVmNetForInsert"
 
 func TestAccVcdMediaInsertBasic(t *testing.T) {
+	preTestChecks(t)
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Vdc":              testConfig.VCD.Vdc,
@@ -59,6 +61,7 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckMediaInserted(itemName string) resource.TestCheckFunc {

@@ -1,3 +1,4 @@
+//go:build vdc || ALL || functional
 // +build vdc ALL functional
 
 package vcd
@@ -11,27 +12,29 @@ func init() {
 }
 
 func TestAccVcdOrgVdcReservationPool(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 	}
 	validateConfiguration(t)
 
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           "ReservationPool",
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "1024",
-		"Reserved":                  "1024",
-		"Limit":                     "1024",
-		"LimitIncreased":            "1100",
-		"AllocatedIncreased":        "1100",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  t.Name(),
+		"VdcName":                    TestAccVcdVdc,
+		"OrgName":                    testConfig.VCD.Org,
+		"AllocationModel":            "ReservationPool",
+		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                  "1024",
+		"Reserved":                   "1024",
+		"Limit":                      "1024",
+		"LimitIncreased":             "1100",
+		"AllocatedIncreased":         "1100",
+		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"Tags":                       "vdc",
+		"FuncName":                   t.Name(),
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
@@ -51,32 +54,35 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 	}
 	validateConfiguration(t)
 
 	allocationModel := "AllocationPool"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           "AllocationPool",
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "2048",
-		"Reserved":                  "1024",
-		"Limit":                     "2048",
-		"LimitIncreased":            "2148",
-		"AllocatedIncreased":        "2148",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  t.Name(),
-		"MemoryGuaranteed":          "0.3",
-		"CpuGuaranteed":             "0.45",
+		"VdcName":                    TestAccVcdVdc,
+		"OrgName":                    testConfig.VCD.Org,
+		"AllocationModel":            "AllocationPool",
+		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                  "2048",
+		"Reserved":                   "1024",
+		"Limit":                      "2048",
+		"LimitIncreased":             "2148",
+		"AllocatedIncreased":         "2148",
+		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"Tags":                       "vdc",
+		"FuncName":                   t.Name(),
+		"MemoryGuaranteed":           "0.3",
+		"CpuGuaranteed":              "0.45",
 		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
@@ -93,32 +99,35 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 	}
 	validateConfiguration(t)
 
 	allocationModel := "AllocationVApp"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           allocationModel,
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "0",
-		"Reserved":                  "0",
-		"Limit":                     "2048",
-		"LimitIncreased":            "2148",
-		"AllocatedIncreased":        "0",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  t.Name(),
-		"MemoryGuaranteed":          "0.5",
-		"CpuGuaranteed":             "0.6",
+		"VdcName":                    TestAccVcdVdc,
+		"OrgName":                    testConfig.VCD.Org,
+		"AllocationModel":            allocationModel,
+		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                  "0",
+		"Reserved":                   "0",
+		"Limit":                      "2048",
+		"LimitIncreased":             "2148",
+		"AllocatedIncreased":         "0",
+		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"Tags":                       "vdc",
+		"FuncName":                   t.Name(),
+		"MemoryGuaranteed":           "0.5",
+		"CpuGuaranteed":              "0.6",
 		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
@@ -135,11 +144,13 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
 	validateConfiguration(t)
@@ -147,21 +158,22 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 	allocationModel := "Flex"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           allocationModel,
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "1024",
-		"Reserved":                  "0",
-		"Limit":                     "1024",
-		"LimitIncreased":            "1124",
-		"AllocatedIncreased":        "1124",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  t.Name(),
-		"MemoryGuaranteed":          "0.5",
-		"CpuGuaranteed":             "0.6",
+		"VdcName":                    TestAccVcdVdc,
+		"OrgName":                    testConfig.VCD.Org,
+		"AllocationModel":            allocationModel,
+		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                  "1024",
+		"Reserved":                   "0",
+		"Limit":                      "1024",
+		"LimitIncreased":             "1124",
+		"AllocatedIncreased":         "1124",
+		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"Tags":                       "vdc",
+		"FuncName":                   t.Name(),
+		"MemoryGuaranteed":           "0.5",
+		"CpuGuaranteed":              "0.6",
 		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and these parameters with values result in the Flex part of the template being filled:
 		"equalsChar":                         "=",
@@ -177,6 +189,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"MemoryOverheadUpdateValueForAssert": "true",
 	}
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func validateConfiguration(t *testing.T) {

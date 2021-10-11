@@ -1,3 +1,4 @@
+//go:build vdc || ALL || functional
 // +build vdc ALL functional
 
 package vcd
@@ -13,6 +14,7 @@ import (
 var TestVmPolicy = "TestVmPolicyBasic"
 
 func TestAccVcdVmSizingPolicy(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVmSizingPolicy requires system admin privileges")
 	}
@@ -27,7 +29,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 		"Description": "TestAccVcdVmSizingPolicyDescription",
 
 		"CpuShare":       "886",
-		"CpuLimit":       "2400",
+		"CpuLimit":       "12375",
 		"CpuCount":       "9",
 		"CpuSpeed":       "2500",
 		"CoresPerSocket": "3",
@@ -193,6 +195,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func importStateVmSizingPolicyByIdOrName(testConfig TestConfig, resourceName string, byId bool) resource.ImportStateIdFunc {

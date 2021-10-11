@@ -1,3 +1,4 @@
+//go:build gateway || nat || ALL || functional
 // +build gateway nat ALL functional
 
 package vcd
@@ -10,6 +11,7 @@ import (
 )
 
 func TestAccVcdEdgeSnat(t *testing.T) {
+	preTestChecks(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -88,6 +90,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccNetForNat = `

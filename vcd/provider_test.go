@@ -1,8 +1,12 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user access_control search auth nsxt ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbAppProfile || lbAppRule || lbServiceMonitor || lbServerPool || lbVirtualServer || user || access_control || standaloneVm || search || auth || nsxt || role || alb || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user access_control standaloneVm search auth nsxt role alb ALL
 
 package vcd
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -20,12 +24,14 @@ var testAccProvider *schema.Provider
 var testAccProviders map[string]func() (*schema.Provider, error)
 
 func TestProvider(t *testing.T) {
+	// Do not add pre and post checks
 	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProvider_impl(t *testing.T) {
+	// Do not add pre and post checks
 	var _ *schema.Provider = Provider()
 }
 
@@ -78,6 +84,46 @@ func createTemporaryVCDConnection() *VCDClient {
 	return conn
 }
 
+// createSystemTemporaryVCDConnection is like createTemporaryVCDConnection but it will ignore all conditional
+// configurations like `VCD_TEST_ORG_USER=1` and will still return a System client instead of user one. This allows to
+// perform System actions (entities which require System rights - Org, Vdc, etc...)
+func createSystemTemporaryVCDConnection() *VCDClient {
+	var configStruct TestConfig
+	configFileName := getConfigFileName()
+
+	// Looks if the configuration file exists before attempting to read it
+	if configFileName == "" {
+		panic(fmt.Errorf("configuration file %s not found", configFileName))
+	}
+	jsonFile, err := ioutil.ReadFile(configFileName)
+	if err != nil {
+		panic(fmt.Errorf("could not read config file %s: %v", configFileName, err))
+	}
+	err = json.Unmarshal(jsonFile, &configStruct)
+	if err != nil {
+		panic(fmt.Errorf("could not unmarshal json file: %v", err))
+	}
+
+	config := Config{
+		User:            configStruct.Provider.User,
+		Password:        configStruct.Provider.Password,
+		Token:           configStruct.Provider.Token,
+		UseSamlAdfs:     configStruct.Provider.UseSamlAdfs,
+		CustomAdfsRptId: configStruct.Provider.CustomAdfsRptId,
+		SysOrg:          configStruct.Provider.SysOrg,
+		Org:             configStruct.VCD.Org,
+		Vdc:             configStruct.VCD.Vdc,
+		Href:            configStruct.Provider.Url,
+		InsecureFlag:    configStruct.Provider.AllowInsecure,
+		MaxRetryTimeout: configStruct.Provider.MaxRetryTimeout,
+	}
+	conn, err := config.Client()
+	if err != nil {
+		panic("unable to initialize VCD connection :" + err.Error())
+	}
+	return conn
+}
+
 // minIfLess returns:
 // `min` if `value` is less than min
 // `value` if `value` > `min`
@@ -92,6 +138,13 @@ func minIfLess(min, value int) int {
 // TestAccClientUserAgent ensures that client initialization config.Client() used by provider initializes
 // go-vcloud-director client by having User-Agent set
 func TestAccClientUserAgent(t *testing.T) {
+	// Do not add pre and post checks
+	// Exit the test early
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	clientConfig := Config{
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,

@@ -1,3 +1,4 @@
+//go:build auth || ALL || functional
 // +build auth ALL functional
 
 package vcd
@@ -14,6 +15,7 @@ import (
 // Note. The test cannot be run in parallel because it temporarily overrides authentication cache
 // and credentials for the purpose of its run. It restores them at the end.
 func TestAccVcdSamlAuth(t *testing.T) {
+	preTestChecks(t)
 
 	// Skip test if explicit SAML credentials are not specified
 	if testConfig.Provider.SamlUser == "" || testConfig.Provider.SamlPassword == "" {
@@ -102,6 +104,7 @@ func TestAccVcdSamlAuth(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdOrg = `

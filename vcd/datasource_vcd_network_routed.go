@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -159,5 +161,16 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 }
 
 func datasourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if vdc.IsNsxt() {
+		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
+	}
+
 	return genericVcdNetworkRoutedRead(d, meta, "datasource")
 }

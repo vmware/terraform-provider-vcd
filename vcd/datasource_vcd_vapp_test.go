@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -43,6 +44,7 @@ func getAvailableVapp() (*govcd.VApp, error) {
 
 // TestAccVcdVappDS tests a vApp data source if a vApp is found in the VDC
 func TestAccVcdVappDS(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -87,6 +89,7 @@ func TestAccVcdVappDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const datasourceTestVapp = `

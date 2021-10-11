@@ -1,3 +1,4 @@
+//go:build disk || ALL || functional
 // +build disk ALL functional
 
 package vcd
@@ -15,6 +16,7 @@ import (
 // Test independent disk data resource
 // Using a disk data source we reference a disk data source
 func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdDataSourceIndependentDisk requires system admin privileges")
 	}
@@ -83,6 +85,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testCheckDiskNonStringOutputs() resource.TestCheckFunc {

@@ -1,3 +1,4 @@
+//go:build vm || ALL || functional
 // +build vm ALL functional
 
 package vcd
@@ -12,6 +13,7 @@ import (
 
 // TestAccVcdVappNetworkDS tests a vApp network data source if a vApp is found in the VDC
 func TestAccVcdVappNetworkDS(t *testing.T) {
+	preTestChecks(t)
 	networkName := "TestAccVcdVappNetworkDS"
 	description := "Created in test"
 	const gateway = "192.168.0.1"
@@ -83,6 +85,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, retainIpMacEnabled bool) resource.TestCheckFunc {

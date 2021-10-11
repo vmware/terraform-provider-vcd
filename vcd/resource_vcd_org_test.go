@@ -1,3 +1,4 @@
+//go:build org || ALL || functional
 // +build org ALL functional
 
 package vcd
@@ -15,6 +16,7 @@ import (
 const orgNameTestAccVcdOrg string = "TestAccVcdOrg"
 
 func TestAccVcdOrgBasic(t *testing.T) {
+	preTestChecks(t)
 
 	var params = StringMap{
 		"OrgName":     orgNameTestAccVcdOrg,
@@ -59,8 +61,10 @@ func TestAccVcdOrgBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 func TestAccVcdOrgFull(t *testing.T) {
+	preTestChecks(t)
 
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdOrgFull requires system admin privileges")
@@ -268,6 +272,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		return
 
 	}
+	postTestChecks(t)
 }
 
 func testAccCheckVcdOrgExists(resourceName string) resource.TestCheckFunc {

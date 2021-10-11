@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp"
+page_title: "VMware Cloud Director: vcd_vapp"
 sidebar_current: "docs-vcd-datasource-vapp"
 description: |-
-  Provides a vCloud Director vApp data source. This can be used to reference vApps.
+  Provides a VMware Cloud Director vApp data source. This can be used to reference vApps.
 ---
 
 # vcd\_vapp
 
-Provides a vCloud Director vApp data source. This can be used to reference vApps.
+Provides a VMware Cloud Director vApp data source. This can be used to reference vApps.
 
 Supported in provider *v2.5+*
 
@@ -17,9 +17,9 @@ Supported in provider *v2.5+*
 
 ```hcl
 data "vcd_vapp" "test-tf" {
-  name             = "test-tf"
-  org              = "tf"
-  vdc              = "vdc-tf"
+  name = "test-tf"
+  org  = "tf"
+  vdc  = "vdc-tf"
 }
 
 output "id" {
@@ -53,6 +53,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
+* `description` An optional description for the vApp
 * `href` - The vApp Hyper Reference
 * `metadata` -  Key value map of metadata to assign to this vApp. Key and value can be any string. 
 * `guest_properties` -  Key value map of vApp guest properties.

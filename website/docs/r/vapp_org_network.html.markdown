@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_org_network"
+page_title: "VMware Cloud Director: vcd_vapp_org_network"
 sidebar_current: "docs-vcd-resource-vapp-org-network"
 description: |-
   Provides capability to attach an existing Org VDC Network to a vApp and toggle network features.
@@ -19,10 +19,10 @@ resource "vcd_vapp_org_network" "vappOrgNet" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
 
-  vapp_name         = "my-vapp"
+  vapp_name = "my-vapp"
 
- # Comment below line to create an isolated vApp network
-  org_network_name  = "my-org-network"
+  # Comment below line to create an isolated vApp network
+  org_network_name = "my-org-network"
 }
 ```
 

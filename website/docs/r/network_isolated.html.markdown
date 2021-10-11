@@ -1,17 +1,21 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_isolated"
+page_title: "VMware Cloud Director: vcd_network_isolated"
 sidebar_current: "docs-vcd-resource-network-isolated"
 description: |-
-  Provides a vCloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
 # vcd\_network\_isolated
 
-Provides a vCloud Director Org VDC isolated Network. This can be used to create,
+Provides a VMware Cloud Director Org VDC isolated Network. This can be used to create,
 modify, and delete internal networks for vApps to connect. This network is not attached to external networks or routers.
 
 Supported in provider *v2.0+*
+
+~> **Note:** This resource supports only NSX-V backed Org VDC networks.
+Please use newer [`vcd_network_isolated_v2`](/providers/vmware/vcd/latest/docs/resources/network_isolated_v2) resource
+which is compatible with NSX-T.
 
 ## Example Usage
 
@@ -83,10 +87,10 @@ For example, using this structure, representing an isolated network that was **n
 
 ```hcl
 resource "vcd_network_isolated" "tf-mynet" {
-  name              = "my-net"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  gateway           = "COMPUTE"
+  name    = "my-net"
+  org     = "my-org"
+  vdc     = "my-vdc"
+  gateway = "COMPUTE"
 }
 ```
 

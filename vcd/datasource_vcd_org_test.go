@@ -1,3 +1,4 @@
+//go:build org || ALL || functional
 // +build org ALL functional
 
 package vcd
@@ -10,6 +11,7 @@ import (
 
 // Cloning an organization using an existing organization as data source
 func TestAccVcdDatasourceOrg(t *testing.T) {
+	preTestChecks(t)
 
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdDatasourceOrg requires system admin privileges")
@@ -82,6 +84,7 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdDatasourceOrg = `

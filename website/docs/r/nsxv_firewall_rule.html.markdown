@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_firewall_rule"
+page_title: "VMware Cloud Director: vcd_nsxv_firewall_rule"
 sidebar_current: "docs-vcd-resource-nsxv-firewall-rule"
 description: |-
-  Provides a vCloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
+  Provides a VMware Cloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
   used to create, modify, and delete firewall rules.
 ---
 
 # vcd\_nsxv\_firewall\_rule
 
-Provides a vCloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
+Provides a VMware Cloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
 used to create, modify, and delete firewall rules.
 
 ~> **Note:** This resource requires advanced edge gateway (NSX-V).
@@ -18,9 +18,9 @@ used to create, modify, and delete firewall rules.
 
 ```hcl
 data "vcd_edgegateway" "mygw" {
-  org          = "my-org"
-  vdc          = "my-vdc"
-  name         = "my-edge-gateway-name"
+  org  = "my-org"
+  vdc  = "my-vdc"
+  name = "my-edge-gateway-name"
 }
 
 resource "vcd_nsxv_firewall_rule" "my-rule-1" {

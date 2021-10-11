@@ -1,3 +1,4 @@
+//go:build functional || auth || ALL
 // +build functional auth ALL
 
 package vcd
@@ -22,6 +23,7 @@ import (
 // Note. Because this test does not use regular templateFill function - it will not generate binary
 // tests, but there should be no need for them as well.
 func TestAccAuth(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -229,6 +231,7 @@ func TestAccAuth(t *testing.T) {
 
 	// Clear connection cache to force other tests use their own mechanism
 	cachedVCDClients.reset()
+	postTestChecks(t)
 }
 
 func runAuthTest(t *testing.T, configText string) {

@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -9,11 +10,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func init() {
-	testingTags["vm"] = "resource_vcd_vapp_vm_properties_test.go"
-}
-
 func TestAccVcdVAppVmProperties(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 	var vm govcd.VM
 
@@ -76,6 +74,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVm_properties = `

@@ -1,4 +1,5 @@
-// +build functional network extnetwork  ALL
+//go:build functional || network || extnetwork || ALL
+// +build functional network extnetwork ALL
 
 package vcd
 
@@ -10,8 +11,14 @@ import (
 )
 
 func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
@@ -26,10 +33,6 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 	}
 
 	configText := templateFill(externalNetworkV2Datasource, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -56,6 +59,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const externalNetworkV2Datasource = `

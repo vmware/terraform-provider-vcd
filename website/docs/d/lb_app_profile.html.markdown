@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_lb_app_profile"
+page_title: "VMware Cloud Director: vcd_lb_app_profile"
 sidebar_current: "docs-vcd-data-source-lb-app-profile"
 description: |-
   Provides an NSX edge gateway load balancer application profile data source.
@@ -8,13 +8,13 @@ description: |-
 
 # vcd\_lb\_app\_profile
 
-Provides a vCloud Director Edge Gateway Load Balancer Application Profile data source. An
+Provides a VMware Cloud Director Edge Gateway Load Balancer Application Profile data source. An
 application profile defines the behavior of the load balancer for a particular type of network
 traffic. After configuring a profile, you associate it with a virtual server. The virtual server
 then processes traffic according to the values specified in the profile.
 
 ~> **Note:** See additional support notes in [application profile resource page]
-(/docs/providers/vcd/r/lb_app_profile.html).
+(/providers/vmware/vcd/latest/docs/resources/lb_app_profile).
 
 Supported in provider *v2.4+*
 
@@ -22,9 +22,9 @@ Supported in provider *v2.4+*
 
 ```hcl
 data "vcd_lb_app_profile" "my-profile" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
 
   name = "not-managed"
 }

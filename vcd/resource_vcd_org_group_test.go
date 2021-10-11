@@ -1,3 +1,4 @@
+//go:build user || functional || ALL
 // +build user functional ALL
 
 package vcd
@@ -27,6 +28,7 @@ import (
 // access internet so that it can download docker image. Also the environment where test is run must
 // be able to access external network IP so that monitoring is possible.
 func TestAccVcdOrgGroup(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdOrgGroup requires system admin privileges")
 		return
@@ -37,14 +39,22 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		return
 	}
 
+	ldapContainerName := "rroemhild/test-openldap"
+	// Override LDAP container name if it is specified in config
+	if testConfig.Misc.LdapContainer != "" {
+		ldapContainerName = testConfig.Misc.LdapContainer
+	}
+
 	ldapConfigParams := struct {
-		ExternalNetwork string
-		GuestImage      string
-		CatalogName     string
+		ExternalNetwork   string
+		GuestImage        string
+		CatalogName       string
+		LdapContainerName string
 	}{
-		ExternalNetwork: testConfig.Networking.ExternalNetwork,
-		GuestImage:      testConfig.VCD.Catalog.CatalogItem,
-		CatalogName:     testConfig.VCD.Catalog.Name,
+		ExternalNetwork:   testConfig.Networking.ExternalNetwork,
+		GuestImage:        testConfig.VCD.Catalog.CatalogItem,
+		CatalogName:       testConfig.VCD.Catalog.Name,
+		LdapContainerName: ldapContainerName,
 	}
 	// getLdapSetupTemplate does not use regular templateFill because this part is used for
 	// automated LDAP configuration setup
@@ -174,6 +184,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // testAccCheckVcdGroupDestroy verifies if Org Group with given name does not exist in vCD
@@ -244,7 +255,7 @@ resource "vcd_vapp_vm" "ldap-container" {
 			done
 			systemctl enable docker
 			systemctl start docker
-			docker run --name ldap-server --restart=always --privileged -d -p 389:389 rroemhild/test-openldap
+			docker run --name ldap-server --restart=always -d -p 389:10389 rroemhild/test-openldap
 		} &
 		EOT
   }

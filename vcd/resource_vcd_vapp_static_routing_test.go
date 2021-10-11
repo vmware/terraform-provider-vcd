@@ -1,3 +1,4 @@
+//go:build functional || vapp || ALL
 // +build functional vapp ALL
 
 package vcd
@@ -11,6 +12,7 @@ import (
 )
 
 func TestAccVcdVappStaticRouting(t *testing.T) {
+	preTestChecks(t)
 	if testConfig.Networking.EdgeGateway == "" {
 		t.Skip("Variable testConfig.Networking.EdgeGateway must be configured")
 		return
@@ -95,7 +97,7 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 			},
 		},
 	})
-
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVappStaticRoutesExists(n string, rulesCount int) resource.TestCheckFunc {

@@ -1,3 +1,4 @@
+//go:build gateway || lb || lbVirtualServer || ALL || functional
 // +build gateway lb lbVirtualServer ALL functional
 
 package vcd
@@ -15,6 +16,7 @@ import (
 )
 
 func TestAccVcdLbVirtualServer(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
@@ -113,6 +115,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdLbVirtualServerDestroy(virtualServerName string) resource.TestCheckFunc {

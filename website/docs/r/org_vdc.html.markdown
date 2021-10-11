@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_vdc"
+page_title: "VMware Cloud Director: vcd_org_vdc"
 sidebar_current: "docs-vcd-resource-org-vdc"
 description: |-
-  Provides a vCloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
+  Provides a VMware Cloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 ---
 
 # vcd\_org\_vdc
 
-Provides a vCloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
+Provides a VMware Cloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 Requires system administrator privileges.
 
 -> **Note:** This resource supports NSX-T and NSX-V based Org Vdcs by providing relevant
@@ -31,7 +31,7 @@ resource "vcd_org_vdc" "my-vdc" {
   description = "The pride of my work"
   org         = "my-org"
 
-  allocation_model = "ReservationPool"
+  allocation_model  = "ReservationPool"
   network_pool_name = "vDC1-VXLAN-NP"
   provider_vdc_name = "vDC1"
 
@@ -46,16 +46,16 @@ resource "vcd_org_vdc" "my-vdc" {
   }
 
   storage_profile {
-    name     = "storage-name"
-    limit    = 10240
-    default  = true    
+    name    = "storage-name"
+    limit   = 10240
+    default = true
   }
-  
+
   metadata = {
     role    = "customerName"
     env     = "staging"
     version = "v1"
-  }  
+  }
 
   enabled                  = true
   enable_thin_provisioning = true

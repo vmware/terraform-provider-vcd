@@ -1,4 +1,5 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user search auth nsxt ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb ALL
 
 package vcd
 
@@ -24,6 +25,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/hashicorp/go-version"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -36,6 +39,12 @@ func init() {
 	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
 	// They will all appear alongside the native flags when we use an invalid one
 	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
+	setBoolFlag(&vcdRemoveTestList, "vcd-remove-test-list", "VCD_REMOVE_TEST_LIST", "Remove list of test runs")
+	setBoolFlag(&vcdPrePostChecks, "vcd-pre-post-checks", "VCD_PRE_POST_CHECKS", "Perform checks before and after tests")
+	setBoolFlag(&vcdShowTimestamp, "vcd-show-timestamp", "VCD_SHOW_TIMESTAMP", "Show timestamp in pre and post checks")
+	setBoolFlag(&vcdShowElapsedTime, "vcd-show-elapsed-time", "VCD_SHOW_ELAPSED_TIME", "Show elapsed time since the start of the suite in pre and post checks")
+	setBoolFlag(&vcdShowCount, "vcd-show-count", "VCD_SHOW_COUNT", "Show number of pass/fail tests")
+	setBoolFlag(&vcdReRunFailed, "vcd-re-run-failed", "VCD_RE_RUN_FAILED", "Run only tests that failed in a previous run")
 	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
 	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
 	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
@@ -45,6 +54,7 @@ func init() {
 	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
 	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
 	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
 
 }
 
@@ -82,9 +92,10 @@ type TestConfig struct {
 		Org         string `json:"org"`
 		Vdc         string `json:"vdc"`
 		ProviderVdc struct {
-			Name           string `json:"name"`
-			NetworkPool    string `json:"networkPool"`
-			StorageProfile string `json:"storageProfile"`
+			Name            string `json:"name"`
+			NetworkPool     string `json:"networkPool"`
+			StorageProfile  string `json:"storageProfile"`
+			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {
 			Name           string `json:"name"`
@@ -118,9 +129,18 @@ type TestConfig struct {
 		} `json:"peer"`
 	} `json:"networking"`
 	Nsxt struct {
-		Manager        string `json:"manager"`
-		Tier0router    string `json:"tier0router"`
-		Tier0routerVrf string `json:"tier0routervrf"`
+		Manager           string `json:"manager"`
+		Tier0router       string `json:"tier0router"`
+		Tier0routerVrf    string `json:"tier0routervrf"`
+		Vdc               string `json:"vdc"`
+		ExternalNetwork   string `json:"externalNetwork"`
+		EdgeGateway       string `json:"edgeGateway"`
+		NsxtImportSegment string `json:"nsxtImportSegment"`
+
+		NsxtAlbControllerUrl      string `json:"nsxtAlbControllerUrl"`
+		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
+		NsxtAlbControllerPassword string `json:"nsxtAlbControllerPassword"`
+		NsxtAlbImportableCloud    string `json:"nsxtAlbImportableCloud"`
 	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
@@ -143,6 +163,9 @@ type TestConfig struct {
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 		MediaName       string `json:"mediaName,omitempty"`
 	} `json:"media"`
+	Misc struct {
+		LdapContainer string `json:"ldapContainer,omitempty"`
+	} `json:"misc"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
 		Gateway                      string `json:"gateway"`                      // Gateway for external network
@@ -153,7 +176,6 @@ type TestConfig struct {
 		Dns2                         string `json:"dns2"`                         // DNS 2 for external network
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup"`     // port group, if different from Networking.ExternalNetworkPortGroup
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType"` // port group type, if different from Networking.ExternalNetworkPortGroupType
-		StorageProfile2              string `json:"storageProfile2"`              // Second storage profile for VDC
 		RoutedNetwork                string `json:"routedNetwork"`                // optional routed network name to create
 		IsolatedNetwork              string `json:"isolatedNetwork"`              // optional isolated network name to create
 		DirectNetwork                string `json:"directNetwork"`                // optional direct network name to create
@@ -184,13 +206,48 @@ var (
 	// vcdTestOrgUser enables testing with the Org User
 	vcdTestOrgUser = false
 
+	// vcdRemoveTestList triggers the removal of the test run list if present
+	vcdRemoveTestList = false
+
+	// vcdPrePostChecks enables pre and post checks for all tests
+	vcdPrePostChecks = false
+
+	// vcdReRunFailed will run only tests that failed in a previous run
+	vcdReRunFailed = false
+
+	// vcdShowTimestamp shows a time stamp at the start of each test
+	vcdShowTimestamp = false
+
+	// vcdShowElapsedTime shows the elapsed time since the start od the suite
+	vcdShowElapsedTime = false
+
+	// vcdShowCount shows the count of pass/skip/fail at the end of the suite
+	vcdShowCount = false
+
+	// vcdSkipPattern will skip all tests with a name that matches a given pattern
+	vcdSkipPattern string
+
+	// vcdSkipAllFile is the name of the file that will skip all the tests if found during a pre-test check
+	vcdSkipAllFile = "skip_vcd_tests"
+
+	// vcdStartTime is he time when the tests started
+	vcdStartTime = time.Now()
+
+	// vcdPassCount, vcdFailCount, vcdSkipCount are the global counters for the tests result
+	vcdPassCount = 0
+	vcdFailCount = 0
+	vcdSkipCount = 0
+
 	// vcdHelp displays the vcd-* flags
 	vcdHelp = false
 
 	// Distributed networks require an edge gateway with distributed routing enabled,
 	// which in turn requires a NSX controller. To run the distributed test, users
 	// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
-	testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
+	testDistributedNetworks = false
+
+	// runTestRunListFileLock regulates access to the list of run tests
+	runTestRunListFileLock = newMutexKVSilent()
 )
 
 const (
@@ -213,18 +270,18 @@ const (
 #
 
 provider "vcd" {
-  user                 = "{{.User}}"
-  password             = "{{.Password}}"
+  user                 = "{{.PrUser}}"
+  password             = "{{.PrPassword}}"
   token                = "{{.Token}}"
   auth_type            = "{{.AuthType}}"
   saml_adfs_rpt_id     = "{{.SamlAdfsCustomRptId}}"
-  url                  = "{{.Url}}"
-  sysorg               = "{{.SysOrg}}"
-  org                  = "{{.Org}}"
-  vdc                  = "{{.Vdc}}"
+  url                  = "{{.PrUrl}}"
+  sysorg               = "{{.PrSysOrg}}"
+  org                  = "{{.PrOrg}}"
+  vdc                  = "{{.PrVdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
-  version              = "~> {{.VersionRequired}}"
+  #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
 }
@@ -243,6 +300,10 @@ var (
 	// Keeps track of test artifact names, to avoid duplicates
 	testArtifactNames = make(map[string]string)
 )
+
+func testDistributedNetworksEnabled() bool {
+	return testDistributedNetworks || os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
+}
 
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
@@ -316,14 +377,17 @@ func templateFill(tmpl string, data StringMap) string {
 
 		// The data structure used to fill the template is integrated with
 		// provider data
-		data["User"] = testConfig.Provider.User
-		data["Password"] = testConfig.Provider.Password
+		data["PrUser"] = testConfig.Provider.User
+		data["PrPassword"] = testConfig.Provider.Password
 		data["SamlAdfsCustomRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Token"] = testConfig.Provider.Token
-		data["Url"] = testConfig.Provider.Url
-		data["SysOrg"] = testConfig.Provider.SysOrg
-		data["Org"] = testConfig.VCD.Org
-		data["Vdc"] = testConfig.VCD.Vdc
+		data["PrUrl"] = testConfig.Provider.Url
+		data["PrSysOrg"] = testConfig.Provider.SysOrg
+		data["PrOrg"] = testConfig.VCD.Org
+		vdcName, found := data["PrVdc"]
+		if !found || vdcName == "" {
+			data["PrVdc"] = testConfig.VCD.Vdc
+		}
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
@@ -584,6 +648,25 @@ func setTestEnv() {
 	}
 }
 
+// getVcdVersion returns the VCD version (three digits + build number)
+// To get the version, we establish a new connection with the credentials
+// chosen for the current test.
+func getVcdVersion(config TestConfig) (string, error) {
+	vcdClient, err := getTestVCDFromJson(config)
+	if vcdClient == nil || err != nil {
+		return "", err
+	}
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
+	if err != nil {
+		return "", err
+	}
+	version, _, err := vcdClient.Client.GetVcdVersion()
+	if err != nil {
+		return "", err
+	}
+	return version, nil
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
 
@@ -594,6 +677,14 @@ func TestMain(m *testing.M) {
 	// Enable custom flags
 	flag.Parse()
 	setTestEnv()
+	flag.CommandLine.VisitAll(func(f *flag.Flag) {
+		if f.Name == "test.v" {
+			if f.Value.String() == "false" {
+				fmt.Printf("Missing '-v' flag\n")
+				os.Exit(1)
+			}
+		}
+	})
 	// If -vcd-help was in the command line
 	if vcdHelp {
 		fmt.Println("vcd flags:")
@@ -607,6 +698,15 @@ func TestMain(m *testing.M) {
 		fmt.Println()
 		os.Exit(0)
 	}
+	// If any of the checks is enabled, we enable the pre and post test functions
+	if vcdSkipPattern != "" || vcdShowElapsedTime || vcdShowTimestamp || vcdRemoveTestList ||
+		vcdShowCount || vcdReRunFailed {
+		vcdPrePostChecks = true
+	}
+	if vcdPrePostChecks {
+		// remove the user-placed skip file
+		_ = os.Remove(vcdSkipAllFile)
+	}
 
 	// Fills the configuration variable: it will be available to all tests,
 	// or the whole suite will fail if it is not found.
@@ -616,13 +716,27 @@ func TestMain(m *testing.M) {
 	if configFile != "" {
 		testConfig = getConfigStruct(configFile)
 	}
+	if vcdRemoveTestList {
+		for _, ft := range []string{"pass", "fail"} {
+			err := removeTestRunList(ft)
+			if err != nil {
+				fmt.Printf("Error removing testRunList: %s", err)
+				fmt.Printf("You should remove the file %s manually before trying again", getTestListFile(ft))
+				os.Exit(0)
+			}
+		}
+	}
 	if !vcdShortTest {
 
 		if configFile == "" {
 			fmt.Println("No configuration file found")
 			os.Exit(1)
 		}
-		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
+		versionInfo, err := getVcdVersion(testConfig)
+		if err == nil {
+			versionInfo = fmt.Sprintf("(version %s)", versionInfo)
+		}
+		fmt.Printf("Connecting to %s %s\n", testConfig.Provider.Url, versionInfo)
 
 		authentication := "password"
 		if testConfig.Provider.UseSamlAdfs {
@@ -662,23 +776,26 @@ func TestMain(m *testing.M) {
 			fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
 		}
 	}
+	if vcdShowCount {
+		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
+	}
 
 	// TODO: cleanup leftovers
 	os.Exit(exitCode)
 }
 
-//Creates catalog and/or catalog item if they are not preconfigured.
+// createSuiteCatalogAndItem creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("Checking resources to create for test suite...\n")
 
 	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
 
 	if config.Ova.OvaTestFileName == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests aborted\n"))
+		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests terminated\n"))
 	}
 
 	if config.Ova.OvaDownloadUrl == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests aborted\n"))
+		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests terminated\n"))
 	} else if testConfig.VCD.Catalog.CatalogItem == "" {
 		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
 
@@ -912,6 +1029,31 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 	}
 }
 
+// importStateIdOrgNsxtVdcObject can be used by all entities that depend on Org + NSX-T VDC (such as Vapp, networks,
+// edge gateway) in NSX-T VDC
+func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.Nsxt.Vdc +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
+// importStateIdNsxtManagerObject can be used by all entities that depend on NSX-T manager name + objectName
+func importStateIdNsxtManagerObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.Nsxt.Manager == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.Nsxt.Manager + ImportSeparator + objectName, nil
+	}
+}
+
 // Used by all entities that depend on Org + Catalog (such as catalog item, media item)
 func importStateIdOrgCatalogObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
@@ -958,6 +1100,22 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 	}
 }
 
+// importStateIdNsxtEdgeGatewayObject used by all entities that depend on Org + NSX-T VDC + edge gateway (such as FW, NAT, Security Groups)
+func importStateIdNsxtEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path for object %s", objectName)
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.Nsxt.Vdc +
+			ImportSeparator +
+			edgeGatewayName +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
 // Used by all entities that depend on Org + VDC + vApp VM (such as VM internal disks)
 func importStateIdVmObject(orgName, vdcName, vappName, vmName, objectIdentifier string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
@@ -984,6 +1142,16 @@ func setBoolFlag(varPointer *bool, name, envVar, help string) {
 		*varPointer = true
 	}
 	flag.BoolVar(varPointer, name, *varPointer, help)
+}
+
+// setStringFlag binds a flag to a string variable (passed as pointer)
+// it also uses an optional environment variable that, if set, will
+// update the variable before binding it to the flag.
+func setStringFlag(varPointer *string, name, envVar, help string) {
+	if envVar != "" && os.Getenv(envVar) != "" {
+		*varPointer = os.Getenv(envVar)
+	}
+	flag.StringVar(varPointer, name, *varPointer, help)
 }
 
 type envHelper struct {
@@ -1133,5 +1301,302 @@ func skipNoNsxtConfiguration(t *testing.T) {
 	}
 	if testConfig.Nsxt.Tier0routerVrf == "" {
 		t.Skip(generalMessage + "No VRF NSX-T Tier-0 specified")
+	}
+	if testConfig.Nsxt.NsxtImportSegment == "" {
+		t.Skip(generalMessage + "No NSX-T importable segment specified ")
+	}
+}
+
+func skipNoNsxtAlbConfiguration(t *testing.T) {
+	generalMessage := "Missing NSX-T ALB config: "
+
+	if testConfig.Nsxt.NsxtAlbControllerUrl == "" {
+		t.Skip(generalMessage + "URL")
+	}
+
+	if testConfig.Nsxt.NsxtAlbControllerUser == "" {
+		t.Skip(generalMessage + "User")
+	}
+
+	if testConfig.Nsxt.NsxtAlbControllerPassword == "" {
+		t.Skip(generalMessage + "Password")
+	}
+
+	if testConfig.Nsxt.NsxtAlbImportableCloud == "" {
+		t.Skip(generalMessage + "Importable Cloud")
+	}
+}
+
+func testAccCheckVcdStandaloneVmExists(vmName, node, orgName, vdcName string) resource.TestCheckFunc {
+	if orgName == "" {
+		orgName = testConfig.VCD.Org
+	}
+	if vdcName == "" {
+		vdcName = testConfig.VCD.Vdc
+	}
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[node]
+		if !ok {
+			return fmt.Errorf("not found: %s", node)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no VM ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
+		}
+
+		_, err = vdc.QueryVmByName(vmName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckVcdStandaloneVmDestroy(vmName string, orgName string, vdcName string) resource.TestCheckFunc {
+	if orgName == "" {
+		orgName = testConfig.VCD.Org
+	}
+	if vdcName == "" {
+		vdcName = testConfig.VCD.Vdc
+	}
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_vm" {
+				continue
+			}
+			_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+			if err != nil {
+				return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
+			}
+
+			_, err = vdc.QueryVmByName(vmName)
+
+			if err == nil {
+				return fmt.Errorf("VM still exist")
+			}
+
+			return nil
+		}
+
+		return nil
+	}
+}
+
+func timeStamp() string {
+	now := time.Now()
+	return now.Format(time.RFC3339)
+}
+
+// preTestChecks is to be called at the beginning of a test function.
+// It allows for several skipping mechanisms:
+//
+// 1) It will skip if the file 'skip_vcd_tests' is found.
+//   This allows to interrupt the test suite in  a clean way, by creating the skipping trigger file
+//   during the test run
+//   When the user creates such file, the tests still running will continue until their natural end
+//   and the other tests will skip
+//
+// 2) if the file 'skip_vcd_tests' contains a pattern, only the tests with a name that match such pattern will skip
+//
+// 3) It will skip if a test has already run successfully. This is useful when the suite was interrupted,
+//   so that we can repeat the run without repeating the tests that have succeeded
+//
+// 4) It will skip the test if a given environment variable was set
+//
+// 5) It will skip the test if the option -vcd-skip-pattern or the environment variable 'VCD_SKIP_PATTERN'
+//   contains a pattern that matches the test name.
+// 6) If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
+func preTestChecks(t *testing.T) {
+	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
+	if !vcdPrePostChecks {
+		return
+	}
+	if vcdShowTimestamp {
+		fmt.Printf("Test started at: %s\n", timeStamp())
+	}
+	if vcdShowElapsedTime {
+		elapsed := time.Since(vcdStartTime)
+		fmt.Printf("Elapsed: %s\n", elapsed.String())
+	}
+	if fileExists(vcdSkipAllFile) {
+		vcdSkipCount += 1
+		t.Skip(fmt.Sprintf("File '%s' found at %s. Test %s skipped", vcdSkipAllFile, timeStamp(), t.Name()))
+	}
+	if vcdSkipPattern != "" {
+		re := regexp.MustCompile(vcdSkipPattern)
+		if re.MatchString(t.Name()) {
+			vcdSkipCount += 1
+			t.Skip(fmt.Sprintf("Skip pattern '%s' matches test name '%s'", vcdSkipPattern, t.Name()))
+		}
+	}
+	skipEnvVar := fmt.Sprintf("skip-%s", t.Name())
+
+	if vcdTestVerbose {
+		fmt.Printf("ENV VAR for %s: %s\n", t.Name(), skipEnvVar)
+	}
+	if os.Getenv(skipEnvVar) != "" {
+		vcdSkipCount += 1
+		t.Skip(fmt.Sprintf("variable '%s' was set.", skipEnvVar))
+	}
+	// If this test has run already, we skip it
+	if isTestInFile(t.Name(), "pass") {
+		vcdSkipCount += 1
+		t.Skip(fmt.Sprintf("test '%s' found in '%s' ", t.Name(), getTestListFile("pass")))
+	}
+	if vcdReRunFailed {
+		if !isTestInFile(t.Name(), "fail") {
+			vcdSkipCount += 1
+			t.Skip("only running tests that have failed at the previous run")
+		}
+	}
+}
+
+// postTestChecks runs checks after the test
+// It performs the following:
+// 1) shows a time stamp (if enabled by -vcd-show-timestamp
+// 2) stores file name in the "pass" or "fail" list, depending on their outcome. The lists are distinct by VCD IP
+// 3) increments the pass/fail counters
+func postTestChecks(t *testing.T) {
+	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
+	if !vcdPrePostChecks {
+		return
+	}
+	if vcdShowTimestamp {
+		fmt.Printf("Test ended at at: %s\n", timeStamp())
+	}
+	var err error
+	var fileType = "pass"
+	if t.Failed() {
+		fileType = "fail"
+		vcdFailCount += 1
+	} else {
+		vcdPassCount += 1
+	}
+	err = addToTestRunList(t.Name(), fileType)
+	if err != nil {
+		fmt.Printf("WARNING: error adding test name '%s' to file '%s'\n", t.Name(), getTestListFile(fileType))
+	}
+}
+
+// getTestListFile returns the name of the file containing the wanted (pass/fail) list
+// for the VCD being tested
+func getTestListFile(fileType string) string {
+	if testConfig.Provider.Url == "" {
+		return ""
+	}
+	testingVcdIp := strings.Replace(testConfig.Provider.Url, "https://", "", -1)
+	testingVcdIp = strings.Replace(testingVcdIp, "/api", "", -1)
+	testingVcdIp = strings.Replace(testingVcdIp, "/", "", -1)
+	testingVcdIp = strings.Replace(testingVcdIp, ".", "-", -1)
+	return fmt.Sprintf("vcd_test_%s_list-%s.txt", fileType, testingVcdIp)
+}
+
+// isTestInFile returns true if a given test name is found in the wanted (pass/fail) list
+func isTestInFile(testName, fileType string) bool {
+	fileName := getTestListFile(fileType)
+	if fileName == "" {
+		return false
+	}
+	runTestRunListFileLock.kvLock(fileName)
+	defer runTestRunListFileLock.kvUnlock(fileName)
+	if !fileExists(fileName) {
+		return false
+	}
+	f, err := os.Open(fileName) // #nosec G304
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == testName {
+			return true
+		}
+	}
+	return false
+}
+
+// removeTestRunList removes the wanted (pass/fail) list for the VCD being tested
+// This operation is triggered by -vcd-remove-test-list, and it is needed to run
+// a test again after running with -vcd-pre-post-checks
+func removeTestRunList(fileType string) error {
+	fileName := getTestListFile(fileType)
+	runTestRunListFileLock.kvLock(fileName)
+	defer runTestRunListFileLock.kvUnlock(fileName)
+	if fileExists(vcdSkipAllFile) {
+		err := os.Remove(vcdSkipAllFile)
+		if err != nil {
+			return err
+		}
+	}
+	if !fileExists(fileName) {
+		fmt.Printf("[removeTestRunList] '%s' not found\n", fileName)
+		return nil
+	}
+	return os.Remove(fileName)
+}
+
+// addToTestRunList adds a given test name to a wanted (pass/fail) list
+func addToTestRunList(testName, fileType string) error {
+	fileName := getTestListFile(fileType)
+	if fileName == "" {
+		return nil
+	}
+	runTestRunListFileLock.kvLock(fileName)
+	defer runTestRunListFileLock.kvUnlock(fileName)
+
+	var file *os.File
+	var err error
+	if fileExists(fileName) {
+		file, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	} else {
+		file, err = os.Create(fileName)
+	}
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	_, err = fmt.Fprintf(w, "%s\n", testName)
+	if err != nil {
+		return fmt.Errorf("error writing to file %s: %s", fileName, err)
+	}
+	return w.Flush()
+}
+
+// noTestCredentials helps to check if a config file with credentials is actually provided. It helps to conditionally
+// ignore tests in such case
+func noTestCredentials() bool {
+	return testConfig.Provider.User == ""
+}
+
+// skipTestForVcdExactVersion allows to skip tests for specific VCD version
+// exactSkipVersion must match exact VCD version (e.g. 10.2.2.17855680)
+func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason string) {
+	vcdClient := createTemporaryVCDConnection()
+
+	vcdVersion, err := vcdClient.Client.GetVcdFullVersion()
+	if err != nil {
+		t.Fatalf("Could not determine VCD version")
+	}
+
+	expectedVersion, err := version.NewVersion(exactSkipVersion)
+	if err != nil {
+		t.Fatalf("could not process versions")
+	}
+	if vcdVersion.Version.Equal(expectedVersion) {
+		t.Skipf("skipping test on VCD version %s because %s", exactSkipVersion, skipReason)
 	}
 }

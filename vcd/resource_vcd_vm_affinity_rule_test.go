@@ -1,3 +1,4 @@
+//go:build vm || functional || affinity || ALL
 // +build vm functional affinity ALL
 
 package vcd
@@ -19,13 +20,14 @@ import (
 type affinityRuleData struct {
 	name        string               // Name of the rule
 	polarity    string               // Affinity or Anti-Affinity
-	creationVms map[string]*types.VM // List of the VMs to add on creation
-	updateVms   map[string]*types.VM // List of the VMs to add on update
+	creationVms map[string]*types.Vm // List of the VMs to add on creation
+	updateVms   map[string]*types.Vm // List of the VMs to add on update
 }
 
 // TestAccVcdVmAffinityRule creates the pre-requisites for the VM affinity rule test
 // Creates several definitions, and calls runVmAffinityRuleTest for each one
 func TestAccVcdVmAffinityRule(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -128,11 +130,11 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule1",
 			polarity: types.PolarityAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm1b": vappList[0].VApp.Children.VM[1],
 			},
-			updateVms: map[string]*types.VM{
+			updateVms: map[string]*types.Vm{
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
 				"Test_EmptyVm2b": vappList[1].VApp.Children.VM[1],
 			},
@@ -143,12 +145,12 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule2",
 			polarity: types.PolarityAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm1b": vappList[0].VApp.Children.VM[1],
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
 			},
-			updateVms: map[string]*types.VM{
+			updateVms: map[string]*types.Vm{
 				"Test_EmptyVm3a": vappList[2].VApp.Children.VM[0],
 				"Test_EmptyVm3b": vappList[2].VApp.Children.VM[1],
 			},
@@ -159,7 +161,7 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule3",
 			polarity: types.PolarityAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm1b": vappList[0].VApp.Children.VM[1],
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
@@ -175,16 +177,16 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule4",
 			polarity: types.PolarityAntiAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
 			},
-			updateVms: map[string]*types.VM{
+			updateVms: map[string]*types.Vm{
 				"Test_EmptyVm3a": vappList[2].VApp.Children.VM[0],
 			},
 		}, t)
 	})
-
+	postTestChecks(t)
 }
 
 // runVmAffinityRuleTest runs the test for a VM affinity rule definition
@@ -246,6 +248,8 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 
 	var rule govcd.VmAffinityRule
 	resourceName := "vcd_vm_affinity_rule." + data.name
+	datasourceById := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_name"
+	datasourceByName := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_id"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -266,8 +270,10 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 						resourceName, "vm_ids.#", fmt.Sprintf("%d", len(data.creationVms))),
 					resource.TestCheckResourceAttr(
 						resourceName, "polarity", data.polarity),
-					resource.TestCheckOutput("name_of_rule_by_id", data.name),
-					resource.TestCheckOutput("polarity_of_rule_by_name", data.polarity),
+					resource.TestCheckResourceAttrPair(resourceName, "name", datasourceById, "name"),
+					resource.TestCheckResourceAttrPair(resourceName, "polarity", datasourceById, "polarity"),
+					resource.TestCheckResourceAttrPair(resourceName, "name", datasourceByName, "name"),
+					resource.TestCheckResourceAttrPair(resourceName, "polarity", datasourceByName, "polarity"),
 				),
 			},
 			// Tests update
@@ -382,13 +388,9 @@ func testAccCheckVmAffinityRuleDestroy(rule *govcd.VmAffinityRule, orgName, vdcN
 }
 
 // makeEmptyVapp creates a given vApp without any VM
-func makeEmptyVapp(vdc *govcd.Vdc, name string) (*govcd.VApp, error) {
+func makeEmptyVapp(vdc *govcd.Vdc, name string, description string) (*govcd.VApp, error) {
 
-	err := vdc.ComposeRawVApp(name)
-	if err != nil {
-		return nil, err
-	}
-	vapp, err := vdc.GetVAppByName(name, true)
+	vapp, err := vdc.CreateRawVApp(name, description)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +484,7 @@ func makeVappGroup(label string, vdc *govcd.Vdc, groupDefinition map[string][]st
 		if vcdTestVerbose {
 			fmt.Printf("Creating vApp %s\n", vappName)
 		}
-		vapp, err := makeEmptyVapp(vdc, vappName)
+		vapp, err := makeEmptyVapp(vdc, vappName, "")
 		if err != nil {
 			return nil, err
 		}
@@ -577,13 +579,5 @@ data "vcd_vm_affinity_rule" "ds_affinity_rule_by_name" {
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_id" {
 	rule_id = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.id
 	depends_on = [vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}]
-}
-
-output "polarity_of_rule_by_name" {
-	value = data.vcd_vm_affinity_rule.ds_affinity_rule_by_name.polarity
-}
-
-output "name_of_rule_by_id" {
-	value = data.vcd_vm_affinity_rule.ds_affinity_rule_by_id.name
 }
 `

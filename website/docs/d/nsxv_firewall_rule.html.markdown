@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_firewall_rule"
+page_title: "VMware Cloud Director: vcd_nsxv_firewall_rule"
 sidebar_current: "docs-vcd-data-source-nsxv-firewall-rule"
 description: |-
-  Provides a vCloud Director firewall rule data source for advanced edge gateways (NSX-V). This can
+  Provides a VMware Cloud Director firewall rule data source for advanced edge gateways (NSX-V). This can
   be used to read existing rules by ID and use its attributes in other resources.
 ---
 
 # vcd\_nsxv\_firewall\_rule
 
-Provides a vCloud Director firewall rule data source for advanced edge gateways (NSX-V). This can be
+Provides a VMware Cloud Director firewall rule data source for advanced edge gateways (NSX-V). This can be
 used to read existing rules by ID and use its attributes in other resources.
 
 ~> **Note:** This data source requires advanced edge gateway.
@@ -18,11 +18,11 @@ used to read existing rules by ID and use its attributes in other resources.
 
 ```hcl
 data "vcd_nsxv_firewall_rule" "my-rule" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
 
-  rule_id = "133048"  # real firewall rule ID, not the UI number
+  rule_id = "133048" # real firewall rule ID, not the UI number
 }
 ```
 
@@ -34,9 +34,9 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT rule.
 * `rule_id` - (Required) ID of firewall rule (not UI number). See more information about firewall
-rule ID in `vcd_nsxv_firewall_rule` [import section](/docs/providers/vcd/r/nsxv_firewall_rule.html#listing-real-firewall-rule-ids).
+rule ID in `vcd_nsxv_firewall_rule` [import section](/providers/vmware/vcd/latest/docs/resources/nsxv_firewall_rule#listing-real-firewall-rule-ids).
 
 ## Attribute Reference
 
-All the attributes defined in [`vcd_nsxv_firewall_rule`](/docs/providers/vcd/r/nsxv_firewall_rule.html)
+All the attributes defined in [`vcd_nsxv_firewall_rule`](/providers/vmware/vcd/latest/docs/resources/nsxv_firewall_rule)
 resource are available.

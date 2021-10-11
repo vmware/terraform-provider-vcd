@@ -1,3 +1,4 @@
+//go:build vapp || vm || ALL || functional
 // +build vapp vm ALL functional
 
 package vcd
@@ -11,6 +12,7 @@ import (
 )
 
 func TestAccVcdVAppEmptyVm(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -219,6 +221,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppEmpty = `

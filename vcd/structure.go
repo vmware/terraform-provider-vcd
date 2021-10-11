@@ -69,12 +69,16 @@ func convertSchemaSetToSliceOfStrings(param *schema.Set) []string {
 	return result
 }
 
-func convertToTypeSet(param []string) []interface{} {
-	slice := make([]interface{}, len(param))
+// convertStringsTotTypeSet accepts a slice of strings and returns a *schema.Set suitable for storing in Terraform
+// set of strings
+func convertStringsTotTypeSet(param []string) *schema.Set {
+	sliceOfInterfaces := make([]interface{}, len(param))
 	for index, value := range param {
-		slice[index] = value
+		sliceOfInterfaces[index] = value
 	}
-	return slice
+
+	set := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), sliceOfInterfaces)
+	return set
 }
 
 // takeBoolPointer accepts a boolean and returns a pointer to this value.
@@ -114,4 +118,25 @@ func normalizeId(prefix, id string) string {
 // to a HREF from a regular user path.
 func haveSameUuid(s1, s2 string) bool {
 	return extractUuid(s1) == extractUuid(s2)
+}
+
+// extractIdsFromOpenApiReferences extracts []string with IDs from []types.OpenApiReference which contains ID and Names
+func extractIdsFromOpenApiReferences(refs []types.OpenApiReference) []string {
+	resultStrings := make([]string, len(refs))
+	for index := range refs {
+		resultStrings[index] = refs[index].ID
+	}
+
+	return resultStrings
+}
+
+// convertSliceOfStringsToOpenApiReferenceIds converts []string to []types.OpenApiReference by filling
+// types.OpenApiReference.ID fields
+func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiReference {
+	resultReferences := make([]types.OpenApiReference, len(ids))
+	for i, v := range ids {
+		resultReferences[i].ID = v
+	}
+
+	return resultReferences
 }

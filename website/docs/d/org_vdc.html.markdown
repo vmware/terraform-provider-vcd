@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_vdc"
+page_title: "VMware Cloud Director: vcd_org_vdc"
 sidebar_current: "docs-vcd-data-source-org-vdc"
 description: |-
   Provides an organization VDC data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_org\_vdc
 
-Provides a vCloud Director Organization VDC data source. An Organization VDC can be used to reference a VCD and use its 
+Provides a VMware Cloud Director Organization VDC data source. An Organization VDC can be used to reference a VCD and use its 
 data within other resources or data sources.
 
 -> **Note:** This resource supports NSX-T and NSX-V based Org VDCs
@@ -19,12 +19,12 @@ Supported in provider *v2.5+*
 
 ```hcl
 data "vcd_org_vdc" "my-org-vdc" {
-  org     = "my-org"
-  name    = "my-vdc"
+  org  = "my-org"
+  name = "my-vdc"
 }
 
 output "provider_vdc" {
- value   = data.vcd_org_vdc.my-org-vdc.provider_vdc_name
+  value = data.vcd_org_vdc.my-org-vdc.provider_vdc_name
 }
 
 ```
@@ -38,5 +38,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [organization VDC resource](/docs/providers/vcd/r/org_vdc.html#attribute-reference) are supported.
+All attributes defined in [organization VDC resource](/providers/vmware/vcd/latest/docs/resources/org_vdc#attribute-reference) are supported.
 

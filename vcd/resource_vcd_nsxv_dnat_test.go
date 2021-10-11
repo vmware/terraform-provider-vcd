@@ -1,3 +1,4 @@
+//go:build gateway || nat || ALL || functional
 // +build gateway nat ALL functional
 
 package vcd
@@ -13,6 +14,7 @@ import (
 )
 
 func TestAccVcdEdgeDnat(t *testing.T) {
+	preTestChecks(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -160,6 +162,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // importStateIdByResourceName constructs an import path (ID in Terraform import terms) in the format of:
