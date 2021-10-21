@@ -10,13 +10,13 @@ description: |-
 # Guest Customization
 
 Guest Customization allows users to supply custom configuration for new VMs which is inevitable in
-cloud environments. Unfortunately there is no single mechanism for this task and one must pick on of
+cloud environments. Unfortunately there is no single mechanism for this task and one must pick one of
 many available - [`VMware Guest
 Customization`](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-BB682E4D-DCD7-4936-A665-0B0FBD6F0EB5.html),
 [`cloud-init`](https://cloud-init.io/), [`Ignition`](https://coreos.github.io/ignition/),
 [`Talos`](https://www.talos.dev/docs/v0.13/virtualized-platforms/vmware/#update-settings-for-the-worker-nodes),
 [`Packer`](https://www.packer.io/), etc. To make matters worse each OS might require a different
-approach. The goal of this page is to give pointers and make it easier to setup Guest Customization.
+approach. The goal of this page is to give pointers and make it easier to set up Guest Customization.
 
 ~> This page is expected to grow over time. If you have a good working example for this page, we
 would happily accept a Pull Request with documentation how to use it.
@@ -46,8 +46,8 @@ There is a lot more to read about producing Ignition files that can be read in [
 docs](https://docs.fedoraproject.org/en-US/fedora-coreos/producing-ign/), but in this case we will
 just pick a quick example with minimal configuration in JSON.
 
-This Ignition configuration will set a password of `asdf123` and set hostname to `core1` in guest.
-Store these contents in `ignition.json`
+This Ignition configuration will create user `core` with password `asdf123` (hashed using `mkpasswd` in config) and 
+set hostname to `core1` in guest. Store these contents in `ignition.json`
 ```json 
 {
     "ignition": {
@@ -79,7 +79,7 @@ To supply it to Guest VM using Terraform provider VCD one must read contents and
 
 ```hcl
 resource "vcd_vm" "customized" {
-  name = "fedora-cores-customized"
+  name = "fedora-coreos-customized"
 
   catalog_name  = "my-catalog-name"
   template_name = "fedora-coreos"
@@ -104,4 +104,4 @@ resource "vcd_vm" "customized" {
 After applying the configuration one should be able to login using `core` user and `asdf123`
 password. In addition the hostname should be set to `core1. [Official Ignition
 docs](https://docs.fedoraproject.org/en-US/fedora-coreos/producing-ign/) have a lot more
-configuration possibilities.
+configuration options.
