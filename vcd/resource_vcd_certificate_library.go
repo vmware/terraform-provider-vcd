@@ -101,7 +101,7 @@ func isSysOrg(adminOrg *govcd.AdminOrg) bool {
 	return strings.EqualFold(adminOrg.AdminOrg.Name, "system")
 }
 
-// resourceVcdCertificateInLibraryReadCreate covers Create functionality for resource
+// resourceVcdCertificateInLibraryReadCreate covers Update functionality for resource
 func resourceVcdCertificateInLibraryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -144,13 +144,11 @@ func getCertificateConfigurationType(d *schema.ResourceData) *types.CertificateL
 func resourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// TODO change Read not need admin org or test it works anyways
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	// get by ID when it's available
 	certificate := &govcd.Certificate{}
 	if isSysOrg(adminOrg) {
 		certificate, err = vcdClient.Client.GetCertificateFromLibraryById(d.Id())
@@ -171,9 +169,9 @@ func resourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.Resource
 }
 
 func setCertificateConfigurationData(config *types.CertificateLibraryItem, d *schema.ResourceData) {
-	d.Set("alias", config.Alias)
-	d.Set("description", config.Description)
-	d.Set("certificate", config.Certificate)
+	_ = d.Set("alias", config.Alias)
+	_ = d.Set("description", config.Description)
+	_ = d.Set("certificate", config.Certificate)
 }
 
 func resourceVcdAlbCertificateInLibraryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -221,7 +219,7 @@ func resourceCertificateInLibraryImport(ctx context.Context, d *schema.ResourceD
 	}
 
 	d.SetId(certificate.CertificateLibrary.Id)
-	d.Set("org", orgName)
+	_ = d.Set("org", orgName)
 	setCertificateConfigurationData(certificate.CertificateLibrary, d)
 
 	return []*schema.ResourceData{d}, nil

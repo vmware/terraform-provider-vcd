@@ -109,7 +109,7 @@ func getAvailableCertificate(vcdClient *VCDClient) ([]*govcd.Certificate, error)
 	}
 
 	// TODO rename func name
-	certificatesInSystem, err := vcdClient.Client.GetAllCertificateFromLibrary(nil)
+	certificatesInSystem, err := vcdClient.Client.GetAllCertificatesFromLibrary(nil)
 	if len(certificatesInSystem) == 0 {
 		return nil, fmt.Errorf("no certificate found in System")
 	}

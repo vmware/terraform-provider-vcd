@@ -54,7 +54,6 @@ func datasourceCertificateInLibrary() *schema.Resource {
 func datasourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// TODO change Read not need admin org or test it works anyways
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrg, err)
@@ -69,7 +68,7 @@ func datasourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.Resour
 		} else if d.Get("id").(string) != "" {
 			certificate, err = vcdClient.Client.GetCertificateFromLibraryById(d.Get("id").(string))
 		} else {
-			return diag.Errorf("Id or Alias value is missing", err)
+			return diag.Errorf("Id or Alias value is missing %s", err)
 		}
 	} else {
 		alias := d.Get("alias").(string)
@@ -78,7 +77,7 @@ func datasourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.Resour
 		} else if d.Get("id").(string) != "" {
 			certificate, err = adminOrg.GetCertificateFromLibraryById(d.Get("id").(string))
 		} else {
-			return diag.Errorf("Id or Alias value is missing", err)
+			return diag.Errorf("Id or Alias value is missing %s", err)
 		}
 	}
 	if err != nil {
