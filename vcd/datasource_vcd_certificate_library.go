@@ -60,7 +60,7 @@ func datasourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.Resour
 	}
 
 	// get by ID when it's available
-	certificate := &govcd.Certificate{}
+	var certificate *govcd.Certificate
 	if isSysOrg(adminOrg) {
 		alias := d.Get("alias").(string)
 		if alias != "" {

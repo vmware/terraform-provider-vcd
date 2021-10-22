@@ -104,12 +104,17 @@ func getAvailableCertificate(vcdClient *VCDClient) ([]*govcd.Certificate, error)
 	}
 
 	certificates, err := adminOrg.GetAllCertificatesFromLibrary(nil)
+	if err != nil {
+		return nil, fmt.Errorf("gate all certificates failed : %s", err)
+	}
 	if len(certificates) == 0 {
 		return nil, fmt.Errorf("no certificate found in org %v", testConfig.VCD.Org)
 	}
 
-	// TODO rename func name
 	certificatesInSystem, err := vcdClient.Client.GetAllCertificatesFromLibrary(nil)
+	if err != nil {
+		return nil, fmt.Errorf("gate all certificates from Sys failed : %s", err)
+	}
 	if len(certificatesInSystem) == 0 {
 		return nil, fmt.Errorf("no certificate found in System")
 	}

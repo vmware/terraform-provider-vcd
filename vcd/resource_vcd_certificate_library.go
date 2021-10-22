@@ -80,7 +80,7 @@ func resourceVcdCertificateInLibraryCreate(ctx context.Context, d *schema.Resour
 	}
 
 	certificateConfig := getCertificateConfigurationType(d)
-	createdCertificate := &govcd.Certificate{}
+	var createdCertificate *govcd.Certificate
 	if isSysOrg(adminOrg) {
 		createdCertificate, err = vcdClient.Client.AddCertificateToLibrary(certificateConfig)
 		if err != nil {
@@ -110,7 +110,7 @@ func resourceVcdCertificateInLibraryUpdate(ctx context.Context, d *schema.Resour
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	certificate := &govcd.Certificate{}
+	var certificate *govcd.Certificate
 	if isSysOrg(adminOrg) {
 		certificate, err = vcdClient.Client.GetCertificateFromLibraryById(d.Id())
 	} else {
@@ -149,7 +149,7 @@ func resourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.Resource
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	certificate := &govcd.Certificate{}
+	var certificate *govcd.Certificate
 	if isSysOrg(adminOrg) {
 		certificate, err = vcdClient.Client.GetCertificateFromLibraryById(d.Id())
 	} else {
@@ -182,7 +182,7 @@ func resourceVcdAlbCertificateInLibraryDelete(ctx context.Context, d *schema.Res
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	certificateToDelete := &govcd.Certificate{}
+	var certificateToDelete *govcd.Certificate
 	if isSysOrg(adminOrg) {
 		certificateToDelete, err = vcdClient.Client.GetCertificateFromLibraryById(d.Get("id").(string))
 	} else {
@@ -208,7 +208,7 @@ func resourceCertificateInLibraryImport(ctx context.Context, d *schema.ResourceD
 		return nil, fmt.Errorf("[certificate import] error retrieving org %s: %s", orgName, err)
 	}
 
-	certificate := &govcd.Certificate{}
+	var certificate *govcd.Certificate
 	if isSysOrg(adminOrg) {
 		certificate, err = vcdClient.Client.GetCertificateFromLibraryByName(certificateName)
 	} else {
