@@ -142,6 +142,20 @@
     "//": "Docker registry. This can help to overcome Docker registry throttling",
     "ldapContainer": ""
   },
+  "certificates": {
+    "//": "absolute path to pem file",
+    "certificate1Path": "/home/user/cert.pem",
+    "//": "absolute path to private key pem file",
+    "certificate1PrivateKeyPath": "/home/user/key.pem",
+    "//": "pass phrase for private key",
+    "certificate1Pass": "test",
+    "//": "absolute path to pem file",
+    "certificate2Path": "/home/user/cert2.pem",
+    "//": "absolute path to private key pem file",
+    "certificate2PrivateKeyPath": "/home/user/key2.pem",
+    "//": "absolute path to pem file",
+    "certificate2Pass": "test"
+  },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",
 
