@@ -1,0 +1,2 @@
+* **New Resource:** `vcd_certificate_in_library` for managing certificates in library (provider configuration) [GH-731]
+* **New Data source:** `vcd_certificate_in_library` for reading certificates in library [GH-731]

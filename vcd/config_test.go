@@ -166,6 +166,14 @@ type TestConfig struct {
 	Misc struct {
 		LdapContainer string `json:"ldapContainer,omitempty"`
 	} `json:"misc"`
+	Certificates struct {
+		Certificate1Path           string `json:"certificate1Path,omitempty"`           // absolute path to pem file
+		Certificate1PrivateKeyPath string `json:"certificate1PrivateKeyPath,omitempty"` // absolute path to private key pem file
+		Certificate1Pass           string `json:"certificate1Pass,omitempty"`           // pass phrase for private key
+		Certificate2Path           string `json:"certificate2Path,omitempty"`           // absolute path to pem file
+		Certificate2PrivateKeyPath string `json:"certificate2PrivateKeyPath,omitempty"` // absolute path to private key pem file
+		Certificate2Pass           string `json:"certificate2Pass,omitempty"`           // absolute path to pem file
+	} `json:"certificates"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
 		Gateway                      string `json:"gateway"`                      // Gateway for external network
