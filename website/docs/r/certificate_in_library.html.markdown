@@ -29,9 +29,9 @@ resource "vcd_certificate_in_library" "new-certificate" {
 
 The following arguments are supported:
 
-* `alias` - (Required)  - Alias(name) of certificate
+* `alias` - (Required)  - Alias (name) of certificate
 * `description` - (Optional)  - Certificate description
-* `certificate` - (Optional)  - Content of Certificate
+* `certificate` - (Required)  - Content of Certificate
 * `private_key` - (Optional)  - Content of private key
 * `private_key_passphrase` - (Optional)  - private key pass phrase 
 
@@ -47,8 +47,8 @@ The following attributes are exported on this resource:
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
 An existing certificate from library can be [imported][docs-import] into this resource
-via supplying the full dot separated path certificate in library. An example is
-below:
+via supplying the full dot separated path certificate in library. `System` org should be used to import system
+certificates. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 

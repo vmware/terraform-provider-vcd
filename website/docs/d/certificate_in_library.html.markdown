@@ -25,8 +25,8 @@ data "vcd_certificate_in_library" "certificate1" {
 
 The following arguments are supported:
 
-* `alias` - (Optional)  - alias(name) of certificate
-* `id` - (Optional)  - id of certificate
+* `alias` - (Optional)  - alias (name) of certificate
+* `id` - (Optional)  - ID of certificate
 
 `alias` or `id` is required field.
 

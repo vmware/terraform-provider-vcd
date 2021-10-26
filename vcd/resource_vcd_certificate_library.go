@@ -32,13 +32,7 @@ func resourceCertificateInLibrary() *schema.Resource {
 			"alias": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    false,
 				Description: "Alias of certificate",
-			},
-			"id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Certificate ID",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -70,7 +64,7 @@ func resourceCertificateInLibrary() *schema.Resource {
 	}
 }
 
-// resourceVcdCertificateInLibraryReadCreate covers Create functionality for resource
+// resourceVcdCertificateInLibraryCreate covers Create functionality for resource
 func resourceVcdCertificateInLibraryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -101,7 +95,7 @@ func isSysOrg(adminOrg *govcd.AdminOrg) bool {
 	return strings.EqualFold(adminOrg.AdminOrg.Name, "system")
 }
 
-// resourceVcdCertificateInLibraryReadCreate covers Update functionality for resource
+// resourceVcdCertificateInLibraryUpdate covers Update functionality for resource
 func resourceVcdCertificateInLibraryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -184,9 +178,9 @@ func resourceVcdAlbCertificateInLibraryDelete(ctx context.Context, d *schema.Res
 
 	var certificateToDelete *govcd.Certificate
 	if isSysOrg(adminOrg) {
-		certificateToDelete, err = vcdClient.Client.GetCertificateFromLibraryById(d.Get("id").(string))
+		certificateToDelete, err = vcdClient.Client.GetCertificateFromLibraryById(d.Id())
 	} else {
-		certificateToDelete, err = adminOrg.GetCertificateFromLibraryById(d.Get("id").(string))
+		certificateToDelete, err = adminOrg.GetCertificateFromLibraryById(d.Id())
 	}
 	if err != nil {
 		return diag.Errorf("[certificate library delete] : %s", err)

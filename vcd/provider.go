@@ -87,7 +87,6 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_cloud":                datasourceVcdAlbCloud(),              // 3.4
 	"vcd_nsxt_alb_service_engine_group": datasourceVcdAlbServiceEngineGroup(), // 3.4
 	"vcd_certificate_in_library":        datasourceCertificateInLibrary(),     // 3.5
-
 }
 
 var globalResourceMap = map[string]*schema.Resource{
