@@ -636,6 +636,34 @@ func getConfigStruct(config string) TestConfig {
 		}
 		configStruct.Ova.OvaVappMultiVmsPath = multiVmOvaPath
 	}
+	if configStruct.Certificates.Certificate1Path != "" {
+		certificatePath1Path, err := filepath.Abs(configStruct.Certificates.Certificate1Path)
+		if err != nil {
+			panic("error retrieving absolute path for certificate 1 path " + configStruct.Certificates.Certificate1Path)
+		}
+		configStruct.Certificates.Certificate1Path = certificatePath1Path
+	}
+	if configStruct.Certificates.Certificate2Path != "" {
+		certificatePath2Path, err := filepath.Abs(configStruct.Certificates.Certificate2Path)
+		if err != nil {
+			panic("error retrieving absolute path for certificate 2 path " + configStruct.Certificates.Certificate2Path)
+		}
+		configStruct.Certificates.Certificate2Path = certificatePath2Path
+	}
+	if configStruct.Certificates.Certificate1PrivateKeyPath != "" {
+		certificatePrivatePath1Path, err := filepath.Abs(configStruct.Certificates.Certificate1PrivateKeyPath)
+		if err != nil {
+			panic("error retrieving absolute path for private certificate 1 path " + configStruct.Certificates.Certificate1PrivateKeyPath)
+		}
+		configStruct.Certificates.Certificate1PrivateKeyPath = certificatePrivatePath1Path
+	}
+	if configStruct.Certificates.Certificate2PrivateKeyPath != "" {
+		certificatePrivatePath2Path, err := filepath.Abs(configStruct.Certificates.Certificate2PrivateKeyPath)
+		if err != nil {
+			panic("error retrieving absolute path for private certificate 2 path " + configStruct.Certificates.Certificate2PrivateKeyPath)
+		}
+		configStruct.Certificates.Certificate2PrivateKeyPath = certificatePrivatePath2Path
+	}
 
 	// Partial duplication of actions performed in createSuiteCatalogAndItem
 	// It is needed when we run the binary tests without TEST_ACC
