@@ -195,8 +195,8 @@ func resourceVcdOpenApiDhcpImport(ctx context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("[NSX-T DHCP pool import] DHCP configuration is only supported for Routed NSX-T networks: %s", err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(orgVdcNet.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -236,7 +236,7 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 }
 
 func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiOrgVdcNetworkDhcp, d *schema.ResourceData) error {
-	_ = d.Set("org_network_id", orgNetworkId)
+	dSet(d, "org_network_id", orgNetworkId)
 	if len(orgVdc.DhcpPools) > 0 {
 		poolInterfaceSlice := make([]interface{}, len(orgVdc.DhcpPools))
 

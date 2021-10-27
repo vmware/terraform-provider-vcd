@@ -220,8 +220,8 @@ func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceD
 			networkName, orgNetwork.GetType())
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -229,16 +229,16 @@ func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceD
 
 func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
 
-	_ = d.Set("name", orgVdcNetwork.Name)
-	_ = d.Set("description", orgVdcNetwork.Description)
+	dSet(d, "name", orgVdcNetwork.Name)
+	dSet(d, "description", orgVdcNetwork.Description)
 
 	// Only one subnet can be defined although the structure accepts slice
-	_ = d.Set("gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
-	_ = d.Set("prefix_length", orgVdcNetwork.Subnets.Values[0].PrefixLength)
-	_ = d.Set("dns1", orgVdcNetwork.Subnets.Values[0].DNSServer1)
-	_ = d.Set("dns2", orgVdcNetwork.Subnets.Values[0].DNSServer2)
-	_ = d.Set("dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
-	_ = d.Set("is_shared", orgVdcNetwork.Shared)
+	dSet(d, "gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
+	dSet(d, "prefix_length", orgVdcNetwork.Subnets.Values[0].PrefixLength)
+	dSet(d, "dns1", orgVdcNetwork.Subnets.Values[0].DNSServer1)
+	dSet(d, "dns2", orgVdcNetwork.Subnets.Values[0].DNSServer2)
+	dSet(d, "dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
+	dSet(d, "is_shared", orgVdcNetwork.Shared)
 
 	// If any IP sets are available
 	if len(orgVdcNetwork.Subnets.Values[0].IPRanges.Values) > 0 {

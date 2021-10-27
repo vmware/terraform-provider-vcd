@@ -168,9 +168,9 @@ func natRuleImport(natType string) schema.StateFunc {
 				readNatRule.ID, readNatRule.Action, natType)
 		}
 
-		_ = d.Set("org", orgName)
-		_ = d.Set("vdc", vdcName)
-		_ = d.Set("edge_gateway", edgeName)
+		dSet(d, "org", orgName)
+		dSet(d, "vdc", vdcName)
+		dSet(d, "edge_gateway", edgeName)
 
 		d.SetId(readNatRule.ID)
 		return []*schema.ResourceData{d}, nil

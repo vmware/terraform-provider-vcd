@@ -174,10 +174,10 @@ func getNsxtAlbControllerType(d *schema.ResourceData) *types.NsxtAlbController {
 }
 
 func setNsxtAlbControllerData(d *schema.ResourceData, albController *types.NsxtAlbController) {
-	_ = d.Set("name", albController.Name)
-	_ = d.Set("description", albController.Description)
-	_ = d.Set("url", albController.Url)
-	_ = d.Set("username", albController.Username)
-	_ = d.Set("license_type", albController.LicenseType)
-	_ = d.Set("version", albController.Version)
+	dSet(d, "name", albController.Name)
+	dSet(d, "description", albController.Description)
+	dSet(d, "url", albController.Url)
+	dSet(d, "username", albController.Username)
+	dSet(d, "license_type", albController.LicenseType)
+	dSet(d, "version", albController.Version)
 }

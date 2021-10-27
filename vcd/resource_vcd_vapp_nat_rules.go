@@ -222,7 +222,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	var rules []map[string]interface{}
 	if vappNetwork.Configuration.Features == nil || vappNetwork.Configuration.Features.NatService == nil {
 		log.Print("no Nat rules found.")
-		_ = d.Set("rule", rules)
+		dSet(d, "rule", rules)
 	}
 
 	for _, rule := range vappNetwork.Configuration.Features.NatService.NatRule {
@@ -243,15 +243,15 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 		}
 		rules = append(rules, singleRule)
 	}
-	_ = d.Set("enabled", vappNetwork.Configuration.Features.NatService.IsEnabled)
+	dSet(d, "enabled", vappNetwork.Configuration.Features.NatService.IsEnabled)
 	if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
 		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficInPolicy {
-		_ = d.Set("enable_ip_masquerade", true)
+		dSet(d, "enable_ip_masquerade", true)
 	} else if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
 		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficPolicy {
-		_ = d.Set("enable_ip_masquerade", false)
+		dSet(d, "enable_ip_masquerade", false)
 	}
-	_ = d.Set("nat_type", vappNetwork.Configuration.Features.NatService.NatType)
+	dSet(d, "nat_type", vappNetwork.Configuration.Features.NatService.NatType)
 	err = d.Set("rule", rules)
 	if err != nil {
 		return err

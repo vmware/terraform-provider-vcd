@@ -686,7 +686,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				return fmt.Errorf("[VM creation] error retrieving vApp from standalone VM %s : %s", vmName, err)
 			}
 			util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
-			_ = d.Set("vapp_name", vapp.VApp.Name)
+			dSet(d, "vapp_name", vapp.VApp.Name)
 		} else {
 			task, err := vapp.AddNewVMWithComputePolicy(vmName, vappTemplate, &networkConnectionSection, storageProfilePtr, sizingPolicy, acceptEulas)
 			if err != nil {
@@ -713,7 +713,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 		// VM creation already succeeded so ID must be set
 		d.SetId(vm.VM.ID)
-		_ = d.Set("vm_type", computedVmType)
+		dSet(d, "vm_type", computedVmType)
 
 		err = handleExposeHardwareVirtualization(d, vm)
 		if err != nil {
@@ -732,13 +732,13 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		// update existing internal disks in template
 		err = updateTemplateInternalDisks(d, meta, *vm)
 		if err != nil {
-			d.Set("override_template_disk", nil)
+			dSet(d, "override_template_disk", nil)
 			return fmt.Errorf("error managing internal disks : %s", err)
 		} else {
 			// add details of internal disk to state
 			errReadInternalDisk := updateStateOfInternalDisks(d, *vm)
 			if errReadInternalDisk != nil {
-				d.Set("internal_disk", nil)
+				dSet(d, "internal_disk", nil)
 				log.Printf("error reading interal disks : %s", errReadInternalDisk)
 			}
 		}
@@ -753,7 +753,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		if err != nil {
 			errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 			if errAttachedDisk != nil {
-				d.Set("disk", nil)
+				dSet(d, "disk", nil)
 				return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
 			}
 			return err
@@ -775,7 +775,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return fmt.Errorf("[VM creation] error retrieving vApp from standalone VM %s : %s", vmName, err)
 		}
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
-		_ = d.Set("vapp_name", vapp.VApp.Name)
+		dSet(d, "vapp_name", vapp.VApp.Name)
 		return genericVcdVmRead(d, meta, "create", vmType)
 	}
 
@@ -1152,7 +1152,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			if err != nil {
 				errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 				if errAttachedDisk != nil {
-					d.Set("disk", nil)
+					dSet(d, "disk", nil)
 					return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
 				}
 				return fmt.Errorf("error attaching-detaching  disks when updating resource : %s", err)
@@ -1328,7 +1328,7 @@ func getVmFromResource(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 		if vmType == standaloneVmType {
 			additionalMessage = fmt.Sprintf("\nAdding a vApp name to a standalone VM is not allowed." +
 				"Please use 'vcd_vapp_vm' resource to specify vApp")
-			_ = d.Set("vapp_name", "")
+			dSet(d, "vapp_name", "")
 		}
 
 		return nil, nil, nil, nil, "", nil, fmt.Errorf("[getVmFromResource] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
@@ -1467,7 +1467,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 			if isStandalone {
 				additionalMessage = fmt.Sprintf("\nAdding a vApp name to a standalone VM is not allowed." +
 					"Please use 'vcd_vapp_vm' resource to specify vApp")
-				_ = d.Set("vapp_name", "")
+				dSet(d, "vapp_name", "")
 			}
 			return fmt.Errorf("[VM read] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
 		}
@@ -1495,11 +1495,11 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 		computedVmType = string(vappVmType)
 	}
 	// org, vdc, and vapp_name are already implicitly set
-	_ = d.Set("name", vm.VM.Name)
-	_ = d.Set("vapp_name", vapp.VApp.Name)
-	_ = d.Set("description", vm.VM.Description)
+	dSet(d, "name", vm.VM.Name)
+	dSet(d, "vapp_name", vapp.VApp.Name)
+	dSet(d, "description", vm.VM.Description)
 	d.SetId(vm.VM.ID)
-	_ = d.Set("vm_type", computedVmType)
+	dSet(d, "vm_type", computedVmType)
 
 	networks, err := readNetworks(d, *vm, *vapp, vdc)
 	if err != nil {
@@ -1511,10 +1511,10 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 		return err
 	}
 
-	_ = d.Set("href", vm.VM.HREF)
-	_ = d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
-	_ = d.Set("cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
-	_ = d.Set("memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
+	dSet(d, "href", vm.VM.HREF)
+	dSet(d, "expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
+	dSet(d, "cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
+	dSet(d, "memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
 	cpus := int64(0)
 	coresPerSocket := 0
@@ -1528,9 +1528,9 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 			memory = item.VirtualQuantity
 		}
 	}
-	_ = d.Set("memory", memory)
-	_ = d.Set("cpus", cpus)
-	_ = d.Set("cpu_cores", coresPerSocket)
+	dSet(d, "memory", memory)
+	dSet(d, "cpus", cpus)
+	dSet(d, "cpu_cores", coresPerSocket)
 
 	metadata, err := vm.GetMetadata()
 	if err != nil {
@@ -1542,7 +1542,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	}
 
 	if vm.VM.StorageProfile != nil {
-		_ = d.Set("storage_profile", vm.VM.StorageProfile.Name)
+		dSet(d, "storage_profile", vm.VM.StorageProfile.Name)
 	}
 
 	// update guest properties
@@ -1558,13 +1558,13 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 
 	err = updateStateOfInternalDisks(d, *vm)
 	if err != nil {
-		d.Set("internal_disk", nil)
+		dSet(d, "internal_disk", nil)
 		return fmt.Errorf("[VM read] error reading internal disks : %s", err)
 	}
 
 	err = updateStateOfAttachedDisks(d, *vm, vdc)
 	if err != nil {
-		d.Set("disk", nil)
+		dSet(d, "disk", nil)
 		return fmt.Errorf("[VM read] error reading attached disks : %s", err)
 	}
 
@@ -1573,14 +1573,14 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	}
 
 	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil && vm.VM.VmSpecSection.HardwareVersion.Value != "" {
-		_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
+		dSet(d, "hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
 	}
 	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.OsType != "" {
-		_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+		dSet(d, "os_type", vm.VM.VmSpecSection.OsType)
 	}
 
 	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
-		_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+		dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
 	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
@@ -2213,10 +2213,10 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 		}
 	}
 
-	_ = d.Set("name", vmIdentifier)
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("vapp_name", vappName)
+	dSet(d, "name", vmIdentifier)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "vapp_name", vappName)
 	d.SetId(vm.VM.ID)
 	return []*schema.ResourceData{d}, nil
 }
@@ -2374,7 +2374,7 @@ func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("unable to get guest customization section: %s", err)
 	}
 
-	_ = d.Set("computer_name", customizationSection.ComputerName)
+	dSet(d, "computer_name", customizationSection.ComputerName)
 
 	customizationBlock := make([]interface{}, 1)
 	customizationBlockAttributes := make(map[string]interface{})

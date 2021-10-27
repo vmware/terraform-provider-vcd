@@ -179,9 +179,9 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return err
 	}
-	_ = d.Set("name", catalogItem.CatalogItem.Name)
-	_ = d.Set("created", vAppTemplate.VAppTemplate.DateCreated)
-	_ = d.Set("description", catalogItem.CatalogItem.Description)
+	dSet(d, "name", catalogItem.CatalogItem.Name)
+	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
+	dSet(d, "description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 
 	return err
@@ -285,10 +285,10 @@ func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("catalog", catalogName)
-	_ = d.Set("name", catalogItemName)
-	_ = d.Set("description", catalogItem.CatalogItem.Description)
+	dSet(d, "org", orgName)
+	dSet(d, "catalog", catalogName)
+	dSet(d, "name", catalogItemName)
+	dSet(d, "description", catalogItem.CatalogItem.Description)
 	d.SetId(catalogItem.CatalogItem.ID)
 
 	return []*schema.ResourceData{d}, nil

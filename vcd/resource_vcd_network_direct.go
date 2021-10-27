@@ -159,9 +159,9 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 		return fmt.Errorf("[direct network read] network not found: %s", err)
 	}
 
-	_ = d.Set("name", network.OrgVDCNetwork.Name)
-	_ = d.Set("href", network.OrgVDCNetwork.HREF)
-	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
+	dSet(d, "name", network.OrgVDCNetwork.Name)
+	dSet(d, "href", network.OrgVDCNetwork.HREF)
+	dSet(d, "shared", network.OrgVDCNetwork.IsShared)
 
 	// Getting external network data through network list, as a direct call to external network
 	// structure requires system admin privileges.
@@ -179,15 +179,15 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 	if currentNetwork == nil {
 		return fmt.Errorf("error retrieving network %s from network list", network.OrgVDCNetwork.Name)
 	}
-	_ = d.Set("external_network", currentNetwork.ConnectedTo)
-	_ = d.Set("external_network_netmask", currentNetwork.Netmask)
-	_ = d.Set("external_network_dns1", currentNetwork.Dns1)
-	_ = d.Set("external_network_dns2", currentNetwork.Dns2)
-	_ = d.Set("external_network_dns_suffix", currentNetwork.DnsSuffix)
+	dSet(d, "external_network", currentNetwork.ConnectedTo)
+	dSet(d, "external_network_netmask", currentNetwork.Netmask)
+	dSet(d, "external_network_dns1", currentNetwork.Dns1)
+	dSet(d, "external_network_dns2", currentNetwork.Dns2)
+	dSet(d, "external_network_dns_suffix", currentNetwork.DnsSuffix)
 	// Fixes issue #450
-	_ = d.Set("external_network_gateway", currentNetwork.DefaultGateway)
+	dSet(d, "external_network_gateway", currentNetwork.DefaultGateway)
 
-	_ = d.Set("description", network.OrgVDCNetwork.Description)
+	dSet(d, "description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 
@@ -290,9 +290,9 @@ func resourceVcdNetworkDirectImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf("[direct network import] no parent network found for %s", network.OrgVDCNetwork.Name)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("external_network", parentNetwork.Name)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "external_network", parentNetwork.Name)
 	d.SetId(network.OrgVDCNetwork.ID)
 	return []*schema.ResourceData{d}, nil
 }

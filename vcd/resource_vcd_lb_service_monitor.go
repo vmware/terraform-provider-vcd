@@ -213,10 +213,10 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
-	d.Set("name", monitorName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
+	dSet(d, "name", monitorName)
 
 	d.SetId(readLBMonitor.ID)
 	return []*schema.ResourceData{d}, nil
@@ -264,16 +264,16 @@ func getLBMonitorExtensionType(d *schema.ResourceData) string {
 
 // setLBMonitorData sets object state from *types.LbMonitor
 func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LbMonitor) error {
-	d.Set("interval", lBmonitor.Interval)
-	d.Set("timeout", lBmonitor.Timeout)
-	d.Set("max_retries", lBmonitor.MaxRetries)
-	d.Set("type", lBmonitor.Type)
+	dSet(d, "interval", lBmonitor.Interval)
+	dSet(d, "timeout", lBmonitor.Timeout)
+	dSet(d, "max_retries", lBmonitor.MaxRetries)
+	dSet(d, "type", lBmonitor.Type)
 	// Optional attributes may not be necessary
-	d.Set("method", lBmonitor.Method)
-	d.Set("url", lBmonitor.URL)
-	d.Set("send", lBmonitor.Send)
-	d.Set("receive", lBmonitor.Receive)
-	d.Set("expected", lBmonitor.Expected)
+	dSet(d, "method", lBmonitor.Method)
+	dSet(d, "url", lBmonitor.URL)
+	dSet(d, "send", lBmonitor.Send)
+	dSet(d, "receive", lBmonitor.Receive)
+	dSet(d, "expected", lBmonitor.Expected)
 
 	if err := setLBMonitorExtensionData(d, lBmonitor); err != nil {
 		return err
@@ -312,6 +312,6 @@ func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LbMonito
 
 	}
 
-	d.Set("extension", extensionStorage)
+	dSet(d, "extension", extensionStorage)
 	return nil
 }

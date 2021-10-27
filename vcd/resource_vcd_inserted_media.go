@@ -168,6 +168,6 @@ func getVM(d *schema.ResourceData, meta interface{}) (*govcd.VM, *govcd.Org, err
 
 //update function for "eject_force"
 func resourceVcdMediaEjectUpdate(d *schema.ResourceData, m interface{}) error {
-	_ = d.Set("eject_force", d.Get("eject_force"))
+	dSet(d, "eject_force", d.Get("eject_force"))
 	return nil
 }

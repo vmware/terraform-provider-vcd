@@ -484,9 +484,9 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 				d.Id(), err)
 		}
 
-		_ = d.Set("org", orgName)
-		_ = d.Set("vdc", vdcName)
-		_ = d.Set("edge_gateway", edgeName)
+		dSet(d, "org", orgName)
+		dSet(d, "vdc", vdcName)
+		dSet(d, "edge_gateway", edgeName)
 
 		d.SetId(readFirewallRule.ID)
 		return []*schema.ResourceData{d}, nil
@@ -497,18 +497,18 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 
 // setFirewallRuleData is the main function used for setting Terraform schema
 func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
-	_ = d.Set("name", rule.Name)
-	_ = d.Set("enabled", rule.Enabled)
-	_ = d.Set("logging_enabled", rule.LoggingEnabled)
-	_ = d.Set("action", rule.Action)
-	_ = d.Set("rule_type", rule.RuleType)
+	dSet(d, "name", rule.Name)
+	dSet(d, "enabled", rule.Enabled)
+	dSet(d, "logging_enabled", rule.LoggingEnabled)
+	dSet(d, "action", rule.Action)
+	dSet(d, "rule_type", rule.RuleType)
 
 	if rule.RuleTag != "" {
 		value, err := strconv.Atoi(rule.RuleTag)
 		if err != nil {
 			return fmt.Errorf("could not convert ruletag (%s) from string to int: %s", rule.RuleTag, err)
 		}
-		_ = d.Set("rule_tag", value)
+		dSet(d, "rule_tag", value)
 	}
 
 	// Process and set "source" block

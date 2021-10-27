@@ -187,10 +187,10 @@ func resourceAccessControlVappRead(d *schema.ResourceData, meta interface{}) err
 			return fmt.Errorf("[resourceAccessControlVappRead] error setting access control list %s", err)
 		}
 	}
-	_ = d.Set("vapp_id", vapp.VApp.ID)
-	_ = d.Set("shared_with_everyone", accessControl.IsSharedToEveryone)
+	dSet(d, "vapp_id", vapp.VApp.ID)
+	dSet(d, "shared_with_everyone", accessControl.IsSharedToEveryone)
 	if accessControl.IsSharedToEveryone {
-		_ = d.Set("everyone_access_level", accessControl.EveryoneAccessLevel)
+		dSet(d, "everyone_access_level", accessControl.EveryoneAccessLevel)
 	}
 	d.SetId(vapp.VApp.ID)
 
@@ -266,9 +266,9 @@ func accessControlVappImport(d *schema.ResourceData, meta interface{}) ([]*schem
 			vappIdentifier, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("vapp_id", vapp.VApp.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "vapp_id", vapp.VApp.ID)
 	d.SetId(vapp.VApp.ID)
 
 	return []*schema.ResourceData{d}, nil

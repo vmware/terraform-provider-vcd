@@ -230,10 +230,10 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 			d.Id(), err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
-	d.Set("name", appProfileName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
+	dSet(d, "name", appProfileName)
 
 	d.SetId(readLBProfile.ID)
 	return []*schema.ResourceData{d}, nil
@@ -269,33 +269,33 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LbAppProfile, error) {
 }
 
 func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LbAppProfile) error {
-	d.Set("name", LBProfile.Name)
+	dSet(d, "name", LBProfile.Name)
 	// The 'type' field is lowercased for 'd.Set()' because we want to be consistent
 	// and ask the same casing for type in all resources, but they behave differently.
-	d.Set("type", strings.ToLower(LBProfile.Template))
-	d.Set("enable_ssl_passthrough", LBProfile.SslPassthrough)
-	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHttpHeader)
-	d.Set("enable_pool_side_ssl", LBProfile.ServerSslEnabled)
+	dSet(d, "type", strings.ToLower(LBProfile.Template))
+	dSet(d, "enable_ssl_passthrough", LBProfile.SslPassthrough)
+	dSet(d, "insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHttpHeader)
+	dSet(d, "enable_pool_side_ssl", LBProfile.ServerSslEnabled)
 	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
 	// never returned, nor shown
 	// d.Set("expiration", LBProfile.Expire)
 
 	if LBProfile.Persistence != nil {
-		d.Set("persistence_mechanism", LBProfile.Persistence.Method)
-		d.Set("cookie_name", LBProfile.Persistence.CookieName)
-		d.Set("cookie_mode", LBProfile.Persistence.CookieMode)
-		d.Set("expiration", LBProfile.Persistence.Expire)
+		dSet(d, "persistence_mechanism", LBProfile.Persistence.Method)
+		dSet(d, "cookie_name", LBProfile.Persistence.CookieName)
+		dSet(d, "cookie_mode", LBProfile.Persistence.CookieMode)
+		dSet(d, "expiration", LBProfile.Persistence.Expire)
 	} else {
-		d.Set("persistence_mechanism", "")
-		d.Set("cookie_name", "")
-		d.Set("cookie_mode", "")
-		d.Set("expiration", 0)
+		dSet(d, "persistence_mechanism", "")
+		dSet(d, "cookie_name", "")
+		dSet(d, "cookie_mode", "")
+		dSet(d, "expiration", 0)
 	}
 
 	if LBProfile.HttpRedirect != nil {
-		d.Set("http_redirect_url", LBProfile.HttpRedirect.To)
+		dSet(d, "http_redirect_url", LBProfile.HttpRedirect.To)
 	} else { // We still want to make sure it is empty
-		d.Set("http_redirect_url", "")
+		dSet(d, "http_redirect_url", "")
 	}
 
 	return nil

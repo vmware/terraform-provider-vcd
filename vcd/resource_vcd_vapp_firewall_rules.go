@@ -264,9 +264,9 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	_ = d.Set("enabled", vappNetwork.Configuration.Features.FirewallService.IsEnabled)
-	_ = d.Set("default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
-	_ = d.Set("log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
+	dSet(d, "enabled", vappNetwork.Configuration.Features.FirewallService.IsEnabled)
+	dSet(d, "default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
+	dSet(d, "log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
 
 	return nil
 }
@@ -413,13 +413,13 @@ func getNetworkRules(d *schema.ResourceData, meta interface{}, orgName, vdcName,
 	}
 
 	if vcdClient.Org != orgName {
-		d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	_ = d.Set("vapp_id", vapp.VApp.ID)
-	_ = d.Set("network_id", vappNetwork.ID)
+	dSet(d, "vapp_id", vapp.VApp.ID)
+	dSet(d, "network_id", vappNetwork.ID)
 	d.SetId(vappNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil

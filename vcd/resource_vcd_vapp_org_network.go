@@ -163,13 +163,13 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 		d.SetId(normalizeId("urn:vcloud:network:", networkId))
 	}
 
-	_ = d.Set("retain_ip_mac_enabled", *vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
+	dSet(d, "retain_ip_mac_enabled", *vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
 
 	isFenced := false
 	if vAppNetwork.Configuration.FenceMode == types.FenceModeNAT {
 		isFenced = true
 	}
-	_ = d.Set("is_fenced", isFenced)
+	dSet(d, "is_fenced", isFenced)
 	return nil
 }
 
@@ -285,13 +285,13 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
 	if vcdClient.Org != orgName {
-		_ = d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		_ = d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	_ = d.Set("org_network_name", networkName)
-	_ = d.Set("vapp_name", vappName)
+	dSet(d, "org_network_name", networkName)
+	dSet(d, "vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil
 }

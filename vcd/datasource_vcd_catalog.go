@@ -96,9 +96,9 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
-	_ = d.Set("description", catalog.Catalog.Description)
-	_ = d.Set("created", catalog.Catalog.DateCreated)
-	_ = d.Set("name", catalog.Catalog.Name)
+	dSet(d, "description", catalog.Catalog.Description)
+	dSet(d, "created", catalog.Catalog.DateCreated)
+	dSet(d, "name", catalog.Catalog.Name)
 	d.SetId(catalog.Catalog.ID)
 	return nil
 }

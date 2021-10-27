@@ -301,14 +301,14 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 	if d.Id() == "" {
 		d.SetId(normalizeId("urn:vcloud:network:", networkId))
 	}
-	_ = d.Set("description", vAppNetwork.Description)
+	dSet(d, "description", vAppNetwork.Description)
 	if config := vAppNetwork.Configuration; config != nil {
 		if config.IPScopes != nil {
-			_ = d.Set("gateway", config.IPScopes.IPScope[0].Gateway)
-			_ = d.Set("netmask", config.IPScopes.IPScope[0].Netmask)
-			_ = d.Set("dns1", config.IPScopes.IPScope[0].DNS1)
-			_ = d.Set("dns2", config.IPScopes.IPScope[0].DNS2)
-			_ = d.Set("dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
+			dSet(d, "gateway", config.IPScopes.IPScope[0].Gateway)
+			dSet(d, "netmask", config.IPScopes.IPScope[0].Netmask)
+			dSet(d, "dns1", config.IPScopes.IPScope[0].DNS1)
+			dSet(d, "dns2", config.IPScopes.IPScope[0].DNS2)
+			dSet(d, "dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
 		}
 		if config.Features != nil && config.Features.DhcpService != nil {
 			transformed := schema.NewSet(resourceVcdDhcpPoolHash, []interface{}{})
@@ -346,13 +346,13 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			}
 		}
 
-		_ = d.Set("guest_vlan_allowed", *config.GuestVlanAllowed)
+		dSet(d, "guest_vlan_allowed", *config.GuestVlanAllowed)
 		if config.ParentNetwork != nil {
-			_ = d.Set("org_network_name", config.ParentNetwork.Name)
+			dSet(d, "org_network_name", config.ParentNetwork.Name)
 		} else {
-			_ = d.Set("org_network_name", nil)
+			dSet(d, "org_network_name", nil)
 		}
-		_ = d.Set("retain_ip_mac_enabled", config.RetainNetInfoAcrossDeployments)
+		dSet(d, "retain_ip_mac_enabled", config.RetainNetInfoAcrossDeployments)
 	}
 	return nil
 }
@@ -496,13 +496,13 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
 	if vcdClient.Org != orgName {
-		_ = d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		_ = d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	_ = d.Set("name", networkName)
-	_ = d.Set("vapp_name", vappName)
+	dSet(d, "name", networkName)
+	dSet(d, "vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil
 }

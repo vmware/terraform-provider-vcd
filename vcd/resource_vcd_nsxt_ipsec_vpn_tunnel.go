@@ -463,9 +463,9 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 		return nil, fmt.Errorf("unable to find IPsec VPN Tunnels '%s': %s", ipSecVpnTunnelIdentifier, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(ipSecVpnTunnel.NsxtIpSecVpn.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -494,14 +494,14 @@ func getNsxtIpSecVpnTunnelType(d *schema.ResourceData) (*types.NsxtIpSecVpnTunne
 }
 
 func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.NsxtIpSecVpnTunnel) error {
-	_ = d.Set("name", ipSecVpnConfig.Name)
-	_ = d.Set("description", ipSecVpnConfig.Description)
-	_ = d.Set("pre_shared_key", ipSecVpnConfig.PreSharedKey)
-	_ = d.Set("enabled", ipSecVpnConfig.Enabled)
-	_ = d.Set("local_ip_address", ipSecVpnConfig.LocalEndpoint.LocalAddress)
-	_ = d.Set("enabled", ipSecVpnConfig.Enabled)
-	_ = d.Set("logging", ipSecVpnConfig.Logging)
-	_ = d.Set("security_profile", ipSecVpnConfig.SecurityType)
+	dSet(d, "name", ipSecVpnConfig.Name)
+	dSet(d, "description", ipSecVpnConfig.Description)
+	dSet(d, "pre_shared_key", ipSecVpnConfig.PreSharedKey)
+	dSet(d, "enabled", ipSecVpnConfig.Enabled)
+	dSet(d, "local_ip_address", ipSecVpnConfig.LocalEndpoint.LocalAddress)
+	dSet(d, "enabled", ipSecVpnConfig.Enabled)
+	dSet(d, "logging", ipSecVpnConfig.Logging)
+	dSet(d, "security_profile", ipSecVpnConfig.SecurityType)
 
 	localNetworksSet := convertStringsTotTypeSet(ipSecVpnConfig.LocalEndpoint.LocalNetworks)
 	err := d.Set("local_networks", localNetworksSet)
@@ -509,7 +509,7 @@ func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.Nsx
 		return fmt.Errorf("error storing 'local_networks': %s", err)
 	}
 
-	_ = d.Set("remote_ip_address", ipSecVpnConfig.RemoteEndpoint.RemoteAddress)
+	dSet(d, "remote_ip_address", ipSecVpnConfig.RemoteEndpoint.RemoteAddress)
 	remoteNetworksSet := convertStringsTotTypeSet(ipSecVpnConfig.RemoteEndpoint.RemoteNetworks)
 	err = d.Set("remote_networks", remoteNetworksSet)
 	if err != nil {
@@ -520,9 +520,9 @@ func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.Nsx
 }
 
 func setNsxtIpSecVpnTunnelStatusData(d *schema.ResourceData, ipSecVpnStatus *types.NsxtIpSecVpnTunnelStatus) {
-	_ = d.Set("status", ipSecVpnStatus.TunnelStatus)
-	_ = d.Set("ike_service_status", ipSecVpnStatus.IkeStatus.IkeServiceStatus)
-	_ = d.Set("ike_fail_reason", ipSecVpnStatus.IkeStatus.FailReason)
+	dSet(d, "status", ipSecVpnStatus.TunnelStatus)
+	dSet(d, "ike_service_status", ipSecVpnStatus.IkeStatus.IkeServiceStatus)
+	dSet(d, "ike_fail_reason", ipSecVpnStatus.IkeStatus.FailReason)
 }
 
 func getNsxtIpSecVpnProfileTunnelConfigurationType(d *schema.ResourceData) (*types.NsxtIpSecVpnTunnelSecurityProfile, error) {

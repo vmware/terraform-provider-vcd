@@ -106,10 +106,10 @@ func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding group %s: %s", d.Id(), err)
 	}
 
-	d.Set("name", group.Group.Name)
-	d.Set("description", group.Group.Description)
-	d.Set("role", group.Group.Role.Name)
-	d.Set("provider_type", group.Group.ProviderType)
+	dSet(d, "name", group.Group.Name)
+	dSet(d, "description", group.Group.Description)
+	dSet(d, "role", group.Group.Role.Name)
+	dSet(d, "provider_type", group.Group.ProviderType)
 
 	return nil
 }

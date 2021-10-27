@@ -351,15 +351,15 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	_ = d.Set("bus_type", internalDiskBusTypesFromValues[strings.ToLower(diskSettings.AdapterType)])
-	_ = d.Set("size_in_mb", diskSettings.SizeMb)
-	_ = d.Set("bus_number", diskSettings.BusNumber)
-	_ = d.Set("unit_number", diskSettings.UnitNumber)
+	dSet(d, "bus_type", internalDiskBusTypesFromValues[strings.ToLower(diskSettings.AdapterType)])
+	dSet(d, "size_in_mb", diskSettings.SizeMb)
+	dSet(d, "bus_number", diskSettings.BusNumber)
+	dSet(d, "unit_number", diskSettings.UnitNumber)
 	if diskSettings.ThinProvisioned != nil {
-		_ = d.Set("thin_provisioned", *diskSettings.ThinProvisioned)
+		dSet(d, "thin_provisioned", *diskSettings.ThinProvisioned)
 	}
-	_ = d.Set("iops", diskSettings.Iops)
-	_ = d.Set("storage_profile", diskSettings.StorageProfile.Name)
+	dSet(d, "iops", diskSettings.Iops)
+	dSet(d, "storage_profile", diskSettings.StorageProfile.Name)
 
 	return nil
 }
@@ -470,13 +470,13 @@ func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName,
 
 	d.SetId(disk.DiskId)
 	if vcdClient.Org != orgName {
-		d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	d.Set("vapp_name", vappName)
-	d.Set("vm_name", vmName)
-	d.Set("allow_vm_reboot", false)
+	dSet(d, "vapp_name", vappName)
+	dSet(d, "vm_name", vmName)
+	dSet(d, "allow_vm_reboot", false)
 	return []*schema.ResourceData{d}, nil
 }

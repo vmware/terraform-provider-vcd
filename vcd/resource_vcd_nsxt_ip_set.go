@@ -199,17 +199,17 @@ func resourceVcdNsxtIpSetImport(ctx context.Context, d *schema.ResourceData, met
 			ipSet.NsxtFirewallGroup.Name, ipSet.NsxtFirewallGroup.Type)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(ipSet.NsxtFirewallGroup.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func setNsxtIpSetData(d *schema.ResourceData, ipSetType *types.NsxtFirewallGroup) error {
-	_ = d.Set("name", ipSetType.Name)
-	_ = d.Set("description", ipSetType.Description)
+	dSet(d, "name", ipSetType.Name)
+	dSet(d, "description", ipSetType.Description)
 
 	ipSetSet := convertStringsTotTypeSet(ipSetType.IpAddresses)
 

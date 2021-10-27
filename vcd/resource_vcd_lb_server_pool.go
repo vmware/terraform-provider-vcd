@@ -252,10 +252,10 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer server pool with name %s: %s", d.Id(), err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
-	d.Set("name", poolName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
+	dSet(d, "name", poolName)
 
 	d.SetId(readLBPool.ID)
 	return []*schema.ResourceData{d}, nil
@@ -315,13 +315,13 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LbPoolMembers, error) {
 
 // setLBPoolData sets object state from *types.LbPool
 func setLBPoolData(d *schema.ResourceData, lBpool *types.LbPool) error {
-	d.Set("name", lBpool.Name)
-	d.Set("description", lBpool.Description)
-	d.Set("algorithm", lBpool.Algorithm)
+	dSet(d, "name", lBpool.Name)
+	dSet(d, "description", lBpool.Description)
+	dSet(d, "algorithm", lBpool.Algorithm)
 	// Optional attributes may not be necessary
-	d.Set("monitor_id", lBpool.MonitorId)
-	d.Set("enable_transparency", lBpool.Transparent)
-	d.Set("algorithm_parameters", lBpool.AlgorithmParameters)
+	dSet(d, "monitor_id", lBpool.MonitorId)
+	dSet(d, "enable_transparency", lBpool.Transparent)
+	dSet(d, "algorithm_parameters", lBpool.AlgorithmParameters)
 
 	return setLBPoolMembersData(d, lBpool.Members)
 }
@@ -346,7 +346,7 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LbPoolMemb
 		memberSet[index] = oneMember
 	}
 
-	d.Set("member", memberSet)
+	dSet(d, "member", memberSet)
 
 	return nil
 }

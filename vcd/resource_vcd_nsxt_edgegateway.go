@@ -263,8 +263,8 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 
 	d.SetId(edge.EdgeGateway.ID)
 
@@ -363,9 +363,9 @@ func getNsxtEdgeGatewayUplinkRangeTypes(subnetMap map[string]interface{}) []type
 
 // setNsxtEdgeGatewayData sets schema
 func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData) error {
-	_ = d.Set("name", e.Name)
-	_ = d.Set("description", e.Description)
-	_ = d.Set("edge_cluster_id", e.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
+	dSet(d, "name", e.Name)
+	dSet(d, "description", e.Description)
+	dSet(d, "edge_cluster_id", e.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
 	if len(e.EdgeGatewayUplinks) < 1 {
 		return fmt.Errorf("no edge gateway uplinks detected during read")
 	}
@@ -374,8 +374,8 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 	// Tier 1 gateway can only be connected to single Tier 0 gateway)
 	edgeUplink := e.EdgeGatewayUplinks[0]
 
-	_ = d.Set("dedicate_external_network", edgeUplink.Dedicated)
-	_ = d.Set("external_network_id", edgeUplink.UplinkID)
+	dSet(d, "dedicate_external_network", edgeUplink.Dedicated)
+	dSet(d, "external_network_id", edgeUplink.UplinkID)
 
 	// subnets
 	subnets := make([]interface{}, 1)
@@ -397,7 +397,7 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 		// If primary IP exists - set it to schema and computed variable at the top level for easier access
 		if subnetValue.PrimaryIP != "" {
 			oneSubnet["primary_ip"] = subnetValue.PrimaryIP
-			_ = d.Set("primary_ip", subnetValue.PrimaryIP)
+			dSet(d, "primary_ip", subnetValue.PrimaryIP)
 		}
 
 		// Check for allocated IPs

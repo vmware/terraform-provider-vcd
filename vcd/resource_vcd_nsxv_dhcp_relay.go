@@ -210,9 +210,9 @@ func resourceVcdNsxvDhcpRelayImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
 	d.SetId(compositeId)
 	return []*schema.ResourceData{d}, nil
 }

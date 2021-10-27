@@ -350,41 +350,41 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 // setOrgVdcData sets object state from *govcd.AdminVdc
 func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
 
-	_ = d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
+	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
-		_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
+		dSet(d, "cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
 	}
 	if adminVdc.AdminVdc.VCpuInMhz != nil {
-		_ = d.Set("cpu_speed", int(*adminVdc.AdminVdc.VCpuInMhz))
+		dSet(d, "cpu_speed", int(*adminVdc.AdminVdc.VCpuInMhz))
 	}
-	_ = d.Set("description", adminVdc.AdminVdc.Description)
+	dSet(d, "description", adminVdc.AdminVdc.Description)
 	if adminVdc.AdminVdc.UsesFastProvisioning != nil {
-		_ = d.Set("enable_fast_provisioning", *adminVdc.AdminVdc.UsesFastProvisioning)
+		dSet(d, "enable_fast_provisioning", *adminVdc.AdminVdc.UsesFastProvisioning)
 	}
 	if adminVdc.AdminVdc.IsThinProvision != nil {
-		_ = d.Set("enable_thin_provisioning", *adminVdc.AdminVdc.IsThinProvision)
+		dSet(d, "enable_thin_provisioning", *adminVdc.AdminVdc.IsThinProvision)
 	}
-	_ = d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
-	_ = d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
+	dSet(d, "enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
+	dSet(d, "enabled", adminVdc.AdminVdc.IsEnabled)
 	if adminVdc.AdminVdc.ResourceGuaranteedMemory != nil {
-		_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+		dSet(d, "memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
 	}
-	_ = d.Set("name", adminVdc.AdminVdc.Name)
+	dSet(d, "name", adminVdc.AdminVdc.Name)
 
 	if adminVdc.AdminVdc.NetworkPoolReference != nil {
 		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 		if err != nil {
 			return fmt.Errorf("error retrieving network pool: %s", err)
 		}
-		_ = d.Set("network_pool_name", networkPool.Name)
+		dSet(d, "network_pool_name", networkPool.Name)
 	}
 
-	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
-	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
+	dSet(d, "network_quota", adminVdc.AdminVdc.NetworkQuota)
+	dSet(d, "nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
 	if adminVdc.AdminVdc.ProviderVdcReference != nil {
-		_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+		dSet(d, "provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
 	}
-	_ = d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
+	dSet(d, "vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
 	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
 		return fmt.Errorf("error setting compute_capacity: %s", err)
@@ -403,11 +403,11 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	}
 
 	if adminVdc.AdminVdc.IsElastic != nil {
-		_ = d.Set("elasticity", *adminVdc.AdminVdc.IsElastic)
+		dSet(d, "elasticity", *adminVdc.AdminVdc.IsElastic)
 	}
 
 	if adminVdc.AdminVdc.IncludeMemoryOverhead != nil {
-		_ = d.Set("include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
+		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
 	vdcName := d.Get("name").(string)
@@ -438,7 +438,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		}
 		vmSizingPoliciesSet := convertStringsTotTypeSet(policyIds)
 
-		_ = d.Set("default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+		dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
 		err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
 		if err != nil {
@@ -1318,8 +1318,8 @@ func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schem
 		return nil, fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("name", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "name", vdcName)
 
 	d.SetId(adminVdc.AdminVdc.ID)
 

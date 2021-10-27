@@ -139,9 +139,9 @@ func genericGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta int
 		publishAll = *globalRole.GlobalRole.PublishAll
 	}
 	d.SetId(globalRole.GlobalRole.Id)
-	_ = d.Set("description", globalRole.GlobalRole.Description)
-	_ = d.Set("bundle_key", globalRole.GlobalRole.BundleKey)
-	_ = d.Set("read_only", globalRole.GlobalRole.ReadOnly)
+	dSet(d, "description", globalRole.GlobalRole.Description)
+	dSet(d, "bundle_key", globalRole.GlobalRole.BundleKey)
+	dSet(d, "read_only", globalRole.GlobalRole.ReadOnly)
 	err = d.Set("publish_to_all_tenants", publishAll)
 	if err != nil {
 		return diag.Errorf("[global role read-%s] error setting publish_to_all_tenants: %s", operation, err)
@@ -323,14 +323,14 @@ func resourceVcdGlobalRoleImport(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return nil, fmt.Errorf("[global role import] error retrieving global role %s: %s", globalRoleName, err)
 	}
-	_ = d.Set("name", globalRoleName)
-	_ = d.Set("description", globalRole.GlobalRole.Description)
-	_ = d.Set("bundle_key", globalRole.GlobalRole.BundleKey)
+	dSet(d, "name", globalRoleName)
+	dSet(d, "description", globalRole.GlobalRole.Description)
+	dSet(d, "bundle_key", globalRole.GlobalRole.BundleKey)
 	publishAll := false
 	if globalRole.GlobalRole.PublishAll != nil {
 		publishAll = *globalRole.GlobalRole.PublishAll
 	}
-	_ = d.Set("publish_to_all_tenants", publishAll)
+	dSet(d, "publish_to_all_tenants", publishAll)
 	d.SetId(globalRole.GlobalRole.Id)
 	return []*schema.ResourceData{d}, nil
 }

@@ -246,8 +246,8 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	setMainData(d, disk)
-	_ = d.Set("datastore_name", diskRecord.DataStoreName)
-	_ = d.Set("is_attached", diskRecord.IsAttached)
+	dSet(d, "datastore_name", diskRecord.DataStoreName)
+	dSet(d, "is_attached", diskRecord.IsAttached)
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
@@ -255,14 +255,14 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 
 func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	d.SetId(disk.Disk.Id)
-	_ = d.Set("name", disk.Disk.Name)
-	_ = d.Set("description", disk.Disk.Description)
-	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
-	_ = d.Set("size_in_mb", disk.Disk.SizeMb)
-	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
-	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
-	_ = d.Set("iops", disk.Disk.Iops)
-	_ = d.Set("owner_name", disk.Disk.Owner.User.Name)
+	dSet(d, "name", disk.Disk.Name)
+	dSet(d, "description", disk.Disk.Description)
+	dSet(d, "storage_profile", disk.Disk.StorageProfile.Name)
+	dSet(d, "size_in_mb", disk.Disk.SizeMb)
+	dSet(d, "bus_type", busTypesFromValues[disk.Disk.BusType])
+	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
+	dSet(d, "iops", disk.Disk.Iops)
+	dSet(d, "owner_name", disk.Disk.Owner.User.Name)
 }
 
 func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) error {
@@ -363,7 +363,7 @@ func getDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName
 	}
 
 	d.SetId(disk.Disk.Id)
-	_ = d.Set("name", disk.Disk.Name)
+	dSet(d, "name", disk.Disk.Name)
 	return []*schema.ResourceData{d}, nil
 }
 

@@ -283,9 +283,9 @@ func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("unable to find NAT Rule '%s': %s", natRuleIdentifier, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(natRule.NsxtNatRule.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -345,35 +345,35 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 }
 
 func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client *VCDClient) error {
-	_ = d.Set("name", rule.Name)
-	_ = d.Set("description", rule.Description)
-	_ = d.Set("external_address", rule.ExternalAddresses)
-	_ = d.Set("internal_address", rule.InternalAddresses)
-	_ = d.Set("snat_destination_address", rule.SnatDestinationAddresses)
-	_ = d.Set("logging", rule.Logging)
-	_ = d.Set("enabled", rule.Enabled)
+	dSet(d, "name", rule.Name)
+	dSet(d, "description", rule.Description)
+	dSet(d, "external_address", rule.ExternalAddresses)
+	dSet(d, "internal_address", rule.InternalAddresses)
+	dSet(d, "snat_destination_address", rule.SnatDestinationAddresses)
+	dSet(d, "logging", rule.Logging)
+	dSet(d, "enabled", rule.Enabled)
 	if rule.ApplicationPortProfile != nil {
-		_ = d.Set("app_port_profile_id", rule.ApplicationPortProfile.ID)
+		dSet(d, "app_port_profile_id", rule.ApplicationPortProfile.ID)
 	}
 
 	// Some specific changes in API V35.2 (VCD 10.2.2+)
 	if client.Client.APIVCDMaxVersionIs(">= 35.2") {
 		// firewall_match and priority are new fields introduces in VCD 10.2.2
-		_ = d.Set("firewall_match", rule.FirewallMatch)
-		_ = d.Set("priority", rule.Priority)
+		dSet(d, "firewall_match", rule.FirewallMatch)
+		dSet(d, "priority", rule.Priority)
 		// Before v35.2 the field to use is rule.InternalPort
-		_ = d.Set("dnat_external_port", rule.DnatExternalPort)
+		dSet(d, "dnat_external_port", rule.DnatExternalPort)
 	}
 
 	if client.Client.APIVCDMaxVersionIs("< 35.2") {
-		_ = d.Set("dnat_external_port", rule.InternalPort)
+		dSet(d, "dnat_external_port", rule.InternalPort)
 	}
 
 	// API V36.0+ uses Type field instead of RuleType
 	if client.Client.APIVCDMaxVersionIs(">= 36.0") {
-		_ = d.Set("rule_type", rule.Type)
+		dSet(d, "rule_type", rule.Type)
 	} else {
-		_ = d.Set("rule_type", rule.RuleType)
+		dSet(d, "rule_type", rule.RuleType)
 	}
 
 	return nil

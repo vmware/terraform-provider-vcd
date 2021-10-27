@@ -235,8 +235,8 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 // setVmSizingPolicy sets object state from *govcd.VdcComputePolicy
 func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) error {
 
-	_ = d.Set("name", policy.Name)
-	_ = d.Set("description", policy.Description)
+	dSet(d, "name", policy.Name)
+	dSet(d, "description", policy.Description)
 
 	var cpuList []map[string]interface{}
 	cpuMap := make(map[string]interface{})
@@ -580,10 +580,10 @@ func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, orgId, policyId
 	}
 
 	if vcdClient.Org != adminOrg.AdminOrg.Name && vcdClient.Org != adminOrg.AdminOrg.ID {
-		d.Set("org", adminOrg.AdminOrg.Name)
+		dSet(d, "org", adminOrg.AdminOrg.Name)
 	}
 
-	_ = d.Set("name", vmSizingPolicy.VdcComputePolicy.Name)
+	dSet(d, "name", vmSizingPolicy.VdcComputePolicy.Name)
 	d.SetId(vmSizingPolicy.VdcComputePolicy.ID)
 
 	return []*schema.ResourceData{d}, nil

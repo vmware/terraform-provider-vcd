@@ -243,15 +243,15 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 		return err
 	}
 
-	_ = d.Set("name", media.Media.Name)
-	_ = d.Set("description", media.Media.Description)
-	_ = d.Set("is_iso", mediaRecord.MediaRecord.IsIso)
-	_ = d.Set("owner_name", mediaRecord.MediaRecord.OwnerName)
-	_ = d.Set("is_published", mediaRecord.MediaRecord.IsPublished)
-	_ = d.Set("creation_date", mediaRecord.MediaRecord.CreationDate)
-	_ = d.Set("size", mediaRecord.MediaRecord.StorageB)
-	_ = d.Set("status", mediaRecord.MediaRecord.Status)
-	_ = d.Set("storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
+	dSet(d, "name", media.Media.Name)
+	dSet(d, "description", media.Media.Description)
+	dSet(d, "is_iso", mediaRecord.MediaRecord.IsIso)
+	dSet(d, "owner_name", mediaRecord.MediaRecord.OwnerName)
+	dSet(d, "is_published", mediaRecord.MediaRecord.IsPublished)
+	dSet(d, "creation_date", mediaRecord.MediaRecord.CreationDate)
+	dSet(d, "size", mediaRecord.MediaRecord.StorageB)
+	dSet(d, "status", mediaRecord.MediaRecord.Status)
+	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
 	metadata, err := media.GetMetadata()
 	if err != nil {
@@ -374,10 +374,10 @@ func resourceVcdCatalogMediaImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("catalog", catalogName)
-	_ = d.Set("name", mediaName)
-	_ = d.Set("description", media.Media.Description)
+	dSet(d, "org", orgName)
+	dSet(d, "catalog", catalogName)
+	dSet(d, "name", mediaName)
+	dSet(d, "description", media.Media.Description)
 	d.SetId(media.Media.ID)
 
 	return []*schema.ResourceData{d}, nil
