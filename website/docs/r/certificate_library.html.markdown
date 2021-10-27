@@ -16,11 +16,24 @@ Provides a resource to manage certificate in System or Org library.
 
 ```hcl
 resource "vcd_library_certificate" "new-certificate" {
-  org  = "myOrg"
-  alias = "SAML certificate"
-  description = "my description"
-  certificate = file("/home/user/cert.pem")
-  private_key = file("/home/user/key.pem")
+  org                    = "myOrg"
+  alias                  = "SAML certificate"
+  description            = "my description"
+  certificate            = file("/home/user/cert.pem")
+  private_key            = file("/home/user/key.pem")
+  private_key_passphrase = "passphrase"
+}
+```
+
+
+Creating certificate in System (Provider) context:
+```hcl
+resource "vcd_library_certificate" "new-certificate-for-system" {
+  org                    = "System"
+  alias                  = "provider certificate"
+  description            = "my description"
+  certificate            = file("/home/user/provider-cert.pem")
+  private_key            = file("/home/user/provider-key.pem")
   private_key_passphrase = "passphrase"
 }
 ```
