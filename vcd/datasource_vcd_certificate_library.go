@@ -8,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceCertificateInLibrary() *schema.Resource {
+func datasourceLibraryCertificate() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdCertificateInLibraryRead,
+		ReadContext: datasourceVcdLibraryCertificateRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -53,7 +53,7 @@ func datasourceCertificateInLibrary() *schema.Resource {
 	}
 }
 
-func datasourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdLibraryCertificateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)

@@ -11,8 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdCertificateInLibraryDS tests that existing certificate can be fetched
-func TestAccVcdCertificateInLibraryDS(t *testing.T) {
+// TestAccVcdLibraryCertificateDS tests that existing certificate can be fetched
+func TestAccVcdLibraryCertificateDS(t *testing.T) {
 	preTestChecks(t)
 
 	// This test requires access to the vCD before filling templates
@@ -41,10 +41,10 @@ func TestAccVcdCertificateInLibraryDS(t *testing.T) {
 		"IdSystem":    certificates[1].CertificateLibrary.Id,
 	}
 
-	template := testAccVcdCertificateInLibraryOrgDS
+	template := testAccVcdLibraryCertificateOrgDS
 	// add test part when test is run by System admin
 	if vcdClient.Client.IsSysAdmin {
-		template = template + testAccVcdCertificateInLibrarySysDS
+		template = template + testAccVcdLibraryCertificateSysDS
 	}
 
 	configText1 := templateFill(template, params)
@@ -122,7 +122,7 @@ func getAvailableCertificate(vcdClient *VCDClient) ([]*govcd.Certificate, error)
 	return []*govcd.Certificate{certificates[0], certificatesInSystem[0]}, nil
 }
 
-const testAccVcdCertificateInLibraryOrgDS = `
+const testAccVcdLibraryCertificateOrgDS = `
 data "vcd_library_certificate" "existing" {
   org    = "{{.Org}}"
   alias  = "{{.Alias}}"
@@ -134,7 +134,7 @@ data "vcd_library_certificate" "existingById" {
 }
 `
 
-const testAccVcdCertificateInLibrarySysDS = `
+const testAccVcdLibraryCertificateSysDS = `
 data "vcd_library_certificate" "existingSystem" {
   org    = "System"
   alias  = "{{.AliasSystem}}"

@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdCertificateInLibraryResource tests that certificate can add to library
-func TestAccVcdCertificateInLibraryResource(t *testing.T) {
+// TestAccVcdLibraryCertificateResource tests that certificate can add to library
+func TestAccVcdLibraryCertificateResource(t *testing.T) {
 	preTestChecks(t)
 
 	// This test requires access to the vCD before filling templates
@@ -29,12 +29,12 @@ func TestAccVcdCertificateInLibraryResource(t *testing.T) {
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,
-		"Alias":                    "TestAccVcdCertificateInLibraryResource",
-		"AliasUpdate":              "TestAccVcdCertificateInLibraryResourceUpdated",
-		"AliasSystem":              "TestAccVcdCertificateInLibraryResourceSys",
-		"AliasPrivate":             "TestAccVcdCertificateInLibraryResourcePrivate",
-		"AliasPrivateSystem":       "TestAccVcdCertificateInLibraryResourcePrivateSys",
-		"AliasPrivateSystemUpdate": "TestAccVcdCertificateInLibraryResourcePrivateSysUpdated",
+		"Alias":                    "TestAccVcdLibraryCertificateResource",
+		"AliasUpdate":              "TestAccVcdLibraryCertificateResourceUpdated",
+		"AliasSystem":              "TestAccVcdLibraryCertificateResourceSys",
+		"AliasPrivate":             "TestAccVcdLibraryCertificateResourcePrivate",
+		"AliasPrivateSystem":       "TestAccVcdLibraryCertificateResourcePrivateSys",
+		"AliasPrivateSystemUpdate": "TestAccVcdLibraryCertificateResourcePrivateSysUpdated",
 		"Certificate1Path":         testConfig.Certificates.Certificate1Path,
 		"Certificate2Path":         testConfig.Certificates.Certificate2Path,
 		"PrivateKey2":              testConfig.Certificates.Certificate2PrivateKeyPath,
@@ -51,11 +51,11 @@ func TestAccVcdCertificateInLibraryResource(t *testing.T) {
 		t.Skip(t.Name() + " only System Administrator can add Certificates")
 	}
 
-	configText1 := templateFill(testAccVcdCertificateInLibraryResource, params)
+	configText1 := templateFill(testAccVcdLibraryCertificateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-update"
-	configText2 := templateFill(testAccVcdCertificateInLibraryResourceUpdate, params)
+	configText2 := templateFill(testAccVcdLibraryCertificateResourceUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	resourceAddressOrgCert := "vcd_library_certificate.orgCertificate"
@@ -113,7 +113,7 @@ func TestAccVcdCertificateInLibraryResource(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdCertificateInLibraryResource = `
+const testAccVcdLibraryCertificateResource = `
 resource "vcd_library_certificate" "orgCertificate" {
   org         = "{{.Org}}"
   alias       = "{{.Alias}}"
@@ -147,7 +147,7 @@ resource "vcd_library_certificate" "sysCertificateWithPrivate" {
 }
 `
 
-const testAccVcdCertificateInLibraryResourceUpdate = `
+const testAccVcdLibraryCertificateResourceUpdate = `
 resource "vcd_library_certificate" "orgCertificate" {
   org         = "{{.Org}}"
   alias       = "{{.AliasUpdate}}"

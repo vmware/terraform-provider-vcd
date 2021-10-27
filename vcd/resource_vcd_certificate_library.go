@@ -12,14 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceCertificateInLibrary() *schema.Resource {
+func resourceLibraryCertificate() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:   resourceVcdCertificateInLibraryRead,
-		CreateContext: resourceVcdCertificateInLibraryCreate,
-		UpdateContext: resourceVcdCertificateInLibraryUpdate,
-		DeleteContext: resourceVcdAlbCertificateInLibraryDelete,
+		ReadContext:   resourceVcdLibraryCertificateRead,
+		CreateContext: resourceVcdLibraryCertificateCreate,
+		UpdateContext: resourceVcdLibraryCertificateUpdate,
+		DeleteContext: resourceVcdAlbLibraryCertificateDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceCertificateInLibraryImport,
+			StateContext: resourceLibraryCertificateImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -64,8 +64,8 @@ func resourceCertificateInLibrary() *schema.Resource {
 	}
 }
 
-// resourceVcdCertificateInLibraryCreate covers Create functionality for resource
-func resourceVcdCertificateInLibraryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdLibraryCertificateCreate covers Create functionality for resource
+func resourceVcdLibraryCertificateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -88,15 +88,15 @@ func resourceVcdCertificateInLibraryCreate(ctx context.Context, d *schema.Resour
 
 	}
 	d.SetId(createdCertificate.CertificateLibrary.Id)
-	return resourceVcdCertificateInLibraryRead(ctx, d, meta)
+	return resourceVcdLibraryCertificateRead(ctx, d, meta)
 }
 
 func isSysOrg(adminOrg *govcd.AdminOrg) bool {
 	return strings.EqualFold(adminOrg.AdminOrg.Name, "system")
 }
 
-// resourceVcdCertificateInLibraryUpdate covers Update functionality for resource
-func resourceVcdCertificateInLibraryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdLibraryCertificateUpdate covers Update functionality for resource
+func resourceVcdLibraryCertificateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -122,7 +122,7 @@ func resourceVcdCertificateInLibraryUpdate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("[certificate library update] : %s", err)
 	}
 
-	return resourceVcdCertificateInLibraryRead(ctx, d, meta)
+	return resourceVcdLibraryCertificateRead(ctx, d, meta)
 }
 
 func getCertificateConfigurationType(d *schema.ResourceData) *types.CertificateLibraryItem {
@@ -135,7 +135,7 @@ func getCertificateConfigurationType(d *schema.ResourceData) *types.CertificateL
 	}
 }
 
-func resourceVcdCertificateInLibraryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdLibraryCertificateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -168,7 +168,7 @@ func setCertificateConfigurationData(config *types.CertificateLibraryItem, d *sc
 	_ = d.Set("certificate", config.Certificate)
 }
 
-func resourceVcdAlbCertificateInLibraryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbLibraryCertificateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -189,7 +189,7 @@ func resourceVcdAlbCertificateInLibraryDelete(ctx context.Context, d *schema.Res
 	return diag.FromErr(certificateToDelete.Delete())
 }
 
-func resourceCertificateInLibraryImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceLibraryCertificateImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.certificate-name")
