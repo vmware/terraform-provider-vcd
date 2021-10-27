@@ -624,3 +624,10 @@ func buildUserAgent(version, sysOrg string) string {
 
 	return userAgent
 }
+
+func dSet(d *schema.ResourceData, key string, value interface{}) {
+	err := d.Set(key, value)
+	if err != nil {
+		panic(fmt.Sprintf("error in %s - key '%s': %s ", callFuncName(), key, err))
+	}
+}
