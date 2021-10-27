@@ -1,12 +1,12 @@
 **---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_certificate_in_library"
-sidebar_current: "docs-vcd-data-source-certificate-in-library"
+page_title: "VMware Cloud Director: vcd_library_certificate"
+sidebar_current: "docs-vcd-data-source-certificate-library"
 description: |-
 Provides a data source to read certificate in System or Org library.
 ---
 
-# vcd\_certificate\_in\_library
+# vcd\_certificate\_library
 Supported in provider *v3.5+* and VCD 10.2+.
 
 Provides a data source to read certificate in System or Org library and reference in other resources.
@@ -15,7 +15,7 @@ Provides a data source to read certificate in System or Org library and referenc
 ## Example Usage
 
 ```hcl
-data "vcd_certificate_in_library" "certificate1" {
+data "vcd_library_certificate" "certificate1" {
   org   = "myOrg"
   alias = "SAML Encryption"
 }
@@ -33,4 +33,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_certificate_in_library`](/providers/vmware/vcd/latest/docs/resources/vcd_certificate_in_library) resource are available.
+[`vcd_library_certificate`](/providers/vmware/vcd/latest/docs/resources/vcd_library_certificate) resource are available.

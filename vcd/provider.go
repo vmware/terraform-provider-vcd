@@ -86,7 +86,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_controller":           datasourceVcdAlbController(),         // 3.4
 	"vcd_nsxt_alb_cloud":                datasourceVcdAlbCloud(),              // 3.4
 	"vcd_nsxt_alb_service_engine_group": datasourceVcdAlbServiceEngineGroup(), // 3.4
-	"vcd_certificate_in_library":        datasourceCertificateInLibrary(),     // 3.5
+	"vcd_library_certificate":           datasourceCertificateInLibrary(),     // 3.5
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -146,7 +146,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_cloud":                resourceVcdAlbCloud(),                 // 3.4
 	"vcd_nsxt_alb_controller":           resourceVcdAlbController(),            // 3.4
 	"vcd_nsxt_alb_service_engine_group": resourceVcdAlbServiceEngineGroup(),    // 3.4
-	"vcd_certificate_in_library":        resourceCertificateInLibrary(),        // 3.5
+	"vcd_library_certificate":           resourceCertificateInLibrary(),        // 3.5
 }
 
 // Provider returns a terraform.ResourceProvider.

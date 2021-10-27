@@ -58,10 +58,10 @@ func TestAccVcdCertificateInLibraryResource(t *testing.T) {
 	configText2 := templateFill(testAccVcdCertificateInLibraryResourceUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
-	resourceAddressOrgCert := "vcd_certificate_in_library.orgCertificate"
-	resourceAddressOrgPrivateCert := "vcd_certificate_in_library.OrgWithPrivateCertificate"
-	resourceAddressSysCert := "vcd_certificate_in_library.sysCertificate"
-	resourceAddressSysPrivateCert := "vcd_certificate_in_library.sysCertificateWithPrivate"
+	resourceAddressOrgCert := "vcd_library_certificate.orgCertificate"
+	resourceAddressOrgPrivateCert := "vcd_library_certificate.OrgWithPrivateCertificate"
+	resourceAddressSysCert := "vcd_library_certificate.sysCertificate"
+	resourceAddressSysPrivateCert := "vcd_library_certificate.sysCertificateWithPrivate"
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -114,14 +114,14 @@ func TestAccVcdCertificateInLibraryResource(t *testing.T) {
 }
 
 const testAccVcdCertificateInLibraryResource = `
-resource "vcd_certificate_in_library" "orgCertificate" {
+resource "vcd_library_certificate" "orgCertificate" {
   org         = "{{.Org}}"
   alias       = "{{.Alias}}"
   description = "{{.Description1}}"
   certificate = file("{{.Certificate1Path}}")
 }
 
-resource "vcd_certificate_in_library" "OrgWithPrivateCertificate" {
+resource "vcd_library_certificate" "OrgWithPrivateCertificate" {
   org                    = "{{.Org}}"
   alias                  = "{{.AliasPrivate}}"
   description            = "{{.Description2}}"
@@ -130,14 +130,14 @@ resource "vcd_certificate_in_library" "OrgWithPrivateCertificate" {
   private_key_passphrase = "{{.PassPhrase}}"
 }
 
-resource "vcd_certificate_in_library" "sysCertificate" {
+resource "vcd_library_certificate" "sysCertificate" {
   org         = "System"
   alias       = "{{.AliasSystem}}"
   description = "{{.Description3}}"
   certificate = file("{{.Certificate1Path}}")
 }
 
-resource "vcd_certificate_in_library" "sysCertificateWithPrivate" {
+resource "vcd_library_certificate" "sysCertificateWithPrivate" {
   org                    = "System"
   alias                  = "{{.AliasPrivateSystem}}"
   description            = "{{.Description4}}"
@@ -148,14 +148,14 @@ resource "vcd_certificate_in_library" "sysCertificateWithPrivate" {
 `
 
 const testAccVcdCertificateInLibraryResourceUpdate = `
-resource "vcd_certificate_in_library" "orgCertificate" {
+resource "vcd_library_certificate" "orgCertificate" {
   org         = "{{.Org}}"
   alias       = "{{.AliasUpdate}}"
   description = "{{.Description1Update}}"
   certificate = file("{{.Certificate1Path}}")
 }
 
-resource "vcd_certificate_in_library" "sysCertificateWithPrivate" {
+resource "vcd_library_certificate" "sysCertificateWithPrivate" {
   org                    = "System"
   alias                  = "{{.AliasPrivateSystemUpdate}}"
   description            = "{{.Description4Update}}"

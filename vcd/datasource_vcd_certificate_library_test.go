@@ -51,27 +51,27 @@ func TestAccVcdCertificateInLibraryDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	checkFunctions := []resource.TestCheckFunc{
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existing", "alias", certificates[0].CertificateLibrary.Alias),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existing", "id", certificates[0].CertificateLibrary.Id),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existing", "description", certificates[0].CertificateLibrary.Description),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existing", "certificate", certificates[0].CertificateLibrary.Certificate),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingById", "alias", certificates[0].CertificateLibrary.Alias),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingById", "id", certificates[0].CertificateLibrary.Id),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingById", "description", certificates[0].CertificateLibrary.Description),
-		resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingById", "certificate", certificates[0].CertificateLibrary.Certificate),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existing", "alias", certificates[0].CertificateLibrary.Alias),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existing", "id", certificates[0].CertificateLibrary.Id),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existing", "description", certificates[0].CertificateLibrary.Description),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existing", "certificate", certificates[0].CertificateLibrary.Certificate),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existingById", "alias", certificates[0].CertificateLibrary.Alias),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existingById", "id", certificates[0].CertificateLibrary.Id),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existingById", "description", certificates[0].CertificateLibrary.Description),
+		resource.TestCheckResourceAttr("data.vcd_library_certificate.existingById", "certificate", certificates[0].CertificateLibrary.Certificate),
 	}
 
 	// add test part when test is run by System admin
 	if vcdClient.Client.IsSysAdmin {
 		sysCheckFunctions := []resource.TestCheckFunc{
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystem", "alias", certificates[1].CertificateLibrary.Alias),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystem", "id", certificates[1].CertificateLibrary.Id),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystem", "description", certificates[1].CertificateLibrary.Description),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystem", "certificate", certificates[1].CertificateLibrary.Certificate),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystemById", "alias", certificates[1].CertificateLibrary.Alias),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystemById", "id", certificates[1].CertificateLibrary.Id),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystemById", "description", certificates[1].CertificateLibrary.Description),
-			resource.TestCheckResourceAttr("data.vcd_certificate_in_library.existingSystemById", "certificate", certificates[1].CertificateLibrary.Certificate),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystem", "alias", certificates[1].CertificateLibrary.Alias),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystem", "id", certificates[1].CertificateLibrary.Id),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystem", "description", certificates[1].CertificateLibrary.Description),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystem", "certificate", certificates[1].CertificateLibrary.Certificate),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystemById", "alias", certificates[1].CertificateLibrary.Alias),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystemById", "id", certificates[1].CertificateLibrary.Id),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystemById", "description", certificates[1].CertificateLibrary.Description),
+			resource.TestCheckResourceAttr("data.vcd_library_certificate.existingSystemById", "certificate", certificates[1].CertificateLibrary.Certificate),
 		}
 		fmt.Printf("Sys admin part added \n")
 		checkFunctions = append(checkFunctions, sysCheckFunctions...)
@@ -123,24 +123,24 @@ func getAvailableCertificate(vcdClient *VCDClient) ([]*govcd.Certificate, error)
 }
 
 const testAccVcdCertificateInLibraryOrgDS = `
-data "vcd_certificate_in_library" "existing" {
+data "vcd_library_certificate" "existing" {
   org    = "{{.Org}}"
   alias  = "{{.Alias}}"
 }
 
-data "vcd_certificate_in_library" "existingById" {
+data "vcd_library_certificate" "existingById" {
   org = "{{.Org}}"
   id  = "{{.Id}}"
 }
 `
 
 const testAccVcdCertificateInLibrarySysDS = `
-data "vcd_certificate_in_library" "existingSystem" {
+data "vcd_library_certificate" "existingSystem" {
   org    = "System"
   alias  = "{{.AliasSystem}}"
 }
 
-data "vcd_certificate_in_library" "existingSystemById" {
+data "vcd_library_certificate" "existingSystemById" {
   org = "System"
   id  = "{{.IdSystem}}"
 }
