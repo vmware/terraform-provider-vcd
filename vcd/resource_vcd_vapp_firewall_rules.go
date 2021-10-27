@@ -2,13 +2,14 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
-	"text/tabwriter"
 )
 
 func resourceVcdVappFirewallRules() *schema.Resource {
@@ -434,7 +435,7 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 	}
 
 	stdout := getTerraformStdout()
-	_, _ = fmt.Fprintln(stdout, "Retrieving all vApp networks by name")
+	dumpFprintln(stdout, "Retrieving all vApp networks by name")
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve vApp by name: %s", err)
@@ -442,8 +443,8 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 
 	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tvApp ID\tID\tName\t")
-	fmt.Fprintln(writer, "--\t-------\t--\t----\t")
+	dumpFprintln(writer, "No\tvApp ID\tID\tName\t")
+	dumpFprintln(writer, "--\t-------\t--\t----\t")
 
 	for index, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
 		uuid, err := govcd.GetUuidFromHref(vappNetwork.Link.HREF, false)
@@ -451,12 +452,9 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 			return nil, fmt.Errorf("unable to parse vApp network ID: %s, %s", err, uuid)
 		}
 
-		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
+		dumpFprintf(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
 	}
-	err = writer.Flush()
-	if err != nil {
-		return nil, fmt.Errorf("unable to write to stdout: %s", err)
-	}
+	dumpFlush(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkRulesImport)
 }

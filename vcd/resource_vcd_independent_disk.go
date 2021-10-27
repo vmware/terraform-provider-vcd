@@ -134,18 +134,23 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	diskName := d.Get("name").(string)
-	diskRecord, _ := vdc.QueryDisk(diskName)
+	diskRecord, err := vdc.QueryDisk(diskName)
+	if err != nil {
+		return fmt.Errorf("error retrieving disk: %s", err)
+	}
 
 	if diskRecord != (govcd.DiskRecord{}) {
 		return fmt.Errorf("disk with such name already exist : %s", diskName)
 	}
 
-	var diskCreateParams *types.DiskCreateParams
+	var diskCreateParams = &types.DiskCreateParams{
+		Disk: &types.Disk{
+			Name: diskName,
+		},
+	}
+
 	if sizeProvided {
-		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
-			Name:   diskName,
-			SizeMb: int64(size.(int)),
-		}}
+		diskCreateParams.Disk.SizeMb = int64(size.(int))
 	}
 
 	var storageReference types.Reference
@@ -375,7 +380,7 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
-	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks by name")
+	dumpFprintln(getTerraformStdout(), "Retrieving all disks by name")
 	disks, err := vdc.GetDisksByName(diskName, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
@@ -383,12 +388,12 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 
 	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tName\tDescription\tSizeMb")
-	fmt.Fprintln(writer, "--\t--\t----\t------\t----")
+	dumpFprintln(writer, "No\tID\tName\tDescription\tSizeMb")
+	dumpFprintln(writer, "--\t--\t----\t------\t----")
 	for index, disk := range *disks {
-		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+		dumpFprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
 	}
-	writer.Flush()
+	dumpFlush(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
 }

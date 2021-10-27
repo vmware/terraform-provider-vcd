@@ -276,10 +276,6 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	d.SetId(d.Get("edge_gateway").(string))
 
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
 	return nil
 }
 

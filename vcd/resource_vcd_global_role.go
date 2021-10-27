@@ -283,9 +283,6 @@ func resourceGlobalRoleDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("[global role delete] error retrieving global role %s: %s", globalRoleName, err)
 	}
 
-	if err != nil {
-		return diag.Errorf("[global role delete] error retrieving global role %s: %s", globalRoleName, err)
-	}
 	err = globalRole.Delete()
 	if err != nil {
 		return diag.Errorf("[global role delete] error deleting global role %s: %s", globalRoleName, err)

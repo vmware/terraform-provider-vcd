@@ -118,6 +118,14 @@ func resourceVcdNsxtAppPortProfileCreate(ctx context.Context, d *schema.Resource
 		}
 	}
 
+	// Fix coverity warning
+	if org == nil {
+		return diag.Errorf("undefined 'org' property for vcd_nsxt_app_port_profile")
+	}
+	if vdc == nil {
+		return diag.Errorf("undefined 'vdc' property for vcd_nsxt_app_port_profile")
+	}
+
 	appPortProfile := getNsxtAppPortProfileType(d, org, vdc)
 
 	createdAppPortProfile, err := org.CreateNsxtAppPortProfile(appPortProfile)
@@ -155,6 +163,14 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.Errorf(errorRetrievingOrgAndVdc, err)
 		}
+	}
+
+	// Fix coverity warning
+	if org == nil {
+		return diag.Errorf("undefined 'org' property for vcd_nsxt_app_port_profile")
+	}
+	if vdc == nil {
+		return diag.Errorf("undefined 'vdc' property for vcd_nsxt_app_port_profile")
 	}
 
 	appPortProfile, err := org.GetNsxtAppPortProfileById(d.Id())

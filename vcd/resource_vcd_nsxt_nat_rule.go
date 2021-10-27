@@ -8,7 +8,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -385,20 +384,20 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 func dumpNatRulesToScreen(name string, allRules []*govcd.NsxtNatRule) {
 	stdout := getTerraformStdout()
 
-	fmt.Fprintf(stdout, "# The following NAT rules with Name '%s' are available\n", name)
-	fmt.Fprintf(stdout, "# Please use ID instead of Name in import path to pick exact rule\n")
+	dumpFprintf(stdout, "# The following NAT rules with Name '%s' are available\n", name)
+	dumpFprintf(stdout, "# Please use ID instead of Name in import path to pick exact rule\n")
 
 	w := tabwriter.NewWriter(stdout, 1, 1, 1, ' ', 0)
-	fmt.Fprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
+	dumpFprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
 	for _, rule := range allRules {
 		if rule.NsxtNatRule.Name != name {
 			continue
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+		dumpFprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 			rule.NsxtNatRule.ID, rule.NsxtNatRule.Name, rule.NsxtNatRule.RuleType, rule.NsxtNatRule.InternalAddresses,
 			rule.NsxtNatRule.ExternalAddresses)
 	}
 
-	w.Flush()
+	dumpFlush(w)
 }

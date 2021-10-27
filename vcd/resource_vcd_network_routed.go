@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdNetworkRouted() *schema.Resource {
@@ -190,7 +191,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if vdc.IsNsxt() {
-		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
+		dumpFprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
 	edgeGatewayName := d.Get("edge_gateway").(string)
@@ -475,11 +476,16 @@ func resourceVcdNetworkStaticIpPoolHash(v interface{}) int {
 	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%s-",
+	_, err := buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["start_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%s-",
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
-
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 	return hashcodeString(buf.String())
 }
 

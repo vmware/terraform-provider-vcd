@@ -281,7 +281,10 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	orgVdc, _ := adminOrg.GetVDCByName(orgVdcName, false)
+	orgVdc, err := adminOrg.GetVDCByName(orgVdcName, false)
+	if err != nil {
+		return err
+	}
 	if orgVdc != nil {
 		return fmt.Errorf("org VDC with such name already exists: %s", orgVdcName)
 	}

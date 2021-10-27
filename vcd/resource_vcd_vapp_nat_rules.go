@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
 )
 
 const (
@@ -166,7 +167,7 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
+		dumpFprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
 	}
 
 	d.SetId(vappNetwork.ID)
@@ -260,7 +261,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
+		dumpFprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
 	}
 
 	return nil

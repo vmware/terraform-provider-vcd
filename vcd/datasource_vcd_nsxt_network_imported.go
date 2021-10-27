@@ -127,6 +127,11 @@ func datasourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.Resourc
 		}
 	}
 
+	// Fix coverity warning
+	if network == nil {
+		return diag.Errorf("[datasourceVcdNsxtNetworkImportedRead] error defining network")
+	}
+
 	if !network.IsImported() {
 		return diag.Errorf("[nsxt imported network import] Org network with name '%s' found, but is not of type Imported (OPAQUE) (type is '%s')",
 			network.OpenApiOrgVdcNetwork.Name, network.GetType())

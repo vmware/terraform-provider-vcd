@@ -277,9 +277,6 @@ func resourceRightsBundleDelete(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("[rights bundle delete] error retrieving rights bundle %s: %s", rightsBundleName, err)
 	}
 
-	if err != nil {
-		return diag.Errorf("[rights bundle delete] error retrieving rights bundle %s: %s", rightsBundleName, err)
-	}
 	err = rightsBundle.Delete()
 	if err != nil {
 		return diag.Errorf("[rights bundle delete] error deleting rights bundle %s: %s", rightsBundleName, err)

@@ -275,7 +275,10 @@ func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}
 
 	d.SetId(extNetRes.ExternalNetwork.ID)
 
-	setExternalNetworkV2Data(d, extNetRes.ExternalNetwork, vcdClient)
+	err = setExternalNetworkV2Data(d, extNetRes.ExternalNetwork, vcdClient)
+	if err != nil {
+		return nil, err
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

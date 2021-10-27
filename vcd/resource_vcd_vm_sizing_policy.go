@@ -2,12 +2,13 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"net/url"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -228,6 +229,10 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 		d.SetId(policy.VdcComputePolicy.ID)
 	}
 
+	// Fix coverity warning
+	if policy == nil {
+		return fmt.Errorf("[genericVcdVmSizingPolicyRead] error defining sizing policy")
+	}
 	util.Logger.Printf("[TRACE] [get VM sizing policy] Retrieved by %s\n", method)
 	return setVmSizingPolicy(d, *policy.VdcComputePolicy)
 }
@@ -598,7 +603,7 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 	}
 
 	stdout := getTerraformStdout()
-	_, _ = fmt.Fprintln(stdout, "Retrieving all VM sizing policies")
+	dumpFprintln(stdout, "Retrieving all VM sizing policies")
 	policies, err := org.GetAllVdcComputePolicies(nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
@@ -606,16 +611,13 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 
 	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tName\t")
-	fmt.Fprintln(writer, "--\t--\t----\t")
+	dumpFprintln(writer, "No\tID\tName\t")
+	dumpFprintln(writer, "--\t--\t----\t")
 
 	for index, policy := range policies {
-		fmt.Fprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		dumpFprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
 	}
-	err = writer.Flush()
-	if err != nil {
-		return nil, fmt.Errorf("unable to write to stdout: %s", err)
-	}
+	dumpFlush(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpVmSizingPolicyImport)
 }

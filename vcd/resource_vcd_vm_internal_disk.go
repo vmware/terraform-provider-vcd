@@ -2,13 +2,14 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
-	"text/tabwriter"
 )
 
 func resourceVmInternalDisk() *schema.Resource {
@@ -425,7 +426,7 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
 	}
 
-	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks")
+	dumpFprintln(getTerraformStdout(), "Retrieving all disks")
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
 		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
 		return nil, fmt.Errorf("no internal disks found on VM: %s", vmName)
@@ -433,16 +434,16 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 
 	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
-	fmt.Fprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
+	dumpFprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
+	dumpFprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
 	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
 		if disk.Disk == nil {
-			fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
+			dumpFprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
 				disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
 		}
 	}
-	writer.Flush()
+	dumpFlush(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpInternalDiskImport)
 }

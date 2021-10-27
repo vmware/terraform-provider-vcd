@@ -762,9 +762,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		//create empty VM
 		vm, err := addEmptyVm(d, vcdClient, org, vdc, vappName)
 		if err != nil {
-			return err
-		}
-		if err != nil {
 			d.SetId("")
 			return fmt.Errorf("[VM creation] error creating standalone VM %s : %s", vmName, err)
 		}
@@ -2031,7 +2028,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 		log.Printf("[DEBUG] [VM read] [DHCP IP Lookup] '%s' DHCP is used on NICs %v with wait time '%d seconds'",
 			vm.VM.Name, dhcpNicIndexes, maxDhcpWaitSecondsInt)
 		if len(dhcpNicIndexes) == 0 {
-			_, _ = fmt.Fprint(getTerraformStdout(), "INFO: Using 'network_dhcp_wait_seconds' only "+
+			dumpFprint(getTerraformStdout(), "INFO: Using 'network_dhcp_wait_seconds' only "+
 				"makes sense if at least one NIC is using 'ip_allocation_mode=DHCP'\n")
 		}
 
@@ -2052,7 +2049,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 				log.Printf("[DEBUG] [VM read] [DHCP IP Lookup] VM %s timed out waiting %d seconds "+
 					"to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
 					"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
-				_, _ = fmt.Fprintf(getTerraformStdout(), "WARNING: VM %s timed out waiting %d seconds "+
+				dumpFprintf(getTerraformStdout(), "WARNING: VM %s timed out waiting %d seconds "+
 					"to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
 					"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
 			}

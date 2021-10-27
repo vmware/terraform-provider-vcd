@@ -166,7 +166,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if vdc.IsNsxt() {
-		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
+		dumpFprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
 	gatewayName := d.Get("gateway").(string)
@@ -272,6 +272,11 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 	case "resource-update":
 		// From update, we get the network directly
 		network = meta.(*govcd.OrgVDCNetwork)
+	}
+
+	// Fix coverity warning
+	if network == nil {
+		return fmt.Errorf("[genericVcdNetworkIsolatedRead] error defining network")
 	}
 
 	dSet(d, "name", network.OrgVDCNetwork.Name)
@@ -449,7 +454,7 @@ func resourceVcdNetworkIsolatedUpdate(d *schema.ResourceData, meta interface{}) 
 
 	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
 	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
-	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dnsSuffix
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNSSuffix = dnsSuffix
 
 	err = network.Update()
 	if err != nil {

@@ -1,18 +1,21 @@
 package vcd
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func init() {
@@ -551,7 +554,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Token + "#" +
 		c.SysOrg + "#" +
 		c.Href
-	checksum := fmt.Sprintf("%x", sha1.Sum([]byte(rawData)))
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(rawData)))
 
 	// The cached connection is served only if the variable VCD_CACHE is set
 	cachedVCDClients.Lock()
@@ -625,9 +628,43 @@ func buildUserAgent(version, sysOrg string) string {
 	return userAgent
 }
 
+// dSet sets the value of a schema property, discarding the error
+// Use only for scalar values (strings, booleans, and numbers)
 func dSet(d *schema.ResourceData, key string, value interface{}) {
 	err := d.Set(key, value)
 	if err != nil {
 		panic(fmt.Sprintf("error in %s - key '%s': %s ", callFuncName(), key, err))
+	}
+}
+
+// dumpFprint calls fmt.Fprint and discards the error
+func dumpFprint(w io.Writer, a ...interface{}) {
+	_, err := fmt.Fprint(w, a...)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
+	}
+}
+
+// dumpFprintf calls fmt.Fprintf and discards the error
+func dumpFprintf(w io.Writer, format string, a ...interface{}) {
+	_, err := fmt.Fprintf(w, format, a...)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
+	}
+}
+
+// dumpFprintln calls fmt.Fprintln and discards the error
+func dumpFprintln(w io.Writer, a ...interface{}) {
+	_, err := fmt.Fprintln(w, a...)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
+	}
+}
+
+// dumpFlush calls writer.Flush and discards the error
+func dumpFlush(w *tabwriter.Writer) {
+	err := w.Flush()
+	if err != nil {
+		util.Logger.Printf("[ERROR] error flushing terraform stdout: %s", err)
 	}
 }

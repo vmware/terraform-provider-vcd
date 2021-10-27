@@ -9,7 +9,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -593,21 +592,20 @@ func setNsxtIpSecVpnProfileTunnelConfigurationData(d *schema.ResourceData, tunne
 func dumpIpSecVpnTunnelsToScreen(name string, allTunnels []*govcd.NsxtIpSecVpnTunnel) {
 	stdout := getTerraformStdout()
 
-	fmt.Fprintf(stdout, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
-	fmt.Fprintf(stdout, "# Please use ID instead of Name in import path to pick exact ipSecVpnTunnel\n")
+	dumpFprintf(stdout, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
+	dumpFprintf(stdout, "# Please use ID instead of Name in import path to pick exact ipSecVpnTunnel\n")
 
 	w := tabwriter.NewWriter(stdout, 1, 1, 1, ' ', 0)
-	fmt.Fprintln(w, "ID\tName\tLocal IP\tRemote IP")
+	dumpFprintln(w, "ID\tName\tLocal IP\tRemote IP")
 	for _, ipSecVpnTunnel := range allTunnels {
 		if ipSecVpnTunnel.NsxtIpSecVpn.Name != name {
 			continue
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		dumpFprintf(w, "%s\t%s\t%s\t%s\n",
 			ipSecVpnTunnel.NsxtIpSecVpn.ID, ipSecVpnTunnel.NsxtIpSecVpn.Name,
 			ipSecVpnTunnel.NsxtIpSecVpn.LocalEndpoint.LocalAddress,
 			ipSecVpnTunnel.NsxtIpSecVpn.RemoteEndpoint.RemoteAddress)
 	}
-
-	w.Flush()
+	dumpFlush(w)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdVappNetwork() *schema.Resource {
@@ -510,14 +511,29 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 func resourceVcdDhcpPoolHash(v interface{}) int {
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%t-", m["enabled"].(bool)))
-	buf.WriteString(fmt.Sprintf("%d-", m["max_lease_time"].(int)))
-	buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	_, err := buf.WriteString(fmt.Sprintf("%t-", m["enabled"].(bool)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%d-", m["max_lease_time"].(int)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 	if m["start_address"] != nil {
-		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["start_address"].(string))))
+		_, err = buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["start_address"].(string))))
+		if err != nil {
+			util.Logger.Printf("[ERROR] error writing to string: %s", err)
+		}
 	}
 	if m["end_address"] != nil {
-		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
+		_, err = buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
+		if err != nil {
+			util.Logger.Printf("[ERROR] error writing to string: %s", err)
+		}
 	}
 	return hashcodeString(buf.String())
 }
