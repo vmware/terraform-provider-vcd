@@ -14,6 +14,15 @@ import (
 func TestAccVcdLibraryCertificateResource(t *testing.T) {
 	preTestChecks(t)
 
+	vcdClient := createTemporaryVCDConnection()
+	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
+		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
+	}
+
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can add Certificates")
+	}
+
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -21,9 +30,10 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
+	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
+		testConfig.Certificates.Certificate2PrivateKeyPath == "" || testConfig.Certificates.Certificate2Pass == "" {
+		t.Skip("Variables Certificates.Certificate1Path, Certificates.Certificate2Path2, " +
+			"Certificates.Certificate2PrivateKeyPath, Certificates.Certificate2Pass must be set")
 	}
 
 	// String map to fill the template
@@ -45,10 +55,6 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 		"Description3":             "myDescription 3",
 		"Description4":             "myDescription 4",
 		"Description4Update":       "myDescription 4 updated",
-	}
-
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can add Certificates")
 	}
 
 	configText1 := templateFill(testAccVcdLibraryCertificateResource, params)
