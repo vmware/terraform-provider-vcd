@@ -99,34 +99,15 @@ func resourceVcdNsxtAppPortProfileCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	var org *govcd.Org
-	var vdc *govcd.Vdc
-
-	switch scope {
-	// PROVIDER scope does not require VDC, only Org
-	case types.ApplicationPortProfileScopeProvider:
-		org, err = vcdClient.GetOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrg, err)
-		}
-
-	// TENANT scope requires Org and VDC
-	case types.ApplicationPortProfileScopeTenant:
-		org, vdc, err = vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrgAndVdc, err)
-		}
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	// Fix coverity warning
-	if org == nil {
-		return diag.Errorf("undefined 'org' property for vcd_nsxt_app_port_profile")
+	appPortProfile, err := getNsxtAppPortProfileType(d, org, vcdClient)
+	if err != nil {
+		return diag.Errorf("error getting NSX-T Application Port Profile configuration: %s", err)
 	}
-	if vdc == nil {
-		return diag.Errorf("undefined 'vdc' property for vcd_nsxt_app_port_profile")
-	}
-
-	appPortProfile := getNsxtAppPortProfileType(d, org, vdc)
 
 	createdAppPortProfile, err := org.CreateNsxtAppPortProfile(appPortProfile)
 	if err != nil {
@@ -147,30 +128,9 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	var org *govcd.Org
-	var vdc *govcd.Vdc
-
-	switch scope {
-	// PROVIDER scope does not require VDC, only Org
-	case types.ApplicationPortProfileScopeProvider:
-		org, err = vcdClient.GetOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrg, err)
-		}
-	// TENANT scope requires Org and VDC
-	case types.ApplicationPortProfileScopeTenant:
-		org, vdc, err = vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrgAndVdc, err)
-		}
-	}
-
-	// Fix coverity warning
-	if org == nil {
-		return diag.Errorf("undefined 'org' property for vcd_nsxt_app_port_profile")
-	}
-	if vdc == nil {
-		return diag.Errorf("undefined 'vdc' property for vcd_nsxt_app_port_profile")
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	appPortProfile, err := org.GetNsxtAppPortProfileById(d.Id())
@@ -178,7 +138,10 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error getting NSX-T Application Port Profile: %s", err)
 	}
 
-	updateappPortProfile := getNsxtAppPortProfileType(d, org, vdc)
+	updateappPortProfile, err := getNsxtAppPortProfileType(d, org, vcdClient)
+	if err != nil {
+		return diag.Errorf("error getting NSX-T Application Port Profile configuration: %s", err)
+	}
 	// Inject existing ID for update
 	updateappPortProfile.ID = d.Id()
 
@@ -341,7 +304,7 @@ func validateScope(scope, nsxtManagerId, orgName string) error {
 	return nil
 }
 
-func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vdc *govcd.Vdc) *types.NsxtAppPortProfile {
+func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vcdClient *VCDClient) (*types.NsxtAppPortProfile, error) {
 	appPortProfileConfig := &types.NsxtAppPortProfile{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -354,6 +317,11 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vdc *govc
 		appPortProfileConfig.ContextEntityId = nsxtManagerUrn
 	case types.ApplicationPortProfileScopeTenant:
 		appPortProfileConfig.OrgRef = &types.OpenApiReference{ID: org.Org.ID}
+		// Tenant scope requires VDC
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		}
 		appPortProfileConfig.ContextEntityId = vdc.Vdc.ID
 	}
 
@@ -372,7 +340,7 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vdc *govc
 		appPortProfileConfig.ApplicationPorts = applicationPorts
 	}
 
-	return appPortProfileConfig
+	return appPortProfileConfig, nil
 }
 
 // setNsxtAppPortProfileData sets Terraform schema from types.NsxtAppPortProfile
