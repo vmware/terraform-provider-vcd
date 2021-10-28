@@ -10,6 +10,7 @@ description: |-
 Supported in provider *v3.5+* and VCD 10.2+.
 
 Provides a data source to read certificate in System or Org library and reference in other resources.
+
 ~> Only `System Administrator` can access System certificates using this data source.
 
 ## Example Usage
