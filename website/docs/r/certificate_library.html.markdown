@@ -1,9 +1,9 @@
-**---
+---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_library_certificate"
 sidebar_current: "docs-vcd-resource-certificate-library"
 description: |-
-Provides a certificate in System or Org library resource.
+  Provides a certificate in System or Org library resource.
 ---
 
 # vcd\_certificate\_library

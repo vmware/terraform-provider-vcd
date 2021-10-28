@@ -1,9 +1,9 @@
-**---
+---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_library_certificate"
 sidebar_current: "docs-vcd-data-source-certificate-library"
 description: |-
-Provides a data source to read certificate in System or Org library.
+  Provides a data source to read certificate in System or Org library.
 ---
 
 # vcd\_certificate\_library
