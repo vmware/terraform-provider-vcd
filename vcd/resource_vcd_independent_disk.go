@@ -135,7 +135,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 
 	diskName := d.Get("name").(string)
 	diskRecord, err := vdc.QueryDisk(diskName)
-	if diskRecord != (govcd.DiskRecord{})  || err == nil {
+	if diskRecord != (govcd.DiskRecord{}) || err == nil {
 		return fmt.Errorf("disk with such name already exist : %s", diskName)
 	}
 
