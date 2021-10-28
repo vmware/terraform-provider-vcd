@@ -1825,11 +1825,14 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%s-",
+	_, err := buf.WriteString(fmt.Sprintf("%s-",
 		m["name"].(string)))
 	// We use the name and no other identifier to calculate the hash
 	// With the VM resource, we assume that disks have a unique name.
 	// In the event that this is not true, we return an error
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 	return hashcodeString(buf.String())
 }
 

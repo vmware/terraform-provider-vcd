@@ -494,16 +494,28 @@ func genericResourceVcdNetworkDhcpPoolHash(v interface{}, networkType string) in
 	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%s-",
+	_, err := buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["start_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%s-",
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%d-",
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%d-",
 		m["max_lease_time"].(int)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 
 	switch networkType {
 	case "isolated":
-		buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+		_, err = buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+		if err != nil {
+			util.Logger.Printf("[ERROR] error writing to string: %s", err)
+		}
 	case "routed":
 		// do nothing
 	default:
