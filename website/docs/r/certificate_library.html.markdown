@@ -10,6 +10,7 @@ description: |-
 Supported in provider *v3.5+* and VCD 10.2+.
 
 Provides a resource to manage certificate in System or Org library.
+
 ~> Only `System Administrator` can create this resource.
 
 ## Example Usage
