@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -631,6 +632,10 @@ func buildUserAgent(version, sysOrg string) string {
 // dSet sets the value of a schema property, discarding the error
 // Use only for scalar values (strings, booleans, and numbers)
 func dSet(d *schema.ResourceData, key string, value interface{}) {
+	if !isScalar(value) {
+		panic(fmt.Sprintf("ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) ",
+			reflect.TypeOf(value).Kind(), callFuncName()))
+	}
 	err := d.Set(key, value)
 	if err != nil {
 		panic(fmt.Sprintf("error in %s - key '%s': %s ", callFuncName(), key, err))
@@ -667,4 +672,16 @@ func dumpFlush(w *tabwriter.Writer) {
 	if err != nil {
 		util.Logger.Printf("[ERROR] error flushing terraform stdout: %s", err)
 	}
+}
+
+// isScalar returns true if its argument is not a composite object
+// we want strings, numbers, booleans
+func isScalar(t interface{}) bool {
+	typeOf := reflect.TypeOf(t)
+	switch typeOf.Kind().String() {
+	case "struct", "map", "array", "slice":
+		return false
+	}
+
+	return true
 }
