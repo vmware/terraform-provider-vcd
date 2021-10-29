@@ -26,8 +26,8 @@ resource "vcd_library_certificate" "new-certificate" {
 }
 ```
 
-
 Creating certificate in System (Provider) context:
+
 ```hcl
 resource "vcd_library_certificate" "new-certificate-for-system" {
   org                    = "System"
