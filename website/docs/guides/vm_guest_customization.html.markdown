@@ -46,9 +46,8 @@ There is a lot more to read about producing Ignition files that can be read in [
 docs](https://docs.fedoraproject.org/en-US/fedora-coreos/producing-ign/), but in this case we will
 just pick a quick example with minimal configuration in JSON.
 
-This Ignition configuration will create user `core` with password `asdf123` (hashed using `mkpasswd` in config as per
-[docs](https://docs.fedoraproject.org/en-US/fedora-coreos/authentication/#_using_password_authentication)) and set
-hostname to `core1` in guest. Store these contents in `ignition.json`
+This Ignition configuration will create user `core` with password `asdf123` (hashed using `mkpasswd` or other compatible
+hash generator) and set hostname to `core1` in guest. Store these contents in `ignition.json`
 ```json 
 {
     "ignition": {
