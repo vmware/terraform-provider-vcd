@@ -1,13 +1,13 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Guest Customization"
-sidebar_current: "docs-vcd-guides-guest-customization"
+page_title: "VMware Cloud Director: VM Guest Customization"
+sidebar_current: "docs-vcd-guides-vm-guest-customization"
 description: |-
-  Provides guidance on Guest Customization.
+  Provides guidance on VM Guest Customization.
 ---
 
 
-# Guest Customization
+# VM Guest Customization
 
 Guest Customization allows users to supply custom configuration for new VMs which is inevitable in
 cloud environments. Unfortunately there is no single mechanism for this task and one must pick one of
