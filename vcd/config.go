@@ -632,7 +632,7 @@ func buildUserAgent(version, sysOrg string) string {
 // dSet sets the value of a schema property, discarding the error
 // Use only for scalar values (strings, booleans, and numbers)
 func dSet(d *schema.ResourceData, key string, value interface{}) {
-	if !isScalar(value) {
+	if value != nil && !isScalar(value) {
 		panic(fmt.Sprintf("ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) ",
 			reflect.TypeOf(value).Kind(), callFuncName()))
 	}
@@ -677,6 +677,9 @@ func dumpFlush(w *tabwriter.Writer) {
 // isScalar returns true if its argument is not a composite object
 // we want strings, numbers, booleans
 func isScalar(t interface{}) bool {
+	if t == nil {
+		return true
+	}
 	typeOf := reflect.TypeOf(t)
 	switch typeOf.Kind().String() {
 	case "struct", "map", "array", "slice":

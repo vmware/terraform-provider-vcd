@@ -3,17 +3,28 @@
 
 package vcd
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func Test_isScalar(t *testing.T) {
 	type args struct {
 		t interface{}
 	}
+	var stringSlice interface{} = []string{"a", "b"}
+	var interfaceScalar1 interface{} = "a"
+	var interfaceScalar2 interface{} = 42
 	tests := []struct {
 		name string
 		args args
 		want bool
 	}{
+		{
+			name: "scalar-nil",
+			args: args{nil},
+			want: true,
+		},
 		{
 			name: "scalar-string",
 			args: args{"hello"},
@@ -50,6 +61,16 @@ func Test_isScalar(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "scalar-interface1",
+			args: args{interfaceScalar1},
+			want: true,
+		},
+		{
+			name: "scalar-interface2",
+			args: args{interfaceScalar2},
+			want: true,
+		},
+		{
 			name: "struct",
 			args: args{struct{}{}},
 			want: false,
@@ -82,6 +103,21 @@ func Test_isScalar(t *testing.T) {
 		{
 			name: "array of structs",
 			args: args{[2]struct{}{{}, {}}},
+			want: false,
+		},
+		{
+			name: "array of interface",
+			args: args{[3]interface{}{1, "aaa", true}},
+			want: false,
+		},
+		{
+			name: "interface as slice",
+			args: args{stringSlice},
+			want: false,
+		},
+		{
+			name: "library object1",
+			args: args{time.Now()},
 			want: false,
 		},
 	}
