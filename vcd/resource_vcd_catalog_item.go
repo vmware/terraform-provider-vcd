@@ -111,7 +111,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 			if err := getError(task); err != nil {
 				return err
 			}
-			dumpFprint(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
+			fprintNoErr(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -126,7 +126,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 				log.Printf("vCD Error importing new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
-			dumpFprint(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
+			fprintNoErr(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}

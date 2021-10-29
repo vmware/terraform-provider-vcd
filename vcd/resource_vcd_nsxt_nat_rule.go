@@ -384,20 +384,20 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 func dumpNatRulesToScreen(name string, allRules []*govcd.NsxtNatRule) {
 	stdout := getTerraformStdout()
 
-	dumpFprintf(stdout, "# The following NAT rules with Name '%s' are available\n", name)
-	dumpFprintf(stdout, "# Please use ID instead of Name in import path to pick exact rule\n")
+	fprintfNoErr(stdout, "# The following NAT rules with Name '%s' are available\n", name)
+	fprintfNoErr(stdout, "# Please use ID instead of Name in import path to pick exact rule\n")
 
 	w := tabwriter.NewWriter(stdout, 1, 1, 1, ' ', 0)
-	dumpFprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
+	fprintlnNoErr(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
 	for _, rule := range allRules {
 		if rule.NsxtNatRule.Name != name {
 			continue
 		}
 
-		dumpFprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+		fprintfNoErr(w, "%s\t%s\t%s\t%s\t%s\n",
 			rule.NsxtNatRule.ID, rule.NsxtNatRule.Name, rule.NsxtNatRule.RuleType, rule.NsxtNatRule.InternalAddresses,
 			rule.NsxtNatRule.ExternalAddresses)
 	}
 
-	dumpFlush(w)
+	flushNoErr(w)
 }

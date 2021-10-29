@@ -376,7 +376,7 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
-	dumpFprintln(getTerraformStdout(), "Retrieving all disks by name")
+	fprintlnNoErr(getTerraformStdout(), "Retrieving all disks by name")
 	disks, err := vdc.GetDisksByName(diskName, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
@@ -384,12 +384,12 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 
 	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	dumpFprintln(writer, "No\tID\tName\tDescription\tSizeMb")
-	dumpFprintln(writer, "--\t--\t----\t------\t----")
+	fprintlnNoErr(writer, "No\tID\tName\tDescription\tSizeMb")
+	fprintlnNoErr(writer, "--\t--\t----\t------\t----")
 	for index, disk := range *disks {
-		dumpFprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+		fprintfNoErr(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
 	}
-	dumpFlush(writer)
+	flushNoErr(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
 }

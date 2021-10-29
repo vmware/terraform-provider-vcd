@@ -166,7 +166,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if vdc.IsNsxt() {
-		dumpFprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
+		fprintfNoErr(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
 	gatewayName := d.Get("gateway").(string)

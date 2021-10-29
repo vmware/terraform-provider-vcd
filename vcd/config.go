@@ -642,32 +642,32 @@ func dSet(d *schema.ResourceData, key string, value interface{}) {
 	}
 }
 
-// dumpFprint calls fmt.Fprint and discards the error
-func dumpFprint(w io.Writer, a ...interface{}) {
+// fprintNoErr calls fmt.Fprint and discards the error
+func fprintNoErr(w io.Writer, a ...interface{}) {
 	_, err := fmt.Fprint(w, a...)
 	if err != nil {
 		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
 	}
 }
 
-// dumpFprintf calls fmt.Fprintf and discards the error
-func dumpFprintf(w io.Writer, format string, a ...interface{}) {
+// fprintfNoErr calls fmt.Fprintf and discards the error
+func fprintfNoErr(w io.Writer, format string, a ...interface{}) {
 	_, err := fmt.Fprintf(w, format, a...)
 	if err != nil {
 		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
 	}
 }
 
-// dumpFprintln calls fmt.Fprintln and discards the error
-func dumpFprintln(w io.Writer, a ...interface{}) {
+// fprintlnNoErr calls fmt.Fprintln and discards the error
+func fprintlnNoErr(w io.Writer, a ...interface{}) {
 	_, err := fmt.Fprintln(w, a...)
 	if err != nil {
 		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
 	}
 }
 
-// dumpFlush calls writer.Flush and discards the error
-func dumpFlush(w *tabwriter.Writer) {
+// flushNoErr calls writer.Flush and discards the error
+func flushNoErr(w *tabwriter.Writer) {
 	err := w.Flush()
 	if err != nil {
 		util.Logger.Printf("[ERROR] error flushing terraform stdout: %s", err)

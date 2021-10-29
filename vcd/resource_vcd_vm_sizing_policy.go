@@ -603,7 +603,7 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 	}
 
 	stdout := getTerraformStdout()
-	dumpFprintln(stdout, "Retrieving all VM sizing policies")
+	fprintlnNoErr(stdout, "Retrieving all VM sizing policies")
 	policies, err := org.GetAllVdcComputePolicies(nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
@@ -611,13 +611,13 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 
 	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	dumpFprintln(writer, "No\tID\tName\t")
-	dumpFprintln(writer, "--\t--\t----\t")
+	fprintlnNoErr(writer, "No\tID\tName\t")
+	fprintlnNoErr(writer, "--\t--\t----\t")
 
 	for index, policy := range policies {
-		dumpFprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		fprintfNoErr(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
 	}
-	dumpFlush(writer)
+	flushNoErr(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpVmSizingPolicyImport)
 }

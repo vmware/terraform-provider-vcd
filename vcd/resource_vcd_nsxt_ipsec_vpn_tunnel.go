@@ -592,20 +592,20 @@ func setNsxtIpSecVpnProfileTunnelConfigurationData(d *schema.ResourceData, tunne
 func dumpIpSecVpnTunnelsToScreen(name string, allTunnels []*govcd.NsxtIpSecVpnTunnel) {
 	stdout := getTerraformStdout()
 
-	dumpFprintf(stdout, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
-	dumpFprintf(stdout, "# Please use ID instead of Name in import path to pick exact ipSecVpnTunnel\n")
+	fprintfNoErr(stdout, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
+	fprintfNoErr(stdout, "# Please use ID instead of Name in import path to pick exact ipSecVpnTunnel\n")
 
 	w := tabwriter.NewWriter(stdout, 1, 1, 1, ' ', 0)
-	dumpFprintln(w, "ID\tName\tLocal IP\tRemote IP")
+	fprintlnNoErr(w, "ID\tName\tLocal IP\tRemote IP")
 	for _, ipSecVpnTunnel := range allTunnels {
 		if ipSecVpnTunnel.NsxtIpSecVpn.Name != name {
 			continue
 		}
 
-		dumpFprintf(w, "%s\t%s\t%s\t%s\n",
+		fprintfNoErr(w, "%s\t%s\t%s\t%s\n",
 			ipSecVpnTunnel.NsxtIpSecVpn.ID, ipSecVpnTunnel.NsxtIpSecVpn.Name,
 			ipSecVpnTunnel.NsxtIpSecVpn.LocalEndpoint.LocalAddress,
 			ipSecVpnTunnel.NsxtIpSecVpn.RemoteEndpoint.RemoteAddress)
 	}
-	dumpFlush(w)
+	flushNoErr(w)
 }

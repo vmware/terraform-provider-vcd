@@ -143,7 +143,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 				return err
 			}
 
-			dumpFprint(terraformStdout, "vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%\n")
+			fprintNoErr(terraformStdout, "vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -158,7 +158,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 				log.Printf("vCD Error importing new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
-			dumpFprint(terraformStdout, "vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%\n")
+			fprintNoErr(terraformStdout, "vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}
