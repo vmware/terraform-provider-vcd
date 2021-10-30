@@ -633,8 +633,14 @@ func buildUserAgent(version, sysOrg string) string {
 // Use only for scalar values (strings, booleans, and numbers)
 func dSet(d *schema.ResourceData, key string, value interface{}) {
 	if value != nil && !isScalar(value) {
-		panic(fmt.Sprintf("ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) ",
-			reflect.TypeOf(value).Kind(), callFuncName()))
+		stdout := getTerraformStdout()
+		starLine := strings.Repeat("*", 80)
+		fprintlnNoErr(stdout, starLine)
+		fprintfNoErr(stdout,
+			"*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
+			reflect.TypeOf(value).Kind(), callFuncName())
+		fprintlnNoErr(stdout, starLine)
+		stdout.Close()
 	}
 	err := d.Set(key, value)
 	if err != nil {
