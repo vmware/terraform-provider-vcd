@@ -312,6 +312,5 @@ func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LbMonito
 
 	}
 
-	dSet(d, "extension", extensionStorage)
-	return nil
+	return d.Set("extension", extensionStorage)
 }

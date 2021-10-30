@@ -278,7 +278,5 @@ func setlBVirtualServerData(d *schema.ResourceData, lBVirtualServer *types.LbVir
 	dSet(d, "connection_rate_limit", lBVirtualServer.ConnectionRateLimit)
 	dSet(d, "app_profile_id", lBVirtualServer.ApplicationProfileId)
 	dSet(d, "server_pool_id", lBVirtualServer.DefaultPoolId)
-	dSet(d, "app_rule_ids", lBVirtualServer.ApplicationRuleIds)
-
-	return nil
+	return d.Set("app_rule_ids", lBVirtualServer.ApplicationRuleIds)
 }

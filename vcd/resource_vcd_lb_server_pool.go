@@ -346,7 +346,5 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LbPoolMemb
 		memberSet[index] = oneMember
 	}
 
-	dSet(d, "member", memberSet)
-
-	return nil
+	return d.Set("member", memberSet)
 }
