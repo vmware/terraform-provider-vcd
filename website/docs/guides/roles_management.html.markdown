@@ -39,7 +39,7 @@ script, and would also increase the amount of computing needed to run a script.
 To see the list of available rights, you can do one of the following:
 
 * make a data source of several existing Roles, Global Roles, or Rights Bundles, and use an `output` structure to show the contents;
-* use a data source of [`resource_list`](/providers/vmware/vcd/latest/docs/data-sources/resource_list) to show the rights available to a given organization.
+* use a data source of [`vcd_resource_list`](/providers/vmware/vcd/latest/docs/data-sources/resource_list) to show the rights available to a given organization.
 
 Examples:
 
