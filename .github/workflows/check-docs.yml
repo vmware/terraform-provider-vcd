@@ -1,8 +1,8 @@
 name: check-docs
 on:
   push:
-    # paths:
-    #   - 'website/**'
+    paths:
+      - 'website/**'
   pull_request:
     paths:
       - 'website/**'
