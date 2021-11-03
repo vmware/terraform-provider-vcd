@@ -24,5 +24,8 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - name: Get latest released version
+      run: echo "PROVIDER_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
     - name: hclcheck
       run: make hclcheck
