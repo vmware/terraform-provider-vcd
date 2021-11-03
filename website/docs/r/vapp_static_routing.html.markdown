@@ -21,15 +21,15 @@ modify, and delete static routing rules in a [vApp network](/providers/vmware/vc
 resource "vcd_vapp" "web" {
   name = "web"
 }
-​
+
 resource "vcd_vapp_network" "vapp-net" {
-  name               = "my-vapp-net"
-  vapp_name          = vcd_vapp.web.name
-  org_network_name   = "my-vdc-int-net"
-  gateway            = "192.168.2.1"
-  netmask            = "255.255.255.0"
-  dns1               = "192.168.2.1"
-​
+  name             = "my-vapp-net"
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = "my-vdc-int-net"
+  gateway          = "192.168.2.1"
+  netmask          = "255.255.255.0"
+  dns1             = "192.168.2.1"
+
   static_ip_pool {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"

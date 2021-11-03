@@ -412,7 +412,7 @@ Step 1 - Setup VM:
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "web2"
   catalog_name  = "Boxes"
   template_name = "windows"
@@ -432,7 +432,7 @@ Step 2 - Override some VM customization options and force customization (VM will
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-  #...
+  # ...
 
   network {
     type               = "org"
@@ -456,7 +456,7 @@ customization on every `terraform apply` command:
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-  #...
+  # ...
 
   network {
     type               = "org"

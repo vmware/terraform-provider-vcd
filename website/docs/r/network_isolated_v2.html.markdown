@@ -99,10 +99,10 @@ For example, using this structure, representing a isolated network that was **no
 
 ```hcl
 resource "vcd_network_isolated_v2" "tf-mynet" {
-  name              = "my-net"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  ...
+  name = "my-net"
+  org  = "my-org"
+  vdc  = "my-vdc"
+  # ...
 }
 ```
 

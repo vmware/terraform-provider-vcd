@@ -17,8 +17,8 @@ Supported in provider *v2.0+*
 
 ```hcl
 provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
+  user     = var.admin_user
+  password = var.admin_password
   org      = "System"
   url      = "https://AcmeVcd/api"
 }
