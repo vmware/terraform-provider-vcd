@@ -68,19 +68,12 @@ function terraform_validation_check {
     cp "$hcl_file" "$folder/validate/current.tf"
     cd "$folder/validate" || exit 1
 
-    # Allows to set the provider version as environment variable. If not defined it picks latest tag
-    providerVersion="$PROVIDER_VERSION"
-    if [ -z "$providerVersion" ]
-    then
-        providerVersion="$(git describe --abbrev=0 --tags | cut -d'v' -f 2)"
-    fi
-    
     echo "
 terraform {
   required_providers {
     vcd = {
       source  = \"vmware/vcd\"
-      version = \"$providerVersion\"
+      version = \"$(git describe --abbrev=0 --tags | cut -d'v' -f 2)\"
     }
     nsxt = {
       source = \"vmware/nsxt\"
