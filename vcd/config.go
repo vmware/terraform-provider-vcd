@@ -643,7 +643,6 @@ func dSet(d *schema.ResourceData, key string, value interface{}) {
 			"*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
 			reflect.TypeOf(value).Kind(), callFuncName())
 		fprintlnNoErr(stdout, starLine)
-		stdout.Close()
 	}
 	err := d.Set(key, value)
 	if err != nil {
