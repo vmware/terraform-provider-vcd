@@ -118,7 +118,7 @@ echo "------------------------------
     Summary:
 
     * Syntax errors: $SYNTAX_ERRORS
-    * Semantic errors $SEMANTIC_ERRORS
+    * Semantic errors: $SEMANTIC_ERRORS
 ------------------------------"
 
 # If at least terraform fmt failed - return non 0 exit code
