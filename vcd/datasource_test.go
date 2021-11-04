@@ -56,7 +56,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "" || !usingSysAdmin()):
 			t.Skip(`No NSX-T configuration detected or not running as System user`)
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
-			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group":
+			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
+			dataSourceName == "vcd_nsxt_alb_settings":
 			skipNoNsxtAlbConfiguration(t)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
