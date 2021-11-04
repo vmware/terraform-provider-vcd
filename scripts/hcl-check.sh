@@ -151,39 +151,6 @@ function print_times {
     fi
 }
 
-# Check if 'website' directory is present
-if [ ! -d "website" ] 
-then
-    echo "(!) ERROR: Expected to find 'website' directory. Please run the script from project root directory"
-    exit 1
-fi
-
-while [ "$1" != "" ]
-do
-  opt=$1
-  case $opt in
-    h|help)
-        get_help
-        ;;
-    d|debug)
-        if [ -z "$VERBOSE" ]
-        then
-            export DEBUG=1
-        fi
-        ;;
-    v|verbose)
-        if [ -z "$DEBUG" ]
-        then
-            export VERBOSE=1
-        fi
-        ;;
-    *)
-        get_help
-        ;;
-  esac
-  shift
-done
-
 # Prints the results of the format checking
 function print_summary {
     end_time=$(date +%s)
@@ -231,6 +198,38 @@ function print_summary {
     echo "$dash_line"
     echo ""
 }
+
+if [ ! -d "website" ] 
+then
+    echo "(!) ERROR: Expected to find 'website' directory. Please run the script from project root directory"
+    exit 1
+fi
+
+while [ "$1" != "" ]
+do
+  opt=$1
+  case $opt in
+    h|help)
+        get_help
+        ;;
+    d|debug)
+        if [ -z "$VERBOSE" ]
+        then
+            export DEBUG=1
+        fi
+        ;;
+    v|verbose)
+        if [ -z "$DEBUG" ]
+        then
+            export VERBOSE=1
+        fi
+        ;;
+    *)
+        get_help
+        ;;
+  esac
+  shift
+done
 
 start_time=$(date +%s)
 start_timestamp=$(date)
