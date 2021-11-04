@@ -52,7 +52,7 @@ function extract_hcl {
     flag {
     s = s $0 ORS
     }' ../website/docs/{*/,?}*markdown
-    hcl_number="$(ls | wc -l)"
+    hcl_number="$(ls | wc -l | tr -d ' ')"
     cd "$curdir" || exit 1
 }
 
