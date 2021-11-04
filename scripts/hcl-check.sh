@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SYNTAX_ERRORS=0
-SEMANTIC_ERRORS=0
+FMT_ERRORS=0
+INIT_ERRORS=0
 
 # extract_hcl searches for .markdown files by using glob 'website/docs/{*/,?}*markdown' in:
 # * website/docs/*.markdown
@@ -46,9 +46,9 @@ function terraform_fmt_check {
     terraform fmt -check $hcl_file &>/dev/null
     retVal=$?
     if [ $retVal -ne 0 ]; then
-        ((SYNTAX_ERRORS++))
+        ((FMT_ERRORS++))
 
-        echo "(!) ERROR: File ${hcl_file} contains syntax errors! (terraform fmt)"
+        echo "(!) ERROR: File ${hcl_file} contains format errors! (terraform fmt)"
         terraform fmt -no-color -diff -check $hcl_file 2>&1
     fi
 }
@@ -85,8 +85,8 @@ terraform {
     terraform init -no-color > /dev/null
     retVal=$?
     if [ $retVal -ne 0 ]; then
-        ((SEMANTIC_ERRORS++))
-        echo "(!) ERROR: File ${hcl_file} contains semantic errors! (terraform init)"
+        ((INIT_ERRORS++))
+        echo "(!) ERROR: File ${hcl_file} contains errors! (terraform init)"
     fi
 
     rm -f current.tf # We don't remove the provider so we don't download it everytime
@@ -117,12 +117,12 @@ done
 echo "------------------------------
     Summary:
 
-    * Syntax errors: $SYNTAX_ERRORS
-    * Semantic errors: $SEMANTIC_ERRORS
+    * terraform fmt errors: $FMT_ERRORS
+    * terraform init errors: $INIT_ERRORS
 ------------------------------"
 
 # If at least terraform fmt failed - return non 0 exit code
-if [[ $SYNTAX_ERRORS = 0 ]] && [[ $SEMANTIC_ERRORS = 0 ]]
+if [[ $FMT_ERRORS = 0 ]] && [[ $INIT_ERRORS = 0 ]]
 then
     echo 'Finished SUCCESSFULLY!'
     exit 0;
