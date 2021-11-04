@@ -127,15 +127,7 @@ terraform {
     echo ""
 }
 
-# Prints if verbose mode is enabled
-function echo_verbose {
-    if [ -n "$VERBOSE" ]
-    then
-        echo "$@"
-    fi
-}
-
-# Prints a progress symbol or the argument if in verbose mode
+# Prints a progress symbol or the argument if in verbose mode. Prints nothing if in debug mode.
 function print_progress {
     if [[ -n "$VERBOSE" ]]
     then
@@ -146,7 +138,7 @@ function print_progress {
     fi
 }
 
-# Prints a progress symbol or the argument if in verbose mode
+# Prints the time that it took to execute the given command
 function print_times {
     exec_command=$1
     command_start_time=$2
