@@ -13,7 +13,7 @@ import (
 func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
 	preTestChecks(t)
 
-	// This test requires access to the vCD before filling templates
+	// This test requires access to the VCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -22,7 +22,7 @@ func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
 
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
+		t.Skip(t.Name() + " requires at least API v35.0 (VCD 10.2+)")
 	}
 	skipNoNsxtAlbConfiguration(t)
 
