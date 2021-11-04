@@ -112,7 +112,7 @@ terraform {
   required_version = \">= 0.13\"
 }" > provider_setup.tf
 
-        terraform_result="$(terraform init -no-color > /dev/null 2>&1)"
+        terraform_result="$(terraform init -no-color 2>&1 > /dev/null)"
         if [ -n "$terraform_result" ]; then
             ((init_errors++))
             init_error_text="${init_error_text}${terraform_result}"
