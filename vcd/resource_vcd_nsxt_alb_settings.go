@@ -165,9 +165,9 @@ func resourceVcdAlbSettingsImport(ctx context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_id", edge.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 
 	d.SetId(edge.EdgeGateway.ID)
 
