@@ -9,13 +9,19 @@ tmp_dir='tmp'
 
 # Prints a full list of possible options of this script.
 function get_help {
-    echo "Syntax: $(basename $0) [options]"
+    echo "Syntax: $(basename "$0") [options]"
     echo "Where options are one or more of the following:"
-    echo "  h | help               Show this help and exit"
-    echo "  d | debug              Debug mode: shows information on the commands being executed"
-    echo "  v | verbose            Gives more info"
+    echo "  -h              Show this help and exit"
+    echo "  -d              Debug mode: shows information on the commands being executed"
+    echo "  -v              Gives more info"
     echo ""
     echo "NOTE: debug and verbose modes are mutually exclusive. Only the first one introduced as option will be active."
+    echo ""
+    echo "Examples"
+    echo "$(basename "$0") -v"
+    echo "$(basename "$0") -d"
+    echo "$(basename "$0") -vd # Will run only verbose mode. Debug is ignored"
+    echo "$(basename "$0") -dv # Will run only debug mode. Verbose is ignored"
     echo ""
     exit 0
 }
@@ -205,30 +211,35 @@ then
     exit 1
 fi
 
-while [ "$1" != "" ]
+opts=$(getopt "hdv" "$@")
+if [ $? -ne 0 ]
+then
+    get_help
+fi
+eval set -- "$opts"
+
+while true
 do
-  opt=$1
-  case $opt in
-    h|help)
-        get_help
-        ;;
-    d|debug)
-        if [ -z "$VERBOSE" ]
-        then
-            export DEBUG=1
-        fi
-        ;;
-    v|verbose)
-        if [ -z "$DEBUG" ]
-        then
-            export VERBOSE=1
-        fi
-        ;;
-    *)
-        get_help
-        ;;
-  esac
-  shift
+    case "$1"
+    in
+        -h)
+            get_help;;
+        -d)
+            if [ -z "$VERBOSE" ]
+            then
+                export DEBUG=1
+            fi
+            shift;;
+        -v)
+            if [ -z "$DEBUG" ]
+            then
+                export VERBOSE=1
+            fi
+            shift;;
+        --)
+            shift
+            break;;
+    esac
 done
 
 start_time=$(date +%s)
