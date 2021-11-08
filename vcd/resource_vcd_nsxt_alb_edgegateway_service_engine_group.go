@@ -12,14 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVcdAlbServiceEngineGroupAssignment() *schema.Resource {
+func resourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdAlbServiceEngineGroupAssignmentCreate,
-		UpdateContext: resourceVcdAlbServiceEngineGroupAssignmentUpdate,
-		ReadContext:   resourceVcdAlbServiceEngineGroupAssignmentRead,
-		DeleteContext: resourceVcdAlbServiceEngineGroupAssignmentDelete,
+		CreateContext: resourceVcdAlbEdgeGatewayServiceEngineGroupCreate,
+		UpdateContext: resourceVcdAlbEdgeGatewayServiceEngineGroupUpdate,
+		ReadContext:   resourceVcdAlbEdgeGatewayServiceEngineGroupRead,
+		DeleteContext: resourceVcdAlbEdgeGatewayServiceEngineGroupDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdEdgeAlbServiceEngineGroupImport,
+			StateContext: resourceVcdAlbEdgeGatewayServiceEngineGroupImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -63,83 +63,79 @@ func resourceVcdAlbServiceEngineGroupAssignment() *schema.Resource {
 			"deployed_virtual_services": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Number of reserved deployed virtual services for this Service Engine Group",
+				Description: "Number of deployed virtual services for this Service Engine Group",
 			},
 		},
 	}
 }
 
-func resourceVcdAlbServiceEngineGroupAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeAlbServiceEngineAssigmentConfig := getNsxtAlbServiceEngineGroupAssignmentType(d)
-	edgeAlbServiceEngineAssigment, err := vcdClient.CreateAlbServiceEngineGroupAssignment(edgeAlbServiceEngineAssigmentConfig)
+	edgeAlbServiceEngineGroupAssignmentConfig := getAlbServiceEngineGroupAssignmentType(d)
+	edgeAlbServiceEngineGroupAssignment, err := vcdClient.CreateAlbServiceEngineGroupAssignment(edgeAlbServiceEngineGroupAssignmentConfig)
 	if err != nil {
-		return diag.Errorf("error creating ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error creating ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
 
-	d.SetId(edgeAlbServiceEngineAssigment.NsxtAlbServiceEngineGroupAssignment.ID)
-
-	return resourceVcdAlbServiceEngineGroupAssignmentRead(ctx, d, meta)
+	d.SetId(edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
+	return resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx, d, meta)
 }
 
-func resourceVcdAlbServiceEngineGroupAssignmentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeAlbServiceEngineAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
+	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
 	if err != nil {
-		return diag.Errorf("error reading ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error reading ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
-	edgeAlbServiceEngineAssigmentConfig := getNsxtAlbServiceEngineGroupAssignmentType(d)
+	edgeAlbServiceEngineGroupAssignmentConfig := getAlbServiceEngineGroupAssignmentType(d)
 	// Inject correct ID for update
-	edgeAlbServiceEngineAssigmentConfig.ID = edgeAlbServiceEngineAssignment.NsxtAlbServiceEngineGroupAssignment.ID
-	updatedEdgeAlbServiceEngineAssigment, err := edgeAlbServiceEngineAssignment.Update(edgeAlbServiceEngineAssigmentConfig)
+	edgeAlbServiceEngineGroupAssignmentConfig.ID = edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID
+	updatedEdgeAlbServiceEngineGroupAssignment, err := edgeAlbServiceEngineGroupAssignment.Update(edgeAlbServiceEngineGroupAssignmentConfig)
 	if err != nil {
-		return diag.Errorf("error updating ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error updating ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
 
-	d.SetId(updatedEdgeAlbServiceEngineAssigment.NsxtAlbServiceEngineGroupAssignment.ID)
-
-	return resourceVcdAlbServiceEngineGroupAssignmentRead(ctx, d, meta)
+	d.SetId(updatedEdgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
+	return resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx, d, meta)
 }
 
-func resourceVcdAlbServiceEngineGroupAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	edgeAlbServiceEngineAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
+	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
 	if err != nil {
-		return diag.Errorf("error reading ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error reading ALB Service Engine Group assignment: %s", err)
 	}
-	setNsxtAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineAssignment.NsxtAlbServiceEngineGroupAssignment)
-
-	d.SetId(edgeAlbServiceEngineAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
-
+	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment)
+	d.SetId(edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
 	return nil
 }
 
-func resourceVcdAlbServiceEngineGroupAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeAlbServiceEngineAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
+	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
 	if err != nil {
-		return diag.Errorf("error reading ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error reading ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
 
-	err = edgeAlbServiceEngineAssignment.Delete()
+	err = edgeAlbServiceEngineGroupAssignment.Delete()
 	if err != nil {
-		return diag.Errorf("error deleting ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error deleting ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
 	return nil
 }
 
-func resourceVcdEdgeAlbServiceEngineGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	log.Printf("[TRACE] NSX-T ALB Service Engine Group Assignment import initiated")
+func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[TRACE] NSX-T ALB Service Engine Group assignment import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
@@ -151,7 +147,7 @@ func resourceVcdEdgeAlbServiceEngineGroupImport(ctx context.Context, d *schema.R
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find org %s: %s", vdcName, err)
+		return nil, fmt.Errorf("unable to find Org %s: %s", vdcName, err)
 	}
 
 	if vdc.IsNsxv() {
@@ -160,22 +156,21 @@ func resourceVcdEdgeAlbServiceEngineGroupImport(ctx context.Context, d *schema.R
 
 	edge, err := vdc.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}
 
 	seGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentByName(seGroupName)
 	if err != nil {
-		return nil, fmt.Errorf("errorr retrieving Servce Engine Group Assignment with Name '%s': %s", seGroupName, err)
+		return nil, fmt.Errorf("errorr retrieving Servce Engine Group assignment to Edge Gateway with Name '%s': %s",
+			seGroupName, err)
 	}
 
 	_ = d.Set("edge_gateway_id", edge.EdgeGateway.ID)
-
 	d.SetId(seGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
-
 	return []*schema.ResourceData{d}, nil
 }
 
-func setNsxtAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types.NsxtAlbServiceEngineGroupAssignment) {
+func setAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types.NsxtAlbServiceEngineGroupAssignment) {
 	_ = d.Set("edge_gateway_id", t.GatewayRef.ID)
 	_ = d.Set("service_engine_group_id", t.ServiceEngineGroupRef.ID)
 	_ = d.Set("max_virtual_services", t.MaxVirtualServices)
@@ -183,12 +178,14 @@ func setNsxtAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types
 	_ = d.Set("deployed_virtual_services", t.NumDeployedVirtualServices)
 }
 
-func getNsxtAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtAlbServiceEngineGroupAssignment {
+func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtAlbServiceEngineGroupAssignment {
 	edgeAlbServiceEngineAssigmentConfig := &types.NsxtAlbServiceEngineGroupAssignment{
 		GatewayRef:            &types.OpenApiReference{ID: d.Get("edge_gateway_id").(string)},
 		ServiceEngineGroupRef: &types.OpenApiReference{ID: d.Get("service_engine_group_id").(string)},
 	}
 
+	// Max Virtual Services and Reserved Virtual Services only work with SHARED Service Engine Group, but validation
+	// enforcement is left for VCD API.
 	if maxServicesInterface, isSet := d.GetOk("max_virtual_services"); isSet {
 		edgeAlbServiceEngineAssigmentConfig.MaxVirtualServices = takeIntPointer(maxServicesInterface.(int))
 	}

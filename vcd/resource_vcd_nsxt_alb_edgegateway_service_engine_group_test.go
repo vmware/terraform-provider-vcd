@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentDedicated(t *testing.T) {
+func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -39,11 +39,11 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentDedicated(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step1"
 	params["IsActive"] = "true"
-	configText1 := templateFill(testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated, params)
+	configText1 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicatedDS, params)
+	configText2 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	if vcdShortTest {
@@ -89,21 +89,21 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentDedicated(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated = testAccVcdNsxtAlbGeneralSettings + `
+const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated = testAccVcdNsxtAlbGeneralSettings + `
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 	edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 	service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 `
 
-const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicatedDS = testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated + `
+const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDS = testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated + `
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 	edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 	service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 `
 
-func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
+func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -132,12 +132,16 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step1"
 	params["IsActive"] = "true"
-	configText1 := templateFill(testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentShared, params)
+	configText1 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupShared, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentSharedDS, params)
+	configText2 := templateFill(testAccVcdNsxtAlbEdgeServiceEngineGroupSharedDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupSharedStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -161,7 +165,7 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "max_virtual_services", "100"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", "30"),
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", "0"),
 				),
 			},
 			resource.TestStep{
@@ -170,6 +174,15 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
 					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.test", nil),
+				),
+			},
+			resource.TestStep{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "max_virtual_services", "70"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", "35"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", "0"),
 				),
 			},
 			resource.TestStep{
@@ -183,7 +196,7 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentShared = testAccVcdNsxtAlbGeneralSettings + `
+const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupShared = testAccVcdNsxtAlbGeneralSettings + `
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
@@ -193,9 +206,19 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 }
 `
 
-const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentSharedDS = testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated + `
+const testAccVcdNsxtAlbEdgeServiceEngineGroupSharedDS = testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated + `
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+}
+`
+
+const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupSharedStep3 = testAccVcdNsxtAlbGeneralSettings + `
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+
+  max_virtual_services      = 70
+  reserved_virtual_services = 35
 }
 `

@@ -11,9 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdAlbServiceEngineGroupAssignment() *schema.Resource {
+func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdAlbServiceEngineGroupAssignmentRead,
+		ReadContext: datasourceVcdAlbEdgeGatewayServiceEngineGroupRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -60,7 +60,7 @@ func datasourceVcdAlbServiceEngineGroupAssignment() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbServiceEngineGroupAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
@@ -71,20 +71,18 @@ func datasourceVcdAlbServiceEngineGroupAssignmentRead(ctx context.Context, d *sc
 
 	edgeAlbServiceEngineAssignments, err := vcdClient.GetAllAlbServiceEngineGroupAssignments(queryParams)
 	if err != nil {
-		return diag.Errorf("error reading ALB Service Engine Group Assignment: %s", err)
+		return diag.Errorf("error reading ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
 
 	if len(edgeAlbServiceEngineAssignments) == 0 {
-		return diag.Errorf("%s", govcd.ErrorEntityNotFound)
+		return diag.FromErr(govcd.ErrorEntityNotFound)
 	}
 
 	if len(edgeAlbServiceEngineAssignments) > 1 {
-		return diag.Errorf("more than one Service Engine Group assignment found (%d)", len(edgeAlbServiceEngineAssignments))
+		return diag.Errorf("more than one Service Engine Group assignment to Edge Gateway found (%d)", len(edgeAlbServiceEngineAssignments))
 	}
 
-	setNsxtAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineAssignments[0].NsxtAlbServiceEngineGroupAssignment)
-
+	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineAssignments[0].NsxtAlbServiceEngineGroupAssignment)
 	d.SetId(edgeAlbServiceEngineAssignments[0].NsxtAlbServiceEngineGroupAssignment.ID)
-
 	return nil
 }
