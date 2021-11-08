@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_edge_service_engine_group"
+page_title: "VMware Cloud Director: vcd_nsxt_alb_edgegateway_service_engine_group"
 sidebar_current: "docs-vcd-resource-nsxt-alb-edge-service-engine-group"
 description: |-
 Provides a resource to manage NSX-T ALB Service Engine Group assignment to NSX-T Edge Gateway.
 ---
 
-# vcd\_nsxt\_alb\_edge\_service\_engine\_group
+# vcd\_nsxt\_alb\_edgegateway\_service\_engine\_group
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
@@ -24,7 +24,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "nsxt-gw"
 }
 
-resource "vcd_nsxt_alb_edge_service_engine_group" "test" {
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }

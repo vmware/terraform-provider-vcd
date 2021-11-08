@@ -65,21 +65,21 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentDedicated(t *testing.T) {
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "reserved_virtual_services", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", regexp.MustCompile(`\d*`)),
 				),
 			},
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
-					resourceFieldsEqual("data.vcd_nsxt_alb_edge_service_engine_group.test", "vcd_nsxt_alb_edge_service_engine_group.test", nil),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
+					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.test", nil),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_nsxt_alb_edge_service_engine_group.test",
+				ResourceName:      "vcd_nsxt_alb_edgegateway_service_engine_group.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["EdgeGw"].(string), "first-se"),
@@ -90,14 +90,14 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentDedicated(t *testing.T) {
 }
 
 const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated = testAccVcdNsxtAlbGeneralSettings + `
-resource "vcd_nsxt_alb_edge_service_engine_group" "test" {
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 	edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 	service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 `
 
 const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicatedDS = testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated + `
-data "vcd_nsxt_alb_edge_service_engine_group" "test" {
+data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 	edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 	service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
@@ -158,22 +158,22 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "max_virtual_services", "100"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "reserved_virtual_services", "30"),
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "max_virtual_services", "100"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", "30"),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
 				),
 			},
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_edge_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
-					resourceFieldsEqual("data.vcd_nsxt_alb_edge_service_engine_group.test", "vcd_nsxt_alb_edge_service_engine_group.test", nil),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
+					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.test", nil),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_nsxt_alb_edge_service_engine_group.test",
+				ResourceName:      "vcd_nsxt_alb_edgegateway_service_engine_group.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["EdgeGw"].(string), "first-se"),
@@ -184,7 +184,7 @@ func TestAccVcdNsxtEdgeServiceEngineGroupAssignmentShared(t *testing.T) {
 }
 
 const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentShared = testAccVcdNsxtAlbGeneralSettings + `
-resource "vcd_nsxt_alb_edge_service_engine_group" "test" {
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 
@@ -194,7 +194,7 @@ resource "vcd_nsxt_alb_edge_service_engine_group" "test" {
 `
 
 const testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentSharedDS = testAccVcdNsxtAlbEdgeServiceEngineGroupAssignmentDedicated + `
-data "vcd_nsxt_alb_edge_service_engine_group" "test" {
+data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
