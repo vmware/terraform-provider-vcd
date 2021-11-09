@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdNetworkRouted() *schema.Resource {
@@ -190,7 +191,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if vdc.IsNsxt() {
-		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
+		fprintfNoErr(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
 	edgeGatewayName := d.Get("edge_gateway").(string)
@@ -314,7 +315,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 		if err != nil {
 			return fmt.Errorf("[routed network read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 		}
-		_ = d.Set("edge_gateway", edgeGatewayName)
+		dSet(d, "edge_gateway", edgeGatewayName)
 	}
 	edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
 	if err != nil {
@@ -322,16 +323,16 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 		return fmt.Errorf("[routed network read] error retrieving edge gateway %s: %s", edgeGatewayName, err)
 	}
 
-	_ = d.Set("name", network.OrgVDCNetwork.Name)
-	_ = d.Set("href", network.OrgVDCNetwork.HREF)
-	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
+	dSet(d, "name", network.OrgVDCNetwork.Name)
+	dSet(d, "href", network.OrgVDCNetwork.HREF)
+	dSet(d, "shared", network.OrgVDCNetwork.IsShared)
 	if c := network.OrgVDCNetwork.Configuration; c != nil {
 		if c.IPScopes != nil {
-			_ = d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
-			_ = d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
-			_ = d.Set("dns1", c.IPScopes.IPScope[0].DNS1)
-			_ = d.Set("dns2", c.IPScopes.IPScope[0].DNS2)
-			_ = d.Set("dns_suffix", c.IPScopes.IPScope[0].DNSSuffix)
+			dSet(d, "gateway", c.IPScopes.IPScope[0].Gateway)
+			dSet(d, "netmask", c.IPScopes.IPScope[0].Netmask)
+			dSet(d, "dns1", c.IPScopes.IPScope[0].DNS1)
+			dSet(d, "dns2", c.IPScopes.IPScope[0].DNS2)
+			dSet(d, "dns_suffix", c.IPScopes.IPScope[0].DNSSuffix)
 		}
 	}
 
@@ -364,17 +365,17 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	}
 
 	if network.OrgVDCNetwork.Configuration.SubInterface == nil {
-		_ = d.Set("interface_type", "internal")
+		dSet(d, "interface_type", "internal")
 	} else {
 		if *network.OrgVDCNetwork.Configuration.SubInterface {
-			_ = d.Set("interface_type", "subinterface")
+			dSet(d, "interface_type", "subinterface")
 		} else {
 			if *network.OrgVDCNetwork.Configuration.DistributedInterface {
-				_ = d.Set("interface_type", "distributed")
+				dSet(d, "interface_type", "distributed")
 			}
 		}
 	}
-	_ = d.Set("description", network.OrgVDCNetwork.Description)
+	dSet(d, "description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -475,11 +476,16 @@ func resourceVcdNetworkStaticIpPoolHash(v interface{}) int {
 	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%s-",
+	_, err := buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["start_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%s-",
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
-
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 	return hashcodeString(buf.String())
 }
 
@@ -488,16 +494,28 @@ func genericResourceVcdNetworkDhcpPoolHash(v interface{}, networkType string) in
 	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%s-",
+	_, err := buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["start_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%s-",
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%d-",
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%d-",
 		m["max_lease_time"].(int)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 
 	switch networkType {
 	case "isolated":
-		buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+		_, err = buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+		if err != nil {
+			util.Logger.Printf("[ERROR] error writing to string: %s", err)
+		}
 	case "routed":
 		// do nothing
 	default:
@@ -551,9 +569,9 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf("[routed network] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway", edgeGatewayName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeGatewayName)
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil

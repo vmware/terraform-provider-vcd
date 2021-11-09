@@ -276,10 +276,6 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	d.SetId(d.Get("edge_gateway").(string))
 
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
 	return nil
 }
 
@@ -300,14 +296,14 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 
 	if len(egsc.Tunnel) == 1 {
 		tunnel := egsc.Tunnel[0]
-		_ = d.Set("name", tunnel.Name)
-		_ = d.Set("description", tunnel.Description)
-		_ = d.Set("encryption_protocol", tunnel.EncryptionProtocol)
-		_ = d.Set("local_ip_address", tunnel.LocalIPAddress)
-		_ = d.Set("local_id", tunnel.LocalID)
-		_ = d.Set("mtu", tunnel.Mtu)
-		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
-		_ = d.Set("peer_id", tunnel.PeerID)
+		dSet(d, "name", tunnel.Name)
+		dSet(d, "description", tunnel.Description)
+		dSet(d, "encryption_protocol", tunnel.EncryptionProtocol)
+		dSet(d, "local_ip_address", tunnel.LocalIPAddress)
+		dSet(d, "local_id", tunnel.LocalID)
+		dSet(d, "mtu", tunnel.Mtu)
+		dSet(d, "peer_ip_address", tunnel.PeerIPAddress)
+		dSet(d, "peer_id", tunnel.PeerID)
 
 		// Read for local_subnets and peer_subnets never worked and it is impossible to fix it with current resource
 		// design because not all data can be retrieved. Detailed explanation and code demonstrating read problems is

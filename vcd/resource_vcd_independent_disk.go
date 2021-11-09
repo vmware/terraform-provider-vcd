@@ -134,18 +134,19 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	diskName := d.Get("name").(string)
-	diskRecord, _ := vdc.QueryDisk(diskName)
-
-	if diskRecord != (govcd.DiskRecord{}) {
+	diskRecord, err := vdc.QueryDisk(diskName)
+	if diskRecord != (govcd.DiskRecord{}) || err == nil {
 		return fmt.Errorf("disk with such name already exist : %s", diskName)
 	}
 
-	var diskCreateParams *types.DiskCreateParams
+	var diskCreateParams = &types.DiskCreateParams{
+		Disk: &types.Disk{
+			Name: diskName,
+		},
+	}
+
 	if sizeProvided {
-		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
-			Name:   diskName,
-			SizeMb: int64(size.(int)),
-		}}
+		diskCreateParams.Disk.SizeMb = int64(size.(int))
 	}
 
 	var storageReference types.Reference
@@ -246,8 +247,8 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	setMainData(d, disk)
-	_ = d.Set("datastore_name", diskRecord.DataStoreName)
-	_ = d.Set("is_attached", diskRecord.IsAttached)
+	dSet(d, "datastore_name", diskRecord.DataStoreName)
+	dSet(d, "is_attached", diskRecord.IsAttached)
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
@@ -255,14 +256,14 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 
 func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	d.SetId(disk.Disk.Id)
-	_ = d.Set("name", disk.Disk.Name)
-	_ = d.Set("description", disk.Disk.Description)
-	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
-	_ = d.Set("size_in_mb", disk.Disk.SizeMb)
-	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
-	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
-	_ = d.Set("iops", disk.Disk.Iops)
-	_ = d.Set("owner_name", disk.Disk.Owner.User.Name)
+	dSet(d, "name", disk.Disk.Name)
+	dSet(d, "description", disk.Disk.Description)
+	dSet(d, "storage_profile", disk.Disk.StorageProfile.Name)
+	dSet(d, "size_in_mb", disk.Disk.SizeMb)
+	dSet(d, "bus_type", busTypesFromValues[disk.Disk.BusType])
+	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
+	dSet(d, "iops", disk.Disk.Iops)
+	dSet(d, "owner_name", disk.Disk.Owner.User.Name)
 }
 
 func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) error {
@@ -363,7 +364,7 @@ func getDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName
 	}
 
 	d.SetId(disk.Disk.Id)
-	_ = d.Set("name", disk.Disk.Name)
+	dSet(d, "name", disk.Disk.Name)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -375,7 +376,7 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
-	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks by name")
+	fprintlnNoErr(getTerraformStdout(), "Retrieving all disks by name")
 	disks, err := vdc.GetDisksByName(diskName, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
@@ -383,12 +384,12 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 
 	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tName\tDescription\tSizeMb")
-	fmt.Fprintln(writer, "--\t--\t----\t------\t----")
+	fprintlnNoErr(writer, "No\tID\tName\tDescription\tSizeMb")
+	fprintlnNoErr(writer, "--\t--\t----\t------\t----")
 	for index, disk := range *disks {
-		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+		fprintfNoErr(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
 	}
-	writer.Flush()
+	flushNoErr(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
 }

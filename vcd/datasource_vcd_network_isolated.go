@@ -144,7 +144,7 @@ func datasourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if vdc.IsNsxt() {
-		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
+		fprintfNoErr(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
 	return genericVcdNetworkIsolatedRead(d, meta, "datasource")

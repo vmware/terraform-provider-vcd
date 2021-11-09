@@ -133,9 +133,9 @@ func genericRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	d.SetId(rightsBundle.RightsBundle.Id)
-	_ = d.Set("description", rightsBundle.RightsBundle.Description)
-	_ = d.Set("bundle_key", rightsBundle.RightsBundle.BundleKey)
-	_ = d.Set("read_only", rightsBundle.RightsBundle.ReadOnly)
+	dSet(d, "description", rightsBundle.RightsBundle.Description)
+	dSet(d, "bundle_key", rightsBundle.RightsBundle.BundleKey)
+	dSet(d, "read_only", rightsBundle.RightsBundle.ReadOnly)
 
 	rights, err := rightsBundle.GetRights(nil)
 	if err != nil {
@@ -163,7 +163,7 @@ func genericRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta i
 	if rightsBundle.RightsBundle.PublishAll != nil {
 		publishAll = *rightsBundle.RightsBundle.PublishAll
 	}
-	_ = d.Set("publish_to_all_tenants", publishAll)
+	dSet(d, "publish_to_all_tenants", publishAll)
 	for _, tenant := range tenants {
 		registeredTenants = append(registeredTenants, tenant.Name)
 	}
@@ -277,9 +277,6 @@ func resourceRightsBundleDelete(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("[rights bundle delete] error retrieving rights bundle %s: %s", rightsBundleName, err)
 	}
 
-	if err != nil {
-		return diag.Errorf("[rights bundle delete] error retrieving rights bundle %s: %s", rightsBundleName, err)
-	}
 	err = rightsBundle.Delete()
 	if err != nil {
 		return diag.Errorf("[rights bundle delete] error deleting rights bundle %s: %s", rightsBundleName, err)
@@ -300,15 +297,15 @@ func resourceVcdRightsBundleImport(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return nil, fmt.Errorf("[rights bundle import] error retrieving rights bundle %s: %s", rightsBundleName, err)
 	}
-	_ = d.Set("name", rightsBundleName)
-	_ = d.Set("description", rightsBundle.RightsBundle.Description)
-	_ = d.Set("bundle_key", rightsBundle.RightsBundle.BundleKey)
+	dSet(d, "name", rightsBundleName)
+	dSet(d, "description", rightsBundle.RightsBundle.Description)
+	dSet(d, "bundle_key", rightsBundle.RightsBundle.BundleKey)
 
 	publishAll := false
 	if rightsBundle.RightsBundle.PublishAll != nil {
 		publishAll = *rightsBundle.RightsBundle.PublishAll
 	}
-	_ = d.Set("publish_to_all_tenants", publishAll)
+	dSet(d, "publish_to_all_tenants", publishAll)
 	d.SetId(rightsBundle.RightsBundle.Id)
 	return []*schema.ResourceData{d}, nil
 }

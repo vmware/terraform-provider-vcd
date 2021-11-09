@@ -2,13 +2,14 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
-	"text/tabwriter"
 )
 
 func resourceVcdVappFirewallRules() *schema.Resource {
@@ -264,9 +265,9 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	_ = d.Set("enabled", vappNetwork.Configuration.Features.FirewallService.IsEnabled)
-	_ = d.Set("default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
-	_ = d.Set("log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
+	dSet(d, "enabled", vappNetwork.Configuration.Features.FirewallService.IsEnabled)
+	dSet(d, "default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
+	dSet(d, "log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
 
 	return nil
 }
@@ -413,13 +414,13 @@ func getNetworkRules(d *schema.ResourceData, meta interface{}, orgName, vdcName,
 	}
 
 	if vcdClient.Org != orgName {
-		d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	_ = d.Set("vapp_id", vapp.VApp.ID)
-	_ = d.Set("network_id", vappNetwork.ID)
+	dSet(d, "vapp_id", vapp.VApp.ID)
+	dSet(d, "network_id", vappNetwork.ID)
 	d.SetId(vappNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -434,7 +435,7 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 	}
 
 	stdout := getTerraformStdout()
-	_, _ = fmt.Fprintln(stdout, "Retrieving all vApp networks by name")
+	fprintlnNoErr(stdout, "Retrieving all vApp networks by name")
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve vApp by name: %s", err)
@@ -442,8 +443,8 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 
 	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tvApp ID\tID\tName\t")
-	fmt.Fprintln(writer, "--\t-------\t--\t----\t")
+	fprintlnNoErr(writer, "No\tvApp ID\tID\tName\t")
+	fprintlnNoErr(writer, "--\t-------\t--\t----\t")
 
 	for index, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
 		uuid, err := govcd.GetUuidFromHref(vappNetwork.Link.HREF, false)
@@ -451,12 +452,9 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 			return nil, fmt.Errorf("unable to parse vApp network ID: %s, %s", err, uuid)
 		}
 
-		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
+		fprintfNoErr(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
 	}
-	err = writer.Flush()
-	if err != nil {
-		return nil, fmt.Errorf("unable to write to stdout: %s", err)
-	}
+	flushNoErr(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkRulesImport)
 }

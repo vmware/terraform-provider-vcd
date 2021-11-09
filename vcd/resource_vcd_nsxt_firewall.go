@@ -240,10 +240,10 @@ func resourceVcdNsxtFirewallImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 
-	_ = d.Set("edge_gateway_id", edge.EdgeGateway.ID)
+	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 	d.SetId(edge.EdgeGateway.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -251,7 +251,7 @@ func resourceVcdNsxtFirewallImport(ctx context.Context, d *schema.ResourceData, 
 
 func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceData, edgeGatewayId string) error {
 
-	_ = d.Set("edge_gateway_id", edgeGatewayId)
+	dSet(d, "edge_gateway_id", edgeGatewayId)
 
 	result := make([]interface{}, len(fwRules))
 

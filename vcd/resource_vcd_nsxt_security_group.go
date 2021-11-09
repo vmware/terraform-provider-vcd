@@ -243,17 +243,17 @@ func resourceVcdSecurityGroupImport(ctx context.Context, d *schema.ResourceData,
 			securityGroup.NsxtFirewallGroup.Name, securityGroup.NsxtFirewallGroup.Type)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(securityGroup.NsxtFirewallGroup.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func setNsxtSecurityGroupData(d *schema.ResourceData, fw *types.NsxtFirewallGroup) error {
-	_ = d.Set("name", fw.Name)
-	_ = d.Set("description", fw.Description)
+	dSet(d, "name", fw.Name)
+	dSet(d, "description", fw.Description)
 
 	netIds := make([]string, len(fw.Members))
 	for i := range fw.Members {

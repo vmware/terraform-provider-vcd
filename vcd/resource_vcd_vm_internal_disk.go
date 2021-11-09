@@ -2,13 +2,14 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
-	"text/tabwriter"
 )
 
 func resourceVmInternalDisk() *schema.Resource {
@@ -351,15 +352,15 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	_ = d.Set("bus_type", internalDiskBusTypesFromValues[strings.ToLower(diskSettings.AdapterType)])
-	_ = d.Set("size_in_mb", diskSettings.SizeMb)
-	_ = d.Set("bus_number", diskSettings.BusNumber)
-	_ = d.Set("unit_number", diskSettings.UnitNumber)
+	dSet(d, "bus_type", internalDiskBusTypesFromValues[strings.ToLower(diskSettings.AdapterType)])
+	dSet(d, "size_in_mb", diskSettings.SizeMb)
+	dSet(d, "bus_number", diskSettings.BusNumber)
+	dSet(d, "unit_number", diskSettings.UnitNumber)
 	if diskSettings.ThinProvisioned != nil {
-		_ = d.Set("thin_provisioned", *diskSettings.ThinProvisioned)
+		dSet(d, "thin_provisioned", *diskSettings.ThinProvisioned)
 	}
-	_ = d.Set("iops", diskSettings.Iops)
-	_ = d.Set("storage_profile", diskSettings.StorageProfile.Name)
+	dSet(d, "iops", diskSettings.Iops)
+	dSet(d, "storage_profile", diskSettings.StorageProfile.Name)
 
 	return nil
 }
@@ -425,7 +426,7 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
 	}
 
-	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks")
+	fprintlnNoErr(getTerraformStdout(), "Retrieving all disks")
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
 		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
 		return nil, fmt.Errorf("no internal disks found on VM: %s", vmName)
@@ -433,16 +434,16 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 
 	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
-	fmt.Fprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
+	fprintlnNoErr(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
+	fprintlnNoErr(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
 	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
 		if disk.Disk == nil {
-			fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
+			fprintfNoErr(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
 				disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
 		}
 	}
-	writer.Flush()
+	flushNoErr(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpInternalDiskImport)
 }
@@ -470,13 +471,13 @@ func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName,
 
 	d.SetId(disk.DiskId)
 	if vcdClient.Org != orgName {
-		d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	d.Set("vapp_name", vappName)
-	d.Set("vm_name", vmName)
-	d.Set("allow_vm_reboot", false)
+	dSet(d, "vapp_name", vappName)
+	dSet(d, "vm_name", vmName)
+	dSet(d, "allow_vm_reboot", false)
 	return []*schema.ResourceData{d}, nil
 }

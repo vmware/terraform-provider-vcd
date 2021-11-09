@@ -226,10 +226,10 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 			d.Id(), err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
-	d.Set("name", virtualServerName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
+	dSet(d, "name", virtualServerName)
 
 	d.SetId(readVirtualServer.ID)
 	return []*schema.ResourceData{d}, nil
@@ -267,18 +267,16 @@ func getLBVirtualServerType(d *schema.ResourceData) (*types.LbVirtualServer, err
 
 // setlBVirtualServerData sets object state from *types.LbVirtualServer
 func setlBVirtualServerData(d *schema.ResourceData, lBVirtualServer *types.LbVirtualServer) error {
-	d.Set("name", lBVirtualServer.Name)
-	d.Set("description", lBVirtualServer.Description)
-	d.Set("enabled", lBVirtualServer.Enabled)
-	d.Set("ip_address", lBVirtualServer.IpAddress)
-	d.Set("protocol", lBVirtualServer.Protocol)
-	d.Set("port", lBVirtualServer.Port)
-	d.Set("enable_acceleration", lBVirtualServer.AccelerationEnabled)
-	d.Set("connection_limit", lBVirtualServer.ConnectionLimit)
-	d.Set("connection_rate_limit", lBVirtualServer.ConnectionRateLimit)
-	d.Set("app_profile_id", lBVirtualServer.ApplicationProfileId)
-	d.Set("server_pool_id", lBVirtualServer.DefaultPoolId)
-	d.Set("app_rule_ids", lBVirtualServer.ApplicationRuleIds)
-
-	return nil
+	dSet(d, "name", lBVirtualServer.Name)
+	dSet(d, "description", lBVirtualServer.Description)
+	dSet(d, "enabled", lBVirtualServer.Enabled)
+	dSet(d, "ip_address", lBVirtualServer.IpAddress)
+	dSet(d, "protocol", lBVirtualServer.Protocol)
+	dSet(d, "port", lBVirtualServer.Port)
+	dSet(d, "enable_acceleration", lBVirtualServer.AccelerationEnabled)
+	dSet(d, "connection_limit", lBVirtualServer.ConnectionLimit)
+	dSet(d, "connection_rate_limit", lBVirtualServer.ConnectionRateLimit)
+	dSet(d, "app_profile_id", lBVirtualServer.ApplicationProfileId)
+	dSet(d, "server_pool_id", lBVirtualServer.DefaultPoolId)
+	return d.Set("app_rule_ids", lBVirtualServer.ApplicationRuleIds)
 }

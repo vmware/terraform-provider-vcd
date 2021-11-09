@@ -1,18 +1,22 @@
 package vcd
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func init() {
@@ -551,7 +555,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Token + "#" +
 		c.SysOrg + "#" +
 		c.Href
-	checksum := fmt.Sprintf("%x", sha1.Sum([]byte(rawData)))
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(rawData)))
 
 	// The cached connection is served only if the variable VCD_CACHE is set
 	cachedVCDClients.Lock()
@@ -623,4 +627,72 @@ func buildUserAgent(version, sysOrg string) string {
 		version, runtime.GOOS, runtime.GOARCH, strings.ToLower(sysOrg) == "system")
 
 	return userAgent
+}
+
+// dSet sets the value of a schema property, discarding the error
+// Use only for scalar values (strings, booleans, and numbers)
+func dSet(d *schema.ResourceData, key string, value interface{}) {
+	if value != nil && !isScalar(value) {
+		stdout := getTerraformStdout()
+		starLine := strings.Repeat("*", 80)
+		fprintlnNoErr(stdout, starLine)
+		// This warning should never reach the final user.
+		// Its purpose is to alert the developer that there was an improper use of `dSet`
+		// The warning will work when testing with either `go test` or `make install` + `terraform apply`
+		fprintfNoErr(stdout,
+			"*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
+			reflect.TypeOf(value).Kind(), callFuncName())
+		fprintlnNoErr(stdout, starLine)
+	}
+	err := d.Set(key, value)
+	if err != nil {
+		panic(fmt.Sprintf("error in %s - key '%s': %s ", callFuncName(), key, err))
+	}
+}
+
+// fprintNoErr calls fmt.Fprint and discards the error
+func fprintNoErr(w io.Writer, a ...interface{}) {
+	_, err := fmt.Fprint(w, a...)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
+	}
+}
+
+// fprintfNoErr calls fmt.Fprintf and discards the error
+func fprintfNoErr(w io.Writer, format string, a ...interface{}) {
+	_, err := fmt.Fprintf(w, format, a...)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
+	}
+}
+
+// fprintlnNoErr calls fmt.Fprintln and discards the error
+func fprintlnNoErr(w io.Writer, a ...interface{}) {
+	_, err := fmt.Fprintln(w, a...)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
+	}
+}
+
+// flushNoErr calls writer.Flush and discards the error
+func flushNoErr(w *tabwriter.Writer) {
+	err := w.Flush()
+	if err != nil {
+		util.Logger.Printf("[ERROR] error flushing terraform stdout: %s", err)
+	}
+}
+
+// isScalar returns true if its argument is not a composite object
+// we want strings, numbers, booleans
+func isScalar(t interface{}) bool {
+	if t == nil {
+		return true
+	}
+	typeOf := reflect.TypeOf(t)
+	switch typeOf.Kind().String() {
+	case "struct", "map", "array", "slice":
+		return false
+	}
+
+	return true
 }

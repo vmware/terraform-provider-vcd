@@ -207,8 +207,8 @@ func resourceVcdIpSetImport(d *schema.ResourceData, meta interface{}) ([]*schema
 		return nil, fmt.Errorf("unable to find IP set with name %s", ipSetName)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(ipSet.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -233,11 +233,11 @@ func getIpSet(d *schema.ResourceData, vdc *govcd.Vdc) (*types.EdgeIpSet, error) 
 func setIpSetData(d *schema.ResourceData, ipSet *types.EdgeIpSet, vdc *govcd.Vdc, origin string) error {
 
 	if origin == "resource" {
-		d.Set("name", ipSet.Name)
+		dSet(d, "name", ipSet.Name)
 	}
 
-	d.Set("description", ipSet.Description)
-	d.Set("is_inheritance_allowed", ipSet.InheritanceAllowed)
+	dSet(d, "description", ipSet.Description)
+	dSet(d, "is_inheritance_allowed", ipSet.InheritanceAllowed)
 
 	// convert comma separated list of ip addresses to TypeSet and set it
 	var ipAddressesSlice []interface{}

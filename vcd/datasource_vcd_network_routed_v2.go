@@ -144,6 +144,13 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
+	// This check is needed to prevent a coverity warning about using a nil network.
+	// In fact, this can't happen, because the schema definition requires either "name" or "filter" to be
+	// defined, and both conditions are evaluated above.
+	if network == nil {
+		return diag.Errorf("undefined network: not found by either name or search criteria")
+	}
+
 	err = setOpenApiOrgVdcNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network read v2] error setting Org VDC network data: %s", err)
