@@ -384,7 +384,7 @@ func TestAccVcdVmInternalDiskNvme(t *testing.T) {
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
 		"Vdc":      testConfig.VCD.Vdc,
-		"FuncName": "TestVappVmDS",
+		"FuncName": t.Name(),
 		"Tags":     "vm",
 		"BusType":  "nvme",
 		"VmName":   t.Name() + "-vm",
