@@ -165,17 +165,17 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *s
 			seGroupName, err)
 	}
 
-	_ = d.Set("edge_gateway_id", edge.EdgeGateway.ID)
+	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 	d.SetId(seGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
 func setAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types.NsxtAlbServiceEngineGroupAssignment) {
-	_ = d.Set("edge_gateway_id", t.GatewayRef.ID)
-	_ = d.Set("service_engine_group_id", t.ServiceEngineGroupRef.ID)
-	_ = d.Set("max_virtual_services", t.MaxVirtualServices)
-	_ = d.Set("reserved_virtual_services", t.MinVirtualServices)
-	_ = d.Set("deployed_virtual_services", t.NumDeployedVirtualServices)
+	dSet(d, "edge_gateway_id", t.GatewayRef.ID)
+	dSet(d, "service_engine_group_id", t.ServiceEngineGroupRef.ID)
+	dSet(d, "max_virtual_services", t.MaxVirtualServices)
+	dSet(d, "reserved_virtual_services", t.MinVirtualServices)
+	dSet(d, "deployed_virtual_services", t.NumDeployedVirtualServices)
 }
 
 func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtAlbServiceEngineGroupAssignment {
