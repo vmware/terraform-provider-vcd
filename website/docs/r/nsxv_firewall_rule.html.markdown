@@ -126,7 +126,7 @@ resource "vcd_nsxv_firewall_rule" "my-rule-2" {
 
   # This attribute allows to ensure rule is inserted above the referred one
   # in rule processing engine
-  above_rule_id = "${vcd_nsxv_firewall_rule.my-rule-1.id}"
+  above_rule_id = vcd_nsxv_firewall_rule.my-rule-1.id
   name          = "my-friendly-name"
 
   source {

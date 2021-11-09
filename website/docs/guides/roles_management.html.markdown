@@ -39,7 +39,7 @@ script, and would also increase the amount of computing needed to run a script.
 To see the list of available rights, you can do one of the following:
 
 * make a data source of several existing Roles, Global Roles, or Rights Bundles, and use an `output` structure to show the contents;
-* use a data source of [`vcd_resource_list`](/providers/vmware/vcd/latest/docs/data-sources/vcd_resource_list) to show the rights available to a given organization.
+* use a data source of [`vcd_resource_list`](/providers/vmware/vcd/latest/docs/data-sources/resource_list) to show the rights available to a given organization.
 
 Examples:
 
@@ -58,8 +58,7 @@ data "vcd_resource_list" "rights-list" {
 }
 
 output "rights-list" {
- value = data.vcd_resource_list.rights-list
- value = data.vcd_resource_list.rights-list
+  value = data.vcd_resource_list.rights-list
 }
 ```
 
@@ -221,11 +220,12 @@ Now we modify it:
 
 ```hcl
 resource "vcd_global_role" "new-global-role" {
-  name        = "new-global-role"
-  description = "new global role"
-  rights = [ /* rights list goes here */ ]
+  name                   = "new-global-role"
+  description            = "new global role"
+  rights                 = [/* rights list goes here */]
   publish_to_all_tenants = false
-  tenants = [ "org1", "org2" ]
+  tenants                = ["org1", "org2"]
+}
 ```
 
 The effects of this global role are only propagated to `org1` and `org2`. Other organizations cease to see the role that
@@ -235,10 +235,11 @@ Let's do another change:
 
 ```hcl
 resource "vcd_global_role" "new-global-role" {
-  name        = "new-global-role"
-  description = "new global role"
-  rights = [ /* rights list goes here */ ]
+  name                   = "new-global-role"
+  description            = "new global role"
+  rights                 = [/* rights list goes here */]
   publish_to_all_tenants = false
+}
 ```
 
 The `tenants` field is removed, meaning that we don't publish to anyone. And since `publish_to_all_tenants` is false,
@@ -353,7 +354,6 @@ to this:
 resource "vcd_global_role" "new-vapp-user" {
   name                   = "new vApp User"
   description            = "New rights given to a user who uses vApps created by others"
-  name                   = "New vApp User"
   publish_to_all_tenants = false
   rights = [
     "Organization vDC Compute Policy: View",
@@ -374,7 +374,7 @@ resource "vcd_global_role" "new-vapp-user" {
     "vApp: View ACL",
     "vApp: View VM metrics",
   ]
-  tenants" = [
+  tenants = [
     "org2",
   ]
 }

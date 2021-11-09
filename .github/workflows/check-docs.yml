@@ -1,0 +1,33 @@
+name: check-docs
+on:
+  push:
+    paths:
+      - 'website/**'
+  pull_request:
+    paths:
+      - 'website/**'
+
+jobs:
+  build:
+    name: Check
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Required to have tag information available
+
+    - name: Get latest released version
+      run: echo "PROVIDER_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+    - name: hclcheck
+      run: make hclcheck

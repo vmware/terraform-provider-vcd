@@ -44,19 +44,25 @@ saved into a catalog. See Example 7 below.
 When a filter contains multiple clauses, you achieve the overall match only if all the clauses match. For example:
 
 ```hcl
-# TF-UPGRADE-TODO: Block type was not recognized, so this block and its contents were not automatically upgraded.
-filter {
-  name_regex = "^p.*11$"
-  date       = "> 2020-02-10"
+data "vcd_catalog_item" "unknown" {
 
-  metadata {
-    key   = "key1"
-    value = "value1"
-  }
+  # ...
 
-  metadata {
-    key   = "keyABC"
-    value = "valueXYZ"
+  # TF-UPGRADE-TODO: Block type was not recognized, so this block and its contents were not automatically upgraded.
+
+  filter {
+    name_regex = "^p.*11$"
+    date       = "> 2020-02-10"
+
+    metadata {
+      key   = "key1"
+      value = "value1"
+    }
+
+    metadata {
+      key   = "keyABC"
+      value = "valueXYZ"
+    }
   }
 }
 ```

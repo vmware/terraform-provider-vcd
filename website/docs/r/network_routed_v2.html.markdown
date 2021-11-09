@@ -134,10 +134,10 @@ For example, using this structure, representing a routed network that was **not*
 
 ```hcl
 resource "vcd_network_routed_v2" "tf-mynet" {
-  name              = "my-net"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  ...
+  name = "my-net"
+  org  = "my-org"
+  vdc  = "my-vdc"
+  # ...
 }
 ```
 

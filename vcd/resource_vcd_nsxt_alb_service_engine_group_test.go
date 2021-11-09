@@ -183,31 +183,31 @@ resource "vcd_nsxt_alb_cloud" "first" {
 
 const testAccVcdNsxtAlbServiceEngineStep1 = testAccVcdNsxtAlbServiceEnginePrereqs + `
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                      = "first-se"
-  alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
+  name                                 = "first-se"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
-  reservation_model         = "DEDICATED"
+  reservation_model                    = "DEDICATED"
 }
 `
 
 const testAccVcdNsxtAlbServiceEngineStep2 = testAccVcdNsxtAlbServiceEnginePrereqs + `
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                      = "first-se-updated"
-  description               = "test-description"
-  alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
+  name                                 = "first-se-updated"
+  description                          = "test-description"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
-  reservation_model         = "SHARED"
+  reservation_model                    = "SHARED"
 }
 `
 
 const testAccVcdNsxtAlbServiceEngineStep3DS = testAccVcdNsxtAlbServiceEnginePrereqs + `
 # skip-binary-test: Data Source test
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                      = "first-se-updated"
-  description               = "test-description"
-  alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
+  name                                 = "first-se-updated"
+  description                          = "test-description"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
-  reservation_model         = "SHARED"
+  reservation_model                    = "SHARED"
 }
 
 data "vcd_nsxt_alb_service_engine_group" "first" {
@@ -217,11 +217,11 @@ data "vcd_nsxt_alb_service_engine_group" "first" {
 
 const testAccVcdNsxtAlbServiceEngineStep4 = testAccVcdNsxtAlbServiceEnginePrereqs + `
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                      = "first-se-updated"
-  description               = "test-description"
-  alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
+  name                                 = "first-se-updated"
+  description                          = "test-description"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
-  reservation_model         = "SHARED"
+  reservation_model                    = "SHARED"
   
   # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
   # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
@@ -233,11 +233,11 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
 const testAccVcdNsxtAlbServiceEngineStep5DS = testAccVcdNsxtAlbServiceEnginePrereqs + `
 # skip-binary-test: Data Source test
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                      = "first-se-updated"
-  description               = "test-description"
-  alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
+  name                                 = "first-se-updated"
+  description                          = "test-description"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
-  reservation_model         = "SHARED"
+  reservation_model                    = "SHARED"
   
   # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
   # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
