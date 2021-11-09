@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdVappNetwork() *schema.Resource {
@@ -301,14 +302,14 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 	if d.Id() == "" {
 		d.SetId(normalizeId("urn:vcloud:network:", networkId))
 	}
-	_ = d.Set("description", vAppNetwork.Description)
+	dSet(d, "description", vAppNetwork.Description)
 	if config := vAppNetwork.Configuration; config != nil {
 		if config.IPScopes != nil {
-			_ = d.Set("gateway", config.IPScopes.IPScope[0].Gateway)
-			_ = d.Set("netmask", config.IPScopes.IPScope[0].Netmask)
-			_ = d.Set("dns1", config.IPScopes.IPScope[0].DNS1)
-			_ = d.Set("dns2", config.IPScopes.IPScope[0].DNS2)
-			_ = d.Set("dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
+			dSet(d, "gateway", config.IPScopes.IPScope[0].Gateway)
+			dSet(d, "netmask", config.IPScopes.IPScope[0].Netmask)
+			dSet(d, "dns1", config.IPScopes.IPScope[0].DNS1)
+			dSet(d, "dns2", config.IPScopes.IPScope[0].DNS2)
+			dSet(d, "dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
 		}
 		if config.Features != nil && config.Features.DhcpService != nil {
 			transformed := schema.NewSet(resourceVcdDhcpPoolHash, []interface{}{})
@@ -346,13 +347,13 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			}
 		}
 
-		_ = d.Set("guest_vlan_allowed", *config.GuestVlanAllowed)
+		dSet(d, "guest_vlan_allowed", *config.GuestVlanAllowed)
 		if config.ParentNetwork != nil {
-			_ = d.Set("org_network_name", config.ParentNetwork.Name)
+			dSet(d, "org_network_name", config.ParentNetwork.Name)
 		} else {
-			_ = d.Set("org_network_name", nil)
+			dSet(d, "org_network_name", nil)
 		}
-		_ = d.Set("retain_ip_mac_enabled", config.RetainNetInfoAcrossDeployments)
+		dSet(d, "retain_ip_mac_enabled", config.RetainNetInfoAcrossDeployments)
 	}
 	return nil
 }
@@ -496,13 +497,13 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
 	if vcdClient.Org != orgName {
-		_ = d.Set("org", orgName)
+		dSet(d, "org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		_ = d.Set("vdc", vdcName)
+		dSet(d, "vdc", vdcName)
 	}
-	_ = d.Set("name", networkName)
-	_ = d.Set("vapp_name", vappName)
+	dSet(d, "name", networkName)
+	dSet(d, "vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -510,14 +511,29 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 func resourceVcdDhcpPoolHash(v interface{}) int {
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%t-", m["enabled"].(bool)))
-	buf.WriteString(fmt.Sprintf("%d-", m["max_lease_time"].(int)))
-	buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	_, err := buf.WriteString(fmt.Sprintf("%t-", m["enabled"].(bool)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%d-", m["max_lease_time"].(int)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	if err != nil {
+		util.Logger.Printf("[ERROR] error writing to string: %s", err)
+	}
 	if m["start_address"] != nil {
-		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["start_address"].(string))))
+		_, err = buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["start_address"].(string))))
+		if err != nil {
+			util.Logger.Printf("[ERROR] error writing to string: %s", err)
+		}
 	}
 	if m["end_address"] != nil {
-		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
+		_, err = buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
+		if err != nil {
+			util.Logger.Printf("[ERROR] error writing to string: %s", err)
+		}
 	}
 	return hashcodeString(buf.String())
 }

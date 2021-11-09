@@ -519,8 +519,8 @@ func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(edgeGateway.EdgeGateway.ID)
 	return []*schema.ResourceData{d}, nil
 }
@@ -854,9 +854,9 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 		return fmt.Errorf("could not set external_network_ip_addresses field: %s", err)
 	}
 
-	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
-	_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
-	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
+	dSet(d, "use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
+	dSet(d, "fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
+	dSet(d, "ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if len(gw.SubnetParticipation) < 1 {
@@ -870,7 +870,7 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 		for _, subnet := range gw.SubnetParticipation {
 			// Check if this subnet is used as default gateway and set IP
 			if subnet.UseForDefaultRoute {
-				_ = d.Set("default_external_network_ip", subnet.IPAddress)
+				dSet(d, "default_external_network_ip", subnet.IPAddress)
 			}
 		}
 	}
@@ -906,10 +906,10 @@ func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		return fmt.Errorf("unable to read general load balancer settings: %s", err)
 	}
 
-	_ = d.Set("lb_enabled", lb.Enabled)
-	_ = d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
-	_ = d.Set("lb_logging_enabled", lb.Logging.Enable)
-	_ = d.Set("lb_loglevel", lb.Logging.LogLevel)
+	dSet(d, "lb_enabled", lb.Enabled)
+	dSet(d, "lb_acceleration_enabled", lb.AccelerationEnabled)
+	dSet(d, "lb_logging_enabled", lb.Logging.Enable)
+	dSet(d, "lb_loglevel", lb.Logging.LogLevel)
 
 	return nil
 }
@@ -921,9 +921,9 @@ func setFirewallData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		return fmt.Errorf("unable to read firewall settings: %s", err)
 	}
 
-	_ = d.Set("fw_enabled", fw.Enabled)
-	_ = d.Set("fw_default_rule_logging_enabled", fw.DefaultPolicy.LoggingEnabled)
-	_ = d.Set("fw_default_rule_action", fw.DefaultPolicy.Action)
+	dSet(d, "fw_enabled", fw.Enabled)
+	dSet(d, "fw_default_rule_logging_enabled", fw.DefaultPolicy.LoggingEnabled)
+	dSet(d, "fw_default_rule_action", fw.DefaultPolicy.Action)
 
 	return nil
 }

@@ -165,15 +165,15 @@ func getNsxtAlbCloudType(d *schema.ResourceData) *types.NsxtAlbCloud {
 }
 
 func setNsxtAlbCloudData(d *schema.ResourceData, albCloud *types.NsxtAlbCloud) {
-	_ = d.Set("name", albCloud.Name)
-	_ = d.Set("description", albCloud.Description)
-	_ = d.Set("health_status", albCloud.HealthStatus)
-	_ = d.Set("health_message", albCloud.DetailedHealthMessage)
-	_ = d.Set("importable_cloud_id", albCloud.LoadBalancerCloudBacking.BackingId)
-	_ = d.Set("controller_id", albCloud.LoadBalancerCloudBacking.LoadBalancerControllerRef.ID)
+	dSet(d, "name", albCloud.Name)
+	dSet(d, "description", albCloud.Description)
+	dSet(d, "health_status", albCloud.HealthStatus)
+	dSet(d, "health_message", albCloud.DetailedHealthMessage)
+	dSet(d, "importable_cloud_id", albCloud.LoadBalancerCloudBacking.BackingId)
+	dSet(d, "controller_id", albCloud.LoadBalancerCloudBacking.LoadBalancerControllerRef.ID)
 
 	if albCloud.NetworkPoolRef != nil {
-		_ = d.Set("network_pool_name", albCloud.NetworkPoolRef.Name)
-		_ = d.Set("network_pool_id", albCloud.NetworkPoolRef.ID)
+		dSet(d, "network_pool_name", albCloud.NetworkPoolRef.Name)
+		dSet(d, "network_pool_id", albCloud.NetworkPoolRef.ID)
 	}
 }

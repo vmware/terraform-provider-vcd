@@ -2,12 +2,13 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"net/url"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -228,6 +229,10 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 		d.SetId(policy.VdcComputePolicy.ID)
 	}
 
+	// Fix coverity warning
+	if policy == nil {
+		return fmt.Errorf("[genericVcdVmSizingPolicyRead] error defining sizing policy")
+	}
 	util.Logger.Printf("[TRACE] [get VM sizing policy] Retrieved by %s\n", method)
 	return setVmSizingPolicy(d, *policy.VdcComputePolicy)
 }
@@ -235,8 +240,8 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 // setVmSizingPolicy sets object state from *govcd.VdcComputePolicy
 func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) error {
 
-	_ = d.Set("name", policy.Name)
-	_ = d.Set("description", policy.Description)
+	dSet(d, "name", policy.Name)
+	dSet(d, "description", policy.Description)
 
 	var cpuList []map[string]interface{}
 	cpuMap := make(map[string]interface{})
@@ -580,10 +585,10 @@ func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, orgId, policyId
 	}
 
 	if vcdClient.Org != adminOrg.AdminOrg.Name && vcdClient.Org != adminOrg.AdminOrg.ID {
-		d.Set("org", adminOrg.AdminOrg.Name)
+		dSet(d, "org", adminOrg.AdminOrg.Name)
 	}
 
-	_ = d.Set("name", vmSizingPolicy.VdcComputePolicy.Name)
+	dSet(d, "name", vmSizingPolicy.VdcComputePolicy.Name)
 	d.SetId(vmSizingPolicy.VdcComputePolicy.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -598,7 +603,7 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 	}
 
 	stdout := getTerraformStdout()
-	_, _ = fmt.Fprintln(stdout, "Retrieving all VM sizing policies")
+	fprintlnNoErr(stdout, "Retrieving all VM sizing policies")
 	policies, err := org.GetAllVdcComputePolicies(nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
@@ -606,16 +611,13 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 
 	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tName\t")
-	fmt.Fprintln(writer, "--\t--\t----\t")
+	fprintlnNoErr(writer, "No\tID\tName\t")
+	fprintlnNoErr(writer, "--\t--\t----\t")
 
 	for index, policy := range policies {
-		fmt.Fprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		fprintfNoErr(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
 	}
-	err = writer.Flush()
-	if err != nil {
-		return nil, fmt.Errorf("unable to write to stdout: %s", err)
-	}
+	flushNoErr(writer)
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpVmSizingPolicyImport)
 }

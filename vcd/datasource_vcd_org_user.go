@@ -116,6 +116,6 @@ func datasourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving user %s : %s", identifier, err)
 	}
 
-	_ = d.Set("user_id", user.User.ID)
+	dSet(d, "user_id", user.User.ID)
 	return setOrgUserData(d, user, adminOrg)
 }

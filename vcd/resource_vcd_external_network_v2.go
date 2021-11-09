@@ -275,7 +275,10 @@ func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}
 
 	d.SetId(extNetRes.ExternalNetwork.ID)
 
-	setExternalNetworkV2Data(d, extNetRes.ExternalNetwork, vcdClient)
+	err = setExternalNetworkV2Data(d, extNetRes.ExternalNetwork, vcdClient)
+	if err != nil {
+		return nil, err
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -459,8 +462,8 @@ func processIpRanges(staticIpPool *schema.Set) []types.ExternalNetworkV2IPRange 
 }
 
 func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2, vcdClient *VCDClient) error {
-	_ = d.Set("name", net.Name)
-	_ = d.Set("description", net.Description)
+	dSet(d, "name", net.Name)
+	dSet(d, "description", net.Description)
 
 	// Loop over all subnets (known as ip_scope in UI)
 	subnetSlice := make([]interface{}, len(net.Subnets.Values))

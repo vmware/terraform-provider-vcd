@@ -240,8 +240,8 @@ func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceDat
 			networkName, orgNetwork.GetType())
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -249,20 +249,20 @@ func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceDat
 
 func setOpenApiOrgVdcNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
 
-	_ = d.Set("name", orgVdcNetwork.Name)
-	_ = d.Set("description", orgVdcNetwork.Description)
+	dSet(d, "name", orgVdcNetwork.Name)
+	dSet(d, "description", orgVdcNetwork.Description)
 
 	if orgVdcNetwork.Connection != nil {
-		_ = d.Set("edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
-		_ = d.Set("interface_type", orgVdcNetwork.Connection.ConnectionType)
+		dSet(d, "edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
+		dSet(d, "interface_type", orgVdcNetwork.Connection.ConnectionType)
 	}
 
 	// Only one subnet can be defined although the structure accepts slice
-	_ = d.Set("gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
-	_ = d.Set("prefix_length", orgVdcNetwork.Subnets.Values[0].PrefixLength)
-	_ = d.Set("dns1", orgVdcNetwork.Subnets.Values[0].DNSServer1)
-	_ = d.Set("dns2", orgVdcNetwork.Subnets.Values[0].DNSServer2)
-	_ = d.Set("dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
+	dSet(d, "gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
+	dSet(d, "prefix_length", orgVdcNetwork.Subnets.Values[0].PrefixLength)
+	dSet(d, "dns1", orgVdcNetwork.Subnets.Values[0].DNSServer1)
+	dSet(d, "dns2", orgVdcNetwork.Subnets.Values[0].DNSServer2)
+	dSet(d, "dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
 
 	// If any IP sets are available
 	if len(orgVdcNetwork.Subnets.Values[0].IPRanges.Values) > 0 {

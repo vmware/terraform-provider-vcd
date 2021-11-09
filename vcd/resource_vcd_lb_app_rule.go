@@ -177,10 +177,10 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 			d.Id(), err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
-	d.Set("name", appRuleName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
+	dSet(d, "name", appRuleName)
 
 	d.SetId(readLBRule.ID)
 	return []*schema.ResourceData{d}, nil
@@ -208,7 +208,7 @@ func getLBAppRuleType(d *schema.ResourceData) (*types.LbAppRule, error) {
 // is rendered as such API call
 // <script>acl en req.fhdr(accept-language),language(es;fr;en) -m str en\nuse_backend english if en</script>
 func setLBAppRuleData(d *schema.ResourceData, LBRule *types.LbAppRule) error {
-	d.Set("script", LBRule.Script)
-	d.Set("name", LBRule.Name)
+	dSet(d, "script", LBRule.Script)
+	dSet(d, "name", LBRule.Name)
 	return nil
 }

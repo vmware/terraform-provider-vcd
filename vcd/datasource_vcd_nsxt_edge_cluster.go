@@ -64,10 +64,10 @@ func datasourceNsxtEdgeCluster(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("could not find NSX-T Edge Cluster by name '%s': %s", nsxtEdgeClusterName, err)
 	}
 
-	_ = d.Set("description", nsxtEdgeCluster.NsxtEdgeCluster.Description)
-	_ = d.Set("node_count", nsxtEdgeCluster.NsxtEdgeCluster.NodeCount)
-	_ = d.Set("node_type", nsxtEdgeCluster.NsxtEdgeCluster.NodeType)
-	_ = d.Set("deployment_type", nsxtEdgeCluster.NsxtEdgeCluster.DeploymentType)
+	dSet(d, "description", nsxtEdgeCluster.NsxtEdgeCluster.Description)
+	dSet(d, "node_count", nsxtEdgeCluster.NsxtEdgeCluster.NodeCount)
+	dSet(d, "node_type", nsxtEdgeCluster.NsxtEdgeCluster.NodeType)
+	dSet(d, "deployment_type", nsxtEdgeCluster.NsxtEdgeCluster.DeploymentType)
 
 	d.SetId(nsxtEdgeCluster.NsxtEdgeCluster.ID)
 

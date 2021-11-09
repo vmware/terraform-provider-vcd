@@ -160,7 +160,7 @@ func resourceVappNetworkStaticRoutingRead(d *schema.ResourceData, meta interface
 	var rules []map[string]interface{}
 	if vappNetwork.Configuration.Features == nil || vappNetwork.Configuration.Features.StaticRoutingService == nil {
 		log.Print("[INFO] no Static routes found.")
-		_ = d.Set("rule", nil)
+		dSet(d, "rule", nil)
 	}
 
 	for _, rule := range vappNetwork.Configuration.Features.StaticRoutingService.StaticRoute {
@@ -171,7 +171,7 @@ func resourceVappNetworkStaticRoutingRead(d *schema.ResourceData, meta interface
 		singleRule["next_hop_ip"] = rule.NextHopIP
 		rules = append(rules, singleRule)
 	}
-	_ = d.Set("enabled", vappNetwork.Configuration.Features.StaticRoutingService.IsEnabled)
+	dSet(d, "enabled", vappNetwork.Configuration.Features.StaticRoutingService.IsEnabled)
 	err = d.Set("rule", rules)
 	if err != nil {
 		return err

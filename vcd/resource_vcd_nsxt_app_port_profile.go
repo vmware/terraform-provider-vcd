@@ -99,26 +99,15 @@ func resourceVcdNsxtAppPortProfileCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	var org *govcd.Org
-	var vdc *govcd.Vdc
-
-	switch scope {
-	// PROVIDER scope does not require VDC, only Org
-	case types.ApplicationPortProfileScopeProvider:
-		org, err = vcdClient.GetOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrg, err)
-		}
-
-	// TENANT scope requires Org and VDC
-	case types.ApplicationPortProfileScopeTenant:
-		org, vdc, err = vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrgAndVdc, err)
-		}
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	appPortProfile := getNsxtAppPortProfileType(d, org, vdc)
+	appPortProfile, err := getNsxtAppPortProfileType(d, org, vcdClient)
+	if err != nil {
+		return diag.Errorf("error getting NSX-T Application Port Profile configuration: %s", err)
+	}
 
 	createdAppPortProfile, err := org.CreateNsxtAppPortProfile(appPortProfile)
 	if err != nil {
@@ -139,22 +128,9 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	var org *govcd.Org
-	var vdc *govcd.Vdc
-
-	switch scope {
-	// PROVIDER scope does not require VDC, only Org
-	case types.ApplicationPortProfileScopeProvider:
-		org, err = vcdClient.GetOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrg, err)
-		}
-	// TENANT scope requires Org and VDC
-	case types.ApplicationPortProfileScopeTenant:
-		org, vdc, err = vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrgAndVdc, err)
-		}
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	appPortProfile, err := org.GetNsxtAppPortProfileById(d.Id())
@@ -162,7 +138,10 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error getting NSX-T Application Port Profile: %s", err)
 	}
 
-	updateappPortProfile := getNsxtAppPortProfileType(d, org, vdc)
+	updateappPortProfile, err := getNsxtAppPortProfileType(d, org, vcdClient)
+	if err != nil {
+		return diag.Errorf("error getting NSX-T Application Port Profile configuration: %s", err)
+	}
 	// Inject existing ID for update
 	updateappPortProfile.ID = d.Id()
 
@@ -275,8 +254,8 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 		}
 		nsxtAppPortProfile = allNsxtAppPortProfiles[0]
 
-		_ = d.Set("org", org.Org.Name)
-		_ = d.Set("nsxt_manager_id", nsxtManagerUrn)
+		dSet(d, "org", org.Org.Name)
+		dSet(d, "nsxt_manager_id", nsxtManagerUrn)
 
 	case 3: // TENANT scope
 		orgName, vdcName, appPortProfileName := resourceURI[0], resourceURI[1], resourceURI[2]
@@ -299,8 +278,8 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 			return nil, fmt.Errorf("unable to find Application Port Profile '%s': %s", appPortProfileName, err)
 		}
 
-		_ = d.Set("org", orgName)
-		_ = d.Set("vdc", vdcName)
+		dSet(d, "org", orgName)
+		dSet(d, "vdc", vdcName)
 
 	default:
 		return nil, fmt.Errorf("resource path must be specified in one of two formats, based on Application Port Profile scope:\n" +
@@ -325,7 +304,7 @@ func validateScope(scope, nsxtManagerId, orgName string) error {
 	return nil
 }
 
-func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vdc *govcd.Vdc) *types.NsxtAppPortProfile {
+func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vcdClient *VCDClient) (*types.NsxtAppPortProfile, error) {
 	appPortProfileConfig := &types.NsxtAppPortProfile{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -338,6 +317,11 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vdc *govc
 		appPortProfileConfig.ContextEntityId = nsxtManagerUrn
 	case types.ApplicationPortProfileScopeTenant:
 		appPortProfileConfig.OrgRef = &types.OpenApiReference{ID: org.Org.ID}
+		// Tenant scope requires VDC
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		}
 		appPortProfileConfig.ContextEntityId = vdc.Vdc.ID
 	}
 
@@ -356,16 +340,16 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vdc *govc
 		appPortProfileConfig.ApplicationPorts = applicationPorts
 	}
 
-	return appPortProfileConfig
+	return appPortProfileConfig, nil
 }
 
 // setNsxtAppPortProfileData sets Terraform schema from types.NsxtAppPortProfile
 //
 // Note. GET queries do not return nsxt_manager_ir for SYSTEM scope therefore it cannot be read.
 func setNsxtAppPortProfileData(d *schema.ResourceData, appPortProfile *types.NsxtAppPortProfile) error {
-	_ = d.Set("name", appPortProfile.Name)
-	_ = d.Set("description", appPortProfile.Description)
-	_ = d.Set("scope", appPortProfile.Scope)
+	dSet(d, "name", appPortProfile.Name)
+	dSet(d, "description", appPortProfile.Description)
+	dSet(d, "scope", appPortProfile.Scope)
 
 	if appPortProfile.ApplicationPorts != nil && len(appPortProfile.ApplicationPorts) > 0 {
 

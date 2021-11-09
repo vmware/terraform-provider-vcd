@@ -356,14 +356,14 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
 func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
-	_ = d.Set("name", adminOrg.AdminOrg.Name)
-	_ = d.Set("full_name", adminOrg.AdminOrg.FullName)
-	_ = d.Set("description", adminOrg.AdminOrg.Description)
-	_ = d.Set("is_enabled", adminOrg.AdminOrg.IsEnabled)
-	_ = d.Set("deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
-	_ = d.Set("stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
-	_ = d.Set("can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
-	_ = d.Set("delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
+	dSet(d, "name", adminOrg.AdminOrg.Name)
+	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
+	dSet(d, "description", adminOrg.AdminOrg.Description)
+	dSet(d, "is_enabled", adminOrg.AdminOrg.IsEnabled)
+	dSet(d, "deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
+	dSet(d, "stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
+	dSet(d, "can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
+	dSet(d, "delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
 	var err error
 
 	vappLeaseSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings

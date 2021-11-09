@@ -111,7 +111,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 			if err := getError(task); err != nil {
 				return err
 			}
-			_, _ = fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
+			fprintNoErr(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -126,7 +126,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 				log.Printf("vCD Error importing new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
-			_, _ = fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
+			fprintNoErr(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}
@@ -179,9 +179,9 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return err
 	}
-	_ = d.Set("name", catalogItem.CatalogItem.Name)
-	_ = d.Set("created", vAppTemplate.VAppTemplate.DateCreated)
-	_ = d.Set("description", catalogItem.CatalogItem.Description)
+	dSet(d, "name", catalogItem.CatalogItem.Name)
+	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
+	dSet(d, "description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 
 	return err
@@ -285,10 +285,10 @@ func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("catalog", catalogName)
-	_ = d.Set("name", catalogItemName)
-	_ = d.Set("description", catalogItem.CatalogItem.Description)
+	dSet(d, "org", orgName)
+	dSet(d, "catalog", catalogName)
+	dSet(d, "name", catalogItemName)
+	dSet(d, "description", catalogItem.CatalogItem.Description)
 	d.SetId(catalogItem.CatalogItem.ID)
 
 	return []*schema.ResourceData{d}, nil

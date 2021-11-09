@@ -225,20 +225,20 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 // Used after retrieving the user (read, import), to fill the Terraform container appropriately
 func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
 	d.SetId(orgUser.User.ID)
-	_ = d.Set("name", orgUser.User.Name)
-	_ = d.Set("provider_type", orgUser.User.ProviderType)
-	_ = d.Set("is_group_role", orgUser.User.IsGroupRole)
-	_ = d.Set("description", orgUser.User.Description)
-	_ = d.Set("full_name", orgUser.User.FullName)
-	_ = d.Set("email_address", orgUser.User.EmailAddress)
-	_ = d.Set("telephone", orgUser.User.Telephone)
-	_ = d.Set("instant_messaging", orgUser.User.IM)
-	_ = d.Set("enabled", orgUser.User.IsEnabled)
-	_ = d.Set("is_locked", orgUser.User.IsLocked)
-	_ = d.Set("deployed_vm_quota", orgUser.User.DeployedVmQuota)
-	_ = d.Set("stored_vm_quota", orgUser.User.StoredVmQuota)
+	dSet(d, "name", orgUser.User.Name)
+	dSet(d, "provider_type", orgUser.User.ProviderType)
+	dSet(d, "is_group_role", orgUser.User.IsGroupRole)
+	dSet(d, "description", orgUser.User.Description)
+	dSet(d, "full_name", orgUser.User.FullName)
+	dSet(d, "email_address", orgUser.User.EmailAddress)
+	dSet(d, "telephone", orgUser.User.Telephone)
+	dSet(d, "instant_messaging", orgUser.User.IM)
+	dSet(d, "enabled", orgUser.User.IsEnabled)
+	dSet(d, "is_locked", orgUser.User.IsLocked)
+	dSet(d, "deployed_vm_quota", orgUser.User.DeployedVmQuota)
+	dSet(d, "stored_vm_quota", orgUser.User.StoredVmQuota)
 	if orgUser.User.Role != nil {
-		_ = d.Set("role", orgUser.User.Role.Name)
+		dSet(d, "role", orgUser.User.Role.Name)
 	}
 	return nil
 }
@@ -323,7 +323,7 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, fmt.Errorf("[user import] error retrieving user %s: %s", userName, err)
 	}
 
-	_ = d.Set("org", orgName)
+	dSet(d, "org", orgName)
 	err = setOrgUserData(d, user, adminOrg)
 	if err != nil {
 		return nil, err

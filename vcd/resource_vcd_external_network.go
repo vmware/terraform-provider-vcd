@@ -169,9 +169,9 @@ func resourceVcdExternalNetworkCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func setExternalNetworkData(d *schema.ResourceData, extNetRes StringMap) error {
-	_ = d.Set("name", extNetRes["name"])
-	_ = d.Set("description", extNetRes["description"])
-	_ = d.Set("retain_net_info_across_deployments", extNetRes["retain_net_info_across_deployments"])
+	dSet(d, "name", extNetRes["name"])
+	dSet(d, "description", extNetRes["description"])
+	dSet(d, "retain_net_info_across_deployments", extNetRes["retain_net_info_across_deployments"])
 
 	err := d.Set("ip_scope", extNetRes["ip_scope"])
 	if err != nil {

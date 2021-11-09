@@ -166,7 +166,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if vdc.IsNsxt() {
-		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
+		fprintfNoErr(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
 	gatewayName := d.Get("gateway").(string)
@@ -274,18 +274,23 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 		network = meta.(*govcd.OrgVDCNetwork)
 	}
 
-	_ = d.Set("name", network.OrgVDCNetwork.Name)
-	_ = d.Set("href", network.OrgVDCNetwork.HREF)
+	// Fix coverity warning
+	if network == nil {
+		return fmt.Errorf("[genericVcdNetworkIsolatedRead] error defining network")
+	}
+
+	dSet(d, "name", network.OrgVDCNetwork.Name)
+	dSet(d, "href", network.OrgVDCNetwork.HREF)
 	if c := network.OrgVDCNetwork.Configuration; c != nil {
 		if c.IPScopes != nil {
-			_ = d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
-			_ = d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
-			_ = d.Set("dns1", c.IPScopes.IPScope[0].DNS1)
-			_ = d.Set("dns2", c.IPScopes.IPScope[0].DNS2)
-			_ = d.Set("dns_suffix", c.IPScopes.IPScope[0].DNSSuffix)
+			dSet(d, "gateway", c.IPScopes.IPScope[0].Gateway)
+			dSet(d, "netmask", c.IPScopes.IPScope[0].Netmask)
+			dSet(d, "dns1", c.IPScopes.IPScope[0].DNS1)
+			dSet(d, "dns2", c.IPScopes.IPScope[0].DNS2)
+			dSet(d, "dns_suffix", c.IPScopes.IPScope[0].DNSSuffix)
 		}
 	}
-	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
+	dSet(d, "shared", network.OrgVDCNetwork.IsShared)
 
 	staticIpPool := getStaticIpPool(network)
 	if len(staticIpPool) > 0 {
@@ -313,7 +318,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 			return fmt.Errorf("[isolated network read] dhcp set %s", err)
 		}
 	}
-	_ = d.Set("description", network.OrgVDCNetwork.Description)
+	dSet(d, "description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -381,8 +386,8 @@ func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf("[isolated network import] error retrieving Org VDC network %s: %s", networkName, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(network.OrgVDCNetwork.ID)
 	return []*schema.ResourceData{d}, nil
 }
@@ -449,7 +454,7 @@ func resourceVcdNetworkIsolatedUpdate(d *schema.ResourceData, meta interface{}) 
 
 	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
 	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
-	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dnsSuffix
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNSSuffix = dnsSuffix
 
 	err = network.Update()
 	if err != nil {

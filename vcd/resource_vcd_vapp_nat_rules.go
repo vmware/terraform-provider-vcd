@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
 )
 
 const (
@@ -166,7 +167,7 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
+		fprintNoErr(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
 	}
 
 	d.SetId(vappNetwork.ID)
@@ -222,7 +223,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	var rules []map[string]interface{}
 	if vappNetwork.Configuration.Features == nil || vappNetwork.Configuration.Features.NatService == nil {
 		log.Print("no Nat rules found.")
-		_ = d.Set("rule", rules)
+		dSet(d, "rule", rules)
 	}
 
 	for _, rule := range vappNetwork.Configuration.Features.NatService.NatRule {
@@ -243,15 +244,15 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 		}
 		rules = append(rules, singleRule)
 	}
-	_ = d.Set("enabled", vappNetwork.Configuration.Features.NatService.IsEnabled)
+	dSet(d, "enabled", vappNetwork.Configuration.Features.NatService.IsEnabled)
 	if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
 		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficInPolicy {
-		_ = d.Set("enable_ip_masquerade", true)
+		dSet(d, "enable_ip_masquerade", true)
 	} else if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
 		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficPolicy {
-		_ = d.Set("enable_ip_masquerade", false)
+		dSet(d, "enable_ip_masquerade", false)
 	}
-	_ = d.Set("nat_type", vappNetwork.Configuration.Features.NatService.NatType)
+	dSet(d, "nat_type", vappNetwork.Configuration.Features.NatService.NatType)
 	err = d.Set("rule", rules)
 	if err != nil {
 		return err
@@ -260,7 +261,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
+		fprintNoErr(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
 	}
 
 	return nil

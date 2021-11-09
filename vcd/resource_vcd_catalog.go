@@ -121,14 +121,14 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		// By default API does not return Storage Profile Name in response. It has ID and HREF, but not Name so name
 		// must be looked up
 		storageProfileId := adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile[0].ID
-		_ = d.Set("storage_profile_id", storageProfileId)
+		dSet(d, "storage_profile_id", storageProfileId)
 	} else {
 		// In case no storage profile are defined in API call
-		_ = d.Set("storage_profile_id", "")
+		dSet(d, "storage_profile_id", "")
 	}
 
-	_ = d.Set("description", adminCatalog.AdminCatalog.Description)
-	_ = d.Set("created", adminCatalog.AdminCatalog.DateCreated)
+	dSet(d, "description", adminCatalog.AdminCatalog.Description)
+	dSet(d, "created", adminCatalog.AdminCatalog.DateCreated)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
 	return nil
@@ -241,9 +241,9 @@ func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("name", catalogName)
-	_ = d.Set("description", catalog.Catalog.Description)
+	dSet(d, "org", orgName)
+	dSet(d, "name", catalogName)
+	dSet(d, "description", catalog.Catalog.Description)
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields

@@ -63,10 +63,10 @@ func datasourceVcdAlbImportableCloudRead(ctx context.Context, d *schema.Resource
 			d.Get("name").(string), err)
 	}
 
-	d.Set("already_imported", albImportableCloud.NsxtAlbImportableCloud.AlreadyImported)
-	d.Set("network_pool_name", albImportableCloud.NsxtAlbImportableCloud.NetworkPoolRef.Name)
-	d.Set("network_pool_id", albImportableCloud.NsxtAlbImportableCloud.NetworkPoolRef.ID)
-	d.Set("transport_zone_name", albImportableCloud.NsxtAlbImportableCloud.TransportZoneName)
+	dSet(d, "already_imported", albImportableCloud.NsxtAlbImportableCloud.AlreadyImported)
+	dSet(d, "network_pool_name", albImportableCloud.NsxtAlbImportableCloud.NetworkPoolRef.Name)
+	dSet(d, "network_pool_id", albImportableCloud.NsxtAlbImportableCloud.NetworkPoolRef.ID)
+	dSet(d, "transport_zone_name", albImportableCloud.NsxtAlbImportableCloud.TransportZoneName)
 	d.SetId(albImportableCloud.NsxtAlbImportableCloud.ID)
 
 	return nil
