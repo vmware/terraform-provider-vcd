@@ -16,15 +16,15 @@ Provides a data source to read NSX-T ALB General Settings for particular NSX-T E
 
 ```hcl
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+  org = "my-org"
+  vdc = "nsxt-vdc"
 
   name = "nsxt-gw"
 }
 
 data "vcd_nsxt_alb_settings" "test" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+  org = "my-org"
+  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 }

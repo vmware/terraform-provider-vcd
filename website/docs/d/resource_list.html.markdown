@@ -147,7 +147,7 @@ output "net" {
 resource "vcd_network_routed" "new_net" {
   count        = length(data.vcd_network_routed.full_networks)
   name         = "${data.vcd_network_routed.full_networks[count.index].name}-2"
-  edge_gateway = "${data.vcd_network_routed.full_networks[count.index].edge_gateway}"
+  edge_gateway = data.vcd_network_routed.full_networks[count.index].edge_gateway
   gateway      = "192.168.${count.index + 10}.1"
 
   static_ip_pool {

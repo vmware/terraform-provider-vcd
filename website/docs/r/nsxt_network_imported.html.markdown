@@ -94,7 +94,7 @@ resource "vcd_nsxt_network_imported" "tf-mynet" {
   name = "my-net"
   org  = "my-org"
   vdc  = "my-vdc"
-  ...
+  # ...
 }
 ```
 

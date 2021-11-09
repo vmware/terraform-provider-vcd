@@ -13,9 +13,8 @@ Provides a VMware Cloud Director independent disk resource. This can be used to 
 ## Example Usage
 
 ```hcl
-resource "vcd_independent_disk" "myNewIndependentDisk" {  
+resource "vcd_independent_disk" "myNewIndependentDisk" {
   vdc             = "my-vcd"
-  
   name            = "logDisk"
   size_in_mb      = "1024"
   bus_type        = "SCSI"
@@ -24,13 +23,13 @@ resource "vcd_independent_disk" "myNewIndependentDisk" {
 }
 
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name = vcd_vapp.web.name
 
-...
-  
+  # ...
+
   disk {
-    name = "${vcd_independent_disk.myNewIndependentDisk.name}"
-    bus_number = 1
+    name        = vcd_independent_disk.myNewIndependentDisk.name
+    bus_number  = 1
     unit_number = 0
   }
 

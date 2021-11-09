@@ -10,7 +10,7 @@ description: |-
 
 Provides a VMware Cloud Director vApp NAT resource. This can be used to create,
 modify, and delete NAT rules in a [vApp network](/providers/vmware/vcd/latest/docs/resources/vapp_network).
-NAT rules can be applied to [vApp networks connected to Org network](/providers/vmware/vcd/latest/docs/resources/vapp_network.html) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network) which are fenced.
+NAT rules can be applied to [vApp networks connected to Org network](/providers/vmware/vcd/latest/docs/resources/vapp_network) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network) which are fenced.
 
 !> **Warning:** Using this resource overrides any existing NAT rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
@@ -20,14 +20,14 @@ NAT rules can be applied to [vApp networks connected to Org network](/providers/
 resource "vcd_vapp" "web" {
   name = "web"
 }
-​
+
 resource "vcd_vapp_network" "vapp-net" {
-  name               = "my-vapp-net"
-  vapp_name          = vcd_vapp.web.name
-  org_network_name   = "my-vdc-int-net"
-  gateway            = "192.168.2.1"
-  netmask            = "255.255.255.0"
-  dns1               = "192.168.2.1"
+  name             = "my-vapp-net"
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = "my-vdc-int-net"
+  gateway          = "192.168.2.1"
+  netmask          = "255.255.255.0"
+  dns1             = "192.168.2.1"
 
   static_ip_pool {
     start_address = "192.168.2.51"
@@ -46,7 +46,7 @@ resource "vcd_vapp_firewall_rules" "vapp_fw1" {
   vapp_id        = vcd_vapp.web.id
   network_id     = vcd_vapp_network.vapp-net.id
   default_action = "drop"
-  enabled = true
+  enabled        = true
 }
 
 resource "vcd_vapp_nat_rules" "vapp-nat" {
@@ -74,10 +74,10 @@ resource "vcd_vapp_nat_rules" "vapp-nat" {
 
 # In order to enable NAT service, firewall needs to be enabled as well
 resource "vcd_vapp_firewall_rules" "vapp_fw2" {
-  vapp_id    = vcd_vapp.web.id
-  network_id = vcd_vapp_network.vapp-org-net.id
+  vapp_id        = vcd_vapp.web.id
+  network_id     = vcd_vapp_network.vapp-org-net.id
   default_action = "drop"
-  enabled = true
+  enabled        = true
 }
 
 resource "vcd_vapp_nat_rules" "vapp-nat2" {
