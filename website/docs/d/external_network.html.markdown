@@ -27,7 +27,7 @@ resource "vcd_dnat" "tf-nat-rule" {
   network_type = "ext"
   edge_gateway = "tf-gw"
   # References the first IP scope block. From that we extract the first static IP pool to retrieve the start address
-  external_ip     = "${data.vcd_external_network.extnet-datacloud.ip_scope[0].static_ip_pool[0].start_address}"
+  external_ip     = data.vcd_external_network.extnet-datacloud.ip_scope[0].static_ip_pool[0].start_address
   port            = 7777
   protocol        = "tcp"
   internal_ip     = "10.10.102.60"

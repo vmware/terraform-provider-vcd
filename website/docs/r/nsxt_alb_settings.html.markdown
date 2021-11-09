@@ -20,21 +20,21 @@ deactivate NSX-T ALB for a defined Edge Gateway.
 
 ```hcl
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+  org = "my-org"
+  vdc = "nsxt-vdc"
 
   name = "nsxt-gw"
 }
 
 resource "vcd_nsxt_alb_settings" "org1" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+  org = "my-org"
+  vdc = "nsxt-vdc"
 
-  edge_gateway_id               = data.vcd_nsxt_edgegateway.existing.id
-  is_active                     = true
-  
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  is_active       = true
+
   # Optional definition of service network for the ALB. "192.168.255.125/25" is the default one.
-  #service_network_specification = "192.168.255.125/25"
+  # service_network_specification = "192.168.255.125/25"
 }
 ```
 

@@ -147,6 +147,10 @@ fmt:
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
+# runs HCL validation
+hclcheck:
+	@sh -c "'$(CURDIR)/scripts/hcl-check.sh'"
+
 # runs the go tidy directory check
 tidy-check:
 	go mod tidy

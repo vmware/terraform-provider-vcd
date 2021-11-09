@@ -34,8 +34,8 @@ resource "vcd_nsxt_firewall" "testing" {
 ## Example Usage 2 (Multiple firewall rules - order matters)
 ```hcl
 resource "vcd_nsxt_firewall" "testing" {
-  org  = "my-org"
-  vdc  = "my-nsxt-vdc"
+  org = "my-org"
+  vdc = "my-nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
@@ -57,18 +57,18 @@ resource "vcd_nsxt_firewall" "testing" {
     destination_ids = [vcd_nsxt_security_group.group2.id]
     logging         = true
   }
-  
+
   # Rule #3 - Allows IPv4 and IPv6 traffic of 2 Application Port Profiles in both directions:
   # from vcd_nsxt_security_group.group.1.id to all list of security groups vcd_nsxt_security_group.group.*.id
   # from list of security groups vcd_nsxt_security_group.group.*.id to vcd_nsxt_security_group.group.1.id
   rule {
-    action          = "ALLOW"
-    name            = "test_rule-3"
-    direction       = "IN_OUT"
-    ip_protocol     = "IPV4_IPV6"
-    source_ids      = [vcd_nsxt_security_group.group.1.id]
-    destination_ids = vcd_nsxt_security_group.group.*.id
-    app_port_profile_ids = [app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id, vcd_nsxt_app_port_profile.custom-app.id]
+    action               = "ALLOW"
+    name                 = "test_rule-3"
+    direction            = "IN_OUT"
+    ip_protocol          = "IPV4_IPV6"
+    source_ids           = [vcd_nsxt_security_group.group.1.id]
+    destination_ids      = vcd_nsxt_security_group.group.*.id
+    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id, vcd_nsxt_app_port_profile.custom-app.id]
   }
 }
 ```

@@ -96,7 +96,7 @@ resource "vcd_vm" "customized" {
 
   guest_properties = {
     "guestinfo.ignition.config.data.encoding" = "base64"
-    "guestinfo.ignition.config.data" = base64encode(file("ignition.json"))
+    "guestinfo.ignition.config.data"          = base64encode(file("ignition.json"))
   }
 }
 ```

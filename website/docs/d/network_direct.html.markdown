@@ -30,7 +30,7 @@ output "external_network" {
 }
 
 data "vcd_external_network" "external_network1" {
-  name = "${data.vcd_network_direct.net.external_network}"
+  name = data.vcd_network_direct.net.external_network
 }
 
 # From the second data source we extract the basic networking info
