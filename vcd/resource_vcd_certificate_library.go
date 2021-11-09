@@ -3,8 +3,9 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"strings"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
@@ -163,9 +164,9 @@ func resourceVcdLibraryCertificateRead(ctx context.Context, d *schema.ResourceDa
 }
 
 func setCertificateConfigurationData(config *types.CertificateLibraryItem, d *schema.ResourceData) {
-	_ = d.Set("alias", config.Alias)
-	_ = d.Set("description", config.Description)
-	_ = d.Set("certificate", config.Certificate)
+	dSet(d, "alias", config.Alias)
+	dSet(d, "description", config.Description)
+	dSet(d, "certificate", config.Certificate)
 }
 
 func resourceVcdAlbLibraryCertificateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -213,7 +214,7 @@ func resourceLibraryCertificateImport(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(certificate.CertificateLibrary.Id)
-	_ = d.Set("org", orgName)
+	dSet(d, "org", orgName)
 	setCertificateConfigurationData(certificate.CertificateLibrary, d)
 
 	return []*schema.ResourceData{d}, nil

@@ -182,6 +182,6 @@ func getNsxtAlbConfigurationType(d *schema.ResourceData) *types.NsxtAlbConfig {
 }
 
 func setNsxtAlbConfigurationData(config *types.NsxtAlbConfig, d *schema.ResourceData) {
-	d.Set("is_active", config.Enabled)
-	d.Set("service_network_specification", config.ServiceNetworkDefinition)
+	dSet(d, "is_active", config.Enabled)
+	dSet(d, "service_network_specification", config.ServiceNetworkDefinition)
 }
