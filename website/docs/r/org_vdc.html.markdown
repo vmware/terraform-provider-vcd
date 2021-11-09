@@ -20,8 +20,8 @@ Supported in provider *v2.2+*
 
 ```hcl
 provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
+  user     = var.admin_user
+  password = var.admin_password
   org      = "System"
   url      = "https://AcmeVcd/api"
 }
@@ -106,7 +106,7 @@ resource "vcd_org_vdc" "nsxt-vdc" {
 
 ```hcl
 resource "vcd_vm_sizing_policy" "size_1" {
-  name        = "size-one"
+  name = "size-one"
 
   cpu {
     shares                = "886"
@@ -120,7 +120,7 @@ resource "vcd_vm_sizing_policy" "size_1" {
 }
 
 resource "vcd_vm_sizing_policy" "size_2" {
-  name        = "size-two"
+  name = "size-two"
 
   cpu {
     shares                = "886"
@@ -138,11 +138,12 @@ resource "vcd_vm_sizing_policy" "size_2" {
     reservation_guarantee = "0.3"
   }
 }
+
 resource "vcd_org_vdc" "my-vdc" {
   name        = "my-vdc"
   description = "The pride of my work"
   org         = "my-org"
-  ...  
+  # ...  
   default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_1.id
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
 }

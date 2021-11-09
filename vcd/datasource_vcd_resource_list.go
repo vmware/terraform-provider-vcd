@@ -245,6 +245,44 @@ func globalRolesList(d *schema.ResourceData, meta interface{}) (list []string, e
 	return list, err
 }
 
+func libraryCertificateList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	adminOrg, err := client.GetAdminOrg(d.Get("org").(string))
+	if err != nil {
+		return list, err
+	}
+
+	var certificates []*govcd.Certificate
+	if isSysOrg(adminOrg) {
+		certificates, err = client.Client.GetAllCertificatesFromLibrary(nil)
+	} else {
+		certificates, err = adminOrg.GetAllCertificatesFromLibrary(nil)
+	}
+
+	if err != nil {
+		return list, err
+	}
+	for _, certificate := range certificates {
+		switch listMode {
+		case "name", "hierarchy":
+			list = append(list, certificate.CertificateLibrary.Alias)
+		case "id":
+			list = append(list, certificate.CertificateLibrary.Id)
+		case "name_id":
+			list = append(list, certificate.CertificateLibrary.Alias+nameIdSeparator+certificate.CertificateLibrary.Id)
+		case "href":
+			list = append(list, "")
+		case "import":
+			list = append(list, fmt.Sprintf("terraform import vcd_library_certificate.%s %s",
+				certificate.CertificateLibrary.Alias, certificate.CertificateLibrary.Alias))
+		}
+	}
+	return list, err
+}
+
 func rightsBundlesList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -935,6 +973,8 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 		list, err = rolesList(d, meta)
 	case "vcd_global_role", "global_roles":
 		list, err = globalRolesList(d, meta)
+	case "vcd_library_certificate":
+		list, err = libraryCertificateList(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",

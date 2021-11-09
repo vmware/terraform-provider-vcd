@@ -29,6 +29,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{"global_role", "vcd_global_role", "", "vApp Author"},
 		{"rights_bundle", "vcd_rights_bundle", "", "Default Rights Bundle"},
 		{"right", "vcd_right", "", "Catalog: Change Owner"},
+		{"library_certificate", "vcd_library_certificate", "", ""},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent

@@ -10,7 +10,7 @@ description: |-
 
 Provides a VMware Cloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/providers/vmware/vcd/latest/docs/resources/vapp_network).
-Firewall rules can be applied to [vApp networks connected to Org network](/providers/vmware/vcd/latest/docs/resources/vapp_network.html) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network) which are fenced. 
+Firewall rules can be applied to [vApp networks connected to Org network](/providers/vmware/vcd/latest/docs/resources/vapp_network) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network) which are fenced. 
 
 !> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
@@ -20,14 +20,14 @@ Firewall rules can be applied to [vApp networks connected to Org network](/provi
 resource "vcd_vapp" "web" {
   name = "web"
 }
-​
+
 resource "vcd_vapp_network" "vapp-net" {
-  name               = "my-vapp-net"
-  vapp_name          = vcd_vapp.web.name
-  org_network_name   = "my-vdc-int-net"
-  gateway            = "192.168.2.1"
-  netmask            = "255.255.255.0"
-  dns1               = "192.168.2.1"
+  name             = "my-vapp-net"
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = "my-vdc-int-net"
+  gateway          = "192.168.2.1"
+  netmask          = "255.255.255.0"
+  dns1             = "192.168.2.1"
 
   static_ip_pool {
     start_address = "192.168.2.51"

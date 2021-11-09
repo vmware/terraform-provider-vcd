@@ -147,7 +147,7 @@ output "net" {
 resource "vcd_network_routed" "new_net" {
   count        = length(data.vcd_network_routed.full_networks)
   name         = "${data.vcd_network_routed.full_networks[count.index].name}-2"
-  edge_gateway = "${data.vcd_network_routed.full_networks[count.index].edge_gateway}"
+  edge_gateway = data.vcd_network_routed.full_networks[count.index].edge_gateway
   gateway      = "192.168.${count.index + 10}.1"
 
   static_ip_pool {
@@ -302,6 +302,7 @@ The following arguments are supported:
     * `vcd_network_routed_v2`
     * `vcd_network_isolated_v2`
     * `vcd_nsxt_network_imported`
+    * `vcd_library_certificate`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID

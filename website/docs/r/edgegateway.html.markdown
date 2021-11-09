@@ -101,8 +101,8 @@ resource "vcd_edgegateway" "egw" {
     subnet {
       # IP address will be auto-assigned. It can then be found in the list of `external_network_ips`
       # attribute
-      gateway    = "1.1.1.1"
-      netmask    = "255.255.255.248"
+      gateway = "1.1.1.1"
+      netmask = "255.255.255.248"
     }
   }
 }
