@@ -1,5 +1,5 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate ALL
 
 package vcd
 
@@ -166,6 +166,14 @@ type TestConfig struct {
 	Misc struct {
 		LdapContainer string `json:"ldapContainer,omitempty"`
 	} `json:"misc"`
+	Certificates struct {
+		Certificate1Path           string `json:"certificate1Path,omitempty"`           // absolute path to pem file
+		Certificate1PrivateKeyPath string `json:"certificate1PrivateKeyPath,omitempty"` // absolute path to private key pem file
+		Certificate1Pass           string `json:"certificate1Pass,omitempty"`           // pass phrase for private key
+		Certificate2Path           string `json:"certificate2Path,omitempty"`           // absolute path to pem file
+		Certificate2PrivateKeyPath string `json:"certificate2PrivateKeyPath,omitempty"` // absolute path to private key pem file
+		Certificate2Pass           string `json:"certificate2Pass,omitempty"`           // absolute path to pem file
+	} `json:"certificates"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
 		Gateway                      string `json:"gateway"`                      // Gateway for external network
@@ -627,6 +635,34 @@ func getConfigStruct(config string) TestConfig {
 			panic("error retrieving absolute path for multi OVA path " + configStruct.Ova.OvaVappMultiVmsPath)
 		}
 		configStruct.Ova.OvaVappMultiVmsPath = multiVmOvaPath
+	}
+	if configStruct.Certificates.Certificate1Path != "" {
+		certificatePath1Path, err := filepath.Abs(configStruct.Certificates.Certificate1Path)
+		if err != nil {
+			panic("error retrieving absolute path for certificate 1 path " + configStruct.Certificates.Certificate1Path)
+		}
+		configStruct.Certificates.Certificate1Path = certificatePath1Path
+	}
+	if configStruct.Certificates.Certificate2Path != "" {
+		certificatePath2Path, err := filepath.Abs(configStruct.Certificates.Certificate2Path)
+		if err != nil {
+			panic("error retrieving absolute path for certificate 2 path " + configStruct.Certificates.Certificate2Path)
+		}
+		configStruct.Certificates.Certificate2Path = certificatePath2Path
+	}
+	if configStruct.Certificates.Certificate1PrivateKeyPath != "" {
+		certificatePrivatePath1Path, err := filepath.Abs(configStruct.Certificates.Certificate1PrivateKeyPath)
+		if err != nil {
+			panic("error retrieving absolute path for private certificate 1 path " + configStruct.Certificates.Certificate1PrivateKeyPath)
+		}
+		configStruct.Certificates.Certificate1PrivateKeyPath = certificatePrivatePath1Path
+	}
+	if configStruct.Certificates.Certificate2PrivateKeyPath != "" {
+		certificatePrivatePath2Path, err := filepath.Abs(configStruct.Certificates.Certificate2PrivateKeyPath)
+		if err != nil {
+			panic("error retrieving absolute path for private certificate 2 path " + configStruct.Certificates.Certificate2PrivateKeyPath)
+		}
+		configStruct.Certificates.Certificate2PrivateKeyPath = certificatePrivatePath2Path
 	}
 
 	// Partial duplication of actions performed in createSuiteCatalogAndItem

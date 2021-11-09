@@ -302,6 +302,7 @@ The following arguments are supported:
     * `vcd_network_routed_v2`
     * `vcd_network_isolated_v2`
     * `vcd_nsxt_network_imported`
+    * `vcd_library_certificate`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID

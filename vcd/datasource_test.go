@@ -188,6 +188,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":
 			templateFields = templateFields + `name = "does-not-exist"` + "\n"
+		case "alias":
+			templateFields = templateFields + `alias = "does-not-exist"` + "\n"
 		case "org_network_name":
 			templateFields = templateFields + `org_network_name = "does-not-exist"` + "\n"
 		// OpenAPI requires org_network_id to be a valid URN - chances of duplicating it are close enough to zero
