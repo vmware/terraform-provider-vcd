@@ -16,8 +16,8 @@ Provides a datasource to read NSX-T ALB Service Engine Group assignment to NSX-T
 
 ```hcl
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+  org = "my-org"
+  vdc = "nsxt-vdc"
 
   name = "nsxt-gw"
 }
