@@ -142,17 +142,17 @@ func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGat
 		if err != nil {
 			return fmt.Errorf("could not convert ruletag (%s) from string to int: %s", natRule.RuleTag, err)
 		}
-		_ = d.Set("rule_tag", value)
+		dSet(d, "rule_tag", value)
 	}
 
-	_ = d.Set("network_type", resourceNetworkType)
-	_ = d.Set("network_name", networkName)
-	_ = d.Set("enabled", natRule.Enabled)
-	_ = d.Set("logging_enabled", natRule.LoggingEnabled)
-	_ = d.Set("description", natRule.Description)
-	_ = d.Set("original_address", natRule.OriginalAddress)
-	_ = d.Set("translated_address", natRule.TranslatedAddress)
-	_ = d.Set("rule_type", natRule.RuleType)
+	dSet(d, "network_type", resourceNetworkType)
+	dSet(d, "network_name", networkName)
+	dSet(d, "enabled", natRule.Enabled)
+	dSet(d, "logging_enabled", natRule.LoggingEnabled)
+	dSet(d, "description", natRule.Description)
+	dSet(d, "original_address", natRule.OriginalAddress)
+	dSet(d, "translated_address", natRule.TranslatedAddress)
+	dSet(d, "rule_type", natRule.RuleType)
 
 	return nil
 }

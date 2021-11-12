@@ -82,15 +82,15 @@ func datasourceVcenterRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func setVcenterData(d *schema.ResourceData, vc *types.QueryResultVirtualCenterRecordType) {
-	_ = d.Set("vcenter_version", vc.VcVersion)
+	dSet(d, "vcenter_version", vc.VcVersion)
 	// vc.Url is in format `https://XXXX.com/sdk` while UI shows hostname only so we extract it
 	// The error should not be a reason to fail datasource if it is invalid so it is just logged
 	host, err := url.Parse(vc.Url)
 	if err != nil {
 		log.Printf("[DEBUG] [vCenter read] - could not parse vCenter URL '%s': %s", vc.Url, err)
 	}
-	_ = d.Set("vcenter_host", host.Host)
-	_ = d.Set("status", vc.Status)
-	_ = d.Set("is_enabled", vc.IsEnabled)
-	_ = d.Set("connection_status", vc.ListenerState)
+	dSet(d, "vcenter_host", host.Host)
+	dSet(d, "status", vc.Status)
+	dSet(d, "is_enabled", vc.IsEnabled)
+	dSet(d, "connection_status", vc.ListenerState)
 }

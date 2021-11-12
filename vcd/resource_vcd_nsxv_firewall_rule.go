@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdNsxvFirewallRule() *schema.Resource {
@@ -392,7 +393,7 @@ func resourceVcdNsxvFirewallRuleDelete(d *schema.ResourceData, meta interface{})
 // Example list path (_the_id_string_): list@org.vdc.edge-gw
 func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId, uiId string
-	var listRules, importRule bool
+	var listRules bool
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
@@ -413,13 +414,13 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 		listRules = true
 	case 4:
 		orgName, vdcName, edgeName, firewallRuleId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
-		importRule = true
+		listRules = false
 	case 5:
 		if resourceURI[3] != "ui-no" {
 			return nil, helpError
 		}
 		orgName, vdcName, edgeName, uiId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[4]
-		importRule = true
+		listRules = false
 	default:
 		return nil, helpError
 	}
@@ -434,7 +435,7 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 	// table with both UI and real firewall IDs
 	if listRules {
 		stdout := getTerraformStdout() // share the same stdout for multiple print statements
-		_, _ = fmt.Fprintln(stdout, "Retrieving all firewall rules")
+		fprintlnNoErr(stdout, "Retrieving all firewall rules")
 		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
 		if err != nil {
 			return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
@@ -442,73 +443,69 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 
 		tableWriter := new(bytes.Buffer)
 		writer := tabwriter.NewWriter(tableWriter, 0, 8, 1, '\t', tabwriter.AlignRight)
-		fmt.Fprintln(writer, "UI No\tID\tName\tAction\tType")
-		fmt.Fprintln(writer, "-----\t--\t----\t------\t----")
+		fprintlnNoErr(writer, "UI No\tID\tName\tAction\tType")
+		fprintlnNoErr(writer, "-----\t--\t----\t------\t----")
 		for index, rule := range allRules {
-			fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
+			fprintfNoErr(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
 		}
-		writer.Flush()
-		_, _ = fmt.Fprintln(stdout, tableWriter.String())
+		flushNoErr(writer)
+		fprintlnNoErr(stdout, tableWriter.String())
 
 		return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
 	}
 
 	// Proceed with import
-	if importRule {
-		// If user requested to import by UI Number - real ID must be looked up
-		// Specified import path as 'org.vdc.edge-gw.ui-no.3' to import rule number 3 in UI
-		if uiId != "" {
-			allRules, err := edgeGateway.GetAllNsxvFirewallRules()
-			if err != nil {
-				return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
-			}
-
-			uiIdInt, err := strconv.Atoi(uiId)
-			if err != nil {
-				return nil, fmt.Errorf("could not convert firewall rule number %s to integer", uiId)
-			}
-
-			// Rule index cannot be bigger than all rules and less than one
-			if uiIdInt > len(allRules) || uiIdInt < 1 {
-				return nil, fmt.Errorf("rule number %d does not exist", uiIdInt)
-			}
-
-			// Lookup real firewall rule id and use it for lookup
-			firewallRuleId = allRules[uiIdInt-1].ID
-
-		}
-
-		readFirewallRule, err := edgeGateway.GetNsxvFirewallRuleById(firewallRuleId)
+	// If user requested to import by UI Number - real ID must be looked up
+	// Specified import path as 'org.vdc.edge-gw.ui-no.3' to import rule number 3 in UI
+	if uiId != "" {
+		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
 		if err != nil {
-			return nil, fmt.Errorf("unable to find firewall rule with id %s: %s",
-				d.Id(), err)
+			return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
 		}
 
-		_ = d.Set("org", orgName)
-		_ = d.Set("vdc", vdcName)
-		_ = d.Set("edge_gateway", edgeName)
+		uiIdInt, err := strconv.Atoi(uiId)
+		if err != nil {
+			return nil, fmt.Errorf("could not convert firewall rule number %s to integer", uiId)
+		}
 
-		d.SetId(readFirewallRule.ID)
-		return []*schema.ResourceData{d}, nil
+		// Rule index cannot be bigger than all rules and less than one
+		if uiIdInt > len(allRules) || uiIdInt < 1 {
+			return nil, fmt.Errorf("rule number %d does not exist", uiIdInt)
+		}
+
+		// Lookup real firewall rule id and use it for lookup
+		firewallRuleId = allRules[uiIdInt-1].ID
+
 	}
 
-	return nil, nil
+	readFirewallRule, err := edgeGateway.GetNsxvFirewallRuleById(firewallRuleId)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find firewall rule with id %s: %s",
+			d.Id(), err)
+	}
+
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway", edgeName)
+
+	d.SetId(readFirewallRule.ID)
+	return []*schema.ResourceData{d}, nil
 }
 
 // setFirewallRuleData is the main function used for setting Terraform schema
 func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
-	_ = d.Set("name", rule.Name)
-	_ = d.Set("enabled", rule.Enabled)
-	_ = d.Set("logging_enabled", rule.LoggingEnabled)
-	_ = d.Set("action", rule.Action)
-	_ = d.Set("rule_type", rule.RuleType)
+	dSet(d, "name", rule.Name)
+	dSet(d, "enabled", rule.Enabled)
+	dSet(d, "logging_enabled", rule.LoggingEnabled)
+	dSet(d, "action", rule.Action)
+	dSet(d, "rule_type", rule.RuleType)
 
 	if rule.RuleTag != "" {
 		value, err := strconv.Atoi(rule.RuleTag)
 		if err != nil {
 			return fmt.Errorf("could not convert ruletag (%s) from string to int: %s", rule.RuleTag, err)
 		}
-		_ = d.Set("rule_tag", value)
+		dSet(d, "rule_tag", value)
 	}
 
 	// Process and set "source" block
@@ -889,9 +886,18 @@ func resourceVcdNsxvFirewallRuleServiceHash(v interface{}) int {
 		sourcePort = "any"
 	}
 
-	buf.WriteString(fmt.Sprintf("%s-", protocol))
-	buf.WriteString(fmt.Sprintf("%s-", port))
-	buf.WriteString(fmt.Sprintf("%s-", sourcePort))
+	_, err := buf.WriteString(fmt.Sprintf("%s-", protocol))
+	if err != nil {
+		util.Logger.Printf("[ERROR] buf.WriteString failed: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%s-", port))
+	if err != nil {
+		util.Logger.Printf("[ERROR] buf.WriteString failed: %s", err)
+	}
+	_, err = buf.WriteString(fmt.Sprintf("%s-", sourcePort))
+	if err != nil {
+		util.Logger.Printf("[ERROR] buf.WriteString failed: %s", err)
+	}
 
 	return hashcodeString(buf.String())
 }

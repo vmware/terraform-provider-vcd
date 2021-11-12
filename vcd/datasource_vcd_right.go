@@ -70,10 +70,10 @@ func datasourceRightRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	d.SetId(right.ID)
-	_ = d.Set("description", right.Description)
-	_ = d.Set("right_type", right.RightType)
-	_ = d.Set("category_id", right.Category)
-	_ = d.Set("bundle_key", right.BundleKey)
+	dSet(d, "description", right.Description)
+	dSet(d, "right_type", right.RightType)
+	dSet(d, "category_id", right.Category)
+	dSet(d, "bundle_key", right.BundleKey)
 	var impliedRights []map[string]interface{}
 	for _, ir := range right.ImpliedRights {
 		impliedRights = append(impliedRights, map[string]interface{}{

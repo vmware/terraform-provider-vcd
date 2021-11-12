@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -149,7 +148,7 @@ func resourceVcdOpenApiDhcpDelete(ctx context.Context, d *schema.ResourceData, m
 	// VCD versions < 10.2 do not allow to execute "DELETE" therefore we emit warning and "return success" to prevent
 	// destroy errors breaking Terraform flow.
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		_, _ = fmt.Fprint(getTerraformStdout(), "vcd_nsxt_network_dhcp WARNING: for VCD versions < 10.2 DHCP pool "+
+		fprintNoErr(getTerraformStdout(), "vcd_nsxt_network_dhcp WARNING: for VCD versions < 10.2 DHCP pool "+
 			"removal is not supported. Destroy is a NO-OP for VCD versions < 10.2. "+
 			"Please recreate parent network to remove DHCP pools.\n")
 		return nil
@@ -195,8 +194,8 @@ func resourceVcdOpenApiDhcpImport(ctx context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("[NSX-T DHCP pool import] DHCP configuration is only supported for Routed NSX-T networks: %s", err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(orgVdcNet.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -236,7 +235,7 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 }
 
 func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiOrgVdcNetworkDhcp, d *schema.ResourceData) error {
-	_ = d.Set("org_network_id", orgNetworkId)
+	dSet(d, "org_network_id", orgNetworkId)
 	if len(orgVdc.DhcpPools) > 0 {
 		poolInterfaceSlice := make([]interface{}, len(orgVdc.DhcpPools))
 

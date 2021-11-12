@@ -124,6 +124,11 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
+	// Fix coverity warning
+	if network == nil {
+		return diag.Errorf("[isolated network read v2] error defining network")
+	}
+
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[isolated network read v2] error setting Org VDC network data: %s", err)

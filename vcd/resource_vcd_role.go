@@ -127,9 +127,9 @@ func genericRoleRead(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	d.SetId(role.Role.ID)
-	_ = d.Set("description", role.Role.Description)
-	_ = d.Set("bundle_key", role.Role.BundleKey)
-	_ = d.Set("read_only", role.Role.ReadOnly)
+	dSet(d, "description", role.Role.Description)
+	dSet(d, "bundle_key", role.Role.BundleKey)
+	dSet(d, "read_only", role.Role.ReadOnly)
 
 	rights, err := role.GetRights(nil)
 	if err != nil {
@@ -289,10 +289,10 @@ func resourceVcdRoleImport(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return nil, fmt.Errorf("[role import] error retrieving role %s: %s", roleName, err)
 	}
-	_ = d.Set("org", orgName)
-	_ = d.Set("name", roleName)
-	_ = d.Set("description", role.Role.Description)
-	_ = d.Set("bundle_key", role.Role.BundleKey)
+	dSet(d, "org", orgName)
+	dSet(d, "name", roleName)
+	dSet(d, "description", role.Role.Description)
+	dSet(d, "bundle_key", role.Role.BundleKey)
 	d.SetId(role.Role.ID)
 	return []*schema.ResourceData{d}, nil
 }

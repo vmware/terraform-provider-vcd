@@ -148,8 +148,8 @@ func resourceVcdEdgeGatewaySettingsRead(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
-	_ = d.Set("edge_gateway_name", edgeGateway.EdgeGateway.Name)
+	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	dSet(d, "edge_gateway_name", edgeGateway.EdgeGateway.Name)
 	d.SetId(edgeGateway.EdgeGateway.ID)
 
 	log.Printf("[TRACE] edge gateway settings read completed: %#v", edgeGateway.EdgeGateway)
@@ -222,10 +222,10 @@ func resourceVcdEdgeGatewaySettingsImport(d *schema.ResourceData, meta interface
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_name", edgeGateway.EdgeGateway.Name)
-	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_name", edgeGateway.EdgeGateway.Name)
+	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(edgeGateway.EdgeGateway.ID)
 	return []*schema.ResourceData{d}, nil
 }

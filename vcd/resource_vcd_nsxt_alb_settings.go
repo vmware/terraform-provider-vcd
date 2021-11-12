@@ -165,9 +165,9 @@ func resourceVcdAlbSettingsImport(ctx context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("edge_gateway_id", edge.EdgeGateway.ID)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 
 	d.SetId(edge.EdgeGateway.ID)
 
@@ -182,6 +182,6 @@ func getNsxtAlbConfigurationType(d *schema.ResourceData) *types.NsxtAlbConfig {
 }
 
 func setNsxtAlbConfigurationData(config *types.NsxtAlbConfig, d *schema.ResourceData) {
-	d.Set("is_active", config.Enabled)
-	d.Set("service_network_specification", config.ServiceNetworkDefinition)
+	dSet(d, "is_active", config.Enabled)
+	dSet(d, "service_network_specification", config.ServiceNetworkDefinition)
 }

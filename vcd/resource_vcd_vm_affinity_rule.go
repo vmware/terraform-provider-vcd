@@ -229,13 +229,13 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 		return fmt.Errorf("[VM affinity rule read] error retrieving VM affinity rule %s: %s", name, err)
 	}
 
-	_ = d.Set("name", vmAffinityRule.VmAffinityRule.Name)
+	dSet(d, "name", vmAffinityRule.VmAffinityRule.Name)
 	if origin == "datasource" {
-		_ = d.Set("rule_id", vmAffinityRule.VmAffinityRule.ID)
+		dSet(d, "rule_id", vmAffinityRule.VmAffinityRule.ID)
 	}
-	_ = d.Set("required", *vmAffinityRule.VmAffinityRule.IsMandatory)
-	_ = d.Set("enabled", *vmAffinityRule.VmAffinityRule.IsEnabled)
-	_ = d.Set("polarity", vmAffinityRule.VmAffinityRule.Polarity)
+	dSet(d, "required", *vmAffinityRule.VmAffinityRule.IsMandatory)
+	dSet(d, "enabled", *vmAffinityRule.VmAffinityRule.IsEnabled)
+	dSet(d, "polarity", vmAffinityRule.VmAffinityRule.Polarity)
 	var endpointVMs []string
 	for _, vmr := range vmAffinityRule.VmAffinityRule.VmReferences {
 		for _, ref := range vmr.VMReference {
@@ -378,9 +378,9 @@ func resourceVcdVmAffinityRuleImport(d *schema.ResourceData, meta interface{}) (
 			affinityRuleIdentifier, formatVmAffinityRulesList(foundRules))
 	}
 	vmAffinityRule := foundRules[0]
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	_ = d.Set("name", vmAffinityRule.Name)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "name", vmAffinityRule.Name)
 	d.SetId(vmAffinityRule.ID)
 
 	return []*schema.ResourceData{d}, nil

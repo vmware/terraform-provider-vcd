@@ -252,10 +252,10 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	if err != nil {
 		statusText = vAppUnknownStatus
 	}
-	_ = d.Set("status", vapp.VApp.Status)
-	_ = d.Set("status_text", statusText)
-	_ = d.Set("href", vapp.VApp.HREF)
-	_ = d.Set("description", vapp.VApp.Description)
+	dSet(d, "status", vapp.VApp.Status)
+	dSet(d, "status_text", statusText)
+	dSet(d, "href", vapp.VApp.HREF)
+	dSet(d, "description", vapp.VApp.Description)
 	metadata, err := vapp.GetMetadata()
 	if err != nil {
 		return fmt.Errorf("[vapp read] error retrieving metadata: %s", err)
@@ -365,9 +365,9 @@ func resourceVcdVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.
 	if err != nil {
 		return nil, fmt.Errorf("[vapp import] error retrieving vapp %s: %s", vappName, err)
 	}
-	_ = d.Set("name", vappName)
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	dSet(d, "name", vappName)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	d.SetId(vapp.VApp.ID)
 	return []*schema.ResourceData{d}, nil
 }

@@ -213,7 +213,7 @@ func resourceVcdAlbServiceEngineGroupImport(ctx context.Context, d *schema.Resou
 
 	// This value is an internal flag and it cannot be read from resource itself. However, it makes sense to set it to
 	// default value in configuration. That way plan after import should be clean
-	_ = d.Set("sync_on_refresh", false)
+	dSet(d, "sync_on_refresh", false)
 
 	d.SetId(albSeGroup.NsxtAlbServiceEngineGroup.ID)
 	return []*schema.ResourceData{d}, nil
@@ -236,14 +236,14 @@ func getNsxtAlbServiceEngineGroupType(d *schema.ResourceData, impServiceEngineGr
 }
 
 func setNsxtAlbServiceEngineGroupData(d *schema.ResourceData, albController *types.NsxtAlbServiceEngineGroup) {
-	_ = d.Set("name", albController.Name)
-	_ = d.Set("description", albController.Description)
-	_ = d.Set("reservation_model", albController.ReservationType)
-	_ = d.Set("alb_cloud_id", albController.ServiceEngineGroupBacking.LoadBalancerCloudRef.ID)
+	dSet(d, "name", albController.Name)
+	dSet(d, "description", albController.Description)
+	dSet(d, "reservation_model", albController.ReservationType)
+	dSet(d, "alb_cloud_id", albController.ServiceEngineGroupBacking.LoadBalancerCloudRef.ID)
 
-	_ = d.Set("max_virtual_services", albController.MaxVirtualServices)
-	_ = d.Set("reserved_virtual_services", albController.ReservedVirtualServices)
-	_ = d.Set("deployed_virtual_services", albController.NumDeployedVirtualServices)
-	_ = d.Set("ha_mode", albController.HaMode)
-	_ = d.Set("overallocated", albController.OverAllocated)
+	dSet(d, "max_virtual_services", albController.MaxVirtualServices)
+	dSet(d, "reserved_virtual_services", albController.ReservedVirtualServices)
+	dSet(d, "deployed_virtual_services", albController.NumDeployedVirtualServices)
+	dSet(d, "ha_mode", albController.HaMode)
+	dSet(d, "overallocated", albController.OverAllocated)
 }

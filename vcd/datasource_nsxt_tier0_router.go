@@ -52,7 +52,7 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 
 	// If unused Tier-0 router is found - set the ID and return
 	if err == nil {
-		d.Set("is_assigned", false)
+		dSet(d, "is_assigned", false)
 		d.SetId(tier0Router.NsxtTier0Router.ID)
 		return nil
 	}
@@ -72,7 +72,7 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 				// Very odd but when VRF Tier-0 router is used - BackingType can be UNKNOWN
 				if v.Name == tier0RouterName &&
 					(v.BackingType == types.ExternalNetworkBackingTypeNsxtTier0Router || v.BackingType == "UNKNOWN") {
-					d.Set("is_assigned", true)
+					dSet(d, "is_assigned", true)
 					d.SetId(v.BackingID)
 					return nil
 				}
