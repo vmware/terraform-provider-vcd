@@ -64,6 +64,7 @@ type TestConfig struct {
 		User     string `json:"user"`
 		Password string `json:"password"`
 		Token    string `json:"token,omitempty"`
+		ApiToken string `json:"api_token,omitempty"`
 
 		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
 		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
@@ -281,6 +282,7 @@ provider "vcd" {
   user                 = "{{.PrUser}}"
   password             = "{{.PrPassword}}"
   token                = "{{.Token}}"
+  api_token            = "{{.ApiToken}}"
   auth_type            = "{{.AuthType}}"
   saml_adfs_rpt_id     = "{{.SamlAdfsCustomRptId}}"
   url                  = "{{.PrUrl}}"
@@ -389,6 +391,7 @@ func templateFill(tmpl string, data StringMap) string {
 		data["PrPassword"] = testConfig.Provider.Password
 		data["SamlAdfsCustomRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Token"] = testConfig.Provider.Token
+		data["ApiToken"] = testConfig.Provider.ApiToken
 		data["PrUrl"] = testConfig.Provider.Url
 		data["PrSysOrg"] = testConfig.Provider.SysOrg
 		data["PrOrg"] = testConfig.VCD.Org
@@ -410,6 +413,8 @@ func templateFill(tmpl string, data StringMap) string {
 		switch {
 		case testConfig.Provider.Token != "":
 			data["AuthType"] = "token"
+		case testConfig.Provider.ApiToken != "":
+			data["AuthType"] = "api_token"
 		case testConfig.Provider.UseSamlAdfs:
 			data["AuthType"] = "saml_adfs"
 		default:
@@ -692,7 +697,7 @@ func getVcdVersion(config TestConfig) (string, error) {
 	if vcdClient == nil || err != nil {
 		return "", err
 	}
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
 	if err != nil {
 		return "", err
 	}
@@ -850,7 +855,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	if vcdClient == nil || err != nil {
 		panic(err)
 	}
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
 	if err != nil {
 		panic(err)
 	}
@@ -984,7 +989,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
 	if err != nil {
 		panic(err)
 	}
@@ -1634,5 +1639,11 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 	}
 	if vcdVersion.Version.Equal(expectedVersion) {
 		t.Skipf("skipping test on VCD version %s because %s", exactSkipVersion, skipReason)
+	}
+}
+
+func skipTestForApiToken(t *testing.T) {
+	if testConfig.Provider.ApiToken != "" {
+		t.Skipf("skipping test %s because API token does not support this functionality", t.Name())
 	}
 }

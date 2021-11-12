@@ -65,7 +65,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		t.Skip("unable to validate vCD version - skipping test")
 	}
 
-	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
 	if err != nil {
 		t.Skip(fmt.Sprintf("authentication error: %s", err))
 	}
