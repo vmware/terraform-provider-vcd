@@ -172,8 +172,8 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
-				Description:  "'integrated', 'saml_adfs', and 'token' are the only supported now. 'integrated' is default.",
-				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token"}, false),
+				Description:  "'integrated', 'saml_adfs', 'token', and 'api_token' are the only ones supported now. 'integrated' is default.",
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token"}, false),
 			},
 			"saml_adfs_rpt_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -187,6 +187,13 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_TOKEN", nil),
 				Description: "The token used instead of username/password for VCD API operations.",
+			},
+
+			"api_token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_API_TOKEN", nil),
+				Description: "The API token used instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
 			},
 
 			"sysorg": &schema.Schema{
@@ -275,6 +282,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		User:            d.Get("user").(string),
 		Password:        d.Get("password").(string),
 		Token:           d.Get("token").(string),
+		ApiToken:        d.Get("api_token").(string),
 		SysOrg:          connectOrg,            // Connection org
 		Org:             d.Get("org").(string), // Default org for operations
 		Vdc:             d.Get("vdc").(string), // Default vdc
@@ -289,6 +297,21 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	case "saml_adfs":
 		config.UseSamlAdfs = true
 		config.CustomAdfsRptId = d.Get("saml_adfs_rpt_id").(string)
+	case "token":
+		if config.Token == "" {
+			return nil, fmt.Errorf("empty token detected with 'auth_type' == 'token'")
+		}
+	case "api_token":
+		if config.ApiToken == "" {
+			return nil, fmt.Errorf("empty API token detected with 'auth_type' == 'api_token'")
+		}
+	default:
+		if config.ApiToken != "" || config.Token != "" {
+			return nil, fmt.Errorf("to use a token, the appropriate 'auth_type' (either 'token' or 'api_token') must be set")
+		}
+	}
+	if config.ApiToken != "" && config.Token != "" {
+		return nil, fmt.Errorf("only one of 'token' or 'api_token' should be set")
 	}
 
 	// If the provider includes logging directives,

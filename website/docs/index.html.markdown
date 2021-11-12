@@ -122,6 +122,8 @@ You can connect using an authorization token instead of username and password.
 
 ```hcl
 provider "vcd" {
+  user                 = "none"
+  password             = "none"
   auth_type            = "token"
   token                = var.token
   sysorg               = "System"
@@ -138,6 +140,32 @@ resource "vcd_network_routed" "net1" {
 }
 ```
 When using a token, the fields `user` and `password` will be ignored, but they need to be in the script.
+
+### Connecting with an API token
+
+With VCD 10.3.1+, you can connect using an API token, as defined in the [documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html).
+
+```hcl
+provider "vcd" {
+  user                 = "none"
+  password             = "none"
+  auth_type            = "api_token"
+  api_token            = var.api_token
+  sysorg               = "System"
+  org                  = var.vcd_org # Default for resources
+  vdc                  = var.vcd_vdc # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
+}
+
+# Create a new network in the default organization and VDC
+resource "vcd_network_routed" "net1" {
+  # ...
+}
+```
+
+Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
 ### Shell script to obtain token
 To obtain a token you can use this sample shell script:
@@ -219,19 +247,26 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `password` - (Required) This is the password for Cloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
 
-* `auth_type` - (Optional) `integrated`, `token` or `saml_adfs`. Default is `integrated`.
+* `auth_type` - (Optional) `integrated`, `token`, `api_token`, or `saml_adfs`. Default is `integrated`.
   * `integrated` - VCD local users and LDAP users (provided LDAP is configured for Organization).
   * `saml_adfs` allows to use SAML login flow with Active Directory Federation
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
   set with `VCD_AUTH_TYPE` environment variable.
   * `token` allows to specify token in [`token`](#token) field.
+  * `api_token` allows to specify an API token.
   
 * `token` - (Optional; *v2.6+*) This is the token that can be used instead of username
    and password (in combination with field `auth_type=token`). When this is set, username and
    password will be ignored, but should be left in configuration either empty or with any custom
    values. A token can be specified with the `VCD_TOKEN` environment variable.
    Both a (deprecated) authorization token or a bearer token (*v3.1+*) can be used in this field.
+
+* `api_token` - (Optional; *v3.5+*) This is the API token that a System or organization administrator can create and 
+   distribute to users. It is used instead of username and password (in combination with `auth_type=api_token`). When
+   this field is filled, username and password are ignored. An API token can also be specified with the `VCD_API_TOKEN`
+   environment variable. This token requires at least VCD 10.3.1. There are restrictions to its use, as defined in
+   [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html)
 
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used
   as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
