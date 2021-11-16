@@ -144,6 +144,8 @@ When using a token, the fields `user` and `password` will be ignored, but they n
 ### Connecting with an API token
 
 With VCD 10.3.1+, you can connect using an API token, as defined in the [documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html).
+The API token is not a bearer token, but one will be created and automatically used by the Terraform provider when an API
+token is supplied.
 
 ```hcl
 provider "vcd" {
@@ -167,8 +169,8 @@ resource "vcd_network_routed" "net1" {
 
 Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
-### Shell script to obtain token
-To obtain a token you can use this sample shell script:
+### Shell script to obtain a bearer token
+To obtain a bearer token you can use this sample shell script:
 
 ```sh
 #!/bin/bash
@@ -256,7 +258,7 @@ The following arguments are used to configure the VMware Cloud Director Provider
   * `token` allows to specify token in [`token`](#token) field.
   * `api_token` allows to specify an API token.
   
-* `token` - (Optional; *v2.6+*) This is the token that can be used instead of username
+* `token` - (Optional; *v2.6+*) This is the bearer token that can be used instead of username
    and password (in combination with field `auth_type=token`). When this is set, username and
    password will be ignored, but should be left in configuration either empty or with any custom
    values. A token can be specified with the `VCD_TOKEN` environment variable.
