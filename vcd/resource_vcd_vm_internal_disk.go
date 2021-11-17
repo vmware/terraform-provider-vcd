@@ -51,8 +51,8 @@ func resourceVmInternalDisk() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata"}, false),
-				Description:  "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata",
+				ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata", "nvme"}, false),
+				Description:  "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata, nvme",
 			},
 			"size_in_mb": {
 				Type:        schema.TypeInt,
@@ -104,6 +104,7 @@ var internalDiskBusTypes = map[string]string{
 	"sas":         "4",
 	"paravirtual": "5",
 	"sata":        "6",
+	"nvme":        "7",
 }
 var internalDiskBusTypesFromValues = map[string]string{
 	"1": "ide",
@@ -111,6 +112,7 @@ var internalDiskBusTypesFromValues = map[string]string{
 	"4": "sas",
 	"5": "paravirtual",
 	"6": "sata",
+	"7": "nvme",
 }
 
 // resourceVmInternalDiskCreate creates an internal disk for VM
