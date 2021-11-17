@@ -188,9 +188,15 @@ function validate_script {
     terraform init > init.out 2>&1
     exit_code=$?
     check_exit_code init.out
+
     terraform validate > validate.out 2>&1
     exit_code=$?
     check_exit_code validate.out
+    
+    terraform fmt -check > fmt.out 2>&1
+    exit_code=$?
+    check_exit_code fmt.out
+
     cd - > /dev/null
     rm -rf vtmp
 }
