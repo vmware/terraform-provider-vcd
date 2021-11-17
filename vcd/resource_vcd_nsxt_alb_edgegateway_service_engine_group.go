@@ -94,7 +94,7 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupUpdate(ctx context.Context, d *s
 		return diag.Errorf("error reading ALB Service Engine Group assignment to Edge Gateway: %s", err)
 	}
 	edgeAlbServiceEngineGroupAssignmentConfig := getAlbServiceEngineGroupAssignmentType(d)
-	// Inject correct ID for update
+	// Add correct ID for update
 	edgeAlbServiceEngineGroupAssignmentConfig.ID = edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID
 	updatedEdgeAlbServiceEngineGroupAssignment, err := edgeAlbServiceEngineGroupAssignment.Update(edgeAlbServiceEngineGroupAssignmentConfig)
 	if err != nil {
@@ -179,7 +179,7 @@ func setAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types.Nsx
 }
 
 func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtAlbServiceEngineGroupAssignment {
-	edgeAlbServiceEngineAssigmentConfig := &types.NsxtAlbServiceEngineGroupAssignment{
+	edgeAlbServiceEngineAssignmentConfig := &types.NsxtAlbServiceEngineGroupAssignment{
 		GatewayRef:            &types.OpenApiReference{ID: d.Get("edge_gateway_id").(string)},
 		ServiceEngineGroupRef: &types.OpenApiReference{ID: d.Get("service_engine_group_id").(string)},
 	}
@@ -187,12 +187,12 @@ func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtA
 	// Max Virtual Services and Reserved Virtual Services only work with SHARED Service Engine Group, but validation
 	// enforcement is left for VCD API.
 	if maxServicesInterface, isSet := d.GetOk("max_virtual_services"); isSet {
-		edgeAlbServiceEngineAssigmentConfig.MaxVirtualServices = takeIntPointer(maxServicesInterface.(int))
+		edgeAlbServiceEngineAssignmentConfig.MaxVirtualServices = takeIntPointer(maxServicesInterface.(int))
 	}
 
 	if reservedServicesInterface, isSet := d.GetOk("reserved_virtual_services"); isSet {
-		edgeAlbServiceEngineAssigmentConfig.MinVirtualServices = takeIntPointer(reservedServicesInterface.(int))
+		edgeAlbServiceEngineAssignmentConfig.MinVirtualServices = takeIntPointer(reservedServicesInterface.(int))
 	}
 
-	return edgeAlbServiceEngineAssigmentConfig
+	return edgeAlbServiceEngineAssignmentConfig
 }
