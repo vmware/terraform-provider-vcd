@@ -290,8 +290,8 @@ provider "vcd" {
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
   #version             = "~> {{.VersionRequired}}"
-  logging              = {{.Logging}}
-  logging_file         = "{{.LoggingFile}}"
+  logging      = {{.Logging}}
+  logging_file = "{{.LoggingFile}}"
 }
 `
 )

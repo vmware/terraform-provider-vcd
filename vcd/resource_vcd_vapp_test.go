@@ -153,10 +153,10 @@ func init() {
 const testAccCheckVcdVApp_basic = `
 
 resource "vcd_vapp" "{{.VappName}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
-  name          = "{{.VappName}}"
-  description   = "{{.VappDescription}}"
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.VappName}}"
+  description = "{{.VappDescription}}"
 
   metadata = {
     vapp_metadata = "vApp Metadata."
@@ -170,25 +170,25 @@ resource "vcd_vapp" "{{.VappName}}" {
 
 # needed to check power on on update in next step
 resource "vcd_vapp_vm" "test_vm1" {
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  name          = "test_vm1"
-  memory        = 512
-  cpus          = 1
-  cpu_cores     = 1 
+  vapp_name = vcd_vapp.{{.VappName}}.name
+  name      = "test_vm1"
+  memory    = 512
+  cpus      = 1
+  cpu_cores = 1 
 
-  os_type                        = "rhel4Guest"
-  hardware_version               = "vmx-14"
-  computer_name                  = "compNameUp"
+  os_type          = "rhel4Guest"
+  hardware_version = "vmx-14"
+  computer_name    = "compNameUp"
 }
 `
 
 const testAccCheckVcdVApp_update = `
 # skip-binary-test: only for updates
 resource "vcd_vapp" "{{.VappName}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
-  name          = "{{.VappName}}"
-  description   = "{{.VappDescription}}"
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.VappName}}"
+  description = "{{.VappDescription}}"
 
   metadata = {
     vapp_metadata = "vApp Metadata updated"
@@ -204,14 +204,14 @@ resource "vcd_vapp" "{{.VappName}}" {
 
 # vApp power on won't work if vApp doesn't have VM
 resource "vcd_vapp_vm" "test_vm1" {
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  name          = "test_vm1"
-  memory        = 512
-  cpus          = 1
-  cpu_cores     = 1 
+  vapp_name = vcd_vapp.{{.VappName}}.name
+  name      = "test_vm1"
+  memory    = 512
+  cpus      = 1
+  cpu_cores = 1 
 
-  os_type                        = "rhel4Guest"
-  hardware_version               = "vmx-14"
-  computer_name                  = "compNameUp"
+  os_type          = "rhel4Guest"
+  hardware_version = "vmx-14"
+  computer_name    = "compNameUp"
 }
 `
