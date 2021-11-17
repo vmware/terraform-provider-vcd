@@ -787,6 +787,9 @@ func TestMain(m *testing.M) {
 		if testConfig.Provider.Token != "" {
 			authentication = "token"
 		}
+		if testConfig.Provider.ApiToken != "" {
+			authentication = "API-token"
+		}
 
 		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
