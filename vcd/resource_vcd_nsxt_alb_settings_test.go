@@ -155,15 +155,15 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
 
 const testAccVcdNsxtAlbGeneralSettings = testAccVcdNsxtAlbProviderPrereqs + `
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name = "{{.EdgeGw}}"
 }
 
 resource "vcd_nsxt_alb_settings" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = {{.IsActive}}
@@ -175,8 +175,8 @@ resource "vcd_nsxt_alb_settings" "test" {
 
 const testAccVcdNsxtAlbGeneralSettingsCustomService = testAccVcdNsxtAlbProviderPrereqs + `
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name = "{{.EdgeGw}}"
 }

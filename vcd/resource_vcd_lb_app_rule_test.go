@@ -149,7 +149,7 @@ resource "vcd_lb_app_rule" "test" {
   name   = "{{.AppRuleName}}"
   script = "{{.SingleLineScript}}"
 }
-  
+
 data "vcd_lb_app_rule" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -168,7 +168,7 @@ resource "vcd_lb_app_rule" "test" {
   name   = "{{.AppRuleName}}"
   script = {{.MultilineScript}}
 }
-  
+
 data "vcd_lb_app_rule" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -197,5 +197,4 @@ data "vcd_lb_app_rule" "test" {
   name         = vcd_lb_app_rule.test.name
   depends_on   = [vcd_lb_app_rule.test]
 }
-
 `

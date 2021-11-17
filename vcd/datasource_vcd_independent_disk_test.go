@@ -152,15 +152,15 @@ data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
 }
 
 output "iops" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
 }
 output "owner_name" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
 }
 output "datastore_name" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
 }
 output "is_attached" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
 }
 `

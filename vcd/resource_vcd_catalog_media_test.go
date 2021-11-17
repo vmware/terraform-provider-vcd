@@ -183,7 +183,7 @@ const testAccCheckVcdCatalogMediaBasic = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    mediaItem_metadata = "mediaItem Metadata"
+    mediaItem_metadata  = "mediaItem Metadata"
     mediaItem_metadata2 = "mediaItem Metadata2"
   }
 }
@@ -229,7 +229,7 @@ const testAccCheckVcdCatalogMediaUpdate = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    mediaItem_metadata = "mediaItem Metadata v2"
+    mediaItem_metadata  = "mediaItem Metadata v2"
     mediaItem_metadata2 = "mediaItem Metadata2 v2"
     mediaItem_metadata3 = "mediaItem Metadata3"
   }

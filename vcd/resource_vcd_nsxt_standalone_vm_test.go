@@ -252,12 +252,12 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
 }
 
 resource "vcd_network_isolated_v2" "net-test" {
-  name            = "{{.NetworkName}}-isolated"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
+  name = "{{.NetworkName}}-isolated"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
   
-  gateway         = "110.10.102.1"
-  prefix_length   = 26
+  gateway       = "110.10.102.1"
+  prefix_length = 26
 
   static_ip_pool {
     start_address = "110.10.102.2"
@@ -266,10 +266,10 @@ resource "vcd_network_isolated_v2" "net-test" {
 }
 
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
   
-  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
+  org_network_id = vcd_network_routed_v2.{{.NetworkName}}.id
 
   pool {
     start_address = "10.10.102.210"
@@ -283,11 +283,11 @@ resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
 }
 
 resource "vcd_nsxt_network_imported" "imported-test" {
-  name            = "{{.NetworkName}}-imported"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  gateway         = "12.12.2.1"
-  prefix_length   = 24
+  name          = "{{.NetworkName}}-imported"
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  gateway       = "12.12.2.1"
+  prefix_length = 24
 
   nsxt_logical_switch_name = "{{.ImportSegment}}"
 
@@ -427,8 +427,8 @@ resource "vcd_network_isolated_v2" "net-test" {
 }
 
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
   
   org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
 
@@ -444,11 +444,11 @@ resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
 }
 
 resource "vcd_nsxt_network_imported" "imported-test" {
-  name            = "{{.NetworkName}}-imported"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  gateway         = "12.12.2.1"
-  prefix_length   = 24
+  name          = "{{.NetworkName}}-imported"
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  gateway       = "12.12.2.1"
+  prefix_length = 24
 
   nsxt_logical_switch_name = "{{.ImportSegment}}"
 
@@ -507,11 +507,11 @@ resource "vcd_vm" "{{.VMName}}" {
   # You cannot remove NICs from an active virtual machine on which no operating system is installed.
   power_on = false
 
-  description   = "test empty standalone VM"
-  name          = "{{.VMName}}"
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1 
+  description = "test empty standalone VM"
+  name        = "{{.VMName}}"
+  memory      = 512
+  cpus        = 2
+  cpu_cores   = 1 
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
@@ -528,7 +528,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	adapter_type       = "PCNet32"
+	  adapter_type       = "PCNet32"
   }
 
   network {

@@ -109,8 +109,8 @@ resource "vcd_org" "{{.OrgName2}}" {
     delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_lease.0.delete_on_storage_lease_expiration
   }
   vapp_template_lease {
-    maximum_storage_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.maximum_storage_lease_in_sec
-    delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.delete_on_storage_lease_expiration
+    maximum_storage_lease_in_sec       = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.maximum_storage_lease_in_sec
+    delete_on_storage_lease_expiration = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.delete_on_storage_lease_expiration
   }
 }
 `

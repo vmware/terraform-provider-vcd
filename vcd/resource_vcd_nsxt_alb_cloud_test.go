@@ -133,7 +133,7 @@ resource "vcd_nsxt_alb_cloud" "first" {
 
 const testAccVcdNsxtAlbCloudStep2 = testAccVcdNsxtAlbCloudPrereqs + `
 resource "vcd_nsxt_alb_cloud" "first" {
-  name        = "nsxt-cloud-renamed"
+  name = "nsxt-cloud-renamed"
 
   controller_id       = vcd_nsxt_alb_controller.first.id
   importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cld.id
@@ -144,7 +144,7 @@ resource "vcd_nsxt_alb_cloud" "first" {
 const testAccVcdNsxtAlbCloudStep4DS = testAccVcdNsxtAlbCloudStep2 + `
 # skip-binary-test: Data Source test
 data "vcd_nsxt_alb_cloud" "first" {
-  name          = vcd_nsxt_alb_cloud.first.name
+  name = vcd_nsxt_alb_cloud.first.name
 }
 `
 

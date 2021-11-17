@@ -95,7 +95,7 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    catalogMedia_metadata = "catalogMedia Metadata"
+    catalogMedia_metadata  = "catalogMedia Metadata"
     catalogMedia_metadata2 = "catalogMedia Metadata2"
   }
 }

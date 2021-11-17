@@ -1097,9 +1097,9 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
   interface_type = "{{.InterfaceType}}"
 
   dhcp_pool {
-    start_address      = "{{.StartDhcpIpAddress}}"
-    end_address        = "{{.EndDhcpIpAddress}}"
-    max_lease_time     = "{{.MaxLeaseTime}}"
+    start_address  = "{{.StartDhcpIpAddress}}"
+    end_address    = "{{.EndDhcpIpAddress}}"
+    max_lease_time = "{{.MaxLeaseTime}}"
   }
 }
 `

@@ -210,47 +210,47 @@ func testAccCheckVcdLBAppProfileDestroy(appProfileName string) resource.TestChec
 
 const testAccVcdLBAppProfile_TCP = `
 resource "vcd_lb_app_profile" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-  
-	name           = "{{.AppProfileName}}"
-	type           = "{{.Type}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
 
-	enable_ssl_passthrough         = "false"
-	insert_x_forwarded_http_header = "false"
-	enable_pool_side_ssl           = "false"
+  name = "{{.AppProfileName}}"
+  type = "{{.Type}}"
+
+  enable_ssl_passthrough         = "false"
+  insert_x_forwarded_http_header = "false"
+  enable_pool_side_ssl           = "false"
 }
 
 data "vcd_lb_app_profile" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name         = vcd_lb_app_profile.test.name
-	depends_on   = [vcd_lb_app_profile.test]
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
 const testAccVcdLBAppProfile_UDP = `
 resource "vcd_lb_app_profile" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
   
-	name           = "{{.AppProfileName}}"
-	type           = "{{.Type}}"
+  name           = "{{.AppProfileName}}"
+  type           = "{{.Type}}"
 
-	enable_ssl_passthrough         = "true"
-	insert_x_forwarded_http_header = "true"
-	enable_pool_side_ssl           = "true"
+  enable_ssl_passthrough         = "true"
+  insert_x_forwarded_http_header = "true"
+  enable_pool_side_ssl           = "true"
 }
 
 data "vcd_lb_app_profile" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name         = vcd_lb_app_profile.test.name
-	depends_on   = [vcd_lb_app_profile.test]
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -290,7 +290,7 @@ resource "vcd_lb_app_profile" "test" {
 
   http_redirect_url     = ""
   persistence_mechanism = "sourceip"
-  expiration = "17"
+  expiration            = "17"
 }
 
 data "vcd_lb_app_profile" "test" {
@@ -311,8 +311,8 @@ resource "vcd_lb_app_profile" "test" {
   name = "{{.AppProfileName}}"
   type = "{{.Type}}"
 
-  persistence_mechanism = "sourceip"
-  expiration = 0
+  persistence_mechanism          = "sourceip"
+  expiration                     = 0
   enable_ssl_passthrough         = "true"
   enable_pool_side_ssl           = "true"
   insert_x_forwarded_http_header = "true"

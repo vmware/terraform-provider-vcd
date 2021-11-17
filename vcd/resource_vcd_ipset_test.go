@@ -143,8 +143,8 @@ func testAccCheckVcdIpSetDestroy(resource, ipSetName string) resource.TestCheckF
 
 const testAccVcdIpSet = `
 resource "vcd_nsxv_ip_set" "test-ipset" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
+  org= "{{.Org}}"
+  vdc= "{{.Vdc}}"
 
   name         = "{{.IpSetName}}"
   description  = "test-ip-set-description"
@@ -152,49 +152,49 @@ resource "vcd_nsxv_ip_set" "test-ipset" {
 }
 
 data "vcd_nsxv_ip_set" "test-ipset" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-  
-	name         = vcd_nsxv_ip_set.test-ipset.name
-	depends_on   = [vcd_nsxv_ip_set.test-ipset]
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = vcd_nsxv_ip_set.test-ipset.name
+  depends_on = [vcd_nsxv_ip_set.test-ipset]
 }
 `
 
 const testAccVcdIpSetUpdate = `
 resource "vcd_nsxv_ip_set" "test-ipset" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
   name         = "{{.IpSetName}}"
   description  = "test-ip-set-changed-description"
-  ip_addresses = ["10.10.10.1","11.11.11.1"]
+  ip_addresses = ["10.10.10.1", "11.11.11.1"]
 }
 
 data "vcd_nsxv_ip_set" "test-ipset" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-  
-	name         = vcd_nsxv_ip_set.test-ipset.name
-	depends_on   = [vcd_nsxv_ip_set.test-ipset]
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"  
+
+  name       = vcd_nsxv_ip_set.test-ipset.name
+  depends_on = [vcd_nsxv_ip_set.test-ipset]
 }
 `
 
 const testAccVcdIpSetUpdate2 = `
 resource "vcd_nsxv_ip_set" "test-ipset" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
   name                   = "{{.IpSetName}}"
   is_inheritance_allowed = false
   description            = "test-ip-set-changed-description"
-  ip_addresses           = ["1.1.1.1/24","10.10.10.100-10.10.10.110"]
+  ip_addresses           = ["1.1.1.1/24", "10.10.10.100-10.10.10.110"]
 }
 
 data "vcd_nsxv_ip_set" "test-ipset" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-  
-	name         = vcd_nsxv_ip_set.test-ipset.name
-	depends_on   = [vcd_nsxv_ip_set.test-ipset]
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = vcd_nsxv_ip_set.test-ipset.name
+  depends_on = [vcd_nsxv_ip_set.test-ipset]
 }
 `

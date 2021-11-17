@@ -615,24 +615,24 @@ func testAccCheckVcdFirewallRuleDestroy(resource string) resource.TestCheckFunc 
 
 const testAccVcdEdgeFirewallRule0 = `
 resource "vcd_nsxv_firewall_rule" "rule0" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "test-rule"
-	rule_tag = "30000"
-	action = "deny"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "test-rule"
+  rule_tag     = "30000"
+  action       = "deny"  
 
-	source {
-		ip_addresses = ["any"]
-	}
-  
-	destination {
-		ip_addresses = ["192.168.1.110"]
-	}
-  
-	service {
-		protocol = "any"
-	}
+  source {
+  	ip_addresses = ["any"]
+  }
+
+  destination {
+  	ip_addresses = ["192.168.1.110"]
+  }
+
+  service {
+  	protocol = "any"
+  }
 }
 
 resource "vcd_nsxv_firewall_rule" "rule0-2" {

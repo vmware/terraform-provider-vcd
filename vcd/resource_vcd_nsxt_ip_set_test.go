@@ -240,8 +240,8 @@ resource "vcd_nsxt_ip_set" "set1" {
 
 const testAccNsxtIpSetEmpty2 = testAccNsxtIpSetPrereqs + `
 resource "vcd_nsxt_ip_set" "set1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 

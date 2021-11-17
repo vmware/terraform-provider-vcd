@@ -249,12 +249,12 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
-  name        = "test-tunnel-1-updated"
+  name = "test-tunnel-1-updated"
   
   pre_shared_key    = "updated-psk"
   # Primary IP address of Edge Gateway
-  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
-  local_networks    = ["50.40.40.1/32"]
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["50.40.40.1/32"]
   # That is a fake remote IP address
   remote_ip_address = "1.2.3.4"
 }
@@ -274,8 +274,8 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   
   pre_shared_key    = "updated-psk"
   # Primary IP address of Edge Gateway
-  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
-  local_networks    = ["50.40.40.1/32"]
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["50.40.40.1/32"]
   # That is a fake remote IP address
   remote_ip_address = "2.3.4.5"
   remote_networks   = ["1.1.1.1/32", "2.2.2.0/24", "3.3.0.0/16"]
@@ -551,9 +551,9 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
     ike_version               = "IKE_V2"
     ike_encryption_algorithms = ["AES_128"]
     # ike_encryption_algorithms = ["AES_128", "AES_256"]
-    ike_digest_algorithms     = ["SHA2_256"]
-    ike_dh_groups             = ["GROUP14"]
-    ike_sa_lifetime           = 86400
+    ike_digest_algorithms = ["SHA2_256"]
+    ike_dh_groups         = ["GROUP14"]
+    ike_sa_lifetime       = 86400
     
 	tunnel_pfs_enabled = true
 	tunnel_df_policy = "COPY"
@@ -594,8 +594,8 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
     ike_dh_groups             = ["GROUP19"]
     ike_sa_lifetime           = 21600 # 4 hours
     
-	tunnel_pfs_enabled = true
-	tunnel_df_policy = "COPY"
+	tunnel_pfs_enabled           = true
+	tunnel_df_policy             = "COPY"
     tunnel_encryption_algorithms = ["AES_128"]
     tunnel_digest_algorithms     = ["SHA2_512"]
     tunnel_dh_groups             = ["GROUP19"]

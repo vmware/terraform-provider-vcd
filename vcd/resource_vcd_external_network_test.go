@@ -153,11 +153,11 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   }
 
   ip_scope {
-    gateway      = "{{.Gateway}}"
-    netmask      = "{{.Netmask}}"
-    dns1         = "{{.Dns1}}"
-    dns2         = "{{.Dns2}}"
-    dns_suffix   = "company.biz"
+    gateway    = "{{.Gateway}}"
+    netmask    = "{{.Netmask}}"
+    dns1       = "{{.Dns1}}"
+    dns2       = "{{.Dns2}}"
+    dns_suffix = "company.biz"
 
     static_ip_pool {
       start_address = "{{.StartAddress}}"

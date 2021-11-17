@@ -296,11 +296,11 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   }
 
   ip_scope {
-    gateway      = "192.168.30.49"
-    netmask      = "255.255.255.240"
-    dns1         = "192.168.0.164"
-    dns2         = "192.168.0.196"
-    dns_suffix   = "company.biz"
+    gateway    = "192.168.30.49"
+    netmask    = "255.255.255.240"
+    dns1       = "192.168.0.164"
+    dns2       = "192.168.0.196"
+    dns_suffix = "company.biz"
 
     static_ip_pool {
       start_address = "192.168.30.51"

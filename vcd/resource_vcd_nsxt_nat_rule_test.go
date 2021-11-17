@@ -142,8 +142,8 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 const natRuleDataSourceDefinition = `
 # skip-binary-test: Data Source test
 data "vcd_nsxt_nat_rule" "nat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   name            = "{{.RuleName}}"
@@ -176,8 +176,8 @@ data "vcd_nsxt_app_port_profile" "custom" {
 }
 
 resource "vcd_nsxt_nat_rule" "dnat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -199,8 +199,8 @@ const testAccNsxtNatDnatStep2DS = testAccNsxtNatDnatStep2 + natRuleDataSourceDef
 
 const testAccNsxtNatDnatStep5 = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_app_port_profile" "custom-app" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name        = "custom app profile"
   description = "Application port profile for custom application"
@@ -214,8 +214,8 @@ resource "vcd_nsxt_app_port_profile" "custom-app" {
 
 
 resource "vcd_nsxt_nat_rule" "dnat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -286,8 +286,8 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 
 const testAccNsxtNatNoDnat = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_nat_rule" "no-dnat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -296,7 +296,7 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 
   
   # Using primary_ip from edge gateway
-  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  external_address   = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   dnat_external_port = 7777
 }
 `
@@ -403,8 +403,8 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 
 const testAccNsxtNatSnat = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_nat_rule" "snat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 	
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -422,8 +422,8 @@ const testAccNsxtNatSnatDS = testAccNsxtNatSnat + natRuleDataSourceDefinition
 
 const testAccNsxtNatSnat2 = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_nat_rule" "snat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 	
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -432,9 +432,9 @@ resource "vcd_nsxt_nat_rule" "snat" {
   description = ""
   
   # Using primary_ip from edge gateway
-  external_address         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_address         = "10.10.10.0/24"
-  logging = false
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address = "10.10.10.0/24"
+  logging          = false
 }
 `
 
@@ -489,8 +489,8 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 
 const testAccNsxtNatNoSnat = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_nat_rule" "no-snat" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -499,7 +499,7 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
   description = "description"
   
   # Using primary_ip from edge gateway
-  internal_address         = "11.11.11.0/24"
+  internal_address = "11.11.11.0/24"
 }
 `
 

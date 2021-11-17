@@ -282,8 +282,8 @@ resource "vcd_network_routed" "net" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
 
-  name         = "test-org-for-dnat"
-  gateway      = "10.10.0.1"
+  name    = "test-org-for-dnat"
+  gateway = "10.10.0.1"
 
   static_ip_pool {
     start_address = "10.10.0.152"

@@ -187,7 +187,7 @@ const testAccCheckVcdCatalogItemUpdate = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    catalogItem_metadata = "catalogItem Metadata v2"
+    catalogItem_metadata  = "catalogItem Metadata v2"
     catalogItem_metadata2 = "catalogItem Metadata2 v2"
     catalogItem_metadata3 = "catalogItem Metadata3"
   }

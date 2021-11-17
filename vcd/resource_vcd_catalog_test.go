@@ -210,14 +210,14 @@ resource "vcd_catalog" "test-catalog" {
   name        = "{{.CatalogName}}"
   description = "{{.Description}}"
 
-  delete_force      = "true"
-  delete_recursive  = "true"
+  delete_force     = "true"
+  delete_recursive = "true"
 }
 `
 
 const testAccCheckVcdCatalogStep1 = `
 data "vcd_storage_profile" "sp" {
-	name = "{{.StorageProfile}}"
+  name = "{{.StorageProfile}}"
 }
 
 resource "vcd_catalog" "test-catalog" {
@@ -227,8 +227,8 @@ resource "vcd_catalog" "test-catalog" {
   description        = "{{.Description}}"
   storage_profile_id = data.vcd_storage_profile.sp.id
 
-  delete_force      = "true"
-  delete_recursive  = "true"
+  delete_force     = "true"
+  delete_recursive = "true"
 }
 `
 

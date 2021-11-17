@@ -120,7 +120,7 @@ resource "vcd_catalog_item" "{{.NewCatalogItem}}" {
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    catalogItem_metadata = "catalogItem Metadata"
+    catalogItem_metadata  = "catalogItem Metadata"
     catalogItem_metadata2 = "catalogItem Metadata2"
   }
 }

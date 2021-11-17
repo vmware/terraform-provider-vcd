@@ -232,13 +232,13 @@ data "vcd_nsxt_app_port_profile" "ssh" {
 }
 
 resource "vcd_nsxt_app_port_profile" "custom-app" {
-  org   = "{{.Org}}"
-  vdc   = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name        = "custom app profile"
   description = "Application port profile for custom application"
 
-  scope       = "TENANT"
+  scope = "TENANT"
 
   app_port {
     protocol = "ICMPv6"

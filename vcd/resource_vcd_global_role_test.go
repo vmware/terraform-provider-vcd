@@ -135,7 +135,7 @@ resource "vcd_global_role" "{{.GlobalRoleName}}" {
     "vApp Template / Media: View",
   ]
   publish_to_all_tenants = false
-  tenants                = [ "{{.Tenant}}" ]
+  tenants                = ["{{.Tenant}}"]
 }
 `
 

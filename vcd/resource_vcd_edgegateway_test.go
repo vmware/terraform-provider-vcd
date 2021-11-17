@@ -456,11 +456,11 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 
 const testAccEdgeGatewayRateLimits = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-	org                     = "{{.Org}}"
-	vdc                     = "{{.Vdc}}"
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
 
-	name                    = "edge-with-rate-limits"
-	configuration           = "compact" 
+	name          = "edge-with-rate-limits"
+	configuration = "compact" 
 
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name
@@ -469,8 +469,8 @@ resource "vcd_edgegateway" "egw" {
 	  outgoing_rate_limit = {{.OutgoingRateLimit}}
   
 	  subnet {
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
+		gateway               = "192.168.30.49"
+		netmask               = "255.255.255.240"
 		use_for_default_route = true
 
 		suballocate_pool {
@@ -592,19 +592,19 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
 
 const testAccEdgeGatewayBasic = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.Vdc}}"
-  name                    = "{{.EdgeGatewayVcd}}"
-  description             = "Description"
-  configuration           = "compact"
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "{{.EdgeGatewayVcd}}"
+  description   = "Description"
+  configuration = "compact"
 
   external_network {
      name = vcd_external_network.{{.NewExternalNetwork}}.name
    
      subnet {
-		ip_address = "192.168.30.51"
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
+		ip_address            = "192.168.30.51"
+		gateway               = "192.168.30.49"
+		netmask               = "255.255.255.240"
 		use_for_default_route = true
 	}
   }
@@ -672,7 +672,7 @@ data "vcd_edgegateway" "egw" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 	
-  name = vcd_edgegateway.egw.name
+  name       = vcd_edgegateway.egw.name
   depends_on = [vcd_edgegateway.egw]
 }
 
@@ -685,17 +685,17 @@ data "vcd_external_network" "ds-network" {
 
 const testAccEdgeGatewayNetworks2 = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-	org                     = "{{.Org}}"
-	vdc                     = "{{.Vdc}}"
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
 
-	name                    = "simple-edge-with-complex-networks"
-	configuration           = "compact"
+	name          = "simple-edge-with-complex-networks"
+	configuration = "compact"
 
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name
 	  subnet {
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
+		gateway               = "192.168.30.49"
+		netmask               = "255.255.255.240"
 		use_for_default_route = true
 	  }
 	}
@@ -706,11 +706,11 @@ const testAccEdgeGatewayParallel = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
 	count = 2
 
-	org                     = "{{.Org}}"
-	vdc                     = "{{.Vdc}}"
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
 
-	name                    = "parallel-${count.index}"
-	configuration           = "compact"
+	name          = "parallel-${count.index}"
+	configuration = "compact"
 
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name

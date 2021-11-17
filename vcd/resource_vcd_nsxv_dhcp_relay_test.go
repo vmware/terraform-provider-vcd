@@ -162,7 +162,7 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
   }
 
   relay_agent {
-    network_name        = vcd_network_routed.test-routed[1].name
+    network_name       = vcd_network_routed.test-routed[1].name
     gateway_ip_address = "210.201.1.1"
   }
 }

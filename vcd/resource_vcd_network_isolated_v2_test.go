@@ -73,8 +73,8 @@ resource "vcd_network_isolated_v2" "net1" {
   prefix_length = 24
 
   static_ip_pool {
-	start_address = "1.1.1.10"
-	end_address   = "1.1.1.20"
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
   }
 }
 `

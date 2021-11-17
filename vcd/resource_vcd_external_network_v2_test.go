@@ -204,7 +204,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
       start_address = "14.14.14.10"
       end_address   = "14.14.14.15"
     }
-    
+
     static_ip_pool {
       start_address = "14.14.14.20"
       end_address   = "14.14.14.25"
@@ -788,8 +788,8 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
   description = "{{.Description}}"
 
   nsxt_network {
-    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
-    nsxt_segment_name = "{{.NsxtSegment}}"
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name    = "{{.NsxtSegment}}"
     nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
   }
 

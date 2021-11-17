@@ -81,17 +81,17 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 
 const testAccNsxtSecurityGroupPrereqsEmpty = `
 data "vcd_nsxt_edgegateway" "existing" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
-	name = "{{.EdgeGw}}"
+  name = "{{.EdgeGw}}"
 }
 `
 
 const testAccNsxtSecurityGroupEmpty = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_security_group" "group1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -102,8 +102,8 @@ resource "vcd_nsxt_security_group" "group1" {
 
 const testAccNsxtSecurityGroupEmpty2 = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_security_group" "group1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 

@@ -5,9 +5,10 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"testing"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -176,7 +177,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 const testAccCheckVcdIndependentDiskWithoutOptionals = `
 resource "vcd_independent_disk" "{{.secondResourceName}}" {
-  name            = "{{.secondName}}"
-  size_in_mb      = "{{.size}}"
+  name       = "{{.secondName}}"
+  size_in_mb = "{{.size}}"
 }
 `
