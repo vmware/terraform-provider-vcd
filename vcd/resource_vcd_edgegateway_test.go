@@ -606,7 +606,7 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
       gateway               = "192.168.30.49"
       netmask               = "255.255.255.240"
       use_for_default_route = true
-	}
+    }
   }
 }
 `
@@ -619,7 +619,7 @@ resource "vcd_edgegateway" "egw" {
   name          = "edge-with-complex-networks"
   description   = "new edge gateway"
   configuration = "compact"
-  
+
   # can be only true when system setting Allow FIPS Mode is enabled
   fips_mode_enabled               = false
   use_default_route_for_dns_relay = true
