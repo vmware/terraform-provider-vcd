@@ -195,7 +195,7 @@ function validate_script {
     
     terraform fmt -check > fmt.out 2>&1 || echo "error in ${1}"
     exit_code=$?
-    #check_exit_code fmt.out
+    check_exit_code fmt.out
 
     cd - > /dev/null
     rm -rf vtmp
