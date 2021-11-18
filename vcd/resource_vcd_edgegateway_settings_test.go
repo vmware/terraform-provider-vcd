@@ -365,8 +365,8 @@ resource "vcd_edgegateway_settings" "{{.EgwSettings}}" {
   edge_gateway_id         = data.vcd_edgegateway.egw.id
   lb_enabled              = {{.LbEnabled}}
   lb_acceleration_enabled = {{.LbAccelerationEnabled}}
-  lb_logging_enabled      = {{.LbLoggingEnabled}}       # only set if provider user is system administrator
-  lb_loglevel             = "{{.LbLogLevel}}"           # only set if provider user is system administrator
+  lb_logging_enabled      = {{.LbLoggingEnabled}}  # only set if provider user is system administrator
+  lb_loglevel             = "{{.LbLogLevel}}"      # only set if provider user is system administrator
 
   fw_enabled                      = {{.FwEnabled}}
   fw_default_rule_logging_enabled = {{.FwRuleEnabled}}

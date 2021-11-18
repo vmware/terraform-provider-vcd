@@ -190,7 +190,7 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
   org              = "{{.Org}}"
   vdc              = "{{.Vdc}}"
   vapp_name        = vcd_vapp.{{.VappName}}.name
-  org_network_name = vcd_network_routed.{{.NetworkName}}.name 
+  org_network_name = vcd_network_routed.{{.NetworkName}}.name
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {

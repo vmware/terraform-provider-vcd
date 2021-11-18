@@ -143,12 +143,12 @@ func testAccCheckVcdIpSetDestroy(resource, ipSetName string) resource.TestCheckF
 
 const testAccVcdIpSet = `
 resource "vcd_nsxv_ip_set" "test-ipset" {
-  org= "{{.Org}}"
-  vdc= "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
   name         = "{{.IpSetName}}"
   description  = "test-ip-set-description"
-  ip_addresses = ["192.168.1.1","192.168.2.1"]
+  ip_addresses = ["192.168.1.1", "192.168.2.1"]
 }
 
 data "vcd_nsxv_ip_set" "test-ipset" {
@@ -172,7 +172,7 @@ resource "vcd_nsxv_ip_set" "test-ipset" {
 
 data "vcd_nsxv_ip_set" "test-ipset" {
   org = "{{.Org}}"
-  vdc = "{{.Vdc}}"  
+  vdc = "{{.Vdc}}"
 
   name       = vcd_nsxv_ip_set.test-ipset.name
   depends_on = [vcd_nsxv_ip_set.test-ipset]

@@ -86,8 +86,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   vdc  = "{{.Vdc}}"
 
   guest_properties = {
-	"guest.hostname"       = "test-host"
-	"guest.another.subkey" = "another-value"
+    "guest.hostname"       = "test-host"
+    "guest.another.subkey" = "another-value"
   }
 }
 `
@@ -99,8 +99,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   vdc  = "{{.Vdc}}"
 
   guest_properties = {
-	"guest.another.subkey" = "new-value"
-	"guest.third.subkey"   = "third-value"
+    "guest.another.subkey" = "new-value"
+    "guest.third.subkey"   = "third-value"
   }
 }
 `

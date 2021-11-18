@@ -150,7 +150,7 @@ resource "vcd_vm" "{{.VMName}}" {
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"

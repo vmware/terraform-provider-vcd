@@ -95,7 +95,7 @@ resource "vcd_nsxt_security_group" "group1" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  name = "test-security-group"
+  name        = "test-security-group"
   description = "test-security-group-description"
 }
 `

@@ -182,13 +182,13 @@ data "vcd_nsxt_edgegateway" "existing" {
 }
 
 resource "vcd_nsxt_alb_settings" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id               = data.vcd_nsxt_edgegateway.existing.id
   is_active                     = true
   service_network_specification = "82.10.10.1/25"
-  
+
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
 }

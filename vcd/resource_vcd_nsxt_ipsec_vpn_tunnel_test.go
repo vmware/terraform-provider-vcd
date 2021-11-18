@@ -230,15 +230,16 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   name        = "test-tunnel-1"
   description = "test-tunnel-description"
-  
-  pre_shared_key    = "test-psk"
+
+  pre_shared_key = "test-psk"
   # Primary IP address of Edge Gateway
-  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
-  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
   # That is a fake remote IP address
   remote_ip_address = "1.2.3.4"
   remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
 }
+
 `
 const testAccNsxtIpSecVpnTunnel1DS = testAccNsxtIpSecVpnTunnel1 + testAccNsxtIpSecVpnTunnelDS
 
@@ -250,8 +251,8 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
   name = "test-tunnel-1-updated"
-  
-  pre_shared_key    = "updated-psk"
+
+  pre_shared_key = "updated-psk"
   # Primary IP address of Edge Gateway
   local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
   local_networks   = ["50.40.40.1/32"]
@@ -271,8 +272,8 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   name    = "test-tunnel-1"
   enabled = false
-  
-  pre_shared_key    = "updated-psk"
+
+  pre_shared_key = "updated-psk"
   # Primary IP address of Edge Gateway
   local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
   local_networks   = ["50.40.40.1/32"]
@@ -538,11 +539,11 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   name        = "test-tunnel-1"
   description = "test-tunnel-description"
-  
-  pre_shared_key    = "test-psk"
+
+  pre_shared_key = "test-psk"
   # Primary IP address of Edge Gateway
-  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
-  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
   # That is a fake remote IP address as there is nothing else to peer to
   remote_ip_address = "1.2.3.4"
   remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
@@ -554,14 +555,14 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
     ike_digest_algorithms = ["SHA2_256"]
     ike_dh_groups         = ["GROUP14"]
     ike_sa_lifetime       = 86400
-    
-	tunnel_pfs_enabled = true
-	tunnel_df_policy = "COPY"
+
+    tunnel_pfs_enabled           = true
+    tunnel_df_policy             = "COPY"
     tunnel_encryption_algorithms = ["AES_256"]
     tunnel_digest_algorithms     = ["SHA2_256"]
     tunnel_dh_groups             = ["GROUP14"]
     tunnel_sa_lifetime           = 3600
-    
+
     dpd_probe_internal = "30"
   }
 }
@@ -578,11 +579,11 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   name        = "test-tunnel-1"
   description = "test-tunnel-description"
-  
-  pre_shared_key    = "test-psk"
+
+  pre_shared_key = "test-psk"
   # Primary IP address of Edge Gateway
-  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
-  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
   # That is a fake remote IP address as there is nothing else to peer to
   remote_ip_address = "1.2.3.4"
   remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
@@ -593,14 +594,14 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
     ike_digest_algorithms     = ["SHA2_256"]
     ike_dh_groups             = ["GROUP19"]
     ike_sa_lifetime           = 21600 # 4 hours
-    
-	tunnel_pfs_enabled           = true
-	tunnel_df_policy             = "COPY"
+
+    tunnel_pfs_enabled           = true
+    tunnel_df_policy             = "COPY"
     tunnel_encryption_algorithms = ["AES_128"]
     tunnel_digest_algorithms     = ["SHA2_512"]
     tunnel_dh_groups             = ["GROUP19"]
     tunnel_sa_lifetime           = 6000 # 10 minutes
-    
+
     dpd_probe_internal = "30"
   }
 }
@@ -617,11 +618,11 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   name        = "test-tunnel-1"
   description = "test-tunnel-description"
-  
-  pre_shared_key    = "test-psk"
+
+  pre_shared_key = "test-psk"
   # Primary IP address of Edge Gateway
-  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
-  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
   # That is a fake remote IP address as there is nothing else to peer to
   remote_ip_address = "1.2.3.4"
   remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]

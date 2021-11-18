@@ -132,21 +132,21 @@ data "vcd_edgegateway" "existing" {
 }
 
 resource "vcd_network_routed_v2" "net1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  name = "{{.NetworkName}}"
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.NetworkName}}"
   description = "NSX-V routed network test OpenAPI"
 
   interface_type = "{{.InterfaceType}}"
 
   edge_gateway_id = data.vcd_edgegateway.existing.id
-  
+
   gateway       = "1.1.1.1"
   prefix_length = 24
 
 
   static_ip_pool {
-	start_address = "1.1.1.10"
+    start_address = "1.1.1.10"
     end_address   = "1.1.1.20"
   }
 }

@@ -84,7 +84,7 @@ func catalogMediaDestroyed(catalog, mediaName string) resource.TestCheckFunc {
 }
 
 const testAccCheckVcdCatalogMediaDS = `
-resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 

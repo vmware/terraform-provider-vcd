@@ -172,7 +172,7 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalogMediaBasic = `
-  resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 
@@ -189,36 +189,36 @@ const testAccCheckVcdCatalogMediaBasic = `
 }
 
 output "creation_date" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.creation_date
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.creation_date
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 output "is_iso" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.is_iso
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.is_iso
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 output "owner_name" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.owner_name
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.owner_name
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 output "is_published" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.is_published
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.is_published
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 output "size" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.size
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.size
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 output "status" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.status
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.status
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 output "storage_profile_name" {
-  value = vcd_catalog_media.{{.CatalogMediaName}}.storage_profile_name
+  value      = vcd_catalog_media.{{.CatalogMediaName}}.storage_profile_name
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }`
 
 const testAccCheckVcdCatalogMediaUpdate = `
-  resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 

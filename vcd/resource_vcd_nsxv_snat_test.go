@@ -99,8 +99,8 @@ resource "vcd_network_routed" "net" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
 
-  name         = "test-org-for-snat"
-  gateway      = "4.4.4.1"
+  name    = "test-org-for-snat"
+  gateway = "4.4.4.1"
 
   static_ip_pool {
     start_address = "4.4.4.152"

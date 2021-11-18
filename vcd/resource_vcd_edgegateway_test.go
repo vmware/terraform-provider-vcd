@@ -456,34 +456,34 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 
 const testAccEdgeGatewayRateLimits = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	name          = "edge-with-rate-limits"
-	configuration = "compact" 
+  name          = "edge-with-rate-limits"
+  configuration = "compact" 
 
-	external_network {
-	  name = vcd_external_network.{{.NewExternalNetwork}}.name
-	  enable_rate_limit   = {{.EnableRateLimit}}
-	  incoming_rate_limit = {{.IncomingRateLimit}}
-	  outgoing_rate_limit = {{.OutgoingRateLimit}}
+  external_network {
+    name                = vcd_external_network.{{.NewExternalNetwork}}.name
+    enable_rate_limit   = {{.EnableRateLimit}}
+    incoming_rate_limit = {{.IncomingRateLimit}}
+    outgoing_rate_limit = {{.OutgoingRateLimit}}
   
-	  subnet {
-		gateway               = "192.168.30.49"
-		netmask               = "255.255.255.240"
-		use_for_default_route = true
+    subnet {
+      gateway               = "192.168.30.49"
+      netmask               = "255.255.255.240"
+      use_for_default_route = true
 
-		suballocate_pool {
-			start_address = "192.168.30.53"
-			end_address   = "192.168.30.55"
-		}
+      suballocate_pool {
+      	start_address = "192.168.30.53"
+      	end_address   = "192.168.30.55"
+      }
 
-		suballocate_pool {
-			start_address = "192.168.30.58"
-			end_address   = "192.168.30.60"
-		}
-	  }
+      suballocate_pool {
+      	start_address = "192.168.30.58"
+      	end_address   = "192.168.30.60"
+      }
 	}
+  }
 }
 `
 
@@ -561,11 +561,11 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   }
 
   ip_scope {
-    gateway      = "192.168.30.49"
-    netmask      = "255.255.255.240"
-    dns1         = "192.168.0.164"
-    dns2         = "192.168.0.196"
-    dns_suffix   = "company.biz"
+    gateway    = "192.168.30.49"
+    netmask    = "255.255.255.240"
+    dns1       = "192.168.0.164"
+    dns2       = "192.168.0.196"
+    dns_suffix = "company.biz"
 
     static_ip_pool {
       start_address = "192.168.30.51"
@@ -574,11 +574,11 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   }
   
 #  ip_scope {
-# 	gateway      = "192.168.40.149"
-# 	netmask      = "255.255.255.0"
-# 	dns1         = "192.168.0.164"
-# 	dns2         = "192.168.0.196"
-# 	dns_suffix   = "company.biz"
+# 	gateway    = "192.168.40.149"
+# 	netmask    = "255.255.255.0"
+# 	dns1       = "192.168.0.164"
+# 	dns2       = "192.168.0.196"
+# 	dns_suffix = "company.biz"
 
 # 	static_ip_pool {
 # 	  start_address = "192.168.40.151"
@@ -613,57 +613,56 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 
 const testAccEdgeGatewayNetworks = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-	org                     = "{{.Org}}"
-	vdc                     = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	name                    = "edge-with-complex-networks"
-	description             = "new edge gateway"
-	configuration           = "compact"
+  name          = "edge-with-complex-networks"
+  description   = "new edge gateway"
+  configuration = "compact"
   
-    # can be only true when system setting Allow FIPS Mode is enabled
-	fips_mode_enabled               = false
-	use_default_route_for_dns_relay = true
-	distributed_routing             = false
+  # can be only true when system setting Allow FIPS Mode is enabled
+  fips_mode_enabled               = false
+  use_default_route_for_dns_relay = true
+  distributed_routing             = false
 
-    lb_enabled              = "true"
-    lb_acceleration_enabled = "true"
-    lb_logging_enabled      = "true"
-    lb_loglevel             = "critical"
+  lb_enabled              = "true"
+  lb_acceleration_enabled = "true"
+  lb_logging_enabled      = "true"
+  lb_loglevel             = "critical"
 
-    fw_enabled                      = "true"
-    fw_default_rule_logging_enabled = "true"
-    fw_default_rule_action          = "accept"
+  fw_enabled                      = "true"
+  fw_default_rule_logging_enabled = "true"
+  fw_default_rule_action          = "accept"
 
-	external_network {
-	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+  external_network {
+    name = vcd_external_network.{{.NewExternalNetwork}}.name
   
-	  subnet {
-		ip_address = "192.168.30.51"
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
-		use_for_default_route = true
+    subnet {
+  	  ip_address            = "192.168.30.51"
+  	  gateway               = "192.168.30.49"
+  	  netmask               = "255.255.255.240"
+  	  use_for_default_route = true
 
-		suballocate_pool {
-			start_address = "192.168.30.53"
-			end_address   = "192.168.30.55"
-		}
+  	  suballocate_pool {
+  	    start_address = "192.168.30.53"
+  	    end_address   = "192.168.30.55"
+  	  }
+  	  suballocate_pool {
+  	    start_address = "192.168.30.58"
+  	    end_address   = "192.168.30.60"
+  	  }
+    }
+  }
 
-		suballocate_pool {
-			start_address = "192.168.30.58"
-			end_address   = "192.168.30.60"
-		}
-	  }
-	}
+  # Attach to existing external network
+  external_network {
+    name = data.vcd_external_network.ds-network.name
 
-	# Attach to existing external network
-	external_network {
-	  name = data.vcd_external_network.ds-network.name
-
-		subnet {
-			# ip_address is skipped here on purpose to get dynamic IP
-			use_for_default_route = false
-			gateway = data.vcd_external_network.ds-network.ip_scope[0].gateway
-			netmask = data.vcd_external_network.ds-network.ip_scope[0].netmask
+    subnet {
+      # ip_address is skipped here on purpose to get dynamic IP
+      use_for_default_route = false
+      gateway               = data.vcd_external_network.ds-network.ip_scope[0].gateway
+      netmask               = data.vcd_external_network.ds-network.ip_scope[0].netmask
 	}
   }
 }
@@ -671,7 +670,7 @@ resource "vcd_edgegateway" "egw" {
 data "vcd_edgegateway" "egw" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
-	
+
   name       = vcd_edgegateway.egw.name
   depends_on = [vcd_edgegateway.egw]
 }
@@ -679,45 +678,45 @@ data "vcd_edgegateway" "egw" {
 # Use data source of existing external network to get needed gateway and netmask
 # for subnet participation details
 data "vcd_external_network" "ds-network" {
-	name = "{{.ExternalNetwork}}"
+  name = "{{.ExternalNetwork}}"
 }
 `
 
 const testAccEdgeGatewayNetworks2 = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	name          = "simple-edge-with-complex-networks"
-	configuration = "compact"
+  name          = "simple-edge-with-complex-networks"
+  configuration = "compact"
 
-	external_network {
-	  name = vcd_external_network.{{.NewExternalNetwork}}.name
-	  subnet {
+  external_network {
+    name = vcd_external_network.{{.NewExternalNetwork}}.name
+    subnet {
 		gateway               = "192.168.30.49"
 		netmask               = "255.255.255.240"
 		use_for_default_route = true
-	  }
-	}
+    }
+  }
 }
 `
 
 const testAccEdgeGatewayParallel = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-	count = 2
+  count = 2
 
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	name          = "parallel-${count.index}"
-	configuration = "compact"
+  name          = "parallel-${count.index}"
+  configuration = "compact"
 
-	external_network {
-	  name = vcd_external_network.{{.NewExternalNetwork}}.name
-	  subnet {
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
-	  }
-	}
+  external_network {
+    name = vcd_external_network.{{.NewExternalNetwork}}.name
+    subnet {
+      gateway = "192.168.30.49"
+      netmask = "255.255.255.240"
+    }
+  }
 }
 `

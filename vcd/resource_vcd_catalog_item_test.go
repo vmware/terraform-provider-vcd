@@ -158,7 +158,7 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalogItemBasic = `
-  resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 
@@ -169,14 +169,14 @@ const testAccCheckVcdCatalogItemBasic = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    catalogItem_metadata = "catalogItem Metadata"
+    catalogItem_metadata  = "catalogItem Metadata"
     catalogItem_metadata2 = "catalogItem Metadata2"
   }
 }
 `
 
 const testAccCheckVcdCatalogItemUpdate = `
-  resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 

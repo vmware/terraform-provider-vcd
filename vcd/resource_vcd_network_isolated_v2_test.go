@@ -65,8 +65,8 @@ resource "vcd_network_isolated_v2" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.NetworkName}}"
-  
-  description = "NSX-V isolated network test OpenAPI" 
+
+  description = "NSX-V isolated network test OpenAPI"
   is_shared   = true
 
   gateway       = "1.1.1.1"

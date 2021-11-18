@@ -237,8 +237,8 @@ resource "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   
-  name           = "{{.AppProfileName}}"
-  type           = "{{.Type}}"
+  name = "{{.AppProfileName}}"
+  type = "{{.Type}}"
 
   enable_ssl_passthrough         = "true"
   insert_x_forwarded_http_header = "true"
@@ -276,7 +276,7 @@ data "vcd_lb_app_profile" "test" {
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
   depends_on   = [vcd_lb_app_profile.test]
-}  
+}
 `
 
 const testAccVcdLBAppProfile_HTTP_SourceIP = `

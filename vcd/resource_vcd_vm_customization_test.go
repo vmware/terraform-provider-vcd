@@ -352,12 +352,12 @@ resource "vcd_vm" "test-vm" {
   cpu_cores     = 1
 
   customization {
-	enabled                             = true
-	change_sid                          = true
-	allow_local_admin_password          = false
-	must_change_password_on_first_login = true
-	auto_generate_password              = true
-	number_of_auto_logons               = 4
+    enabled                             = true
+    change_sid                          = true
+    allow_local_admin_password          = false
+    must_change_password_on_first_login = true
+    auto_generate_password              = true
+    number_of_auto_logons               = 4
   }
 }
 `
@@ -376,11 +376,11 @@ resource "vcd_vm" "test-vm-step2" {
   cpu_cores     = 1
 
   customization {
-	enabled         = false
-	admin_password  = "some password"
-	auto_generate_password = false
-	join_domain     = true
-	join_org_domain = true
+    enabled         = false
+    admin_password  = "some password"
+    auto_generate_password = false
+    join_domain     = true
+    join_org_domain = true
   }
 }
 `
@@ -399,12 +399,12 @@ resource "vcd_vm" "test-vm-step3" {
   cpu_cores     = 1
 
   customization {
-	enabled                = true
-	join_domain            = true
-	join_domain_name       = "UnrealDomain"
-	join_domain_user       = "NoUser"
-	join_domain_password   = "NoPass"
-	join_domain_account_ou = "ou=IT,dc=some,dc=com"
+    enabled                = true
+    join_domain            = true
+    join_domain_name       = "UnrealDomain"
+    join_domain_user       = "NoUser"
+    join_domain_password   = "NoPass"
+    join_domain_account_ou = "ou=IT,dc=some,dc=com"
   }
 }
 `

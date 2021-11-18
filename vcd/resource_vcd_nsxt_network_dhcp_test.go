@@ -83,9 +83,9 @@ data "vcd_nsxt_edgegateway" "existing" {
 }
 
 resource "vcd_network_routed_v2" "net1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "nsxt-routed-dhcp"
+  org         = "{{.Org}}"
+  vdc         = "{{.NsxtVdc}}"
+  name        = "nsxt-routed-dhcp"
   description = "NSX-T routed network for DHCP testing"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -102,11 +102,11 @@ resource "vcd_network_routed_v2" "net1" {
 
 const testAccRoutedNetDhcpStep1 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
-  
+
   pool {
     start_address = "7.1.1.100"
     end_address   = "7.1.1.110"
@@ -116,11 +116,11 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
-  
+
   pool {
     start_address = "7.1.1.100"
     end_address   = "7.1.1.110"

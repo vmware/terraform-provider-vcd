@@ -496,7 +496,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name              = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
   }
 }

@@ -66,9 +66,9 @@ resource "vcd_vm" "shrink-vm" {
   catalog_name  = "{{.Catalog}}"
   template_name = vcd_catalog_item.fourcpu4cores.name
 
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1
+  memory    = 512
+  cpus      = 2
+  cpu_cores = 1
 
   depends_on = [vcd_catalog_item.fourcpu4cores]
 }

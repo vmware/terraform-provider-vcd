@@ -419,23 +419,23 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 const testAccCheckVcdVAppEmptyVmStep1 = testAccCheckVcdVAppEmptyVmNetworkShared + `
 # skip-binary-test: only for updates
 resource "vcd_vapp" "{{.VAppName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	name       = "{{.VAppName}}"
-	depends_on = ["vcd_network_routed.net", "vcd_network_routed.net2"]
+  name       = "{{.VAppName}}"
+  depends_on = ["vcd_network_routed.net", "vcd_network_routed.net2"]
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}"
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1
-  description   = "test empty VM updated"
+  vapp_name   = vcd_vapp.{{.VAppName}}.name
+  name        = "{{.VMName}}"
+  memory      = 512
+  cpus        = 2
+  cpu_cores   = 1
+  description = "test empty VM updated"
 
   os_type                        = "rhel4Guest"
   hardware_version               = "vmx-14"
@@ -471,7 +471,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	mac                = "00:00:00:11:11:11"
+    mac                = "00:00:00:11:11:11"
   }
 
   network {

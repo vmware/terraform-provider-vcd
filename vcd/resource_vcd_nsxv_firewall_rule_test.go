@@ -620,123 +620,123 @@ resource "vcd_nsxv_firewall_rule" "rule0" {
   edge_gateway = "{{.EdgeGateway}}"
   name         = "test-rule"
   rule_tag     = "30000"
-  action       = "deny"  
+  action       = "deny"
 
   source {
-  	ip_addresses = ["any"]
+    ip_addresses = ["any"]
   }
 
   destination {
-  	ip_addresses = ["192.168.1.110"]
+    ip_addresses = ["192.168.1.110"]
   }
 
   service {
-  	protocol = "any"
+    protocol = "any"
   }
 }
 
 resource "vcd_nsxv_firewall_rule" "rule0-2" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "rule 123123"
-	action = "deny"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "rule 123123"
+  action       = "deny"
 
-	source {
-		ip_addresses = ["4.4.4.4"]
-	}
-  
-	destination {
-		ip_addresses = ["5.5.5.5"]
-	}
-  
-	service {
-		protocol = "any"
-	}
-	# Dependency helps to ensure provisioning order (which becomes rule processing order)
-	depends_on = ["vcd_nsxv_firewall_rule.rule0"]
+  source {
+    ip_addresses = ["4.4.4.4"]
+  }
+
+  destination {
+    ip_addresses = ["5.5.5.5"]
+  }
+
+  service {
+    protocol = "any"
+  }
+  # Dependency helps to ensure provisioning order (which becomes rule processing order)
+  depends_on = ["vcd_nsxv_firewall_rule.rule0"]
 }
 
 data "vcd_nsxv_firewall_rule" "rule0" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
 
-	rule_id      = vcd_nsxv_firewall_rule.rule0.id
+  rule_id = vcd_nsxv_firewall_rule.rule0.id
 }
 `
 
 const testAccVcdEdgeFirewallRule1 = `
 resource "vcd_nsxv_firewall_rule" "rule1" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "test-rule-1"
-	action = "deny"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "test-rule-1"
+  action       = "deny"
 
-	source {
-		gateway_interfaces = ["internal"]
-	}
-  
-	destination {
-		gateway_interfaces = ["external"]
-	}
-	service {
-		protocol = "tcp"
-		port     = "443"
-	}
+  source {
+    gateway_interfaces = ["internal"]
   }
+
+  destination {
+    gateway_interfaces = ["external"]
+  }
+  service {
+    protocol = "tcp"
+    port     = "443"
+  }
+}
 `
 
 const testAccVcdEdgeFirewallRule2 = `
 resource "vcd_nsxv_firewall_rule" "rule2" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "test-rule-2"
-	action = "deny"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "test-rule-2"
+  action       = "deny"
 
-	source {
-		gateway_interfaces = ["vse"]
-	}
-  
-	destination {
-		gateway_interfaces = ["{{.NetworkName}}"]
-	}
+  source {
+    gateway_interfaces = ["vse"]
+  }
 
-	service {
-		protocol    = "TCP"
-		port        = "443-543"
-		source_port = "2000-4000"
-	}
+  destination {
+    gateway_interfaces = ["{{.NetworkName}}"]
+  }
+
+  service {
+    protocol    = "TCP"
+    port        = "443-543"
+    source_port = "2000-4000"
+  }
 }
 
 output "destination_gateway_interface" {
-	value = tolist(vcd_nsxv_firewall_rule.rule2.destination[0].gateway_interfaces)[0]
+  value = tolist(vcd_nsxv_firewall_rule.rule2.destination[0].gateway_interfaces)[0]
 }
 `
 
 const testAccVcdEdgeFirewallRule3 = `
 resource "vcd_nsxv_firewall_rule" "rule3" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	action          = "deny"
-	enabled         = "false"
-	logging_enabled = "true"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway    = "{{.EdgeGateway}}"
+  action          = "deny"
+  enabled         = "false"
+  logging_enabled = "true"
 
-	source {
-		org_networks = [vcd_network_routed.test-routed[0].name]
-	}
-  
-	destination {
-		exclude      = "true"
-		org_networks = [vcd_network_routed.test-routed[1].name]
-	}
-	service {
-		protocol = "tcp"
-		port     = "443"
-	}
+  source {
+    org_networks = [vcd_network_routed.test-routed[0].name]
+  }
+
+  destination {
+    exclude      = "true"
+    org_networks = [vcd_network_routed.test-routed[1].name]
+  }
+  service {
+    protocol = "tcp"
+    port     = "443"
+  }
 }
 resource "vcd_network_routed" "test-routed" {
   count        = 2
@@ -756,125 +756,125 @@ resource "vcd_network_routed" "test-routed" {
 
 const testAccVcdEdgeFirewallRule4 = `
 resource "vcd_nsxv_firewall_rule" "rule4" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "test-rule-4"
-	action = "deny"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "test-rule-4"
+  action       = "deny"
 
-	source {
-		gateway_interfaces = ["internal"]
-	}
-  
-	destination {
-		gateway_interfaces = ["external"]
-	}
-
-	service {
-		protocol = "tcp"
-		port     = "443"
-	}
-	
-	service {
-		protocol = "tcp"
-		port     = "8443"
-		source_port = "20000-40000"
-	}
-
-	service {
-		protocol = "UDP"
-		port     = "10000"
-	}
-
-	service {
-		protocol    = "udp"
-		port        = "10000"
-		source_port = "20000"
-	}
-
-	service {
-		protocol = "ICMP"
-	}
+  source {
+    gateway_interfaces = ["internal"]
   }
 
-data "vcd_nsxv_firewall_rule" "rule4" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
+  destination {
+    gateway_interfaces = ["external"]
+  }
 
-	rule_id      = vcd_nsxv_firewall_rule.rule4.id
+  service {
+    protocol = "tcp"
+    port     = "443"
+  }
+
+  service {
+    protocol    = "tcp"
+    port        = "8443"
+    source_port = "20000-40000"
+  }
+
+  service {
+    protocol = "UDP"
+    port     = "10000"
+  }
+
+  service {
+    protocol    = "udp"
+    port        = "10000"
+    source_port = "20000"
+  }
+
+  service {
+    protocol = "ICMP"
+  }
+}
+
+data "vcd_nsxv_firewall_rule" "rule4" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  rule_id = vcd_nsxv_firewall_rule.rule4.id
 }
 `
 
 const testAccVcdEdgeFirewallRule5 = `
 resource "vcd_nsxv_firewall_rule" "rule5" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "test-rule-5"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "test-rule-5"
 
-	source {
-		gateway_interfaces = ["internal"]
-	}
-  
-	destination {
-		gateway_interfaces = ["external"]
-	}
-
-	service {
-		protocol = "tcp"
-	}
-
-	service {
-		protocol = "udp"
-	}
-
+  source {
+    gateway_interfaces = ["internal"]
   }
+
+  destination {
+    gateway_interfaces = ["external"]
+  }
+
+  service {
+    protocol = "tcp"
+  }
+
+  service {
+    protocol = "udp"
+  }
+
+}
 `
 
 const testAccVcdEdgeFirewallRule8 = `
 resource "vcd_nsxv_firewall_rule" "rule6" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "below-rule"
-	action = "accept"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "below-rule"
+  action       = "accept"
 
-	source {
-		ip_addresses = ["10.10.10.0/24", "11.10.10.0/24"]
-	}
-  
-	destination {
-		ip_addresses = ["20.10.10.0/24", "21.10.10.0/24"]
-	}
+  source {
+    ip_addresses = ["10.10.10.0/24", "11.10.10.0/24"]
+  }
 
-	service {
-		protocol = "any"
-	}
+  destination {
+    ip_addresses = ["20.10.10.0/24", "21.10.10.0/24"]
+  }
+
+  service {
+    protocol = "any"
+  }
 }
 
 resource "vcd_nsxv_firewall_rule" "rule6-6" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "above-rule"
-	action = "accept"
-	above_rule_id = vcd_nsxv_firewall_rule.rule6.id
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  edge_gateway  = "{{.EdgeGateway}}"
+  name          = "above-rule"
+  action        = "accept"
+  above_rule_id = vcd_nsxv_firewall_rule.rule6.id
 
 
-	source {
-		ip_addresses = ["30.10.10.0/24", "31.10.10.0/24"]
-	}
-  
-	destination {
-		ip_addresses = ["40.10.10.0/24", "41.10.10.0/24"]
-	}
+  source {
+    ip_addresses = ["30.10.10.0/24", "31.10.10.0/24"]
+  }
 
-	service {
-		protocol = "ANY"
-	}
+  destination {
+    ip_addresses = ["40.10.10.0/24", "41.10.10.0/24"]
+  }
 
-	depends_on = ["vcd_nsxv_firewall_rule.rule6"]
+  service {
+    protocol = "ANY"
+  }
+
+  depends_on = ["vcd_nsxv_firewall_rule.rule6"]
 }
 `
 
@@ -991,65 +991,65 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 
 const testAccVcdEdgeFirewallRuleIpSets = `
 resource "vcd_nsxv_firewall_rule" "ip_sets" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "rule-with-ip_sets"
-	action = "accept"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "rule-with-ip_sets"
+  action       = "accept"
 
-	source {
-		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
-	}
-  
-	destination {
-		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
-	}
+  source {
+    ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
+  }
 
-	service {
-		protocol = "any"
-	}
+  destination {
+    ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
+  }
+
+  service {
+    protocol = "any"
+  }
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
-	name = "acceptance test IPset 1"
-	ip_addresses = ["222.222.222.1/24"]
+  name         = "acceptance test IPset 1"
+  ip_addresses = ["222.222.222.1/24"]
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
-	name = "acceptance test IPset 2"
-	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
+  name         = "acceptance test IPset 2"
+  ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
 }
 `
 
 const testAccVcdEdgeFirewallRuleIpSetsUpdate = `
 resource "vcd_nsxv_firewall_rule" "ip_sets" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "updated-rule-with-ip_sets"
-	action = "accept"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "updated-rule-with-ip_sets"
+  action       = "accept"
 
-	source {
-		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
-	}
-  
-	destination {
-		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
-	}
+  source {
+    ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
+  }
 
-	service {
-		protocol = "icmp"
-	}
+  destination {
+    ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
+  }
+
+  service {
+    protocol = "icmp"
+  }
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
-	name = "acceptance test IPset 1"
-	ip_addresses = ["222.222.222.1/24"]
+  name         = "acceptance test IPset 1"
+  ip_addresses = ["222.222.222.1/24"]
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
-	name = "acceptance test IPset 2"
-	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
+  name         = "acceptance test IPset 2"
+  ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
 }
 `
 
@@ -1161,29 +1161,28 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 }
 
 const testAccVcdEdgeFirewallRuleVmsPrereqs = `
-
 resource "vcd_network_routed" "net" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-  
-	name         = "fw-routed-net"
-	edge_gateway = "{{.EdgeGateway}}"
-	gateway      = "47.10.0.1"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	static_ip_pool {
-	  start_address = "47.10.0.152"
-	  end_address   = "47.10.0.254"
-	}
+  name         = "fw-routed-net"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "47.10.0.1"
+
+  static_ip_pool {
+    start_address = "47.10.0.152"
+    end_address   = "47.10.0.254"
+  }
 }
 resource "vcd_vapp" "fw-test" {
   name = "fw-test"
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
-  org                = "{{.Org}}"
-  vdc                = "{{.Vdc}}"
-  vapp_name          = vcd_vapp.fw-test.name
-  org_network_name   = vcd_network_routed.net.name 
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.fw-test.name
+  org_network_name = vcd_network_routed.net.name
 }
 
 resource "vcd_vapp_vm" "fw-vm" {
@@ -1208,44 +1207,44 @@ resource "vcd_vapp_vm" "fw-vm" {
 
 const testAccVcdEdgeFirewallRuleVms = testAccVcdEdgeFirewallRuleVmsPrereqs + `
 resource "vcd_nsxv_firewall_rule" "vms" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "rule-with-ip_sets"
-	action = "accept"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "rule-with-ip_sets"
+  action       = "accept"
 
-	source {
-		vm_ids = [vcd_vapp_vm.fw-vm.id]
-	}
-  
-	destination {
-		ip_addresses = ["any"]
-	}
+  source {
+    vm_ids = [vcd_vapp_vm.fw-vm.id]
+  }
 
-	service {
-		protocol = "any"
-	}
+  destination {
+    ip_addresses = ["any"]
+  }
+
+  service {
+    protocol = "any"
+  }
 }
 `
 
 const testAccVcdEdgeFirewallRuleVmsUpdate = testAccVcdEdgeFirewallRuleVmsPrereqs + `
 resource "vcd_nsxv_firewall_rule" "vms" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name = "rule-with-ip_sets"
-	action = "accept"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "rule-with-ip_sets"
+  action       = "accept"
 
-	source {
-		ip_addresses = ["any"]
-	}
-  
-	destination {
-		vm_ids = [vcd_vapp_vm.fw-vm.id]
-	}
+  source {
+    ip_addresses = ["any"]
+  }
 
-	service {
-		protocol = "any"
-	}
+  destination {
+    vm_ids = [vcd_vapp_vm.fw-vm.id]
+  }
+
+  service {
+    protocol = "any"
+  }
 }
 `

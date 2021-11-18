@@ -89,8 +89,8 @@ resource "vcd_vm" "{{.VmName}}" {
   cpu_cores     = 1
 
   guest_properties = {
-	"guest.hostname"       = "test-host"
-	"guest.another.subkey" = "another-value"
+    "guest.hostname"       = "test-host"
+    "guest.another.subkey" = "another-value"
   }
 }
 `
@@ -107,8 +107,8 @@ resource "vcd_vm" "{{.VmName}}" {
   cpu_cores     = 1
 
   guest_properties = {
-	"guest.another.subkey" = "new-value"
-	"guest.third.subkey"   = "third-value"
+    "guest.another.subkey" = "new-value"
+    "guest.third.subkey"   = "third-value"
   }
 }
 `

@@ -205,7 +205,7 @@ func testAccCheckCatalogDestroy(s *terraform.State) error {
 
 const testAccCheckVcdCatalog = `
 resource "vcd_catalog" "test-catalog" {
-  org = "{{.Org}}" 
+  org = "{{.Org}}"
   
   name        = "{{.CatalogName}}"
   description = "{{.Description}}"
@@ -221,7 +221,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_catalog" "test-catalog" {
-  org = "{{.Org}}" 
+  org = "{{.Org}}"
   
   name               = "{{.CatalogName}}"
   description        = "{{.Description}}"

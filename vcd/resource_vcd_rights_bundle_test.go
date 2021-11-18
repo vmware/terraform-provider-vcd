@@ -135,7 +135,7 @@ resource "vcd_rights_bundle" "{{.RightsBundleName}}" {
     "vApp Template / Media: View",
   ]
   publish_to_all_tenants = false
-  tenants                = [ "{{.Tenant}}" ]
+  tenants                = ["{{.Tenant}}"]
 }
 `
 

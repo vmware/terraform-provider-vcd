@@ -301,12 +301,12 @@ resource "vcd_vm" "{{.VMName}}" {
   # You cannot remove NICs from an active virtual machine on which no operating system is installed.
   power_on = false
 
-  description   = "test empty standalone VM"
-  name          = "{{.VMName}}"
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1 
-  
+  description = "test empty standalone VM"
+  name        = "{{.VMName}}"
+  memory      = 512
+  cpus        = 2
+  cpu_cores   = 1
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -322,7 +322,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	adapter_type       = "PCNet32"
+    adapter_type       = "PCNet32"
   }
 
   network {

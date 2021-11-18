@@ -384,13 +384,14 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     vdc_metadata2 = "VDC Metadata2"
   }
 
-  cpu_guaranteed             = {{.CpuGuaranteed}}
-  memory_guaranteed          = {{.MemoryGuaranteed}}
-  enabled                    = false
-  enable_thin_provisioning   = false
-  enable_fast_provisioning   = false
-  delete_force               = false
-  delete_recursive           = false
+  cpu_guaranteed           = {{.CpuGuaranteed}}
+  memory_guaranteed        = {{.MemoryGuaranteed}}
+  enabled                  = false
+  enable_thin_provisioning = false
+  enable_fast_provisioning = false
+  delete_force             = false
+  delete_recursive         = false
+
   {{.FlexElasticKey}}        {{.equalsChar}} {{.FlexElasticValueUpdate}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 }

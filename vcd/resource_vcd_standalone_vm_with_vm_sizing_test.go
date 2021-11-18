@@ -347,8 +347,8 @@ resource "vcd_vm" "{{.VMName1}}" {
 
   power_on = true
 
-  description   = "test empty VM"
-  name          = "{{.VMName1}}"
+  description = "test empty VM"
+  name        = "{{.VMName1}}"
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
@@ -368,8 +368,8 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   power_on = true
 
-  description   = "test empty VM2"
-  name          = "{{.VMName2}}"
+  description = "test empty VM2"
+  name        = "{{.VMName2}}"
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
@@ -415,8 +415,8 @@ resource "vcd_vm" "{{.VMName1}}" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
 
-  name          = "{{.VMName1}}"
-  description   = "test empty VM updated"
+  name        = "{{.VMName1}}"
+  description = "test empty VM updated"
 
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
@@ -448,7 +448,7 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
-  memory           = 2048
+  memory = 2048
 }
 
 resource "vcd_vm" "{{.VMName3}}" {
@@ -462,7 +462,7 @@ resource "vcd_vm" "{{.VMName3}}" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
-  memory           = 3072
+  memory = 3072
 }
 
 resource "vcd_vm" "{{.VMName5}}" {

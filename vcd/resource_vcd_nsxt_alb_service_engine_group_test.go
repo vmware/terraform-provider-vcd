@@ -238,7 +238,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "SHARED"
-  
+
   # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
   # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
   # not break code. 

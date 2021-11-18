@@ -129,7 +129,7 @@ data "vcd_nsxt_tier0_router" "router" {
 }
 
 resource "vcd_external_network_v2" "ext-net-nsxt" {
-  name        = "test-nsxt-external-network"
+  name = "test-nsxt-external-network"
 
   nsxt_network {
     nsxt_manager_id      = data.vcd_nsxt_manager.main.id
@@ -194,53 +194,53 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 
 
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.NsxtVdc}}"
-  name                    = "{{.NsxtEdgeGatewayVcd}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 
   subnet {
-     gateway       = "88.88.88.1"
-     prefix_length = "24"
+    gateway       = "88.88.88.1"
+    prefix_length = "24"
 
-     allocated_ips {
-       start_address = "88.88.88.91"
-       end_address   = "88.88.88.92"
-     }
+    allocated_ips {
+      start_address = "88.88.88.91"
+      end_address   = "88.88.88.92"
+    }
 
-     allocated_ips {
-       start_address = "88.88.88.94"
-       end_address   = "88.88.88.95"
-     }
+    allocated_ips {
+      start_address = "88.88.88.94"
+      end_address   = "88.88.88.95"
+    }
 
-     allocated_ips {
-       start_address = "88.88.88.97"
-       end_address   = "88.88.88.98"
-     }
+    allocated_ips {
+      start_address = "88.88.88.97"
+      end_address   = "88.88.88.98"
+    }
   }
 
   subnet {
-     gateway       = "99.99.99.1"
-     prefix_length = "25"
-	 # primary_ip should fall into defined "allocated_ips" as otherwise next apply will report additional range of
-	 # "allocated_ips" with the range containing single "primary_ip" and will cause non-empty plan.
-     primary_ip    = "99.99.99.23"
+    gateway       = "99.99.99.1"
+    prefix_length = "25"
+    # primary_ip should fall into defined "allocated_ips" as otherwise next apply will report additional range of
+    # "allocated_ips" with the range containing single "primary_ip" and will cause non-empty plan.
+    primary_ip = "99.99.99.23"
 
-     allocated_ips {
-       start_address = "99.99.99.22"
-       end_address   = "99.99.99.24"
-     }
+    allocated_ips {
+      start_address = "99.99.99.22"
+      end_address   = "99.99.99.24"
+    }
   }
 
   subnet {
-     gateway       = "77.77.77.1"
-     prefix_length = "26"
+    gateway       = "77.77.77.1"
+    prefix_length = "26"
 
-     allocated_ips {
-       start_address = "77.77.77.10"
-       end_address   = "77.77.77.12"
-	 }
+    allocated_ips {
+      start_address = "77.77.77.10"
+      end_address   = "77.77.77.12"
+    }
   }
 }
 `

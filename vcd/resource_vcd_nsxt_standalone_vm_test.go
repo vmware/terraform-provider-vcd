@@ -268,7 +268,7 @@ resource "vcd_network_isolated_v2" "net-test" {
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
-  
+
   org_network_id = vcd_network_routed_v2.{{.NetworkName}}.id
 
   pool {
@@ -309,7 +309,7 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   storage_profile = "{{.storageProfileName}}"
 
   depends_on = [vcd_network_routed_v2.{{.NetworkName}}, vcd_network_isolated_v2.net-test, 
-                vcd_nsxt_network_imported.imported-test]
+  vcd_nsxt_network_imported.imported-test]
 }
 
 resource "vcd_vm" "{{.VmName}}" {
@@ -384,7 +384,7 @@ output "disk_unit_number" {
 }
 output "vm" {
   value = vcd_vm.{{.VmName}}
-  
+
   sensitive = true
 }
 `
@@ -413,9 +413,9 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
 }
 
 resource "vcd_network_isolated_v2" "net-test" {
-  name            = "{{.NetworkName}}-isolated"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
+  name = "{{.NetworkName}}-isolated"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
   
   gateway         = "110.10.102.1"
   prefix_length   = 26
@@ -430,7 +430,7 @@ resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
   
-  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
+  org_network_id = vcd_network_routed_v2.{{.NetworkName}}.id
 
   pool {
     start_address = "10.10.102.210"
@@ -511,8 +511,8 @@ resource "vcd_vm" "{{.VMName}}" {
   name        = "{{.VMName}}"
   memory      = 512
   cpus        = 2
-  cpu_cores   = 1 
-  
+  cpu_cores   = 1
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -528,7 +528,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	  adapter_type       = "PCNet32"
+    adapter_type       = "PCNet32"
   }
 
   network {

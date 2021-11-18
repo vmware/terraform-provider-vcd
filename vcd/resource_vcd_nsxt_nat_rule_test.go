@@ -182,15 +182,15 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name        = "test-dnat-rule-updated"
-  rule_type  = "DNAT"
+  rule_type   = "DNAT"
   description = "updated-description"
-  
+
   # Using primary_ip from edge gateway
-  external_address  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_address  = "11.11.11.0/32"
+  external_address    = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address    = "11.11.11.0/32"
   dnat_external_port  = 8888
   app_port_profile_id = data.vcd_nsxt_app_port_profile.custom.id
-  
+
   enabled = false
 }
 `
@@ -294,7 +294,6 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
   name      = "test-no-dnat-rule"
   rule_type = "NO_DNAT"
 
-  
   # Using primary_ip from edge gateway
   external_address   = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   dnat_external_port = 7777
@@ -405,13 +404,13 @@ const testAccNsxtNatSnat = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_nat_rule" "snat" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
-	
+
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name        = "test-snat-rule"
   rule_type   = "SNAT"
   description = "description"
-  
+
   # Using primary_ip from edge gateway
   external_address         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   internal_address         = "11.11.11.2"
@@ -424,13 +423,13 @@ const testAccNsxtNatSnat2 = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_nat_rule" "snat" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
-	
+
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name        = "test-snat-rule-updated"
   rule_type   = "SNAT"
   description = ""
-  
+
   # Using primary_ip from edge gateway
   external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   internal_address = "10.10.10.0/24"
@@ -497,7 +496,7 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
   name        = "test-no-snat-rule"
   rule_type   = "NO_SNAT"
   description = "description"
-  
+
   # Using primary_ip from edge gateway
   internal_address = "11.11.11.0/24"
 }

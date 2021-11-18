@@ -223,7 +223,7 @@ resource "vcd_nsxv_dnat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  
+
   network_type = "ext"
   network_name = "{{.NetworkName}}"
 

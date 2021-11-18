@@ -275,22 +275,20 @@ resource "vcd_vapp" "{{.VappName3}}" {
 }
 
 resource "vcd_vapp_access_control" "{{.AccessControlIdentifier0}}" {
+  org     = "{{.Org}}"
+  vdc     = "{{.Vdc}}"
+  vapp_id = vcd_vapp.{{.VappName0}}.id
 
-  org      = "{{.Org}}"
-  vdc      = "{{.Vdc}}"
-  vapp_id  = vcd_vapp.{{.VappName0}}.id
-
-  shared_with_everyone    = {{.SharedToEveryone}}
+  shared_with_everyone = {{.SharedToEveryone}}
   {{.EveryoneAccessLevel}}
 }
 
 resource "vcd_vapp_access_control" "{{.AccessControlIdentifier1}}" {
+  org     = "{{.Org}}"
+  vdc     = "{{.Vdc}}"
+  vapp_id = vcd_vapp.{{.VappName1}}.id
 
-  org      = "{{.Org}}"
-  vdc      = "{{.Vdc}}"
-  vapp_id  = vcd_vapp.{{.VappName1}}.id
-
-  shared_with_everyone    = false
+  shared_with_everyone = false
 
   shared_with {
     user_id      = vcd_org_user.{{.UserName1}}.id
@@ -299,12 +297,11 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier1}}" {
 }
 
 resource "vcd_vapp_access_control" "{{.AccessControlIdentifier2}}" {
+  org     = "{{.Org}}"
+  vdc     = "{{.Vdc}}"
+  vapp_id = vcd_vapp.{{.VappName2}}.id
 
-  org      = "{{.Org}}"
-  vdc      = "{{.Vdc}}"
-  vapp_id  = vcd_vapp.{{.VappName2}}.id
-
-  shared_with_everyone    = false
+  shared_with_everyone = false
 
   shared_with {
     user_id      = vcd_org_user.{{.UserName1}}.id
@@ -317,10 +314,9 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier2}}" {
 }
 
 resource "vcd_vapp_access_control" "{{.AccessControlIdentifier3}}" {
-
-  org      = "{{.Org}}"
-  vdc      = "{{.Vdc}}"
-  vapp_id  = vcd_vapp.{{.VappName3}}.id
+  org     = "{{.Org}}"
+  vdc     = "{{.Vdc}}"
+  vapp_id = vcd_vapp.{{.VappName3}}.id
 
   shared_with_everyone = false
 

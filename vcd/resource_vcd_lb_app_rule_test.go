@@ -156,7 +156,7 @@ data "vcd_lb_app_rule" "test" {
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_rule.test.name
   depends_on   = [vcd_lb_app_rule.test]
-}  
+}
 `
 
 const testAccVcdLBAppRule_MultiLine = `
@@ -175,7 +175,7 @@ data "vcd_lb_app_rule" "test" {
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_rule.test.name
   depends_on   = [vcd_lb_app_rule.test]
-} 
+}
 `
 
 const testAccVcdLBAppRule_FailMultiLine = `

@@ -5,12 +5,13 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdVAppHotUpdateVm(t *testing.T) {
@@ -331,8 +332,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
 
-  memory        = 2048
-  cpus          = 1
+  memory = 2048
+  cpus   = 1
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -351,7 +352,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   }
 
   metadata = {
-    mediaItem_metadata = "data 1"
+    mediaItem_metadata  = "data 1"
     mediaItem_metadata2 = "data 2"
     mediaItem_metadata3 = "data 3"
   }
@@ -378,8 +379,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
  
-  memory        = 3072
-  cpus          = 3
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -398,12 +399,12 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   }
 
   metadata = {
-    mediaItem_metadata = "data 1"
+    mediaItem_metadata  = "data 1"
     mediaItem_metadata2 = "data 3"
   }
 
   guest_properties = {
-	"guest.hostname"       = "test-host2"
+	"guest.hostname" = "test-host2"
   }
 
   storage_profile = "{{.StorageProfile2}}"
@@ -423,8 +424,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
  
-  memory        = 3072
-  cpus          = 3
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = false
   memory_hot_add_enabled = true
@@ -460,8 +461,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
  
-  memory        = 3072
-  cpus          = 3
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -504,8 +505,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
  
-  memory        = 3072
-  cpus          = 3
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -543,8 +544,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
  
-  memory        = 3072
-  cpus          = 3
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true

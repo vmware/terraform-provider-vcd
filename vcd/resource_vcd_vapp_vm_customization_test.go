@@ -226,7 +226,7 @@ resource "vcd_vapp" "test-vapp" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name       = "{{.VAppName}}"
+  name = "{{.VAppName}}"
 }
 
 resource "vcd_vapp_network" "vappNet" {

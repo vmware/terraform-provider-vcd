@@ -328,11 +328,11 @@ func init() {
 
 const testAccCheckVcdOrgBasic = `
 resource "vcd_org" "{{.OrgName}}" {
-  name              = "{{.OrgName}}"
-  full_name         = "{{.FullName}}"
-  description       = "{{.Description}}"
-  delete_force      = "true"
-  delete_recursive  = "true"
+  name             = "{{.OrgName}}"
+  full_name        = "{{.FullName}}"
+  description      = "{{.Description}}"
+  delete_force     = "true"
+  delete_recursive = "true"
 }
 `
 
@@ -354,8 +354,8 @@ resource "vcd_org" "{{.OrgName}}" {
     delete_on_storage_lease_expiration    = {{.VappDeleteOnLeaseExp}}
   }
   vapp_template_lease {
-    maximum_storage_lease_in_sec          = {{.TemplStorageLease}}
-    delete_on_storage_lease_expiration    = {{.TemplDeleteOnLeaseExp}}
+    maximum_storage_lease_in_sec       = {{.TemplStorageLease}}
+    delete_on_storage_lease_expiration = {{.TemplDeleteOnLeaseExp}}
   }
 }
 `
