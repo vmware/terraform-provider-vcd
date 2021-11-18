@@ -76,10 +76,10 @@ resource "vcd_vapp_vm" "web1" {
 }
 
 data "vcd_vapp_vm" "vm-ds" {
-  name             = vcd_vapp_vm.web1.name
-  vapp_name        = vcd_vapp.web.name
-  org              = "{{.Org}}"
-  vdc              = "{{.VDC}}"
-  depends_on       = [vcd_vapp_vm.web1]
+  name       = vcd_vapp_vm.web1.name
+  vapp_name  = vcd_vapp.web.name
+  org        = "{{.Org}}"
+  vdc        = "{{.VDC}}"
+  depends_on = [vcd_vapp_vm.web1]
 }
 `

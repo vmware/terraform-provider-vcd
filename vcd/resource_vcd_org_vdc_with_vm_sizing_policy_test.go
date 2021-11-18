@@ -360,10 +360,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name     = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 10240
-    default  = true
+    name    = "{{.ProviderVdcStorageProfile}}"
+    enabled = true
+    limit   = 10240
+    default = true
   }
 
   metadata = {

@@ -114,7 +114,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 
 const testAccNsxtEdgeGatewayDataSources = `
 data "vcd_external_network_v2" "existing-extnet" {
-	name = "{{.ExternalNetwork}}"
+  name = "{{.ExternalNetwork}}"
 }
 `
 

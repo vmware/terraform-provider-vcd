@@ -84,10 +84,10 @@ resource "vcd_network_routed" "{{.orgNetwork}}" {
 }
 
 resource "vcd_vapp_org_network" "createVappOrgNetwork" {
-  org                = "{{.Org}}"
-  vdc                = "{{.Vdc}}"
-  vapp_name          = vcd_vapp.{{.vappName}}.name
-  org_network_name   = vcd_network_routed.{{.orgNetwork}}.name
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  org_network_name = vcd_network_routed.{{.orgNetwork}}.name
   
   is_fenced = "{{.isFenced}}"
 
@@ -97,10 +97,10 @@ resource "vcd_vapp_org_network" "createVappOrgNetwork" {
 data "vcd_vapp_org_network" "network-ds" {
   vapp_name        = "{{.vappName}}"
   org_network_name = vcd_vapp_org_network.createVappOrgNetwork.org_network_name
-  depends_on 	   = [vcd_vapp_org_network.createVappOrgNetwork]
+  depends_on       = [vcd_vapp_org_network.createVappOrgNetwork]
 }
 
 output "retain_ip_mac_enabled" {
   value = data.vcd_vapp_org_network.network-ds.retain_ip_mac_enabled
-}  
+}
 `

@@ -172,7 +172,7 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalogMediaBasic = `
-resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 
@@ -218,7 +218,7 @@ output "storage_profile_name" {
 }`
 
 const testAccCheckVcdCatalogMediaUpdate = `
-resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 

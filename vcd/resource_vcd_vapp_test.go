@@ -163,8 +163,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   }
 
   guest_properties = {
-	"guest.hostname"       = "test-host"
-	"guest.another.subkey" = "another-value"
+    "guest.hostname"       = "test-host"
+    "guest.another.subkey" = "another-value"
   }
 }
 

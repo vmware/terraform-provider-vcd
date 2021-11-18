@@ -48,6 +48,6 @@ func TestAccVcdVcenter(t *testing.T) {
 
 const datasourceTestVcenter = `
 data "vcd_vcenter" "vc" {
-	name = "{{.Vcenter}}"
-  }
+  name = "{{.Vcenter}}"
+}
 `

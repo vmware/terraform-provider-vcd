@@ -318,10 +318,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name     = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 90240
-    default  = true
+    name    = "{{.ProviderVdcStorageProfile}}"
+    enabled = true
+    limit   = 90240
+    default = true
   }
 
   metadata = {
@@ -337,7 +337,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
   default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_full.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id,vcd_vm_sizing_policy.size_full.id]
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id, vcd_vm_sizing_policy.size_full.id]
 }
 `
 const testAccCheckVcdEmptyVmWithSizing = testAccCheckVcdEmptyWithSizing + `
@@ -360,7 +360,7 @@ resource "vcd_vm" "{{.VMName1}}" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   memory           = 1024
- }
+}
 
 resource "vcd_vm" "{{.VMName2}}" {
   org = "{{.Org}}"
@@ -380,7 +380,7 @@ resource "vcd_vm" "{{.VMName2}}" {
   memory_hot_add_enabled = true
 
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
- }
+}
 
 resource "vcd_vm" "{{.VMName3}}" {
   org = "{{.Org}}"
@@ -405,7 +405,7 @@ resource "vcd_vm" "{{.VMName4}}" {
   power_on      = "false"
 
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
- }
+}
 `
 
 const testAccCheckVcdEmptyVmWithSizingUpdate = "# skip-binary-test: only for updates " +
@@ -435,8 +435,8 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   power_on = true
 
-  description   = "test empty VM2"
-  name          = "{{.VMName2}}"
+  description = "test empty VM2"
+  name        = "{{.VMName2}}"
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"

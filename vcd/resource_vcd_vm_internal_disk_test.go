@@ -194,9 +194,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   org  = "{{.OrgName}}"
   name = "{{.VdcName}}" 
 
-  allocation_model = "{{.AllocationModel}}"
-  network_pool_name     = "{{.NetworkPool}}"
-  provider_vdc_name     = "{{.ProviderVdc}}"
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
 
   compute_capacity {
     cpu {
@@ -211,10 +211,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name     = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 102400
-    default  = true
+    name    = "{{.ProviderVdcStorageProfile}}"
+    enabled = true
+    limit   = 102400
+    default = true
   }
 
   enabled                  = true
@@ -225,14 +225,14 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  org  = "{{.Org}}"
+  vdc  =  vcd_org_vdc.{{.VdcName}}.name
   name = "{{.VappName}}"
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  org           = "{{.Org}}"
+  vdc           =  vcd_org_vdc.{{.VdcName}}.name
   vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
@@ -243,12 +243,12 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   cpu_cores     = 1
 
   override_template_disk {
-    bus_type         = "paravirtual"
-    size_in_mb       = "{{.InternalDiskSize}}"
-    bus_number       = 0
-    unit_number      = 0
-    iops             = 0
-    storage_profile  = "{{.StorageProfileName}}"
+    bus_type        = "paravirtual"
+    size_in_mb      = "{{.InternalDiskSize}}"
+    bus_number      = 0
+    unit_number     = 0
+    iops            = 0
+    storage_profile = "{{.StorageProfileName}}"
   }
 
   disk {
@@ -297,7 +297,7 @@ const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
 # skip-binary-test: expected to fail for allow_vm_reboot=false and bus_type = "ide"
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org             = "{{.Org}}"
-  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vdc             = vcd_org_vdc.{{.VdcName}}.name
   vapp_name       = vcd_vapp.{{.VappName}}.name
   vm_name         = vcd_vapp_vm.{{.VmName}}.name
   bus_type        = "ide"
@@ -312,7 +312,7 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
 const sourceTestVmInternalDisk = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org             = "{{.Org}}"
-  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vdc             = vcd_org_vdc.{{.VdcName}}.name
   vapp_name       = vcd_vapp.{{.VappName}}.name
   vm_name         = vcd_vapp_vm.{{.VmName}}.name
   bus_type        = "ide"
@@ -325,7 +325,7 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
   org             = "{{.Org}}"
-  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vdc             = vcd_org_vdc.{{.VdcName}}.name
   vapp_name       = vcd_vapp.{{.VappName}}.name
   vm_name         = vcd_vapp_vm.{{.VmName}}.name
   bus_type        = "{{.BusType}}"
@@ -340,7 +340,7 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
 const sourceTestVmInternalDisk_Update1 = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
   org             = "{{.Org}}"
-  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vdc             = vcd_org_vdc.{{.VdcName}}.name
   vapp_name       = vcd_vapp.{{.VappName}}.name
   vm_name         = vcd_vapp_vm.{{.VmName}}.name
   bus_type        = "{{.BusType}}"
@@ -353,7 +353,7 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org             = "{{.Org}}"
-  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vdc             = vcd_org_vdc.{{.VdcName}}.name
   vapp_name       = vcd_vapp.{{.VappName}}.name
   vm_name         = vcd_vapp_vm.{{.VmName}}.name
   bus_type        = "ide"

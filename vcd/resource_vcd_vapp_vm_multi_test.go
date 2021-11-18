@@ -207,7 +207,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
-    ip            = "10.10.102.162"
+    ip                 = "10.10.102.162"
   }
 
 }
@@ -227,7 +227,7 @@ resource "vcd_vapp_vm" "{{.VmName3}}" {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
-    ip            = "10.10.102.163"
+    ip                 = "10.10.102.163"
   }
 
 }

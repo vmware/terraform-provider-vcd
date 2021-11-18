@@ -236,7 +236,7 @@ resource "vcd_lb_app_profile" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  
+
   name = "{{.AppProfileName}}"
   type = "{{.Type}}"
 

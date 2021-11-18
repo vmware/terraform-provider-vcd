@@ -134,11 +134,11 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 
 resource "vcd_vapp_org_network" "{{.resourceName}}" {
-  org                = "{{.Org}}"
-  vdc                = "{{.Vdc}}"
-  vapp_name          = vcd_vapp.{{.vappName}}.name
-  org_network_name   = vcd_network_routed.{{.NetworkName}}.name
-  
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  org_network_name = vcd_network_routed.{{.NetworkName}}.name
+
   is_fenced = "{{.isFenced}}"
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
@@ -167,11 +167,11 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 
 resource "vcd_vapp_org_network" "{{.resourceName}}" {
-  org                = "{{.Org}}"
-  vdc                = "{{.Vdc}}"
-  vapp_name          = vcd_vapp.{{.vappName}}.name
-  org_network_name   = vcd_network_routed.{{.NetworkName}}.name
-  
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  org_network_name = vcd_network_routed.{{.NetworkName}}.name
+
   is_fenced = "{{.isFencedForUpdate}}"
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"

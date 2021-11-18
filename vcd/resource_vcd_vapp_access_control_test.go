@@ -27,7 +27,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 		"Org":                      testConfig.VCD.Org,
 		"Vdc":                      testConfig.VCD.Vdc,
 		"SharedToEveryone":         "true",
-		"EveryoneAccessLevel":      fmt.Sprintf(`everyone_access_level = "%s"`, types.ControlAccessReadWrite),
+		"EveryoneAccessLevel":      fmt.Sprintf(`  everyone_access_level = "%s"`, types.ControlAccessReadWrite),
 		"AccessControlIdentifier0": "AC-Vapp0",
 		"AccessControlIdentifier1": "AC-Vapp1",
 		"AccessControlIdentifier2": "AC-Vapp2",
@@ -280,7 +280,7 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier0}}" {
   vapp_id = vcd_vapp.{{.VappName0}}.id
 
   shared_with_everyone = {{.SharedToEveryone}}
-  {{.EveryoneAccessLevel}}
+{{.EveryoneAccessLevel}}
 }
 
 resource "vcd_vapp_access_control" "{{.AccessControlIdentifier1}}" {

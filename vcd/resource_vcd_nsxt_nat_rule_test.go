@@ -220,15 +220,15 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name        = "test-dnat-rule-updated"
-  rule_type  = "DNAT"
+  rule_type   = "DNAT"
   description = "updated-description"
-  
+
   # Using primary_ip from edge gateway
-  external_address  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_address  = "11.11.11.0/32"
+  external_address    = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address    = "11.11.11.0/32"
   dnat_external_port  = 8888
   app_port_profile_id = vcd_nsxt_app_port_profile.custom-app.id
-  
+
   logging = false
   enabled = false
 }

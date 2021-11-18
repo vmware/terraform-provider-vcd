@@ -255,7 +255,7 @@ resource "vcd_network_isolated_v2" "net-test" {
   name = "{{.NetworkName}}-isolated"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
-  
+
   gateway       = "110.10.102.1"
   prefix_length = 26
 
@@ -308,7 +308,7 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
 
-  depends_on = [vcd_network_routed_v2.{{.NetworkName}}, vcd_network_isolated_v2.net-test, 
+  depends_on = [vcd_network_routed_v2.{{.NetworkName}}, vcd_network_isolated_v2.net-test,
   vcd_nsxt_network_imported.imported-test]
 }
 
@@ -417,8 +417,8 @@ resource "vcd_network_isolated_v2" "net-test" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   
-  gateway         = "110.10.102.1"
-  prefix_length   = 26
+  gateway       = "110.10.102.1"
+  prefix_length = 26
 
   static_ip_pool {
     start_address = "110.10.102.2"
@@ -429,7 +429,7 @@ resource "vcd_network_isolated_v2" "net-test" {
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
-  
+
   org_network_id = vcd_network_routed_v2.{{.NetworkName}}.id
 
   pool {

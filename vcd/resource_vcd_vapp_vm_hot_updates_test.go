@@ -311,10 +311,10 @@ resource "vcd_network_routed" "net" {
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
-  org                = "{{.Org}}"
-  vdc                = "{{.Vdc}}"
-  vapp_name          = vcd_vapp.{{.VAppName}}.name
-  org_network_name   = vcd_network_routed.net.name 
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
+  org_network_name = vcd_network_routed.net.name 
 }
 `
 
@@ -343,7 +343,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     connected          = false
   }
- 
+
   network {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
@@ -358,8 +358,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   }
 
   guest_properties = {
-	"guest.hostname"       = "test-host"
-	"guest.another.subkey" = "another-value"
+    "guest.hostname"       = "test-host"
+    "guest.another.subkey" = "another-value"
   }
 
   storage_profile = "{{.StorageProfile}}"
@@ -378,7 +378,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
+
   memory = 3072
   cpus   = 3
 
@@ -390,7 +390,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "DHCP"
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
@@ -404,7 +404,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   }
 
   guest_properties = {
-	"guest.hostname" = "test-host2"
+    "guest.hostname" = "test-host2"
   }
 
   storage_profile = "{{.StorageProfile2}}"
@@ -423,7 +423,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
+
   memory = 3072
   cpus   = 3
 
@@ -437,7 +437,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "DHCP"
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
@@ -460,7 +460,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
+
   memory = 3072
   cpus   = 3
 
@@ -474,7 +474,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "DHCP"
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
@@ -504,7 +504,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
+
   memory = 3072
   cpus   = 3
 
@@ -543,7 +543,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
+
   memory = 3072
   cpus   = 3
 

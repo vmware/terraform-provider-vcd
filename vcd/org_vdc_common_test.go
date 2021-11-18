@@ -377,7 +377,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default = true
   }
 
-  {{.SecondStorageProfile}}
+ {{.SecondStorageProfile}}
 
   metadata = {
     vdc_metadata  = "VDC Metadata"

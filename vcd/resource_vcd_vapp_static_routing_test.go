@@ -188,7 +188,7 @@ resource "vcd_vapp_static_routing" "{{.ResourceName}}" {
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.{{.VappName}}.id
   network_id = vcd_vapp_network.vappRoutedNet.id
-  enabled     = true
+  enabled    = true
 
   rule {
     name         = "rule1"
@@ -210,7 +210,7 @@ resource "vcd_vapp_static_routing" "{{.ResourceName}}" {
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.{{.VappName}}.id
   network_id = vcd_vapp_network.vappRoutedNet.id
-  enabled     = false
+  enabled    = false
 
   rule {
     name         = "rule1"

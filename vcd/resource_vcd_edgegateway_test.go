@@ -460,27 +460,27 @@ resource "vcd_edgegateway" "egw" {
   vdc = "{{.Vdc}}"
 
   name          = "edge-with-rate-limits"
-  configuration = "compact" 
+  configuration = "compact"
 
   external_network {
     name                = vcd_external_network.{{.NewExternalNetwork}}.name
     enable_rate_limit   = {{.EnableRateLimit}}
     incoming_rate_limit = {{.IncomingRateLimit}}
     outgoing_rate_limit = {{.OutgoingRateLimit}}
-  
+
     subnet {
       gateway               = "192.168.30.49"
       netmask               = "255.255.255.240"
       use_for_default_route = true
 
       suballocate_pool {
-      	start_address = "192.168.30.53"
-      	end_address   = "192.168.30.55"
+        start_address = "192.168.30.53"
+        end_address   = "192.168.30.55"
       }
 
       suballocate_pool {
-      	start_address = "192.168.30.58"
-      	end_address   = "192.168.30.60"
+        start_address = "192.168.30.58"
+        end_address   = "192.168.30.60"
       }
 	}
   }
@@ -572,19 +572,19 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
       end_address   = "192.168.30.62"
     }
   }
-  
-#  ip_scope {
-# 	gateway    = "192.168.40.149"
-# 	netmask    = "255.255.255.0"
-# 	dns1       = "192.168.0.164"
-# 	dns2       = "192.168.0.196"
-# 	dns_suffix = "company.biz"
 
-# 	static_ip_pool {
-# 	  start_address = "192.168.40.151"
-# 	  end_address   = "192.168.40.162"
-# 	}
-#   }
+  #  ip_scope {
+  # 	gateway    = "192.168.40.149"
+  # 	netmask    = "255.255.255.0"
+  # 	dns1       = "192.168.0.164"
+  # 	dns2       = "192.168.0.196"
+  # 	dns_suffix = "company.biz"
+
+  # 	static_ip_pool {
+  # 	  start_address = "192.168.40.151"
+  # 	  end_address   = "192.168.40.162"
+  # 	}
+  #   }
 
   retain_net_info_across_deployments = "false"
 }
@@ -636,12 +636,12 @@ resource "vcd_edgegateway" "egw" {
 
   external_network {
     name = vcd_external_network.{{.NewExternalNetwork}}.name
-  
+
     subnet {
-  	  ip_address            = "192.168.30.51"
-  	  gateway               = "192.168.30.49"
-  	  netmask               = "255.255.255.240"
-  	  use_for_default_route = true
+      ip_address            = "192.168.30.51"
+      gateway               = "192.168.30.49"
+      netmask               = "255.255.255.240"
+      use_for_default_route = true
 
   	  suballocate_pool {
   	    start_address = "192.168.30.53"
@@ -693,9 +693,9 @@ resource "vcd_edgegateway" "egw" {
   external_network {
     name = vcd_external_network.{{.NewExternalNetwork}}.name
     subnet {
-		gateway               = "192.168.30.49"
-		netmask               = "255.255.255.240"
-		use_for_default_route = true
+      gateway               = "192.168.30.49"
+      netmask               = "255.255.255.240"
+      use_for_default_route = true
     }
   }
 }

@@ -174,13 +174,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
-     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
+      allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
+      limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
     }
 
     memory {
-     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
-     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
+      allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
+      limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
     }
   }
 
@@ -218,13 +218,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
-     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
+      allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
+      limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
     }
 
     memory {
-     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
-     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
+      allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
+      limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
     }
   }
 

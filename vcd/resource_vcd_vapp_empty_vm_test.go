@@ -346,7 +346,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	adapter_type       = "PCNet32"
+    adapter_type       = "PCNet32"
   }
 
   network {
@@ -371,7 +371,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "POOL"
     is_primary         = false
     adapter_type       = "e1000e"
-	mac                = "00:00:00:11:11:11"
+    mac                = "00:00:00:11:11:11"
   }
 
   network {
@@ -410,7 +410,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name              = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
   }
  }
@@ -489,8 +489,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name              = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
-  } 
+  }
 }
 `

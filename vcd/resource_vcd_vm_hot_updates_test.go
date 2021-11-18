@@ -240,8 +240,8 @@ resource "vcd_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
 
-  memory        = 2048
-  cpus          = 1
+  memory = 2048
+  cpus   = 1
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -260,7 +260,7 @@ resource "vcd_vm" "{{.VMName}}" {
   }
 
   metadata = {
-    mediaItem_metadata = "data 1"
+    mediaItem_metadata  = "data 1"
     mediaItem_metadata2 = "data 2"
     mediaItem_metadata3 = "data 3"
   }
@@ -285,9 +285,9 @@ resource "vcd_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
-  memory        = 3072
-  cpus          = 3
+
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -297,7 +297,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
@@ -306,12 +306,12 @@ resource "vcd_vm" "{{.VMName}}" {
   }
 
   metadata = {
-    mediaItem_metadata = "data 1"
+    mediaItem_metadata  = "data 1"
     mediaItem_metadata2 = "data 3"
   }
 
   guest_properties = {
-	"guest.hostname"       = "test-host2"
+	"guest.hostname" = "test-host2"
   }
 
   storage_profile = "{{.StorageProfile2}}"
@@ -329,9 +329,9 @@ resource "vcd_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
-  memory        = 3072
-  cpus          = 3
+
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = false
   memory_hot_add_enabled = true
@@ -343,7 +343,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
@@ -365,9 +365,9 @@ resource "vcd_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
-  memory        = 3072
-  cpus          = 3
+
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -379,7 +379,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
   }
- 
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
@@ -408,9 +408,9 @@ resource "vcd_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
-  memory        = 3072
-  cpus          = 3
+
+  memory= 3072
+  cpus  = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -446,9 +446,9 @@ resource "vcd_vm" "{{.VMName}}" {
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
- 
-  memory        = 3072
-  cpus          = 3
+
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
@@ -468,7 +468,7 @@ resource "vcd_vm" "{{.VMName}}" {
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
- 
+
   storage_profile = "{{.StorageProfile2}}"
 }
 `

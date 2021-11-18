@@ -77,7 +77,6 @@ resource "vcd_vm" "{{.VmName}}" {
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
-  
 }
 `
 

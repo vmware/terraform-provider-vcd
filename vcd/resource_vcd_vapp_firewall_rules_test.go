@@ -361,7 +361,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     type               = "vapp"
     name               = vcd_vapp_network.vappRoutedNet.name
     ip_allocation_mode = "MANUAL"
-    ip            = "192.168.2.12"
+    ip                 = "192.168.2.12"
   }
 
   network {
@@ -385,7 +385,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   enabled = true
 
   rule {
-    name      = "{{.Name1}}"
+    name             = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "21"
@@ -395,7 +395,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    name      = "{{.Name2}}"
+    name             = "{{.Name2}}"
     policy           = "allow"
     protocol         = "any"
     destination_port = "any"
@@ -405,7 +405,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    name            = "{{.Name3}}"
+    name                   = "{{.Name3}}"
     policy                 = "allow"
     protocol               = "any"
     destination_vm_id      = vcd_vapp_vm.{{.VmName2}}.id
@@ -419,7 +419,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    name      = "{{.Name4}}"
+    name             = "{{.Name4}}"
     enabled          = false
     policy           = "drop"
     protocol         = "any"
@@ -441,7 +441,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}2" {
   log_default_action = true
 
   rule {
-    name      = "{{.Name1}}"
+    name             = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "221"
@@ -465,7 +465,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   enabled = false
 
   rule {
-    name      = "{{.Name1}}"
+    name             = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "21"
@@ -475,7 +475,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    name      = "{{.Name2}}"
+    name             = "{{.Name2}}"
     policy           = "allow"
     protocol         = "any"
     destination_port = "any"
@@ -485,7 +485,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    name      = "{{.Name4}}"
+    name             = "{{.Name4}}"
     enabled          = false
     policy           = "drop"
     protocol         = "any"
@@ -497,7 +497,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    name            = "{{.Name3}}"
+    name                   = "{{.Name3}}"
     policy                 = "allow"
     protocol               = "any"
     destination_vm_id      = vcd_vapp_vm.{{.VmName2}}.id
@@ -523,7 +523,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}2" {
   enabled = false
 
   rule {
-    name      = "{{.Name1}}"
+    name             = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "221"

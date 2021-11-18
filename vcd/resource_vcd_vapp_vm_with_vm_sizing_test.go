@@ -469,7 +469,7 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
-  memory           = 2048
+  memory = 2048
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}3" {
@@ -484,7 +484,7 @@ resource "vcd_vapp_vm" "{{.VMName}}3" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
-  memory           = 3072
+  memory = 3072
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}5" {
