@@ -328,8 +328,8 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
   name        = "{{.VmName1}}"
   memory      = 512
   cpus        = 2
-  cpu_cores   = 1 
-  
+  cpu_cores   = 1
+
   os_type                        = "sles10_64Guest"
   hardware_version               = "vmx-11"
   expose_hardware_virtualization = true
@@ -344,16 +344,16 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
-  vapp_name     = vcd_vapp.{{.VappName}}.name
+  org       = "{{.Org}}"
+  vdc       = "{{.Vdc}}"
+  vapp_name = vcd_vapp.{{.VappName}}.name
 
   description = "test empty VM"
   name        = "{{.VmName2}}"
   memory      = 512
   cpus        = 2
-  cpu_cores   = 1 
-  
+  cpu_cores   = 1
+
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-11"
   computer_name    = "compName"

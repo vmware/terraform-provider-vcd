@@ -288,7 +288,7 @@ resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name       = "{{.VAppName}}"
+  name = "{{.VAppName}}"
 }
 
 resource "vcd_network_routed" "net" {
@@ -314,7 +314,7 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
   org              = "{{.Org}}"
   vdc              = "{{.Vdc}}"
   vapp_name        = vcd_vapp.{{.VAppName}}.name
-  org_network_name = vcd_network_routed.net.name 
+  org_network_name = vcd_network_routed.net.name
 }
 `
 
@@ -363,7 +363,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   }
 
   storage_profile = "{{.StorageProfile}}"
- }
+}
 `
 
 const testAccCheckVcdVAppHotUpdateVmStep1 = `# skip-binary-test: only for updates

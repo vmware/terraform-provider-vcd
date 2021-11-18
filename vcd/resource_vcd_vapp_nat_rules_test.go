@@ -277,7 +277,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
   name        = "{{.VmName1}}"
   memory      = 512
   cpus        = 2
-  cpu_cores   = 1 
+  cpu_cores   = 1
 
   power_on = false  
 
@@ -295,15 +295,15 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
-  vapp_name     = vcd_vapp.{{.VappName}}.name
+  org       = "{{.Org}}"
+  vdc       = "{{.Vdc}}"
+  vapp_name = vcd_vapp.{{.VappName}}.name
 
   description = "test empty VM"
   name        = "{{.VmName2}}"
   memory      = 512
   cpus        = 2
-  cpu_cores   = 1 
+  cpu_cores   = 1
 
   power_on = false
   
@@ -314,7 +314,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     type               = "vapp"
     name               = vcd_vapp_network.vappRoutedNet.name
     ip_allocation_mode = "MANUAL"
-    ip            = "192.168.22.12"
+    ip                 = "192.168.22.12"
   }
 
   network {
@@ -328,10 +328,10 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 const testAccVcdVappNatRules_rules = testAccVcdVappNatRules_vappAndVm + `
 # For NAT rules to work, firewall has to be enabled.
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
-  vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
-  network_id = vcd_vapp_network.vappRoutedNet.id
+  vapp_id        = vcd_vapp.TestAccVcdVappNatRules_vapp.id
+  network_id     = vcd_vapp_network.vappRoutedNet.id
   default_action = "drop"
-  enabled = true
+  enabled        = true
 }
 
 resource "vcd_vapp_nat_rules" "{{.ResourceName}}" {
@@ -343,7 +343,7 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}" {
   enabled    = true
 
   rule {
-    mapping_mode = "automatic" 
+    mapping_mode = "automatic"
     vm_nic_id    = 0
     vm_id        = vcd_vapp_vm.{{.VmName1}}.id
   }
@@ -361,17 +361,17 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_org_network.vappAttachedNet.id
-  
+
   nat_type             = "portForwarding"
   enable_ip_masquerade = true
   enabled              = true
 
   rule {
-    external_port        = 22
-    vm_nic_id            = 0
-    forward_to_port      = 80
-    protocol             = "TCP_UDP"
-    vm_id                = vcd_vapp_vm.{{.VmName1}}.id
+    external_port   = 22
+    vm_nic_id       = 0
+    forward_to_port = 80
+    protocol        = "TCP_UDP"
+    vm_id           = vcd_vapp_vm.{{.VmName1}}.id
   }
 
   rule {
@@ -387,10 +387,10 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
 const testAccVcdVappNatRules_rules_forUpdate = testAccVcdVappNatRules_vappAndVm + `
 # For NAT rules to work, firewall has to be enabled.
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
-  vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
-  network_id = vcd_vapp_network.vappRoutedNet.id
+  vapp_id        = vcd_vapp.TestAccVcdVappNatRules_vapp.id
+  network_id     = vcd_vapp_network.vappRoutedNet.id
   default_action = "drop"
-  enabled = true
+  enabled        = true
 }
 
 resource "vcd_vapp_nat_rules" "{{.ResourceName}}" {
@@ -421,7 +421,7 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_org_network.vappAttachedNet.id
- 
+
   nat_type             = "portForwarding"
   enable_ip_masquerade = false
   enabled              = false
@@ -435,11 +435,11 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
   }
 
   rule {
-    external_port        = 222
-    vm_nic_id            = 0
-    forward_to_port      = 800
-    protocol             = "UDP"
-    vm_id                = vcd_vapp_vm.{{.VmName1}}.id
+    external_port   = 222
+    vm_nic_id       = 0
+    forward_to_port = 800
+    protocol        = "UDP"
+    vm_id           = vcd_vapp_vm.{{.VmName1}}.id
   }
 }
 `

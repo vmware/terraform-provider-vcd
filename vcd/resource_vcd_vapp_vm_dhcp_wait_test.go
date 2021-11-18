@@ -118,7 +118,7 @@ resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name = "{{.VAppName}}" 
+  name = "{{.VAppName}}"
 }
 
 resource "vcd_network_routed" "net" {

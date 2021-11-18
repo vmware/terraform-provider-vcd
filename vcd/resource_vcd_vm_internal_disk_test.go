@@ -192,7 +192,7 @@ func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCh
 const sourceTestVmInternalDiskOrgVdcAndVM = `
 resource "vcd_org_vdc" "{{.VdcName}}" {
   org  = "{{.OrgName}}"
-  name = "{{.VdcName}}" 
+  name = "{{.VdcName}}"
 
   allocation_model  = "{{.AllocationModel}}"
   network_pool_name = "{{.NetworkPool}}"
@@ -226,13 +226,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
 resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
-  vdc  =  vcd_org_vdc.{{.VdcName}}.name
+  vdc  = vcd_org_vdc.{{.VdcName}}.name
   name = "{{.VappName}}"
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
-  vdc           =  vcd_org_vdc.{{.VdcName}}.name
+  vdc           = vcd_org_vdc.{{.VdcName}}.name
   vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
@@ -320,7 +320,7 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   bus_number      = "0"
   unit_number     = "0"
   storage_profile = "{{.StorageProfileName}}"
-  allow_vm_reboot = "true" 
+  allow_vm_reboot = "true"
 }
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {

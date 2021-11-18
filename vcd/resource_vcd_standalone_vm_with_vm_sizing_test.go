@@ -349,7 +349,7 @@ resource "vcd_vm" "{{.VMName1}}" {
 
   description = "test empty VM"
   name        = "{{.VMName1}}"
-  
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -370,7 +370,7 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   description = "test empty VM2"
   name        = "{{.VMName2}}"
-  
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -437,7 +437,7 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   description = "test empty VM2"
   name        = "{{.VMName2}}"
-  
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"

@@ -338,13 +338,19 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     vdc_metadata = "VDC Metadata"
   }
 
-  enabled                    = true
-  enable_thin_provisioning   = true
-  enable_fast_provisioning   = true
-  delete_force               = true
-  delete_recursive           = true
-  {{.FlexElasticKey}}        {{.equalsChar}} {{.FlexElasticValue}}
-  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
+  delete_force             = true
+  delete_recursive         = true
+
+{{if .FlexElasticKey}}
+  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
+{{end}}
+
+{{if .FlexMemoryOverheadKey}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
+{{end}}
 }
 `
 
@@ -377,7 +383,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default = true
   }
 
+{{if .FlexElasticKey}}
  {{.SecondStorageProfile}}
+{{end}}
 
   metadata = {
     vdc_metadata  = "VDC Metadata"
@@ -392,8 +400,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   delete_force             = false
   delete_recursive         = false
 
-  {{.FlexElasticKey}}        {{.equalsChar}} {{.FlexElasticValueUpdate}}
+  {{if .FlexElasticKey}}
+  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
+{{end}}
+
+{{if .FlexMemoryOverheadKey}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
+{{end}}
 }
 `
 

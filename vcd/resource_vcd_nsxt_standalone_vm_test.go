@@ -416,7 +416,7 @@ resource "vcd_network_isolated_v2" "net-test" {
   name = "{{.NetworkName}}-isolated"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
-  
+
   gateway       = "110.10.102.1"
   prefix_length = 26
 

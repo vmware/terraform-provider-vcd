@@ -251,7 +251,7 @@ resource "vcd_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     connected          = false
   }
- 
+
   network {
     type               = "org"
     name               = vcd_network_routed.net.name
@@ -266,12 +266,12 @@ resource "vcd_vm" "{{.VMName}}" {
   }
 
   guest_properties = {
-	"guest.hostname"       = "test-host"
-	"guest.another.subkey" = "another-value"
+    "guest.hostname"       = "test-host"
+    "guest.another.subkey" = "another-value"
   }
 
   storage_profile = "{{.StorageProfile}}"
- }
+}
 `
 
 const testAccCheckVcdHotUpdateVmStep1 = `# skip-binary-test: only for updates
@@ -409,8 +409,8 @@ resource "vcd_vm" "{{.VMName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
 
-  memory= 3072
-  cpus  = 3
+  memory = 3072
+  cpus   = 3
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true

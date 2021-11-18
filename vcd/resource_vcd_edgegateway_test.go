@@ -482,7 +482,7 @@ resource "vcd_edgegateway" "egw" {
         start_address = "192.168.30.58"
         end_address   = "192.168.30.60"
       }
-	}
+    }
   }
 }
 `
@@ -599,13 +599,13 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   configuration = "compact"
 
   external_network {
-     name = vcd_external_network.{{.NewExternalNetwork}}.name
-   
-     subnet {
-		ip_address            = "192.168.30.51"
-		gateway               = "192.168.30.49"
-		netmask               = "255.255.255.240"
-		use_for_default_route = true
+    name = vcd_external_network.{{.NewExternalNetwork}}.name
+
+    subnet {
+      ip_address            = "192.168.30.51"
+      gateway               = "192.168.30.49"
+      netmask               = "255.255.255.240"
+      use_for_default_route = true
 	}
   }
 }
@@ -643,14 +643,14 @@ resource "vcd_edgegateway" "egw" {
       netmask               = "255.255.255.240"
       use_for_default_route = true
 
-  	  suballocate_pool {
-  	    start_address = "192.168.30.53"
-  	    end_address   = "192.168.30.55"
-  	  }
-  	  suballocate_pool {
-  	    start_address = "192.168.30.58"
-  	    end_address   = "192.168.30.60"
-  	  }
+      suballocate_pool {
+        start_address = "192.168.30.53"
+        end_address   = "192.168.30.55"
+      }
+      suballocate_pool {
+        start_address = "192.168.30.58"
+        end_address   = "192.168.30.60"
+      }
     }
   }
 
@@ -663,7 +663,7 @@ resource "vcd_edgegateway" "egw" {
       use_for_default_route = false
       gateway               = data.vcd_external_network.ds-network.ip_scope[0].gateway
       netmask               = data.vcd_external_network.ds-network.ip_scope[0].netmask
-	}
+    }
   }
 }
 

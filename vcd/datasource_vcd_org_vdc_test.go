@@ -164,7 +164,7 @@ data "vcd_org_vdc" "existingVdc" {
   name = "{{.ExistingVdcName}}"
 }
 
-resource "vcd_org_vdc" "{{.VdcName}}" { 
+resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 

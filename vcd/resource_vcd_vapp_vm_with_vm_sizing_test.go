@@ -326,10 +326,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name     = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 90240
-    default  = true
+    name    = "{{.ProviderVdcStorageProfile}}"
+    enabled = true
+    limit   = 90240
+    default = true
   }
 
   metadata = {
@@ -345,14 +345,14 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
   default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_full.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id,vcd_vm_sizing_policy.size_full.id]
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id, vcd_vm_sizing_policy.size_full.id]
 }
 
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
 
-  name       = "{{.VAppName}}"
+  name = "{{.VAppName}}"
 }
 `
 const testAccCheckVcdVAppEmptyVmWithSizing = testAccCheckVcdVAppEmptyWithSizing + `
@@ -362,9 +362,9 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   power_on = true
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  description   = "test empty VM"
-  name          = "{{.VMName}}"
+  vapp_name   = vcd_vapp.{{.VAppName}}.name
+  description = "test empty VM"
+  name        = "{{.VMName}}"
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
@@ -376,7 +376,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   memory           = 1024
- }
+}
 
 resource "vcd_vapp_vm" "{{.VMName}}2" {
   org = "{{.Org}}"
@@ -397,7 +397,7 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
   memory_hot_add_enabled = true
 
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
- }
+}
 
 resource "vcd_vapp_vm" "{{.VMName}}3" {
   org = "{{.Org}}"
@@ -424,7 +424,7 @@ resource "vcd_vapp_vm" "{{.VMName}}4" {
   power_on      = "false"
 
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
- }
+}
 `
 
 const testAccCheckVcdVAppEmptyVmWithSizingUpdate = "# skip-binary-test: only for updates " +

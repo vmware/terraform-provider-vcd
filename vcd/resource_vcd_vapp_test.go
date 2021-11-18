@@ -208,7 +208,7 @@ resource "vcd_vapp_vm" "test_vm1" {
   name      = "test_vm1"
   memory    = 512
   cpus      = 1
-  cpu_cores = 1 
+  cpu_cores = 1
 
   os_type          = "rhel4Guest"
   hardware_version = "vmx-14"

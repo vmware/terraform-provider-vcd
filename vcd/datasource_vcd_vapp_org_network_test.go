@@ -88,7 +88,7 @@ resource "vcd_vapp_org_network" "createVappOrgNetwork" {
   vdc              = "{{.Vdc}}"
   vapp_name        = vcd_vapp.{{.vappName}}.name
   org_network_name = vcd_network_routed.{{.orgNetwork}}.name
-  
+
   is_fenced = "{{.isFenced}}"
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"

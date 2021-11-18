@@ -5,8 +5,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -156,47 +157,47 @@ resource "vcd_vapp_network" "createdVappNetwork" {
  
 
 data "vcd_vapp_network" "network-ds" {
-  name       =  vcd_vapp_network.createdVappNetwork.name
+  name       = vcd_vapp_network.createdVappNetwork.name
   vapp_name  = "{{.vappName}}"
-  depends_on =  [vcd_vapp_network.createdVappNetwork]
+  depends_on = [vcd_vapp_network.createdVappNetwork]
 }
 
 output "netmask" {
   value = data.vcd_vapp_network.network-ds.netmask 
-} 
+}
 output "description" {
   value = data.vcd_vapp_network.network-ds.description 
-} 
+}
 output "gateway" {
   value = data.vcd_vapp_network.network-ds.gateway 
-} 
+}
 output "dns1" {
   value = data.vcd_vapp_network.network-ds.dns1 
-} 
+}
 output "dns2" {
   value = data.vcd_vapp_network.network-ds.dns2 
-} 
+}
 output "dnsSuffix" {
   value = data.vcd_vapp_network.network-ds.dns_suffix 
-} 
+}
 output "guestVlanAllowed" {
   value = data.vcd_vapp_network.network-ds.guest_vlan_allowed
-} 
+}
 output "dhcpStartAddress" {
-  value  = tolist(data.vcd_vapp_network.network-ds.dhcp_pool)[0].start_address
+  value = tolist(data.vcd_vapp_network.network-ds.dhcp_pool)[0].start_address
 }
 output "dhcpEndAddress" {
-  value  = tolist(data.vcd_vapp_network.network-ds.dhcp_pool)[0].end_address
+  value = tolist(data.vcd_vapp_network.network-ds.dhcp_pool)[0].end_address
 }
 output "staticIpPoolStartAddress" {
-  value  = tolist(data.vcd_vapp_network.network-ds.static_ip_pool)[0].start_address
+  value = tolist(data.vcd_vapp_network.network-ds.static_ip_pool)[0].start_address
 }
 output "staticIpPoolEndAddress" {
-  value  = tolist(data.vcd_vapp_network.network-ds.static_ip_pool)[0].end_address
+  value = tolist(data.vcd_vapp_network.network-ds.static_ip_pool)[0].end_address
 }
 output "orgNetwork" {
   value = data.vcd_vapp_network.network-ds.org_network_name
-} 
+}
 output "retain_ip_mac_enabled" {
   value = data.vcd_vapp_network.network-ds.retain_ip_mac_enabled
 }

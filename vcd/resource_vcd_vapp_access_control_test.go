@@ -280,6 +280,7 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier0}}" {
   vapp_id = vcd_vapp.{{.VappName0}}.id
 
   shared_with_everyone = {{.SharedToEveryone}}
+
 {{.EveryoneAccessLevel}}
 }
 

@@ -139,13 +139,15 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
-  org         	      = "{{.Org}}"
-  vdc         	      = "{{.Vdc}}"
-  vapp_name 	      = vcd_vapp.{{.VappName}}.name
-  name    	          = "{{.VmName}}"
-  computer_name       = "{{.ComputerName}}"
-  catalog_name	      = "{{.Catalog}}"
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "{{.VmName}}"
+  computer_name = "{{.ComputerName}}"
+  catalog_name	= "{{.Catalog}}"
+
   {{.CatalogItemMultiVm}}
+
   vm_name_in_template = "{{.VmNameInTemplate}}"
   memory              = 1024
   cpus                = 2
@@ -164,13 +166,15 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
-  org         	      = "{{.Org}}"
-  vdc         	      = "{{.Vdc}}"
-  vapp_name           = vcd_vapp.{{.VappName}}.name
-  name	              = "{{.VmName2}}"
-  computer_name       = "{{.ComputerName}}"
-  catalog_name	      = "{{.Catalog}}"
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "{{.VmName2}}"
+  computer_name = "{{.ComputerName}}"
+  catalog_name  = "{{.Catalog}}"
+
   {{.CatalogItemMultiVm}}
+
   vm_name_in_template = "{{.VmNameInTemplate2}}"
   memory              = 1024
   cpus                = 2

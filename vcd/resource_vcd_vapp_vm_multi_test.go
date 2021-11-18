@@ -159,10 +159,10 @@ resource "vcd_vapp" "{{.VappName}}" {
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
-  org                = "{{.Org}}"
-  vdc                = "{{.Vdc}}"
-  vapp_name          = vcd_vapp.{{.VappName}}.name
-  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.{{.VappName}}.name
+  org_network_name = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName1}}" {
@@ -180,16 +180,16 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
-    ip            = "10.10.102.161"
+    ip                 = "10.10.102.161"
   }
 
   disk {
-    name = vcd_independent_disk.{{.diskResourceName}}.name
-    bus_number = 1
+    name        = vcd_independent_disk.{{.diskResourceName}}.name
+    bus_number  = 1
     unit_number = 0
   }
 
-  depends_on    = ["vcd_vapp.{{.VappName}}","vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
+  depends_on = ["vcd_vapp.{{.VappName}}","vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
@@ -201,7 +201,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
-  cpu_cores     = 1 
+  cpu_cores     = 1
 
   network {
     type               = "org"
@@ -222,14 +222,12 @@ resource "vcd_vapp_vm" "{{.VmName3}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-  
+
   network {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
     ip                 = "10.10.102.163"
   }
-
 }
-
 `

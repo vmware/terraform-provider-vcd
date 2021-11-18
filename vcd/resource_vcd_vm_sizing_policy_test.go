@@ -391,50 +391,50 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_4" {
 `
 const testAccVmSizingPolicyDataSource = `
 data "vcd_vm_sizing_policy" "vcd_vm_sizing_policy_by_name" {
-	name = vcd_vm_sizing_policy.{{.PolicyName}}_4.name
+  name = vcd_vm_sizing_policy.{{.PolicyName}}_4.name
 }
 
 output "description" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.description
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.description
 }
 
 output "shares" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].shares
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].shares
 }
 
 output "count" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].count
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].count
 }
 
 output "limit_in_mhz" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].limit_in_mhz
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].limit_in_mhz
 }
 
 output "speed_in_mhz" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].speed_in_mhz
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].speed_in_mhz
 }
 
 output "cores_per_socket" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].cores_per_socket
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].cores_per_socket
 }
 
 output "reservation_guarantee" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].reservation_guarantee
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].reservation_guarantee
 }
 
 output "memory_shares" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].shares
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].shares
 }
 
 output "size_in_mb" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].size_in_mb
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].size_in_mb
 }
 
 output "limit_in_mb" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].limit_in_mb
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].limit_in_mb
 }
 
 output "memory_reservation_guarantee" {
-	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].reservation_guarantee
+  value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].reservation_guarantee
 }
 `
