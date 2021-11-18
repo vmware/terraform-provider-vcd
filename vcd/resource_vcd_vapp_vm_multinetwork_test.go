@@ -365,7 +365,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-    adapter_type       = "PCNet32" 
+    adapter_type       = "PCNet32"
   }
 
   network {

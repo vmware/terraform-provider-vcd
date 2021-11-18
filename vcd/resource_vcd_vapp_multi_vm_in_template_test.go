@@ -28,9 +28,9 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	vappName := t.Name()
 	vmName := t.Name() + "VM"
 	vmName2 := t.Name() + "VM2"
-	catalogItemMultiVm := "template_name       = vcd_catalog_item.defaultOva.name"
+	catalogItemMultiVm := "template_name = vcd_catalog_item.defaultOva.name"
 	if testConfig.VCD.Catalog.CatalogItemWithMultiVms != "" {
-		catalogItemMultiVm = "template_name  = \"" + testConfig.VCD.Catalog.CatalogItemWithMultiVms + "\""
+		catalogItemMultiVm = "template_name = \"" + testConfig.VCD.Catalog.CatalogItemWithMultiVms + "\""
 		t.Log("Test using `catalogItemWithMultiVms` variable from configuration")
 	} else {
 		t.Log("Test using `ovaVappMultiVmsPath` variable from configuration")
@@ -106,8 +106,8 @@ resource "vcd_catalog_item" "defaultOva" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 
-  name                 = "TestAccVcdVAppMultiVmInTemplate"
-  ova_path             = "{{.OvaPath}}"
+  name     = "TestAccVcdVAppMultiVmInTemplate"
+  ova_path = "{{.OvaPath}}"
 }
 `
 

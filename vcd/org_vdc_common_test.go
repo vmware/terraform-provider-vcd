@@ -344,11 +344,11 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   delete_force             = true
   delete_recursive         = true
 
-{{if .FlexElasticKey}}
+{{if .FlexElasticValueUpdate}}
   {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
 {{end}}
 
-{{if .FlexMemoryOverheadKey}}
+{{if .FlexMemoryOverheadValueUpdate}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 {{end}}
 }
@@ -384,7 +384,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
 {{if .FlexElasticKey}}
- {{.SecondStorageProfile}}
+  {{.SecondStorageProfile}}
 {{end}}
 
   metadata = {
@@ -400,11 +400,11 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   delete_force             = false
   delete_recursive         = false
 
-  {{if .FlexElasticKey}}
+{{if .FlexElasticValueUpdate}}
   {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
 {{end}}
 
-{{if .FlexMemoryOverheadKey}}
+{{if .FlexMemoryOverheadValueUpdate}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 {{end}}
 }

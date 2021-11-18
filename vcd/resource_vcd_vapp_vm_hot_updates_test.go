@@ -565,7 +565,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
- 
+
   storage_profile = "{{.StorageProfile2}}"
 }
 `

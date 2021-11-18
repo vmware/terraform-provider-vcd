@@ -189,7 +189,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
     unit_number = 0
   }
 
-  depends_on = ["vcd_vapp.{{.VappName}}","vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
+  depends_on = ["vcd_vapp.{{.VappName}}", "vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {

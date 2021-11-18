@@ -324,13 +324,13 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   # You cannot remove NICs from an active virtual machine on which no operating system is installed.
   power_on = false
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  description   = "test empty VM"
-  name          = "{{.VMName}}"
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1 
-  
+  vapp_name   = vcd_vapp.{{.VAppName}}.name
+  description = "test empty VM"
+  name        = "{{.VMName}}"
+  memory      = 512
+  cpus        = 2
+  cpu_cores   = 1
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -413,7 +413,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
   }
- }
+}
 `
 
 const testAccCheckVcdVAppEmptyVmStep1 = testAccCheckVcdVAppEmptyVmNetworkShared + `

@@ -365,7 +365,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   vapp_name   = vcd_vapp.{{.VAppName}}.name
   description = "test empty VM"
   name        = "{{.VMName}}"
-  
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -384,10 +384,10 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
 
   power_on = true
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  description   = "test empty VM2"
-  name          = "{{.VMName}}2"
-  
+  vapp_name   = vcd_vapp.{{.VAppName}}.name
+  description = "test empty VM2"
+  name        = "{{.VMName}}2"
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
@@ -434,9 +434,9 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}"
-  description   = "test empty VM updated"
+  vapp_name   = vcd_vapp.{{.VAppName}}.name
+  name        = "{{.VMName}}"
+  description = "test empty VM updated"
 
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
@@ -455,10 +455,10 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
 
   power_on = true
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  description   = "test empty VM2"
-  name          = "{{.VMName}}2"
-  
+  vapp_name   = vcd_vapp.{{.VAppName}}.name
+  description = "test empty VM2"
+  name        = "{{.VMName}}2"
+
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"

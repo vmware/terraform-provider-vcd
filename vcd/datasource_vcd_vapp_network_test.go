@@ -154,7 +154,6 @@ resource "vcd_vapp_network" "createdVappNetwork" {
   org_network_name      = vcd_network_routed.{{.orgNetwork}}.name
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 }
- 
 
 data "vcd_vapp_network" "network-ds" {
   name       = vcd_vapp_network.createdVappNetwork.name
@@ -163,22 +162,22 @@ data "vcd_vapp_network" "network-ds" {
 }
 
 output "netmask" {
-  value = data.vcd_vapp_network.network-ds.netmask 
+  value = data.vcd_vapp_network.network-ds.netmask
 }
 output "description" {
-  value = data.vcd_vapp_network.network-ds.description 
+  value = data.vcd_vapp_network.network-ds.description
 }
 output "gateway" {
-  value = data.vcd_vapp_network.network-ds.gateway 
+  value = data.vcd_vapp_network.network-ds.gateway
 }
 output "dns1" {
-  value = data.vcd_vapp_network.network-ds.dns1 
+  value = data.vcd_vapp_network.network-ds.dns1
 }
 output "dns2" {
-  value = data.vcd_vapp_network.network-ds.dns2 
+  value = data.vcd_vapp_network.network-ds.dns2
 }
 output "dnsSuffix" {
-  value = data.vcd_vapp_network.network-ds.dns_suffix 
+  value = data.vcd_vapp_network.network-ds.dns_suffix
 }
 output "guestVlanAllowed" {
   value = data.vcd_vapp_network.network-ds.guest_vlan_allowed

@@ -279,7 +279,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
   cpus        = 2
   cpu_cores   = 1
 
-  power_on = false  
+  power_on = false
 
   os_type                        = "sles10_64Guest"
   hardware_version               = "vmx-11"
@@ -306,7 +306,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   cpu_cores   = 1
 
   power_on = false
-  
+
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-11"
   computer_name    = "compName"
