@@ -311,7 +311,7 @@ resource "vcd_vm" "{{.VMName}}" {
   }
 
   guest_properties = {
-	"guest.hostname" = "test-host2"
+    "guest.hostname" = "test-host2"
   }
 
   storage_profile = "{{.StorageProfile2}}"

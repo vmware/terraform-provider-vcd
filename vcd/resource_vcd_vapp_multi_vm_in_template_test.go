@@ -144,7 +144,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
-  catalog_name	= "{{.Catalog}}"
+  catalog_name  = "{{.Catalog}}"
 
   {{.CatalogItemMultiVm}}
 

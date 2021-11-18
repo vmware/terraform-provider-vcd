@@ -383,7 +383,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default = true
   }
 
-{{if .FlexElasticKey}}
+{{if .SecondStorageProfile}}
   {{.SecondStorageProfile}}
 {{end}}
 
