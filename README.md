@@ -1,9 +1,9 @@
-Terraform vCloud Director Provider
+Terraform VMware Cloud Director Provider
 ==================
 
-The official Terraform provider for [VMware vCloud Director](https://www.vmware.com/products/vcloud-director.html)
+The official Terraform provider for [VMware Cloud Director](https://www.vmware.com/products/cloud-director.html)
 
-- Documentation of the latest binary release available at https://www.terraform.io/docs/providers/vcd/index.html
+- Documentation of the latest binary release available at https://registry.terraform.io/providers/vmware/vcd/latest/docs
 - This project is using [go-vcloud-director](https://github.com/vmware/go-vcloud-director) Golang SDK for making API calls to vCD
 - Join through [VMware {code}](https://code.vmware.com/) to [![Chat](https://img.shields.io/badge/chat-on%20slack-brightgreen.svg)](https://vmwarecode.slack.com/messages/CBBBXVB16) in #vcd-terraform-dev channel 
 
@@ -13,8 +13,9 @@ Part of Terraform
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
+- [Hashicorp Discuss](https://discuss.hashicorp.com/c/terraform-core/27) 
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+<img src="https://www.datocms-assets.com/2885/1629941242-logo-terraform-main.svg" width="600px">
 
 Requirements
 ------------
@@ -24,9 +25,10 @@ Requirements
 
 Building The Provider (the modules way)
 --------------------------------------
-**Note.** You *only* need to build the provider plugin if you want to *develop* it. Refer to [documentation](https://www.terraform.io/docs/providers/vcd/) for using it. Terraform will
-automatically download officially released binaries of this provider plugin on the first run of
-`terraform init` command.
+**Note.** You *only* need to build the provider plugin if you want to *develop* it. Refer to
+[documentation](https://registry.terraform.io/providers/vmware/vcd/latest/docs) for using it. Terraform will
+automatically download officially released binaries of this provider plugin on the first run of `terraform init`
+command.
 
 Starting with version 2.1 provider started using [Go modules](https://github.com/golang/go/wiki/Modules)
 This means that it is no longer necessary to be in GOPATH.

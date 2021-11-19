@@ -33,6 +33,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
+		"ReservationModel":   "DEDICATED",
 		"Org":                testConfig.VCD.Org,
 		"NsxtVdc":            testConfig.Nsxt.Vdc,
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
@@ -149,7 +150,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   name                                 = "first-se"
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
-  reservation_model                    = "DEDICATED"
+  reservation_model                    = "{{.ReservationModel}}"
 }
 `
 
