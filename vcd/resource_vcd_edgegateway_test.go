@@ -23,6 +23,11 @@ var (
 
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_basic"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -45,10 +50,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayBasic, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
+
 	if !usingSysAdmin() {
 		t.Skip("Edge Gateway tests require system admin privileges")
 		return
@@ -79,6 +81,11 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 
 func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_basic"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -100,10 +107,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayBasic, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
+
 	if !usingSysAdmin() {
 		t.Skip("Edge gateway tests requires system admin privileges")
 		return
@@ -164,6 +168,10 @@ func testAccCheckVcdEdgeGatewayDestroy(edgeName string) resource.TestCheckFunc {
 
 func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_networks"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -188,11 +196,6 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step2"
 	configText1 := templateFill(testAccEdgeGatewayNetworks2, params)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	if !usingSysAdmin() {
 		t.Skip("Edge gateway tests requires system admin privileges")
@@ -493,6 +496,10 @@ resource "vcd_edgegateway" "egw" {
 // networks.
 func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_networks"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -514,11 +521,6 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayParallel, params)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	if !usingSysAdmin() {
 		t.Skip("Edge gateway tests requires system admin privileges")

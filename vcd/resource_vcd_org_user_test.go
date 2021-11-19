@@ -264,6 +264,10 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 // properties values from organization data source
 func TestAccVcdOrgUserWithDS(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	userData := prepareUserData(t)
 
@@ -286,39 +290,36 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 	}
 
 	configText := templateFill(template, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	} else {
-		fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
-		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-		resource.Test(t, resource.TestCase{
-			PreCheck:          func() { testAccPreCheck(t) },
-			ProviderFactories: testAccProviders,
-			CheckDestroy:      nil,
-			Steps: []resource.TestStep{
-				resource.TestStep{
-					Config: configText,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr(
-							"vcd_org_user."+ud.name, "name", ud.name),
-						resource.TestCheckResourceAttr(
-							"vcd_org_user."+ud.name, "role", ud.roleName),
-						resource.TestCheckResourceAttrPair(
-							"vcd_org_user."+ud.name, "deployed_vm_quota",
-							"data.vcd_org."+testConfig.VCD.Org, "deployed_vm_quota"),
-						resource.TestCheckResourceAttrPair(
-							"vcd_org_user."+ud.name, "stored_vm_quota",
-							"data.vcd_org."+testConfig.VCD.Org, "stored_vm_quota"),
-						resource.TestCheckResourceAttr(
-							"data.vcd_org_user.DSExistingUser", "name", dsOrgUser),
-						resource.TestCheckResourceAttr(
-							"data.vcd_org_user.DSExistingUser", "role", govcd.OrgUserRoleOrganizationAdministrator),
-					),
-				},
+
+	fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_org_user."+ud.name, "name", ud.name),
+					resource.TestCheckResourceAttr(
+						"vcd_org_user."+ud.name, "role", ud.roleName),
+					resource.TestCheckResourceAttrPair(
+						"vcd_org_user."+ud.name, "deployed_vm_quota",
+						"data.vcd_org."+testConfig.VCD.Org, "deployed_vm_quota"),
+					resource.TestCheckResourceAttrPair(
+						"vcd_org_user."+ud.name, "stored_vm_quota",
+						"data.vcd_org."+testConfig.VCD.Org, "stored_vm_quota"),
+					resource.TestCheckResourceAttr(
+						"data.vcd_org_user.DSExistingUser", "name", dsOrgUser),
+					resource.TestCheckResourceAttr(
+						"data.vcd_org_user.DSExistingUser", "role", govcd.OrgUserRoleOrganizationAdministrator),
+				),
 			},
-		})
-	}
+		},
+	})
+
 	cleanUserData(t)
 	postTestChecks(t)
 }

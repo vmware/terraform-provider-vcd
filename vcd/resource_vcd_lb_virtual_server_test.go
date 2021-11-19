@@ -17,6 +17,10 @@ import (
 
 func TestAccVcdLbVirtualServer(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	// String map to fill the template
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
@@ -34,11 +38,6 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 	params["VirtualServerName"] = t.Name() + "-step2"
 	configText2 := templateFill(testAccVcdLbVirtualServer_step2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
