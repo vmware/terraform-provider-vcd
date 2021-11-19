@@ -26,7 +26,6 @@ data "vcd_nsxt_alb_service_engine_group" "first" {
   name = "first-se"
 }
 
-
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
   edge_gateway_id         = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_id = data.vcd_nsxt_alb_service_engine_group.first.id
