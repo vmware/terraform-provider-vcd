@@ -24,7 +24,6 @@ Supported in provider *v3.1+*.
 ## Example Usage (Simple case)
 
 ```hcl
-
 data "vcd_external_network_v2" "nsxt-ext-net" {
   name = "nsxt-edge"
 }
@@ -58,7 +57,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 data "vcd_nsxt_edge_cluster" "secondary" {
   name = "edge-cluster-two"
 }
-
 
 data "vcd_external_network_v2" "nsxt-ext-net" {
   name = "nsxt-edge"
