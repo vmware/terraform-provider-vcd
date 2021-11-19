@@ -17,6 +17,7 @@ func TestAccVcdRightsBundle(t *testing.T) {
 		t.Skip("TestAccVcdRightsBundle requires system admin privileges")
 		return
 	}
+	skipTestForApiToken(t)
 	var rightsBundleName = t.Name()
 	var rightsBundleUpdateName = t.Name() + "-update"
 	var rightsBundleDescription = "A long description containing some text."

@@ -339,7 +339,7 @@ func isPortGroupDistributed(portGroupName string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("error getting client configuration: %s", err)
 	}
-	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
 	if err != nil {
 		return false, fmt.Errorf("authentication error: %s", err)
 	}

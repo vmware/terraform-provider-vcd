@@ -22,6 +22,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 	if testConfig.VCD.Vdc == "" {
 		t.Skip("[TestAccVcdVappAccessControl] no VDC found in configuration")
 	}
+	skipTestForApiToken(t)
 
 	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,

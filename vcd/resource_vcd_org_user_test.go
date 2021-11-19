@@ -86,6 +86,7 @@ func prepareUserData(t *testing.T) []userTestData {
 func TestAccVcdOrgUserBasic(t *testing.T) {
 	preTestChecks(t)
 
+	skipTestForApiToken(t)
 	userData := prepareUserData(t)
 	willSkipTests := false
 
@@ -143,6 +144,7 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 func TestAccVcdOrgUserFull(t *testing.T) {
 	preTestChecks(t)
 
+	skipTestForApiToken(t)
 	userData := prepareUserData(t)
 	willSkipTests := false
 
@@ -265,6 +267,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 func TestAccVcdOrgUserWithDS(t *testing.T) {
 	preTestChecks(t)
 
+	skipTestForApiToken(t)
 	userData := prepareUserData(t)
 
 	ud := userData[0]

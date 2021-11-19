@@ -33,6 +33,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		t.Skip("TestAccVcdOrgGroup requires system admin privileges")
 		return
 	}
+	skipTestForApiToken(t)
 	// LDAP is being configured using go-vcloud-director - binary test cannot be run
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
