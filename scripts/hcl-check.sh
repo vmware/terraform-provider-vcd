@@ -91,7 +91,7 @@ function multi_newline_check {
 
   for hcl_file in "$tmp_dir"/*.tf
       do
-        print_progress "Checking for multiple newlines  in $hcl_file..."
+        print_progress "Checking for multiple newlines in $hcl_file..."
 
         hcl_content=$(cat $hcl_file)
         # 'cat -s' squeezes multiple adjacent empty lines, causing the output to be single spaced.
@@ -223,6 +223,7 @@ function print_summary {
     else
         echo "$init_error_text"
     fi
+    echo ""
     echo "# Multiple newline errors:"
     if [ -z "$newline_error_text" ]
     then
@@ -293,7 +294,7 @@ terraform_validation_check
 print_summary
 
 # If at least one of checks failed - return non 0 exit code
-if [[ $fmt_errors = 0 ]] && [[ $init_errors = 0 ]] && [[ newline_errors = 0 ]]
+if [[ $fmt_errors = 0 ]] && [[ $init_errors = 0 ]] && [[ $newline_errors = 0 ]]
 then
     echo '# Finished SUCCESSFULLY!'
     exit 0;
