@@ -86,7 +86,6 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
   name      = "test-no-dnat-rule"
   rule_type = "NO_DNAT"
 
-
   # Using primary_ip from edge gateway
   external_address   = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   dnat_external_port = 7777
@@ -103,7 +102,6 @@ resource "vcd_nsxt_nat_rule" "reflexive" {
 
   name      = "test-reflexive"
   rule_type = "REFLEXIVE"
-
 
   # Using primary_ip from edge gateway
   external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
