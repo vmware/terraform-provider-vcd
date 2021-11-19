@@ -344,12 +344,12 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   delete_force             = true
   delete_recursive         = true
 
-{{if .FlexElasticValueUpdate}}
-  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
+{{if .FlexElasticValue}}
+  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValue}}
 {{end}}
 
-{{if .FlexMemoryOverheadValueUpdate}}
-  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
+{{if .FlexMemoryOverheadValue}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 {{end}}
 }
 `
