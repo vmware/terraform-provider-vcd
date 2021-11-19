@@ -2,6 +2,7 @@
 
 fmt_errors=0
 init_errors=0
+newline_errors=0
 hcl_number=0
 debug_accumulated_time=0
 dash_line="# ---------------------------------------------------------"
@@ -29,7 +30,7 @@ function get_help {
 # extract_hcl searches for .markdown files by using glob 'website/docs/{*/,?}*markdown' in:
 # * website/docs/*.markdown
 # * website/docs/*/*.markdown
-# It will look for code blocks starting with '```hcl' and extract their contents until closing '```'
+# It will look for code blocks starting with '```hcl' and extract their hcl_contents until closing '```'
 # and store in a file inside a tmp directory. Filename will be "base_filename+total_occurence_number"
 # (e.g. edgegateway.html.markdown-100.tf)
 function extract_hcl {
@@ -82,6 +83,27 @@ function terraform_fmt_check {
     done
 
     echo ""
+}
+
+# Runs against all generate HCL files and checks if there are no two (or more) empty lines
+function multi_newline_check {
+  newline_error_text=''
+
+  for hcl_file in "$tmp_dir"/*.tf
+      do
+        print_progress "Checking for multiple newlines  in $hcl_file..."
+
+        hcl_content=$(cat $hcl_file)
+        # 'cat -s' squeezes multiple adjacent empty lines, causing the output to be single spaced.
+        hcl_content_without_newlines=$(cat -s $hcl_file)
+
+        if [ "$hcl_content_without_newlines" != "$hcl_content" ]; then
+          newline_error_text="${newline_error_text} \n ${hcl_file}"
+          ((newline_errors++))
+        fi
+      done
+
+      echo ""
 }
 
 # Performs a Terraform init on a temporary HCL file that contain the documentation snippets.
@@ -177,12 +199,13 @@ function print_summary {
     echo "$dash_line"
     echo "# Summary:"
     echo ""
-    echo "# Started:               $start_timestamp"
-    echo "# Ended:                 $end_timestamp"
-    echo "# Elapsed:               $elapsed ($secs sec)"
-    echo "# Analyzed snippets:     $hcl_number"
-    echo "# terraform fmt errors:  $fmt_errors"
-    echo "# terraform init errors: $init_errors"
+    echo "# Started:                 $start_timestamp"
+    echo "# Ended:                   $end_timestamp"
+    echo "# Elapsed:                 $elapsed ($secs sec)"
+    echo "# Analyzed snippets:       $hcl_number"
+    echo "# terraform fmt errors:    $fmt_errors"
+    echo "# terraform init errors:   $init_errors"
+    echo "# multiple newline errors: $newline_errors"
     echo "$dash_line"
     echo "# FULL report:"
     echo "# Format errors:"
@@ -199,6 +222,13 @@ function print_summary {
         echo "# NONE (All ok!)"
     else
         echo "$init_error_text"
+    fi
+    echo "# Multiple newline errors:"
+    if [ -z "$newline_error_text" ]
+    then
+        echo "# NONE (All ok!)"
+    else
+        echo -e "$newline_error_text"
     fi
     echo ""
     echo "$dash_line"
@@ -248,18 +278,22 @@ start_timestamp=$(date)
 # Dump the HCL code in tmp folder
 extract_hcl
 
-# Iterate over all extracted blocks and perform `terraform fmt`
-echo '# Checking HCL format:'
-terraform_fmt_check
+# Do a double newline check
+echo '# Looking for multiple newlines:'
+multi_newline_check
 
-# Iterate over all extracted blocks and perform `terraform init`
-echo '# Checking HCL correctness:'
-terraform_validation_check
+# Iterate over all extracted blocks and perform `terraform fmt`
+#echo '# Checking HCL format:'
+#terraform_fmt_check
+#
+## Iterate over all extracted blocks and perform `terraform init`
+#echo '# Checking HCL correctness:'
+#terraform_validation_check
 
 print_summary
 
-# If at least terraform fmt failed - return non 0 exit code
-if [[ $fmt_errors = 0 ]] && [[ $init_errors = 0 ]]
+# If at least one of checks failed - return non 0 exit code
+if [[ $fmt_errors = 0 ]] && [[ $init_errors = 0 ]] && [[ newline_errors = 0 ]]
 then
     echo '# Finished SUCCESSFULLY!'
     exit 0;
