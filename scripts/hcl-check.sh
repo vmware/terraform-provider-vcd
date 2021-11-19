@@ -30,7 +30,7 @@ function get_help {
 # extract_hcl searches for .markdown files by using glob 'website/docs/{*/,?}*markdown' in:
 # * website/docs/*.markdown
 # * website/docs/*/*.markdown
-# It will look for code blocks starting with '```hcl' and extract their hcl_contents until closing '```'
+# It will look for code blocks starting with '```hcl' and extract their contents until closing '```'
 # and store in a file inside a tmp directory. Filename will be "base_filename+total_occurence_number"
 # (e.g. edgegateway.html.markdown-100.tf)
 function extract_hcl {
@@ -283,12 +283,12 @@ echo '# Looking for multiple newlines:'
 multi_newline_check
 
 # Iterate over all extracted blocks and perform `terraform fmt`
-#echo '# Checking HCL format:'
-#terraform_fmt_check
-#
+echo '# Checking HCL format:'
+terraform_fmt_check
+
 ## Iterate over all extracted blocks and perform `terraform init`
-#echo '# Checking HCL correctness:'
-#terraform_validation_check
+echo '# Checking HCL correctness:'
+terraform_validation_check
 
 print_summary
 
