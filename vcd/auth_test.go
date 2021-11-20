@@ -4,6 +4,7 @@
 package vcd
 
 import (
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -32,7 +33,7 @@ func TestAccAuth(t *testing.T) {
 	cachedVCDClients.reset()
 
 	// All other acceptance tests work by relying on environment variables being set in function
-	// `getConfigStruct` to configure authentication method. However because this test wants to test
+	// `getConfigStruct` to configure authentication method. However, because this test wants to test
 	// combinations of accepted `provider` block auth configurations we are setting it as string
 	// directly in `provider` and any environment variables set need to be unset during the run of
 	// this test and restored afterwards.
@@ -61,12 +62,12 @@ func TestAccAuth(t *testing.T) {
 		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
 		configText: `
 			provider "vcd" {
-				user     = "` + testConfig.Provider.User + `"
-				password = "` + testConfig.Provider.Password + `"
-				sysorg   = "` + testConfig.Provider.SysOrg + `" 
-				org      = "` + testConfig.VCD.Org + `"
-				vdc      = "` + testConfig.VCD.Vdc + `"
-				url      = "` + testConfig.Provider.Url + `"
+				user                 = "` + testConfig.Provider.User + `"
+				password             = "` + testConfig.Provider.Password + `"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				vdc                  = "` + testConfig.VCD.Vdc + `"
+				url                  = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
 			}
 	  `,
@@ -78,11 +79,11 @@ func TestAccAuth(t *testing.T) {
 		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
 		configText: `
 			provider "vcd" {
-				user     = "` + testConfig.Provider.User + `"
-				password = "` + testConfig.Provider.Password + `"
-				sysorg   = "` + testConfig.Provider.SysOrg + `" 
-				org      = "` + testConfig.VCD.Org + `"
-				url      = "` + testConfig.Provider.Url + `"
+				user                 = "` + testConfig.Provider.User + `"
+				password             = "` + testConfig.Provider.Password + `"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				url                  = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
 			}
 	  `,
@@ -94,12 +95,12 @@ func TestAccAuth(t *testing.T) {
 		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
 		configText: `
 			provider "vcd" {
-				user      = "` + testConfig.Provider.User + `"
-				password  = "` + testConfig.Provider.Password + `"
-				auth_type = "integrated"
-				sysorg    = "` + testConfig.Provider.SysOrg + `" 
-				org       = "` + testConfig.VCD.Org + `"
-				url       = "` + testConfig.Provider.Url + `"
+				user                 = "` + testConfig.Provider.User + `"
+				password             = "` + testConfig.Provider.Password + `"
+				auth_type            = "integrated"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				url                  = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
 			}
 	  `,
@@ -111,14 +112,14 @@ func TestAccAuth(t *testing.T) {
 		skipReason: "testConfig.Provider.UseSamlAdfs must be true",
 		configText: `
 			provider "vcd" {
-				user             = "` + testConfig.Provider.User + `"
-				password         = "` + testConfig.Provider.Password + `"
-				auth_type        = "saml_adfs"
-				saml_adfs_rpt_id = "` + testConfig.Provider.CustomAdfsRptId + `"
-				sysorg           = "` + testConfig.Provider.SysOrg + `" 
-				org              = "` + testConfig.VCD.Org + `"
-				vdc              = "` + testConfig.VCD.Vdc + `"
-				url              = "` + testConfig.Provider.Url + `"
+				user                 = "` + testConfig.Provider.User + `"
+				password             = "` + testConfig.Provider.Password + `"
+				auth_type            = "saml_adfs"
+				saml_adfs_rpt_id     = "` + testConfig.Provider.CustomAdfsRptId + `"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				vdc                  = "` + testConfig.VCD.Vdc + `"
+				url                  = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
 			}
 	  `,
@@ -128,10 +129,10 @@ func TestAccAuth(t *testing.T) {
 		name: "SystemUserAndPasswordWithoutSysOrg",
 		configText: `
 		provider "vcd" {
-		  user     = "` + testConfig.Provider.User + `"
-		  password = "` + testConfig.Provider.Password + `"
-		  org      = "` + testConfig.Provider.SysOrg + `" 
-		  url      = "` + testConfig.Provider.Url + `"
+		  user                 = "` + testConfig.Provider.User + `"
+		  password             = "` + testConfig.Provider.Password + `"
+		  org                  = "` + testConfig.Provider.SysOrg + `" 
+		  url                  = "` + testConfig.Provider.Url + `"
 		  allow_unverified_ssl = true
 		}
 	  `,
@@ -144,11 +145,12 @@ func TestAccAuth(t *testing.T) {
 		name: "TokenAuth",
 		configText: `
 		provider "vcd" {
-			token    = "` + tempConn.Client.VCDToken + `"
-			sysorg   = "` + testConfig.Provider.SysOrg + `" 
-			org      = "` + testConfig.VCD.Org + `"
-			vdc      = "` + testConfig.VCD.Vdc + `"
-			url      = "` + testConfig.Provider.Url + `"
+			token                = "` + tempConn.Client.VCDToken + `"
+			auth_type            = "token"
+			sysorg               = "` + testConfig.Provider.SysOrg + `" 
+			org                  = "` + testConfig.VCD.Org + `"
+			vdc                  = "` + testConfig.VCD.Vdc + `"
+			url                  = "` + testConfig.Provider.Url + `"
 			allow_unverified_ssl = true
 		  }
 	  `,
@@ -158,11 +160,12 @@ func TestAccAuth(t *testing.T) {
 		name: "TokenAuthOnly,AuthType=token",
 		configText: `
 		provider "vcd" {
-			token    = "` + tempConn.Client.VCDToken + `"
-			sysorg   = "` + testConfig.Provider.SysOrg + `" 
-			org      = "` + testConfig.VCD.Org + `"
-			vdc      = "` + testConfig.VCD.Vdc + `"
-			url      = "` + testConfig.Provider.Url + `"
+			token                = "` + tempConn.Client.VCDToken + `"
+			auth_type            = "token"
+			sysorg               = "` + testConfig.Provider.SysOrg + `" 
+			org                  = "` + testConfig.VCD.Org + `"
+			vdc                  = "` + testConfig.VCD.Vdc + `"
+			url                  = "` + testConfig.Provider.Url + `"
 			allow_unverified_ssl = true
 		  }
 	  `,
@@ -172,13 +175,14 @@ func TestAccAuth(t *testing.T) {
 		name: "TokenPriorityOverUserAndPassword",
 		configText: `
 		provider "vcd" {
-		  user     = "invalidUser"
-		  password = "invalidPassword"
-		  token    = "` + tempConn.Client.VCDToken + `"
-		  sysorg   = "` + testConfig.Provider.SysOrg + `" 
-		  org      = "` + testConfig.VCD.Org + `"
-		  vdc      = "` + testConfig.VCD.Vdc + `"
-		  url      = "` + testConfig.Provider.Url + `"
+		  user                 = "invalidUser"
+		  password             = "invalidPassword"
+		  token                = "` + tempConn.Client.VCDToken + `"
+		  auth_type            = "token"
+		  sysorg               = "` + testConfig.Provider.SysOrg + `" 
+		  org                  = "` + testConfig.VCD.Org + `"
+		  vdc                  = "` + testConfig.VCD.Vdc + `"
+		  url                  = "` + testConfig.Provider.Url + `"
 		  allow_unverified_ssl = true
 		}
 	  `,
@@ -188,14 +192,14 @@ func TestAccAuth(t *testing.T) {
 		name: "TokenWithUserAndPassword,AuthType=token",
 		configText: `
 		provider "vcd" {
-		  auth_type = "token"
-		  user      = "invalidUser"
-		  password  = "invalidPassword"
-		  token     = "` + tempConn.Client.VCDToken + `"
-		  sysorg    = "` + testConfig.Provider.SysOrg + `" 
-		  org       = "` + testConfig.VCD.Org + `"
-		  vdc       = "` + testConfig.VCD.Vdc + `"
-		  url       = "` + testConfig.Provider.Url + `"
+		  auth_type            = "token"
+		  user                 = "invalidUser"
+		  password             = "invalidPassword"
+		  token                = "` + tempConn.Client.VCDToken + `"
+		  sysorg               = "` + testConfig.Provider.SysOrg + `" 
+		  org                  = "` + testConfig.VCD.Org + `"
+		  vdc                  = "` + testConfig.VCD.Vdc + `"
+		  url                  = "` + testConfig.Provider.Url + `"
 		  allow_unverified_ssl = true
 		}
 	  `,
@@ -208,18 +212,46 @@ func TestAccAuth(t *testing.T) {
 		skipReason: "testConfig.Provider.SamlUser and testConfig.Provider.SamlPassword must be set",
 		configText: `
 			provider "vcd" {
-			  auth_type        = "saml_adfs"
-			  user             = "` + testConfig.Provider.SamlUser + `"
-			  password         = "` + testConfig.Provider.SamlPassword + `"
-			  saml_adfs_rpt_id = "` + testConfig.Provider.SamlCustomRptId + `"
-			  org              = "` + testConfig.VCD.Org + `"
-			  vdc              = "` + testConfig.VCD.Vdc + `"
-			  url              = "` + testConfig.Provider.Url + `"
+			  auth_type            = "saml_adfs"
+			  user                 = "` + testConfig.Provider.SamlUser + `"
+			  password             = "` + testConfig.Provider.SamlPassword + `"
+			  saml_adfs_rpt_id     = "` + testConfig.Provider.SamlCustomRptId + `"
+			  org                  = "` + testConfig.VCD.Org + `"
+			  vdc                  = "` + testConfig.VCD.Vdc + `"
+			  url                  = "` + testConfig.Provider.Url + `"
 			  allow_unverified_ssl = true
 			}
 		  `,
 	})
 
+	// Conditional test on API tokens. This subtest will run only if an API token is defined
+	// in an environment variable
+	// Note: since this test has a manual input, there is no skip for VCD version. This test will fail if
+	// run on VCD < 10.3.1
+	apiToken := os.Getenv("TEST_VCD_API_TOKEN")
+	if apiToken != "" {
+		testOrg := os.Getenv("TEST_VCD_ORG")
+		// If sysOrg is not defined in an environment variable, the API token must be one created for the
+		// organization stated in testConfig.VCD.Org
+		if testOrg == "" {
+			testOrg = testConfig.VCD.Org
+		}
+		testCases = append(testCases, authTestCase{
+			name: "ApiToken,AuthType=api_token",
+			configText: `
+			provider "vcd" {
+			  user                 = "invalidUser"
+		      password             = "invalidPassword"
+		      api_token            = "` + apiToken + `"
+		      auth_type            = "api_token"
+		      org                  = "` + testOrg + `"
+		      url                  = "` + testConfig.Provider.Url + `"
+		      allow_unverified_ssl = true
+			}
+		  `,
+		})
+
+	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			if test.skip {
