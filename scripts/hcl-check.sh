@@ -131,7 +131,7 @@ terraform {
   required_providers {
     vcd = {
       source  = \"vmware/vcd\"
-      version = \"$provider_version\"
+      version = \">=$provider_version\"
     }
     nsxt = {
       source = \"vmware/nsxt\"
