@@ -49,7 +49,6 @@ resource "vcd_vapp_access_control" "AC-not-shared" {
   shared_with_everyone = false
 }
 
-
 resource "vcd_vapp_access_control" "AC-global" {
 
   vapp_id = data.vcd_vapp.Vapp-AC-1.id
