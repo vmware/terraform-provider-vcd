@@ -30,6 +30,7 @@ type Config struct {
 	User            string
 	Password        string
 	Token           string // Token used instead of user and password
+	ApiToken        string // User generated token used instead of user and password
 	SysOrg          string // Org used for authentication
 	Org             string // Default Org used for API operations
 	Vdc             string // Default (optional) VDC for API operations
@@ -532,19 +533,23 @@ func (cli *VCDClient) GetNsxtEdgeGatewayFromResourceById(d *schema.ResourceData,
 	return egw, nil
 }
 
-func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org string) error {
+func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken string) error {
 	var err error
-	if token != "" {
-		if len(token) > 32 {
-			err = client.SetToken(org, govcd.BearerTokenHeader, token)
-		} else {
-			err = client.SetToken(org, govcd.AuthorizationHeader, token)
-		}
-		if err != nil {
-			err = fmt.Errorf("error during token-based authentication: %s", err)
-		}
+	if apiToken != "" {
+		err = client.SetToken(org, govcd.ApiTokenHeader, apiToken)
 	} else {
-		err = client.Authenticate(user, password, org)
+		if token != "" {
+			if len(token) > 32 {
+				err = client.SetToken(org, govcd.BearerTokenHeader, token)
+			} else {
+				err = client.SetToken(org, govcd.AuthorizationHeader, token)
+			}
+			if err != nil {
+				err = fmt.Errorf("error during token-based authentication: %s", err)
+			}
+		} else {
+			err = client.Authenticate(user, password, org)
+		}
 	}
 	return err
 }
@@ -553,6 +558,7 @@ func (c *Config) Client() (*VCDClient, error) {
 	rawData := c.User + "#" +
 		c.Password + "#" +
 		c.Token + "#" +
+		c.ApiToken + "#" +
 		c.SysOrg + "#" +
 		c.Href
 	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(rawData)))
@@ -596,7 +602,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
 
-	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg)
+	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}

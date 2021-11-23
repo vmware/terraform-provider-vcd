@@ -17,6 +17,7 @@ func TestAccVcdGlobalRole(t *testing.T) {
 		t.Skip("TestAccVcdGlobalRole requires system admin privileges")
 		return
 	}
+	skipTestForApiToken(t)
 	var globalRoleName = t.Name()
 	var globalRoleUpdateName = t.Name() + "-update"
 	var globalRoleDescription = "A long description containing some text."

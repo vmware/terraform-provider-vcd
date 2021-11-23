@@ -5,8 +5,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -93,7 +94,7 @@ func TestAccVcdLibraryCertificateDS(t *testing.T) {
 
 // getAvailableCertificate fetches one available certificate to use in data source tests
 func getAvailableCertificate(vcdClient *VCDClient) ([]*govcd.Certificate, error) {
-	err := ProviderAuthenticate(vcdClient.VCDClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	err := ProviderAuthenticate(vcdClient.VCDClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
 	if err != nil {
 		return nil, fmt.Errorf("authentication error: %v", err)
 	}
