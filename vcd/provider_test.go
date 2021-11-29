@@ -1,5 +1,5 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbAppProfile || lbAppRule || lbServiceMonitor || lbServerPool || lbVirtualServer || user || access_control || standaloneVm || search || auth || nsxt || role || alb || certificate || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user access_control standaloneVm search auth nsxt role alb certificate ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbAppProfile || lbAppRule || lbServiceMonitor || lbServerPool || lbVirtualServer || user || access_control || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user access_control standaloneVm search auth nsxt role alb certificate vdcGroup ALL
 
 package vcd
 

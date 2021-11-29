@@ -32,20 +32,22 @@ func tagsHelp(t *testing.T) {
 
 At least one of the following tags should be defined:
 
-   * ALL :       Runs all the tests
-   * functional: Runs all the acceptance tests
-   * unit:       Runs unit tests that don't need a live vCD
+   * ALL :         Runs all the tests
+   * functional:   Runs all the acceptance tests
+   * unit:         Runs unit tests that don't need a live vCD
 
-   * catalog:    Runs catalog related tests (also catalog_item, media)
-   * disk:       Runs disk related tests
-   * network:    Runs network related tests
-   * gateway:    Runs edge gateway related tests
-   * org:        Runs org related tests
-   * user:       Runs user related tests
-   * vapp:       Runs vapp related tests
-   * vdc:        Runs vdc related tests
-   * vm:         Runs vm related tests
-   * lb:         Runs load balancer related tests
+   * catalog:      Runs catalog related tests (also catalog_item, media)
+   * disk:         Runs disk related tests
+   * network:      Runs network related tests
+   * gateway:      Runs edge gateway related tests
+   * org:          Runs org related tests
+   * user:         Runs user related tests
+   * vapp:         Runs vapp related tests
+   * vdc:          Runs vdc related tests
+   * vm:           Runs vm related tests
+   * lb:           Runs load balancer related tests
+   * certificate:  Runs certificate related tests
+   * vdcGroup:     Runs VDC group related tests
 
 Examples:
 
