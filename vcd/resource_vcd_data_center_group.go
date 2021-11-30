@@ -64,7 +64,7 @@ var participatingOrgVdcsResource = &schema.Resource{
 		},
 		"vdc_id": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Computed:    true,
 			Description: "VDC ID",
 		},
 	},
@@ -290,7 +290,6 @@ func setVdcGroupConfigurationData(config *types.VdcGroup, d *schema.ResourceData
 			candidateVdcMap["vdc_id"] = candidateVdc.VdcRef.ID
 
 			candidateVdcsSlice = append(candidateVdcsSlice, candidateVdcMap)
-			fprintfNoErr(getTerraformStdout(), "WARNING: SET HAAPNE"+candidateVdcMap["vdc_id"].(string))
 		}
 	}
 
