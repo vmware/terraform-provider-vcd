@@ -31,20 +31,25 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 		t.Skip(t.Name() + " only System Administrator can create Data center group")
 	}
 
-	if testConfig.Nsxt.Vdc == "" {
-		t.Skip("Variables Nsxt.Vdc must be set")
+	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
+		testConfig.VCD.NsxtProviderVdc.NetworkPool == "" || testConfig.VCD.ProviderVdc.StorageProfile == "" {
+		t.Skip("Variables Nsxt.Vdc, VCD.NsxtProviderVdc.NetworkPool, VCD.NsxtProviderVdc.Name," +
+			" VCD.ProviderVdc.StorageProfile  must be set")
 	}
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":                          testConfig.VCD.Org,
-		"Name":                         "TestAccVcdDataCenterGroupResource",
-		"NameUpdated":                  "TestAccVcdDataCenterGroupResourceUpdated",
-		"Description":                  "myDescription",
-		"DescriptionUpdate":            "myDescription updated",
-		"StartingVdcName":              testConfig.Nsxt.Vdc,
-		"ParticipatingVdcName1":        testConfig.Nsxt.Vdc,
-		"ParticipatingVdcName2Updated": testConfig.Nsxt.Vdc,
+		"Org":                       testConfig.VCD.Org,
+		"Name":                      "TestAccVcdDataCenterGroupResource",
+		"NameUpdated":               "TestAccVcdDataCenterGroupResourceUpdated",
+		"Description":               "myDescription",
+		"DescriptionUpdate":         "myDescription updated",
+		"StartingVdcName":           testConfig.Nsxt.Vdc,
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"Allocated":                 "1024",
+		"Limit":                     "1024",
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 	}
 
 	configText1 := templateFill(testAccVcdDataCenterGroupResource, params)
@@ -72,6 +77,7 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["Description"].(string)),
 					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckOutput("participatingVdcCount", "2"),
 				),
 			},
 			resource.TestStep{
@@ -81,7 +87,7 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["DescriptionUpdate"].(string)),
 					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
-					//resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "participating_vdc_ids[0]", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckOutput("participatingVdcCount", "1"),
 				),
 			},
 			resource.TestStep{
@@ -103,13 +109,51 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdDataCenterGroupResource = `
+const testAccVcdDataCenterGroupNewVdc = `
+resource "vcd_org_vdc" "newVdc" {
+  name = "newVdc"
+  org  = "{{.Org}}"
+
+  allocation_model  = "Flex"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
+
+  compute_capacity {
+    cpu {
+      allocated = "{{.Allocated}}"
+      limit     = "{{.Limit}}"
+    }
+
+    memory {
+      allocated = "{{.Allocated}}"
+      limit     = "{{.Limit}}"
+    }
+  }
+
+  storage_profile {
+    name    = "{{.ProviderVdcStorageProfile}}"
+    enabled = true
+    limit   = 10240
+    default = true
+  }
+
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+  }
+
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+  elasticity      			 = true
+  include_vm_memory_overhead = true
+}
+`
+
+const testAccVcdDataCenterGroupResource = testAccVcdDataCenterGroupNewVdc + `
 data "vcd_org_vdc" "startVdc"{
   name = "{{.StartingVdcName}}"
-}
-
-data "vcd_org_vdc" "participatingVdcId"{
-  name = "{{.ParticipatingVdcName1}}"
 }
 
 resource "vcd_data_center_group" "fromUnitTest" {
@@ -117,17 +161,18 @@ resource "vcd_data_center_group" "fromUnitTest" {
   name                  = "{{.Name}}"
   description           = "{{.Description}}"
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
-  participating_vdc_ids = [data.vcd_org_vdc.participatingVdcId.id]
+  participating_vdc_ids = [data.vcd_org_vdc.startVdc.id, vcd_org_vdc.newVdc.id]
 }
+
+output "participatingVdcCount" {
+  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
+}
+
 `
 
-const testAccVcdDataCenterGroupResourceUpdate = `
+const testAccVcdDataCenterGroupResourceUpdate = testAccVcdDataCenterGroupNewVdc + `
 data "vcd_org_vdc" "startVdc"{
   name = "{{.StartingVdcName}}"
-}
-
-data "vcd_org_vdc" "participatingVdcId"{
-  name = "{{.ParticipatingVdcName1}}"
 }
 
 resource "vcd_data_center_group" "fromUnitTest" {
@@ -135,11 +180,11 @@ resource "vcd_data_center_group" "fromUnitTest" {
   name                  = "{{.NameUpdated}}"
   description           = "{{.DescriptionUpdate}}"
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
-  participating_vdc_ids = [data.vcd_org_vdc.participatingVdcId.id]
+  participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
 }
 
-output "participatingVdcId1" {
-  value = tolist(vcd_data_center_group.fromUnitTest.participating_vdc_ids)[0]
+output "participatingVdcCount" {
+  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
 }
 
 `
