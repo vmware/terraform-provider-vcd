@@ -185,6 +185,10 @@ func cleanupRightsAndBundle(t *testing.T, vcdClient *VCDClient, rightsToRemove [
 
 func runDataCenterGroupTest(t *testing.T, params StringMap) {
 
+	params["FuncName"] = t.Name() + "-newVdc"
+	configTextPre := templateFill(testAccVcdDataCenterGroupNewVdc, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
+
 	params["FuncName"] = t.Name()
 	configText1 := templateFill(testAccVcdDataCenterGroupResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -197,6 +201,10 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 	configText3 := templateFill(testAccVcdDataCenterGroupDatasource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText3)
 
+	params["FuncName"] = t.Name() + "-provider"
+	configTextProvider := templateFill(testAccVcdDataCenterGroupOrgProvider, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configTextProvider)
+
 	resourceAddressDataCenterGroup := "vcd_data_center_group.fromUnitTest"
 
 	resource.Test(t, resource.TestCase{
@@ -204,6 +212,10 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 		PreCheck:          func() { testAccPreCheck(t) },
 
 		Steps: []resource.TestStep{
+			// initialize new VDC, this done separately as otherwise randomly fail due choose wrong connection
+			resource.TestStep{
+				Config: configTextPre,
+			},
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -238,27 +250,20 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 				ImportStateIdFunc:       importStateIdOrgObject(testConfig, params["NameUpdated"].(string)),
 				ImportStateVerifyIgnore: []string{"starting_vdc_id"},
 			},
+			// for clean destroy, otherwise randomly fail due choose wrong connection
+			resource.TestStep{
+				Config: configTextProvider,
+			},
+			// for clean destroy, otherwise randomly fail due choose wrong connection
+			resource.TestStep{
+				Config: configTextPre,
+			},
 		},
 	})
 	postTestChecks(t)
 }
 
 const testAccVcdDataCenterGroupNewVdc = `
-provider "vcd" {
-  alias                = "orguser"
-  user                 = "{{.OrgUser}}"
-  password             = "{{.OrgUserPassword}}"
-  auth_type            = "integrated"
-  url                  = "{{.VcdUrl}}"
-  sysorg               = "{{.Org}}"
-  org                  = "{{.Org}}"
-  vdc                  = "{{.VDC}}"
-  allow_unverified_ssl = "true"
-  max_retry_timeout    = 600
-  logging              = true
-  logging_file         = "go-vcloud-director-org.log"
-}
-
 resource "vcd_org_vdc" "newVdc" {
   name = "newVdc"
   org  = "{{.Org}}"
@@ -298,16 +303,32 @@ resource "vcd_org_vdc" "newVdc" {
   elasticity      			 = true
   include_vm_memory_overhead = true
 }
+`
+const testAccVcdDataCenterGroupOrgProvider = testAccVcdDataCenterGroupNewVdc + `
+provider "vcd" {
+  alias                = "orguser"
+  user                 = "{{.OrgUser}}"
+  password             = "{{.OrgUserPassword}}"
+  auth_type            = "integrated"
+  url                  = "{{.VcdUrl}}"
+  sysorg               = "{{.Org}}"
+  org                  = "{{.Org}}"
+  vdc                  = "{{.VDC}}"
+  allow_unverified_ssl = "true"
+  max_retry_timeout    = 600
+  logging              = true
+  logging_file         = "go-vcloud-director-org.log"
+}
 
+`
+
+const testAccVcdDataCenterGroupResource = testAccVcdDataCenterGroupOrgProvider + `
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
   org  = "{{.Org}}"
   name = "{{.VDC}}"
 }
-`
-
-const testAccVcdDataCenterGroupResource = testAccVcdDataCenterGroupNewVdc + `
 
 resource "vcd_data_center_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
@@ -325,7 +346,14 @@ output "participatingVdcCount" {
 
 `
 
-const testAccVcdDataCenterGroupResourceUpdate = testAccVcdDataCenterGroupNewVdc + `
+const testAccVcdDataCenterGroupResourceUpdate = testAccVcdDataCenterGroupOrgProvider + `
+data "vcd_org_vdc" "startVdc"{
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
+}
+
 resource "vcd_data_center_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
