@@ -130,6 +130,16 @@ func extractIdsFromOpenApiReferences(refs []types.OpenApiReference) []string {
 	return resultStrings
 }
 
+// extractNamesFromOpenApiReferences extracts []string with names from []types.OpenApiReference which contains ID and Names
+func extractNamesFromOpenApiReferences(refs []types.OpenApiReference) []string {
+	resultStrings := make([]string, len(refs))
+	for index := range refs {
+		resultStrings[index] = refs[index].Name
+	}
+
+	return resultStrings
+}
+
 // convertSliceOfStringsToOpenApiReferenceIds converts []string to []types.OpenApiReference by filling
 // types.OpenApiReference.ID fields
 func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiReference {
