@@ -43,9 +43,14 @@ func datasourceDataCenterGroup() *schema.Resource {
 			},
 			"dfw_enabled": {
 				Type:        schema.TypeBool,
-				Optional:    true,
 				Computed:    true,
 				Description: "Distributed firewall status",
+			},
+			"default_policy_status": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Default Policy Status",
 			},
 			"error_message": {
 				Type:        schema.TypeString,
@@ -186,7 +191,7 @@ func datasourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(vdcGroup.VdcGroup.Id)
-	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d)
+	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, nil)
 	if err != nil {
 		return diag.Errorf("[data center group read] : %s", err)
 	}

@@ -55,6 +55,12 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 		"OrgUserPassword":           testConfig.TestEnvBuild.OrgUserPassword,
 		"VcdUrl":                    testConfig.Provider.Url,
 		"OrgUserProvider":           "",
+		"Dfw":                       "false",
+		"DefaultPolicy":             "false",
+		"DfwUpdated":                "true",
+		"DefaultPolicyUpdated":      "true",
+		"DfwUpdated2":               "false",
+		"DefaultPolicyUpdated2":     "false",
 	}
 
 	runDataCenterGroupTest(t, params)
@@ -109,6 +115,12 @@ func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 		"OrgUserPassword":           testConfig.TestEnvBuild.OrgUserPassword,
 		"VcdUrl":                    testConfig.Provider.Url,
 		"OrgUserProvider":           "provider = vcd.orguser",
+		"Dfw":                       "false",
+		"DefaultPolicy":             "false",
+		"DfwUpdated":                "true",
+		"DefaultPolicyUpdated":      "true",
+		"DfwUpdated2":               "false",
+		"DefaultPolicyUpdated2":     "false",
 	}
 
 	// run as Org user
@@ -191,19 +203,23 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 
 	params["FuncName"] = t.Name()
 	configText1 := templateFill(testAccVcdDataCenterGroupResource, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-update"
 	configText2 := templateFill(testAccVcdDataCenterGroupResourceUpdate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText2)
+
+	params["FuncName"] = t.Name() + "-update2"
+	configText3 := templateFill(testAccVcdDataCenterGroupResourceUpdate2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText2)
 
 	params["FuncName"] = t.Name() + "-datasource"
-	configText3 := templateFill(testAccVcdDataCenterGroupDatasource, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText3)
+	configText4 := templateFill(testAccVcdDataCenterGroupDatasource, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText3)
 
 	params["FuncName"] = t.Name() + "-provider"
 	configTextProvider := templateFill(testAccVcdDataCenterGroupOrgProvider, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configTextProvider)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configTextProvider)
 
 	resourceAddressDataCenterGroup := "vcd_data_center_group.fromUnitTest"
 
@@ -224,6 +240,8 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["Description"].(string)),
 					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckOutput("participatingVdcCount", "2"),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["Dfw"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicy"].(string)),
 				),
 			},
 			resource.TestStep{
@@ -234,13 +252,27 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["DescriptionUpdate"].(string)),
 					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckOutput("participatingVdcCount", "1"),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["DfwUpdated"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicyUpdated"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "name", params["NameUpdated"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["DescriptionUpdate"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckOutput("participatingVdcCount", "1"),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["DfwUpdated2"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicyUpdated2"].(string)),
+				),
+			},
+			resource.TestStep{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(resourceAddressDataCenterGroup, "data.vcd_data_center_group.fetchCreated", []string{"participating_vdc_ids.#",
-						"starting_vdc_id", "%", "participating_vdc_ids.0"}),
+						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status"}),
 				),
 			},
 			resource.TestStep{
@@ -265,6 +297,8 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 
 const testAccVcdDataCenterGroupNewVdc = `
 resource "vcd_org_vdc" "newVdc" {
+  provider = vcd
+
   name = "newVdc"
   org  = "{{.Org}}"
 
@@ -338,6 +372,9 @@ resource "vcd_data_center_group" "fromUnitTest" {
   description           = "{{.Description}}"
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
   participating_vdc_ids = [data.vcd_org_vdc.startVdc.id, vcd_org_vdc.newVdc.id]
+
+  dfw_enabled           = "{{.Dfw}}"
+  #default_policy_status = "{{.DefaultPolicy}}"
 }
 
 output "participatingVdcCount" {
@@ -362,13 +399,42 @@ resource "vcd_data_center_group" "fromUnitTest" {
   description           = "{{.DescriptionUpdate}}"
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
   participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
+
+  dfw_enabled           = "{{.DfwUpdated}}"
+  default_policy_status = "{{.DefaultPolicyUpdated}}"
 }
 
 output "participatingVdcCount" {
   value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
 }
-
 `
+
+const testAccVcdDataCenterGroupResourceUpdate2 = testAccVcdDataCenterGroupOrgProvider + `
+data "vcd_org_vdc" "startVdc"{
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
+}
+
+resource "vcd_data_center_group" "fromUnitTest" {
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org                   = "{{.Org}}"
+  name                  = "{{.NameUpdated}}"
+  description           = "{{.DescriptionUpdate}}"
+  starting_vdc_id       = data.vcd_org_vdc.startVdc.id
+  participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
+
+  dfw_enabled           = "{{.DfwUpdated2}}"
+  default_policy_status = "{{.DefaultPolicyUpdated2}}"
+}
+
+output "participatingVdcCount" {
+  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
+}
+`
+
 const testAccVcdDataCenterGroupDatasource = testAccVcdDataCenterGroupResourceUpdate + `
 # skip-binary-test: data source test only works in acceptance tests
 data "vcd_data_center_group" "fetchCreated" {
