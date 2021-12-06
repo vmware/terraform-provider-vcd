@@ -427,8 +427,8 @@ const testAccVcdNsxtAlbPoolDS = `
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 
 data "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
   name            = vcd_nsxt_alb_pool.test.name
@@ -437,8 +437,8 @@ data "vcd_nsxt_alb_pool" "test" {
 
 const testAccVcdNsxtAlbPoolStep1 = testAccVcdNsxtAlbPoolPrereqs + `
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -449,8 +449,8 @@ const testAccVcdNsxtAlbPoolStep2 = testAccVcdNsxtAlbPoolStep1 + testAccVcdNsxtAl
 
 const testAccVcdNsxtAlbPoolStep3 = testAccVcdNsxtAlbPoolPrereqs + `
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   description     = "description text"
@@ -476,8 +476,8 @@ const testAccVcdNsxtAlbPoolStep4 = testAccVcdNsxtAlbPoolStep3 + testAccVcdNsxtAl
 // testAccVcdNsxtAlbPoolStep5 aims to test out all possible member configurations while also updating some other values
 const testAccVcdNsxtAlbPoolStep5 = testAccVcdNsxtAlbPoolPrereqs + `
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -539,8 +539,8 @@ const testAccVcdNsxtAlbPoolStep6 = testAccVcdNsxtAlbPoolStep5 + testAccVcdNsxtAl
 // testAccVcdNsxtAlbPoolStep7 tests out many combinations of health_monitors
 const testAccVcdNsxtAlbPoolStep7 = testAccVcdNsxtAlbPoolPrereqs + `
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -574,8 +574,8 @@ const testAccVcdNsxtAlbPoolStep8 = testAccVcdNsxtAlbPoolStep7 + testAccVcdNsxtAl
 
 const testAccVcdNsxtAlbPoolStep9 = testAccVcdNsxtAlbPoolPrereqs + `
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -606,8 +606,8 @@ resource "vcd_library_certificate" "org-cert-2" {
 }
 
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -636,8 +636,8 @@ resource "vcd_library_certificate" "org-cert-2" {
 }
 
 resource "vcd_nsxt_alb_pool" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -652,15 +652,15 @@ const testAccVcdNsxtAlbPoolStep15 = testAccVcdNsxtAlbPoolStep13 + testAccVcdNsxt
 
 const testAccVcdNsxtAlbPoolPrereqs = `
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name = "{{.EdgeGw}}"
 }
 
 resource "vcd_nsxt_alb_settings" "test" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = {{.IsActive}}
