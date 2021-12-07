@@ -339,8 +339,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "ca_certificate_ids.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
-					//stateDumper(),
-					//sleepTester(),
 				),
 			},
 			resource.TestStep{
@@ -368,8 +366,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "ca_certificate_ids.#", "2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "true"),
-					//stateDumper(),
-					//sleepTester(),
 				),
 			},
 			resource.TestStep{
@@ -399,8 +395,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "2"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_alb_pool.test", "domain_names.*", "domain1"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_alb_pool.test", "domain_names.*", "domain2"),
-					//stateDumper(),
-					//sleepTester(),
 				),
 			},
 			resource.TestStep{
@@ -435,7 +429,9 @@ data "vcd_nsxt_alb_pool" "test" {
 }
 `
 
-const testAccVcdNsxtAlbPoolStep1 = testAccVcdNsxtAlbPoolPrereqs + `
+const testAccVcdNsxtAlbPoolStep1 = testAccVcdNsxtAlbPoolStep1Only + testAccVcdNsxtAlbPoolPrereqs
+
+const testAccVcdNsxtAlbPoolStep1Only = `
 resource "vcd_nsxt_alb_pool" "test" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
@@ -727,3 +723,125 @@ func testAccCheckVcdAlbPoolDestroy(resource string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
+	preTestChecks(t)
+	//if !usingSysAdmin() {
+	//	t.Skip(t.Name() + " requires system admin privileges")
+	//	return
+	//}
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createSystemTemporaryVCDConnection()
+	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
+		t.Skip(t.Name() + " requires at least API v35.0 (VCD 10.2+)")
+	}
+	skipNoNsxtAlbConfiguration(t)
+
+	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
+		testConfig.Certificates.Certificate1PrivateKeyPath == "" || testConfig.Certificates.Certificate1Pass == "" {
+		t.Skip("Variables Certificates.Certificate1Path, Certificates.Certificate2Path, " +
+			"Certificates.Certificate1PrivateKeyPath, Certificates.Certificate1Pass must be set")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"PoolName":           t.Name(),
+		"ControllerName":     t.Name(),
+		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
+		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
+		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
+		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
+		"ReservationModel":   "DEDICATED",
+		"Org":                testConfig.VCD.Org,
+		"NsxtVdc":            testConfig.Nsxt.Vdc,
+		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
+		"IsActive":           "true",
+		"AliasPrivate":       t.Name() + "-cert",
+		"Certificate1Path":   testConfig.Certificates.Certificate1Path,
+		"Certificate2Path":   testConfig.Certificates.Certificate2Path,
+		"CertPrivateKey1":    testConfig.Certificates.Certificate1PrivateKeyPath,
+		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
+		"Tags":               "nsxt alb",
+	}
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdNsxtAlbPoolStepOrgUser, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	systemPrerequisites := &albOrgUserPrerequisites{t: t, vcdClient: vcdClient}
+
+	configurePrerequisites := func() {
+		fmt.Println("## Setting up prerequisites using System user")
+		systemPrerequisites.setupAlbPoolPrerequisites()
+		fmt.Println("## Running actual Terraform test")
+	}
+
+	defer func() {
+		fmt.Println("## Cleaning up prerequisites")
+		systemPrerequisites.teardownAlbPoolPrerequisites()
+		fmt.Println("## Finished cleaning up prerequisites")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdAlbPoolDestroy("vcd_nsxt_alb_pool.test"),
+		),
+
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				PreConfig: configurePrerequisites, // This will use temporary System session and
+				Config:    configText1,            // Setup prerequisites - configure NSX-T ALB in Provider
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "name", t.Name()),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "description", ""),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "up_member_count", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled_member_count", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.#", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "passive_monitoring_enabled", "true"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_message", "The pool is unassigned."),
+					//resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_service_ids"),
+					//resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_services"),
+					//resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_monitor.#", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "ca_certificate_ids.#", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "0"),
+					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
+				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_nsxt_alb_pool.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtAlbPoolStepOrgUser = `
+data "vcd_nsxt_edgegateway" "existing" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_alb_pool" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name            = "{{.PoolName}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+}
+`
