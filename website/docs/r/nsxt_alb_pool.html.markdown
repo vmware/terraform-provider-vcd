@@ -132,6 +132,12 @@ The following arguments are supported:
 * `port` (Optional) Port for receiving traffic - overrides the root value `default_port` for individual members
 * `ratio` (Optional) Ratio of selecting eligible servers in the pool. (default `1`)
 
+### Attributes of members
+
+* `health_status` - one of `UP`, `DOWN`, `DISABLED`.
+* `detailed_health_message` - human-readable member health description. 
+* `marked_down_by` - A set of health monitors that marked the member as `DOWN` 
+
 <a id="persistence-profile-block"></a>
 ## Persistence profile
 

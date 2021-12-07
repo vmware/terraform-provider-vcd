@@ -774,12 +774,12 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 	configText2 := templateFill(testAccVcdNsxtAlbPoolStep2OrgUser, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	// Setup prerequisited using temporary admin version and defer cleanup
 	systemPrerequisites := &albOrgUserPrerequisites{t: t, vcdClient: vcdClient}
-
 	configurePrerequisites := func() {
 		fmt.Println("## Setting up prerequisites using System user")
 		systemPrerequisites.setupAlbPoolPrerequisites()
-		fmt.Println("## Running actual Terraform test")
+		fmt.Println("## Running Terraform test")
 	}
 
 	defer func() {
@@ -797,7 +797,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				PreConfig: configurePrerequisites, // This will use temporary System session and
+				PreConfig: configurePrerequisites, // Use temporary System session and setup all prerequisites using SDK
 				Config:    configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -824,60 +824,52 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "false",
-						"ip_address":              "192.168.1.1",
-						"health_status":           "DISABLED",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "false",
+						"ip_address":    "192.168.1.1",
+						"health_status": "DISABLED",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "true",
-						"ip_address":              "192.168.1.2",
-						"health_status":           "DOWN",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "true",
+						"ip_address":    "192.168.1.2",
+						"health_status": "DOWN",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "false",
-						"ip_address":              "192.168.1.3",
-						"port":                    "8320",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":    "false",
+						"ip_address": "192.168.1.3",
+						"port":       "8320",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "true",
-						"ip_address":              "192.168.1.4",
-						"port":                    "9200",
-						"health_status":           "DOWN",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "true",
+						"ip_address":    "192.168.1.4",
+						"port":          "9200",
+						"health_status": "DOWN",
 					}),
 
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "false",
-						"ip_address":              "192.168.1.5",
-						"ratio":                   "3",
-						"health_status":           "DISABLED",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "false",
+						"ip_address":    "192.168.1.5",
+						"ratio":         "3",
+						"health_status": "DISABLED",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "true",
-						"ip_address":              "192.168.1.6",
-						"ratio":                   "1",
-						"health_status":           "DOWN",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "true",
+						"ip_address":    "192.168.1.6",
+						"ratio":         "1",
+						"health_status": "DOWN",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "false",
-						"ip_address":              "192.168.1.7",
-						"ratio":                   "3",
-						"port":                    "7000",
-						"health_status":           "DISABLED",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "false",
+						"ip_address":    "192.168.1.7",
+						"ratio":         "3",
+						"port":          "7000",
+						"health_status": "DISABLED",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
-						"enabled":                 "true",
-						"ip_address":              "192.168.1.8",
-						"ratio":                   "1",
-						"port":                    "6000",
-						"health_status":           "DOWN",
-						"detailed_health_message": "Pool not assigned to any Virtual Service",
+						"enabled":       "true",
+						"ip_address":    "192.168.1.8",
+						"ratio":         "1",
+						"port":          "6000",
+						"health_status": "DOWN",
 					}),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_monitor.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "health_monitor.*", map[string]string{
@@ -928,7 +920,6 @@ resource "vcd_nsxt_alb_pool" "test" {
 `
 
 const testAccVcdNsxtAlbPoolStep2OrgUser = `
-
 data "vcd_nsxt_edgegateway" "existing" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
