@@ -145,7 +145,7 @@ func addRights(t *testing.T, vcdClient *VCDClient) []types.OpenApiReference {
 		"vDC Group: Configure Logging",
 		"vDC Group: View",
 		"Organization vDC Distributed Firewall: Enable/Disable",
-		//"Security Tag Edit", 10.2 doesn't have it and for this kind'a testing not needed
+		//"Security Tag Edit", 10.2 doesn't have it and for this kind testing not needed
 	} {
 		newRight, err := vcdClient.Client.GetRightByName(rightName)
 		if err != nil {
@@ -175,6 +175,24 @@ func addRights(t *testing.T, vcdClient *VCDClient) []types.OpenApiReference {
 			t.Errorf("%s error publishing to tenants: %s", t.Name(), err)
 		}
 	}
+
+	orgAdminGlobalRole, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
+	if err != nil {
+		t.Errorf("%s error fetching global role Org Administrator: %s", t.Name(), err)
+	}
+	missingRight, err := vcdClient.Client.GetRightByName("Organization vDC Distributed Firewall: Enable/Disable")
+	if err != nil {
+		t.Errorf("%s error fetching right: %s", t.Name(), err)
+	}
+	err = orgAdminGlobalRole.AddRights([]types.OpenApiReference{{Name: missingRight.Name, ID: missingRight.ID}})
+	if err != nil {
+		t.Errorf("%s error adding right: %s", t.Name(), err)
+	}
+	err = orgAdminGlobalRole.PublishAllTenants()
+	if err != nil {
+		t.Errorf("%s error publishing to tenants: %s", t.Name(), err)
+	}
+
 	return rightsToAdd
 }
 
@@ -192,6 +210,23 @@ func cleanupRightsAndBundle(t *testing.T, vcdClient *VCDClient, rightsToRemove [
 		if err != nil {
 			t.Errorf("%s error unpublishing to tenants: %s", t.Name(), err)
 		}
+	}
+
+	orgAdminGlobalRole, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
+	if err != nil {
+		t.Errorf("%s error fetching global role Org Administrator: %s", t.Name(), err)
+	}
+	missingRight, err := vcdClient.Client.GetRightByName("Organization vDC Distributed Firewall: Enable/Disable")
+	if err != nil {
+		t.Errorf("%s error fetching right: %s", t.Name(), err)
+	}
+	err = orgAdminGlobalRole.RemoveRights([]types.OpenApiReference{{Name: missingRight.Name, ID: missingRight.ID}})
+	if err != nil {
+		t.Errorf("%s error adding right: %s", t.Name(), err)
+	}
+	err = orgAdminGlobalRole.PublishAllTenants()
+	if err != nil {
+		t.Errorf("%s error publishing to tenants: %s", t.Name(), err)
 	}
 }
 
