@@ -774,7 +774,11 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 	configText2 := templateFill(testAccVcdNsxtAlbPoolStep2OrgUser, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
-	// Setup prerequisited using temporary admin version and defer cleanup
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccVcdNsxtAlbPoolStep2OrgUserAndDs, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
+	// Setup prerequisites using temporary admin version and defer cleanup
 	systemPrerequisites := &albOrgUserPrerequisites{t: t, vcdClient: vcdClient}
 	configurePrerequisites := func() {
 		fmt.Println("## Setting up prerequisites using System user")
@@ -897,6 +901,15 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
 			},
+			//
+			resource.TestStep{
+				Config: configText4, // Test data source
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
+					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
+					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -996,5 +1009,15 @@ resource "vcd_nsxt_alb_pool" "test" {
     ratio      = 1
     port       = 6000
   }
+}
+`
+
+const testAccVcdNsxtAlbPoolStep2OrgUserAndDs = testAccVcdNsxtAlbPoolStep2OrgUser + `
+data "vcd_nsxt_alb_pool" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name            = "{{.PoolName}}"
 }
 `
