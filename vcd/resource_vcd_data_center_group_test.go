@@ -409,7 +409,6 @@ resource "vcd_data_center_group" "fromUnitTest" {
   participating_vdc_ids = [data.vcd_org_vdc.startVdc.id, vcd_org_vdc.newVdc.id]
 
   dfw_enabled           = "{{.Dfw}}"
-  #default_policy_status = "{{.DefaultPolicy}}"
 }
 
 output "participatingVdcCount" {
