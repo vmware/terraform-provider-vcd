@@ -726,11 +726,8 @@ func testAccCheckVcdAlbPoolDestroy(resource string) resource.TestCheckFunc {
 
 func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 	preTestChecks(t)
-	//if !usingSysAdmin() {
-	//	t.Skip(t.Name() + " requires system admin privileges")
-	//	return
-	//}
 
+	// This test cannot run in Short mode because it uses go-vcloud-director SDK to setup prerequisites
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -770,8 +767,12 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 	}
 
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdNsxtAlbPoolStepOrgUser, params)
+	configText1 := templateFill(testAccVcdNsxtAlbPoolStep1OrgUser, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdNsxtAlbPoolStep2OrgUser, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	systemPrerequisites := &albOrgUserPrerequisites{t: t, vcdClient: vcdClient}
 
@@ -797,25 +798,105 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				PreConfig: configurePrerequisites, // This will use temporary System session and
-				Config:    configText1,            // Setup prerequisites - configure NSX-T ALB in Provider
+				Config:    configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "name", t.Name()),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "description", ""),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "up_member_count", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled_member_count", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.#", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "passive_monitoring_enabled", "true"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_message", "The pool is unassigned."),
-					//resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_service_ids"),
-					//resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_services"),
-					//resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_monitor.#", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "ca_certificate_ids.#", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "0"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "up_member_count", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled_member_count", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "passive_monitoring_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_message", "The pool is unassigned."),
+					resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_service_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_services"),
+					resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_monitor.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "ca_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
+				),
+			},
+			resource.TestStep{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "false",
+						"ip_address":              "192.168.1.1",
+						"health_status":           "DISABLED",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "true",
+						"ip_address":              "192.168.1.2",
+						"health_status":           "DOWN",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "false",
+						"ip_address":              "192.168.1.3",
+						"port":                    "8320",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "true",
+						"ip_address":              "192.168.1.4",
+						"port":                    "9200",
+						"health_status":           "DOWN",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "false",
+						"ip_address":              "192.168.1.5",
+						"ratio":                   "3",
+						"health_status":           "DISABLED",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "true",
+						"ip_address":              "192.168.1.6",
+						"ratio":                   "1",
+						"health_status":           "DOWN",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "false",
+						"ip_address":              "192.168.1.7",
+						"ratio":                   "3",
+						"port":                    "7000",
+						"health_status":           "DISABLED",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
+						"enabled":                 "true",
+						"ip_address":              "192.168.1.8",
+						"ratio":                   "1",
+						"port":                    "6000",
+						"health_status":           "DOWN",
+						"detailed_health_message": "Pool not assigned to any Virtual Service",
+					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_monitor.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "health_monitor.*", map[string]string{
+						"type": "HTTP",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "health_monitor.*", map[string]string{
+						"type": "TCP",
+					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "FEWEST_SERVERS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "8443"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "8"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "up_member_count", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled_member_count", "4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "passive_monitoring_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.#", "1"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_pool.test", "persistence_profile.0.name"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.0.type", "CLIENT_IP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.0.value", ""),
 				),
 			},
 			resource.TestStep{
@@ -829,7 +910,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtAlbPoolStepOrgUser = `
+const testAccVcdNsxtAlbPoolStep1OrgUser = `
 data "vcd_nsxt_edgegateway" "existing" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
@@ -843,5 +924,86 @@ resource "vcd_nsxt_alb_pool" "test" {
 
   name            = "{{.PoolName}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+}
+`
+
+const testAccVcdNsxtAlbPoolStep2OrgUser = `
+
+data "vcd_nsxt_edgegateway" "existing" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_alb_pool" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name            = "{{.PoolName}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  algorithm                  = "FEWEST_SERVERS"
+  default_port               = "8443"
+  graceful_timeout_period    = "2"
+  passive_monitoring_enabled = false
+
+  persistence_profile {
+    type = "CLIENT_IP"
+  }
+
+  health_monitor {
+    type = "HTTP"
+  }
+
+  health_monitor {
+    type = "TCP"
+  }
+
+  member {
+    enabled    = false
+    ip_address = "192.168.1.1"
+  }
+
+  member {
+    enabled    = true
+    ip_address = "192.168.1.2"
+  }
+
+  member {
+    enabled    = false
+    ip_address = "192.168.1.3"
+    port       = 8320
+  }
+
+  member {
+    enabled    = true
+    ip_address = "192.168.1.4"
+    port       = 9200
+  }
+
+  member {
+    enabled    = false
+    ip_address = "192.168.1.5"
+    ratio      = 3
+  }
+
+  member {
+    ip_address = "192.168.1.6"
+    ratio      = 1
+  }
+
+  member {
+    enabled    = false
+    ip_address = "192.168.1.7"
+    ratio      = 3
+    port       = 7000
+  }
+
+  member {
+    ip_address = "192.168.1.8"
+    ratio      = 1
+    port       = 6000
+  }
 }
 `
