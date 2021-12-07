@@ -3,14 +3,18 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_pool"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-pool"
 description: |-
-  Provides a data source to read NSX-T ALB Pool for particular NSX-T Edge Gateway.
+  Provides a data source to read NSX-T ALB Pools for particular NSX-T Edge Gateway. Pools maintain the list of servers
+  assigned to them and perform health monitoring, load balancing, persistence. A pool may only be used or referenced by
+  only one virtual service at a time.
 ---
 
 # vcd\_nsxt\_alb\_pool
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to read NSX-T ALB Pool for particular NSX-T Edge Gateway.
+Provides a data source to read NSX-T ALB Pools for particular NSX-T Edge Gateway. Pools maintain the list of servers
+assigned to them and perform health monitoring, load balancing, persistence. A pool may only be used or referenced by
+only one virtual service at a time.
 
 ## Example Usage
 

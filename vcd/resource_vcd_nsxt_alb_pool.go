@@ -260,7 +260,7 @@ func resourceVcdAlbPoolCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	albPoolConfig, err := getNsxtAlbPoolType(d)
 	if err != nil {
-		return diag.Errorf("error getting MSX-T ALB Pool type: %s", err)
+		return diag.Errorf("error getting NSX-T ALB Pool type: %s", err)
 	}
 	createdAlbPool, err := vcdClient.CreateNsxtAlbPool(albPoolConfig)
 	if err != nil {
@@ -284,7 +284,7 @@ func resourceVcdAlbPoolUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	updatePoolConfig, err := getNsxtAlbPoolType(d)
 	if err != nil {
-		return diag.Errorf("error getting MSX-T ALB Pool type: %s", err)
+		return diag.Errorf("error getting NSX-T ALB Pool type: %s", err)
 	}
 	updatePoolConfig.ID = d.Id()
 

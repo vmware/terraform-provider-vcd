@@ -53,7 +53,6 @@ func datasourceVcdAlbPool() *schema.Resource {
 				Computed:    true,
 				Description: "Default Port defines destination server port used by the traffic sent to the member (default 80)",
 			},
-			//
 			"graceful_timeout_period": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -227,7 +226,7 @@ func datasourceVcdAlbPoolRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if vdc.IsNsxv() {
-		return diag.Errorf("ALB Pools are only supported on NSX-T please use 'vcd_lb_server_pool' for NSX-V load balancers")
+		return diag.Errorf("ALB Pools are only supported on NSX-T. Please use 'vcd_lb_server_pool' for NSX-V load balancers")
 	}
 
 	nsxtEdge, err := vdc.GetNsxtEdgeGatewayById(d.Get("edge_gateway_id").(string))
