@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -435,7 +436,7 @@ func resourceDataCenterGroupImport(ctx context.Context, d *schema.ResourceData, 
 	dSet(d, "org", orgName)
 	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
 	if err != nil {
-		return fmt.Errorf("[data center group import] : %s", err)
+		return nil, fmt.Errorf("[data center group import] : %s", err)
 	}
 
 	return []*schema.ResourceData{d}, nil
