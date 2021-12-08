@@ -16,11 +16,11 @@ Provides a resource to manage data center groups.
 ## Example Usage
 
 ```hcl
-data "vcd_org_vdc" "startVdc"{
+data "vcd_org_vdc" "startVdc" {
   name = "existingVdc"
 }
 
-data "vcd_org_vdc" "additionalVdc"{
+data "vcd_org_vdc" "additionalVdc" {
   name = "oneMoreVdc"
 }
 

@@ -17,7 +17,7 @@ Provides a data source to read data center group and reference in other resource
 
 ```hcl
 data "vcd_org_vdc" "startVdc" {
-  org   = "myOrg"
+  org  = "myOrg"
   name = "myVDC"
 }
 ```
