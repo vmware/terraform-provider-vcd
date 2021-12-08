@@ -190,13 +190,13 @@ func resourceVcdDataCenterGroupCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error creating data center group: %s", err)
 	}
 
-	if d.Get("dfw_enabled").(bool) == true {
+	if d.Get("dfw_enabled").(bool) {
 		createdVdcGroup, err = createdVdcGroup.ActivateDfw()
 		if err != nil {
 			return diag.Errorf("error enabling DFW for data center group: %s", err)
 		}
 		// by default, default policy will be enabled when DFW is enabled, so only need code for disabling
-		if d.Get("default_policy_status").(bool) == false {
+		if !d.Get("default_policy_status").(bool) {
 			createdVdcGroup, err = createdVdcGroup.DisableDefaultPolicy()
 			if err != nil {
 				return diag.Errorf("error disabling default policy for data center group: %s", err)
@@ -231,7 +231,7 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if d.HasChange("dfw_enabled") {
-		if d.Get("dfw_enabled").(bool) == true {
+		if d.Get("dfw_enabled").(bool) {
 			vdcGroup, err = vdcGroup.ActivateDfw()
 		} else {
 			vdcGroup, err = vdcGroup.DisableDefaultPolicy()
@@ -247,7 +247,7 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if d.HasChange("default_policy_status") {
-		errDiag := applyDefaultPolicy(d, vdcGroup, err)
+		errDiag := applyDefaultPolicy(d, vdcGroup)
 		if errDiag != nil {
 			return errDiag
 		}
@@ -256,11 +256,12 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdDataCenterGroupRead(ctx, d, meta)
 }
 
-func applyDefaultPolicy(d *schema.ResourceData, vdcGroup *govcd.VdcGroup, err error) diag.Diagnostics {
-	if d.Get("default_policy_status").(bool) == false {
-		vdcGroup, err = vdcGroup.DisableDefaultPolicy()
+func applyDefaultPolicy(d *schema.ResourceData, vdcGroup *govcd.VdcGroup) diag.Diagnostics {
+	var err error
+	if !d.Get("default_policy_status").(bool) {
+		_, err = vdcGroup.DisableDefaultPolicy()
 	} else {
-		vdcGroup, err = vdcGroup.EnableDefaultPolicy()
+		_, err = vdcGroup.EnableDefaultPolicy()
 	}
 	// ignore if it isn't possible to change
 	if err != nil && err.Error() != "DFW has to be enabled before changing Default policy" {
@@ -301,7 +302,7 @@ func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[data center group read] : %s", err)
 	}
 
-	defaultValueStatus, err := getDefaultPolicyStatus(err, vdcGroup)
+	defaultValueStatus, err := getDefaultPolicyStatus(vdcGroup)
 	if err != nil {
 		return diag.Errorf("[data center group read] : %s", err)
 	}
@@ -324,7 +325,7 @@ func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func getDefaultPolicyStatus(err error, vdcGroup *govcd.VdcGroup) (*bool, error) {
+func getDefaultPolicyStatus(vdcGroup *govcd.VdcGroup) (*bool, error) {
 	dfwPolicies, err := vdcGroup.GetDfwPolicies()
 	if err != nil {
 		return nil, fmt.Errorf("[data center group read] : %s", err)
@@ -395,7 +396,7 @@ func resourceVcdAlbDataCenterGroupDelete(ctx context.Context, d *schema.Resource
 		return diag.Errorf("[data center group delete] : %s", err)
 	}
 
-	if vdcGroupToDelete.VdcGroup.DfwEnabled == true {
+	if vdcGroupToDelete.VdcGroup.DfwEnabled {
 		vdcGroupToDelete, err = vdcGroupToDelete.DisableDefaultPolicy()
 		if err != nil {
 			return diag.Errorf("error disabling default policy for data center group delete: %s", err)
@@ -427,7 +428,7 @@ func resourceDataCenterGroupImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("error importing data center group item: %s", err)
 	}
 
-	defaultValueStatus, err := getDefaultPolicyStatus(err, vdcGroup)
+	defaultValueStatus, err := getDefaultPolicyStatus(vdcGroup)
 	if err != nil {
 		return nil, fmt.Errorf("error importing data center group item: %s", err)
 	}
