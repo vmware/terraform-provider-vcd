@@ -7,8 +7,6 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -307,7 +305,10 @@ func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[data center group read] : %s", err)
 	}
 
-	setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
+	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
+	if err != nil {
+		return diag.Errorf("[data center group read] : %s", err)
+	}
 
 	var participatingVdcIds []interface{}
 	for _, participatingVdc := range vdcGroup.VdcGroup.ParticipatingOrgVdcs {
@@ -432,7 +433,10 @@ func resourceDataCenterGroupImport(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(vdcGroup.VdcGroup.Id)
 	dSet(d, "org", orgName)
-	setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
+	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
+	if err != nil {
+		return fmt.Errorf("[data center group import] : %s", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
