@@ -206,7 +206,7 @@ func cleanupRightsAndBundle(t *testing.T, vcdClient *VCDClient, rightsToRemove [
 		if err != nil {
 			t.Errorf("%s error removing rights %s: %s", t.Name(), rightsToRemove, err)
 		}
-		err = defaultRightsBundle.UnpublishAllTenants()
+		err = defaultRightsBundle.PublishAllTenants()
 		if err != nil {
 			t.Errorf("%s error unpublishing to tenants: %s", t.Name(), err)
 		}
