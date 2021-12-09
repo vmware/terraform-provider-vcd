@@ -36,7 +36,11 @@ func datasourceVcdAlbPool() *schema.Resource {
 				Required:    true,
 				Description: "Name of ALB Pool",
 			},
-
+			"enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines if NSX-T ALB Pool is enabled or disabled",
+			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -165,6 +165,8 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *s
 			seGroupName, err)
 	}
 
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 	d.SetId(seGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
 	return []*schema.ResourceData{d}, nil

@@ -95,6 +95,7 @@ The following arguments are supported:
 
 * `name` - (Required) A name for NSX-T ALB Pool
 * `description` - (Optional) An optional description NSX-T ALB Pool
+* `enabled` - (Optional) Boolean value if NSX-T ALB Pool should be enabled (default `true`)
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `algorithm` - (Optional) Optional algorithm for choosing pool members (default `LEAST_CONNECTIONS`). Other options

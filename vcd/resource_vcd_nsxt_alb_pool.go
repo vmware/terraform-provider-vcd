@@ -53,6 +53,12 @@ func resourceVcdAlbPool() *schema.Resource {
 				Required:    true,
 				Description: "Name of ALB Pool",
 			},
+			"enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Boolean value if ALB Pool is enabled or not (default true)",
+			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -65,7 +71,6 @@ func resourceVcdAlbPool() *schema.Resource {
 				// Default is LEAST_CONNECTIONS even if no value is sent
 				Default: "LEAST_CONNECTIONS",
 			},
-
 			"default_port": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -129,7 +134,7 @@ func resourceVcdAlbPool() *schema.Resource {
 			// Read only information
 			"associated_virtual_service_ids": {
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Computed:    true,
 				Description: "IDs of associated virtual services",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -137,7 +142,7 @@ func resourceVcdAlbPool() *schema.Resource {
 			},
 			"associated_virtual_services": {
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Computed:    true,
 				Description: "Names of associated virtual services",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -388,6 +393,7 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 	albPoolConfig := &types.NsxtAlbPool{
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
+		Enabled:                  takeBoolPointer(d.Get("enabled").(bool)),
 		GatewayRef:               types.OpenApiReference{ID: d.Get("edge_gateway_id").(string)},
 		Algorithm:                d.Get("algorithm").(string),
 		DefaultPort:              takeIntPointer(d.Get("default_port").(int)),
@@ -427,6 +433,7 @@ func setNsxtAlbPoolData(d *schema.ResourceData, albPool *types.NsxtAlbPool) erro
 	dSet(d, "name", albPool.Name)
 	dSet(d, "description", albPool.Description)
 	dSet(d, "edge_gateway_id", albPool.GatewayRef.ID)
+	dSet(d, "enabled", albPool.Enabled)
 	dSet(d, "algorithm", albPool.Algorithm)
 	dSet(d, "default_port", albPool.DefaultPort)
 	dSet(d, "graceful_timeout_period", albPool.GracefulTimeoutPeriod)
@@ -608,7 +615,6 @@ func setNsxtAlbPoolPersistenceProfileData(d *schema.ResourceData, persistencePro
 }
 
 func setCertificateData(d *schema.ResourceData, albPool *types.NsxtAlbPool) error {
-
 	if albPool.CaCertificateRefs != nil {
 		certIds := extractIdsFromOpenApiReferences(albPool.CaCertificateRefs)
 		certIdSet := convertStringsTotTypeSet(certIds)
