@@ -16,6 +16,13 @@ import (
 func TestAccVcdDataCenterGroupResource(t *testing.T) {
 	preTestChecks(t)
 
+	// This test requires access to the vCD before filling templates
+	// Thus it won't run in the short test
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
@@ -63,6 +70,13 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 // TestAccVcdDataCenterGroupResourceAsOrgUser tests that data center group can be managed by Org user
 func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 	preTestChecks(t)
+
+	// This test requires access to the vCD before filling templates
+	// Thus it won't run in the short test
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
