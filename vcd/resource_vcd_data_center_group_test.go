@@ -16,13 +16,6 @@ import (
 func TestAccVcdDataCenterGroupResource(t *testing.T) {
 	preTestChecks(t)
 
-	// This test requires access to the vCD before filling templates
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
@@ -61,6 +54,7 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 		"DefaultPolicyUpdated":      "true",
 		"DfwUpdated2":               "false",
 		"DefaultPolicyUpdated2":     "false",
+		"SkipBinary":                "",
 	}
 
 	runDataCenterGroupTest(t, params)
@@ -69,13 +63,6 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 // TestAccVcdDataCenterGroupResourceAsOrgUser tests that data center group can be managed by Org user
 func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 	preTestChecks(t)
-
-	// This test requires access to the vCD before filling templates
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
@@ -121,6 +108,7 @@ func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 		"DefaultPolicyUpdated":      "true",
 		"DfwUpdated2":               "false",
 		"DefaultPolicyUpdated2":     "false",
+		"SkipBinary":                "# skip-binary-test: in binary user rights aren't changed to be correct",
 	}
 
 	// run as Org user
@@ -331,6 +319,7 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 }
 
 const testAccVcdDataCenterGroupNewVdc = `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_org_vdc" "newVdc" {
   provider = vcd
 
@@ -374,6 +363,7 @@ resource "vcd_org_vdc" "newVdc" {
 }
 `
 const testAccVcdDataCenterGroupOrgProvider = testAccVcdDataCenterGroupNewVdc + `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 provider "vcd" {
   alias                = "orguser"
   user                 = "{{.OrgUser}}"
@@ -392,6 +382,7 @@ provider "vcd" {
 `
 
 const testAccVcdDataCenterGroupResource = testAccVcdDataCenterGroupOrgProvider + `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -418,6 +409,7 @@ output "participatingVdcCount" {
 `
 
 const testAccVcdDataCenterGroupResourceUpdate = testAccVcdDataCenterGroupOrgProvider + `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -444,6 +436,7 @@ output "participatingVdcCount" {
 `
 
 const testAccVcdDataCenterGroupResourceUpdate2 = testAccVcdDataCenterGroupOrgProvider + `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -451,6 +444,7 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_data_center_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -464,6 +458,7 @@ resource "vcd_data_center_group" "fromUnitTest" {
   default_policy_status = "{{.DefaultPolicyUpdated2}}"
 }
 
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
   value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
 }
