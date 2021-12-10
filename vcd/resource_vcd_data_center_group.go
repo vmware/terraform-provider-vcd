@@ -245,7 +245,7 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	if d.HasChange("default_policy_status") {
+	if !d.Get("default_policy_status").(bool) {
 		errDiag := applyDefaultPolicy(d, vdcGroup)
 		if errDiag != nil {
 			return errDiag
