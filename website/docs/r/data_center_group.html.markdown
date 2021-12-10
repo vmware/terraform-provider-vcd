@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_data_center_group"
-sidebar_current: "docs-vcd-data-source-data-center-group"
+sidebar_current: "docs-vcd-resource-data-center-group"
 description: |-
   Provides a data center group resource.
 ---
@@ -44,7 +44,7 @@ The following arguments are supported:
 * `description` - (Optional)  - Data center group description
 * `starting_vdc_id` - (Required)  - With selecting a starting VDC you will be able to create a group in which this VDC can participate.
 * `participating_vdc_ids` - (Required)  - The list of organization vDCs that are participating in this group.
-* `dfw_enabled` - (Optional)  - Whether Distributed Firewall is enabled for this vDC Group. Only applicable for NSX_T vDC Groups.
+* `dfw_enabled` - (Optional)  - Whether Distributed Firewall is enabled for this vDC Group.
 * `default_policy_status` - (Optional)  - Whether this security policy is enabled.
 
 ## Attribute Reference
@@ -55,7 +55,7 @@ The following attributes are exported on this resource:
 * `error_message` - More detailed error message when datacenter group has error status
 * `local_egress` - Status whether local egress is enabled for a universal router belonging " +
   "to a universal vDC group.
-* `network_pool_id` - ID of network pool to use if creating a local vDC group router.
+* `network_pool_id` - ID of used network pool.
 * `network_pool_universal_id` - The network provider’s universal id that is backing the universal network pool.
 * `network_provider_type` - Defines the networking provider backing the vDC Group.
 * `status` - The status that the group can be in (e.g. 'SAVING', 'SAVED', 'CONFIGURING', 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND', 'UNCONFIGURED').

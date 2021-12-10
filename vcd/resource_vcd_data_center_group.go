@@ -128,15 +128,14 @@ func resourceDataCenterGroup() *schema.Resource {
 				Description: "More detailed error message when datacenter group has error status",
 			},
 			"local_egress": {
-				Type:     schema.TypeBool,
-				Computed: true,
-				Description: "Status whether local egress is enabled for a universal router belonging " +
-					"to a universal vDC group.",
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Status whether local egress is enabled for a universal router belonging to a universal vDC group.",
 			},
 			"network_pool_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of network pool to use if creating a local vDC group router.",
+				Description: "ID of used network pool.",
 			},
 			"network_pool_universal_id": {
 				Type:        schema.TypeString,
@@ -239,7 +238,7 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 			if err != nil && err.Error() != "DFW has to be enabled before changing Default policy" {
 				return diag.Errorf("error disabling default policy for data center group: %s", err)
 			}
-			vdcGroup, err = vdcGroup.DeActivateDfw()
+			vdcGroup, err = vdcGroup.DeactivateDfw()
 		}
 		if err != nil {
 			return diag.Errorf("error activating/deactivating DFW for data center group: %s", err)
@@ -270,14 +269,10 @@ func applyDefaultPolicy(d *schema.ResourceData, vdcGroup *govcd.VdcGroup) diag.D
 	return nil
 }
 
-func getDataCenterGroupConfigurationType(d *schema.ResourceData) VdcGroupConfig {
-	// convert list of VDC IDs to slice of strings
-	var vdcIds []string
-	participatingVdcsIds := d.Get("participating_vdc_ids").(*schema.Set).List()
-	for _, participatingVdcId := range participatingVdcsIds {
-		vdcIds = append(vdcIds, participatingVdcId.(string))
-	}
-	return VdcGroupConfig{
+func getDataCenterGroupConfigurationType(d *schema.ResourceData) vdcGroupConfig {
+	vdcIds := convertSchemaSetToSliceOfStrings(d.Get("participating_vdc_ids").(*schema.Set))
+
+	return vdcGroupConfig{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		StartingVdcId:       d.Get("starting_vdc_id").(string),
@@ -401,7 +396,7 @@ func resourceVcdAlbDataCenterGroupDelete(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.Errorf("error disabling default policy for data center group delete: %s", err)
 		}
-		vdcGroupToDelete, err = vdcGroupToDelete.DeActivateDfw()
+		vdcGroupToDelete, err = vdcGroupToDelete.DeactivateDfw()
 		if err != nil {
 			return diag.Errorf("error deactivating DFW for data center group delete: %s", err)
 		}
@@ -443,8 +438,8 @@ func resourceDataCenterGroupImport(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-// VdcGroupConfig is a minimal structure defining a VdcGroup in Organization
-type VdcGroupConfig struct {
+// vdcGroupConfig is a minimal structure defining a VdcGroup in Organization
+type vdcGroupConfig struct {
 	Name                string
 	Description         string
 	ParticipatingVdcIds []string

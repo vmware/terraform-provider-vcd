@@ -59,17 +59,16 @@ func datasourceDataCenterGroup() *schema.Resource {
 				Description: "More detailed error message when datacenter group has error status",
 			},
 			"local_egress": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
-				Description: "Status whether local egress is enabled for a universal router belonging " +
-					"to a universal vDC group.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Status whether local egress is enabled for a universal router belonging to a universal vDC group.",
 			},
 			"network_pool_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "ID of network pool to use if creating a local vDC group router.",
+				Description: "ID of used network pool.",
 			},
 			"network_pool_universal_id": {
 				Type:        schema.TypeString,
