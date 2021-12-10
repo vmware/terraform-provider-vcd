@@ -53,8 +53,7 @@ The following attributes are exported on this resource:
 
 * `id` - The data center group ID
 * `error_message` - More detailed error message when datacenter group has error status
-* `local_egress` - Status whether local egress is enabled for a universal router belonging " +
-  "to a universal vDC group.
+* `local_egress` - Status whether local egress is enabled for a universal router belonging to a universal vDC group.
 * `network_pool_id` - ID of used network pool.
 * `network_pool_universal_id` - The network provider’s universal id that is backing the universal network pool.
 * `network_provider_type` - Defines the networking provider backing the vDC Group.
@@ -75,7 +74,7 @@ The following attributes are exported on this resource:
 * `status` - "The status that the vDC can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING', 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND', 'UNCONFIGURED')."
 * `remote_org` - Specifies whether the vDC is local to this VCD site.
 * `network_provider_scope` - Specifies the network provider scope of the vDC.
-*  `fault_domain_tag` - Represents the fault domain of a given organization vDC.
+* `fault_domain_tag` - Represents the fault domain of a given organization vDC.
 
 ## Importing
 
