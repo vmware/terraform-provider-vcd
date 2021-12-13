@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdDataCenterGroupResource tests that data center group can be managed
-func TestAccVcdDataCenterGroupResource(t *testing.T) {
+// TestAccVcdVdcGroupResource tests that VDC group can be managed
+func TestAccVcdVdcGroupResource(t *testing.T) {
 	preTestChecks(t)
 
 	// This test requires access to the vCD before filling templates
@@ -29,7 +29,7 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 	}
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of Data center group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
@@ -42,8 +42,8 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
 		"VDC":                       testConfig.Nsxt.Vdc,
-		"Name":                      "TestAccVcdDataCenterGroupResource",
-		"NameUpdated":               "TestAccVcdDataCenterGroupResourceUpdated",
+		"Name":                      "TestAccVcdVdcGroupResource",
+		"NameUpdated":               "TestAccVcdVdcGroupResourceUpdated",
 		"Description":               "myDescription",
 		"DescriptionUpdate":         "myDescription updated",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
@@ -66,11 +66,11 @@ func TestAccVcdDataCenterGroupResource(t *testing.T) {
 		"SkipBinary":                "",
 	}
 
-	runDataCenterGroupTest(t, params)
+	runVdcGroupTest(t, params)
 }
 
-// TestAccVcdDataCenterGroupResourceAsOrgUser tests that data center group can be managed by Org user
-func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
+// TestAccVcdVdcGroupResourceAsOrgUser tests that VDC group can be managed by Org user
+func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 	preTestChecks(t)
 
 	// This test requires access to the vCD before filling templates
@@ -86,7 +86,7 @@ func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 	}
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of Data center group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
@@ -105,8 +105,8 @@ func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
 		"VDC":                       testConfig.Nsxt.Vdc,
-		"Name":                      "TestAccVcdDataCenterGroupResource",
-		"NameUpdated":               "TestAccVcdDataCenterGroupResourceUpdated",
+		"Name":                      "TestAccVcdVdcGroupResource",
+		"NameUpdated":               "TestAccVcdVdcGroupResourceUpdated",
 		"Description":               "myDescription",
 		"DescriptionUpdate":         "myDescription updated",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
@@ -130,7 +130,7 @@ func TestAccVcdDataCenterGroupResourceAsOrgUser(t *testing.T) {
 	}
 
 	// run as Org user
-	runDataCenterGroupTest(t, params)
+	runVdcGroupTest(t, params)
 }
 
 func addRights(t *testing.T, vcdClient *VCDClient) []types.OpenApiReference {
@@ -236,37 +236,37 @@ func cleanupRightsAndBundle(t *testing.T, vcdClient *VCDClient, rightsToRemove [
 	}
 }
 
-func runDataCenterGroupTest(t *testing.T, params StringMap) {
+func runVdcGroupTest(t *testing.T, params StringMap) {
 
 	params["FuncName"] = t.Name() + "-newVdc"
-	configTextPre := templateFill(testAccVcdDataCenterGroupNewVdc, params)
+	configTextPre := templateFill(testAccVcdVdcGroupNewVdc, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
 
 	params["FuncName"] = t.Name()
-	configText1 := templateFill(testAccVcdDataCenterGroupResource, params)
+	configText1 := templateFill(testAccVcdVdcGroupResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-update"
-	configText2 := templateFill(testAccVcdDataCenterGroupResourceUpdate, params)
+	configText2 := templateFill(testAccVcdVdcGroupResourceUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText2)
 
 	params["FuncName"] = t.Name() + "-update2"
-	configText3 := templateFill(testAccVcdDataCenterGroupResourceUpdate2, params)
+	configText3 := templateFill(testAccVcdVdcGroupResourceUpdate2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText3)
 
 	params["FuncName"] = t.Name() + "-update3"
-	configText4 := templateFill(testAccVcdDataCenterGroupResourceUpdate3, params)
+	configText4 := templateFill(testAccVcdVdcGroupResourceUpdate3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText4)
 
 	params["FuncName"] = t.Name() + "-datasource"
-	configText5 := templateFill(testAccVcdDataCenterGroupDatasource, params)
+	configText5 := templateFill(testAccVcdVdcGroupDatasource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText5)
 
 	params["FuncName"] = t.Name() + "-provider"
-	configTextProvider := templateFill(testAccVcdDataCenterGroupOrgProvider, params)
+	configTextProvider := templateFill(testAccVcdVdcGroupOrgProvider, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configTextProvider)
 
-	resourceAddressDataCenterGroup := "vcd_data_center_group.fromUnitTest"
+	resourceAddressVdcGroup := "vcd_vdc_group.fromUnitTest"
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -280,60 +280,60 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "name", params["Name"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["Description"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["Name"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "description", params["Description"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckOutput("participatingVdcCount", "2"),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["Dfw"].(string)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicy"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "dfw_enabled", params["Dfw"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicy"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "name", params["NameUpdated"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["DescriptionUpdate"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "description", params["DescriptionUpdate"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckOutput("participatingVdcCount", "1"),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["DfwUpdated"].(string)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicyUpdated"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "dfw_enabled", params["DfwUpdated"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "name", params["NameUpdated"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["DescriptionUpdate"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "description", params["DescriptionUpdate"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckOutput("participatingVdcCount", "1"),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["DfwUpdated2"].(string)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicyUpdated2"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "dfw_enabled", params["DfwUpdated2"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated2"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "name", params["NameUpdated"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "id", regexp.MustCompile(`^\S+`)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "description", params["DescriptionUpdate"].(string)),
-					resource.TestMatchResourceAttr(resourceAddressDataCenterGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "description", params["DescriptionUpdate"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
 					resource.TestCheckOutput("participatingVdcCount", "1"),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "dfw_enabled", params["DfwUpdated3"].(string)),
-					resource.TestCheckResourceAttr(resourceAddressDataCenterGroup, "default_policy_status", params["DefaultPolicyUpdated3"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "dfw_enabled", params["DfwUpdated3"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated3"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual(resourceAddressDataCenterGroup, "data.vcd_data_center_group.fetchCreated", []string{"participating_vdc_ids.#",
+					resourceFieldsEqual(resourceAddressVdcGroup, "data.vcd_vdc_group.fetchCreated", []string{"participating_vdc_ids.#",
 						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status"}),
 				),
 			},
 			resource.TestStep{
-				ResourceName:            resourceAddressDataCenterGroup,
+				ResourceName:            resourceAddressVdcGroup,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgObject(testConfig, params["NameUpdated"].(string)),
@@ -352,7 +352,7 @@ func runDataCenterGroupTest(t *testing.T, params StringMap) {
 	postTestChecks(t)
 }
 
-const testAccVcdDataCenterGroupNewVdc = `
+const testAccVcdVdcGroupNewVdc = `
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_org_vdc" "newVdc" {
   provider = vcd
@@ -396,7 +396,7 @@ resource "vcd_org_vdc" "newVdc" {
   include_vm_memory_overhead = true
 }
 `
-const testAccVcdDataCenterGroupOrgProvider = testAccVcdDataCenterGroupNewVdc + `
+const testAccVcdVdcGroupOrgProvider = testAccVcdVdcGroupNewVdc + `
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 provider "vcd" {
   alias                = "orguser"
@@ -415,7 +415,7 @@ provider "vcd" {
 
 `
 
-const testAccVcdDataCenterGroupResource = testAccVcdDataCenterGroupOrgProvider + `
+const testAccVcdVdcGroupResource = testAccVcdVdcGroupOrgProvider + `
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
@@ -424,7 +424,7 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
-resource "vcd_data_center_group" "fromUnitTest" {
+resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
   org                   = "{{.Org}}"
@@ -437,12 +437,12 @@ resource "vcd_data_center_group" "fromUnitTest" {
 }
 
 output "participatingVdcCount" {
-  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
+  value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 
 `
 
-const testAccVcdDataCenterGroupResourceUpdate = testAccVcdDataCenterGroupOrgProvider + `
+const testAccVcdVdcGroupResourceUpdate = testAccVcdVdcGroupOrgProvider + `
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
@@ -451,7 +451,7 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
-resource "vcd_data_center_group" "fromUnitTest" {
+resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
   org                   = "{{.Org}}"
@@ -465,11 +465,11 @@ resource "vcd_data_center_group" "fromUnitTest" {
 }
 
 output "participatingVdcCount" {
-  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
+  value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 `
 
-const testAccVcdDataCenterGroupResourceUpdate2 = testAccVcdDataCenterGroupOrgProvider + `
+const testAccVcdVdcGroupResourceUpdate2 = testAccVcdVdcGroupOrgProvider + `
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
@@ -479,7 +479,7 @@ data "vcd_org_vdc" "startVdc"{
 }
 
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
-resource "vcd_data_center_group" "fromUnitTest" {
+resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
   org                   = "{{.Org}}"
@@ -494,11 +494,11 @@ resource "vcd_data_center_group" "fromUnitTest" {
 
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
-  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
+  value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 `
 
-const testAccVcdDataCenterGroupResourceUpdate3 = testAccVcdDataCenterGroupOrgProvider + `
+const testAccVcdVdcGroupResourceUpdate3 = testAccVcdVdcGroupOrgProvider + `
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
@@ -508,7 +508,7 @@ data "vcd_org_vdc" "startVdc"{
 }
 
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
-resource "vcd_data_center_group" "fromUnitTest" {
+resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
   org                   = "{{.Org}}"
@@ -517,22 +517,23 @@ resource "vcd_data_center_group" "fromUnitTest" {
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
   participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
 
+
   dfw_enabled           = "{{.DfwUpdated3}}"
   default_policy_status = "{{.DefaultPolicyUpdated3}}"
 }
 
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
-  value = length(vcd_data_center_group.fromUnitTest.participating_vdc_ids)
+  value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 `
 
-const testAccVcdDataCenterGroupDatasource = testAccVcdDataCenterGroupResourceUpdate3 + `
+const testAccVcdVdcGroupDatasource = testAccVcdVdcGroupResourceUpdate3 + `
 # skip-binary-test: data source test only works in acceptance tests
-data "vcd_data_center_group" "fetchCreated" {
+data "vcd_vdc_group" "fetchCreated" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
   org  = "{{.Org}}"
-  name = vcd_data_center_group.fromUnitTest.name
+  name = vcd_vdc_group.fromUnitTest.name
 }
 `

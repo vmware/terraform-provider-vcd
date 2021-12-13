@@ -7,9 +7,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func datasourceDataCenterGroup() *schema.Resource {
+func datasourceVdcGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdDataCenterGroupRead,
+		ReadContext: datasourceVcdVdcGroupRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -25,7 +25,7 @@ func datasourceDataCenterGroup() *schema.Resource {
 				ForceNew:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"name", "id"},
-				Description:  "Name of data center group",
+				Description:  "Name of VDC group",
 			},
 			"id": {
 				Type:         schema.TypeString,
@@ -33,13 +33,13 @@ func datasourceDataCenterGroup() *schema.Resource {
 				ForceNew:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"name", "id"},
-				Description:  "Data center group ID",
+				Description:  "VDC group ID",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Data center group description",
+				Description: "VDC group description",
 			},
 			"dfw_enabled": {
 				Type:        schema.TypeBool,
@@ -56,7 +56,7 @@ func datasourceDataCenterGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "More detailed error message when datacenter group has error status",
+				Description: "More detailed error message when VDC group has error status",
 			},
 			"local_egress": {
 				Type:        schema.TypeBool,
@@ -167,7 +167,7 @@ func datasourceDataCenterGroup() *schema.Resource {
 	}
 }
 
-func datasourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdVdcGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -186,13 +186,13 @@ func datasourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("Id or Name value is missing %s", err)
 	}
 	if err != nil {
-		return diag.Errorf("[data center group read] : %s", err)
+		return diag.Errorf("[VDC group read] : %s", err)
 	}
 
 	d.SetId(vdcGroup.VdcGroup.Id)
 	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, nil)
 	if err != nil {
-		return diag.Errorf("[data center group read] : %s", err)
+		return diag.Errorf("[VDC group read] : %s", err)
 	}
 
 	return nil

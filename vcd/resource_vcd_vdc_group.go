@@ -69,14 +69,14 @@ var participatingOrgVdcsResource = &schema.Resource{
 	},
 }
 
-func resourceDataCenterGroup() *schema.Resource {
+func resourceVdcGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:   resourceVcdDataCenterGroupRead,
-		CreateContext: resourceVcdDataCenterGroupCreate,
-		UpdateContext: resourceVcdDataCenterGroupUpdate,
-		DeleteContext: resourceVcdAlbDataCenterGroupDelete,
+		ReadContext:   resourceVcdVdcGroupRead,
+		CreateContext: resourceVcdVdcGroupCreate,
+		UpdateContext: resourceVcdVdcGroupUpdate,
+		DeleteContext: resourceVcdVdcGroupDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDataCenterGroupImport,
+			StateContext: resourceVdcGroupImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -89,12 +89,12 @@ func resourceDataCenterGroup() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of data center group",
+				Description: "Name of VDC group",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Data center group description",
+				Description: "VDC group description",
 			},
 			"dfw_enabled": {
 				Type:        schema.TypeBool,
@@ -125,7 +125,7 @@ func resourceDataCenterGroup() *schema.Resource {
 			"error_message": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "More detailed error message when datacenter group has error status",
+				Description: "More detailed error message when VDC group has error status",
 			},
 			"local_egress": {
 				Type:        schema.TypeBool,
@@ -174,8 +174,8 @@ func resourceDataCenterGroup() *schema.Resource {
 	}
 }
 
-// resourceVcdDataCenterGroupCreate covers Create functionality for resource
-func resourceVcdDataCenterGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdVdcGroupCreate covers Create functionality for resource
+func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -183,32 +183,32 @@ func resourceVcdDataCenterGroupCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	vdcGroupConfig := getDataCenterGroupConfigurationType(d)
+	vdcGroupConfig := getVdcGroupConfigurationType(d)
 	createdVdcGroup, err := adminOrg.CreateNsxtVdcGroup(vdcGroupConfig.Name, vdcGroupConfig.Description, vdcGroupConfig.StartingVdcId, vdcGroupConfig.ParticipatingVdcIds)
 	if err != nil {
-		return diag.Errorf("error creating data center group: %s", err)
+		return diag.Errorf("error creating VDC group: %s", err)
 	}
 
 	if d.Get("dfw_enabled").(bool) {
 		createdVdcGroup, err = createdVdcGroup.ActivateDfw()
 		if err != nil {
-			return diag.Errorf("error enabling DFW for data center group: %s", err)
+			return diag.Errorf("error enabling DFW for VDC group: %s", err)
 		}
 		// by default, default policy will be enabled when DFW is enabled, so only need code for disabling
 		if !d.Get("default_policy_status").(bool) {
 			createdVdcGroup, err = createdVdcGroup.DisableDefaultPolicy()
 			if err != nil {
-				return diag.Errorf("error disabling default policy for data center group: %s", err)
+				return diag.Errorf("error disabling default policy for VDC group: %s", err)
 			}
 		}
 	}
 
 	d.SetId(createdVdcGroup.VdcGroup.Id)
-	return resourceVcdDataCenterGroupRead(ctx, d, meta)
+	return resourceVcdVdcGroupRead(ctx, d, meta)
 }
 
-// resourceVcdDataCenterGroupUpdate covers Update functionality for resource
-func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdVdcGroupUpdate covers Update functionality for resource
+func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -218,14 +218,14 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 
 	vdcGroup, err := adminOrg.GetVdcGroupById(d.Id())
 	if err != nil {
-		return diag.Errorf("[data center group update] : %s", err)
+		return diag.Errorf("[VDC group update] : %s", err)
 	}
 
 	if d.HasChanges("name", "description", "participating_vdc_ids") {
-		vdcGroupConfig := getDataCenterGroupConfigurationType(d)
+		vdcGroupConfig := getVdcGroupConfigurationType(d)
 		vdcGroup, err = vdcGroup.Update(vdcGroupConfig.Name, vdcGroupConfig.Description, vdcGroupConfig.ParticipatingVdcIds)
 		if err != nil {
-			return diag.Errorf("[data center group update] : %s", err)
+			return diag.Errorf("[VDC group update] : %s", err)
 		}
 	}
 
@@ -236,12 +236,12 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 			vdcGroup, err = vdcGroup.DisableDefaultPolicy()
 			// ignore if it isn't possible to change
 			if err != nil && err.Error() != "DFW has to be enabled before changing Default policy" {
-				return diag.Errorf("error disabling default policy for data center group: %s", err)
+				return diag.Errorf("error disabling default policy for VDC group: %s", err)
 			}
 			vdcGroup, err = vdcGroup.DeactivateDfw()
 		}
 		if err != nil {
-			return diag.Errorf("error activating/deactivating DFW for data center group: %s", err)
+			return diag.Errorf("error activating/deactivating DFW for VDC group: %s", err)
 		}
 	}
 
@@ -252,7 +252,7 @@ func resourceVcdDataCenterGroupUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	return resourceVcdDataCenterGroupRead(ctx, d, meta)
+	return resourceVcdVdcGroupRead(ctx, d, meta)
 }
 
 func applyDefaultPolicy(d *schema.ResourceData, vdcGroup *govcd.VdcGroup) diag.Diagnostics {
@@ -264,12 +264,12 @@ func applyDefaultPolicy(d *schema.ResourceData, vdcGroup *govcd.VdcGroup) diag.D
 	}
 	// ignore if it isn't possible to change
 	if err != nil && err.Error() != "DFW has to be enabled before changing Default policy" {
-		return diag.Errorf("error disabling/enabling default policy for data center group: %s", err)
+		return diag.Errorf("error disabling/enabling default policy for VDC group: %s", err)
 	}
 	return nil
 }
 
-func getDataCenterGroupConfigurationType(d *schema.ResourceData) vdcGroupConfig {
+func getVdcGroupConfigurationType(d *schema.ResourceData) vdcGroupConfig {
 	vdcIds := convertSchemaSetToSliceOfStrings(d.Get("participating_vdc_ids").(*schema.Set))
 
 	return vdcGroupConfig{
@@ -280,7 +280,7 @@ func getDataCenterGroupConfigurationType(d *schema.ResourceData) vdcGroupConfig 
 	}
 }
 
-func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -294,17 +294,17 @@ func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData,
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("[data center group read] : %s", err)
+		return diag.Errorf("[VDC group read] : %s", err)
 	}
 
 	defaultValueStatus, err := getDefaultPolicyStatus(vdcGroup)
 	if err != nil {
-		return diag.Errorf("[data center group read] : %s", err)
+		return diag.Errorf("[VDC group read] : %s", err)
 	}
 
 	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
 	if err != nil {
-		return diag.Errorf("[data center group read] : %s", err)
+		return diag.Errorf("[VDC group read] : %s", err)
 	}
 
 	var participatingVdcIds []interface{}
@@ -314,7 +314,7 @@ func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData,
 	if len(participatingVdcIds) > 0 {
 		err = d.Set("participating_vdc_ids", participatingVdcIds)
 		if err != nil {
-			return diag.Errorf("[data center group read] could not set participating_vdc_ids block: %s", err)
+			return diag.Errorf("[VDC group read] could not set participating_vdc_ids block: %s", err)
 		}
 	}
 	return nil
@@ -323,7 +323,7 @@ func resourceVcdDataCenterGroupRead(ctx context.Context, d *schema.ResourceData,
 func getDefaultPolicyStatus(vdcGroup *govcd.VdcGroup) (*bool, error) {
 	dfwPolicies, err := vdcGroup.GetDfwPolicies()
 	if err != nil {
-		return nil, fmt.Errorf("[data center group read] : %s", err)
+		return nil, fmt.Errorf("[VDC group read] : %s", err)
 	}
 	var defaultValueStatus *bool
 	if dfwPolicies != nil && dfwPolicies.DefaultPolicy != nil {
@@ -373,12 +373,12 @@ func setVdcGroupConfigurationData(config *types.VdcGroup, d *schema.ResourceData
 
 	err := d.Set("participating_org_vdcs", schema.NewSet(schema.HashResource(participatingOrgVdcsResource), candidateVdcsSlice))
 	if err != nil {
-		return fmt.Errorf("[data center group read] could not set participating_org_vdcs block: %s", err)
+		return fmt.Errorf("[VDC group read] could not set participating_org_vdcs block: %s", err)
 	}
 	return nil
 }
 
-func resourceVcdAlbDataCenterGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -388,51 +388,51 @@ func resourceVcdAlbDataCenterGroupDelete(ctx context.Context, d *schema.Resource
 
 	vdcGroupToDelete, err := adminOrg.GetVdcGroupById(d.Id())
 	if err != nil {
-		return diag.Errorf("[data center group delete] : %s", err)
+		return diag.Errorf("[VDC group delete] : %s", err)
 	}
 
 	if vdcGroupToDelete.VdcGroup.DfwEnabled {
 		vdcGroupToDelete, err = vdcGroupToDelete.DisableDefaultPolicy()
 		if err != nil {
-			return diag.Errorf("error disabling default policy for data center group delete: %s", err)
+			return diag.Errorf("error disabling default policy for VDC group delete: %s", err)
 		}
 		vdcGroupToDelete, err = vdcGroupToDelete.DeactivateDfw()
 		if err != nil {
-			return diag.Errorf("error deactivating DFW for data center group delete: %s", err)
+			return diag.Errorf("error deactivating DFW for VDC group delete: %s", err)
 		}
 	}
 
 	return diag.FromErr(vdcGroupToDelete.Delete())
 }
 
-func resourceDataCenterGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVdcGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.data-center-group-name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-group-name")
 	}
 	orgName, vdcGroupName := resourceURI[0], resourceURI[1]
 
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrg(orgName)
 	if err != nil {
-		return nil, fmt.Errorf("[data center group import] error retrieving org %s: %s", orgName, err)
+		return nil, fmt.Errorf("[VDC group import] error retrieving org %s: %s", orgName, err)
 	}
 
 	vdcGroup, err := adminOrg.GetVdcGroupByName(vdcGroupName)
 	if err != nil {
-		return nil, fmt.Errorf("error importing data center group item: %s", err)
+		return nil, fmt.Errorf("error importing VDC group item: %s", err)
 	}
 
 	defaultValueStatus, err := getDefaultPolicyStatus(vdcGroup)
 	if err != nil {
-		return nil, fmt.Errorf("error importing data center group item: %s", err)
+		return nil, fmt.Errorf("error importing VDC group item: %s", err)
 	}
 
 	d.SetId(vdcGroup.VdcGroup.Id)
 	dSet(d, "org", orgName)
 	err = setVdcGroupConfigurationData(vdcGroup.VdcGroup, d, defaultValueStatus)
 	if err != nil {
-		return nil, fmt.Errorf("[data center group import] : %s", err)
+		return nil, fmt.Errorf("[VDC group import] : %s", err)
 	}
 
 	return []*schema.ResourceData{d}, nil

@@ -1,17 +1,17 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_data_center_group"
-sidebar_current: "docs-vcd-resource-data-center-group"
+page_title: "VMware Cloud Director: vcd_vdc_group"
+sidebar_current: "docs-vcd-resource-vdc-group"
 description: |-
-  Provides a data center group resource.
+  Provides a VDC group resource.
 ---
 
-# vcd\_data\_center\_group
+# vcd\_vdc\_group
 Supported in provider *v3.5+* and VCD 10.2+.
 
-Provides a resource to manage data center groups.
+Provides a resource to manage VDC groups.
 
-~> Only `System Administrator` and `Org Users` with right `View VDC Group`, `Configure VDC Group`, `vDC Group: Configure Logging`, `Organization vDC Distributed Firewall: Enable/Disable` can manage data center groups using this resource.
+~> Only `System Administrator` and `Org Users` with right `View VDC Group`, `Configure VDC Group`, `vDC Group: Configure Logging`, `Organization vDC Distributed Firewall: Enable/Disable` can manage VDC groups using this resource.
 
 ## Example Usage
 
@@ -24,9 +24,9 @@ data "vcd_org_vdc" "additionalVdc" {
   name = "oneMoreVdc"
 }
 
-resource "vcd_data_center_group" "new-data-center-group" {
+resource "vcd_vdc_group" "new-vdc-group" {
   org                   = "myOrg"
-  name                  = "newDataCenterGroup"
+  name                  = "newVdcGroup"
   description           = "my description"
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
   participating_vdc_ids = [data.vcd_org_vdc.startVdc.id, data.vcd_org_vdc.additionalVdc.id]
@@ -40,8 +40,8 @@ resource "vcd_data_center_group" "new-data-center-group" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations
-* `name` - (Required)  - The name for data center group
-* `description` - (Optional)  - Data center group description
+* `name` - (Required)  - The name for VDC group
+* `description` - (Optional)  - VDC group description
 * `starting_vdc_id` - (Required)  - With selecting a starting VDC you will be able to create a group in which this VDC can participate.
 * `participating_vdc_ids` - (Required)  - The list of organization vDCs that are participating in this group.
 * `dfw_enabled` - (Optional)  - Whether Distributed Firewall is enabled for this vDC Group.
@@ -51,8 +51,8 @@ The following arguments are supported:
 
 The following attributes are exported on this resource:
 
-* `id` - The data center group ID
-* `error_message` - More detailed error message when datacenter group has error status
+* `id` - The VDC group ID
+* `error_message` - More detailed error message when VDC group has error status
 * `local_egress` - Status whether local egress is enabled for a universal router belonging to a universal vDC group.
 * `network_pool_id` - ID of used network pool.
 * `network_pool_universal_id` - The network provider’s universal id that is backing the universal network pool.
@@ -81,13 +81,13 @@ The following attributes are exported on this resource:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing data center group can be [imported][docs-import] into this resource
-via supplying the full dot separated path data center group. An example is below:
+An existing VDC group can be [imported][docs-import] into this resource
+via supplying the full dot separated path VDC group. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_data_center_group.imported my-org.my-data-center-group
+terraform import vcd_vdc_group.imported my-org.my-vdc-group
 ```
 
-The above would import the data center group named `my-data-center-group` which is configured in organization named `my-org`.
+The above would import the VDC group named `my-vdc-group` which is configured in organization named `my-org`.
