@@ -65,9 +65,11 @@ func resourceVcdAlbPool() *schema.Resource {
 				Description: "Description of ALB Pool",
 			},
 			"algorithm": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Algorithm for choosing pool members (default LEAST_CONNECTIONS)",
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: "Algorithm for choosing pool members (default LEAST_CONNECTIONS). Other `ROUND_ROBIN`," +
+					"`CONSISTENT_HASH`, `FASTEST_RESPONSE`, `LEAST_LOAD`, `FEWEST_SERVERS`, `RANDOM`, `FEWEST_TASKS`," +
+					"`CORE_AFFINITY`",
 				// Default is LEAST_CONNECTIONS even if no value is sent
 				Default: "LEAST_CONNECTIONS",
 			},
@@ -352,7 +354,7 @@ func resourceVcdAlbPoolImport(ctx context.Context, d *schema.ResourceData, meta 
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", vdcName, err)
+		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
 	}
 
 	if vdc.IsNsxv() {
@@ -364,25 +366,16 @@ func resourceVcdAlbPoolImport(ctx context.Context, d *schema.ResourceData, meta 
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
 
-	albPools, err := vcdClient.GetAllAlbPools(edge.EdgeGateway.ID, nil)
+	albPool, err := vcdClient.GetAlbPoolByName(edge.EdgeGateway.ID, poolName)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve NSX-T ALB Pool '%s': %s", poolName, err)
-	}
-
-	if len(albPools) < 1 {
-		return nil, fmt.Errorf("ALB Pool with name '%s' in Edge Gateway '%s' not found", poolName, edgeName)
-	}
-
-	if len(albPools) > 1 {
-		return nil, fmt.Errorf("found more than one (%d) ALB Pool with name '%s' in Edge Gateway '%s'",
-			len(albPools), poolName, edgeName)
+		return nil, fmt.Errorf("could not retrieve ALB Pool %s: %s", poolName, err)
 	}
 
 	dSet(d, "org", orgName)
 	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 
-	d.SetId(albPools[0].NsxtAlbPool.ID)
+	d.SetId(albPool.NsxtAlbPool.ID)
 
 	return []*schema.ResourceData{d}, nil
 }

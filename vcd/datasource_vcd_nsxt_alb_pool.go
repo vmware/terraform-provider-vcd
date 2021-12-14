@@ -76,7 +76,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 						"ip_address": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Name of pool member",
+							Description: "IP Address of pool member",
 						},
 						"port": {
 							Type:        schema.TypeInt,
@@ -116,7 +116,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"type": &schema.Schema{
 							Type:        schema.TypeString,
-							Required:    true,
+							Computed:    true,
 							Description: "Type of health monitor",
 						},
 						"name": &schema.Schema{
