@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
 	"text/tabwriter"
@@ -10,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVmInternalDisk() *schema.Resource {
@@ -277,7 +277,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	vcdClient.lockParentVm(d)
 	defer vcdClient.unLockParentVm(d)
 
-	// ignore only allow_vm_reboot change, allows avoiding empty update
+	// ignore only allow_vm_reboot change, allows to avoid empty update
 	if d.HasChange("allow_vm_reboot") && !d.HasChange("iops") && !d.HasChange("size_in_mb") && !d.HasChange("storage_profile") {
 		return nil
 	}
