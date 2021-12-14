@@ -213,7 +213,7 @@ func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func isInvalidPropertySetup(dfw_enabled, default_policy_status bool) diag.Diagnostics {
-	if dfw_enabled == false && default_policy_status == true {
+	if !dfw_enabled && default_policy_status {
 		return diag.Errorf("`default_policy_status` must be `false` when `dfw_enabled` is `false`.")
 	}
 	return nil
