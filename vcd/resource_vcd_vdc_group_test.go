@@ -63,6 +63,8 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 		"DefaultPolicyUpdated2":     "false",
 		"DfwUpdated3":               "true",
 		"DefaultPolicyUpdated3":     "false",
+		"DfwUpdated4":               "false",
+		"DefaultPolicyUpdated4":     "true",
 		"SkipBinary":                "",
 	}
 
@@ -126,6 +128,8 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 		"DefaultPolicyUpdated2":     "false",
 		"DfwUpdated3":               "true",
 		"DefaultPolicyUpdated3":     "false",
+		"DfwUpdated4":               "false",
+		"DefaultPolicyUpdated4":     "true",
 		"SkipBinary":                "# skip-binary-test: in binary user rights aren't changed to be correct",
 	}
 
@@ -258,13 +262,17 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 	configText4 := templateFill(testAccVcdVdcGroupResourceUpdate3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText4)
 
-	params["FuncName"] = t.Name() + "-datasource"
-	configText5 := templateFill(testAccVcdVdcGroupDatasource, params)
+	params["FuncName"] = t.Name() + "-update4"
+	configText5 := templateFill(testAccVcdVdcGroupResourceUpdate4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText5)
+
+	params["FuncName"] = t.Name() + "-datasource"
+	configText6 := templateFill(testAccVcdVdcGroupDatasource, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText6)
 
 	params["FuncName"] = t.Name() + "-provider"
 	configTextProvider := templateFill(testAccVcdVdcGroupOrgProvider, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configTextProvider)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 8: %s", configTextProvider)
 
 	resourceAddressVdcGroup := "vcd_vdc_group.fromUnitTest"
 
@@ -326,7 +334,11 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 				),
 			},
 			resource.TestStep{
-				Config: configText5,
+				Config:      configText5,
+				ExpectError: regexp.MustCompile("`default_policy_status` must be `false` when `dfw_enabled` is `false`."),
+			},
+			resource.TestStep{
+				Config: configText6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(resourceAddressVdcGroup, "data.vcd_vdc_group.fetchCreated", []string{"participating_vdc_ids.#",
 						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status"}),
@@ -520,6 +532,36 @@ resource "vcd_vdc_group" "fromUnitTest" {
 
   dfw_enabled           = "{{.DfwUpdated3}}"
   default_policy_status = "{{.DefaultPolicyUpdated3}}"
+}
+
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+output "participatingVdcCount" {
+  value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
+}
+`
+
+const testAccVcdVdcGroupResourceUpdate4 = testAccVcdVdcGroupOrgProvider + `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+data "vcd_org_vdc" "startVdc"{
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
+}
+
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+resource "vcd_vdc_group" "fromUnitTest" {
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org                   = "{{.Org}}"
+  name                  = "{{.NameUpdated}}"
+  description           = "{{.DescriptionUpdate}}"
+  starting_vdc_id       = data.vcd_org_vdc.startVdc.id
+  participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
+
+
+  dfw_enabled           = "{{.DfwUpdated4}}"
+  default_policy_status = "{{.DefaultPolicyUpdated4}}"
 }
 
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}

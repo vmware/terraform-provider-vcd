@@ -178,6 +178,11 @@ func resourceVdcGroup() *schema.Resource {
 func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool), d.Get("default_policy_status").(bool))
+	if diagErr != nil {
+		return diagErr
+	}
+
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrg, err)
@@ -207,9 +212,21 @@ func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVcdVdcGroupRead(ctx, d, meta)
 }
 
+func isInvalidPropertySetup(dfw_enabled, default_policy_status bool) diag.Diagnostics {
+	if dfw_enabled == false && default_policy_status == true {
+		return diag.Errorf("`default_policy_status` must be `false` when `dfw_enabled` is `false`.")
+	}
+	return nil
+}
+
 // resourceVcdVdcGroupUpdate covers Update functionality for resource
 func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
+	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool), d.Get("default_policy_status").(bool))
+	if diagErr != nil {
+		return diagErr
+	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
