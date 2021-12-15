@@ -65,6 +65,8 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 		"DefaultPolicyUpdated3":     "false",
 		"DfwUpdated4":               "false",
 		"DefaultPolicyUpdated4":     "true",
+		"DfwUpdated5":               "true",
+		"DefaultPolicyUpdated5":     "true",
 		"SkipBinary":                "",
 	}
 
@@ -130,6 +132,8 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 		"DefaultPolicyUpdated3":     "false",
 		"DfwUpdated4":               "false",
 		"DefaultPolicyUpdated4":     "true",
+		"DfwUpdated5":               "true",
+		"DefaultPolicyUpdated5":     "true",
 		"SkipBinary":                "# skip-binary-test: in binary user rights aren't changed to be correct",
 	}
 
@@ -266,13 +270,17 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 	configText5 := templateFill(testAccVcdVdcGroupResourceUpdate4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText5)
 
-	params["FuncName"] = t.Name() + "-datasource"
-	configText6 := templateFill(testAccVcdVdcGroupDatasource, params)
+	params["FuncName"] = t.Name() + "-update5"
+	configText6 := templateFill(testAccVcdVdcGroupResourceUpdate5, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText6)
+
+	params["FuncName"] = t.Name() + "-datasource"
+	configText7 := templateFill(testAccVcdVdcGroupDatasource, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 8: %s", configText7)
 
 	params["FuncName"] = t.Name() + "-provider"
 	configTextProvider := templateFill(testAccVcdVdcGroupOrgProvider, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 8: %s", configTextProvider)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 9: %s", configTextProvider)
 
 	resourceAddressVdcGroup := "vcd_vdc_group.fromUnitTest"
 
@@ -339,6 +347,18 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 			},
 			resource.TestStep{
 				Config: configText6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "description", params["DescriptionUpdate"].(string)),
+					resource.TestMatchResourceAttr(resourceAddressVdcGroup, "starting_vdc_id", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckOutput("participatingVdcCount", "1"),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "dfw_enabled", params["DfwUpdated5"].(string)),
+					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated5"].(string)),
+				),
+			},
+			resource.TestStep{
+				Config: configText7,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(resourceAddressVdcGroup, "data.vcd_vdc_group.fetchCreated", []string{"participating_vdc_ids.#",
 						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status"}),
@@ -562,6 +582,36 @@ resource "vcd_vdc_group" "fromUnitTest" {
 
   dfw_enabled           = "{{.DfwUpdated4}}"
   default_policy_status = "{{.DefaultPolicyUpdated4}}"
+}
+
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+output "participatingVdcCount" {
+  value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
+}
+`
+
+const testAccVcdVdcGroupResourceUpdate5 = testAccVcdVdcGroupOrgProvider + `
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+data "vcd_org_vdc" "startVdc"{
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
+}
+
+{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+resource "vcd_vdc_group" "fromUnitTest" {
+  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
+
+  org                   = "{{.Org}}"
+  name                  = "{{.NameUpdated}}"
+  description           = "{{.DescriptionUpdate}}"
+  starting_vdc_id       = data.vcd_org_vdc.startVdc.id
+  participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
+
+
+  dfw_enabled           = "{{.DfwUpdated5}}"
+  default_policy_status = "{{.DefaultPolicyUpdated5}}"
 }
 
 {{if .SkipBinary}}{{.SkipBinary}}{{end}}

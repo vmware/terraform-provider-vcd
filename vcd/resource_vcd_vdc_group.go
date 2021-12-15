@@ -262,7 +262,7 @@ func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
-	if !d.Get("default_policy_status").(bool) {
+	if d.HasChange("default_policy_status") || !d.Get("default_policy_status").(bool) {
 		errDiag := applyDefaultPolicy(d, vdcGroup)
 		if errDiag != nil {
 			return errDiag
