@@ -9,9 +9,9 @@ description: |-
 # vcd\_vdc\_group
 Supported in provider *v3.5+* and VCD 10.2+.
 
-Provides a resource to manage VDC groups.
+Provides a resource to manage NSX-T VDC groups.
 
-~> Only `System Administrator` and `Org Users` with right `View VDC Group`, `Configure VDC Group`, `vDC Group: Configure Logging`, `Organization vDC Distributed Firewall: Enable/Disable` can manage VDC groups using this resource.
+~> Only `System Administrator` and `Org Users` with rights `View VDC Group`, `Configure VDC Group`, `vDC Group: Configure Logging`, `Organization vDC Distributed Firewall: Enable/Disable` can manage VDC groups using this resource.
 
 ## Example Usage
 
@@ -30,8 +30,8 @@ resource "vcd_vdc_group" "new-vdc-group" {
   description           = "my description"
   starting_vdc_id       = data.vcd_org_vdc.startVdc.id
   participating_vdc_ids = [data.vcd_org_vdc.startVdc.id, data.vcd_org_vdc.additionalVdc.id]
-  dfw_enabled           = "true"
-  default_policy_status = "true"
+  dfw_enabled           = true
+  default_policy_status = true
 }
 ```
 
@@ -42,10 +42,10 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations
 * `name` - (Required)  - The name for VDC group
 * `description` - (Optional)  - VDC group description
-* `starting_vdc_id` - (Required)  - With selecting a starting VDC you will be able to create a group in which this VDC can participate.
-* `participating_vdc_ids` - (Required)  - The list of organization vDCs that are participating in this group.
+* `starting_vdc_id` - (Required)  - With selecting a starting VDC you will be able to create a group in which this VDC can participate. **Note**. It must be included in `participating_vdc_ids` to participate in this group.
+* `participating_vdc_ids` - (Required)  - The list of organization vDCs that are participating in this group. **Note**. `starting_vdc_id` isn't automatically included.
 * `dfw_enabled` - (Optional)  - Whether Distributed Firewall is enabled for this vDC Group.
-* `default_policy_status` - (Optional)  - Whether this security policy is enabled.
+* `default_policy_status` - (Optional)  - Whether this security policy is enabled. `dfw_enabled` must be `true`.
 
 ## Attribute Reference
 
