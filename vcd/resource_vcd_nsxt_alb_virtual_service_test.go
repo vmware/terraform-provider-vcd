@@ -679,7 +679,7 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   pool_id                  = vcd_nsxt_alb_pool.test.id
-  service_engine_group_id  = data.vcd_nsxt_alb_edgegateway_service_engine_group.assignment.id
+  service_engine_group_id  = data.vcd_nsxt_alb_edgegateway_service_engine_group.assignment.service_engine_group_id
   virtual_ip_address       = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   application_profile_type = "L4"
   service_port {
