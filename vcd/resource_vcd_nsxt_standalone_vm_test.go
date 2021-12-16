@@ -29,7 +29,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	}
 	skipNoNsxtConfiguration(t)
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}

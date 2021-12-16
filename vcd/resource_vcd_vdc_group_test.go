@@ -4,10 +4,11 @@
 package vcd
 
 import (
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"regexp"
 	"testing"
+
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -23,7 +24,7 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
 	}
@@ -68,6 +69,7 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 		"DfwUpdated5":               "true",
 		"DefaultPolicyUpdated5":     "true",
 		"SkipBinary":                "",
+		"Tags":                      "vdc vdcGroup",
 	}
 
 	runVdcGroupTest(t, params)
@@ -77,14 +79,10 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 	preTestChecks(t)
 
-	// This test requires access to the vCD before filling templates
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(t.Name() + " requires a connection to set the tests")
 	}
-
-	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
 	}
@@ -135,6 +133,7 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 		"DfwUpdated5":               "true",
 		"DefaultPolicyUpdated5":     "true",
 		"SkipBinary":                "# skip-binary-test: in binary user rights aren't changed to be correct",
+		"Tags":                      "vdc vdcGroup",
 	}
 
 	// run as Org user
@@ -281,6 +280,11 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 	params["FuncName"] = t.Name() + "-provider"
 	configTextProvider := templateFill(testAccVcdVdcGroupOrgProvider, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 9: %s", configTextProvider)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resourceAddressVdcGroup := "vcd_vdc_group.fromUnitTest"
 

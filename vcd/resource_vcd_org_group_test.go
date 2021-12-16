@@ -335,7 +335,7 @@ type ldapConfigurator struct {
 func (l *ldapConfigurator) configureOrgLdap() {
 	var err error
 	// Step 0 - collect needed connections
-	l.vcdClient = createTemporaryVCDConnection()
+	l.vcdClient = createTemporaryVCDConnection(false)
 	l.org, err = l.vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {
 		l.t.Errorf("could not get Org '%s': %s", testConfig.VCD.Org, err)

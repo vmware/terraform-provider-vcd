@@ -25,7 +25,7 @@ func TestAccDataSourceNotFound(t *testing.T) {
 	}
 
 	// Setup temporary client to evaluate versions and conditionally skip tests
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 
 	// Run a sub-test for each of data source defined in provider
 	for _, dataSource := range Provider().DataSources() {

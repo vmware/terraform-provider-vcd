@@ -63,7 +63,7 @@ func testAccPreCheck(t *testing.T) {
 
 // createTemporaryVCDConnection is meant to create a VCDClient to check environment before executing specific acceptance
 // tests and before VCDClient is accessible.
-func createTemporaryVCDConnection() *VCDClient {
+func createTemporaryVCDConnection(acceptNil bool) *VCDClient {
 	config := Config{
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,
@@ -80,6 +80,9 @@ func createTemporaryVCDConnection() *VCDClient {
 	}
 	conn, err := config.Client()
 	if err != nil {
+		if acceptNil {
+			return nil
+		}
 		panic("unable to initialize VCD connection :" + err.Error())
 	}
 	return conn

@@ -24,7 +24,7 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1+)")
 	}

@@ -521,7 +521,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 		expectError       *regexp.Regexp
 		expectImportError *regexp.Regexp
 	)
-	client := createTemporaryVCDConnection()
+	client := createTemporaryVCDConnection(false)
 	if client.Client.APIVCDMaxVersionIs("< 35.2") {
 		fmt.Println("# expecting an error for unsupported fields 'firewall_match' and 'priority'")
 		expectError = regexp.MustCompile(`firewall_match and priority fields can only be set for VCD 10.2.2+`)
@@ -648,7 +648,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		"SkipNotice":    "",
 	}
 
-	client := createTemporaryVCDConnection()
+	client := createTemporaryVCDConnection(false)
 	if client.Client.APIVCDMaxVersionIs("< 36.0") {
 		fmt.Println("# expecting an error for unsupported NAT Rule Type 'REFLEXIVE'")
 		expectError = regexp.MustCompile(`rule_type 'REFLEXIVE' can only be used for VCD 10.3+`)

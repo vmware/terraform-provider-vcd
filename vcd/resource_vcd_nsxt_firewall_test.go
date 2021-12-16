@@ -21,7 +21,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 	}
 	skipNoNsxtConfiguration(t)
 
-	client := createTemporaryVCDConnection()
+	client := createTemporaryVCDConnection(false)
 
 	// String map to fill the template
 	var params = StringMap{

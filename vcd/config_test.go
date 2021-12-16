@@ -1629,7 +1629,7 @@ func noTestCredentials() bool {
 // skipTestForVcdExactVersion allows to skip tests for specific VCD version
 // exactSkipVersion must match exact VCD version (e.g. 10.2.2.17855680)
 func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason string) {
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 
 	vcdVersion, err := vcdClient.Client.GetVcdFullVersion()
 	if err != nil {
