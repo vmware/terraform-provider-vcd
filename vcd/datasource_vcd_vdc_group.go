@@ -62,7 +62,7 @@ func datasourceVdcGroup() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Status whether local egress is enabled for a universal router belonging to a universal VCD group.",
+				Description: "Status whether local egress is enabled for a universal router belonging to a universal vDC group.",
 			},
 			"network_pool_id": {
 				Type:        schema.TypeString,
@@ -80,7 +80,7 @@ func datasourceVdcGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Defines the networking provider backing the VCD Group.",
+				Description: "Defines the networking provider backing the vDC Group.",
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -100,33 +100,33 @@ func datasourceVdcGroup() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "True means that a VCD group router has been created.",
+				Description: "True means that a vDC group router has been created.",
 			},
 			"participating_org_vdcs": {
 				Computed:    true,
 				Type:        schema.TypeSet,
-				Description: "The list of organization VCDs that are participating in this group.",
+				Description: "The list of organization vDCs that are participating in this group.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"fault_domain_tag": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Represents the fault domain of a given organization VCD.",
+							Description: "Represents the fault domain of a given organization vDC.",
 						},
 						"network_provider_scope": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Specifies the network provider scope of the VCD.",
+							Description: "Specifies the network provider scope of the vDC.",
 						},
 						"remote_org": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Specifies whether the VCD is local to this VCD site",
+							Description: "Specifies whether the vDC is local to this VCD site",
 						},
 						"status": {
 							Type:     schema.TypeString,
 							Computed: true,
-							Description: "The status that the VCD can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING'," +
+							Description: "The status that the vDC can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING'," +
 								" 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND'," +
 								" 'UNCONFIGURED').",
 						},
