@@ -68,7 +68,6 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 		"DefaultPolicyUpdated4":     "true",
 		"DfwUpdated5":               "true",
 		"DefaultPolicyUpdated5":     "true",
-		"SkipBinary":                "",
 		"Tags":                      "vdc vdcGroup",
 	}
 
@@ -132,7 +131,6 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 		"DefaultPolicyUpdated4":     "true",
 		"DfwUpdated5":               "true",
 		"DefaultPolicyUpdated5":     "true",
-		"SkipBinary":                "# skip-binary-test: in binary user rights aren't changed to be correct",
 		"Tags":                      "vdc vdcGroup",
 	}
 
@@ -389,7 +387,6 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 }
 
 const testAccVcdVdcGroupNewVdc = `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_org_vdc" "newVdc" {
   provider = vcd
 
@@ -433,7 +430,6 @@ resource "vcd_org_vdc" "newVdc" {
 }
 `
 const testAccVcdVdcGroupOrgProvider = testAccVcdVdcGroupNewVdc + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 provider "vcd" {
   alias                = "orguser"
   user                 = "{{.OrgUser}}"
@@ -448,11 +444,9 @@ provider "vcd" {
   logging              = true
   logging_file         = "go-vcloud-director-org.log"
 }
-
 `
 
 const testAccVcdVdcGroupResource = testAccVcdVdcGroupOrgProvider + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -475,11 +469,9 @@ resource "vcd_vdc_group" "fromUnitTest" {
 output "participatingVdcCount" {
   value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
-
 `
 
 const testAccVcdVdcGroupResourceUpdate = testAccVcdVdcGroupOrgProvider + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -506,7 +498,6 @@ output "participatingVdcCount" {
 `
 
 const testAccVcdVdcGroupResourceUpdate2 = testAccVcdVdcGroupOrgProvider + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -514,7 +505,6 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -528,14 +518,12 @@ resource "vcd_vdc_group" "fromUnitTest" {
   default_policy_status = "{{.DefaultPolicyUpdated2}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
   value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 `
 
 const testAccVcdVdcGroupResourceUpdate3 = testAccVcdVdcGroupOrgProvider + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -543,7 +531,6 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -558,14 +545,12 @@ resource "vcd_vdc_group" "fromUnitTest" {
   default_policy_status = "{{.DefaultPolicyUpdated3}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
   value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 `
 
 const testAccVcdVdcGroupResourceUpdate4 = testAccVcdVdcGroupOrgProvider + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -573,7 +558,7 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
+# skip-binary-test: checking if error is thrown
 resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -588,14 +573,12 @@ resource "vcd_vdc_group" "fromUnitTest" {
   default_policy_status = "{{.DefaultPolicyUpdated4}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
   value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
 `
 
 const testAccVcdVdcGroupResourceUpdate5 = testAccVcdVdcGroupOrgProvider + `
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 data "vcd_org_vdc" "startVdc"{
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -603,7 +586,6 @@ data "vcd_org_vdc" "startVdc"{
   name = "{{.VDC}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 resource "vcd_vdc_group" "fromUnitTest" {
   {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
 
@@ -618,7 +600,6 @@ resource "vcd_vdc_group" "fromUnitTest" {
   default_policy_status = "{{.DefaultPolicyUpdated5}}"
 }
 
-{{if .SkipBinary}}{{.SkipBinary}}{{end}}
 output "participatingVdcCount" {
   value = length(vcd_vdc_group.fromUnitTest.participating_vdc_ids)
 }
