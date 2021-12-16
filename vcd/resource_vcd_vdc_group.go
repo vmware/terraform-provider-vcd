@@ -17,12 +17,12 @@ var participatingOrgVdcsResource = &schema.Resource{
 		"fault_domain_tag": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Represents the fault domain of a given organization VDC.",
+			Description: "Represents the fault domain of a given organization VDC",
 		},
 		"network_provider_scope": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Specifies the network provider scope of the VDC.",
+			Description: "Specifies the network provider scope of the VDC",
 		},
 		"remote_org": {
 			Type:        schema.TypeBool,
@@ -34,7 +34,7 @@ var participatingOrgVdcsResource = &schema.Resource{
 			Computed: true,
 			Description: "The status that the VDC can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING'," +
 				" 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND'," +
-				" 'UNCONFIGURED').",
+				" 'UNCONFIGURED')",
 		},
 		"org_name": {
 			Type:        schema.TypeString,
@@ -130,44 +130,44 @@ func resourceVdcGroup() *schema.Resource {
 			"local_egress": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Status whether local egress is enabled for a universal router belonging to a universal VDC group.",
+				Description: "Status whether local egress is enabled for a universal router belonging to a universal VDC group",
 			},
 			"network_pool_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of used network pool.",
+				Description: "ID of used network pool",
 			},
 			"network_pool_universal_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The network provider’s universal id that is backing the universal network pool.",
+				Description: "The network provider’s universal id that is backing the universal network pool",
 			},
 			"network_provider_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Defines the networking provider backing the VDC Group.",
+				Description: "Defines the networking provider backing the VDC Group",
 			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "The status that the group can be in (e.g. 'SAVING', 'SAVED', 'CONFIGURING'," +
 					" 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND'," +
-					" 'UNCONFIGURED').",
+					" 'UNCONFIGURED')",
 			},
 			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Defines the group as LOCAL or UNIVERSAL.",
+				Description: "Defines the group as LOCAL or UNIVERSAL",
 			},
 			"universal_networking_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True means that a VDC group router has been created.",
+				Description: "True means that a VDC group router has been created",
 			},
 			"participating_org_vdcs": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "The list of organization VDCs that are participating in this group.",
+				Description: "The list of organization VDCs that are participating in this group",
 				Elem:        participatingOrgVdcsResource,
 			},
 		},
