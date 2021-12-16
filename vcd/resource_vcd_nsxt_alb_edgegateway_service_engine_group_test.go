@@ -91,6 +91,9 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 
 const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated = testAccVcdNsxtAlbGeneralSettings + `
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
   edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }

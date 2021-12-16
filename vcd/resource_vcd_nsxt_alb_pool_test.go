@@ -421,9 +421,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 	postTestChecks(t)
 }
 
-// testAccVcdNsxtAlbPoolStep1 represents minimal configuration of load balancer pool which is not really functional,
-// but still can be created
-
 const testAccVcdNsxtAlbPoolDS = `
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 
