@@ -132,9 +132,9 @@ The following arguments are supported:
 ## Member
 
 * `ip_address` (Required) IP address of pool member. 
-* `enabled` (Optional) defines if the pool member is enabled to receive traffic (default `true`)
+* `enabled` (Optional) Defines if the pool member is enabled to receive traffic (default `true`)
 * `port` (Optional) Port for receiving traffic - overrides the root value `default_port` for individual members
-* `ratio` (Optional) Ratio of selecting eligible servers in the pool. (default `1`)
+* `ratio` (Optional) Ratio of selecting eligible servers in the pool (default `1`)
 
 ### Attributes of members
 
@@ -157,7 +157,7 @@ The following arguments are supported:
 
   * `TLS` - Information is embedded in the client's SSL/TLS ticket ID. This will use default system profile System-Persistence-TLS
 
-* `value` (Optional) is required for some `type`s: ``HTTP_COOKIE`, `CUSTOM_HTTP_HEADER`, `APP_COOKIE`
+* `value` (Optional) is required for some `type` values: `HTTP_COOKIE`, `CUSTOM_HTTP_HEADER`, `APP_COOKIE`
 
 ### Attributes of persistence profile
 
