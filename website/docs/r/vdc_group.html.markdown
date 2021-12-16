@@ -43,8 +43,8 @@ The following arguments are supported:
 * `name` - (Required)  - The name for VDC group
 * `description` - (Optional)  - VDC group description
 * `starting_vdc_id` - (Required)  - With selecting a starting VDC you will be able to create a group in which this VDC can participate. **Note**. It must be included in `participating_vdc_ids` to participate in this group.
-* `participating_vdc_ids` - (Required)  - The list of organization vDCs that are participating in this group. **Note**. `starting_vdc_id` isn't automatically included.
-* `dfw_enabled` - (Optional)  - Whether Distributed Firewall is enabled for this vDC Group.
+* `participating_vdc_ids` - (Required)  - The list of organization VDCs that are participating in this group. **Note**. `starting_vdc_id` isn't automatically included.
+* `dfw_enabled` - (Optional)  - Whether Distributed Firewall is enabled for this VDC Group.
 * `default_policy_status` - (Optional)  - Whether this security policy is enabled. `dfw_enabled` must be `true`.
 
 ## Attribute Reference
@@ -53,14 +53,14 @@ The following attributes are exported on this resource:
 
 * `id` - The VDC group ID
 * `error_message` - More detailed error message when VDC group has error status
-* `local_egress` - Status whether local egress is enabled for a universal router belonging to a universal vDC group.
+* `local_egress` - Status whether local egress is enabled for a universal router belonging to a universal VDC group.
 * `network_pool_id` - ID of used network pool.
 * `network_pool_universal_id` - The network provider’s universal id that is backing the universal network pool.
-* `network_provider_type` - Defines the networking provider backing the vDC Group.
+* `network_provider_type` - Defines the networking provider backing the VDC Group.
 * `status` - The status that the group can be in (e.g. 'SAVING', 'SAVED', 'CONFIGURING', 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND', 'UNCONFIGURED').
 * `type` - Defines the group as LOCAL or UNIVERSAL.
-* `universal_networking_enabled` - True means that a vDC group router has been created.
-* `participating_org_vdcs` - A list of blocks providing organization vDCs that are participating in this group details. See [Participating Org VDCs](#participatingOrgVdcs) below for details.
+* `universal_networking_enabled` - True means that a VDC group router has been created.
+* `participating_org_vdcs` - A list of blocks providing organization VDCs that are participating in this group details. See [Participating Org VDCs](#participatingOrgVdcs) below for details.
 
 <a id="participatingOrgVdcs"></a>
 ## Participating Org VDCs
@@ -71,10 +71,10 @@ The following attributes are exported on this resource:
 * `site_name` - Site name.
 * `org_id` - Organization ID.
 * `org_name` - Organization Name.
-* `status` - "The status that the vDC can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING', 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND', 'UNCONFIGURED')."
-* `remote_org` - Specifies whether the vDC is local to this VCD site.
-* `network_provider_scope` - Specifies the network provider scope of the vDC.
-* `fault_domain_tag` - Represents the fault domain of a given organization vDC.
+* `status` - "The status that the VDC can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING', 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND', 'UNCONFIGURED')."
+* `remote_org` - Specifies whether the VDC is local to this VCD site.
+* `network_provider_scope` - Specifies the network provider scope of the VDC.
+* `fault_domain_tag` - Represents the fault domain of a given organization VDC.
 
 ## Importing
 
