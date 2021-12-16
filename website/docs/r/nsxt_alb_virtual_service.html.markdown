@@ -31,7 +31,7 @@ data "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
 
   edge_gateway_id           = data.vcd_nsxt_edgegateway.existing.id
   service_engine_group_name = "known_service_engine_group"
-  
+
   # ID reference to service_engine_group_id can also be supplied by 
   # using `vcd_nsxt_alb_service_engine_group` data source
   # but it requires provider level access therefore tenant can use `service_engine_group_name` field.
@@ -151,7 +151,7 @@ The following arguments are supported:
 * `virtual_ip_address` - (Required) IP Address for the service to listen on.
 * `ca_certificate_id` - (Optional) ID reference of CA certificate. Required when `application_profile_type` is `HTTPS`
   or `L4_TLS`
-* `service_port` - (Required) A block to define port, port range and traffic type. . Multiple can be used. See
+* `service_port` - (Required) A block to define port, port range and traffic type. Multiple can be used. See
   [service_port](#service-port-block) and example for usage details.
 
 
@@ -162,7 +162,6 @@ The following arguments are supported:
 * `end_port` (Optional) Only required to specify port range and is not needed for single port values
 * `type` (Required) One of `TCP_PROXY`, `TCP_FAST_PATH`, `UDP_FAST_PATH`
 * `ssl_enabled` (Optional) Must be enabled if CA certificate is to be used for this port. Default `false`
-
 
 ## Importing
 

@@ -20,8 +20,8 @@ traffic, it directs it to members in ALB Pool.
 
 ```hcl
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+  org = "my-org"
+  vdc = "nsxt-vdc"
 
   name = "nsxt-gw"
 }
@@ -48,4 +48,5 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_alb_settings`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_settings) resource are available.
+[`vcd_nsxt_alb_virtual_service`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service) resource are
+available.
