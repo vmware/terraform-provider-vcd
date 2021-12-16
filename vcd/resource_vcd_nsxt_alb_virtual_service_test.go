@@ -132,6 +132,10 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 				Config: configText2, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
+
+					// Check ALB Pool attributes that represent which Virtual Services consume this pool
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_service_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_alb_pool.test", "associated_virtual_services.*", t.Name()),
 				),
 			},
 			resource.TestStep{
