@@ -528,7 +528,6 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 
 	defer func() {
 		fmt.Println("## Cleaning up prerequisites")
-		//time.Sleep(5 * time.Minute)
 		systemPrerequisites.teardownAlbPoolPrerequisites()
 		fmt.Println("## Finished cleaning up prerequisites")
 	}()
@@ -592,7 +591,6 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
 			},
-			////
 			resource.TestStep{
 				Config: configText4, // Test data source
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -614,11 +612,21 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "{{.EdgeGw}}"
 }
 
+# This is not really needed in this example, but checking that the 
+# data source can run with Org user
+data "vcd_nsxt_alb_settings" "gw" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+}
+
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
-  edge_gateway_id           = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_alb_settings.gw.id
+
   # This name comes from prerequisite setup
   service_engine_group_name = "{{.TestName}}"
 }
@@ -658,11 +666,21 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "{{.EdgeGw}}"
 }
 
+# This is not really needed in this example, but checking that the 
+# data source can run with Org user
+data "vcd_nsxt_alb_settings" "gw" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+}
+
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
-  edge_gateway_id           = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_alb_settings.gw.id
+
   # This name comes from prerequisite setup
   service_engine_group_name = "{{.TestName}}"
 }
