@@ -11,9 +11,8 @@ description: |-
 ## About 
 
 Starting with version 10.2, VMware Cloud Director provides load balancing services by leveraging the capabilities of
-VMware NSX Advanced Load Balancer.
-
-_System administrators_ can enable and configure access to load balancing services for VDCs backed by NSX-T.
+VMware NSX Advanced Load Balancer. _System administrators_ can enable and configure access to load balancing services
+for VDCs backed by NSX-T.
 
 Load balancing services are associated with NSX-T Edge Gateways, which can be scoped either to an organization VDC
 backed by NSX-T VDC or to a VDC group with NSX-T Data Center network provider type.
@@ -32,7 +31,7 @@ A Service Engine Group has a unique set of compute characteristics that are defi
 * NSX Advanced Load Balancer is supported starting VCD versions *10.2+*.
 * NSX Advanced Load Balancer configured with NSX-T, see [Avi Integration with NSX-T](https://avinetworks.com/docs/20.1/avi-nsx-t-integration/).
 * Provider operations supported in Terraform provider VCD *v3.4+*. 
-* Tenant operations supported in Terraform provider VCD *3.5*. 
+* Tenant operations supported in Terraform provider VCD *3.5+*. 
 
 -> In this document, when we mention **tenants**, the term can be substituted with **organizations**.
 
@@ -45,7 +44,8 @@ setup for providers:
 * [vcd_nsxt_alb_cloud](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud)
 * [vcd_nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group)
 
-Additionally, there is a data source only to help lookup ALB Importable Clouds:
+Additionally, there is a data source only to help lookup ALB Importable Clouds helping to populate 
+[vcd_nsxt_alb_cloud](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud):
 
 * [vcd_nsxt_alb_importable_cloud](/providers/vmware/vcd/latest/docs/data-sources/nsxt_alb_importable_cloud)
 
@@ -61,11 +61,25 @@ Finally, the remaining two resources help tenants to manage their ALB configurat
 * [vcd_nsxt_alb_pool](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_pool)
 * [vcd_nsxt_alb_virtual_service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service)
 
-
+-> Examples below demonstrate a working setup, but do not cover all capabilities. More information about capabilities of
+each resource are outlined in their own documentation pages.
 
 ## Infrastructure Setup example (Provider)
 
 -> All operations in this part require Provider access.
+
+The following snippet will do the following:
+
+* Register NSX-T ALB Controller using
+  [vcd_nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller) resource
+* Look up available Clouds to import using
+  [vcd_nsxt_alb_importable_cloud](/providers/vmware/vcd/latest/docs/data-sources/nsxt_alb_importable_cloud) data source
+* Define NSX-T ALB Cloud in VCD using [vcd_nsxt_alb_cloud](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud)
+  resource
+* Define a Service Engine Group
+  [vcd_nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group) which
+  can later be assigned to tenant Edge Gateways
+
 
 ```hcl
 # Local variable is used to avoid direct reference and 
@@ -155,7 +169,18 @@ And that completes the work required for Providers.
 ## Pool and Virtual Service configuration NSX-T Edge Gateway configuration (Tenant)
 
 This part demonstrates how Tenant can handle Pools and Virtual Services once providers have done
-their part to enable ALB on NSX-T Edge Gateways.
+their part to enable ALB on NSX-T Edge Gateways. It will:
+
+* Look up existing NSX-T Edge Gateway using
+  [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway) data source
+* Look up Service Engine Groups that are available for this NSX-T Edge Gateway using
+  [vcd_nsxt_alb_edgegateway_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_edgegateway_service_engine_group)
+  data source
+* Set up an ALB Pool with 3 members using [vcd_nsxt_alb_pool](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_pool)
+  resource
+* Expose a Virtual Service using
+  [vcd_nsxt_alb_virtual_service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service) resource which
+  combines all the data
 
 ```hcl
 data "vcd_nsxt_edgegateway" "existing" {
