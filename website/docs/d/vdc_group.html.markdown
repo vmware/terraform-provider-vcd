@@ -29,7 +29,7 @@ The following arguments are supported:
 * `name` - (Optional)  - Name of VDC group
 * `id` - (Optional)  - ID of VDC group
 
-`name` or `id` is required field.
+Either `name` or `id` must be used. If both are missing, an error arises.
 
 ## Attribute Reference
 

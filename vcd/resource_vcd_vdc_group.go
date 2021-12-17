@@ -106,12 +106,12 @@ func resourceVdcGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Starting VDC Id",
+				Description: "Starting VDC ID",
 			},
 			"participating_vdc_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "Participating VCD IDs",
+				Description: "Participating VDC IDs",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
