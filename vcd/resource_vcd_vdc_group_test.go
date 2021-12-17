@@ -4,11 +4,9 @@
 package vcd
 
 import (
-	"log"
 	"regexp"
+	"strings"
 	"testing"
-
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -96,11 +94,8 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 			" VCD.ProviderVdc.StorageProfile  must be set")
 	}
 
-	// Add needed right for Org User
-	rightsToAdd := addRights(t, vcdClient)
-
-	//remove added rights at the end of test
-	defer cleanupRightsAndBundle(t, vcdClient, rightsToAdd)
+	// Check if needed rights are configured
+	checkRights(t, vcdClient)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -138,9 +133,8 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 	runVdcGroupTest(t, params)
 }
 
-func addRights(t *testing.T, vcdClient *VCDClient) []types.OpenApiReference {
-	// add needed rights
-	var rightsToAdd []types.OpenApiReference
+func checkRights(t *testing.T, vcdClient *VCDClient) {
+	var missingRights []string
 	defaultRightsBundle, err := vcdClient.Client.GetRightsBundleByName("Default Rights Bundle")
 	if err != nil {
 		t.Errorf("%s error fetch default rights bundle: %s", t.Name(), err)
@@ -168,76 +162,35 @@ func addRights(t *testing.T, vcdClient *VCDClient) []types.OpenApiReference {
 				foundRight = true
 			}
 		}
-		if foundRight {
-			log.Printf("Right %s already in Default Rights Bundle\n", rightName)
-			// ignore
-		} else {
-			rightsToAdd = append(rightsToAdd, types.OpenApiReference{Name: newRight.Name, ID: newRight.ID})
+		if !foundRight {
+			missingRights = append(missingRights, newRight.Name)
 		}
 	}
 
-	if len(rightsToAdd) > 0 {
-		err = defaultRightsBundle.AddRights(rightsToAdd)
-		if err != nil {
-			t.Errorf("%s error adding rights %s: %s", t.Name(), rightsToAdd, err)
-		}
-		err = defaultRightsBundle.PublishAllTenants()
-		if err != nil {
-			t.Errorf("%s error publishing to tenants: %s", t.Name(), err)
-		}
+	if len(missingRights) > 0 {
+		t.Skip(t.Name() + "missing rights to run test: " + strings.Join(missingRights, ", "))
 	}
 
 	orgAdminGlobalRole, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
 		t.Errorf("%s error fetching global role Org Administrator: %s", t.Name(), err)
 	}
-	missingRight, err := vcdClient.Client.GetRightByName("Organization vDC Distributed Firewall: Enable/Disable")
+
+	globalRoleRights, err := orgAdminGlobalRole.GetRights(nil)
 	if err != nil {
-		t.Errorf("%s error fetching right: %s", t.Name(), err)
-	}
-	err = orgAdminGlobalRole.AddRights([]types.OpenApiReference{{Name: missingRight.Name, ID: missingRight.ID}})
-	if err != nil {
-		t.Errorf("%s error adding right: %s", t.Name(), err)
-	}
-	err = orgAdminGlobalRole.PublishAllTenants()
-	if err != nil {
-		t.Errorf("%s error publishing to tenants: %s", t.Name(), err)
+		t.Errorf("%s error fetching rights: %s", t.Name(), err)
 	}
 
-	return rightsToAdd
-}
-
-func cleanupRightsAndBundle(t *testing.T, vcdClient *VCDClient, rightsToRemove []types.OpenApiReference) {
-	if len(rightsToRemove) > 0 {
-		defaultRightsBundle, err := vcdClient.Client.GetRightsBundleByName("Default Rights Bundle")
-		if err != nil {
-			t.Errorf("%s error fetch default rights bundle: %s", t.Name(), err)
-		}
-		err = defaultRightsBundle.RemoveRights(rightsToRemove)
-		if err != nil {
-			t.Errorf("%s error removing rights %s: %s", t.Name(), rightsToRemove, err)
-		}
-		err = defaultRightsBundle.PublishAllTenants()
-		if err != nil {
-			t.Errorf("%s error unpublishing to tenants: %s", t.Name(), err)
+	rightName := "Organization vDC Distributed Firewall: Enable/Disable"
+	foundRight := false
+	for _, globalRoleRight := range globalRoleRights {
+		if globalRoleRight.Name == rightName {
+			foundRight = true
 		}
 	}
 
-	orgAdminGlobalRole, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
-	if err != nil {
-		t.Errorf("%s error fetching global role Org Administrator: %s", t.Name(), err)
-	}
-	missingRight, err := vcdClient.Client.GetRightByName("Organization vDC Distributed Firewall: Enable/Disable")
-	if err != nil {
-		t.Errorf("%s error fetching right: %s", t.Name(), err)
-	}
-	err = orgAdminGlobalRole.RemoveRights([]types.OpenApiReference{{Name: missingRight.Name, ID: missingRight.ID}})
-	if err != nil {
-		t.Errorf("%s error adding right: %s", t.Name(), err)
-	}
-	err = orgAdminGlobalRole.PublishAllTenants()
-	if err != nil {
-		t.Errorf("%s error publishing to tenants: %s", t.Name(), err)
+	if !foundRight {
+		t.Skip(t.Name() + "missing rights to run test:" + rightName)
 	}
 }
 
