@@ -118,8 +118,8 @@ resource "vcd_nsxt_alb_cloud" "first" {
 }
 
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                                 = "first-se-updated"
-  description                          = "test-description"
+  name                                 = "first-se"
+  description                          = "description"
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "SHARED"
@@ -161,6 +161,9 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
 
   edge_gateway_id         = vcd_nsxt_alb_settings.main.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+
+  max_virtual_services      = 50
+  reserved_virtual_services = 1
 }
 ````
 
