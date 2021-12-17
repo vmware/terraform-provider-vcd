@@ -72,7 +72,7 @@ The following attributes are exported on this resource:
 * `org_id` - Organization ID.
 * `org_name` - Organization name.
 * `status` - "The status that the VDC can be in e.g. 'SAVING', 'SAVED', 'CONFIGURING', 'REALIZED', 'REALIZATION_FAILED', 'DELETING', 'DELETE_FAILED', 'OBJECT_NOT_FOUND', 'UNCONFIGURED')."
-* `remote_org` - Specifies whether the VDC is local to this VCD site.
+* `is_remote_org` - Specifies whether the VDC is local to this VCD site.
 * `network_provider_scope` - Specifies the network provider scope of the VDC.
 * `fault_domain_tag` - Represents the fault domain of a given organization VDC.
 

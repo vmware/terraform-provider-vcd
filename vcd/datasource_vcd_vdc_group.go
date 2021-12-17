@@ -118,7 +118,7 @@ func datasourceVdcGroup() *schema.Resource {
 							Computed:    true,
 							Description: "Specifies the network provider scope of the VDC",
 						},
-						"remote_org": {
+						"is_remote_org": {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Specifies whether the VDC is local to this VCD site",

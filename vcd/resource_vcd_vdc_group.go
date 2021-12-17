@@ -24,7 +24,7 @@ var participatingOrgVdcsResource = &schema.Resource{
 			Computed:    true,
 			Description: "Specifies the network provider scope of the VDC",
 		},
-		"remote_org": {
+		"is_remote_org": {
 			Type:        schema.TypeBool,
 			Computed:    true,
 			Description: "Specifies whether the VDC is local to this VCD site",
@@ -375,7 +375,7 @@ func setVdcGroupConfigurationData(config *types.VdcGroup, d *schema.ResourceData
 			candidateVdcMap := make(map[string]interface{})
 			candidateVdcMap["fault_domain_tag"] = candidateVdc.FaultDomainTag
 			candidateVdcMap["network_provider_scope"] = candidateVdc.NetworkProviderScope
-			candidateVdcMap["remote_org"] = candidateVdc.RemoteOrg
+			candidateVdcMap["is_remote_org"] = candidateVdc.RemoteOrg
 			candidateVdcMap["status"] = candidateVdc.Status
 			candidateVdcMap["org_name"] = candidateVdc.OrgRef.Name
 			candidateVdcMap["org_id"] = candidateVdc.OrgRef.ID
