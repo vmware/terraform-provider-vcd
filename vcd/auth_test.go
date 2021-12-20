@@ -139,7 +139,7 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	// To test token auth we must gain it at first
-	tempConn := createTemporaryVCDConnection()
+	tempConn := createTemporaryVCDConnection(false)
 
 	testCases = append(testCases, authTestCase{
 		name: "TokenAuth",

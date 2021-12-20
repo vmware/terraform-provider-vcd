@@ -117,7 +117,7 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 
 // edgeGatewayIsAdvanced checks if edge gateway for testing is an advanced one
 func edgeGatewayIsAdvanced() bool {
-	conn := createTemporaryVCDConnection()
+	conn := createTemporaryVCDConnection(false)
 
 	edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway)
 	if err != nil {

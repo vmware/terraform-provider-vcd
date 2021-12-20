@@ -67,7 +67,7 @@ func checkStorageProfileOriginatesInParentVdc(resource, storageProfileName, orgN
 		// Lookup ID field of resource
 		resourceId := rs.Primary.ID
 
-		vcdClient := createTemporaryVCDConnection()
+		vcdClient := createTemporaryVCDConnection(false)
 		adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 		if err != nil {
 			return fmt.Errorf("error getting adminOrg: %s", err)
@@ -95,7 +95,7 @@ func checkStorageProfileOriginatesInParentVdc(resource, storageProfileName, orgN
 
 // findStorageProfileIdInVdc should find storage profile ID using the ID that comes from data source
 func findStorageProfileIdInVdc(t *testing.T, storageProfileName string) string {
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {
 		t.Error(err)

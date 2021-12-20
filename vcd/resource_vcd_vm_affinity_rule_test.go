@@ -41,7 +41,7 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		t.Skip("[TestAccVcdVmAffinityRule] no VDC found in configuration")
 	}
 
-	client := createTemporaryVCDConnection()
+	client := createTemporaryVCDConnection(false)
 
 	_, vdc, err := client.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 	if err != nil {
