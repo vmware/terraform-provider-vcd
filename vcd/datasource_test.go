@@ -207,12 +207,5 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		templateFields = templateFields + `service_engine_group_id = "does-not-exist"` + "\n"
 	}
 
-	// Inject NSX-T VDC for resources that are known to require it
-	switch dataSourceName {
-	case "vcd_nsxt_edgegateway":
-		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
-	case "vcd_nsxt_alb_pool":
-		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
-	}
 	return templateFields
 }
