@@ -1,5 +1,5 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate vdcGroup ALL
 
 package vcd
 
@@ -1629,7 +1629,7 @@ func noTestCredentials() bool {
 // skipTestForVcdExactVersion allows to skip tests for specific VCD version
 // exactSkipVersion must match exact VCD version (e.g. 10.2.2.17855680)
 func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason string) {
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 
 	vcdVersion, err := vcdClient.Client.GetVcdFullVersion()
 	if err != nil {

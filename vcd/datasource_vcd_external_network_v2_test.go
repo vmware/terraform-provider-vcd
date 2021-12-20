@@ -22,7 +22,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip(t.Name() + " requires at least API v33.0 (vCD 10+)")
 	}

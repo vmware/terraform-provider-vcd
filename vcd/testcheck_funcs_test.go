@@ -1,5 +1,5 @@
-//go:build vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || ALL || functional
-// +build vapp vm user nsxt extnetwork network gateway catalog standaloneVm alb ALL functional
+//go:build vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ALL || functional
+// +build vapp vm user nsxt extnetwork network gateway catalog standaloneVm alb vdcGroup ALL functional
 
 package vcd
 
