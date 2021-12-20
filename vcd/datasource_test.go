@@ -25,7 +25,7 @@ func TestAccDataSourceNotFound(t *testing.T) {
 	}
 
 	// Setup temporary client to evaluate versions and conditionally skip tests
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 
 	// Run a sub-test for each of data source defined in provider
 	for _, dataSource := range Provider().DataSources() {
@@ -41,7 +41,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		switch {
 		case (dataSourceName == "vcd_external_network" || dataSourceName == "vcd_vcenter" ||
 			dataSourceName == "vcd_portgroup" || dataSourceName == "vcd_global_role" ||
-			dataSourceName == "vcd_rights_bundle") &&
+			dataSourceName == "vcd_rights_bundle" || dataSourceName == "vcd_vdc_group") &&
 			!usingSysAdmin():
 			t.Skip(`Works only with system admin privileges`)
 		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):

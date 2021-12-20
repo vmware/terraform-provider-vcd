@@ -376,7 +376,7 @@ func TestAccVcdVmInternalDiskNvme(t *testing.T) {
 	}
 
 	// NVM devices are in VCD starting with version 10.2.1
-	client := createTemporaryVCDConnection()
+	client := createTemporaryVCDConnection(false)
 	if client.Client.APIVCDMaxVersionIs("< 35.1") {
 		t.Skip("NVMe drive support was only introduced in VCD 10.2.1")
 	}

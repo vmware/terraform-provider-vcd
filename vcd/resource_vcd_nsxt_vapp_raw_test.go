@@ -21,7 +21,7 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}

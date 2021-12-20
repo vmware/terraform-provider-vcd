@@ -17,7 +17,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
 	}
@@ -115,7 +115,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection()
+	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
 	}
