@@ -204,7 +204,7 @@ var nsxtAlbPoolMember = &schema.Resource{
 		"marked_down_by": {
 			Type:        schema.TypeSet,
 			Computed:    true,
-			Description: "Marked down by one or more health monitors",
+			Description: "Marked down by provides a set of health monitors that marked the service down",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -358,12 +358,12 @@ func resourceVcdAlbPoolImport(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if vdc.IsNsxv() {
-		return nil, fmt.Errorf("ALB Pools are only supported on NSX-T please use 'vcd_lb_server_pool' for NSX-V load balancers")
+		return nil, fmt.Errorf("ALB Pools are only supported on NSX-T please use 'vcd_lb_server_pool' for NSX-V Load Balancers")
 	}
 
 	edge, err := vdc.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}
 
 	albPool, err := vcdClient.GetAlbPoolByName(edge.EdgeGateway.ID, poolName)

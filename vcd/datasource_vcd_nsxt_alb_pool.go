@@ -91,7 +91,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 						"marked_down_by": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "Marked down by",
+							Description: "Marked down by provides a set of health monitors that marked the service down",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},

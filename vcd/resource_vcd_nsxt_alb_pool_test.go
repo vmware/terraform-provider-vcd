@@ -133,6 +133,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
@@ -161,6 +162,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "description", "description text"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "FEWEST_SERVERS"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "8443"),
@@ -170,7 +172,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled_member_count", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "passive_monitoring_enabled", "false"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_message", "The pool is unassigned."),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "health_message", "The pool is disabled or all of the members are disabled."),
 					resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_service_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "associated_virtual_services"),
 					resource.TestCheckNoResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile"),
@@ -197,6 +199,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_LOAD"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "9000"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "-1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "8"),
@@ -281,6 +284,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "CORE_AFFINITY"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "80"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
@@ -323,6 +327,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "80"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
@@ -352,6 +357,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "80"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
@@ -379,6 +385,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "80"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
@@ -414,9 +421,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 	postTestChecks(t)
 }
 
-// testAccVcdNsxtAlbPoolStep1 represents minimal configuration of load balancer pool which is not really functional,
-// but still can be created
-
 const testAccVcdNsxtAlbPoolDS = `
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 
@@ -429,9 +433,7 @@ data "vcd_nsxt_alb_pool" "test" {
 }
 `
 
-const testAccVcdNsxtAlbPoolStep1 = testAccVcdNsxtAlbPoolStep1Only + testAccVcdNsxtAlbPoolPrereqs
-
-const testAccVcdNsxtAlbPoolStep1Only = `
+const testAccVcdNsxtAlbPoolStep1 = testAccVcdNsxtAlbPoolPrereqs + `
 resource "vcd_nsxt_alb_pool" "test" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
@@ -449,6 +451,7 @@ resource "vcd_nsxt_alb_pool" "test" {
   vdc = "{{.NsxtVdc}}"
 
   name            = "{{.PoolName}}"
+  enabled         = false
   description     = "description text"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
 
