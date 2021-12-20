@@ -88,7 +88,7 @@ func createTemporaryVCDConnection(acceptNil bool) *VCDClient {
 	return conn
 }
 
-// createSystemTemporaryVCDConnection is like createTemporaryVCDConnection but it will ignore all conditional
+// createSystemTemporaryVCDConnection is like createTemporaryVCDConnection, but it will ignore all conditional
 // configurations like `VCD_TEST_ORG_USER=1` and will still return a System client instead of user one. This allows to
 // perform System actions (entities which require System rights - Org, Vdc, etc...)
 func createSystemTemporaryVCDConnection() *VCDClient {

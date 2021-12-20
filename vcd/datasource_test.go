@@ -57,7 +57,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 			t.Skip(`No NSX-T configuration detected or not running as System user`)
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
 			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
-			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group":
+			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group" ||
+			dataSourceName == "vcd_nsxt_alb_pool":
 			skipNoNsxtAlbConfiguration(t)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
@@ -72,12 +73,6 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		mandatoryRuntimeFields := getMandatoryDataSourceRuntimeFields(dataSourceName)
 		mandatoryFields = append(mandatoryFields, mandatoryRuntimeFields...)
 		addedParams := addMandatoryParams(dataSourceName, mandatoryFields, t, vcdClient)
-
-		// Inject NSX-T VDC for resources that are known to require it
-		switch dataSourceName {
-		case "vcd_nsxt_edgegateway":
-			addedParams += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
-		}
 
 		var params = StringMap{
 			"DataSourceName":  dataSourceName,
@@ -201,6 +196,14 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `controller_id = "urn:vcloud:loadBalancerController:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		}
 
+	}
+
+	// Inject NSX-T VDC for resources that are known to require it
+	switch dataSourceName {
+	case "vcd_nsxt_edgegateway":
+		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
+	case "vcd_nsxt_alb_pool":
+		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
 	}
 	return templateFields
 }

@@ -91,14 +91,19 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 
 const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated = testAccVcdNsxtAlbGeneralSettings + `
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
-  edge_gateway_id         = data.vcd_nsxt_edgegateway.existing.id
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 `
 
 const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDS = testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated + `
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
-  edge_gateway_id         = data.vcd_nsxt_edgegateway.existing.id
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 `
@@ -198,7 +203,10 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 
 const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupShared = testAccVcdNsxtAlbGeneralSettings + `
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
-  edge_gateway_id         = data.vcd_nsxt_edgegateway.existing.id
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 
   max_virtual_services      = 100
@@ -206,16 +214,23 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 }
 `
 
-const testAccVcdNsxtAlbEdgeServiceEngineGroupSharedDS = testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicated + `
+const testAccVcdNsxtAlbEdgeServiceEngineGroupSharedDS = testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupShared + `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
-  edge_gateway_id         = data.vcd_nsxt_edgegateway.existing.id
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 `
 
 const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupSharedStep3 = testAccVcdNsxtAlbGeneralSettings + `
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
-  edge_gateway_id         = data.vcd_nsxt_edgegateway.existing.id
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 
   max_virtual_services      = 70

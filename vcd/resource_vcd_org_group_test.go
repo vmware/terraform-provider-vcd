@@ -321,7 +321,7 @@ func isTcpPortOpen(host, port string, timeout int) bool {
 
 // ldapConfigurator is a struct holding required data to ease go-vcloud-director SDK operation
 // integration with Terraform acceptance test framework. It allows to use *testing.T inside some
-// Terraform accpentace functions which accept only functions with no parameters (such as
+// Terraform acceptance functions which accept only functions with no parameters (such as
 // "PreConfig)
 type ldapConfigurator struct {
 	t         *testing.T
