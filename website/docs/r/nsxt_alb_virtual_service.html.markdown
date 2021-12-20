@@ -112,6 +112,7 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
   virtual_ip_address       = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   ca_certificate_id        = data.vcd_library_certificate.org-cert-1.id
   application_profile_type = "L4_TLS"
+
   service_port {
     start_port  = 80
     type        = "TCP_PROXY"

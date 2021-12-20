@@ -36,7 +36,6 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 				Required:    true,
 				Description: "Name of ALB Virtual Service",
 			},
-
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -50,12 +49,12 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 			"service_engine_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Edge gateway ID in which ALB Pool should be created",
+				Description: "Service Engine Group ID",
 			},
 			"ca_certificate_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A set of root certificate IDs to use when validating certificates presented by pool members",
+				Description: "ID of certificate in library if used",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,

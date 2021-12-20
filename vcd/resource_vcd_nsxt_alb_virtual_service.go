@@ -57,18 +57,18 @@ func resourceVcdAlbVirtualService() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway ID in which ALB Pool should be created",
+				Description: "Pool ID",
 			},
 			"service_engine_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway ID in which ALB Pool should be created",
+				Description: "Service Engine Group ID",
 			},
 			"ca_certificate_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "A set of root certificate IDs to use when validating certificates presented by pool members",
+				Description: "Optional certificate ID to use for exposing service",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -105,13 +105,13 @@ var nsxtAlbVirtualServicePort = &schema.Resource{
 		"end_port": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
-			Description: "Starting port in the range",
+			Description: "Last port in the range",
 		},
 		"ssl_enabled": &schema.Schema{
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
-			Description: "Starting port in the range",
+			Description: "Defines if certificate should be used",
 		},
 		"type": &schema.Schema{
 			Type:        schema.TypeString,
@@ -259,7 +259,7 @@ func getNsxtAlbVirtualServiceType(d *schema.ResourceData) (*types.NsxtAlbVirtual
 
 	servicePorts, err := getNsxtAlbVirtualServicePortType(d)
 	if err != nil {
-		return nil, fmt.Errorf("error getting virtual service port definition: %s", err)
+		return nil, fmt.Errorf("error getting Virtual Service port definition: %s", err)
 	}
 	albVirtualServiceConfig.ServicePorts = servicePorts
 
