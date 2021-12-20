@@ -108,6 +108,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "size_in_mb", diskSize),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "description", "description-text"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "bus_type", busType),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "bus_number", busNumber),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "unit_number", unitNumber),
@@ -126,6 +127,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 			resource.TestStep{
 				Config: configText_update1,
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "size_in_mb", biggerDiskSize),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "description", "description-text"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "bus_type", busType),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "bus_number", busNumber),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "unit_number", unitNumber),
@@ -235,6 +237,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   vdc              =  vcd_org_vdc.{{.VdcName}}.name
   vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
+  description   = "description-text"
   computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
