@@ -44,7 +44,7 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 			"pool_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Edge gateway ID in which ALB Pool should be created",
+				Description: "Pool ID to use for this Virtual Service",
 			},
 			"service_engine_group_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -84,7 +84,7 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 						"end_port": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Starting port in the range",
+							Description: "Last port in the range",
 						},
 						"ssl_enabled": &schema.Schema{
 							Type:        schema.TypeBool,
@@ -112,12 +112,12 @@ func datasourceVcdAlbVirtualServiceRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	if vdc.IsNsxv() {
-		return diag.Errorf("ALB Pools are only supported on NSX-T. Please use 'vcd_lb_server_pool' for NSX-V load balancers")
+		return diag.Errorf("ALB Virtual Services are only supported on NSX-T. Please use 'vcd_lb_virtual_server' for NSX-V load balancers")
 	}
 
 	nsxtEdge, err := vdc.GetNsxtEdgeGatewayById(d.Get("edge_gateway_id").(string))
 	if err != nil {
-		return diag.Errorf("could not retrieve NSX-T nsxtEdge gateway with ID '%s': %s", d.Id(), err)
+		return diag.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}
 
 	albVirtualService, err := vcdClient.GetAlbVirtualServiceByName(nsxtEdge.EdgeGateway.ID, d.Get("name").(string))
