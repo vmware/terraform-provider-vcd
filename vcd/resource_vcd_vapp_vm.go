@@ -2532,8 +2532,8 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 				NetworkConnectionSection:  recomposeVAppParamsForEmptyVm.CreateItem.NetworkConnectionSection,
 				VmSpecSection:             recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection,
 				GuestCustomizationSection: recomposeVAppParamsForEmptyVm.CreateItem.GuestCustomizationSection,
-				Media:                     mediaReference,
 			},
+			Media: mediaReference,
 			Xmlns: types.XMLNamespaceVCloud,
 		}
 		newVm, err = vdc.CreateStandaloneVm(&params)
