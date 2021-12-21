@@ -58,7 +58,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
 			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
 			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group" ||
-			dataSourceName == "vcd_nsxt_alb_pool":
+			dataSourceName == "vcd_nsxt_alb_pool" || dataSourceName == "vcd_nsxt_alb_virtual_service":
 			skipNoNsxtAlbConfiguration(t)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
@@ -154,8 +154,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 				return ""
 			}
 			templateFields = templateFields + `edge_gateway_id = "` + nsxtEdgeGw.EdgeGateway.ID + `"` + "\n"
-		case "service_engine_group_id":
-			templateFields = templateFields + `service_engine_group_id = "does-not-exist"` + "\n"
 		case "catalog":
 			templateFields = templateFields + `catalog = "` + testConfig.VCD.Catalog.Name + `"` + "\n"
 		case "vapp_name":
@@ -195,7 +193,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		case "controller_id":
 			templateFields = templateFields + `controller_id = "urn:vcloud:loadBalancerController:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		}
-
 	}
 
 	// Inject NSX-T VDC for resources that are known to require it
@@ -204,6 +201,11 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
 	case "vcd_nsxt_alb_pool":
 		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
+	case "vcd_nsxt_alb_virtual_service":
+		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
+	case "vcd_nsxt_alb_edgegateway_service_engine_group":
+		templateFields = templateFields + `service_engine_group_id = "does-not-exist"` + "\n"
 	}
+
 	return templateFields
 }

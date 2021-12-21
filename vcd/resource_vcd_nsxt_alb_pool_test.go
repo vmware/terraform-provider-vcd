@@ -851,7 +851,6 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 						"port":          "9200",
 						"health_status": "DOWN",
 					}),
-
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "member.*", map[string]string{
 						"enabled":       "false",
 						"ip_address":    "192.168.1.5",

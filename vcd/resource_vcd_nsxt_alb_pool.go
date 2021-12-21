@@ -227,7 +227,7 @@ var nsxtAlbPoolHealthMonitor = &schema.Resource{
 		"type": &schema.Schema{
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Type of health monitor",
+			Description: "Type of health monitor. One of `HTTP`, `HTTPS`, `TCP`, `UDP`, `PING`",
 		},
 		"name": &schema.Schema{
 			Type:     schema.TypeString,
@@ -250,7 +250,7 @@ var nsxtAlbPoolPersistenceProfile = &schema.Resource{
 		"type": &schema.Schema{
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Type of persistence strategy",
+			Description: "Type of persistence strategy. One of `CLIENT_IP`, `HTTP_COOKIE`, `CUSTOM_HTTP_HEADER`, `APP_COOKIE`, `TLS`",
 		},
 		"value": &schema.Schema{
 			Type:        schema.TypeString,

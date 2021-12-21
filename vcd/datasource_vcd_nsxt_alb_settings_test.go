@@ -13,8 +13,6 @@ import (
 func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
 	preTestChecks(t)
 
-	// This test requires access to the VCD before filling templates
-	// Thus it won't run in the short test
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
