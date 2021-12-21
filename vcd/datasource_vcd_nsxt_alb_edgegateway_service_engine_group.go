@@ -35,11 +35,26 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge Gateway ID in which ALB Service Engine Group should be located",
 			},
+			// Following ID reference practice there could be `service_engine_group_id` field used to reference outcome
+			// of `vcd_nsxt_alb_service_engine_group` resource or data source. However - using the mentioned resource or
+			// data source would require Provider level access and this would break workflow when tenant needs to
+			// reference service engine group ID in `vcd_nsxt_alb_virtual_service`. Because of that
+			// `service_engine_group_id` and `service_engine_group_name` are both supported but only one required.
+			"service_engine_group_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Computed:     true,
+				Description:  "Service Engine Group Name which is attached to NSX-T Edge Gateway",
+				ExactlyOneOf: []string{"service_engine_group_name", "service_engine_group_id"},
+			},
 			"service_engine_group_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Edge Gateway ID in which ALB Service Engine Group should be located",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Computed:     true,
+				Description:  "Service Engine Group ID which is attached to NSX-T Edge Gateway",
+				ExactlyOneOf: []string{"service_engine_group_name", "service_engine_group_id"},
 			},
 			"max_virtual_services": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -64,25 +79,47 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *s
 	vcdClient := meta.(*VCDClient)
 
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
-	serviceEngineGroupId := d.Get("service_engine_group_id")
+	serviceEngineGroupName := d.Get("service_engine_group_name").(string)
+	serviceEngineGroupId := d.Get("service_engine_group_id").(string)
 
-	queryParams := url.Values{}
-	queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s;serviceEngineGroupRef.id==%s", edgeGatewayId, serviceEngineGroupId))
+	var err error
+	var edgeAlbServiceEngineAssignment *govcd.NsxtAlbServiceEngineGroupAssignment
 
-	edgeAlbServiceEngineAssignments, err := vcdClient.GetAllAlbServiceEngineGroupAssignments(queryParams)
-	if err != nil {
-		return diag.Errorf("error reading ALB Service Engine Group assignment to Edge Gateway: %s", err)
+	// When `service_engine_group_name` lookup field is presented
+	if serviceEngineGroupName != "" {
+		// This will filter service engine groups by assigned NSX-T Edge Gateway ID and additionally filter by Name on client
+		// side
+		queryParams := url.Values{}
+		queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s", edgeGatewayId))
+		edgeAlbServiceEngineAssignment, err = vcdClient.GetFilteredAlbServiceEngineGroupAssignmentByName(serviceEngineGroupName, queryParams)
+		if err != nil {
+			return diag.Errorf("error retrieving Service Engine Group assignment to NSX-T Edge Gateway: %s", err)
+		}
 	}
 
-	if len(edgeAlbServiceEngineAssignments) == 0 {
-		return diag.FromErr(govcd.ErrorEntityNotFound)
+	// When `service_engine_group_id` lookup field is presented
+	if serviceEngineGroupId != "" {
+		queryParams := url.Values{}
+		queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s;serviceEngineGroupRef.id==%s", edgeGatewayId, serviceEngineGroupId))
+
+		edgeAlbServiceEngineAssignments, err := vcdClient.GetAllAlbServiceEngineGroupAssignments(queryParams)
+		if err != nil {
+			return diag.Errorf("error reading ALB Service Engine Group assignment to Edge Gateway: %s", err)
+		}
+
+		if len(edgeAlbServiceEngineAssignments) == 0 {
+			return diag.FromErr(govcd.ErrorEntityNotFound)
+		}
+
+		if len(edgeAlbServiceEngineAssignments) > 1 {
+			return diag.Errorf("more than one Service Engine Group assignment to Edge Gateway found (%d)", len(edgeAlbServiceEngineAssignments))
+		}
+
+		// Exactly one Service Engine Group assignment is found
+		edgeAlbServiceEngineAssignment = edgeAlbServiceEngineAssignments[0]
 	}
 
-	if len(edgeAlbServiceEngineAssignments) > 1 {
-		return diag.Errorf("more than one Service Engine Group assignment to Edge Gateway found (%d)", len(edgeAlbServiceEngineAssignments))
-	}
-
-	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineAssignments[0].NsxtAlbServiceEngineGroupAssignment)
-	d.SetId(edgeAlbServiceEngineAssignments[0].NsxtAlbServiceEngineGroupAssignment.ID)
+	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineAssignment.NsxtAlbServiceEngineGroupAssignment)
+	d.SetId(edgeAlbServiceEngineAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
 	return nil
 }

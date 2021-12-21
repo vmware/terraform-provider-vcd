@@ -103,6 +103,9 @@ const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDS = testAccVcdNsxt
 data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
   edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }

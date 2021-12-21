@@ -46,7 +46,12 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge Gateway ID in which ALB Service Engine Group should be located",
+				Description: "Service Engine Group ID to attach to this NSX-T Edge Gateway",
+			},
+			"service_engine_group_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Service Engine Group Name which is attached to NSX-T Edge Gateway",
 			},
 			"max_virtual_services": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -71,6 +76,10 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 
 func resourceVcdAlbEdgeGatewayServiceEngineGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	err := validateEdgeGatewayIdParent(d, vcdClient)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
@@ -86,6 +95,10 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupCreate(ctx context.Context, d *s
 
 func resourceVcdAlbEdgeGatewayServiceEngineGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	err := validateEdgeGatewayIdParent(d, vcdClient)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
@@ -119,6 +132,10 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *sch
 
 func resourceVcdAlbEdgeGatewayServiceEngineGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	err := validateEdgeGatewayIdParent(d, vcdClient)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
@@ -175,6 +192,7 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *s
 func setAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types.NsxtAlbServiceEngineGroupAssignment) {
 	dSet(d, "edge_gateway_id", t.GatewayRef.ID)
 	dSet(d, "service_engine_group_id", t.ServiceEngineGroupRef.ID)
+	dSet(d, "service_engine_group_name", t.ServiceEngineGroupRef.Name)
 	dSet(d, "max_virtual_services", t.MaxVirtualServices)
 	dSet(d, "reserved_virtual_services", t.MinVirtualServices)
 	dSet(d, "deployed_virtual_services", t.NumDeployedVirtualServices)
@@ -197,4 +215,20 @@ func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtA
 	}
 
 	return edgeAlbServiceEngineAssignmentConfig
+}
+
+// validateEdgeGatewayIdParent validates if specified field `edge_gateway_id` exists in defined Org and VDC
+func validateEdgeGatewayIdParent(d *schema.ResourceData, vcdClient *VCDClient) error {
+	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf("error retrieving Org and VDC")
+	}
+
+	_, err = vcdClient.GetNsxtEdgeGatewayFromResourceById(d, "edge_gateway_id")
+	if err != nil {
+		return fmt.Errorf("unable to locate NSX-T Edge Gateway with ID '%s' in Org '%s' and VDC '%s': %s",
+			d.Get("edge_gateway_id").(string), org.Org.Name, vdc.Vdc.Name, err)
+	}
+
+	return nil
 }
