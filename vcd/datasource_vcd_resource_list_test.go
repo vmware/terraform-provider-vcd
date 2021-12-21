@@ -29,7 +29,6 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{"global_role", "vcd_global_role", "", "vApp Author"},
 		{"rights_bundle", "vcd_rights_bundle", "", "Default Rights Bundle"},
 		{"right", "vcd_right", "", "Catalog: Change Owner"},
-		{"library_certificate", "vcd_library_certificate", "", ""},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
@@ -76,6 +75,12 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{"lb_virtual_server", "vcd_lb_virtual_server", testConfig.Networking.EdgeGateway, ""},
 		{"lb_app_profile", "vcd_lb_app_profile", testConfig.Networking.EdgeGateway, ""},
 		{"lb_app_rule", "vcd_lb_app_rule", testConfig.Networking.EdgeGateway, ""},
+	}
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 35") {
+		lists = append(lists,
+			listDef{"library_certificate", "vcd_library_certificate", "", ""},
+		)
 	}
 	for _, def := range lists {
 		t.Run(def.name+"-"+def.resourceType, func(t *testing.T) { runResourceInfoTest(def, t) })
