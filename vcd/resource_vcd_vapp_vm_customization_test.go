@@ -480,11 +480,11 @@ resource "vcd_vapp_vm" "test-vm-step2" {
   cpu_cores     = 1
 
   customization {
-	enabled         = false
-	admin_password  = "some password"
+	enabled                = false
+	admin_password         = "some password"
 	auto_generate_password = false
-	join_domain     = true
-	join_org_domain = true
+	join_domain            = true
+	join_org_domain        = true
   }
 }
 `
