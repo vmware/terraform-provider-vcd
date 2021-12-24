@@ -20,6 +20,10 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 	var vappDescription = "A long description containing some text."
 	var vappUpdateDescription = "A shorter description."
 
+	secondsInDay := 60 * 60 * 24
+	runtimeLease := secondsInDay * 30
+	storageLease := secondsInDay * 3
+
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
 		"Vdc":             testConfig.VCD.Vdc,
@@ -32,6 +36,8 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 		"VappName":        vappName,
 		"VappDescription": vappDescription,
 		"FuncName":        "TestAccVcdVApp_Basic",
+		"RuntimeLease":    runtimeLease,
+		"StorageLease":    storageLease,
 		"Tags":            "vapp",
 	}
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
@@ -64,6 +70,12 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "another-value"),
+
+					// For an empty lease section, check that the lease is inherited from the organization
+					resource.TestCheckResourceAttrPair("data.vcd_org."+testConfig.VCD.Org, "vapp_lease.0.maximum_runtime_lease_in_sec",
+						"vcd_vapp."+vappName, "lease.0.runtime_lease_in_sec"),
+					resource.TestCheckResourceAttrPair("data.vcd_org."+testConfig.VCD.Org, "vapp_lease.0.maximum_storage_lease_in_sec",
+						"vcd_vapp."+vappName, "lease.0.storage_lease_in_sec"),
 				),
 			},
 			resource.TestStep{
@@ -77,6 +89,10 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata updated"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "new-value"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.third.subkey`, "third-value"),
+
+					// Check that the updated lease corresponds with the new parameters
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `lease.0.runtime_lease_in_sec`, fmt.Sprintf("%d", runtimeLease)),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `lease.0.storage_lease_in_sec`, fmt.Sprintf("%d", storageLease)),
 				),
 			},
 			resource.TestStep{
@@ -152,6 +168,10 @@ func init() {
 
 const testAccCheckVcdVApp_basic = `
 
+data "vcd_org" "{{.Org}}" {
+	name = "{{.Org}}"
+}
+
 resource "vcd_vapp" "{{.VappName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
@@ -197,6 +217,11 @@ resource "vcd_vapp" "{{.VappName}}" {
   guest_properties = {
 	"guest.another.subkey" = "new-value"
 	"guest.third.subkey"   = "third-value"
+  }
+
+  lease {
+    runtime_lease_in_sec = {{.RuntimeLease}}
+    storage_lease_in_sec = {{.StorageLease}}
   }
 
   power_on = true

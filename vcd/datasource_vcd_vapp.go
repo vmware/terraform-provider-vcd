@@ -53,6 +53,25 @@ func datasourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "Shows the status of the vApp",
 			},
+			"lease": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Defines lease parameters for this vApp",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"runtime_lease_in_sec": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended.  0 means never expires",
+						},
+						"storage_lease_in_sec": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires",
+						},
+					},
+				},
+			},
 		},
 	}
 }
