@@ -53,11 +53,11 @@ resource "vcd_vapp_vm" "web1" {
     "vapp.property1" = "value1"
     "vapp.property2" = "value2"
   }
-  
+
   lease {
-    runtime_lease_in_sec = 60*60*24*30  # extends the runtime lease to 30 days 
-    storage_lease_in_sec = 60*60*24*7  # extends the storage lease to 7 days
-  } 
+    runtime_lease_in_sec = 60 * 60 * 24 * 30 # extends the runtime lease to 30 days
+    storage_lease_in_sec = 60 * 60 * 24 * 7  # extends the storage lease to 7 days
+  }
 }
 
 resource "vcd_vapp_vm" "web2" {
