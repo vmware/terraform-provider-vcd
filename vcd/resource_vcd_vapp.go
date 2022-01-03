@@ -153,7 +153,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
@@ -164,12 +164,30 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding VApp: %#v", err)
 	}
 
+	var runtimeLease = vapp.VApp.LeaseSettingsSection.DeploymentLeaseInSeconds
+	var storageLease = vapp.VApp.LeaseSettingsSection.StorageLeaseInSeconds
 	rawLeaseSection1, ok := d.GetOk("lease")
 	if ok {
+		// We have a lease block
 		rawLeaseSection2 := rawLeaseSection1.([]interface{})
 		leaseSection := rawLeaseSection2[0].(map[string]interface{})
-		runtimeLease := leaseSection["runtime_lease_in_sec"].(int)
-		storageLease := leaseSection["storage_lease_in_sec"].(int)
+		runtimeLease = leaseSection["runtime_lease_in_sec"].(int)
+		storageLease = leaseSection["storage_lease_in_sec"].(int)
+	} else {
+		// No lease block: we read the lease defaults from the Org
+		adminOrg, err := vcdClient.GetAdminOrgById(org.Org.ID)
+		if err != nil {
+			return fmt.Errorf("error retrieving admin Org from parent Org in vApp %s: %s", vapp.VApp.Name, err)
+		}
+		if adminOrg.AdminOrg.OrgSettings == nil || adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings == nil {
+			return fmt.Errorf("error retrieving Org lease settings")
+		}
+		runtimeLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeploymentLeaseSeconds
+		storageLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.StorageLeaseSeconds
+	}
+
+	if runtimeLease != vapp.VApp.LeaseSettingsSection.DeploymentLeaseInSeconds ||
+		storageLease != vapp.VApp.LeaseSettingsSection.StorageLeaseInSeconds {
 		err = vapp.RenewLease(runtimeLease, storageLease)
 		if err != nil {
 			return fmt.Errorf("error updating VApp lease terms: %s", err)
