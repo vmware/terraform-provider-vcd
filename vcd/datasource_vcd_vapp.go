@@ -62,7 +62,7 @@ func datasourceVcdVApp() *schema.Resource {
 						"runtime_lease_in_sec": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended.  0 means never expires",
+							Description: "How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires",
 						},
 						"storage_lease_in_sec": &schema.Schema{
 							Type:        schema.TypeInt,
