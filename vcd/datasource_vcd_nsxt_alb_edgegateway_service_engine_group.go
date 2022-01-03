@@ -85,8 +85,9 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *s
 	var err error
 	var edgeAlbServiceEngineAssignment *govcd.NsxtAlbServiceEngineGroupAssignment
 
+	switch {
 	// When `service_engine_group_name` lookup field is presented
-	if serviceEngineGroupName != "" {
+	case serviceEngineGroupName != "":
 		// This will filter service engine groups by assigned NSX-T Edge Gateway ID and additionally filter by Name on client
 		// side
 		queryParams := url.Values{}
@@ -95,10 +96,8 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *s
 		if err != nil {
 			return diag.Errorf("error retrieving Service Engine Group assignment to NSX-T Edge Gateway: %s", err)
 		}
-	}
-
-	// When `service_engine_group_id` lookup field is presented
-	if serviceEngineGroupId != "" {
+	// When `id` lookup field is presented
+	case serviceEngineGroupId != "":
 		queryParams := url.Values{}
 		queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s;serviceEngineGroupRef.id==%s", edgeGatewayId, serviceEngineGroupId))
 
@@ -117,6 +116,8 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *s
 
 		// Exactly one Service Engine Group assignment is found
 		edgeAlbServiceEngineAssignment = edgeAlbServiceEngineAssignments[0]
+	default:
+		return diag.Errorf("Name or ID must be specified for Service Engine Group assignment data source")
 	}
 
 	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineAssignment.NsxtAlbServiceEngineGroupAssignment)

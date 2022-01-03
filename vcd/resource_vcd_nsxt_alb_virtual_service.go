@@ -324,7 +324,7 @@ func setNsxtAlbVirtualServicePortData(d *schema.ResourceData, ports []types.Nsxt
 			portMap["start_port"] = *port.PortStart
 		}
 
-		if port.PortEnd != nil && *port.PortStart != *port.PortEnd {
+		if port.PortEnd != nil && port.PortStart != nil && *port.PortStart != *port.PortEnd {
 			portMap["end_port"] = *port.PortEnd
 		}
 		if port.SslEnabled != nil {
