@@ -110,7 +110,7 @@ The following arguments are supported:
    included, both fields are mandatory. If lease values are higher than the ones allowed for the whole Org, the values
    are **silently** demoted to the highest value allowed.
   * `runtime_lease_in_sec` - How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
-  * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by Org. Regular values accepted from 3600+.
+  * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
 
 
 ## Importing
