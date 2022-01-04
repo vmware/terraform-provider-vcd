@@ -59,3 +59,6 @@ The following arguments are supported:
 * `guest_properties` -  Key value map of vApp guest properties.
 * `status` -  The vApp status as a numeric code
 * `status_text` -  The vApp status as text.
+* `lease` (*v3.5+*) - The information about the vApp lease. It includes the following fields:
+  * `runtime_lease_in_sec` - How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires.
+  * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires.

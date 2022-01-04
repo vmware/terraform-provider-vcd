@@ -80,6 +80,29 @@ func resourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "Shows the status of the vApp",
 			},
+			"lease": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: "Defines lease parameters for this vApp",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"runtime_lease_in_sec": &schema.Schema{
+							Type:         schema.TypeInt,
+							Required:     true,
+							Description:  "How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires",
+							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
+						},
+						"storage_lease_in_sec": &schema.Schema{
+							Type:         schema.TypeInt,
+							Required:     true,
+							Description:  "How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires",
+							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -130,7 +153,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
@@ -141,6 +164,35 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding VApp: %#v", err)
 	}
 
+	var runtimeLease = vapp.VApp.LeaseSettingsSection.DeploymentLeaseInSeconds
+	var storageLease = vapp.VApp.LeaseSettingsSection.StorageLeaseInSeconds
+	rawLeaseSection1, ok := d.GetOk("lease")
+	if ok {
+		// We have a lease block
+		rawLeaseSection2 := rawLeaseSection1.([]interface{})
+		leaseSection := rawLeaseSection2[0].(map[string]interface{})
+		runtimeLease = leaseSection["runtime_lease_in_sec"].(int)
+		storageLease = leaseSection["storage_lease_in_sec"].(int)
+	} else {
+		// No lease block: we read the lease defaults from the Org
+		adminOrg, err := vcdClient.GetAdminOrgById(org.Org.ID)
+		if err != nil {
+			return fmt.Errorf("error retrieving admin Org from parent Org in vApp %s: %s", vapp.VApp.Name, err)
+		}
+		if adminOrg.AdminOrg.OrgSettings == nil || adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings == nil {
+			return fmt.Errorf("error retrieving Org lease settings")
+		}
+		runtimeLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeploymentLeaseSeconds
+		storageLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.StorageLeaseSeconds
+	}
+
+	if runtimeLease != vapp.VApp.LeaseSettingsSection.DeploymentLeaseInSeconds ||
+		storageLease != vapp.VApp.LeaseSettingsSection.StorageLeaseInSeconds {
+		err = vapp.RenewLease(runtimeLease, storageLease)
+		if err != nil {
+			return fmt.Errorf("error updating VApp lease terms: %s", err)
+		}
+	}
 	if d.HasChange("description") {
 		err = vapp.UpdateNameDescription(d.Get("name").(string), d.Get("description").(string))
 		if err != nil {
@@ -246,6 +298,21 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	err = setGuestProperties(d, guestProperties)
 	if err != nil {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
+	}
+
+	leaseInfo, err := vapp.GetLease()
+	if err != nil {
+		return fmt.Errorf("unable to get lease information: %s", err)
+	}
+	leaseData := []map[string]interface{}{
+		{
+			"runtime_lease_in_sec": leaseInfo.DeploymentLeaseInSeconds,
+			"storage_lease_in_sec": leaseInfo.StorageLeaseInSeconds,
+		},
+	}
+	err = d.Set("lease", leaseData)
+	if err != nil {
+		return fmt.Errorf("unable to set lease information in state: %s", err)
 	}
 
 	statusText, err := vapp.GetStatus()

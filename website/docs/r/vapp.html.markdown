@@ -53,6 +53,11 @@ resource "vcd_vapp_vm" "web1" {
     "vapp.property1" = "value1"
     "vapp.property2" = "value2"
   }
+
+  lease {
+    runtime_lease_in_sec = 60 * 60 * 24 * 30 # extends the runtime lease to 30 days
+    storage_lease_in_sec = 60 * 60 * 24 * 7  # extends the storage lease to 7 days
+  }
 }
 
 resource "vcd_vapp_vm" "web2" {
@@ -101,6 +106,11 @@ The following arguments are supported:
 * `href` - (Computed) The vApp Hyper Reference
 * `status` - (Computed; *v2.5+*) The vApp status as a numeric code
 * `status_text` - (Computed; *v2.5+*) The vApp status as text.
+* `lease` - (Optional *v3.5+*) the information about the vApp lease. It includes the fields below. When this section is 
+   included, both fields are mandatory. If lease values are higher than the ones allowed for the whole Org, the values
+   are **silently** reduced to the highest value allowed.
+  * `runtime_lease_in_sec` - How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
+  * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
 
 
 ## Importing
