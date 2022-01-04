@@ -46,6 +46,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 			t.Skip(`Works only with system admin privileges`)
 		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):
 			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
+		case (dataSourceName == "vcd_library_certificate" || dataSourceName == "vcd_vdc_group") && vcdClient.Client.APIVCDMaxVersionIs("< 35"):
+			t.Skipf("%s requires at least API version 34 (VCD 10.2+)", dataSourceName)
 		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster" ||
 			dataSourceName == "vcd_nsxt_security_group" || dataSourceName == "vcd_nsxt_nat_rule" ||
 			dataSourceName == "vcd_nsxt_app_port_profile" || dataSourceName == "vcd_nsxt_ip_set") &&

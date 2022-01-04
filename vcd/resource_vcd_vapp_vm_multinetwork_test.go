@@ -263,7 +263,7 @@ resource "vcd_vapp" "{{.VAppName}}" {
   vdc = "{{.Vdc}}"
 
   name       = "{{.VAppName}}"
-  depends_on = ["vcd_network_routed.net", "vcd_network_routed.net2"]
+  depends_on = [vcd_network_routed.net, vcd_network_routed.net2]
 }
 
 resource "vcd_vapp_network" "vappIsolatedNet" {
@@ -362,7 +362,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = false
 	adapter_type       = "PCNet32" 
@@ -370,14 +370,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip                 = "11.10.0.170"
     ip_allocation_mode = "MANUAL"
     is_primary         = false
@@ -387,7 +387,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net2.name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = false
     adapter_type       = "e1000e"
@@ -430,7 +430,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name              = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
   }
  }
@@ -452,21 +452,21 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip_allocation_mode = "DHCP"
     is_primary         = false
   }
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip                 = "11.10.0.170"
     ip_allocation_mode = "MANUAL"
     is_primary         = false
@@ -475,7 +475,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net2.name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = false
 	mac                = "00:00:00:11:11:11"
@@ -547,7 +547,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
     ip_allocation_mode = "POOL"
     adapter_type       = "vmxnet2"
   }
