@@ -22,7 +22,8 @@
 * Remove Coverity warnings from code ([#734](https://github.com/vmware/terraform-provider-vcd/pull/734))
 * Add support for disk controller type nvme ([#680](https://github.com/vmware/terraform-provider-vcd/pull/680),[#739](https://github.com/vmware/terraform-provider-vcd/pull/739))
 * Add property `api_token` to provider, supporting API token authentication ([#742](https://github.com/vmware/terraform-provider-vcd/pull/742))
-* Bump Terraform SDK to 2.10.0 ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751)]* `resource/vcd_vapp` add support for `lease` settings management. [[#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
+* Bump Terraform SDK to 2.10.0 ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751)]
+* `resource/vcd_vapp` add support for `lease` settings management. [[#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
 * `datasource/vcd_vapp` add support for `lease` settings visualization. ([#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
 
 ## BUG FIXES
