@@ -1,6 +1,40 @@
-## 3.5.0 (Unreleased)
+## 3.5.0 (TBC)
 
-Changes in progress for v3.5.0 are available at [.changes/v3.5.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.5.0) until the release.
+## FEATURES
+* **New Resource:** `vcd_nsxt_alb_settings` for managing NSX-T ALB on NSX-T Edge Gateways ([#726](https://github.com/vmware/terraform-provider-vcd/pull/726))
+* **New Data source:** `vcd_nsxt_alb_settings` for reading NSX-T ALB on NSX-T Edge Gateways  ([#726](https://github.com/vmware/terraform-provider-vcd/pull/726))
+* **New Resource:** `vcd_library_certificate` for managing certificates in library (provider configuration) ([#733](https://github.com/vmware/terraform-provider-vcd/pull/733))
+* **New Data source:** `vcd_library_certificate` for reading certificates in library ([#733](https://github.com/vmware/terraform-provider-vcd/pull/733))
+* **New Resource:** `vcd_nsxt_alb_edgegateway_service_engine_group` for managing NSX-T ALB Service Engine Groups
+  assignments to Edge Gateways ([#738](https://github.com/vmware/terraform-provider-vcd/pull/738), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
+* **New Data source:** `vcd_nsxt_alb_edgegateway_service_engine_group` for reading NSX-T ALB Service Engine Groups
+  assignments to Edge Gateways ([#738](https://github.com/vmware/terraform-provider-vcd/pull/738), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
+* **New Resource:** `vcd_vdc_group` for managing VDC groups ([#752](https://github.com/vmware/terraform-provider-vcd/pull/752))
+* **New Data source:** `vcd_vdc_group` for reading VDC groups ([#752](https://github.com/vmware/terraform-provider-vcd/pull/752))
+* **New Resource:** `vcd_nsxt_alb_pool` for NSX-T Load balancer pools ([#756](https://github.com/vmware/terraform-provider-vcd/pull/756))
+* **New Data source:** `vcd_nsxt_alb_pool` for reading NSX-T Load balancer pools ([#756](https://github.com/vmware/terraform-provider-vcd/pull/756))
+* **New Resource:** `vcd_nsxt_alb_virtual_service` for managing NSX-T ALB Virtual Service on NSX-T Edge Gateways
+  ([#757](https://github.com/vmware/terraform-provider-vcd/pull/757), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
+* **New Data source:** `vcd_nsxt_alb_virtual_service` for reading NSX-T ALB Virtual Service on NSX-T Edge Gateways
+  ([#757](https://github.com/vmware/terraform-provider-vcd/pull/757), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
+
+## IMPROVEMENTS
+* Remove Coverity warnings from code ([#734](https://github.com/vmware/terraform-provider-vcd/pull/734))
+* Add support for disk controller type nvme ([#680](https://github.com/vmware/terraform-provider-vcd/pull/680),[#739](https://github.com/vmware/terraform-provider-vcd/pull/739))
+* Add property `api_token` to provider, supporting API token authentication ([#742](https://github.com/vmware/terraform-provider-vcd/pull/742))
+* Bump Terraform SDK to 2.10.0 ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751)]* `resource/vcd_vapp` add support for `lease` settings management. [[#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
+* `datasource/vcd_vapp` add support for `lease` settings visualization. ([#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
+
+## BUG FIXES
+* Fix bootable media connection in `vcd_vm` by sending media reference in `CreateVM` ([#714](https://github.com/vmware/terraform-provider-vcd/pull/714))
+* Fix broken documentation links ([#721](https://github.com/vmware/terraform-provider-vcd/pull/721))
+* Fix bug where using `vcd_vm_internal_disk` could remove `description` field in `vcd_vapp_vm` and `vcd_vm` ([#758](https://github.com/vmware/terraform-provider-vcd/pull/758)]* Skip tests for resources not available in 10.1 [[#761](https://github.com/vmware/terraform-provider-vcd/pull/761))
+* Fix wrong references in `TestAccVcdVAppVmMultiNIC` ([#761](https://github.com/vmware/terraform-provider-vcd/pull/761))
+
+## NOTES
+* Add Guest Customization docs with examples to "guides" section ([#729](https://github.com/vmware/terraform-provider-vcd/pull/729))
+* Improve HCL samples in documentation to only contain single newline spaces and adjust automated check to catch it
+  ([#747](https://github.com/vmware/terraform-provider-vcd/pull/747))
 
 ## 3.4.0 (September 30, 2021)
 
