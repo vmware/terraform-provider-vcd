@@ -22,7 +22,7 @@
 * Remove Coverity warnings from code ([#734](https://github.com/vmware/terraform-provider-vcd/pull/734))
 * Add support for disk controller type nvme ([#680](https://github.com/vmware/terraform-provider-vcd/pull/680),[#739](https://github.com/vmware/terraform-provider-vcd/pull/739))
 * Add property `api_token` to provider, supporting API token authentication ([#742](https://github.com/vmware/terraform-provider-vcd/pull/742))
-* Bump Terraform SDK to 2.10.0 ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751)]
+* Bump Terraform SDK to 2.10.0 ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751))
 * `resource/vcd_vapp` add support for `lease` settings management. [[#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
 * `datasource/vcd_vapp` add support for `lease` settings visualization. ([#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
 
@@ -37,6 +37,8 @@
 * Add Guest Customization docs with examples to "guides" section ([#729](https://github.com/vmware/terraform-provider-vcd/pull/729))
 * Improve HCL samples in documentation to only contain single newline spaces and adjust automated check to catch it
   ([#747](https://github.com/vmware/terraform-provider-vcd/pull/747))
+* Add support for Terraform 1.1 CLI by upgrading Terraform Plugin SDK from v2.7.0 to v2.10.0 
+  (there was a crash with older SDK version) ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751))
 
 ## 3.4.0 (September 30, 2021)
 
