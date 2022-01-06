@@ -169,3 +169,7 @@ vcd.TestAccVcdEdgeGatewaySettingsFull.tf v3.0.0 "Terraform 0.13+ shows expected 
 vcd.ResourceSchema-vcd_vapp_vm.tf v3.1.0 "Schema changes in VM due to standalone VM implementation"
 vcd.ResourceList-resources-resources.tf v3.1.0 "v3.2.0 introduced new options and this test complains on output diff"
 vcd.TestAccVcdNsxtStandaloneVmTemplate.tf v3.2.0 "Terraform binary now requires to mark sensitive=true for output"
+vcd.ResourceSchema-vcd_vapp.tf v3.4.0 "Schema changes: New fields introduced in vApp"
+vcd.ResourceSchema-vcd_vapp_vm.tf v3.4.0 "Schema changes: Fields changed in VM"
+vcd.ResourceSchema-vcd_vm_internal_disk.tf v3.4.0 "Schema changes: Fields changes in internal disk"
+vcd.ResourceSchema-vcd_vm.tf v3.4.0 "Schema changes: Fields changed in VM"
