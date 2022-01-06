@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
@@ -12,12 +14,12 @@ import (
 
 func resourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdCatalogItemCreate,
-		Delete: resourceVcdCatalogItemDelete,
-		Read:   resourceVcdCatalogItemRead,
-		Update: resourceVcdCatalogItemUpdate,
+		CreateContext: resourceVcdCatalogItemCreate,
+		DeleteContext: resourceVcdCatalogItemDelete,
+		ReadContext:   resourceVcdCatalogItemRead,
+		UpdateContext: resourceVcdCatalogItemUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdCatalogItemImport,
+			StateContext: resourceVcdCatalogItemImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -58,14 +60,12 @@ func resourceVcdCatalogItem() *schema.Resource {
 			"upload_piece_size": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
-				ForceNew:    false,
 				Default:     1,
 				Description: "size of upload file piece size in mega bytes",
 			},
 			"show_upload_progress": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				ForceNew:    false,
 				Description: "shows upload progress in stdout",
 			},
 			"metadata": {
@@ -79,21 +79,21 @@ func resourceVcdCatalogItem() *schema.Resource {
 	}
 }
 
-func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog item creation initiated")
 
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	catalogName := d.Get("catalog").(string)
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Error finding Catalog: %#v", err)
-		return fmt.Errorf("error finding Catalog: %#v", err)
+		return diag.Errorf("error finding Catalog: %#v", err)
 	}
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
@@ -101,7 +101,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
 		log.Printf("[DEBUG] Error uploading new catalog item: %#v", err)
-		return fmt.Errorf("error uploading new catalog item: %#v", err)
+		return diag.Errorf("error uploading new catalog item: %#v", err)
 	}
 
 	terraformStdout := getTerraformStdout()
@@ -109,7 +109,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	if d.Get("show_upload_progress").(bool) {
 		for {
 			if err := getError(task); err != nil {
-				return err
+				return diag.Errorf("%s", err)
 			}
 			fprintNoErr(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
@@ -124,7 +124,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 			progress, err := task.GetTaskProgress()
 			if err != nil {
 				log.Printf("vCD Error importing new catalog item: %#v", err)
-				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
+				return diag.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
 			fprintNoErr(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
@@ -136,85 +136,88 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
+		return diag.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	item, err := catalog.GetCatalogItemByName(itemName, true)
 	if err != nil {
-		return fmt.Errorf("error retrieving catalog item %s: %s", itemName, err)
+		return diag.Errorf("error retrieving catalog item %s: %s", itemName, err)
 	}
 	d.SetId(item.CatalogItem.ID)
 
 	log.Printf("[TRACE] Catalog item created: %#v", itemName)
 
-	err = createOrUpdateCatalogItemMetadata(d, meta)
-	if err != nil {
-		return fmt.Errorf("error adding catalog item metadata: %s", err)
+	diagError := createOrUpdateCatalogItemMetadata(d, meta)
+	if diagError != nil {
+		return diagError
 	}
 
-	return resourceVcdCatalogItemRead(d, meta)
+	return resourceVcdCatalogItemRead(ctx, d, meta)
 }
 
-func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdCatalogItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdCatalogItemRead(d, meta, "resource")
 }
 
-func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
-		return err
+		return diag.Errorf("Unable to find media item: %s", err)
 	}
 	if catalogItem == nil {
 		log.Printf("[DEBUG] Unable to find media item: %s. Removing from tfstate", err)
-		return err
+		return diag.Errorf("Unable to find media item")
 	}
 
 	vAppTemplate, err := catalogItem.GetVAppTemplate()
 	if err != nil {
-		return err
+		return diag.Errorf("Unable to find Vapp template: %s", err)
 	}
 
 	metadata, err := vAppTemplate.GetMetadata()
 	if err != nil {
-		return err
+		return diag.Errorf("Unable to find meta data: %s", err)
 	}
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set meta data: %s", err)
+	}
 
-	return err
+	return nil
 }
 
-func resourceVcdCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdCatalogItemDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
 // currently updates only metadata
-func resourceVcdCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdCatalogItemUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := createOrUpdateCatalogItemMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error updating catalog item metadata: %s", err)
+		return diag.Errorf("error updating catalog item metadata: %s", err)
 	}
 	return nil
 }
 
-func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) error {
+func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	// We have to add metadata to template to see in UI
 	// catalog item is another abstraction and has own metadata which we don't see in UI
 	vAppTemplate, err := catalogItem.GetVAppTemplate()
 	if err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	if d.HasChange("metadata") {
@@ -232,14 +235,14 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		for _, k := range toBeRemovedMetadata {
 			err := vAppTemplate.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
+				return diag.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			_, err := vAppTemplate.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
+				return diag.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
@@ -252,7 +255,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 //
 // Example import path (id): org_name.catalog_name.catalog_item_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogItemImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.catalog_item")
