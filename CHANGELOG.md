@@ -9,10 +9,10 @@
   assignments to Edge Gateways ([#738](https://github.com/vmware/terraform-provider-vcd/pull/738), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
 * **New Data source:** `vcd_nsxt_alb_edgegateway_service_engine_group` for reading NSX-T ALB Service Engine Groups
   assignments to Edge Gateways ([#738](https://github.com/vmware/terraform-provider-vcd/pull/738), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
-* **New Resource:** `vcd_vdc_group` for managing VDC groups ([#752](https://github.com/vmware/terraform-provider-vcd/pull/752))
-* **New Data source:** `vcd_vdc_group` for reading VDC groups ([#752](https://github.com/vmware/terraform-provider-vcd/pull/752))
-* **New Resource:** `vcd_nsxt_alb_pool` for NSX-T Load balancer pools ([#756](https://github.com/vmware/terraform-provider-vcd/pull/756))
-* **New Data source:** `vcd_nsxt_alb_pool` for reading NSX-T Load balancer pools ([#756](https://github.com/vmware/terraform-provider-vcd/pull/756))
+* **New Resource:** `vcd_vdc_group` for managing VDC Groups ([#752](https://github.com/vmware/terraform-provider-vcd/pull/752))
+* **New Data source:** `vcd_vdc_group` for reading VDC Groups ([#752](https://github.com/vmware/terraform-provider-vcd/pull/752))
+* **New Resource:** `vcd_nsxt_alb_pool` for NSX-T Load Balancer pools ([#756](https://github.com/vmware/terraform-provider-vcd/pull/756))
+* **New Data source:** `vcd_nsxt_alb_pool` for reading NSX-T Load Balancer pools ([#756](https://github.com/vmware/terraform-provider-vcd/pull/756))
 * **New Resource:** `vcd_nsxt_alb_virtual_service` for managing NSX-T ALB Virtual Service on NSX-T Edge Gateways
   ([#757](https://github.com/vmware/terraform-provider-vcd/pull/757), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
 * **New Data source:** `vcd_nsxt_alb_virtual_service` for reading NSX-T ALB Virtual Service on NSX-T Edge Gateways
@@ -20,7 +20,8 @@
 
 ## IMPROVEMENTS
 * Remove Coverity warnings from code ([#734](https://github.com/vmware/terraform-provider-vcd/pull/734))
-* Add support for disk controller type nvme ([#680](https://github.com/vmware/terraform-provider-vcd/pull/680),[#739](https://github.com/vmware/terraform-provider-vcd/pull/739))
+* `resource/vcd_vapp_vm`, `resource/vcd_vm_internal_disk` add support for disk controller type nvme 
+  ([#680](https://github.com/vmware/terraform-provider-vcd/pull/680),[#739](https://github.com/vmware/terraform-provider-vcd/pull/739))
 * Add property `api_token` to provider, supporting API token authentication ([#742](https://github.com/vmware/terraform-provider-vcd/pull/742))
 * Bump Terraform SDK to 2.10.0 ([#751](https://github.com/vmware/terraform-provider-vcd/pull/751))
 * `resource/vcd_vapp` add support for `lease` settings management. [[#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
