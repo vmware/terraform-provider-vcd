@@ -30,7 +30,7 @@
 ## BUG FIXES
 * Fix bootable media connection in `vcd_vm` by sending media reference in `CreateVM` ([#714](https://github.com/vmware/terraform-provider-vcd/pull/714))
 * Fix broken documentation links ([#721](https://github.com/vmware/terraform-provider-vcd/pull/721))
-* Fix bug where using `vcd_vm_internal_disk` could remove `description` field in `vcd_vapp_vm` and `vcd_vm` ([#758](https://github.com/vmware/terraform-provider-vcd/pull/758)]
+* Fix bug where using `vcd_vm_internal_disk` could remove `description` field in `vcd_vapp_vm` and `vcd_vm` ([#758](https://github.com/vmware/terraform-provider-vcd/pull/758))
 * Skip tests for resources not available in 10.1 [[#761](https://github.com/vmware/terraform-provider-vcd/pull/761))
 * Fix wrong references in `TestAccVcdVAppVmMultiNIC` ([#761](https://github.com/vmware/terraform-provider-vcd/pull/761))
 
