@@ -1,4 +1,4 @@
-## 3.5.0 (TBC)
+## 3.5.0 (January 7, 2022)
 
 ## FEATURES
 * **New Resource:** `vcd_nsxt_alb_settings` for managing NSX-T ALB on NSX-T Edge Gateways ([#726](https://github.com/vmware/terraform-provider-vcd/pull/726))
