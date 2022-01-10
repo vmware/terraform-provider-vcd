@@ -52,10 +52,18 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Description: "Time stamp of when the item was created",
 			},
 			"ova_path": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "absolute or relative path to OVA",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"ova_path", "ova_url"},
+				Description:  "absolute or relative path to OVA",
+			},
+			"ova_url": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"ova_path", "ova_url"},
+				Description:  "URL of OVF file",
 			},
 			"upload_piece_size": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -96,8 +104,37 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error finding Catalog: %#v", err)
 	}
 
-	uploadPieceSize := d.Get("upload_piece_size").(int)
+	var diagError diag.Diagnostics
 	itemName := d.Get("name").(string)
+	if d.Get("ova_path").(string) != "" {
+		diagError = uploadFile(d, catalog, itemName)
+	} else if d.Get("ova_url").(string) != "" {
+		diagError = uploadFromUrl(d, catalog, itemName)
+	} else {
+		return diag.Errorf("`ova_path` or `ova_url` value is missing %s", err)
+	}
+	if diagError != nil {
+		return diagError
+	}
+
+	item, err := catalog.GetCatalogItemByName(itemName, true)
+	if err != nil {
+		return diag.Errorf("error retrieving catalog item %s: %s", itemName, err)
+	}
+	d.SetId(item.CatalogItem.ID)
+
+	log.Printf("[TRACE] Catalog item created: %#v", itemName)
+
+	err = createOrUpdateCatalogItemMetadata(d, meta)
+	if diagError != nil {
+		diag.Errorf("%s", err)
+	}
+
+	return resourceVcdCatalogItemRead(ctx, d, meta)
+}
+
+func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
+	uploadPieceSize := d.Get("upload_piece_size").(int)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
 		log.Printf("[DEBUG] Error uploading new catalog item: %#v", err)
@@ -119,6 +156,22 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 
+	return finishHandlingTask(d, *task.Task, itemName, err)
+}
+
+func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
+	task, err := catalog.UploadOvfByLink(d.Get("ova_url").(string), itemName, d.Get("description").(string))
+	if err != nil {
+		log.Printf("[DEBUG] Error uploading new catalog item from URL: %s", err)
+		return diag.Errorf("error uploading new catalog item from URL: %s", err)
+	}
+
+	return finishHandlingTask(d, task, itemName, err)
+}
+
+func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string, err error) diag.Diagnostics {
+	terraformStdout := getTerraformStdout()
+
 	if d.Get("show_upload_progress").(bool) {
 		for {
 			progress, err := task.GetTaskProgress()
@@ -138,21 +191,7 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.Errorf("error waiting for task to complete: %+v", err)
 	}
-
-	item, err := catalog.GetCatalogItemByName(itemName, true)
-	if err != nil {
-		return diag.Errorf("error retrieving catalog item %s: %s", itemName, err)
-	}
-	d.SetId(item.CatalogItem.ID)
-
-	log.Printf("[TRACE] Catalog item created: %#v", itemName)
-
-	diagError := createOrUpdateCatalogItemMetadata(d, meta)
-	if diagError != nil {
-		return diagError
-	}
-
-	return resourceVcdCatalogItemRead(ctx, d, meta)
+	return nil
 }
 
 func resourceVcdCatalogItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -196,6 +235,30 @@ func resourceVcdCatalogItemDelete(ctx context.Context, d *schema.ResourceData, m
 
 // currently updates only metadata
 func resourceVcdCatalogItemUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChange("description") || d.HasChange("name") {
+		catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find media item: %s", err)
+			return diag.Errorf("Unable to find media item: %s", err)
+		}
+		if catalogItem == nil {
+			log.Printf("[DEBUG] Unable to find media item: %s. Removing from tfstate", err)
+			return diag.Errorf("Unable to find media item")
+		}
+
+		vAppTemplate, err := catalogItem.GetVAppTemplate()
+		if err != nil {
+			return diag.Errorf("Unable to find Vapp template: %s", err)
+		}
+
+		vAppTemplate.VAppTemplate.Description = d.Get("description").(string)
+		vAppTemplate.VAppTemplate.Name = d.Get("name").(string)
+		_, err = vAppTemplate.Update()
+		if err != nil {
+			return diag.Errorf("error updating catalog item: %s", err)
+		}
+	}
+
 	err := createOrUpdateCatalogItemMetadata(d, meta)
 	if err != nil {
 		return diag.Errorf("error updating catalog item metadata: %s", err)
@@ -203,21 +266,21 @@ func resourceVcdCatalogItemUpdate(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
-		return diag.Errorf("%s", err)
+		return fmt.Errorf("%s", err)
 	}
 
 	// We have to add metadata to template to see in UI
 	// catalog item is another abstraction and has own metadata which we don't see in UI
 	vAppTemplate, err := catalogItem.GetVAppTemplate()
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return err
 	}
 
 	if d.HasChange("metadata") {
@@ -235,14 +298,14 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		for _, k := range toBeRemovedMetadata {
 			err := vAppTemplate.DeleteMetadata(k)
 			if err != nil {
-				return diag.Errorf("error deleting metadata: %s", err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			_, err := vAppTemplate.AddMetadata(k, v.(string))
 			if err != nil {
-				return diag.Errorf("error adding metadata: %s", err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}

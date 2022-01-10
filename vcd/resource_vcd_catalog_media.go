@@ -262,8 +262,10 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-
-	return diag.Errorf("%s", err)
+	if err != nil {
+		diag.Errorf("%s", err)
+	}
+	return nil
 }
 
 func resourceVcdMediaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

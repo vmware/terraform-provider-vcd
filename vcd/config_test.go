@@ -151,6 +151,7 @@ type TestConfig struct {
 	} `json:"logging"`
 	Ova struct {
 		OvaPath             string `json:"ovaPath,omitempty"`
+		OvfUrl              string `json:"ovfUrl,omitempty"`
 		UploadPieceSize     int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress      bool   `json:"uploadProgress,omitempty"`
 		OvaTestFileName     string `json:"ovaTestFileName,omitempty"`
