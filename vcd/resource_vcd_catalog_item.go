@@ -156,7 +156,7 @@ func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string)
 		}
 	}
 
-	return finishHandlingTask(d, *task.Task, itemName, err)
+	return finishHandlingTask(d, *task.Task, itemName)
 }
 
 func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
@@ -166,10 +166,10 @@ func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName stri
 		return diag.Errorf("error uploading new catalog item from URL: %s", err)
 	}
 
-	return finishHandlingTask(d, task, itemName, err)
+	return finishHandlingTask(d, task, itemName)
 }
 
-func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string, err error) diag.Diagnostics {
+func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string) diag.Diagnostics {
 	terraformStdout := getTerraformStdout()
 
 	if d.Get("show_upload_progress").(bool) {
@@ -187,7 +187,7 @@ func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string
 		}
 	}
 
-	err = task.WaitTaskCompletion()
+	err := task.WaitTaskCompletion()
 	if err != nil {
 		return diag.Errorf("error waiting for task to complete: %+v", err)
 	}
