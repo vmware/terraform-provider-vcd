@@ -462,7 +462,7 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 			return nil, fmt.Errorf("unable to parse vApp network ID: %s, %s", err, uuid)
 		}
 
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", index+1, vapp.VApp.ID, uuid, vappNetwork.NetworkName)
 		if err != nil {
 			logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error writing to buffer: %s", err))
 		}

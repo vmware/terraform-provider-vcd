@@ -625,7 +625,7 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 	}
 
 	for index, policy := range policies {
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\n", index+1, policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
 		if err != nil {
 			logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
 		}

@@ -378,7 +378,7 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 	}
 
 	buf := new(bytes.Buffer)
-	_, err = fmt.Fprintf(buf, "Retrieving all disks by name")
+	_, err = fmt.Fprintln(buf, "Retrieving all disks by name")
 	if err != nil {
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 	}
@@ -389,16 +389,16 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 
 	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	_, err = fmt.Fprintf(writer, "No\tID\tName\tDescription\tSizeMb")
+	_, err = fmt.Fprintf(writer, "No\tID\tName\tDescription\tSizeMb\n")
 	if err != nil {
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 	}
-	_, err = fmt.Fprintf(writer, "--\t--\t----\t------\t----")
+	_, err = fmt.Fprintf(writer, "--\t--\t----\t------\t----\n")
 	if err != nil {
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 	}
 	for index, disk := range *disks {
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", index+1, disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
 		if err != nil {
 			logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 		}

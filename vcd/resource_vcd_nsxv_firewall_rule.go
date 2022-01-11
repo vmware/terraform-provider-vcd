@@ -455,7 +455,7 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 			logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
 		}
 		for index, rule := range allRules {
-			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", index+1, rule.ID, rule.Name, rule.Action, rule.RuleType)
 			if err != nil {
 				logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
 			}

@@ -389,7 +389,7 @@ func dumpNatRulesToScreen(name string, allRules []*govcd.NsxtNatRule) {
 
 	buf := new(bytes.Buffer)
 	w := tabwriter.NewWriter(buf, 1, 1, 1, ' ', 0)
-	_, err := fmt.Fprintf(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
+	_, err := fmt.Fprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
 	if err != nil {
 		logForScreen("vcd_nsxt_nat_rule", fmt.Sprintf("error writing to buffer: %s", err))
 	}
