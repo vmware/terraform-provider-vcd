@@ -452,7 +452,7 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
 		if disk.Disk == nil {
-			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", index+1, disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
 				disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
 			if err != nil {
 				logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error writing to buffer: %s", err))
