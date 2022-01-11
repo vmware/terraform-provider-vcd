@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strings"
@@ -434,17 +435,26 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 		return nil, fmt.Errorf("[vapp network rules import, network list] unable to find VDC %s: %s ", vdcName, err)
 	}
 
-	stdout := getTerraformStdout()
-	fprintlnNoErr(stdout, "Retrieving all vApp networks by name")
+	buf := new(bytes.Buffer)
+	_, err = fmt.Fprintln(buf, "Retrieving all vApp networks by name")
+	if err != nil {
+		logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve vApp by name: %s", err)
 	}
 
-	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fprintlnNoErr(writer, "No\tvApp ID\tID\tName\t")
-	fprintlnNoErr(writer, "--\t-------\t--\t----\t")
+	_, err = fmt.Fprintln(writer, "No\tvApp ID\tID\tName\t")
+	if err != nil {
+		logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	_, err = fmt.Fprintln(writer, "--\t-------\t--\t----\t")
+	if err != nil {
+		logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 
 	for index, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
 		uuid, err := govcd.GetUuidFromHref(vappNetwork.Link.HREF, false)
@@ -452,9 +462,15 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 			return nil, fmt.Errorf("unable to parse vApp network ID: %s, %s", err, uuid)
 		}
 
-		fprintfNoErr(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
+		if err != nil {
+			logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error writing to buffer: %s", err))
+		}
 	}
-	flushNoErr(writer)
+	err = writer.Flush()
+	if err != nil {
+		logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error flushing buffer: %s", err))
+	}
 
 	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkRulesImport)
 }

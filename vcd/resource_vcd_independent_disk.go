@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strings"
@@ -376,20 +377,36 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
-	fprintlnNoErr(getTerraformStdout(), "Retrieving all disks by name")
+	buf := new(bytes.Buffer)
+	_, err = fmt.Fprintf(buf, "Retrieving all disks by name")
+	if err != nil {
+		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 	disks, err := vdc.GetDisksByName(diskName, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
 	}
 
-	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
+	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fprintlnNoErr(writer, "No\tID\tName\tDescription\tSizeMb")
-	fprintlnNoErr(writer, "--\t--\t----\t------\t----")
-	for index, disk := range *disks {
-		fprintfNoErr(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+	_, err = fmt.Fprintf(writer, "No\tID\tName\tDescription\tSizeMb")
+	if err != nil {
+		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 	}
-	flushNoErr(writer)
+	_, err = fmt.Fprintf(writer, "--\t--\t----\t------\t----")
+	if err != nil {
+		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	for index, disk := range *disks {
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+		if err != nil {
+			logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
+		}
+	}
+	err = writer.Flush()
+	if err != nil {
+		logForScreen("vcd_independent_disk", fmt.Sprintf("error flushing buffer: %s", err))
+	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
+	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpDiskImport, buf.String())
 }

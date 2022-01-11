@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -590,22 +591,37 @@ func setNsxtIpSecVpnProfileTunnelConfigurationData(d *schema.ResourceData, tunne
 // be that user specifies a config with the same name. In that case IPsec VPN Tunnel details and their IDs are listed
 // and then one will be able to import by using ID.
 func dumpIpSecVpnTunnelsToScreen(name string, allTunnels []*govcd.NsxtIpSecVpnTunnel) {
-	stdout := getTerraformStdout()
+	buf := new(bytes.Buffer)
 
-	fprintfNoErr(stdout, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
-	fprintfNoErr(stdout, "# Please use ID instead of Name in import path to pick exact ipSecVpnTunnel\n")
+	_, err := fmt.Fprintf(buf, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
+	if err != nil {
+		logForScreen("vcd_vm_nsxt_ipsec_vpn_tunnel", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	_, err = fmt.Fprintf(buf, "# Please use ID instead of Name in import path to pick exact ipSecVpnTunnel\n")
+	if err != nil {
+		logForScreen("vcd_vm_nsxt_ipsec_vpn_tunnel", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 
-	w := tabwriter.NewWriter(stdout, 1, 1, 1, ' ', 0)
-	fprintlnNoErr(w, "ID\tName\tLocal IP\tRemote IP")
+	w := tabwriter.NewWriter(buf, 1, 1, 1, ' ', 0)
+	_, err = fmt.Fprintln(w, "ID\tName\tLocal IP\tRemote IP")
+	if err != nil {
+		logForScreen("vcd_vm_nsxt_ipsec_vpn_tunnel", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 	for _, ipSecVpnTunnel := range allTunnels {
 		if ipSecVpnTunnel.NsxtIpSecVpn.Name != name {
 			continue
 		}
 
-		fprintfNoErr(w, "%s\t%s\t%s\t%s\n",
+		_, err = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			ipSecVpnTunnel.NsxtIpSecVpn.ID, ipSecVpnTunnel.NsxtIpSecVpn.Name,
 			ipSecVpnTunnel.NsxtIpSecVpn.LocalEndpoint.LocalAddress,
 			ipSecVpnTunnel.NsxtIpSecVpn.RemoteEndpoint.RemoteAddress)
+		if err != nil {
+			logForScreen("vcd_vm_nsxt_ipsec_vpn_tunnel", fmt.Sprintf("error writing to buffer: %s", err))
+		}
 	}
-	flushNoErr(w)
+	err = w.Flush()
+	if err != nil {
+		logForScreen("vcd_vm_nsxt_ipsec_vpn_tunnel", fmt.Sprintf("error flushing buffer: %s", err))
+	}
 }

@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strings"
@@ -428,26 +429,39 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
 	}
 
-	fprintlnNoErr(getTerraformStdout(), "Retrieving all disks")
+	buf := new(bytes.Buffer)
+	_, err = fmt.Fprintln(buf, "Retrieving all disks")
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
 		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
 		return nil, fmt.Errorf("no internal disks found on VM: %s", vmName)
 	}
 
-	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
+	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fprintlnNoErr(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
-	fprintlnNoErr(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
+	_, err = fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
+	if err != nil {
+		logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	_, err = fmt.Fprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
+	if err != nil {
+		logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
 		if disk.Disk == nil {
-			fprintfNoErr(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
 				disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
+			if err != nil {
+				logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error writing to buffer: %s", err))
+			}
 		}
 	}
-	flushNoErr(writer)
+	err = writer.Flush()
+	if err != nil {
+		logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error flushing buffer: %s", err))
+	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpInternalDiskImport)
+	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpInternalDiskImport, buf.String())
 }
 
 func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappName, vmName, diskId string) ([]*schema.ResourceData, error) {
