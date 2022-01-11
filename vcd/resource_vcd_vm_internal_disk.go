@@ -431,6 +431,9 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 
 	buf := new(bytes.Buffer)
 	_, err = fmt.Fprintln(buf, "Retrieving all disks")
+	if err != nil {
+		logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
 		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
 		return nil, fmt.Errorf("no internal disks found on VM: %s", vmName)

@@ -436,6 +436,9 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 	if listRules {
 		buf := new(bytes.Buffer)
 		_, err := fmt.Fprintln(buf, "Retrieving all firewall rules")
+		if err != nil {
+			logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
+		}
 		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
 		if err != nil {
 			return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
