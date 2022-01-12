@@ -121,10 +121,10 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("vCD Error importing new catalog item: %#v", err)
-				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
+				log.Printf("VCD Error importing new catalog item: %#v", err)
+				return fmt.Errorf("VCD Error importing new catalog item: %#v", err)
 			}
-			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%%\n"))
+			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import catalog item progress "+progress+"%%\n"))
 			if progress == "100" {
 				break
 			}
@@ -245,7 +245,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 }
 
 // Imports a CatalogItem into Terraform state
-// This function task is to get the data from vCD and fill the resource data container
+// This function task is to get the data from VCD and fill the resource data container
 // Expects the d.ID() to be a path to the resource made of org_name.catalog_name.catalog_item_name
 //
 // Example import path (id): org_name.catalog_name.catalog_item_name
