@@ -1,6 +1,10 @@
-## 3.5.1 (Unreleased)
+## 3.5.1 (January 12, 2022)
 
-Changes in progress for v3.5.1 are available at [.changes/v3.5.1](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.5.1) until the release.
+## BUG FIXES
+Fix Issue #769 "Plugin did not respond : terraform-provider-vcd may crash with Terraform 1.1+ on some OSes".
+The consequences of this fix are that some messages that were directed at the standard output (such as
+progress percentage during uploads or suggestions when using outdated resources) are now written to the regular
+log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy filtering. [GH-771]
 
 ## 3.5.0 (January 7, 2022)
 
