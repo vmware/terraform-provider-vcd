@@ -472,5 +472,5 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 		logForScreen("vcd_vapp_firewall_rule", fmt.Sprintf("error flushing buffer: %s", err))
 	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkRulesImport)
+	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVappNetworkRulesImport, buf.String())
 }

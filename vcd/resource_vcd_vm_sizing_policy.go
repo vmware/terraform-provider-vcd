@@ -635,5 +635,5 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error flushing buffer: %s", err))
 	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpVmSizingPolicyImport)
+	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
 }

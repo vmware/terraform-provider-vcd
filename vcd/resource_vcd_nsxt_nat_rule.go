@@ -269,18 +269,19 @@ func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, m
 		natRule, err = edgeGateway.GetNatRuleById(natRuleIdentifier)
 	}
 
-	// Error occurred and it is not ErrorEntityNotFound. This means - more than one rule found and we should dump a list
+	listStr := ""
+	// Error occurred and it is not ErrorEntityNotFound. This means - more than one rule found, and we should dump a list
 	// of rules with their IDs so that one can pick ID
 	if err != nil && !govcd.ContainsNotFound(err) {
 		allRules, err2 := edgeGateway.GetAllNatRules(nil)
 		if err2 != nil {
 			return nil, fmt.Errorf("error getting list of all NAT rules: %s", err)
 		}
-		dumpNatRulesToScreen(natRuleIdentifier, allRules)
+		listStr = "\n" + getNatRulesList(natRuleIdentifier, allRules)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to find NAT Rule '%s': %s", natRuleIdentifier, err)
+		return nil, fmt.Errorf("unable to find NAT Rule '%s': %s %s", natRuleIdentifier, err, listStr)
 	}
 
 	dSet(d, "org", orgName)
@@ -379,17 +380,26 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 	return nil
 }
 
-// dumpNatRulesToScreen is a helper for import. NAT rules don't enforce name uniqueness therefore it may be that user
+// getNatRulesList is a helper for import. NAT rules don't enforce name uniqueness therefore it may be that user
 // specifies a rule with the same name. In that case NAT rule details and their IDs are listed and the one will be able
 // to import by using ID.
-func dumpNatRulesToScreen(name string, allRules []*govcd.NsxtNatRule) {
+func getNatRulesList(name string, allRules []*govcd.NsxtNatRule) string {
 
 	logForScreen("vcd_nsxt_nat_rule", fmt.Sprintf("# The following NAT rules with Name '%s' are available\n", name))
 	logForScreen("vcd_nsxt_nat_rule", "# Please use ID instead of Name in import path to pick exact rule")
 
 	buf := new(bytes.Buffer)
 	w := tabwriter.NewWriter(buf, 1, 1, 1, ' ', 0)
-	_, err := fmt.Fprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
+
+	_, err := fmt.Fprintf(w, "# The following NAT rules with Name '%s' are available\n", name)
+	if err != nil {
+		logForScreen("vcd_nsxt_nat_rule", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	_, err = fmt.Fprintln(w, "# Please use ID instead of Name in import path to pick exact rule")
+	if err != nil {
+		logForScreen("vcd_nsxt_nat_rule", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	_, err = fmt.Fprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
 	if err != nil {
 		logForScreen("vcd_nsxt_nat_rule", fmt.Sprintf("error writing to buffer: %s", err))
 	}
@@ -411,5 +421,5 @@ func dumpNatRulesToScreen(name string, allRules []*govcd.NsxtNatRule) {
 	if err != nil {
 		logForScreen("vcd_nsxt_nat_rule", fmt.Sprintf("error flushing buffer: %s", err))
 	}
-	logForScreen("vcd_nsxt_nat_rule", buf.String())
+	return buf.String()
 }

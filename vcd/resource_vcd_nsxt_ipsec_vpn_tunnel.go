@@ -449,6 +449,7 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 		ipSecVpnTunnel, err = edgeGateway.GetIpSecVpnTunnelById(ipSecVpnTunnelIdentifier)
 	}
 
+	listStr := ""
 	// Error occurred and it is not ErrorEntityNotFound. This means - more than configuration found and it should be
 	// dumped their IDs so that user can pick ID
 	if err != nil && !govcd.ContainsNotFound(err) {
@@ -456,11 +457,12 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 		if err2 != nil {
 			return nil, fmt.Errorf("error getting list of all IPsec VPN Tunnels: %s", err)
 		}
-		dumpIpSecVpnTunnelsToScreen(ipSecVpnTunnelIdentifier, allRules)
+
+		listStr = "\n" + getIpSecVpnTunnelsList(ipSecVpnTunnelIdentifier, allRules)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to find IPsec VPN Tunnels '%s': %s", ipSecVpnTunnelIdentifier, err)
+		return nil, fmt.Errorf("unable to find IPsec VPN Tunnels '%s': %s%s", ipSecVpnTunnelIdentifier, err, listStr)
 	}
 
 	dSet(d, "org", orgName)
@@ -587,10 +589,10 @@ func setNsxtIpSecVpnProfileTunnelConfigurationData(d *schema.ResourceData, tunne
 	return d.Set("security_profile_customization", []interface{}{secProfileMap})
 }
 
-// dumpIpSecVpnTunnelsToScreen is a helper for import. IPsec VPN tunnels don't enforce name uniqueness therefore it may
+// getIpSecVpnTunnelsList is a helper for import. IPsec VPN tunnels don't enforce name uniqueness therefore it may
 // be that user specifies a config with the same name. In that case IPsec VPN Tunnel details and their IDs are listed
 // and then one will be able to import by using ID.
-func dumpIpSecVpnTunnelsToScreen(name string, allTunnels []*govcd.NsxtIpSecVpnTunnel) {
+func getIpSecVpnTunnelsList(name string, allTunnels []*govcd.NsxtIpSecVpnTunnel) string {
 	buf := new(bytes.Buffer)
 
 	_, err := fmt.Fprintf(buf, "# The following IPsec VPN Tunnels with Name '%s' are available\n", name)
@@ -624,4 +626,5 @@ func dumpIpSecVpnTunnelsToScreen(name string, allTunnels []*govcd.NsxtIpSecVpnTu
 	if err != nil {
 		logForScreen("vcd_vm_nsxt_ipsec_vpn_tunnel", fmt.Sprintf("error flushing buffer: %s", err))
 	}
+	return buf.String()
 }
