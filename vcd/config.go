@@ -655,10 +655,6 @@ func dSet(d *schema.ResourceData, key string, value interface{}) {
 		// This warning should never reach the final user.
 		// Its purpose is to alert the developer that there was an improper use of `dSet`
 		// The warning will work when testing with either `go test` or `make install` + `terraform apply`
-		// ------------------------------------------------------------//
-		// NOTE FOR REVIEWERS: given that we lost the ability of using //
-		// Terraform stdout, is it OK to make this a panic instead?    //
-		// ------------------------------------------------------------//
 		logForScreen("config", fmt.Sprintf("*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
 			reflect.TypeOf(value).Kind(), callFuncName()))
 		logForScreen("", starLine)
