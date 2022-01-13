@@ -434,8 +434,11 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 	// If the user requested to print rules, try to fetch all of them and print in a user friendly
 	// table with both UI and real firewall IDs
 	if listRules {
-		stdout := getTerraformStdout() // share the same stdout for multiple print statements
-		fprintlnNoErr(stdout, "Retrieving all firewall rules")
+		buf := new(bytes.Buffer)
+		_, err := fmt.Fprintln(buf, "Retrieving all firewall rules")
+		if err != nil {
+			logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
+		}
 		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
 		if err != nil {
 			return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
@@ -443,15 +446,26 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 
 		tableWriter := new(bytes.Buffer)
 		writer := tabwriter.NewWriter(tableWriter, 0, 8, 1, '\t', tabwriter.AlignRight)
-		fprintlnNoErr(writer, "UI No\tID\tName\tAction\tType")
-		fprintlnNoErr(writer, "-----\t--\t----\t------\t----")
-		for index, rule := range allRules {
-			fprintfNoErr(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
+		_, err = fmt.Fprintln(writer, "UI No\tID\tName\tAction\tType")
+		if err != nil {
+			logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
 		}
-		flushNoErr(writer)
-		fprintlnNoErr(stdout, tableWriter.String())
+		_, err = fmt.Fprintln(writer, "-----\t--\t----\t------\t----")
+		if err != nil {
+			logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
+		}
+		for index, rule := range allRules {
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", index+1, rule.ID, rule.Name, rule.Action, rule.RuleType)
+			if err != nil {
+				logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error writing to buffer %s", err))
+			}
+		}
+		err = writer.Flush()
+		if err != nil {
+			logForScreen("vcd_nsxv_firewall_rule", fmt.Sprintf("error flushing buffer %s", err))
+		}
 
-		return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
+		return nil, fmt.Errorf("resource was not imported! %s\n%s\n%s", helpError.Error(), buf.String(), tableWriter.String())
 	}
 
 	// Proceed with import
