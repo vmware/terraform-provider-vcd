@@ -41,9 +41,9 @@ The following arguments are supported:
 * `name` - (Required) Item name in catalog
 * `description` - (Optional) Description of item
 * `ova_path` - (Optional) Absolute or relative path to file to upload
-* `ovf_url` - (Optional; *v3.6+*) URL to OVF file. Uploading OVA files by URL are not supported by VCD.
+* `ovf_url` - (Optional; *v3.6+*) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
-* `show_upload_progress` - (Optional) - Default false. Allows to see upload progress. (See note below)
+* `show_upload_progress` - (Optional) - Default false. Allows seeing upload progress. (See note below)
 * `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
 
 ### A note about upload progress
