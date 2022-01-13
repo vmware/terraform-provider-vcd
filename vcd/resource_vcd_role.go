@@ -72,7 +72,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	// Check rights early, so that we can show a friendly error message when there are missing implied rights
 	inputRights, err := getRights(vcdClient, org, "role create", d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	role, err := org.CreateRole(&types.Role{
@@ -123,7 +123,7 @@ func genericRoleRead(ctx context.Context, d *schema.ResourceData, meta interface
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(role.Role.ID)
@@ -177,7 +177,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	inputRights, err := getRights(vcdClient, org, "role update", d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	if len(inputRights) > 0 {

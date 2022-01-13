@@ -56,7 +56,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				ExactlyOneOf: []string{"ova_path", "ova_url"},
-				Description:  "absolute or relative path to OVA",
+				Description:  "Absolute or relative path to OVA",
 			},
 			"ova_url": &schema.Schema{
 				Type:         schema.TypeString,
@@ -100,8 +100,8 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	catalogName := d.Get("catalog").(string)
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Error finding Catalog: %#v", err)
-		return diag.Errorf("error finding Catalog: %#v", err)
+		log.Printf("[DEBUG] Error finding Catalog: %s", err)
+		return diag.Errorf("error finding Catalog: %s", err)
 	}
 
 	var diagError diag.Diagnostics
@@ -123,11 +123,11 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 	d.SetId(item.CatalogItem.ID)
 
-	log.Printf("[TRACE] Catalog item created: %#v", itemName)
+	log.Printf("[TRACE] Catalog item created: %s", itemName)
 
 	err = createOrUpdateCatalogItemMetadata(d, meta)
 	if diagError != nil {
-		diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	return resourceVcdCatalogItemRead(ctx, d, meta)
@@ -137,14 +137,14 @@ func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string)
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
-		log.Printf("[DEBUG] Error uploading new catalog item: %#v", err)
-		return diag.Errorf("error uploading new catalog item: %#v", err)
+		log.Printf("[DEBUG] Error uploading new catalog item: %s", err)
+		return diag.Errorf("error uploading new catalog item: %s", err)
 	}
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
 			if err := getError(task); err != nil {
-				return diag.Errorf("%s", err)
+				return diag.FromErr(err)
 			}
 			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%%\n"))
 			if task.GetUploadProgress() == "100.00" {
@@ -172,8 +172,8 @@ func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("VCD Error importing new catalog item: %#v", err)
-				return diag.Errorf("VCD Error importing new catalog item: %#v", err)
+				log.Printf("VCD Error importing new catalog item: %s", err)
+				return diag.Errorf("VCD Error importing new catalog item: %s", err)
 			}
 			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import catalog item progress "+progress+"%%\n"))
 			if progress == "100" {

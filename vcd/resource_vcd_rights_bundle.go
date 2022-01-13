@@ -69,7 +69,7 @@ func resourceRightsBundleCreate(ctx context.Context, d *schema.ResourceData, met
 
 	inputRights, err := getRights(vcdClient, nil, "rights bundle create", d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 	rightsBundle, err := vcdClient.Client.CreateRightsBundle(&types.RightsBundle{
 		Name:        rightsBundleName,
@@ -89,7 +89,7 @@ func resourceRightsBundleCreate(ctx context.Context, d *schema.ResourceData, met
 
 	inputTenants, err := getTenants(vcdClient, "rights bundle create", d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 	if publishToAllTenants {
 		err = rightsBundle.PublishAllTenants()
@@ -198,7 +198,7 @@ func resourceRightsBundleUpdate(ctx context.Context, d *schema.ResourceData, met
 	if changedRights {
 		inputRights, err = getRights(vcdClient, nil, "rights bundle update", d)
 		if err != nil {
-			return diag.Errorf("%s", err)
+			return diag.FromErr(err)
 		}
 	}
 
@@ -234,7 +234,7 @@ func resourceRightsBundleUpdate(ctx context.Context, d *schema.ResourceData, met
 	if changedTenants {
 		inputTenants, err = getTenants(vcdClient, "rights bundle create", d)
 		if err != nil {
-			return diag.Errorf("%s", err)
+			return diag.FromErr(err)
 		}
 		if publishToAllTenants {
 			err = rightsBundle.PublishAllTenants()

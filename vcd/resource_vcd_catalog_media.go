@@ -125,22 +125,22 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	catalogName := d.Get("catalog").(string)
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
 	if err != nil {
-		log.Printf("Error finding Catalog: %#v", err)
-		return diag.Errorf("error finding Catalog: %#v", err)
+		log.Printf("Error finding Catalog: %s", err)
+		return diag.Errorf("error finding Catalog: %s", err)
 	}
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	mediaName := d.Get("name").(string)
 	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), d.Get("media_path").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
 	if err != nil {
-		log.Printf("Error uploading new catalog media: %#v", err)
-		return diag.Errorf("error uploading new catalog media: %#v", err)
+		log.Printf("Error uploading new catalog media: %s", err)
+		return diag.Errorf("error uploading new catalog media: %s", err)
 	}
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
 			if err := getError(task); err != nil {
-				return diag.Errorf("%s", err)
+				return diag.FromErr(err)
 			}
 
 			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%%\n"))
@@ -155,8 +155,8 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("vCD Error importing new catalog item: %#v", err)
-				return diag.Errorf("vCD Error importing new catalog item: %#v", err)
+				log.Printf("vCD Error importing new catalog item: %s", err)
+				return diag.Errorf("vCD Error importing new catalog item: %s", err)
 			}
 			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%%\n"))
 			if progress == "100" {
@@ -210,7 +210,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 
 			media, err = getMediaByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
 			if err != nil {
-				return diag.Errorf("%s", err)
+				return diag.FromErr(err)
 			}
 		}
 	}
@@ -232,7 +232,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media: %s", err)
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(media.Media.ID)
@@ -240,7 +240,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	mediaRecord, err := catalog.QueryMedia(media.Media.Name)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to query media: %s", err)
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	dSet(d, "name", media.Media.Name)
@@ -256,12 +256,12 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	metadata, err := media.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item metadata: %s", err)
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
-		diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 	return nil
 }

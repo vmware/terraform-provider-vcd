@@ -911,7 +911,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Creating catalog item for test suite...\n")
 		task, err := catalog.UploadOvf(ovaFilePath, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
 		if err != nil {
-			fmt.Printf("error uploading new catalog item: %#v", err)
+			fmt.Printf("error uploading new catalog item: %s", err)
 			panic(err)
 		}
 
