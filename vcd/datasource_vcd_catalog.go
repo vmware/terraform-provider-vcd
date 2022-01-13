@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -10,7 +11,7 @@ import (
 
 func datasourceVcdCatalog() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdCatalogRead,
+		ReadContext: datasourceVcdCatalogRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -40,6 +41,21 @@ func datasourceVcdCatalog() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"publish_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True enables external publication",
+			},
+			"cache_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True enables early catalog export to optimize synchronization",
+			},
+			"preserve_identity_information": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
+			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -60,7 +76,7 @@ func datasourceVcdCatalog() *schema.Resource {
 	}
 }
 
-func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
 		vcdClient = meta.(*VCDClient)
 		err       error
@@ -69,7 +85,7 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	)
 
 	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_catalog")
+		return diag.Errorf(noNameOrFilterError, "vcd_catalog")
 	}
 	orgName := d.Get("org").(string)
 	identifier := d.Get("name").(string)
@@ -93,12 +109,17 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return fmt.Errorf("error retrieving catalog %s: %s", identifier, err)
+		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
 	dSet(d, "description", catalog.Catalog.Description)
 	dSet(d, "created", catalog.Catalog.DateCreated)
 	dSet(d, "name", catalog.Catalog.Name)
 	d.SetId(catalog.Catalog.ID)
+	if catalog.Catalog.PublishExternalCatalogParams != nil {
+		dSet(d, "publish_enabled", catalog.Catalog.PublishExternalCatalogParams.IsPublishedExternally)
+		dSet(d, "cache_enabled", catalog.Catalog.PublishExternalCatalogParams.IsCachedEnabled)
+		dSet(d, "preserve_identity_information", catalog.Catalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
+	}
 	return nil
 }

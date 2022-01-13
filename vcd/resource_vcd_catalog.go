@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -13,12 +15,12 @@ import (
 
 func resourceVcdCatalog() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdCatalogCreate,
-		Delete: resourceVcdCatalogDelete,
-		Read:   resourceVcdCatalogRead,
-		Update: resourceVcdCatalogUpdate,
+		CreateContext: resourceVcdCatalogCreate,
+		DeleteContext: resourceVcdCatalogDelete,
+		ReadContext:   resourceVcdCatalogRead,
+		UpdateContext: resourceVcdCatalogUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdCatalogImport,
+			StateContext: resourceVcdCatalogImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -59,11 +61,36 @@ func resourceVcdCatalog() *schema.Resource {
 				ForceNew:    false,
 				Description: "When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.",
 			},
+			"publish_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "True enables external publication",
+			},
+			"cache_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "True enables early catalog export to optimize synchronization",
+			},
+			"preserve_identity_information": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
+			},
+			"password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "An optional password to access the catalog. Only ASCII characters are allowed in a valid password.",
+			},
 		},
 	}
 }
 
-func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog creation initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -72,7 +99,7 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 	// (only administrator, organization administrator and Catalog author are allowed)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	var storageProfiles *types.CatalogStorageProfiles
@@ -80,7 +107,7 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 	if storageProfileId != "" {
 		storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 		if err != nil {
-			return fmt.Errorf("error looking up Storage Profile '%s' reference: %s", storageProfileId, err)
+			return diag.Errorf("error looking up Storage Profile '%s' reference: %s", storageProfileId, err)
 		}
 		storageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 	}
@@ -91,15 +118,44 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 	catalog, err := adminOrg.CreateCatalogWithStorageProfile(name, description, storageProfiles)
 	if err != nil {
 		log.Printf("[TRACE] Error creating Catalog: %#v", err)
-		return fmt.Errorf("error creating Catalog: %#v", err)
+		return diag.Errorf("error creating Catalog: %#v", err)
 	}
 
 	d.SetId(catalog.AdminCatalog.ID)
+
+	if d.Get("publish_enabled").(bool) {
+		err = updatePublishToExternalOrgSettings(d, catalog)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
-	return resourceVcdCatalogRead(d, meta)
+	return resourceVcdCatalogRead(ctx, d, meta)
 }
 
-func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
+func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
+	err := adminCatalog.PublishToExternalOrganizations(types.PublishExternalCatalogParams{
+		IsPublishedExternally:    takeBoolPointer(d.Get("publish_enabled").(bool)),
+		IsCachedEnabled:          takeBoolPointer(d.Get("cache_enabled").(bool)),
+		PreserveIdentityInfoFlag: takeBoolPointer(d.Get("preserve_identity_information").(bool)),
+		Password:                 d.Get("password").(string),
+	})
+	if err != nil {
+		return fmt.Errorf("[updatePublishToExternalOrgSettings] error: %s", err)
+	}
+	return nil
+}
+
+func resourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericResourceVcdCatalogRead(d, meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
+}
+
+func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -129,32 +185,37 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 
 	dSet(d, "description", adminCatalog.AdminCatalog.Description)
 	dSet(d, "created", adminCatalog.AdminCatalog.DateCreated)
+	if adminCatalog.AdminCatalog.PublishExternalCatalogParams != nil {
+		dSet(d, "publish_enabled", adminCatalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
+		dSet(d, "cache_enabled", adminCatalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
+		dSet(d, "preserve_identity_information", adminCatalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
+	}
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
 	return nil
 }
 
-// resourceVcdCatalogUpdate does not require actions for  fields "delete_force", "delete_recursive", but does allow to
-// change `storage_profile`
-func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
+// resourceVcdCatalogUpdate does not require actions for  fields "delete_force", "delete_recursive",
+// but does allow changing `storage_profile`
+func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
-		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+		return diag.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
 	// Create a copy of adminCatalog to only set and change things which are related to this update section and skip the
 	// other fields. This is important as this provider does not cover all settings available in API and they should not be
 	// overwritten.
-	newAdminCatalog := govcd.NewAdminCatalog(&vcdClient.VCDClient.Client)
+	newAdminCatalog := govcd.NewAdminCatalogWithParent(&vcdClient.VCDClient.Client, adminOrg)
 	newAdminCatalog.AdminCatalog.ID = adminCatalog.AdminCatalog.ID
 	newAdminCatalog.AdminCatalog.HREF = adminCatalog.AdminCatalog.HREF
 	newAdminCatalog.AdminCatalog.Name = adminCatalog.AdminCatalog.Name
@@ -172,7 +233,7 @@ func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
 		if storageProfileId != "" {
 			storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 			if err != nil {
-				return fmt.Errorf("could not process Storage Profile '%s': %s", storageProfileId, err)
+				return diag.Errorf("could not process Storage Profile '%s': %s", storageProfileId, err)
 			}
 			newAdminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 		}
@@ -184,20 +245,27 @@ func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	err = newAdminCatalog.Update()
 	if err != nil {
-		return fmt.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
+		return diag.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
 	}
 
-	return resourceVcdCatalogRead(d, meta)
+	if d.HasChanges("publish_enabled", "cache_enabled", "preserve_identity_information", "password") {
+		err = updatePublishToExternalOrgSettings(d, newAdminCatalog)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return resourceVcdCatalogRead(ctx, d, meta)
 }
 
-func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdCatalogDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog delete started")
 
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -210,7 +278,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 	err = adminCatalog.Delete(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
 		log.Printf("[DEBUG] Error removing catalog %#v", err)
-		return fmt.Errorf("error removing catalog %#v", err)
+		return diag.Errorf("error removing catalog %#v", err)
 	}
 
 	log.Printf("[TRACE] Catalog delete completed: %#v", adminCatalog.AdminCatalog)
@@ -223,7 +291,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 //
 // Example import path (id): org_name.catalog_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog")
@@ -247,7 +315,7 @@ func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields
-	err = resourceVcdCatalogRead(d, meta)
+	err = genericResourceVcdCatalogRead(d, meta)
 	if err != nil {
 		return nil, err
 	}
