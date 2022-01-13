@@ -41,7 +41,7 @@ The following arguments are supported:
 * `name` - (Required) Item name in catalog
 * `description` - (Optional) Description of item
 * `ova_path` - (Optional) Absolute or relative path to file to upload
-* `ova_url` - (Optional) URL to OVF file
+* `ova_url` - (Optional; *v3.6+*) URL to OVF file
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress. (See note below)
 * `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
