@@ -55,14 +55,14 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ExactlyOneOf: []string{"ova_path", "ova_url"},
+				ExactlyOneOf: []string{"ova_path", "ovf_url"},
 				Description:  "Absolute or relative path to OVA",
 			},
-			"ova_url": &schema.Schema{
+			"ovf_url": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ExactlyOneOf: []string{"ova_path", "ova_url"},
+				ExactlyOneOf: []string{"ova_path", "ovf_url"},
 				Description:  "URL of OVF file",
 			},
 			"upload_piece_size": &schema.Schema{
@@ -108,10 +108,10 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	itemName := d.Get("name").(string)
 	if d.Get("ova_path").(string) != "" {
 		diagError = uploadFile(d, catalog, itemName)
-	} else if d.Get("ova_url").(string) != "" {
+	} else if d.Get("ovf_url").(string) != "" {
 		diagError = uploadFromUrl(d, catalog, itemName)
 	} else {
-		return diag.Errorf("`ova_path` or `ova_url` value is missing %s", err)
+		return diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
 	}
 	if diagError != nil {
 		return diagError
@@ -158,7 +158,7 @@ func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string)
 }
 
 func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
-	task, err := catalog.UploadOvfByLink(d.Get("ova_url").(string), itemName, d.Get("description").(string))
+	task, err := catalog.UploadOvfByLink(d.Get("ovf_url").(string), itemName, d.Get("description").(string))
 	if err != nil {
 		log.Printf("[DEBUG] Error uploading new catalog item from URL: %s", err)
 		return diag.Errorf("error uploading new catalog item from URL: %s", err)

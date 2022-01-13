@@ -250,7 +250,7 @@ const testAccCheckVcdCatalogItemFromUrl = `
 
   name                 = "{{.CatalogItemNameFromUrl}}"
   description          = "{{.DescriptionFromUrl}}"
-  ova_url              = "{{.OvfUrl}}"
+  ovf_url              = "{{.OvfUrl}}"
   show_upload_progress = "{{.UploadProgressFromUrl}}"
 
   metadata = {
@@ -268,7 +268,7 @@ const testAccCheckVcdCatalogItemFromUrlUpdated = `
 
   name                 = "{{.CatalogItemNameFromUrlUpdated}}"
   description          = "{{.DescriptionFromUrlUpdated}}"
-  ova_url              = "{{.OvfUrl}}"
+  ovf_url              = "{{.OvfUrl}}"
   show_upload_progress = "{{.UploadProgressFromUrl}}"
 
   metadata = {
