@@ -42,7 +42,7 @@ The following arguments are supported:
 * `description` - (Optional) - Description of media file
 * `media_path` - (Required) - Absolute or relative path to file to upload
 * `upload_piece_size` - (Optional) - size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
-* `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
+* `show_upload_progress` - (Optional) - Default false. Allows to see upload progress. (See note below)
 * `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
 
 ## Attribute reference
@@ -56,6 +56,17 @@ Supported in provider *v2.5+*
 * `size` - (Computed) returns media storage in Bytes
 * `status` - (Computed) returns media status
 * `storage_profile_name` - (Computed) returns storage profile name
+
+### A note about upload progress
+
+Until version 3.5.0, the progress was optionally shown on the screen. Due to changes in the terraform tool, such operation
+is no longer possible. The progress messages are thus written to the log file (`go-vcloud-director.log`) using a special
+tag `[SCREEN]`. To see the progress at run time, users can run the command below in a separate terminal window while
+`terraform apply` is working:
+
+```
+$ tail -f go-vcloud-director.log | grep '\[SCREEN\]'
+```
 
 ## Importing
 
