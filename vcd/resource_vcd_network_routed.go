@@ -191,7 +191,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if vdc.IsNsxt() {
-		fprintfNoErr(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
+		logForScreen("vcd_network_routed", "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
 	edgeGatewayName := d.Get("edge_gateway").(string)

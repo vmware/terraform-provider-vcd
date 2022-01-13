@@ -3,7 +3,6 @@ package vcd
 import (
 	"crypto/sha256"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -11,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"text/tabwriter"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -635,56 +633,35 @@ func buildUserAgent(version, sysOrg string) string {
 	return userAgent
 }
 
+// logForScreen writes to go-vcloud-director log with a tag that can be used to
+// filter messages directed at the user.
+// * origin is the name of the resource that originates the message
+// * msg is the text that will end up in the logs
+//
+// To display its content at run time, you should run the command below in a separate
+// terminal screen while `terraform apply` is running
+//     tail -f go-vcloud-director.log | grep '\[SCREEN\]'
+func logForScreen(origin, msg string) {
+	util.Logger.Printf("[SCREEN] {%s} %s\n", origin, msg)
+}
+
 // dSet sets the value of a schema property, discarding the error
 // Use only for scalar values (strings, booleans, and numbers)
 func dSet(d *schema.ResourceData, key string, value interface{}) {
 	if value != nil && !isScalar(value) {
-		stdout := getTerraformStdout()
 		starLine := strings.Repeat("*", 80)
-		fprintlnNoErr(stdout, starLine)
+
+		logForScreen("", starLine)
 		// This warning should never reach the final user.
 		// Its purpose is to alert the developer that there was an improper use of `dSet`
 		// The warning will work when testing with either `go test` or `make install` + `terraform apply`
-		fprintfNoErr(stdout,
-			"*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
-			reflect.TypeOf(value).Kind(), callFuncName())
-		fprintlnNoErr(stdout, starLine)
+		logForScreen("config", fmt.Sprintf("*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
+			reflect.TypeOf(value).Kind(), callFuncName()))
+		logForScreen("", starLine)
 	}
 	err := d.Set(key, value)
 	if err != nil {
 		panic(fmt.Sprintf("error in %s - key '%s': %s ", callFuncName(), key, err))
-	}
-}
-
-// fprintNoErr calls fmt.Fprint and discards the error
-func fprintNoErr(w io.Writer, a ...interface{}) {
-	_, err := fmt.Fprint(w, a...)
-	if err != nil {
-		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
-	}
-}
-
-// fprintfNoErr calls fmt.Fprintf and discards the error
-func fprintfNoErr(w io.Writer, format string, a ...interface{}) {
-	_, err := fmt.Fprintf(w, format, a...)
-	if err != nil {
-		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
-	}
-}
-
-// fprintlnNoErr calls fmt.Fprintln and discards the error
-func fprintlnNoErr(w io.Writer, a ...interface{}) {
-	_, err := fmt.Fprintln(w, a...)
-	if err != nil {
-		util.Logger.Printf("[ERROR] error writing to terraform stdout: %s", err)
-	}
-}
-
-// flushNoErr calls writer.Flush and discards the error
-func flushNoErr(w *tabwriter.Writer) {
-	err := w.Flush()
-	if err != nil {
-		util.Logger.Printf("[ERROR] error flushing terraform stdout: %s", err)
 	}
 }
 

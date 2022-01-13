@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/url"
@@ -602,22 +603,37 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 		return nil, fmt.Errorf("[listVmSizingPoliciesForImport] unable to find Org %s: %s ", orgId, err)
 	}
 
-	stdout := getTerraformStdout()
-	fprintlnNoErr(stdout, "Retrieving all VM sizing policies")
+	buf := new(bytes.Buffer)
+	_, err = fmt.Fprintln(buf, "Retrieving all VM sizing policies")
+	if err != nil {
+		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 	policies, err := org.GetAllVdcComputePolicies(nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
 	}
 
-	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fprintlnNoErr(writer, "No\tID\tName\t")
-	fprintlnNoErr(writer, "--\t--\t----\t")
+	_, err = fmt.Fprintln(writer, "No\tID\tName\t")
+	if err != nil {
+		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
+	}
+	_, err = fmt.Fprintln(writer, "--\t--\t----\t")
+	if err != nil {
+		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
+	}
 
 	for index, policy := range policies {
-		fprintfNoErr(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\n", index+1, policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		if err != nil {
+			logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
+		}
 	}
-	flushNoErr(writer)
+	err = writer.Flush()
+	if err != nil {
+		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error flushing buffer: %s", err))
+	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpVmSizingPolicyImport)
+	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
 }
