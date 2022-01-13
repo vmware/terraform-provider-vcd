@@ -46,8 +46,6 @@ The following arguments are supported:
 * `publish_enabled` - (*v3.6+*) Enable external publication. Default is `false`.
 * `cache_enabled` - (*v3.6+*) Enable early catalog export to optimize synchronization. Default is `false`.
 * `preserve_identity_information` - (*v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary. Default is `false`.
-* `password` - (*v3.6+*) An optional password to access the catalog. Only ASCII characters are allowed in a valid password.
-
 
 ## Filter arguments
 
