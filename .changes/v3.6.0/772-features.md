@@ -1,1 +1,1 @@
-* `vcd_catalog` allows configuring publish to external organizations [GH-772]
+* `vcd_catalog` allows to configure publishing to external organizations [GH-772]
