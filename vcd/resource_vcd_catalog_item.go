@@ -229,7 +229,6 @@ func resourceVcdCatalogItemDelete(ctx context.Context, d *schema.ResourceData, m
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
-// currently updates only metadata
 func resourceVcdCatalogItemUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChange("description") || d.HasChange("name") {
 		catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
