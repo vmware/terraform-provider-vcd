@@ -1,1 +1,1 @@
-* `vcd_catalog` allows to configure publishing to external organizations [GH-772]
+* `vcd_catalog` allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the vCloud Director installation. [GH-772]
