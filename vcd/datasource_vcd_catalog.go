@@ -44,7 +44,7 @@ func datasourceVcdCatalog() *schema.Resource {
 			"publish_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the vCloud Director installation. Default is `false`.",
+				Description: "True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation. Default is `false`.",
 			},
 			"cache_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
