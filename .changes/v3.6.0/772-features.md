@@ -1,0 +1,1 @@
+* `vcd_catalog` allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation [GH-772]

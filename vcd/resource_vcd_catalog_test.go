@@ -6,6 +6,7 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 	"time"
 
@@ -146,6 +147,149 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 						params["StorageProfile"].(string),
 						params["Org"].(string),
 						params["Vdc"].(string)),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVcdCatalogPublished = `
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name        = "{{.CatalogName}}"
+  description = "{{.Description}}"
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+
+  publish_enabled               = "{{.PublishEnabled}}"
+  cache_enabled                 = "{{.CacheEnabled}}"
+  preserve_identity_information = "{{.PreserveIdentityInformation}}"
+  password                      = "superUnknown"
+}
+`
+
+const testAccCheckVcdCatalogPublishedUpdate1 = `
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name        = "{{.CatalogName}}"
+  description = "{{.Description}}"
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+
+  publish_enabled               = "{{.PublishEnabledUpdate1}}"
+  cache_enabled                 = "{{.CacheEnabledUpdate1}}"
+  preserve_identity_information = "{{.PreserveIdentityInformationUpdate1}}"
+  password                      = "superUnknown"
+}
+`
+
+const testAccCheckVcdCatalogPublishedUpdate2 = `
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name        = "{{.CatalogName}}"
+  description = "{{.Description}}"
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+
+  publish_enabled               = "{{.PublishEnabledUpdate2}}"
+  cache_enabled                 = "{{.CacheEnabledUpdate2}}"
+  preserve_identity_information = "{{.PreserveIdentityInformationUpdate2}}"
+  password                      = "superUnknown"
+}
+`
+
+// TestAccVcdCatalogPublishedToExternalOrg is very similar to TestAccVcdCatalog, but it ensures that a catalog can be
+// published to external Org
+func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
+	preTestChecks(t)
+	var params = StringMap{
+		"Org":                                testConfig.VCD.Org,
+		"Vdc":                                testConfig.VCD.Vdc,
+		"CatalogName":                        TestAccVcdCatalogName,
+		"Description":                        TestAccVcdCatalogDescription,
+		"Tags":                               "catalog",
+		"PublishEnabled":                     true,
+		"PublishEnabledUpdate1":              true,
+		"PublishEnabledUpdate2":              false,
+		"CacheEnabled":                       true,
+		"CacheEnabledUpdate1":                false,
+		"CacheEnabledUpdate2":                false,
+		"PreserveIdentityInformation":        true,
+		"PreserveIdentityInformationUpdate1": false,
+		"PreserveIdentityInformationUpdate2": false,
+	}
+
+	configText := templateFill(testAccCheckVcdCatalogPublished, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	params["FuncName"] = t.Name() + "step1"
+	configTextUpd1 := templateFill(testAccCheckVcdCatalogPublishedUpdate1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	params["FuncName"] = t.Name() + "step2"
+	configTextUpd2 := templateFill(testAccCheckVcdCatalogPublishedUpdate2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceAddress := "vcd_catalog.test-catalog"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckCatalogDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckResourceAttr(resourceAddress, "publish_enabled",
+						strconv.FormatBool(params["PublishEnabled"].(bool))),
+					resource.TestCheckResourceAttr(resourceAddress, "preserve_identity_information",
+						strconv.FormatBool(params["PreserveIdentityInformation"].(bool))),
+					resource.TestCheckResourceAttr(resourceAddress, "cache_enabled",
+						strconv.FormatBool(params["CacheEnabled"].(bool))),
+					//resource.TestCheckResourceAttr(resourceAddress, "password", params[]),
+				),
+			},
+			resource.TestStep{
+				Config: configTextUpd1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckResourceAttr(resourceAddress, "publish_enabled",
+						strconv.FormatBool(params["PublishEnabledUpdate1"].(bool))),
+					resource.TestCheckResourceAttr(resourceAddress, "preserve_identity_information",
+						strconv.FormatBool(params["PreserveIdentityInformationUpdate1"].(bool))),
+					resource.TestCheckResourceAttr(resourceAddress, "cache_enabled",
+						strconv.FormatBool(params["CacheEnabledUpdate1"].(bool))),
+					//resource.TestCheckResourceAttr(resourceAddress, "password", params[]),
+				),
+			},
+			resource.TestStep{
+				Config: configTextUpd2,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckResourceAttr(resourceAddress, "publish_enabled",
+						strconv.FormatBool(params["PublishEnabledUpdate2"].(bool))),
+					resource.TestCheckResourceAttr(resourceAddress, "preserve_identity_information",
+						strconv.FormatBool(params["PreserveIdentityInformationUpdate2"].(bool))),
+					resource.TestCheckResourceAttr(resourceAddress, "cache_enabled",
+						strconv.FormatBool(params["CacheEnabledUpdate2"].(bool))),
+					//resource.TestCheckResourceAttr(resourceAddress, "password", params[]),
 				),
 			},
 		},
