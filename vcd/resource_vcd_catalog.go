@@ -189,6 +189,11 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "publish_enabled", adminCatalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
 		dSet(d, "cache_enabled", adminCatalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
 		dSet(d, "preserve_identity_information", adminCatalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
+	} else {
+		dSet(d, "publish_enabled", false)
+		dSet(d, "cache_enabled", false)
+		dSet(d, "preserve_identity_information", false)
+		dSet(d, "password", "")
 	}
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
