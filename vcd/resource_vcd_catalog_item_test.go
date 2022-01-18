@@ -14,24 +14,43 @@ import (
 
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
 var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
+var TestAccVcdCatalogItemFromUrl = "TestAccVcdCatalogItemBasicFromUrl"
+var TestAccVcdCatalogItemDescriptionFromUrl = "TestAccVcdCatalogItemBasicDescriptionFromUrl"
+var TestAccVcdCatalogItemFromUrlUpdated = "TestAccVcdCatalogItemBasicFromUrlUpdated"
+var TestAccVcdCatalogItemDescriptionFromUrlUpdated = "TestAccVcdCatalogItemBasicDescriptionFromUrlUpdated"
 
 func TestAccVcdCatalogItemBasic(t *testing.T) {
 	preTestChecks(t)
 
+	if testConfig.Ova.OvfUrl == "" {
+		t.Skip("Variables Ova.OvfUrl must be set")
+	}
+
 	var params = StringMap{
-		"Org":             testConfig.VCD.Org,
-		"Catalog":         testSuiteCatalogName,
-		"CatalogItemName": TestAccVcdCatalogItem,
-		"Description":     TestAccVcdCatalogItemDescription,
-		"OvaPath":         testConfig.Ova.OvaPath,
-		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
-		"UploadProgress":  testConfig.Ova.UploadProgress,
-		"Tags":            "catalog",
+		"Org":                           testConfig.VCD.Org,
+		"Catalog":                       testSuiteCatalogName,
+		"CatalogItemName":               TestAccVcdCatalogItem,
+		"CatalogItemNameFromUrl":        TestAccVcdCatalogItemFromUrl,
+		"CatalogItemNameFromUrlUpdated": TestAccVcdCatalogItemFromUrlUpdated,
+		"Description":                   TestAccVcdCatalogItemDescription,
+		"DescriptionFromUrl":            TestAccVcdCatalogItemDescriptionFromUrl,
+		"DescriptionFromUrlUpdated":     TestAccVcdCatalogItemDescriptionFromUrlUpdated,
+		"OvaPath":                       testConfig.Ova.OvaPath,
+		"OvfUrl":                        testConfig.Ova.OvfUrl,
+		"UploadPieceSize":               testConfig.Ova.UploadPieceSize,
+		"UploadProgress":                testConfig.Ova.UploadProgress,
+		"UploadProgressFromUrl":         testConfig.Ova.UploadProgress,
+		"Tags":                          "catalog",
 	}
 
 	configText := templateFill(testAccCheckVcdCatalogItemBasic, params)
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckVcdCatalogItemUpdate, params)
+	params["FuncName"] = t.Name() + "-FromUrl"
+	fromUrlConfigText := templateFill(testAccCheckVcdCatalogItemFromUrl, params)
+	params["FuncName"] = t.Name() + "-FromUrlUpdate"
+	fromUrlConfigTextUpdate := templateFill(testAccCheckVcdCatalogItemFromUrlUpdated, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -72,6 +91,36 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2 v2"),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
+				),
+			},
+			resource.TestStep{
+				Config: fromUrlConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "name", TestAccVcdCatalogItemFromUrl),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "description", TestAccVcdCatalogItemDescriptionFromUrl),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
+				),
+			},
+			resource.TestStep{
+				Config: fromUrlConfigTextUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "name", TestAccVcdCatalogItemFromUrlUpdated),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "description", TestAccVcdCatalogItemDescriptionFromUrlUpdated),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata2", "catalogItem Metadata2_2"),
 				),
 			},
 		},
@@ -190,6 +239,41 @@ const testAccCheckVcdCatalogItemUpdate = `
     catalogItem_metadata = "catalogItem Metadata v2"
     catalogItem_metadata2 = "catalogItem Metadata2 v2"
     catalogItem_metadata3 = "catalogItem Metadata3"
+  }
+}
+`
+
+const testAccCheckVcdCatalogItemFromUrl = `
+  resource "vcd_catalog_item" "{{.CatalogItemNameFromUrl}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+
+  name                 = "{{.CatalogItemNameFromUrl}}"
+  description          = "{{.DescriptionFromUrl}}"
+  ovf_url              = "{{.OvfUrl}}"
+  show_upload_progress = "{{.UploadProgressFromUrl}}"
+
+  metadata = {
+    catalogItem_metadata = "catalogItem Metadata"
+    catalogItem_metadata2 = "catalogItem Metadata2"
+    catalogItem_metadata3 = "catalogItem Metadata3"
+  }
+}
+`
+
+const testAccCheckVcdCatalogItemFromUrlUpdated = `
+  resource "vcd_catalog_item" "{{.CatalogItemNameFromUrl}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+
+  name                 = "{{.CatalogItemNameFromUrlUpdated}}"
+  description          = "{{.DescriptionFromUrlUpdated}}"
+  ovf_url              = "{{.OvfUrl}}"
+  show_upload_progress = "{{.UploadProgressFromUrl}}"
+
+  metadata = {
+    catalogItem_metadata = "catalogItem Metadata"
+    catalogItem_metadata2 = "catalogItem Metadata2_2"
   }
 }
 `

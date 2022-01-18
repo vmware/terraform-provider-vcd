@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -10,36 +11,36 @@ import (
 )
 
 // Deletes catalog item which can be vApp template OVA or media ISO file
-func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
+func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog item delete started")
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		return fmt.Errorf("unable to find catalog")
+		return diag.Errorf("unable to find catalog")
 	}
 
 	catalogItemName := d.Get("name").(string)
 	catalogItem, err := catalog.GetCatalogItemByName(catalogItemName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		return fmt.Errorf("unable to find catalog item %s", catalogItemName)
+		return diag.Errorf("unable to find catalog item %s", catalogItemName)
 	}
 
 	err = catalogItem.Delete()
 	if err != nil {
 		log.Printf("[DEBUG] Error removing catalog item %s", err)
-		return fmt.Errorf("error removing catalog item %s", err)
+		return diag.Errorf("error removing catalog item %s", err)
 	}
 
 	_, err = catalog.GetCatalogItemByName(catalogItemName, true)
 	if err == nil {
-		return fmt.Errorf("catalog item %s still found after deletion", catalogItemName)
+		return diag.Errorf("catalog item %s still found after deletion", catalogItemName)
 	}
 	log.Printf("[TRACE] Catalog item delete completed: %s", catalogItemName)
 
