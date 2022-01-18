@@ -201,7 +201,7 @@ resource "vcd_catalog" "test-catalog" {
   publish_enabled               = "{{.PublishEnabledUpdate2}}"
   cache_enabled                 = "{{.CacheEnabledUpdate2}}"
   preserve_identity_information = "{{.PreserveIdentityInformationUpdate2}}"
-  password                      = "superUnknown"
+  password                      = ""
 }
 `
 
@@ -230,10 +230,10 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	params["FuncName"] = t.Name() + "step1"
 	configTextUpd1 := templateFill(testAccCheckVcdCatalogPublishedUpdate1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpd1)
 	params["FuncName"] = t.Name() + "step2"
 	configTextUpd2 := templateFill(testAccCheckVcdCatalogPublishedUpdate2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpd2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
