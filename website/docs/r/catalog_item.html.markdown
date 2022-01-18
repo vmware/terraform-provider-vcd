@@ -39,10 +39,11 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `catalog` - (Required) The name of the catalog where to upload OVA file
 * `name` - (Required) Item name in catalog
-* `description` - (Optional) - Description of item
-* `ova_path` - (Required) - Absolute or relative path to file to upload
+* `description` - (Optional) Description of item
+* `ova_path` - (Optional) Absolute or relative path to file to upload
+* `ovf_url` - (Optional; *v3.6+*) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
-* `show_upload_progress` - (Optional) - Default false. Allows to see upload progress. (See note below)
+* `show_upload_progress` - (Optional) - Default false. Allows seeing upload progress. (See note below)
 * `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
 
 ### A note about upload progress

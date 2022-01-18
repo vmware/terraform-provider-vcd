@@ -71,7 +71,7 @@ func resourceGlobalRoleCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	inputRights, err := getRights(vcdClient, nil, "global role create", d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 	globalRole, err := vcdClient.Client.CreateGlobalRole(&types.GlobalRole{
 		Name:        globalRoleName,
@@ -91,7 +91,7 @@ func resourceGlobalRoleCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	inputTenants, err := getTenants(vcdClient, "global role create", d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 	if publishToAllTenants {
 		err = globalRole.PublishAllTenants()
@@ -202,7 +202,7 @@ func resourceGlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	if changedRights {
 		inputRights, err = getRights(vcdClient, nil, "global role update", d)
 		if err != nil {
-			return diag.Errorf("%s", err)
+			return diag.FromErr(err)
 		}
 	}
 
@@ -238,7 +238,7 @@ func resourceGlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	if changedTenants {
 		inputTenants, err = getTenants(vcdClient, "global role create", d)
 		if err != nil {
-			return diag.Errorf("%s", err)
+			return diag.FromErr(err)
 		}
 		if publishToAllTenants {
 			err = globalRole.PublishAllTenants()
