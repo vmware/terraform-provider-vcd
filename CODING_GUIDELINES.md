@@ -33,7 +33,7 @@ the query engine in go-vcloud-director. Only types supported by such engine can 
 To add filtering for a new data source:
 
 1. Make sure the underlying entity supports filtering (See "Supporting a new type in the query engine" in 
-[go-vcloud-director coding guidelines](https://github.com/vmware/go-vcloud-director/blob/master/CODING_GUIDELINES.md))
+[go-vcloud-director coding guidelines](https://github.com/vmware/go-vcloud-director/blob/main/CODING_GUIDELINES.md))
 
 2. Add a "filter" field in the data source definition, using the elements listed in `filter.go`
 
@@ -71,5 +71,5 @@ the resource in the documentation (`website/docs/d/resource_list.html.markdown`)
 ## Testing
 
 Every feature in the provider must include testing. See
-[TESTING.md](https://github.com/vmware/terraform-provider-vcd/blob/master/TESTING.md)
+[TESTING.md](https://github.com/vmware/terraform-provider-vcd/blob/main/TESTING.md)
 for more info.

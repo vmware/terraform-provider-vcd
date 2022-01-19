@@ -63,7 +63,7 @@ else
 
     # Retrieves tags from upstream. This will allow us to check out the
     # previously release tag
-    git fetch --tags upstream master
+    git fetch --tags upstream main
     check_exit_code "Error fetching tags"
 
 fi
@@ -117,7 +117,7 @@ else
     echo "#!/usr/bin/env bash" > scripts/gofmtcheck.sh
     make test-binary-prepare
     check_exit_code "error preparing binary tests"
-    git checkout master scripts/gofmtcheck.sh
+    git checkout main scripts/gofmtcheck.sh
 
     # Back to the current version
     git checkout $branch

@@ -23,7 +23,7 @@ contributors. Typical contribution flow steps are:
 - Update Go modules files `go.mod` and `go.sum` if you're changing dependencies.
 - Fetch changes from upstream and resolve any merge conflicts so that your topic branch is up-to-date
 - Push all commits to the topic branch in your forked repo
-- Submit a pull request to merge topic branch commits to upstream master 
+- Submit a pull request to merge topic branch commits to upstream main 
 
 Example:
 
@@ -72,15 +72,15 @@ for referencing issues.
 
 ### Staying In Sync With Upstream
 
-When your branch gets out of sync with the vmware master branch, use the following to update:
+When your branch gets out of sync with the vmware main branch, use the following to update:
 
 ``` shell
-git checkout master
-git pull upstream master
+git checkout main
+git pull upstream main
 git push
-# At this point, your local copy of the master branch is synchronized
+# At this point, your local copy of the main branch is synchronized
 git checkout my-new-feature
-git merge master
+git merge main
 ```
 If there are conflicts you'll need to [merge them now](https://stackoverflow.com/questions/161813/how-to-resolve-merge-conflicts-in-git).
 

@@ -118,7 +118,7 @@
   },
   "ova": {
     "ovaPath": "../test-resources/test_vapp_template.ova",
-    "ovfUrl": "https://raw.githubusercontent.com/vmware/go-vcloud-director/master/test-resources/test_vapp_template_ovf/descriptor.ovf",
+    "ovfUrl": "https://raw.githubusercontent.com/vmware/go-vcloud-director/main/test-resources/test_vapp_template_ovf/descriptor.ovf",
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
     "uploadProgress": true,
