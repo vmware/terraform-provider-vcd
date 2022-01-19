@@ -1,6 +1,6 @@
 ## 3.6.0 (TBC)
 
-Changes in progress for v3.6.0 are available at [.changes/v3.6.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.6.0) until the release.
+Changes in progress for v3.6.0 are available at [.changes/v3.6.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.6.0) until the release.
 
 ## 3.5.1 (January 13, 2022)
 

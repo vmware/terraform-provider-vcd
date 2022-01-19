@@ -377,7 +377,7 @@ created with a previous version of the provider.
 
 The command `make test-upgrade` will do the following:
 
-1. Fetch the tags from master
+1. Fetch the tags from main
 2. Check out the previous version (using the tag corresponding to the version stored in the file `PREVIOUS_VERSION`)
 3. Run `make test-binary-prepare` using the previous version
 4. Back to the current version, build the latest plugin
