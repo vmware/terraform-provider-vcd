@@ -91,6 +91,11 @@ func takeIntPointer(x int) *int {
 	return &x
 }
 
+// takeInt64Pointer accepts an int64 and returns a pointer to this value.
+func takeInt64Pointer(x int64) *int64 {
+	return &x
+}
+
 // extractUuid finds an UUID in the input string
 // Returns an empty string if no UUID was found
 func extractUuid(input string) string {

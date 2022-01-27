@@ -3,7 +3,9 @@ package vcd
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"net"
 	"sort"
@@ -29,27 +31,39 @@ const (
 func resourceVcdVAppVm() *schema.Resource {
 
 	return &schema.Resource{
-		Create: resourceVcdVAppVmCreate,
-		Update: resourceVcdVAppVmUpdate,
-		Read:   resourceVcdVAppVmRead,
-		Delete: resourceVcdVAppVmDelete,
+		CreateContext: resourceVcdVAppVmCreate,
+		UpdateContext: resourceVcdVAppVmUpdate,
+		ReadContext:   resourceVcdVAppVmRead,
+		DeleteContext: resourceVcdVAppVmDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVappVmImport,
+			StateContext: resourceVcdVappVmImport,
 		},
 		Schema: vmSchemaFunc(vappVmType),
 	}
 }
 
-func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVmCreate(d, meta, vappVmType)
+func resourceVcdVAppVmCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericResourceVmCreate(d, meta, vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
-func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "resource", vappVmType)
+func resourceVcdVAppVmRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericVcdVmRead(d, meta, "resource", vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
-func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVcdVmUpdate(d, meta, vappVmType)
+func resourceVcdVAppVmUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericResourceVcdVmUpdate(d, meta, vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // VM Schema is defined as global so that it can be directly accessible in other places
@@ -1861,7 +1875,7 @@ func getMatchedDisk(internalDiskProvidedConfig map[string]interface{}, diskSetti
 	return nil
 }
 
-func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppVmDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] [VM delete] started")
 
 	vcdClient := meta.(*VCDClient)
@@ -1871,14 +1885,14 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappName := d.Get("vapp_name").(string)
 	vapp, err := vdc.GetVAppByName(vappName, false)
 
 	if err != nil {
-		return fmt.Errorf("[VM delete] error finding vApp '%s': %s", vappName, err)
+		return diag.Errorf("[VM delete] error finding vApp '%s': %s", vappName, err)
 	}
 
 	identifier := d.Id()
@@ -1886,23 +1900,27 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		identifier = d.Get("name").(string)
 	}
 	if identifier == "" {
-		return fmt.Errorf("[VM delete] neither ID or name provided")
+		return diag.Errorf("[VM delete] neither ID or name provided")
 	}
 	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
-		return fmt.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
+		return diag.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
 	}
 
 	// If it is a standalone VM, we remove it in one go
 	if vapp.VApp.IsAutoNature {
-		return vm.Delete()
+		err = vm.Delete()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
 	}
 	util.Logger.Printf("[VM delete] vApp before deletion %# v", pretty.Formatter(vapp.VApp))
 	util.Logger.Printf("[VM delete] VM before deletion %# v", pretty.Formatter(vm.VM))
 	deployed, err := vm.IsDeployed()
 	if err != nil {
-		return fmt.Errorf("error getting VM deploy status: %s", err)
+		return diag.Errorf("error getting VM deploy status: %s", err)
 	}
 
 	log.Printf("[TRACE] VM deploy Status: %t", deployed)
@@ -1910,12 +1928,12 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[TRACE] Undeploying VM: %s", vm.VM.Name)
 		task, err := vm.Undeploy()
 		if err != nil {
-			return fmt.Errorf("error Undeploying: %s", err)
+			return diag.Errorf("error Undeploying: %s", err)
 		}
 
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error Undeploying VM: %s", err)
+			return diag.Errorf("error Undeploying VM: %s", err)
 		}
 	}
 
@@ -1925,24 +1943,24 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	for _, existingDiskHref := range existingDisks {
 		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
-			return fmt.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
+			return diag.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
 		}
 
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
 		task, err := vm.DetachDisk(attachParams)
 		if err != nil {
-			return fmt.Errorf("error detaching disk `%s`: %s", existingDiskHref, err)
+			return diag.Errorf("error detaching disk `%s`: %s", existingDiskHref, err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %s", existingDiskHref, err)
+			return diag.Errorf("error waiting detaching disk task to finish`%s`: %s", existingDiskHref, err)
 		}
 	}
 
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
 	err = vapp.RemoveVM(*vm)
 	if err != nil {
-		return fmt.Errorf("error deleting: %s", err)
+		return diag.Errorf("error deleting: %s", err)
 	}
 	log.Printf("[DEBUG] [VM delete] finished")
 	return nil
@@ -2283,7 +2301,7 @@ func setGuestProperties(d *schema.ResourceData, properties *types.ProductSection
 // The VM identifier can be either the VM name or its ID
 // If we are dealing with standalone VMs, the name can retrieve duplicates. When that happens, the import fails
 // and a list of VM information (ID, guest OS, network, IP) is returned
-func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVappVmImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	vcdClient := meta.(*VCDClient)
 
