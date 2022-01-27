@@ -1169,6 +1169,8 @@ func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 	description := vm.VM.Description
 
 	vmSpecSection.NumCpus = takeIntPointer(d.Get("cpus").(int))
+	// has to come together
+	vmSpecSection.NumCoresPerSocket = takeIntPointer(d.Get("cpu_cores").(int))
 	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 	if err != nil {
 		return fmt.Errorf("error changing memory size: %s", err)
@@ -1645,25 +1647,13 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	dSet(d, "cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
 	dSet(d, "memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
-	cpus := int64(0)
-	coresPerSocket := 0
-	memory := int64(0)
-	for _, item := range vm.VM.VirtualHardwareSection.Item {
-		if item.ResourceType == 3 {
-			cpus += item.VirtualQuantity
-			coresPerSocket = item.CoresPerSocket
-		}
-		if item.ResourceType == 4 {
-			memory = item.VirtualQuantity
-		}
-	}
-	dSet(d, "memory", memory)
+	dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
 	dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
 	dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
 	dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
 	dSet(d, "memory_priority_type", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
-	dSet(d, "cpus", cpus)
-	dSet(d, "cpu_cores", coresPerSocket)
+	dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
+	dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
 	dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
 	dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
 	dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
