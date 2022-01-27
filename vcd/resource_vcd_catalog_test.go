@@ -65,6 +65,10 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
 					resource.TestCheckResourceAttr(resourceAddress, "storage_profile_id", ""),
 					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.mediaItem_metadata", "mediaItem Metadata"),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.mediaItem_metadata2", "mediaItem Metadata2"),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -77,6 +81,12 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
 						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:`)),
 					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.mediaItem_metadata", "mediaItem Metadata v2"),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.mediaItem_metadata2", "mediaItem Metadata2 v2"),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.mediaItem_metadata3", "mediaItem Metadata3"),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -356,6 +366,11 @@ resource "vcd_catalog" "test-catalog" {
 
   delete_force      = "true"
   delete_recursive  = "true"
+
+  metadata = {
+    mediaItem_metadata = "mediaItem Metadata"
+    mediaItem_metadata2 = "mediaItem Metadata2"
+  }
 }
 `
 
@@ -373,6 +388,12 @@ resource "vcd_catalog" "test-catalog" {
 
   delete_force      = "true"
   delete_recursive  = "true"
+
+  metadata = {
+    mediaItem_metadata = "mediaItem Metadata v2"
+    mediaItem_metadata2 = "mediaItem Metadata2 v2"
+    mediaItem_metadata3 = "mediaItem Metadata3"
+  }
 }
 `
 
