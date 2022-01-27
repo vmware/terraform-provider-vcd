@@ -258,9 +258,17 @@ The following arguments are supported:
 * `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template or media for `boot_image`.
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
-* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off.
+* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off
+* `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
+* `memory_priority_type` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
+* `memory_shares` - Custom priority for the resource. This is a read-only, unless the share level is "CUSTOM"
+* `memory_limit` - The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket.
+* `cpu_reservation` - The amount of Mhz reservation on the underlying virtualization infrastructure.
+* `cpu_priority_type` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
+* `cpu_shares` - Custom priority for the resource. This is a read-only, unless the share level is "CUSTOM"
+* `cpu_limit` - The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited 
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`

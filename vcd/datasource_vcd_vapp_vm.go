@@ -74,7 +74,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 		"memory_limit": &schema.Schema{
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
+			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited",
 		},
 		"cpus": &schema.Schema{
 			Type:        schema.TypeInt,
@@ -104,7 +104,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 		"cpu_limit": &schema.Schema{
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
+			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited",
 		},
 		"metadata": {
 			Type:        schema.TypeMap,

@@ -93,8 +93,16 @@ The following arguments are supported:
 * `catalog_name` -  The catalog name in which to find the given vApp Template
 * `template_name` -  The name of the vApp Template to use
 * `memory` -  The amount of RAM (in MB) allocated to the VM
+* `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
+* `memory_priority_type` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
+* `memory_shares` - Custom priority for the resource
+* `memory_limit` - The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited
 * `cpus` -  The number of virtual CPUs allocated to the VM
 * `cpu_cores` -  The number of cores per socket
+* `cpu_reservation` - The amount of Mhz reservation on the underlying virtualization infrastructure
+* `cpu_priority_type` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
+* `cpu_shares` - Custom priority for the resource
+* `cpu_limit` - The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited
 * `metadata` -  Key value map of metadata assigned to this VM
 * `disk` -  Independent disk attachment configuration.
 * `network` -  A block defining a network interface. Multiple can be used.
