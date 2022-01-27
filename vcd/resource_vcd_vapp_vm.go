@@ -123,6 +123,34 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description:  "The amount of RAM (in MB) to allocate to the VM",
 			ValidateFunc: validateMultipleOf4(),
 		},
+		"memory_reservation": &schema.Schema{
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
+			ValidateFunc: validateMultipleOf4(),
+		},
+		"memory_priority_type": &schema.Schema{
+			Type:         schema.TypeString,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
+			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
+		},
+		"memory_shares": &schema.Schema{
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Custom priority for the resource. This is a read-only, unless the share level is CUSTOM",
+			ValidateFunc: validateMultipleOf4(),
+		},
+		"memory_limit": &schema.Schema{
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
+			ValidateFunc: validateMultipleOf4(),
+		},
 		"cpus": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -134,6 +162,34 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:    true,
 			Computed:    true,
 			Description: "The number of cores per socket",
+		},
+		"cpu_reservation": &schema.Schema{
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "The amount of Mhz reservation on the underlying virtualization infrastructure",
+			ValidateFunc: validateMultipleOf4(),
+		},
+		"cpu_priority_type": &schema.Schema{
+			Type:         schema.TypeString,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
+			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
+		},
+		"cpu_shares": &schema.Schema{
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Custom priority for the resource. This is a read-only, unless the share level is CUSTOM",
+			ValidateFunc: validateMultipleOf4(),
+		},
+		"cpu_limit": &schema.Schema{
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
+			ValidateFunc: validateMultipleOf4(),
 		},
 		"metadata": {
 			Type:     schema.TypeMap,
@@ -748,6 +804,11 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return err
 		}
 
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM creation] error applying advanced compute settings for VM %s : %s", vmName, err)
+		}
+
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 		err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType)
 		if err != nil {
@@ -773,10 +834,59 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 		dSet(d, "vapp_name", vapp.VApp.Name)
+
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM creation] error applying advanced compute settings for standalone VM %s : %s", vmName, err)
+		}
+
 		return genericVcdVmRead(d, meta, "create", vmType)
 	}
 
 	log.Printf("[DEBUG] [VM create] finished")
+	return nil
+}
+
+func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
+	vmSpecSection := vm.VM.VmSpecSection
+	description := vm.VM.Description
+
+	if memorySharesLevel, ok := d.GetOk("memory_priority_type"); ok {
+		vmSpecSection.MemoryResourceMb.SharesLevel = memorySharesLevel.(string)
+	}
+
+	if memoryLimit, ok := d.GetOk("memory_limit"); ok {
+		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+	}
+
+	if memoryShares, ok := d.GetOk("memory_shares"); ok {
+		vmSpecSection.MemoryResourceMb.Shares = takeIntPointer(memoryShares.(int))
+	}
+
+	if memoryReservation, ok := d.GetOk("memory_reservation"); ok {
+		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+	}
+
+	if memorySharesLevel, ok := d.GetOk("cpu_priority_type"); ok {
+		vmSpecSection.CpuResourceMhz.SharesLevel = memorySharesLevel.(string)
+	}
+
+	if memoryLimit, ok := d.GetOk("cpu_limit"); ok {
+		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+	}
+
+	if memoryShares, ok := d.GetOk("cpu_shares"); ok {
+		vmSpecSection.CpuResourceMhz.Shares = takeIntPointer(memoryShares.(int))
+	}
+
+	if memoryReservation, ok := d.GetOk("cpu_reservation"); ok {
+		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+	}
+
+	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
+	if err != nil {
+		return fmt.Errorf("error changing VM spec section: %s", err)
+	}
 	return nil
 }
 
@@ -1041,25 +1151,25 @@ func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 }
 
 func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
-	task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
+	vmSpecSection := vm.VM.VmSpecSection
+	description := vm.VM.Description
+
+	vmSpecSection.NumCpus = takeIntPointer(d.Get("cpus").(int))
+	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 	if err != nil {
-		return fmt.Errorf("error setting CPU count: %s", err)
-	}
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return err
+		return fmt.Errorf("error changing memory size: %s", err)
 	}
 	return nil
 }
 
 func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
-	task, err := vm.ChangeMemorySize(d.Get("memory").(int))
+	vmSpecSection := vm.VM.VmSpecSection
+	description := vm.VM.Description
+
+	vmSpecSection.MemoryResourceMb.Configured = int64(d.Get("memory").(int))
+	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 	if err != nil {
 		return fmt.Errorf("error changing memory size: %s", err)
-	}
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return err
 	}
 	return nil
 }
@@ -1095,6 +1205,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			return fmt.Errorf("errors updating guest customization: %s", err)
 		}
 
+	}
+
+	if d.HasChanges("memory_reservation", "memory_priority_type", "memory_shares", "memory_limit",
+		"cpu_reservation", "cpu_priority_type", "cpu_limit", "cpu_shares") {
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM update] error advanced compute settings for standalone VM %s : %s", vm.VM.Name, err)
+		}
 	}
 
 	memoryNeedsColdChange := false
@@ -1526,8 +1644,16 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 		}
 	}
 	dSet(d, "memory", memory)
+	dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
+	dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
+	dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
+	dSet(d, "memory_priority_type", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
 	dSet(d, "cpus", cpus)
 	dSet(d, "cpu_cores", coresPerSocket)
+	dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
+	dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
+	dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
+	dSet(d, "cpu_priority_type", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 
 	metadata, err := vm.GetMetadata()
 	if err != nil {
@@ -2631,7 +2757,7 @@ func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Or
 			return fmt.Errorf("`memory` has to be defined as provided sizing policy `sizing_policy_id` memory isn't configured")
 		}
 		if sizingPolicy.VdcComputePolicy.Memory != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: int64(*sizingPolicy.VdcComputePolicy.Memory)}
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb.Configured = int64(*sizingPolicy.VdcComputePolicy.Memory)
 		}
 	}
 	return nil
