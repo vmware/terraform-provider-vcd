@@ -395,7 +395,7 @@ func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err = catalog.AddMetadata(govcd.MetadataStringValue, k, v.(string))
+			_, err = catalog.AddMetadata(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}
