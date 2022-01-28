@@ -368,8 +368,8 @@ resource "vcd_catalog" "test-catalog" {
   delete_recursive  = "true"
 
   metadata = {
-    mediaItem_metadata = "mediaItem Metadata"
-    mediaItem_metadata2 = "mediaItem Metadata2"
+    catalog_metadata  = "catalog Metadata"
+    catalog_metadata2 = "catalog Metadata2"
   }
 }
 `
@@ -390,9 +390,9 @@ resource "vcd_catalog" "test-catalog" {
   delete_recursive  = "true"
 
   metadata = {
-    mediaItem_metadata = "mediaItem Metadata v2"
-    mediaItem_metadata2 = "mediaItem Metadata2 v2"
-    mediaItem_metadata3 = "mediaItem Metadata3"
+    catalog  = "catalog Metadata v2"
+    catalog2 = "catalog Metadata2 v2"
+    catalog3 = "catalog Metadata3"
   }
 }
 `
