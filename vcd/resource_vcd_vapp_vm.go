@@ -1178,7 +1178,7 @@ func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 
 	err := updateVmSpecSection(vmSpecSection, vm, description)
 	if err != nil {
-		fmt.Errorf("error changing memory size: %s", err)
+		return fmt.Errorf("error changing memory size: %s", err)
 	}
 	return nil
 }
@@ -1220,7 +1220,7 @@ func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 
 	err := updateVmSpecSection(vmSpecSection, vm, description)
 	if err != nil {
-		fmt.Errorf("error changing memory size: %s", err)
+		return fmt.Errorf("error changing memory size: %s", err)
 	}
 	return nil
 }
