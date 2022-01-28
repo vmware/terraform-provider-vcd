@@ -899,9 +899,9 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
 	}
 
-	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
+	err := updateVmSpecSection(vmSpecSection, vm, description)
 	if err != nil {
-		return fmt.Errorf("error changing VM spec section: %s", err)
+		return fmt.Errorf("error updating advanced compute settings: %s", err)
 	}
 	return nil
 }
@@ -1175,9 +1175,37 @@ func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 	vmSpecSection.NumCpus = takeIntPointer(d.Get("cpus").(int))
 	// has to come together
 	vmSpecSection.NumCoresPerSocket = takeIntPointer(d.Get("cpu_cores").(int))
+
+	err := updateVmSpecSection(vmSpecSection, vm, description)
+	if err != nil {
+		fmt.Errorf("error changing memory size: %s", err)
+	}
+	return nil
+}
+
+func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, description string) error {
+	// add missing values if not inherited from template, otherwise API throws error if some value is nil
+	if vmSpecSection.MemoryResourceMb.Reservation == nil {
+		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(0))
+	}
+	if vmSpecSection.MemoryResourceMb.Limit == nil {
+		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(-1))
+	}
+	if vmSpecSection.MemoryResourceMb.SharesLevel == "" {
+		vmSpecSection.MemoryResourceMb.SharesLevel = "NORMAL"
+	}
+	if vmSpecSection.CpuResourceMhz.Reservation == nil {
+		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(0))
+	}
+	if vmSpecSection.CpuResourceMhz.Limit == nil {
+		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(-1))
+	}
+	if vmSpecSection.CpuResourceMhz.SharesLevel == "" {
+		vmSpecSection.CpuResourceMhz.SharesLevel = "NORMAL"
+	}
 	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 	if err != nil {
-		return fmt.Errorf("error changing memory size: %s", err)
+		return fmt.Errorf("error updating Vm Spec Section: %s", err)
 	}
 	return nil
 }
@@ -1189,9 +1217,10 @@ func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 	vmSpecSection.DiskSection = nil
 
 	vmSpecSection.MemoryResourceMb.Configured = int64(d.Get("memory").(int))
-	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
+
+	err := updateVmSpecSection(vmSpecSection, vm, description)
 	if err != nil {
-		return fmt.Errorf("error changing memory size: %s", err)
+		fmt.Errorf("error changing memory size: %s", err)
 	}
 	return nil
 }
