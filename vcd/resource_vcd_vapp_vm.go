@@ -864,6 +864,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	vmSpecSection := vm.VM.VmSpecSection
 	description := vm.VM.Description
+	// update treats same values as changes and fails, with no values provided - no changes are made for that section
+	vmSpecSection.DiskSection = nil
 
 	if memorySharesLevel, ok := d.GetOk("memory_priority_type"); ok {
 		vmSpecSection.MemoryResourceMb.SharesLevel = memorySharesLevel.(string)
@@ -1167,6 +1169,8 @@ func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 	vmSpecSection := vm.VM.VmSpecSection
 	description := vm.VM.Description
+	// update treats same values as changes and fails, with no values provided - no changes are made for that section
+	vmSpecSection.DiskSection = nil
 
 	vmSpecSection.NumCpus = takeIntPointer(d.Get("cpus").(int))
 	// has to come together
@@ -1181,6 +1185,8 @@ func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 	vmSpecSection := vm.VM.VmSpecSection
 	description := vm.VM.Description
+	// update treats same values as changes and fails, with no values provided - no changes are made for that section
+	vmSpecSection.DiskSection = nil
 
 	vmSpecSection.MemoryResourceMb.Configured = int64(d.Get("memory").(int))
 	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
