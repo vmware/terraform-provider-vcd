@@ -1007,14 +1007,14 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		return err
 	}
 	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
-		err = changeMemorySize(d, vm)
+		err = vm.ChangeMemory(int64(d.Get("memory").(int)))
 		if err != nil {
 			return err
 		}
 	}
 
 	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
-		err = changeCpuCount(d, vm)
+		err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
 		if err != nil {
 			return err
 		}
@@ -1160,23 +1160,6 @@ func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 	return !foundPrimaryNic
 }
 
-func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
-	vmSpecSection := vm.VM.VmSpecSection
-	description := vm.VM.Description
-	// update treats same values as changes and fails, with no values provided - no changes are made for that section
-	vmSpecSection.DiskSection = nil
-
-	vmSpecSection.NumCpus = takeIntPointer(d.Get("cpus").(int))
-	// has to come together
-	vmSpecSection.NumCoresPerSocket = takeIntPointer(d.Get("cpu_cores").(int))
-
-	err := updateVmSpecSection(vmSpecSection, vm, description)
-	if err != nil {
-		return fmt.Errorf("error changing memory size: %s", err)
-	}
-	return nil
-}
-
 func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, description string) error {
 	// add missing values if not inherited from template, otherwise API throws error if some value is nil
 	if vmSpecSection.MemoryResourceMb.Reservation == nil {
@@ -1200,21 +1183,6 @@ func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, descr
 	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 	if err != nil {
 		return fmt.Errorf("error updating Vm Spec Section: %s", err)
-	}
-	return nil
-}
-
-func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
-	vmSpecSection := vm.VM.VmSpecSection
-	description := vm.VM.Description
-	// update treats same values as changes and fails, with no values provided - no changes are made for that section
-	vmSpecSection.DiskSection = nil
-
-	vmSpecSection.MemoryResourceMb.Configured = int64(d.Get("memory").(int))
-
-	err := updateVmSpecSection(vmSpecSection, vm, description)
-	if err != nil {
-		return fmt.Errorf("error changing memory size: %s", err)
 	}
 	return nil
 }
@@ -1320,27 +1288,21 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		if memoryNeedsColdChange || executionType == "create" {
-			err = changeMemorySize(d, vm)
+			err = vm.ChangeMemory(int64(d.Get("memory").(int)))
 			if err != nil {
 				return err
 			}
 		}
 
 		if d.HasChange("cpu_cores") {
-			coreCounts := d.Get("cpu_cores").(int)
-			task, err := vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
+			err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
 			if err != nil {
-				return fmt.Errorf("error changing cpu count: %s", err)
-			}
-
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+				return err
 			}
 		}
 
 		if cpusNeedsColdChange || executionType == "create" {
-			err = changeCpuCount(d, vm)
+			err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
 			if err != nil {
 				return err
 			}
