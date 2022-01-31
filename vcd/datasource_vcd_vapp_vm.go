@@ -89,7 +89,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 		"cpu_reservation": &schema.Schema{
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "The amount of Mhz reservation on the underlying virtualization infrastructure",
+			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
 		},
 		"cpu_priority": &schema.Schema{
 			Type:        schema.TypeString,

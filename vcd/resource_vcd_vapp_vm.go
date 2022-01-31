@@ -178,7 +178,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
-			Description: "The amount of Mhz reservation on the underlying virtualization infrastructure",
+			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
 		},
 		"cpu_priority": &schema.Schema{
 			Type:         schema.TypeString,
