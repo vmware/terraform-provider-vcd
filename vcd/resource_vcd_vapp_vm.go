@@ -143,7 +143,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
 		},
-		"memory_priority_type": &schema.Schema{
+		"memory_priority": &schema.Schema{
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
@@ -180,7 +180,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "The amount of Mhz reservation on the underlying virtualization infrastructure",
 		},
-		"cpu_priority_type": &schema.Schema{
+		"cpu_priority": &schema.Schema{
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
@@ -861,7 +861,7 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	// update treats same values as changes and fails, with no values provided - no changes are made for that section
 	vmSpecSection.DiskSection = nil
 
-	if memorySharesLevel, ok := d.GetOk("memory_priority_type"); ok {
+	if memorySharesLevel, ok := d.GetOk("memory_priority"); ok {
 		vmSpecSection.MemoryResourceMb.SharesLevel = memorySharesLevel.(string)
 	}
 
@@ -877,7 +877,7 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
 	}
 
-	if memorySharesLevel, ok := d.GetOk("cpu_priority_type"); ok {
+	if memorySharesLevel, ok := d.GetOk("cpu_priority"); ok {
 		vmSpecSection.CpuResourceMhz.SharesLevel = memorySharesLevel.(string)
 	}
 
@@ -1252,8 +1252,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 	}
 
-	if d.HasChanges("memory_reservation", "memory_priority_type", "memory_shares", "memory_limit",
-		"cpu_reservation", "cpu_priority_type", "cpu_limit", "cpu_shares") {
+	if d.HasChanges("memory_reservation", "memory_priority", "memory_shares", "memory_limit",
+		"cpu_reservation", "cpu_priority", "cpu_limit", "cpu_shares") {
 		err = updateAdvancedComputeSettings(d, vm)
 		if err != nil {
 			return fmt.Errorf("[VM update] error advanced compute settings for standalone VM %s : %s", vm.VM.Name, err)
@@ -1680,13 +1680,13 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
 	dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
 	dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
-	dSet(d, "memory_priority_type", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
+	dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
 	dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
 	dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
 	dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
 	dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
 	dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
-	dSet(d, "cpu_priority_type", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
+	dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 
 	metadata, err := vm.GetMetadata()
 	if err != nil {

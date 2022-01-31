@@ -76,20 +76,20 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority_type", params["MemoryPriorityType"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority", params["MemoryPriorityType"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_shares", params["MemoryShares"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_reservation", params["MemoryReservation"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_limit", params["MemoryLimit"].(string)),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_priority_type", params["CpuPriorityTypeUpdate"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_priority", params["CpuPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_shares", params["CpuShares"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_reservation", params["CpuReservation"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_limit", params["CpuLimit"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "name", emptyVmName),
-					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_priority_type", params["MemoryPriorityType"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_priority", params["MemoryPriorityType"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_shares", params["MemoryShares"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_reservation", params["MemoryReservation"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_limit", params["MemoryLimit"].(string)),
-					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_priority_type", params["CpuPriorityTypeUpdate"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_priority", params["CpuPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_shares", params["CpuShares"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_reservation", params["CpuReservation"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_limit", params["CpuLimit"].(string)),
@@ -99,20 +99,20 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority_type", params["MemoryPriorityTypeUpdate"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority", params["MemoryPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_shares", params["MemorySharesUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_reservation", params["MemoryReservationUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_limit", params["MemoryLimitUpdate"].(string)),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_priority_type", params["CpuPriorityTypeUpdate"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_priority", params["CpuPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_shares", params["CpuSharesUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_reservation", params["CpuReservationUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_limit", params["CpuLimitUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "name", emptyVmName),
-					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_priority_type", params["MemoryPriorityTypeUpdate"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_priority", params["MemoryPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_shares", params["MemorySharesUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_reservation", params["MemoryReservationUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_limit", params["MemoryLimitUpdate"].(string)),
-					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_priority_type", params["CpuPriorityTypeUpdate"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_priority", params["CpuPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_shares", params["CpuSharesUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_reservation", params["CpuReservationUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_limit", params["CpuLimitUpdate"].(string)),
@@ -122,20 +122,20 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority_type", params["MemoryPriorityTypeUpdate2"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority", params["MemoryPriorityTypeUpdate2"].(string)),
 					resource.TestMatchResourceAttr("vcd_vm."+standaloneVmName, "memory_shares", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_reservation", params["MemoryReservationUpdate2"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_limit", params["MemoryLimitUpdate2"].(string)),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_priority_type", params["CpuPriorityTypeUpdate2"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_priority", params["CpuPriorityTypeUpdate2"].(string)),
 					resource.TestMatchResourceAttr("vcd_vm."+standaloneVmName, "cpu_shares", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_reservation", params["CpuReservationUpdate2"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_limit", params["CpuLimitUpdate2"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "name", emptyVmName),
-					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_priority_type", params["MemoryPriorityTypeUpdate2"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_priority", params["MemoryPriorityTypeUpdate2"].(string)),
 					resource.TestMatchResourceAttr("vcd_vm."+emptyVmName, "memory_shares", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_reservation", params["MemoryReservationUpdate2"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "memory_limit", params["MemoryLimitUpdate2"].(string)),
-					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_priority_type", params["CpuPriorityTypeUpdate2"].(string)),
+					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_priority", params["CpuPriorityTypeUpdate2"].(string)),
 					resource.TestMatchResourceAttr("vcd_vm."+emptyVmName, "cpu_shares", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_reservation", params["CpuReservationUpdate2"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_limit", params["CpuLimitUpdate2"].(string)),
@@ -159,12 +159,12 @@ resource "vcd_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
 
-  memory_priority_type = "{{.MemoryPriorityType}}"
+  memory_priority = "{{.MemoryPriorityType}}"
   memory_shares        = "{{.MemoryShares}}"
   memory_reservation   = "{{.MemoryReservation}}"
   memory_limit         = "{{.MemoryLimit}}"
 
-  cpu_priority_type = "{{.CpuPriorityType}}"
+  cpu_priority = "{{.CpuPriorityType}}"
   cpu_shares        = "{{.CpuShares}}"
   cpu_reservation   = "{{.CpuReservation}}"
   cpu_limit         = "{{.CpuLimit}}"  
@@ -182,12 +182,12 @@ resource "vcd_vm" "{{.EmptyVmName}}" {
   hardware_version = "vmx-11"
   computer_name    = "whaetev2"
 
-  memory_priority_type = "{{.MemoryPriorityType}}"
+  memory_priority = "{{.MemoryPriorityType}}"
   memory_shares = "{{.MemoryShares}}"
   memory_reservation = "{{.MemoryReservation}}"
   memory_limit = "{{.MemoryLimit}}"
 
-  cpu_priority_type = "{{.CpuPriorityType}}"
+  cpu_priority = "{{.CpuPriorityType}}"
   cpu_shares = "{{.CpuShares}}"
   cpu_reservation = "{{.CpuReservation}}"
   cpu_limit = "{{.CpuLimit}}"  
@@ -206,12 +206,12 @@ resource "vcd_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
 
-  memory_priority_type = "{{.MemoryPriorityTypeUpdate}}"
+  memory_priority = "{{.MemoryPriorityTypeUpdate}}"
   memory_shares = "{{.MemorySharesUpdate}}"
   memory_reservation = "{{.MemoryReservationUpdate}}"
   memory_limit = "{{.MemoryLimitUpdate}}"
 
-  cpu_priority_type = "{{.CpuPriorityTypeUpdate}}"
+  cpu_priority = "{{.CpuPriorityTypeUpdate}}"
   cpu_shares = "{{.CpuSharesUpdate}}"
   cpu_reservation = "{{.CpuReservationUpdate}}"
   cpu_limit = "{{.CpuLimitUpdate}}"  
@@ -229,12 +229,12 @@ resource "vcd_vm" "{{.EmptyVmName}}" {
   hardware_version = "vmx-11"
   computer_name    = "whaetev2"
 
-  memory_priority_type = "{{.MemoryPriorityTypeUpdate}}"
+  memory_priority = "{{.MemoryPriorityTypeUpdate}}"
   memory_shares        = "{{.MemorySharesUpdate}}"
   memory_reservation   = "{{.MemoryReservationUpdate}}"
   memory_limit         = "{{.MemoryLimitUpdate}}"
 
-  cpu_priority_type = "{{.CpuPriorityTypeUpdate}}"
+  cpu_priority = "{{.CpuPriorityTypeUpdate}}"
   cpu_shares        = "{{.CpuSharesUpdate}}"
   cpu_reservation   = "{{.CpuReservationUpdate}}"
   cpu_limit         = "{{.CpuLimitUpdate}}"  
@@ -255,11 +255,11 @@ resource "vcd_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
 
-  memory_priority_type = "{{.MemoryPriorityTypeUpdate2}}"
+  memory_priority = "{{.MemoryPriorityTypeUpdate2}}"
   memory_reservation   = "{{.MemoryReservationUpdate2}}"
   memory_limit         = "{{.MemoryLimitUpdate2}}"
 
-  cpu_priority_type    = "{{.CpuPriorityTypeUpdate2}}"
+  cpu_priority    = "{{.CpuPriorityTypeUpdate2}}"
   cpu_reservation      = "{{.CpuReservationUpdate2}}"
   cpu_limit            = "{{.CpuLimitUpdate2}}"  
 }
@@ -276,11 +276,11 @@ resource "vcd_vm" "{{.EmptyVmName}}" {
   hardware_version = "vmx-11"
   computer_name    = "whaetev2"
 
-  memory_priority_type = "{{.MemoryPriorityTypeUpdate2}}"
+  memory_priority = "{{.MemoryPriorityTypeUpdate2}}"
   memory_reservation   = "{{.MemoryReservationUpdate2}}"
   memory_limit         = "{{.MemoryLimitUpdate2}}"
 
-  cpu_priority_type    = "{{.CpuPriorityTypeUpdate2}}"
+  cpu_priority    = "{{.CpuPriorityTypeUpdate2}}"
   cpu_reservation      = "{{.CpuReservationUpdate2}}"
   cpu_limit            = "{{.CpuLimitUpdate2}}"  
 }

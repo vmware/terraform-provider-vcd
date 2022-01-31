@@ -61,7 +61,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
 		},
-		"memory_priority_type": &schema.Schema{
+		"memory_priority": &schema.Schema{
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
@@ -91,7 +91,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "The amount of Mhz reservation on the underlying virtualization infrastructure",
 		},
-		"cpu_priority_type": &schema.Schema{
+		"cpu_priority": &schema.Schema{
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
