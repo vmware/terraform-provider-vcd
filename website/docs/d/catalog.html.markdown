@@ -46,6 +46,7 @@ The following arguments are supported:
 * `publish_enabled` - (*v3.6+*) Enable allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation. Default is `false`.
 * `cache_enabled` - (*v3.6+*) Enable early catalog export to optimize synchronization. Default is `false`.
 * `preserve_identity_information` - (*v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary. Default is `false`.
+* `metadata` -  (*v3.6+*) Key value map of metadata.
 
 ## Filter arguments
 
