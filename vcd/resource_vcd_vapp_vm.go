@@ -154,7 +154,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
-			Description: "Custom priority for the resource. This is a read-only, unless the share level is CUSTOM",
+			Description: "Custom priority for the resource. This is a read-only, unless the `memory_priority` is CUSTOM",
 		},
 		"memory_limit": &schema.Schema{
 			Type:        schema.TypeInt,
@@ -191,7 +191,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
-			Description: "Custom priority for the resource. This is a read-only, unless the share level is CUSTOM",
+			Description: "Custom priority for the resource. This is a read-only, unless the `cpu_priority` is CUSTOM",
 		},
 		"cpu_limit": &schema.Schema{
 			Type:        schema.TypeInt,

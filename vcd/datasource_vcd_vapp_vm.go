@@ -69,7 +69,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 		"memory_shares": &schema.Schema{
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "Custom priority for the resource. This is a read-only, unless the share level is CUSTOM",
+			Description: "Custom priority for the resource",
 		},
 		"memory_limit": &schema.Schema{
 			Type:        schema.TypeInt,
@@ -99,7 +99,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 		"cpu_shares": &schema.Schema{
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "Custom priority for the resource. This is a read-only, unless the share level is CUSTOM",
+			Description: "Custom priority for the resource",
 		},
 		"cpu_limit": &schema.Schema{
 			Type:        schema.TypeInt,
