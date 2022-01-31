@@ -1676,17 +1676,33 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	dSet(d, "cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
 	dSet(d, "memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
-	dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
-	dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
-	dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
-	dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
-	dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.MemoryResourceMb != nil {
+		dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
+		dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
+		if vm.VM.VmSpecSection.MemoryResourceMb.Reservation != nil {
+			dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
+		}
+		if vm.VM.VmSpecSection.MemoryResourceMb.Limit != nil {
+			dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
+		}
+		if vm.VM.VmSpecSection.MemoryResourceMb.Shares != nil {
+			dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
+		}
+	}
 	dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
 	dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
-	dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
-	dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
-	dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
-	dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.CpuResourceMhz != nil {
+		if vm.VM.VmSpecSection.CpuResourceMhz.Reservation != nil {
+			dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
+		}
+		if vm.VM.VmSpecSection.CpuResourceMhz.Limit != nil {
+			dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
+		}
+		if vm.VM.VmSpecSection.CpuResourceMhz.Shares != nil {
+			dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
+		}
+		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
+	}
 
 	metadata, err := vm.GetMetadata()
 	if err != nil {
