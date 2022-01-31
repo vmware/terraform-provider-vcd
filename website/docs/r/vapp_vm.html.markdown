@@ -246,6 +246,34 @@ resource "vcd_vapp_vm" "secondVM" {
 
 ```
 
+## Example Usage (using advanced compute)
+This example shows how to create an empty VM with advanced compute settings.
+
+```hcl
+resource "vcd_vapp_vm" "advancedVM" {
+  vapp_name     = vcd_vapp.web.name
+  name          = "advancedVM"
+  computer_name = "advancedVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "my-catalog"
+  boot_image       = "myMedia"
+
+  memory_priority_type = "CUSTOM"
+  memory_shares        = "480"
+  memory_reservation   = "8"
+  memory_limit         = "48"
+
+  cpu_priority_type = "CUSTOM"
+  cpu_shares        = "512"
+  cpu_reservation   = "200"
+  cpu_limit         = "1000"
+}
+
 ## Argument Reference
 
 The following arguments are supported:
