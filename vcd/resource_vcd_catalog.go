@@ -388,14 +388,14 @@ func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := catalog.DeleteMetadata(k)
+			err := catalog.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err = catalog.AddMetadata(types.MetadataStringValue, k, v.(string))
+			err = catalog.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}
