@@ -861,41 +861,53 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	// update treats same values as changes and fails, with no values provided - no changes are made for that section
 	vmSpecSection.DiskSection = nil
 
+	updateNeeded := false
+
 	if memorySharesLevel, ok := d.GetOk("memory_priority"); ok {
 		vmSpecSection.MemoryResourceMb.SharesLevel = memorySharesLevel.(string)
+		updateNeeded = true
 	}
 
 	if memoryLimit, ok := d.GetOk("memory_limit"); ok {
 		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+		updateNeeded = true
 	}
 
 	if memoryShares, ok := d.GetOk("memory_shares"); ok {
 		vmSpecSection.MemoryResourceMb.Shares = takeIntPointer(memoryShares.(int))
+		updateNeeded = true
 	}
 
 	if memoryReservation, ok := d.GetOk("memory_reservation"); ok {
 		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+		updateNeeded = true
 	}
 
 	if memorySharesLevel, ok := d.GetOk("cpu_priority"); ok {
 		vmSpecSection.CpuResourceMhz.SharesLevel = memorySharesLevel.(string)
+		updateNeeded = true
 	}
 
 	if memoryLimit, ok := d.GetOk("cpu_limit"); ok {
 		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+		updateNeeded = true
 	}
 
 	if memoryShares, ok := d.GetOk("cpu_shares"); ok {
 		vmSpecSection.CpuResourceMhz.Shares = takeIntPointer(memoryShares.(int))
+		updateNeeded = true
 	}
 
 	if memoryReservation, ok := d.GetOk("cpu_reservation"); ok {
 		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+		updateNeeded = true
 	}
 
-	err := updateVmSpecSection(vmSpecSection, vm, description)
-	if err != nil {
-		return fmt.Errorf("error updating advanced compute settings: %s", err)
+	if updateNeeded {
+		err := updateVmSpecSection(vmSpecSection, vm, description)
+		if err != nil {
+			return fmt.Errorf("error updating advanced compute settings: %s", err)
+		}
 	}
 	return nil
 }
