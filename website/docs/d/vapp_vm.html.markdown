@@ -96,13 +96,13 @@ The following arguments are supported:
 * `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
 * `memory_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload. Values can be: `LOW`, `NORMAL`, `HIGH` and `CUSTOM`
 * `memory_shares` - Custom priority for the resource in MB
-* `memory_limit` - The limit (in MB) for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited. `-1` value for unlimited.
+* `memory_limit` - The limit (in MB) for how much of memory can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited.
 * `cpus` -  The number of virtual CPUs allocated to the VM
 * `cpu_cores` -  The number of cores per socket
 * `cpu_reservation` - The amount of MHz reservation on the underlying virtualization infrastructure
 * `cpu_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload. Values can be: `LOW`, `NORMAL`, `HIGH` and `CUSTOM`
 * `cpu_shares` - Custom priority for the resource in MHz
-* `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited. `-1` value for unlimited.
+* `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited.
 * `metadata` -  Key value map of metadata assigned to this VM
 * `disk` -  Independent disk attachment configuration.
 * `network` -  A block defining a network interface. Multiple can be used.

@@ -290,13 +290,13 @@ The following arguments are supported:
 * `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
 * `memory_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
 * `memory_shares` - Custom priority for the resource in MB. This is a read-only, unless the `memory_priority` is "CUSTOM"
-* `memory_limit` - The limit (in MB) for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited. `-1` value for unlimited.
+* `memory_limit` - The limit (in MB) for how much of memory can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited.
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket.
 * `cpu_reservation` - The amount of MHz reservation on the underlying virtualization infrastructure.
 * `cpu_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
 * `cpu_shares` - Custom priority for the resource in MHz. This is a read-only, unless the `cpu_priority` is "CUSTOM"
-* `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited. `-1` value for unlimited. 
+* `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited. 
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
