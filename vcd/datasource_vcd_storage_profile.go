@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -132,7 +131,7 @@ func datasourceVcdStorageProfileRead(ctx context.Context, d *schema.ResourceData
 	if storageProfile.IopsSettings != nil {
 
 		var iopsSettings = make(map[string]interface{})
-		util.Logger.Printf("!!!!!!!!!!!!!!!!: %s\n", storageProfile.IopsSettings.StorageProfileIopsLimit)
+
 		iopsSettings["iops_limit"] = storageProfile.IopsSettings.StorageProfileIopsLimit
 		iopsSettings["iops_limiting_enabled"] = storageProfile.IopsSettings.Enabled
 		iopsSettings["default_disk_iops"] = storageProfile.IopsSettings.DiskIopsDefault
