@@ -1,0 +1,1 @@
+* `data/vcd_storage_profile` add IOPS settings and other data to state [GH-782]
