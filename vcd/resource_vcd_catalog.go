@@ -140,7 +140,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	err = createOrUpdateAdminCatalogMetadata(d, meta)
 	if err != nil {
-		return diag.Errorf("error adding media item metadata: %s", err)
+		return diag.Errorf("error adding catalog metadata: %s", err)
 	}
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
@@ -211,7 +211,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 
 	metadata, err := adminCatalog.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find media item metadata: %s", err)
+		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
 		return err
 	}
 
@@ -287,7 +287,7 @@ func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	err = createOrUpdateAdminCatalogMetadata(d, meta)
 	if err != nil {
-		return diag.Errorf("error updating media item metadata: %s", err)
+		return diag.Errorf("error updating catalog metadata: %s", err)
 	}
 
 	return resourceVcdCatalogRead(ctx, d, meta)
@@ -360,7 +360,7 @@ func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta 
 
 func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[TRACE] adding/updating metadata for media item")
+	log.Printf("[TRACE] adding/updating metadata for catalog")
 
 	vcdClient := meta.(*VCDClient)
 
