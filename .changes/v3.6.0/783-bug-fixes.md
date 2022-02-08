@@ -1,0 +1,1 @@
+* Fix Issue #611 when read of `vcd_vapp_vm` resource failed when vm isn't found. Now allows terraform to recreate resource when it isn't found. [GH-783]
