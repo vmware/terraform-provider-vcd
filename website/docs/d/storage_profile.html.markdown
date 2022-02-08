@@ -47,6 +47,8 @@ The following arguments are supported:
 <a id="iopsSettings"></a>
 ## IOPS settings
 
+(Supported from VCD *v10.2*)
+
 * `iops_limiting_enabled` - True if this storage profile is IOPs-based placement enabled
 * `maximum_disk_iops` - The maximum IOPS value that this storage profile is permitted to deliver. Value of 0 means this max setting is disabled and there is no max disk IOPS restriction
 * `default_disk_iops` - Value of 0 for disk iops means that no iops would be reserved or provisioned for that virtual disk
