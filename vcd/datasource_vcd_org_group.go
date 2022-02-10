@@ -13,7 +13,7 @@ func datasourceVcdOrgGroup() *schema.Resource {
 		ReadContext: datasourceVcdOrgGroupRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:        schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"name": {
