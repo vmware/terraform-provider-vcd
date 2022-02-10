@@ -71,7 +71,7 @@ func datasourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("org group %s not found: %s", identifier, err)
 	}
 
-	log.Printf("Org group with name %s found", identifier)
+	log.Printf("Org group %s found", identifier)
 	d.SetId(orgGroup.Group.ID)
 	dSet(d, "name", orgGroup.Group.Name)
 	dSet(d, "provider_type", orgGroup.Group.ProviderType)
