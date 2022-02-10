@@ -30,6 +30,7 @@ func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Re
 
 var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_org":                                       datasourceVcdOrg(),                              // 2.5
+	"vcd_org_group":                                 datasourceVcdOrgGroup(),                         // 3.6
 	"vcd_org_user":                                  datasourceVcdOrgUser(),                          // 3.0
 	"vcd_org_vdc":                                   datasourceVcdOrgVdc(),                           // 2.5
 	"vcd_catalog":                                   datasourceVcdCatalog(),                          // 2.5
