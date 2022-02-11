@@ -12,11 +12,12 @@ func datasourceVcdOrgGroup() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Organization name for lookup",
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The name of organization to use, optional if defined at provider level",
 			},
 			"name": {
-				Type:     schema.TypeString,
+				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the group for lookup",
 			},
