@@ -12,11 +12,6 @@ Provides a data source for VMware Cloud Director Organization groups. This can b
 
 Supported in provider *v3.6+*
 
-~> **Note:** This operation requires the rights included in the predefined `Organization
-Administrator` role or an equivalent set of rights. `SAML` or `LDAP` must be configured as vCD
-does not support local groups and will return HTTP error 403 "This operation is denied." if selected
-`provider_type` is not configured.
-
 ## Example Usage to fetch an Organization group
 
 ```hcl
