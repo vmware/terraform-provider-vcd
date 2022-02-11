@@ -176,7 +176,19 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description2"),
 				),
 			},
-
+			//resource.TestStep{
+			//	Config: ldapSetupConfig + groupConfigText + groupConfigText2 + testAccVcdOrgGroupDS, // Datasource check
+			//	Check: resource.ComposeAggregateTestCheckFunc(
+			//		resource.TestMatchResourceAttr("data.vcd_org_group.sourced_group1", "id", groupIdRegex),
+			//		resource.TestCheckResourceAttr("data.vcd_org_group.sourced_group1", "role", role2),
+			//		resource.TestCheckResourceAttr("data.vcd_org_group.sourced_group1", "description", "Description1"),
+			//		resource.TestCheckResourceAttr("data.vcd_org_group.sourced_group1", "provider_type", "INTEGRATED"),
+			//		resource.TestMatchResourceAttr("data.vcd_org_group.sourced_group2", "id", groupIdRegex),
+			//		resource.TestCheckResourceAttr("data.vcd_org_group.sourced_group2", "role", role2),
+			//		resource.TestCheckResourceAttr("data.vcd_org_group.sourced_group2", "description", "Description1"),
+			//		resource.TestCheckResourceAttr("data.vcd_org_group.sourced_group2", "provider_type", "INTEGRATED"),
+			//	),
+			//},
 			resource.TestStep{
 				ResourceName:      "vcd_org_group.group1",
 				ImportState:       true,
@@ -267,6 +279,18 @@ resource "vcd_vapp_vm" "ldap-container" {
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
+}
+`
+
+const testAccVcdOrgGroupDS = `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
+
+data "vcd_org_group" "sourced_group1" {
+  name = vcd_org_group.group1.name
+}
+
+data "vcd_org_group" "sourced_group2" {
+  name = vcd_org_group.group2.name
 }
 `
 
