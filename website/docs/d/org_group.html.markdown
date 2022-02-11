@@ -15,7 +15,7 @@ Supported in provider *v3.6+*
 ## Example Usage to fetch an Organization group
 
 ```hcl
-datasource "vcd_org_group" "org1" {
+data "vcd_org_group" "org1" {
   org  = "org1"
   name = "Org1-AdminGroup"
 }
