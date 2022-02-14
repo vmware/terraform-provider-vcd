@@ -357,7 +357,7 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, meta interface
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
-func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) diag.Diagnostics {
+func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -390,7 +390,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) diag.Diagnosti
 		vappLeaseSlice := []map[string]interface{}{vappLease}
 		err = d.Set("vapp_lease", vappLeaseSlice)
 		if err != nil {
-			return diag.FromErr(err)
+			return err
 		}
 	}
 
@@ -411,7 +411,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) diag.Diagnosti
 		vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
 		err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
 		if err != nil {
-			return diag.FromErr(err)
+			return err
 		}
 	}
 
@@ -452,7 +452,11 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, meta interface{}
 	}
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
-	return setOrgData(d, adminOrg)
+	err = setOrgData(d, adminOrg)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // resourceVcdOrgImport is responsible for importing the resource.
@@ -471,9 +475,9 @@ func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagnosis := setOrgData(d, adminOrg)
+	err = setOrgData(d, adminOrg)
 
-	if diagnosis.HasError() {
+	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
