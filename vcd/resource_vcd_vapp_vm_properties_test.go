@@ -104,6 +104,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `guest_properties`),
 				),
 			},
+			// Validates that if vApp is missing, resource can be recreated and no error is thrown. Covers issue #611
 			resource.TestStep{
 				Config:             configText3,
 				PreConfig:          deleteVapp,
