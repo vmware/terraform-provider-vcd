@@ -1,1 +1,1 @@
-* `data/vcd_storage_profile` add IOPS settings and other data like `limit`, `units`, `used_storage`, `default`, `enabled`, `iops_allocated` to the state [GH-782]
+* `data/vcd_storage_profile` add IOPS settings like `iops_limiting_enabled`, `maximum_disk_iops`, `default_disk_iops`, `disk_iops_per_gb_max`, `iops_limit` and other data like `limit`, `units`, `used_storage`, `default`, `enabled`, `iops_allocated` to the state [GH-782]
