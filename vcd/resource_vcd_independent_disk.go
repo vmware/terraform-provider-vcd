@@ -18,6 +18,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdIndependentDiskCreate,
 		ReadContext:   resourceVcdIndependentDiskRead,
+		UpdateContext: resourceVcdIndependentDiskUpdate,
 		DeleteContext: resourceVcdIndependentDiskDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdIndependentDiskImport,
@@ -56,7 +57,6 @@ func resourceVcdIndependentDisk() *schema.Resource {
 			"size_in_mb": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				ForceNew:    true,
 				Description: "size in MB",
 			},
 			"bus_type": &schema.Schema{
@@ -193,6 +193,100 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(disk.Disk.Id)
 
+	return resourceVcdIndependentDiskRead(ctx, d, meta)
+}
+
+func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	if d.HasChanges("size_in_mb") {
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		}
+
+		disk, err := vdc.GetDiskById(d.Id(), true)
+
+		/*	storageProfileValue := d.Get("storage_profile").(string)
+
+			if storageProfileValue != "" {
+				storageReference, err := vdc.FindStorageProfileReference(storageProfileValue)
+				if err != nil {
+					return diag.Errorf("error finding storage profile %s", storageProfileValue)
+				}
+				disk.Disk.StorageProfile = &types.Reference{HREF: storageReference.HREF}
+			}
+
+			diskCreateParams.Disk.Description = d.Get("description").(string)
+		*/
+		sliceOfVmsHrefs, err := disk.GetAttachedVmsHrefs()
+		if err != nil {
+			return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate faced issue fetching attached VMs")
+		}
+		diskDetailsForReAttach := make(map[string]types.DiskSettings)
+		for _, vmHref := range sliceOfVmsHrefs {
+			vm, err := vcdClient.Client.GetVMByHref(vmHref)
+			if err != nil {
+				return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error fetching attached VM: %s", err)
+			}
+
+			// TODO validate references and handle not found
+			for _, diskSettings := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
+				if diskSettings.Disk != nil && diskSettings.Disk.HREF == disk.Disk.HREF {
+					diskDetailsForReAttach[vmHref] = *diskSettings
+				}
+			}
+
+			attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
+
+			task, err := vm.DetachDisk(attachParams)
+			if err != nil {
+				return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error waiting for task to complete detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
+			}
+		}
+
+		err = disk.Refresh()
+		if err != nil {
+			return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error refreshing independent disk: %s", err)
+		}
+
+		if d.HasChange("size_in_mb") {
+			disk.Disk.SizeMb = int64(d.Get("size_in_mb").(int))
+		}
+
+		task, err := disk.Update(disk.Disk)
+		if err != nil {
+			return diag.Errorf("error updating independent disk: %s", err)
+		}
+
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return diag.Errorf("error waiting to finish updating of independent disk: %s", err)
+		}
+		for _, vmHref := range sliceOfVmsHrefs {
+			vm, err := vcdClient.Client.GetVMByHref(vmHref)
+			if err != nil {
+				return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error fetching attached VM: %s", err)
+			}
+			attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF},
+				BusNumber:  takeIntPointer(diskDetailsForReAttach[vmHref].BusNumber),
+				UnitNumber: takeIntPointer(diskDetailsForReAttach[vmHref].UnitNumber)}
+
+			task, err := vm.AttachDisk(attachParams)
+			if err != nil {
+				return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error attaching independent disk `%s` to vm %s", disk.Disk.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error waiting for task to complete detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
+			}
+		}
+
+	}
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
