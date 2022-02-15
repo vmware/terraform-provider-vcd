@@ -45,12 +45,12 @@ func datasourceVcdStorageProfile() *schema.Resource {
 			"default": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if this is default storage profile for this vDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified",
+				Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if this storage profile is enabled for use in the vDC",
+				Description: "True if this storage profile is enabled for use in the VDC",
 			},
 			"iops_allocated": &schema.Schema{
 				Type:        schema.TypeInt,
