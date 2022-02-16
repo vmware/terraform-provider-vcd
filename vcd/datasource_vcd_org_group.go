@@ -19,7 +19,7 @@ func datasourceVcdOrgGroup() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the group for lookup",
+				Description: "Name of the group to lookup",
 			},
 			"provider_type": {
 				Type:     schema.TypeString,
@@ -39,15 +39,18 @@ func datasourceVcdOrgGroup() *schema.Resource {
 
 func datasourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
+
 	groupName := d.Get("name").(string)
 	orgGroup, err := adminOrg.GetGroupByName(groupName, false)
 	if err != nil {
 		return diag.Errorf("error finding group with name %s: %s", groupName, err)
 	}
+
 	d.SetId(orgGroup.Group.ID)
 	dSet(d, "provider_type", orgGroup.Group.ProviderType)
 	dSet(d, "description", orgGroup.Group.Description)
