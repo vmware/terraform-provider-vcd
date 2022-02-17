@@ -45,17 +45,9 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 
 	deleteVapp := func() {
 		t.Log("Deleting vApp for next step")
-		if &vm == nil {
-			t.Errorf("VM to be removed missing")
-			t.FailNow()
-		}
 		err := vm.Delete()
 		if err != nil {
 			t.Errorf("error manually deleting VM: %s", err)
-			t.FailNow()
-		}
-		if &vapp == nil {
-			t.Errorf("vApp to be removed missing")
 			t.FailNow()
 		}
 		//ignore error
