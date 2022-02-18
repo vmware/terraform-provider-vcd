@@ -459,7 +459,7 @@ func resourceVcdIndependentDiskDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if diskRecord.Disk.IsAttached {
-		return diag.Errorf("can not remove disk as it is attached to vm")
+		return diag.Errorf("can not remove disk %s as it is attached to vm", diskRecord.Disk.Name)
 	}
 
 	disk, err := vdc.GetDiskByHref(diskRecord.Disk.HREF)
