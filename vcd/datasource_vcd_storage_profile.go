@@ -35,7 +35,7 @@ func datasourceVcdStorageProfile() *schema.Resource {
 			"limit": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Maximum number of storage bytes (scaled by Units) allocated for this profile. A value of 0 is understood to mean `maximum possible`",
+				Description: "Maximum number of storage bytes (scaled by 'units' field) allocated for this profile. `0` means `maximum possible`",
 			},
 			"used_storage": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -65,13 +65,13 @@ func datasourceVcdStorageProfile() *schema.Resource {
 			"iops_settings": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "IP ranges used for static pool allocation in the network",
+				Description: "IOPs related settings",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"iops_limiting_enabled": &schema.Schema{
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "True if this storage profile is IOPs-based placement enabled",
+							Description: "True if this storage profile is IOPS-based placement enabled",
 						},
 						"maximum_disk_iops": &schema.Schema{
 							Type:        schema.TypeInt,
@@ -81,17 +81,17 @@ func datasourceVcdStorageProfile() *schema.Resource {
 						"default_disk_iops": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Value of 0 for disk iops means that no iops would be reserved or provisioned for that virtual disk",
+							Description: "Value of 0 for disk IOPS means that no IOPS would be reserved or provisioned for that virtual disk",
 						},
 						"disk_iops_per_gb_max": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "The maximum disk IOPs per GB value that this storage profile is permitted to deliver. A value of 0 means there is no perGB IOPS restriction",
+							Description: "The maximum disk IOPs per GB value that this storage profile is permitted to deliver. A value of 0 means there is no per GB IOPS restriction",
 						},
 						"iops_limit": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Maximum number of IOPs that can be allocated for this profile. A value of 0 is understood to mean `maximum possible`",
+							Description: "Maximum number of IOPs that can be allocated for this profile. `0` means `maximum possible`",
 						},
 					},
 				},
