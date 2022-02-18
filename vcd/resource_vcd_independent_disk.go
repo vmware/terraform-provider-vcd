@@ -486,7 +486,7 @@ func resourceVcdIndependentDiskDelete(ctx context.Context, d *schema.ResourceDat
 
 var errHelpDiskImport = fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.my-independent-disk-id' to import by rule id
-'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs`)
+'list@org-name.vdc-name.my-independent-disk-name' or 'list@org-name.vdc-name' to get a list of disks with their IDs`)
 
 // resourceVcdIndependentDiskImport is responsible for importing the resource.
 // The following steps happen as part of import
@@ -511,12 +511,15 @@ func resourceVcdIndependentDiskImport(ctx context.Context, d *schema.ResourceDat
 
 	log.Printf("[DEBUG] importing vcd_independent_disk resource with provided id %s", d.Id())
 
-	if len(resourceURI) != 3 {
+	if len(resourceURI) != 3 && len(resourceURI) != 2 {
 		return nil, errHelpDiskImport
 	}
 
 	if strings.Contains(d.Id(), "list@") {
-		commandOrgName, vdcName, diskName = resourceURI[0], resourceURI[1], resourceURI[2]
+		commandOrgName, vdcName = resourceURI[0], resourceURI[1]
+		if len(resourceURI) == 3 {
+			diskName = resourceURI[2]
+		}
 		commandOrgNameSplit := strings.Split(commandOrgName, "@")
 		if len(commandOrgNameSplit) != 2 {
 			return nil, errHelpDiskImport
@@ -560,10 +563,6 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 	if err != nil {
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 	}
-	disks, err := vdc.GetDisksByName(diskName, false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
-	}
 
 	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
 
@@ -575,16 +574,38 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 	if err != nil {
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
 	}
-	for index, disk := range *disks {
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", index+1, disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+
+	if diskName == "" {
+		disksRecords, err := vdc.QueryDisks("*")
 		if err != nil {
-			logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
+			return nil, fmt.Errorf("unable to retrieve disks in VDC: %s", err)
 		}
+		for index, disk := range *disksRecords {
+			uuid, err := govcd.GetUuidFromHref(disk.HREF, true)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing disk ID : %s", err)
+			}
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", index+1, uuid, disk.Name, disk.Description, disk.SizeMb)
+			if err != nil {
+				logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
+			}
+		}
+	} else {
+		disks, err := vdc.GetDisksByName(diskName, false)
+		if err != nil {
+			return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
+		}
+		for index, disk := range *disks {
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", index+1, disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.SizeMb)
+			if err != nil {
+				logForScreen("vcd_independent_disk", fmt.Sprintf("error writing to buffer: %s", err))
+			}
+		}
+
 	}
 	err = writer.Flush()
 	if err != nil {
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error flushing buffer: %s", err))
 	}
-
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpDiskImport, buf.String())
 }
