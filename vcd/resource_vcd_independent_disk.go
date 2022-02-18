@@ -418,18 +418,13 @@ func resourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	setMainData(d, disk)
-	dSet(d, "datastore_name", diskRecord.DataStoreName)
-	dSet(d, "is_attached", diskRecord.IsAttached)
-	dSet(d, "encrypted", diskRecord.Encrypted)
-	dSet(d, "sharing_type", diskRecord.SharingType)
-	dSet(d, "uuid", diskRecord.UUID)
+	setMainData(d, disk, diskRecord)
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
+func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.DiskRecordType) {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -442,6 +437,12 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	dSet(d, "iops", disk.Disk.Iops)
 	dSet(d, "owner_name", disk.Disk.Owner.User.Name)
+	dSet(d, "datastore_name", diskRecord.DataStoreName)
+	dSet(d, "is_attached", diskRecord.IsAttached)
+	dSet(d, "encrypted", diskRecord.Encrypted)
+	dSet(d, "sharing_type", diskRecord.SharingType)
+	dSet(d, "uuid", diskRecord.UUID)
+
 }
 
 func resourceVcdIndependentDiskDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
