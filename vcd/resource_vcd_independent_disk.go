@@ -436,7 +436,7 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	dSet(d, "storage_profile", disk.Disk.StorageProfile.Name)
 	dSet(d, "size_in_mb", disk.Disk.SizeMb)
 	dSet(d, "bus_type", busTypesFromValues[disk.Disk.BusType])
-	if "vmware.nvme.controller" == disk.Disk.BusSubType {
+	if disk.Disk.BusSubType == "vmware.nvme.controller" {
 		dSet(d, "bus_type", busTypesFromValues["21"])
 	}
 	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
