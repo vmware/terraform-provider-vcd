@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"strings"
 	"text/tabwriter"
@@ -45,14 +46,12 @@ func resourceVcdIndependentDisk() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "independent disk description",
 			},
 			"storage_profile": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 			"size_in_mb": {
 				Type:        schema.TypeInt,
@@ -72,6 +71,24 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ForceNew:     true,
 				Computed:     true,
 				ValidateFunc: validateBusSubType,
+			},
+			"encrypted": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if disk is encrypted",
+			},
+			"sharing_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"DiskSharing", "ControllerSharing"}, false),
+				Description:  "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
+			},
+			"uuid": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The UUID of this named disk's device backing",
 			},
 			"iops": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -101,29 +118,34 @@ var busTypes = map[string]string{
 	"IDE":  "5",
 	"SCSI": "6",
 	"SATA": "20",
+	"NVME": "20", //not API number as NVME also 20 as SATA
 }
+
 var busTypesFromValues = map[string]string{
 	"5":  "IDE",
 	"6":  "SCSI",
 	"20": "SATA",
+	"21": "NVME",
 }
 
 var busSubTypes = map[string]string{
-	"ide":         "IDE",
-	"buslogic":    "buslogic",
-	"lsilogic":    "lsilogic",
-	"lsilogicsas": "lsilogicsas",
-	"virtualscsi": "VirtualSCSI",
-	"ahci":        "vmware.sata.ahci",
+	"ide":            "IDE",
+	"buslogic":       "buslogic",
+	"lsilogic":       "lsilogic",
+	"lsilogicsas":    "lsilogicsas",
+	"virtualscsi":    "VirtualSCSI",
+	"ahci":           "vmware.sata.ahci",
+	"nvmecontroller": "vmware.nvme.controller",
 }
 
 var busSubTypesFromValues = map[string]string{
-	"ide":              "IDE",
-	"buslogic":         "buslogic",
-	"lsilogic":         "lsilogic",
-	"lsilogicsas":      "lsilogicsas",
-	"VirtualSCSI":      "VirtualSCSI",
-	"vmware.sata.ahci": "ahci",
+	"ide":                    "IDE",
+	"buslogic":               "buslogic",
+	"lsilogic":               "lsilogic",
+	"lsilogicsas":            "lsilogicsas",
+	"VirtualSCSI":            "VirtualSCSI",
+	"vmware.sata.ahci":       "ahci",
+	"vmware.nvme.controller": "nvmecontroller",
 }
 
 func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -175,6 +197,10 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 
 	diskCreateParams.Disk.Description = d.Get("description").(string)
 
+	if value, ok := d.GetOk("sharing_type"); ok {
+		diskCreateParams.Disk.SharingType = value.(string)
+	}
+
 	task, err := vdc.CreateDisk(diskCreateParams)
 	if err != nil {
 		return diag.Errorf("error creating independent disk: %s", err)
@@ -199,28 +225,38 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	if d.HasChanges("size_in_mb") {
+	if d.HasChanges("size_in_mb", "storage_profile", "description") {
 		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 		if err != nil {
 			return diag.Errorf(errorRetrievingOrgAndVdc, err)
 		}
 
-		/*	storageProfileValue := d.Get("storage_profile").(string)
+		storageProfileValue := d.Get("storage_profile").(string)
+		var storageProfileRef *types.Reference
 
-			if storageProfileValue != "" {
-				storageReference, err := vdc.FindStorageProfileReference(storageProfileValue)
-				if err != nil {
-					return diag.Errorf("error finding storage profile %s", storageProfileValue)
-				}
-				disk.Disk.StorageProfile = &types.Reference{HREF: storageReference.HREF}
+		if storageProfileValue != "" {
+			storageReference, err := vdc.FindStorageProfileReference(storageProfileValue)
+			if err != nil {
+				return diag.Errorf("error finding storage profile %s", storageProfileValue)
 			}
-
-			diskCreateParams.Disk.Description = d.Get("description").(string)
-		*/
+			storageProfileRef = &types.Reference{HREF: storageReference.HREF}
+		}
 
 		disk, err := vdc.GetDiskById(d.Id(), true)
+		if err != nil {
+			return diag.Errorf("error fetching independent disk: %s", err)
+		}
 
-		sliceOfVmsHrefs, diskDetailsForReAttach, diagErr := detachVms(vcdClient, disk)
+		sliceOfVmsHrefs, err := disk.GetAttachedVmsHrefs()
+		if err != nil {
+			return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate faced issue fetching attached VMs")
+		}
+
+		//lock VMs as another independent disk resource can be doing update with same VM
+		lockVms(sliceOfVmsHrefs)
+		defer unlockVms(sliceOfVmsHrefs)
+
+		diskDetailsForReAttach, diagErr := detachVms(vcdClient, disk, sliceOfVmsHrefs)
 		if diagErr != nil {
 			return diagErr
 		}
@@ -230,9 +266,10 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error refreshing independent disk: %s", err)
 		}
 
-		// IF second time check needed?s
-		if d.HasChange("size_in_mb") {
-			disk.Disk.SizeMb = int64(d.Get("size_in_mb").(int))
+		disk.Disk.SizeMb = int64(d.Get("size_in_mb").(int))
+		disk.Disk.Description = d.Get("description").(string)
+		if storageProfileRef != nil {
+			disk.Disk.StorageProfile = storageProfileRef
 		}
 
 		task, err := disk.Update(disk.Disk)
@@ -254,37 +291,55 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
-func detachVms(vcdClient *VCDClient, disk *govcd.Disk) ([]string, map[string]types.DiskSettings, diag.Diagnostics) {
-	sliceOfVmsHrefs, err := disk.GetAttachedVmsHrefs()
-	if err != nil {
-		return nil, nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate faced issue fetching attached VMs")
+func lockVms(sliceOfVmsHrefs []string) {
+	for _, vmHref := range sliceOfVmsHrefs {
+		key := fmt.Sprintf("independentDisLock:%s", vmHref)
+		vcdMutexKV.kvLock(key)
 	}
+}
+
+func unlockVms(sliceOfVmsHrefs []string) {
+	for _, vmHref := range sliceOfVmsHrefs {
+		key := fmt.Sprintf("independentDisLock:%s", vmHref)
+		vcdMutexKV.kvUnlock(key)
+	}
+}
+
+func detachVms(vcdClient *VCDClient, disk *govcd.Disk, sliceOfVmsHrefs []string) (map[string]types.DiskSettings, diag.Diagnostics) {
 	diskDetailsForReAttach := make(map[string]types.DiskSettings)
 	for _, vmHref := range sliceOfVmsHrefs {
 		vm, err := vcdClient.Client.GetVMByHref(vmHref)
 		if err != nil {
-			return nil, nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error fetching attached VM: %s", err)
+			return nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error fetching attached VM: %s", err)
 		}
 
-		// TODO validate references and handle not found
-		for _, diskSettings := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
-			if diskSettings.Disk != nil && diskSettings.Disk.HREF == disk.Disk.HREF {
-				diskDetailsForReAttach[vmHref] = *diskSettings
+		isFoundDiskMatch := false
+		if vm.VM != nil && vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.DiskSection != nil && vm.VM.VmSpecSection.DiskSection.DiskSettings != nil {
+			for _, diskSettings := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
+				if diskSettings.Disk != nil && diskSettings.Disk.HREF == disk.Disk.HREF {
+					diskDetailsForReAttach[vmHref] = *diskSettings
+					isFoundDiskMatch = true
+				}
 			}
+		} else {
+			return nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate unexpected return from API, missing VmSpecSection or subtype")
 		}
 
+		if !isFoundDiskMatch {
+			return nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate couldn't match Disk with VM disk")
+		}
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
 
 		task, err := vm.DetachDisk(attachParams)
 		if err != nil {
-			return nil, nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
+			return nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return nil, nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error waiting for task to complete detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
+			return nil, diag.Errorf("[ERROR] resourceVcdIndependentDiskUpdate error waiting for task to complete detaching independent disk `%s` to vm %s", disk.Disk.Name, err)
 		}
 	}
-	return sliceOfVmsHrefs, diskDetailsForReAttach, nil
+	return diskDetailsForReAttach, nil
 }
 
 // attachBackVms reattaches independent disks back to VMs
@@ -366,6 +421,9 @@ func resourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData,
 	setMainData(d, disk)
 	dSet(d, "datastore_name", diskRecord.DataStoreName)
 	dSet(d, "is_attached", diskRecord.IsAttached)
+	dSet(d, "encrypted", diskRecord.Encrypted)
+	dSet(d, "sharing_type", diskRecord.SharingType)
+	dSet(d, "uuid", diskRecord.UUID)
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
@@ -378,6 +436,9 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	dSet(d, "storage_profile", disk.Disk.StorageProfile.Name)
 	dSet(d, "size_in_mb", disk.Disk.SizeMb)
 	dSet(d, "bus_type", busTypesFromValues[disk.Disk.BusType])
+	if "vmware.nvme.controller" == disk.Disk.BusSubType {
+		dSet(d, "bus_type", busTypesFromValues["21"])
+	}
 	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	dSet(d, "iops", disk.Disk.Iops)
 	dSet(d, "owner_name", disk.Disk.Owner.User.Name)
