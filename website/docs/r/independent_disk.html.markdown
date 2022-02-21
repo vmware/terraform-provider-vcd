@@ -9,6 +9,8 @@ description: |-
 # vcd\_independent\_disk
 
 Provides a VMware Cloud Director independent disk resource. This can be used to create and delete independent disks.
+Resource is capable to update independent disk attached to VM in case VM is power off. Update detaches temporarily
+disks and attach back after changes are done.
 
 ## Example Usage
 
@@ -33,7 +35,6 @@ resource "vcd_vapp_vm" "web2" {
     unit_number = 0
   }
 
-  depends_on = ["vcd_independent_disk.myNewIndependentDisk"]
 }
 ```
 
@@ -45,9 +46,10 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
 * `size_in_mb` - (Required, *v3.0+*) Size of disk in MB.
-* `bus_type` - (Optional) Disk bus type. Values can be: `IDE`, `SCSI`, `SATA` 
-* `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI` and `ahci` for `SATA`
+* `bus_type` - (Optional) Disk bus type. Values can be: `IDE`, `SCSI`, `SATA`, (*v3.6+*) `NVME` 
+* `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI`, `ahci` for `SATA` and (*v3.6+*) `nvmecontroller` for `NVME`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
+* `sharing_type` - (Optional, *v3.6+* and VCD 10.2+) This is the sharing type. Values can be: `DiskSharing`,`ControllerSharing`"
 
 ## Attribute reference
 
@@ -57,6 +59,8 @@ Supported in provider *v2.5+*
 * `owner_name` - (Computed) The owner name of the disk
 * `datastore_name` - (Computed) Data store name. Readable only for system user.
 * `is_attached` - (Computed) True if the disk is already attached
+* `encrypted` - (Computed, *v3.6+* and VCD 10.2+) True if disk is encrypted
+* `uuid` - (Computed, *v3.6+* and VCD 10.2+) The UUID of this named disk's device backing
 
 ## Importing
 
@@ -90,6 +94,7 @@ further operations.
 ### Listing independent disk IDs
 
 If you want to list IDs there is a special command **`terraform import vcd_independent_disk.imported list@org-name.vdc-name.my-independent-disk-name`**
+or **`terraform import vcd_independent_disk.imported list@org-name.vdc-name`**
 where `org-name` is the organization used, `vdc-name` is vDC name and `my-independent-disk-name`
 is independent disk name. The output for this command should look similar to the one below:
 
