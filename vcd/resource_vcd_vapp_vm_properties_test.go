@@ -34,11 +34,43 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(testAccCheckVcdVAppVm_propertiesRemove, params)
 
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccCheckVcdVAppVm_propertiesRemove, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+
+	deleteVapp := func() {
+		t.Log("Deleting vApp for next step")
+		err := vm.Delete()
+		if err != nil {
+			t.Errorf("error manually deleting VM: %s", err)
+			t.FailNow()
+		}
+		//ignore error
+		task, _ := vapp.Undeploy()
+		if err != nil {
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				t.Errorf("error manually undeploy vApp: %s", err)
+				t.FailNow()
+			}
+		}
+		task, err = vapp.Delete()
+		if err != nil {
+			t.Errorf("error manually deleting vApp: %s", err)
+			t.FailNow()
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			t.Errorf("error manually deleting vApp: %s", err)
+			t.FailNow()
+		}
+		t.Log("Deleting vApp successful")
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -71,6 +103,13 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
 					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `guest_properties`),
 				),
+			},
+			// Validates that if vApp is missing, resource can be recreated and no error is thrown. Covers issue #611
+			resource.TestStep{
+				Config:             configText3,
+				PreConfig:          deleteVapp,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})

@@ -1466,6 +1466,11 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 					"Please use 'vcd_vapp_vm' resource to specify vApp")
 				dSet(d, "vapp_name", "")
 			}
+			if govcd.IsNotFound(err) {
+				log.Printf("[VM read] error finding vApp '%s': %s%s. Removing it from state.", vappName, err, additionalMessage)
+				d.SetId("")
+				return nil
+			}
 			return fmt.Errorf("[VM read] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
 		}
 		vm, err = vapp.GetVMByNameOrId(identifier, false)
