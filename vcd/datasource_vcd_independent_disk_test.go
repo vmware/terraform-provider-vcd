@@ -78,7 +78,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestMatchOutput("uuid", uuidMatchRegexp),
 					resource.TestCheckOutput("sharing_type", sharingType),
 					resource.TestCheckOutput("encrypted", "false"),
-					resource.TestCheckOutput("attached_vm_ids.#", "0"),
+					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
@@ -97,7 +97,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestMatchOutput("uuid", uuidMatchRegexp),
 					resource.TestCheckOutput("sharing_type", sharingType),
 					resource.TestCheckOutput("encrypted", "false"),
-					resource.TestCheckOutput("attached_vm_ids.#", "0"),
+					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
@@ -160,7 +160,7 @@ output "uuid" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.uuid
 }
 output "attached_vm_ids" {
-  value = data.vcd_independent_disk.{{.dataSourceName}}.attached_vm_ids
+  value = length(tolist(data.vcd_independent_disk.{{.dataSourceName}}.attached_vm_ids))
 }
 `
 
@@ -201,6 +201,6 @@ output "uuid" {
   value = data.vcd_independent_disk.{{.datasourceNameWithId}}.uuid
 }
 output "attached_vm_ids" {
-  value = data.vcd_independent_disk.{{.dataSourceName}}.attached_vm_ids
+  value = length(tolist(data.vcd_independent_disk.{{.datasourceNameWithId}}.attached_vm_ids))
 }
 `
