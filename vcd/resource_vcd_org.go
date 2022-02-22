@@ -195,6 +195,12 @@ func resourceOrgCreate(c context.Context, d *schema.ResourceData, m interface{})
 	log.Printf("[TRACE] Org %s created with id: %s", orgName, org.AdminOrg.ID)
 
 	d.SetId(org.AdminOrg.ID)
+
+	err = createOrUpdateAdminOrgMetadata(d, org)
+	if err != nil {
+		return diag.Errorf("error adding metadata to Org: %s", err)
+	}
+
 	return resourceOrgRead(c, d, m)
 }
 
@@ -346,6 +352,11 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings = settings.OrgVAppTemplateSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
 
+	err = createOrUpdateAdminOrgMetadata(d, adminOrg)
+	if err != nil {
+		return diag.Errorf("error updating metadata from Org: %s", err)
+	}
+
 	log.Printf("[TRACE] Org with id %s found", orgName)
 	task, err := adminOrg.Update()
 
@@ -420,6 +431,15 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	metadata, err := adminOrg.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get Org metadata")
+		return fmt.Errorf("unable to get Org metadata %s", err)
+	}
+	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
+		return fmt.Errorf("error setting metadata: %s", err)
 	}
 
 	return nil
@@ -502,7 +522,9 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 	return orgName, fullName, nil
 }
 
-func setMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) {
+func createOrUpdateAdminOrgMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
+	log.Printf("[TRACE] adding/updating metadata to Org")
+
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")
 		oldMetadata := oldRaw.(map[string]interface{})
@@ -516,24 +538,18 @@ func setMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) {
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			task, err := vapp.DeleteMetadata(k)
+			err := adminOrg.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
+		// Add new metadata
 		for k, v := range newMetadata {
-			task, err := vapp.AddMetadata(k, v.(string))
+			_, err := adminOrg.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
+	return nil
 }
