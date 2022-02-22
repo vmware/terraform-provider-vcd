@@ -118,14 +118,14 @@ var busTypes = map[string]string{
 	"IDE":  "5",
 	"SCSI": "6",
 	"SATA": "20",
-	"NVME": "20", //not API number as NVME also 20 as SATA
+	"NVME": "20",
 }
 
 var busTypesFromValues = map[string]string{
 	"5":  "IDE",
 	"6":  "SCSI",
 	"20": "SATA",
-	"21": "NVME",
+	"21": "NVME", // in API NVME is 20, the same as SATA. In state file we save 21 to know if it's NVME or SATA
 }
 
 var busSubTypes = map[string]string{

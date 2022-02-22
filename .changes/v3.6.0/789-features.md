@@ -1,1 +1,1 @@
-* `vcd_independent_disk` allows creating additionally shared disks types by configuring `sharing_type`. Also, add update support. Add new disk type `NVME` and new attributes `encrypted` and `uuid`. Import now allows listing all independent disks in VDC [GH-789]
+* `vcd_independent_disk` allows creating additionally shared disks types by configuring `sharing_type` (VCD 10.3+). Also, add update support. Add new disk type `NVME` and new attributes `encrypted` and `uuid`. Import now allows listing all independent disks in VDC [GH-789]
