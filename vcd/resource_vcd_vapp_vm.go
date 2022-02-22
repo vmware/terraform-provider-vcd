@@ -653,6 +653,9 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				vmComputePolicy = nil
 			}
 			vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
+			if vmTemplate == nil {
+				return fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
+			}
 			vmParams := types.InstantiateVmTemplateParams{
 				Xmlns:            types.XMLNamespaceVCloud,
 				Name:             vmName,
