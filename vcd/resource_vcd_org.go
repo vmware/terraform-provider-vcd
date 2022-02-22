@@ -501,3 +501,39 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 	}
 	return orgName, fullName, nil
 }
+
+func setMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) {
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			task, err := vapp.DeleteMetadata(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+		for k, v := range newMetadata {
+			task, err := vapp.AddMetadata(k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+	}
+}

@@ -122,5 +122,18 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	}
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
-	return diag.FromErr(setOrgData(d, adminOrg))
+	err = setOrgData(d, adminOrg)
+	if err != nil {
+		return diag.Errorf("unable to set organization state: %s", err)
+	}
+
+	metadata, err := adminOrg.GetMetadata()
+	if err != nil {
+		return diag.Errorf("unable to find metadata: %s", err)
+	}
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("unable to set metadata: %s", err)
+	}
+	return nil
 }
