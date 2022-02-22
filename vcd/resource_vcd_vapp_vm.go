@@ -717,6 +717,9 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				vmComputePolicy = nil
 			}
 			vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
+			if vmTemplate == nil {
+				return fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
+			}
 			vmParams := types.InstantiateVmTemplateParams{
 				Xmlns:            types.XMLNamespaceVCloud,
 				Name:             vmName,
@@ -1602,6 +1605,11 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 				additionalMessage = fmt.Sprintf("\nAdding a vApp name to a standalone VM is not allowed." +
 					"Please use 'vcd_vapp_vm' resource to specify vApp")
 				dSet(d, "vapp_name", "")
+			}
+			if govcd.IsNotFound(err) {
+				log.Printf("[VM read] error finding vApp '%s': %s%s. Removing it from state.", vappName, err, additionalMessage)
+				d.SetId("")
+				return nil
 			}
 			return fmt.Errorf("[VM read] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
 		}
