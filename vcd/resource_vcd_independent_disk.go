@@ -310,17 +310,25 @@ func unlockVms(sliceOfVmsHrefs []string) {
 
 func detachVms(vcdClient *VCDClient, disk *govcd.Disk, sliceOfVmsHrefs []string) (map[string]types.DiskSettings, diag.Diagnostics) {
 	diskDetailsForReAttach := make(map[string]types.DiskSettings)
+	var vms []*govcd.VM
 	for _, vmHref := range sliceOfVmsHrefs {
 		vm, err := vcdClient.Client.GetVMByHref(vmHref)
 		if err != nil {
 			return nil, diag.Errorf("error resourceVcdIndependentDiskUpdate error fetching attached VM: %s", err)
 		}
+		vmStatus := types.VAppStatuses[vm.VM.Status]
+		if vmStatus != "POWERED_OFF" && busTypesFromValues[disk.Disk.BusType] == "IDE" {
+			return nil, diag.Errorf("error resourceVcdIndependentDiskUpdate can not detach disks type `IDE` for VM `%s` which is not powered off", vm.VM.Name)
+		}
+		vms = append(vms, vm)
+	}
 
+	for _, vm := range vms {
 		isFoundDiskMatch := false
 		if vm.VM != nil && vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.DiskSection != nil && vm.VM.VmSpecSection.DiskSection.DiskSettings != nil {
 			for _, diskSettings := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
 				if diskSettings.Disk != nil && diskSettings.Disk.HREF == disk.Disk.HREF {
-					diskDetailsForReAttach[vmHref] = *diskSettings
+					diskDetailsForReAttach[vm.VM.HREF] = *diskSettings
 					isFoundDiskMatch = true
 				}
 			}
