@@ -263,15 +263,15 @@ resource "vcd_vapp_vm" "advancedVM" {
   catalog_name     = "my-catalog"
   boot_image       = "myMedia"
 
-  memory_priority = "CUSTOM"
-  memory_shares        = "480"
-  memory_reservation   = "8"
-  memory_limit         = "48"
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
 
-  cpu_priority = "CUSTOM"
-  cpu_shares        = "512"
-  cpu_reservation   = "200"
-  cpu_limit         = "1000"
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
 }
 
 ## Argument Reference
