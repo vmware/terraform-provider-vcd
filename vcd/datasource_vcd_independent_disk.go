@@ -90,6 +90,14 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "The UUID of this named disk's device backing",
 			},
+			"attached_vm_ids": &schema.Schema{
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM IDs which are using the disk",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -152,7 +160,10 @@ func dataSourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	setMainData(d, disk, diskRecord)
+	err = setMainData(d, disk, diskRecord)
+	if err != nil {
+		diag.FromErr(err)
+	}
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil

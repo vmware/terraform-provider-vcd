@@ -113,6 +113,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -131,6 +132,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -170,6 +172,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -189,6 +192,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -207,6 +211,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "datastore_name", regexp.MustCompile(`^\S+`)),
@@ -221,6 +226,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "attached_vm_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -239,6 +245,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "1"),
 
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "datastore_name", regexp.MustCompile(`^\S+`)),
@@ -252,7 +259,8 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "storage_profile", params["storageProfileNameUpdate"].(string)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "uuid", uuidMatchRegexp),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "sharing_type", sharingType),
-					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "attached_vm_ids.#", "1"),
 				),
 			},
 		},

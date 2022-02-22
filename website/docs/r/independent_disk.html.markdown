@@ -61,6 +61,7 @@ Supported in provider *v2.5+*
 * `is_attached` - (Computed) True if the disk is already attached
 * `encrypted` - (Computed, *v3.6+* and VCD 10.2+) True if disk is encrypted
 * `uuid` - (Computed, *v3.6+* and VCD 10.2+) The UUID of this named disk's device backing
+* `attached_vm_ids` - (Computed, *v3.6+*) IDs of VM which are using the disk
 
 ## Importing
 

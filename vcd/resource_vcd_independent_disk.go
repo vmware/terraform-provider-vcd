@@ -110,6 +110,14 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "True if the disk is already attached",
 			},
+			"attached_vm_ids": &schema.Schema{
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM IDs which are using the disk",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -429,13 +437,16 @@ func resourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	setMainData(d, disk, diskRecord)
+	err = setMainData(d, disk, diskRecord)
+	if err != nil {
+		diag.FromErr(err)
+	}
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.DiskRecordType) {
+func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.DiskRecordType) error {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -454,6 +465,20 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 	dSet(d, "sharing_type", diskRecord.SharingType)
 	dSet(d, "uuid", diskRecord.UUID)
 
+	vmsHrefs, err := disk.GetAttachedVmsHrefs()
+	if err != nil {
+		return fmt.Errorf("[Independent disk read] error fetching attached VMs IDs: %s ", err)
+	}
+	var attachedVmIds []string
+	for _, vmHref := range vmsHrefs {
+		attachedVmIds = append(attachedVmIds, extractUuid(vmHref))
+	}
+	attachedVmSet := convertStringsTotTypeSet(attachedVmIds)
+	err = d.Set("attached_vm_ids", attachedVmSet)
+	if err != nil {
+		return fmt.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
+	}
+	return nil
 }
 
 func resourceVcdIndependentDiskDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
