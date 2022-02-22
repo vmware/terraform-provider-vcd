@@ -54,7 +54,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
@@ -63,16 +63,17 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata.key1", "value1"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "vcd_independent_disk." + resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
-			resource.TestStep{
+			{
 				Config: configTextWithoutOptionals,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceNameSecond),
@@ -171,6 +172,9 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
+  metadata = {
+    key1 = "value1"
+  }
 }
 `
 
