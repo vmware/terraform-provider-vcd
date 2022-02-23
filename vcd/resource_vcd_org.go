@@ -538,14 +538,14 @@ func createOrUpdateAdminOrgMetadata(d *schema.ResourceData, adminOrg *govcd.Admi
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := adminOrg.DeleteMetadata(k)
+			err := adminOrg.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err := adminOrg.AddMetadata(k, v.(string))
+			_, err := adminOrg.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}

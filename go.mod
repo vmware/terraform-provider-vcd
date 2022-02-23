@@ -29,4 +29,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c // indirect
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/adambarreiro/go-vcloud-director/v2 v2.15.0-alpha.1.0.20220221141319-86c9b7c4737d
+replace github.com/vmware/go-vcloud-director/v2 => github.com/adambarreiro/go-vcloud-director/v2 v2.15.0-alpha.1.0.20220223141611-f09a41e43086

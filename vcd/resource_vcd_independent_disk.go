@@ -487,14 +487,14 @@ func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error 
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := disk.DeleteMetadata(k)
+			err := disk.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err := disk.AddMetadata(k, v.(string))
+			_, err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}

@@ -35,7 +35,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"ResourceName":       resourceName,
 		"secondResourceName": resourceNameSecond,
 		"Tags":               "disk",
-		"metadataValue":		"value1",
+		"metadataValue":      "value1",
 	}
 
 	params["FuncName"] = t.Name() + "-Compatibility"
