@@ -35,10 +35,14 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"ResourceName":       resourceName,
 		"secondResourceName": resourceNameSecond,
 		"Tags":               "disk",
+		"metadataValue":		"value1",
 	}
 
 	params["FuncName"] = t.Name() + "-Compatibility"
 	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
+	params["FuncName"] = t.Name() + "-CompatibilityUpdate"
+	params["metadataValue"] = "value2"
+	configTextForCompatibilityUpdate := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
 	params["FuncName"] = t.Name() + "-WithoutOptionals"
 	configTextWithoutOptionals := templateFill(testAccCheckVcdIndependentDiskWithoutOptionals, params)
 
@@ -64,6 +68,18 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata.key1", "value1"),
+				),
+			},
+			{
+				Config: configTextForCompatibilityUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata.key1", "value2"),
 				),
 			},
 			{
@@ -173,7 +189,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
   metadata = {
-    key1 = "value1"
+    key1 = "{{.metadataValue}}"
   }
 }
 `

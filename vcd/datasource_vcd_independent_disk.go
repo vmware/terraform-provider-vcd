@@ -150,7 +150,6 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 	dSet(d, "datastore_name", diskRecord.DataStoreName)
 	dSet(d, "is_attached", diskRecord.IsAttached)
 
-
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
 }

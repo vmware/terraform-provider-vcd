@@ -18,6 +18,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdIndependentDiskCreate,
 		ReadContext:   resourceVcdIndependentDiskRead,
+		UpdateContext: resourceVcdIndependentDiskUpdate,
 		DeleteContext: resourceVcdIndependentDiskDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdIndependentDiskImport,
@@ -216,33 +217,9 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	identifier := d.Id()
-	var disk *govcd.Disk
-	if identifier != "" {
-		disk, err = vdc.GetDiskById(identifier, true)
-		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
-			d.SetId("")
-			return nil
-		}
-		if err != nil {
-			return diag.Errorf("unable to find disk with ID %s: %s", identifier, err)
-		}
-	} else {
-		identifier = d.Get("name").(string)
-		disks, err := vdc.GetDisksByName(identifier, true)
-		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
-			d.SetId("")
-			return nil
-		}
-		if err != nil {
-			return diag.Errorf("unable to find disk with name %s: %s", identifier, err)
-		}
-		if len(*disks) > 1 {
-			return diag.Errorf("found more than one disk with name %s: %s", identifier, err)
-		}
-		disk = &(*disks)[0]
+	identifier, disk, err := getIndependentDiskFromResource(d, vdc)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
@@ -271,6 +248,61 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
+}
+
+// Gets an independent disk data from the Terraform resource
+func getIndependentDiskFromResource(d *schema.ResourceData, vdc *govcd.Vdc) (string, *govcd.Disk, error) {
+	var disk *govcd.Disk
+	var err error
+
+	identifier := d.Id()
+	if identifier != "" {
+		disk, err = vdc.GetDiskById(identifier, true)
+		if govcd.IsNotFound(err) {
+			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return identifier, nil, nil
+		}
+		if err != nil {
+			return identifier, nil, fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+		}
+	} else {
+		identifier = d.Get("name").(string)
+		disks, err := vdc.GetDisksByName(identifier, true)
+		if govcd.IsNotFound(err) {
+			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return identifier, nil, nil
+		}
+		if err != nil {
+			return identifier, nil, fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
+		}
+		if len(*disks) > 1 {
+			return identifier, nil, fmt.Errorf("found more than one disk with name %s: %s", identifier, err)
+		}
+		disk = &(*disks)[0]
+	}
+	return identifier, disk, nil
+}
+
+func resourceVcdIndependentDiskUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChange("metadata") {
+		_, vdc, err := meta.(*VCDClient).GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		}
+
+		_, disk, err := getIndependentDiskFromResource(d, vdc)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		err = createOrUpdateDiskMetadata(d, disk)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return resourceVcdIndependentDiskRead(c, d, meta)
 }
 
 func setMainData(d *schema.ResourceData, disk *govcd.Disk) error {

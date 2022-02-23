@@ -37,7 +37,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"Tags":                 "disk",
 		"dataSourceName":       datasourceName,
 		"datasourceNameWithId": datasourceNameWithId,
-		"metadataValue":		"value1",
+		"metadataValue":        "value1",
 	}
 
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
