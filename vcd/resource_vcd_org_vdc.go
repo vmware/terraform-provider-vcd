@@ -712,7 +712,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc *govcd.A
 			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile '%s' from provider VDC '%s': %s", spCombo.configuration["name"].(string), providerVdcName, err)
 		}
 		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
-			Enabled: spCombo.configuration["enabled"].(bool),
+			Enabled: takeBoolPointer(spCombo.configuration["enabled"].(bool)),
 			Units:   "MB",
 			Limit:   int64(spCombo.configuration["limit"].(int)),
 			Default: spCombo.configuration["default"].(bool),
@@ -1197,7 +1197,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),
-			Enabled: storageConfiguration["enabled"].(bool),
+			Enabled: takeBoolPointer(storageConfiguration["enabled"].(bool)),
 			ProviderVdcStorageProfile: &types.Reference{
 				HREF: sp.HREF,
 			},
