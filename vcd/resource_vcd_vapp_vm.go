@@ -3,7 +3,9 @@ package vcd
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"net"
 	"sort"
@@ -29,27 +31,39 @@ const (
 func resourceVcdVAppVm() *schema.Resource {
 
 	return &schema.Resource{
-		Create: resourceVcdVAppVmCreate,
-		Update: resourceVcdVAppVmUpdate,
-		Read:   resourceVcdVAppVmRead,
-		Delete: resourceVcdVAppVmDelete,
+		CreateContext: resourceVcdVAppVmCreate,
+		UpdateContext: resourceVcdVAppVmUpdate,
+		ReadContext:   resourceVcdVAppVmRead,
+		DeleteContext: resourceVcdVAppVmDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVappVmImport,
+			StateContext: resourceVcdVappVmImport,
 		},
 		Schema: vmSchemaFunc(vappVmType),
 	}
 }
 
-func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVmCreate(d, meta, vappVmType)
+func resourceVcdVAppVmCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericResourceVmCreate(d, meta, vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
-func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "resource", vappVmType)
+func resourceVcdVAppVmRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericVcdVmRead(d, meta, "resource", vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
-func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVcdVmUpdate(d, meta, vappVmType)
+func resourceVcdVAppVmUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericResourceVcdVmUpdate(d, meta, vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // VM Schema is defined as global so that it can be directly accessible in other places
@@ -123,6 +137,31 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description:  "The amount of RAM (in MB) to allocate to the VM",
 			ValidateFunc: validateMultipleOf4(),
 		},
+		"memory_reservation": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
+		},
+		"memory_priority": &schema.Schema{
+			Type:         schema.TypeString,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
+			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
+		},
+		"memory_shares": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "Custom priority for the resource. This is a read-only, unless the `memory_priority` is CUSTOM",
+		},
+		"memory_limit": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
+		},
 		"cpus": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -134,6 +173,31 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:    true,
 			Computed:    true,
 			Description: "The number of cores per socket",
+		},
+		"cpu_reservation": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
+		},
+		"cpu_priority": &schema.Schema{
+			Type:         schema.TypeString,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
+			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
+		},
+		"cpu_shares": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "Custom priority for the resource. This is a read-only, unless the `cpu_priority` is CUSTOM",
+		},
+		"cpu_limit": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
 		},
 		"metadata": {
 			Type:     schema.TypeMap,
@@ -653,6 +717,9 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				vmComputePolicy = nil
 			}
 			vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
+			if vmTemplate == nil {
+				return fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
+			}
 			vmParams := types.InstantiateVmTemplateParams{
 				Xmlns:            types.XMLNamespaceVCloud,
 				Name:             vmName,
@@ -748,6 +815,11 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return err
 		}
 
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM creation] error applying advanced compute settings for VM %s : %s", vmName, err)
+		}
+
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 		err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType)
 		if err != nil {
@@ -773,10 +845,73 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 		dSet(d, "vapp_name", vapp.VApp.Name)
+
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM creation] error applying advanced compute settings for standalone VM %s : %s", vmName, err)
+		}
+
 		return genericVcdVmRead(d, meta, "create", vmType)
 	}
 
 	log.Printf("[DEBUG] [VM create] finished")
+	return nil
+}
+
+func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
+	vmSpecSection := vm.VM.VmSpecSection
+	description := vm.VM.Description
+	// update treats same values as changes and fails, with no values provided - no changes are made for that section
+	vmSpecSection.DiskSection = nil
+
+	updateNeeded := false
+
+	if memorySharesLevel, ok := d.GetOk("memory_priority"); ok {
+		vmSpecSection.MemoryResourceMb.SharesLevel = memorySharesLevel.(string)
+		updateNeeded = true
+	}
+
+	if memoryLimit, ok := d.GetOk("memory_limit"); ok {
+		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+		updateNeeded = true
+	}
+
+	if memoryShares, ok := d.GetOk("memory_shares"); ok {
+		vmSpecSection.MemoryResourceMb.Shares = takeIntPointer(memoryShares.(int))
+		updateNeeded = true
+	}
+
+	if memoryReservation, ok := d.GetOk("memory_reservation"); ok {
+		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+		updateNeeded = true
+	}
+
+	if memorySharesLevel, ok := d.GetOk("cpu_priority"); ok {
+		vmSpecSection.CpuResourceMhz.SharesLevel = memorySharesLevel.(string)
+		updateNeeded = true
+	}
+
+	if memoryLimit, ok := d.GetOk("cpu_limit"); ok {
+		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+		updateNeeded = true
+	}
+
+	if memoryShares, ok := d.GetOk("cpu_shares"); ok {
+		vmSpecSection.CpuResourceMhz.Shares = takeIntPointer(memoryShares.(int))
+		updateNeeded = true
+	}
+
+	if memoryReservation, ok := d.GetOk("cpu_reservation"); ok {
+		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+		updateNeeded = true
+	}
+
+	if updateNeeded {
+		err := updateVmSpecSection(vmSpecSection, vm, description)
+		if err != nil {
+			return fmt.Errorf("error updating advanced compute settings: %s", err)
+		}
+	}
 	return nil
 }
 
@@ -887,14 +1022,14 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		return err
 	}
 	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
-		err = changeMemorySize(d, vm)
+		err = vm.ChangeMemory(int64(d.Get("memory").(int)))
 		if err != nil {
 			return err
 		}
 	}
 
 	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
-		err = changeCpuCount(d, vm)
+		err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
 		if err != nil {
 			return err
 		}
@@ -1040,26 +1175,29 @@ func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 	return !foundPrimaryNic
 }
 
-func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
-	task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
-	if err != nil {
-		return fmt.Errorf("error setting CPU count: %s", err)
+func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, description string) error {
+	// add missing values if not inherited from template, otherwise API throws error if some value is nil
+	if vmSpecSection.MemoryResourceMb.Reservation == nil {
+		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(0))
 	}
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return err
+	if vmSpecSection.MemoryResourceMb.Limit == nil {
+		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(-1))
 	}
-	return nil
-}
-
-func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
-	task, err := vm.ChangeMemorySize(d.Get("memory").(int))
-	if err != nil {
-		return fmt.Errorf("error changing memory size: %s", err)
+	if vmSpecSection.MemoryResourceMb.SharesLevel == "" {
+		vmSpecSection.MemoryResourceMb.SharesLevel = "NORMAL"
 	}
-	err = task.WaitTaskCompletion()
+	if vmSpecSection.CpuResourceMhz.Reservation == nil {
+		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(0))
+	}
+	if vmSpecSection.CpuResourceMhz.Limit == nil {
+		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(-1))
+	}
+	if vmSpecSection.CpuResourceMhz.SharesLevel == "" {
+		vmSpecSection.CpuResourceMhz.SharesLevel = "NORMAL"
+	}
+	_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 	if err != nil {
-		return err
+		return fmt.Errorf("error updating Vm Spec Section: %s", err)
 	}
 	return nil
 }
@@ -1095,6 +1233,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			return fmt.Errorf("errors updating guest customization: %s", err)
 		}
 
+	}
+
+	if d.HasChanges("memory_reservation", "memory_priority", "memory_shares", "memory_limit",
+		"cpu_reservation", "cpu_priority", "cpu_limit", "cpu_shares") {
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM update] error advanced compute settings for standalone VM %s : %s", vm.VM.Name, err)
+		}
 	}
 
 	memoryNeedsColdChange := false
@@ -1157,27 +1303,21 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		if memoryNeedsColdChange || executionType == "create" {
-			err = changeMemorySize(d, vm)
+			err = vm.ChangeMemory(int64(d.Get("memory").(int)))
 			if err != nil {
 				return err
 			}
 		}
 
 		if d.HasChange("cpu_cores") {
-			coreCounts := d.Get("cpu_cores").(int)
-			task, err := vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
+			err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
 			if err != nil {
-				return fmt.Errorf("error changing cpu count: %s", err)
-			}
-
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+				return err
 			}
 		}
 
 		if cpusNeedsColdChange || executionType == "create" {
-			err = changeCpuCount(d, vm)
+			err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
 			if err != nil {
 				return err
 			}
@@ -1466,6 +1606,11 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 					"Please use 'vcd_vapp_vm' resource to specify vApp")
 				dSet(d, "vapp_name", "")
 			}
+			if govcd.IsNotFound(err) {
+				log.Printf("[VM read] error finding vApp '%s': %s%s. Removing it from state.", vappName, err, additionalMessage)
+				d.SetId("")
+				return nil
+			}
 			return fmt.Errorf("[VM read] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
 		}
 		vm, err = vapp.GetVMByNameOrId(identifier, false)
@@ -1513,21 +1658,33 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	dSet(d, "cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
 	dSet(d, "memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
-	cpus := int64(0)
-	coresPerSocket := 0
-	memory := int64(0)
-	for _, item := range vm.VM.VirtualHardwareSection.Item {
-		if item.ResourceType == 3 {
-			cpus += item.VirtualQuantity
-			coresPerSocket = item.CoresPerSocket
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.MemoryResourceMb != nil {
+		dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
+		dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
+		if vm.VM.VmSpecSection.MemoryResourceMb.Reservation != nil {
+			dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
 		}
-		if item.ResourceType == 4 {
-			memory = item.VirtualQuantity
+		if vm.VM.VmSpecSection.MemoryResourceMb.Limit != nil {
+			dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
+		}
+		if vm.VM.VmSpecSection.MemoryResourceMb.Shares != nil {
+			dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
 		}
 	}
-	dSet(d, "memory", memory)
-	dSet(d, "cpus", cpus)
-	dSet(d, "cpu_cores", coresPerSocket)
+	dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
+	dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.CpuResourceMhz != nil {
+		if vm.VM.VmSpecSection.CpuResourceMhz.Reservation != nil {
+			dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
+		}
+		if vm.VM.VmSpecSection.CpuResourceMhz.Limit != nil {
+			dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
+		}
+		if vm.VM.VmSpecSection.CpuResourceMhz.Shares != nil {
+			dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
+		}
+		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
+	}
 
 	metadata, err := vm.GetMetadata()
 	if err != nil {
@@ -1735,7 +1892,7 @@ func getMatchedDisk(internalDiskProvidedConfig map[string]interface{}, diskSetti
 	return nil
 }
 
-func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppVmDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] [VM delete] started")
 
 	vcdClient := meta.(*VCDClient)
@@ -1745,14 +1902,14 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappName := d.Get("vapp_name").(string)
 	vapp, err := vdc.GetVAppByName(vappName, false)
 
 	if err != nil {
-		return fmt.Errorf("[VM delete] error finding vApp '%s': %s", vappName, err)
+		return diag.Errorf("[VM delete] error finding vApp '%s': %s", vappName, err)
 	}
 
 	identifier := d.Id()
@@ -1760,23 +1917,27 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		identifier = d.Get("name").(string)
 	}
 	if identifier == "" {
-		return fmt.Errorf("[VM delete] neither ID or name provided")
+		return diag.Errorf("[VM delete] neither ID or name provided")
 	}
 	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
-		return fmt.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
+		return diag.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
 	}
 
 	// If it is a standalone VM, we remove it in one go
 	if vapp.VApp.IsAutoNature {
-		return vm.Delete()
+		err = vm.Delete()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
 	}
 	util.Logger.Printf("[VM delete] vApp before deletion %# v", pretty.Formatter(vapp.VApp))
 	util.Logger.Printf("[VM delete] VM before deletion %# v", pretty.Formatter(vm.VM))
 	deployed, err := vm.IsDeployed()
 	if err != nil {
-		return fmt.Errorf("error getting VM deploy status: %s", err)
+		return diag.Errorf("error getting VM deploy status: %s", err)
 	}
 
 	log.Printf("[TRACE] VM deploy Status: %t", deployed)
@@ -1784,12 +1945,12 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[TRACE] Undeploying VM: %s", vm.VM.Name)
 		task, err := vm.Undeploy()
 		if err != nil {
-			return fmt.Errorf("error Undeploying: %s", err)
+			return diag.Errorf("error Undeploying: %s", err)
 		}
 
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error Undeploying VM: %s", err)
+			return diag.Errorf("error Undeploying VM: %s", err)
 		}
 	}
 
@@ -1799,24 +1960,24 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	for _, existingDiskHref := range existingDisks {
 		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
-			return fmt.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
+			return diag.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
 		}
 
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
 		task, err := vm.DetachDisk(attachParams)
 		if err != nil {
-			return fmt.Errorf("error detaching disk `%s`: %s", existingDiskHref, err)
+			return diag.Errorf("error detaching disk `%s`: %s", existingDiskHref, err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %s", existingDiskHref, err)
+			return diag.Errorf("error waiting detaching disk task to finish`%s`: %s", existingDiskHref, err)
 		}
 	}
 
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
 	err = vapp.RemoveVM(*vm)
 	if err != nil {
-		return fmt.Errorf("error deleting: %s", err)
+		return diag.Errorf("error deleting: %s", err)
 	}
 	log.Printf("[DEBUG] [VM delete] finished")
 	return nil
@@ -2157,7 +2318,7 @@ func setGuestProperties(d *schema.ResourceData, properties *types.ProductSection
 // The VM identifier can be either the VM name or its ID
 // If we are dealing with standalone VMs, the name can retrieve duplicates. When that happens, the import fails
 // and a list of VM information (ID, guest OS, network, IP) is returned
-func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVappVmImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	vcdClient := meta.(*VCDClient)
 
@@ -2631,7 +2792,7 @@ func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Or
 			return fmt.Errorf("`memory` has to be defined as provided sizing policy `sizing_policy_id` memory isn't configured")
 		}
 		if sizingPolicy.VdcComputePolicy.Memory != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: int64(*sizingPolicy.VdcComputePolicy.Memory)}
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb.Configured = int64(*sizingPolicy.VdcComputePolicy.Memory)
 		}
 	}
 	return nil

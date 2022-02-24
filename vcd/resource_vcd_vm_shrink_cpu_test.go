@@ -42,6 +42,8 @@ func TestAccVcdStandaloneVmShrinkCpu(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.shrink-vm", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.shrink-vm", "name", standaloneVmName),
+					resource.TestCheckResourceAttr("vcd_vm.shrink-vm", "cpus", "2"),
+					resource.TestCheckResourceAttr("vcd_vm.shrink-vm", "cpu_cores", "1"),
 				),
 			},
 		},
@@ -70,7 +72,8 @@ resource "vcd_vm" "shrink-vm" {
   cpus          = 2
   cpu_cores     = 1
 
-  depends_on = [vcd_catalog_item.fourcpu4cores]
+  cpu_reservation = 400
+  cpu_limit       = 2000
 }
 
 `

@@ -52,14 +52,14 @@ func resourceLibraryCertificate() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Sensitive:   true,
-				Description: "Certificate content",
+				Description: "Certificate private key",
 			},
 			"private_key_passphrase": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Sensitive:   true,
-				Description: "Certificate content",
+				Description: "Certificate private pass phrase",
 			},
 		},
 	}

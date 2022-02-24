@@ -2,7 +2,9 @@ package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -54,6 +56,26 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "The amount of RAM (in MB) to allocate to the VM",
 		},
+		"memory_reservation": &schema.Schema{
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
+		},
+		"memory_priority": &schema.Schema{
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
+		},
+		"memory_shares": &schema.Schema{
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Custom priority for the resource",
+		},
+		"memory_limit": &schema.Schema{
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited",
+		},
 		"cpus": &schema.Schema{
 			Type:        schema.TypeInt,
 			Computed:    true,
@@ -63,6 +85,26 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The number of cores per socket",
+		},
+		"cpu_reservation": &schema.Schema{
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
+		},
+		"cpu_priority": &schema.Schema{
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
+		},
+		"cpu_shares": &schema.Schema{
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Custom priority for the resource",
+		},
+		"cpu_limit": &schema.Schema{
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited",
 		},
 		"metadata": {
 			Type:        schema.TypeMap,
@@ -337,11 +379,15 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 
 func datasourceVcdVAppVm() *schema.Resource {
 	return &schema.Resource{
-		Read:   datasourceVcdVAppVmRead,
-		Schema: vcdVmDS(vappVmType),
+		ReadContext: datasourceVcdVAppVmRead,
+		Schema:      vcdVmDS(vappVmType),
 	}
 }
 
-func datasourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "datasource", vappVmType)
+func datasourceVcdVAppVmRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericVcdVmRead(d, meta, "datasource", vappVmType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

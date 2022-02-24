@@ -161,7 +161,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
 
 	if err != nil {
-		return fmt.Errorf("error finding VApp: %#v", err)
+		return fmt.Errorf("error finding VApp: %s", err)
 	}
 
 	var runtimeLease = vapp.VApp.LeaseSettingsSection.DeploymentLeaseInSeconds

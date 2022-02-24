@@ -246,6 +246,34 @@ resource "vcd_vapp_vm" "secondVM" {
 
 ```
 
+## Example Usage (using advanced compute settings)
+This example shows how to create an empty VM with advanced compute settings.
+
+```hcl
+resource "vcd_vapp_vm" "advancedVM" {
+  vapp_name     = vcd_vapp.web.name
+  name          = "advancedVM"
+  computer_name = "advancedVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "my-catalog"
+  boot_image       = "myMedia"
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -258,9 +286,17 @@ The following arguments are supported:
 * `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template or media for `boot_image`.
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
-* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off.
+* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off
+* `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
+* `memory_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
+* `memory_shares` - Custom priority for the resource in MB. This is a read-only, unless the `memory_priority` is "CUSTOM"
+* `memory_limit` - The limit (in MB) for how much of memory can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited.
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket.
+* `cpu_reservation` - The amount of MHz reservation on the underlying virtualization infrastructure.
+* `cpu_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
+* `cpu_shares` - Custom priority for the resource in MHz. This is a read-only, unless the `cpu_priority` is "CUSTOM"
+* `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited. 
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
