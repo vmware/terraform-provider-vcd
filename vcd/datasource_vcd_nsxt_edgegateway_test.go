@@ -110,7 +110,7 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "external_network_id", "data.vcd_nsxt_edgegateway.egw-ds", "external_network_id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "subnet", "data.vcd_nsxt_edgegateway.egw-ds", "subnet"),
 					// Ensure all attributes are available on data source as on the resource itself
-					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.egw-ds", []string{}),
+					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.egw-ds", []string{"%"}),
 				),
 			},
 		},

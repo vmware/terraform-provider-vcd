@@ -120,12 +120,70 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 ```
 
 
+## Example Usage (Assigning NSX-T Edge Gateway to VDC group)
+
+```hcl
+data "vcd_nsxt_edge_cluster" "secondary" {
+  name = "edge-cluster-two"
+}
+
+data "vcd_external_network_v2" "nsxt-ext-net" {
+  name = "nsxt-edge"
+}
+
+data "vcd_vdc_group" "group1" {
+  name = "existing-group"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org          = "my-org"
+  vdc          = "nsxt-vdc"
+  vdc_group_id = data.vcd_vdc_group.group1.id
+  
+  name        = "nsxt-edge"
+  description = "Description"
+
+  external_network_id       = data.vcd_external_network_v2.nsxt-ext-net.id
+  dedicate_external_network = true
+
+  # Custom edge cluster reference
+  edge_cluster_id = data.vcd_nsxt_edge_cluster.secondary.id
+
+  subnet {
+    gateway       = "10.150.191.253"
+    prefix_length = "19"
+    # primary_ip should fall into defined "allocated_ips" range as otherwise
+    # next apply will report additional range of "allocated_ips" with the range
+    # containing single "primary_ip" and will cause non-empty plan.
+    primary_ip = "10.150.160.137"
+    allocated_ips {
+      start_address = "10.150.160.137"
+      end_address   = "10.150.160.137"
+    }
+  }
+
+  subnet {
+    gateway       = "77.77.77.1"
+    prefix_length = "26"
+
+    allocated_ips {
+      start_address = "77.77.77.10"
+      end_address   = "77.77.77.12"
+    }
+  }
+
+}
+```
+
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
+* `vdc_group_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC group **Note.** Data source [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group)
+  can be used to lookup ID by name.
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
 * `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)

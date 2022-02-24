@@ -16,7 +16,7 @@ requires at least VCD *10.1.1+* and NSX-T *3.0+*.
 
 Supported in provider *v3.1+*.
 
-## Example Usage 
+## Example Usage
 
 ```hcl
 data "vcd_nsxt_edgegateway" "t1" {
@@ -26,13 +26,30 @@ data "vcd_nsxt_edgegateway" "t1" {
 }
 ```
 
+## Example Usage (Edge Gateway belonging to VDC group)
+
+```hcl
+data "vcd_vdc_group" "group1" {
+  name = "existing-group"
+}
+
+data "vcd_nsxt_edgegateway" "t1" {
+  org          = "myorg"
+  vdc          = "my-nsxt-vdc"
+  vdc_group_id = data.vcd_vdc_group.group1.id
+  name = "nsxt-edge-gateway"
+}
+```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gatweway belongs. Optional if defined at provider level.
+* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
+* `vdc_group_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC group that this Edge Gateway belongs to.
+**Note.** Data source [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) can be used to lookup 
+ID by name.
 * `name` - (Required) NSX-T Edge Gateway name.
 
 ## Attribute reference

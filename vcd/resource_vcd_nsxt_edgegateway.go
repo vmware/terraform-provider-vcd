@@ -71,10 +71,25 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				ConflictsWith: []string{"owner_id", "starting_vdc_id"},
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
+			},
+			"owner_id": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC group or VDC",
+				ConflictsWith: []string{"vdc"},
+			},
+			"starting_vdc_id": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "ID of VDC group or VDC",
+				ConflictsWith: []string{"vdc"},
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -117,63 +132,64 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 	}
 }
 
-// resourceVcdNsxtEdgeGatewayCreate
 func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T edge gateway creation initiated")
 
 	vcdClient := meta.(*VCDClient)
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
-	}
 
-	if vdc.IsNsxv() {
-		return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
-	}
-
+	// Result should be owner ID field value
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting adminOrg: %s", err))
+		return diag.Errorf("error getting adminOrg: %s", err)
 	}
 
-	nsxtEdgeGatewayType, err := getNsxtEdgeGatewayType(d, vdc)
+	nsxtEdgeGatewayType, err := getNsxtEdgeGatewayType(d, vcdClient, true)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("could not create NSX-T edge gateway type: %s", err))
+		return diag.Errorf("could not create NSX-T edge gateway type: %s", err)
 	}
 
 	createdEdgeGateway, err := adminOrg.CreateNsxtEdgeGateway(nsxtEdgeGatewayType)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating NSX-T edge gateway: %s", err))
+		return diag.Errorf("error creating NSX-T edge gateway: %s", err)
 	}
 
 	d.SetId(createdEdgeGateway.EdgeGateway.ID)
 
+	// NSX-T Edge Gateway cannot be directly created in VDC group, but can only be assigned to VDC group after creation
+	ownerIdField := d.Get("owner_id").(string)
+	if ownerIdField != "" && govcd.OwnerIsVdcGroup(ownerIdField) {
+		_, err := createdEdgeGateway.MoveToVdcGroup(ownerIdField)
+		if err != nil {
+			return diag.Errorf("error assigning NSX-T Edge Gateway to VDC Group: %s", err)
+		}
+	}
+
 	return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
 }
 
-// resourceVcdNsxtEdgeGatewayUpdate
 func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T edge gateway update initiated")
 
+	// We do not allow changing `vdc` field value unless it is removal of the field at all
+	if _, new := d.GetChange("vdc"); d.HasChange("vdc") && new.(string) != "" {
+		return diag.Errorf("changing 'vdc' field value is not supported. It can only be removed. " +
+			"Please use `owner_id` field for moving Edge Gateway to/from VDC Group")
+	}
+
 	vcdClient := meta.(*VCDClient)
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
+		return diag.Errorf("error retrieving VDC: %s", err)
 	}
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	edge, err := org.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting adminOrg: %s", err))
+		return diag.Errorf("could not retrieve NSX-T edge gateway: %s", err)
 	}
 
-	edge, err := adminOrg.GetNsxtEdgeGatewayById(d.Id())
+	updatedEdge, err := getNsxtEdgeGatewayType(d, vcdClient, false)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
-	}
-
-	updatedEdge, err := getNsxtEdgeGatewayType(d, vdc)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error updating NSX-T edge gateway type: %s", err))
+		return diag.Errorf("error updating NSX-T edge gateway type: %s", err)
 	}
 
 	updatedEdge.ID = edge.EdgeGateway.ID
@@ -181,57 +197,55 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 
 	_, err = edge.Update(edge.EdgeGateway)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error updating edge gateway with ID '%s': %s", d.Id(), err))
+		return diag.Errorf("error updating edge gateway with ID '%s': %s", d.Id(), err)
 	}
 
 	return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
 }
 
-// resourceVcdNsxtEdgeGatewayRead
 func resourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T edge gateway read initiated")
 
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
+		return diag.Errorf("error retrieving VDC: %s", err)
 	}
 
-	edge, err := vdc.GetNsxtEdgeGatewayById(d.Id())
+	edge, err := org.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
+		return diag.Errorf("could not retrieve NSX-T edge gateway: %s", err)
 	}
 
 	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error reading NSX-T edge gateway data: %s", err))
+		return diag.Errorf("error reading NSX-T edge gateway data: %s", err)
 	}
 	return nil
 }
 
-// resourceVcdNsxtEdgeGatewayDelete
 func resourceVcdNsxtEdgeGatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] edge gateway deletion initiated")
 
 	vcdClient := meta.(*VCDClient)
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
+		return diag.Errorf("error retrieving VDC: %s", err)
 	}
 
-	edge, err := vdc.GetNsxtEdgeGatewayById(d.Id())
+	edge, err := org.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
+		return diag.Errorf("could not retrieve NSX-T edge gateway: %s", err)
 	}
 
 	err = edge.Delete()
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error deleting NSX-T edge gateway: %s", err))
+		return diag.Errorf("error deleting NSX-T edge gateway: %s", err)
 	}
 
 	return nil
@@ -272,8 +286,18 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 }
 
 // getNsxtEdgeGatewayType
-func getNsxtEdgeGatewayType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.OpenAPIEdgeGateway, error) {
-	e := types.OpenAPIEdgeGateway{
+func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCreateOperation bool) (*types.OpenAPIEdgeGateway, error) {
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
+	startingVdcId := d.Get("starting_vdc_id").(string)
+
+	ownerId, err := getOwnerId(d, vcdClient, isCreateOperation, ownerIdField, startingVdcId, vdcField, inheritedVdcField)
+	if err != nil {
+		return nil, err
+	}
+
+	edgeGatewayType := types.OpenAPIEdgeGateway{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		EdgeGatewayUplinks: []types.EdgeGatewayUplinks{types.EdgeGatewayUplinks{
@@ -281,21 +305,110 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Open
 			Subnets:   types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)},
 			Dedicated: d.Get("dedicate_external_network").(bool),
 		}},
-		OrgVdc: &types.OpenApiReference{
-			ID: vdc.Vdc.ID,
-		},
+		OwnerRef: &types.OpenApiReference{ID: ownerId},
 	}
 
 	// Optional edge_cluster_id
 	if clusterId, isSet := d.GetOk("edge_cluster_id"); isSet {
-		e.EdgeClusterConfig = &types.OpenAPIEdgeGatewayEdgeClusterConfig{
+		edgeGatewayType.EdgeClusterConfig = &types.OpenAPIEdgeGatewayEdgeClusterConfig{
 			PrimaryEdgeCluster: types.OpenAPIEdgeGatewayEdgeCluster{
 				BackingID: clusterId.(string),
 			},
 		}
 	}
 
-	return &e, nil
+	return &edgeGatewayType, nil
+}
+
+// getOwnerId looks up correct value for `owner_id`
+//
+// With the introduction of VDC group support handling VDC reference becomes
+// 3 major combinations possible with `owner_id` having some sub-combinations. They also differ for `create` and `update` because
+// Edge Gateway cannot be created directly in VDC Group.
+// * `vdc` or `owner_id` fields are not set (inherited from `provider` section)
+// * `vdc` field is specified
+// * `owner_id` field is specified
+//   * `owner_id` is VDC
+//   * `owner_id` is VDC Group
+//     * `owner_id` is VDC Group and `starting_vdc_id` is possibly set
+// Whenever owner_id field is set - it takes priority over `vdc` field (set in resource or inherited from provider)
+func getOwnerId(d *schema.ResourceData, vcdClient *VCDClient, isCreateOperation bool, ownerIdField string, startingVdcId string, vdcField string, inheritedVdcField string) (string, error) {
+	var ownerId string
+	switch {
+	// Create operation
+	// `owner_id` is specified and is VDC Group
+	// `starting_vdc_id` is specified
+	case isCreateOperation && ownerIdField != "" && govcd.OwnerIsVdcGroup(ownerIdField) && startingVdcId != "":
+		log.Printf("[TRACE] NSX-T edge gateway create 'owner_id' field is set and is VDC group. 'starting_vdc_id' is set")
+		ownerId = startingVdcId
+	// Update operation
+	// `owner_id` is specified and is VDC Group. It does not matter if `starting_vdc_id` is specified or not
+	case !isCreateOperation && ownerIdField != "" && govcd.OwnerIsVdcGroup(ownerIdField) && startingVdcId != "":
+		log.Printf("[TRACE] NSX-T edge gateway update 'owner_id' field is set and is VDC group.")
+		ownerId = startingVdcId
+	// Create operation
+	// `owner_id` is specified and is VDC Group. `starting_vdc_id` is not specified.
+	// NSX-T Edge Gateway cannot be created in VDC group therefore we are going to lookup random VDC
+	case isCreateOperation && ownerIdField != "" && govcd.OwnerIsVdcGroup(ownerIdField) && startingVdcId == "":
+		log.Printf("[TRACE] NSX-T edge gateway create 'owner_id' field is set and is VDC group. 'starting_vdc_id' is not set. Choosing random starting VDC")
+
+		// Lookup Org
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving Org: %s", err)
+		}
+
+		vdcGroup, err := adminOrg.GetVdcGroupById(ownerIdField)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving VDC group: %s", err)
+		}
+
+		if vdcGroup.VdcGroup != nil && len(vdcGroup.VdcGroup.ParticipatingOrgVdcs) > 0 {
+			ownerId = vdcGroup.VdcGroup.ParticipatingOrgVdcs[0].VdcRef.ID
+		}
+	// Update operation
+	// `owner_id` is set
+	case !isCreateOperation && ownerIdField != "" && govcd.OwnerIsVdcGroup(ownerIdField) && startingVdcId == "":
+		log.Printf("[TRACE] NSX-T edge gateway update 'owner_id' field is set and is VDC group. 'starting_vdc_id' is not set. Choosing random starting VDC")
+
+		ownerId = ownerIdField
+	//case !isCreateOperation
+	//case ownerIdField != "" && govcd.OwnerIsVdc(ownerIdField):
+	//	log.Printf("[TRACE] NSX-T edge gateway 'owner_id' field is set and is VDC")
+	//	ownerId = ownerIdField
+	case vdcField != "":
+		log.Printf("[TRACE] NSX-T edge gateway 'vdc' field is set only in resource")
+
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving Org: %s", err)
+		}
+
+		vdc, err := adminOrg.GetVDCByName(vdcField, false)
+		if err != nil {
+			return "", fmt.Errorf("error finding VDC '%s': %s", vdcField, err)
+		}
+
+		ownerId = vdc.Vdc.ID
+	case inheritedVdcField != "" && vdcField == "" && ownerIdField == "":
+		log.Printf("[TRACE] NSX-T edge gateway 'vdc' field is inherited from provider. `vdc` and `owner_id` are not set")
+
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving Org: %s", err)
+		}
+
+		vdc, err := adminOrg.GetVDCByName(inheritedVdcField, false)
+		if err != nil {
+			return "", fmt.Errorf("error finding VDC '%s': %s", inheritedVdcField, err)
+		}
+
+		ownerId = vdc.Vdc.ID
+
+	default:
+		return "", fmt.Errorf("error looking up ownerId field")
+	}
+	return ownerId, nil
 }
 
 // getNsxtEdgeGatewayUplinksType
@@ -370,6 +483,8 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 		return fmt.Errorf("no edge gateway uplinks detected during read")
 	}
 
+	dSet(d, "owner_id", e.OwnerRef.ID)
+
 	// NSX-T edge gateways support only 1 uplink. Edge gateway can only be connected to one external network (in NSX-T terms
 	// Tier 1 gateway can only be connected to single Tier 0 gateway)
 	edgeUplink := e.EdgeGatewayUplinks[0]
@@ -381,9 +496,9 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 	subnets := make([]interface{}, 1)
 	for _, subnetValue := range edgeUplink.Subnets.Values {
 
-		// Edge Gateway API returns all subnets defined on external network. However if they don't have "ranges" defined
-		// - it means they are not allocated to edge gateway and Terraform should not display it as UI does not display
-		// them as well
+		// Edge Gateway API returns all subnets defined on external network. However, if they don't have "ranges"
+		// defined - it means they are not allocated to edge gateway and Terraform should not display it as UI does not
+		// display them as well
 		ipRangeCount := len(subnetValue.IPRanges.Values)
 		if ipRangeCount == 0 {
 			continue

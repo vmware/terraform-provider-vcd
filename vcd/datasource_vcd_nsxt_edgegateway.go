@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -23,8 +25,14 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			"vdc": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+			},
+			"owner_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "ID of VDC group (if applicable)",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -105,19 +113,30 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 	log.Printf("[TRACE] NSX-T edge gateway datasource read initiated")
 
 	vcdClient := meta.(*VCDClient)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
 	}
 
-	if vdc.IsNsxv() {
-		return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
-	}
+	//if vdc.IsNsxv() {
+	//	return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
+	//}
 
-	edge, err := vdc.GetNsxtEdgeGatewayByName(d.Get("name").(string))
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
+	var edge *govcd.NsxtEdgeGateway
+
+	edgeGatewayName := d.Get("name").(string)
+	ownerId := d.Get("owner_id").(string)
+	switch {
+	case ownerId != "":
+		edge, err = org.GetNsxtEdgeGatewayByNameAndOwnerId(edgeGatewayName, ownerId)
+		if err != nil {
+			return diag.Errorf("error getting NSX-T Edge Gateway:%s", err)
+		}
+	case ownerId == "":
+		edge, err = org.GetNsxtEdgeGatewayByName(edgeGatewayName)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
+		}
 	}
 
 	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
@@ -129,3 +148,13 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 
 	return nil
 }
+
+//func getOwnerOrVdc(d *schema.ResourceData, vcdClient *VCDClient) {
+//	inheritedVdcField := vcdClient.Vdc
+//	vdcField := d.Get("vdc").(string)
+//	ownerIdField := d.Get("owner_id").(string)
+//	startingVdcId := d.Get("starting_vdc_id").(string)
+//
+//
+//
+//}
