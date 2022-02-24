@@ -6,14 +6,15 @@ package vcd
 // testAccVcdVdcGroupNew is a helper definition to setup VDC Group for testing integration with other
 // components
 // Useful field names:
-// * vcd_org_vdc.newVdc.id (new VDC)
-// * vcd_vdc_group.test1.id (VDC Group ID with vcd_org_vdc.newVdc.id being a single member)
+// * vcd_org_vdc.newVdc.0.id (new VDC)
+// * vcd_org_vdc.newVdc.1.id (new VDC)
+// * vcd_vdc_group.test1.id (VDC Group ID with two members listed above)
 
 const testAccVcdVdcGroupNew = `
   resource "vcd_org_vdc" "newVdc" {
-  provider = vcd
+  count = 2
 
-  name = "newVdc"
+  name = "{{.TestName}}-${count.index}"
   org  = "{{.Org}}"
 
   allocation_model  = "Flex"
@@ -22,13 +23,13 @@ const testAccVcdVdcGroupNew = `
 
   compute_capacity {
     cpu {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated = "1024"
+      limit     = "1024"
     }
 
     memory {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated = "1024"
+      limit     = "1024"
     }
   }
 
@@ -49,14 +50,12 @@ const testAccVcdVdcGroupNew = `
   }
 
 resource "vcd_vdc_group" "test1" {
-  {{if .OrgUserProvider}}{{.OrgUserProvider}}{{end}}
-
   org                   = "{{.Org}}"
   name                  = "{{.Name}}"
   description           = "{{.Description}}"
-  starting_vdc_id       = vcd_org_vdc.newVdc.id
-  participating_vdc_ids = [vcd_org_vdc.newVdc.id]
+  starting_vdc_id       = vcd_org_vdc.newVdc.0.id
+  participating_vdc_ids = vcd_org_vdc.newVdc.*.id
   
-  dfw_enabled           = "{{.Dfw}}"
+  dfw_enabled = "{{.Dfw}}"
 }
 `

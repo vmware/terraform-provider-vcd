@@ -33,20 +33,10 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				Description:   "The name of VDC to use, optional if defined at provider level",
-				ConflictsWith: []string{"owner_id"},
-				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
-			},
-			"owner_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				//ForceNew:    true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
-				//ExactlyOneOf: []string{"owner_id", "vdc"},
-				ConflictsWith: []string{"vdc"},
 			},
 			"edge_gateway_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -107,28 +97,24 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 	}
 }
 
+// resourceVcdNetworkRoutedV2Create
 func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockParentEdgeGtw(d)
-	//defer vcdClient.unLockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[routed network create v2] error retrieving VDC: %s", err)
 	}
-	//
-	//_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	//if err != nil {
-	//	return diag.Errorf("[routed network create v2] error retrieving VDC: %s", err)
-	//}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, nil)
+	networkType, err := getOpenApiOrgVdcNetworkType(d, vdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
+	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
 		return diag.Errorf("[routed network create v2] error creating Org VDC routed network: %s", err)
 	}
@@ -138,23 +124,19 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
+// resourceVcdNetworkRoutedV2Update
 func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	//
-	//vcdClient.lockParentEdgeGtw(d)
-	//defer vcdClient.unLockParentEdgeGtw(d)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[routed network update v2] error retrieving VDC: %s", err)
 	}
 
-	//_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	//if err != nil {
-	//	return diag.Errorf("[routed network update v2] error retrieving VDC: %s", err)
-	//}
-
-	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found -
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -164,7 +146,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network update v2] error getting Org VDC network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, nil)
+	networkType, err := getOpenApiOrgVdcNetworkType(d, vdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,20 +162,16 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
+// resourceVcdNetworkRoutedV2Read
 func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[routed network read v2] error retrieving VDC: %s", err)
 	}
-	//
-	//_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	//if err != nil {
-	//	return diag.Errorf("[routed network read v2] error retrieving VDC: %s", err)
-	//}
 
-	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found - unset ID
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -213,23 +191,19 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
+// resourceVcdNetworkRoutedV2Delete
 func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	//vcdClient.lockParentEdgeGtw(d)
-	//defer vcdClient.unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[routed network delete v2] error retrieving VDC: %s", err)
 	}
 
-	//_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	//if err != nil {
-	//	return diag.Errorf("[routed network delete v2] error retrieving VDC: %s", err)
-	//}
-
-	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
 		return diag.Errorf("[routed network delete v2] error getting Org VDC network: %s", err)
 	}
@@ -242,6 +216,7 @@ func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
+// resourceVcdNetworkRoutedV2Import
 func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
@@ -307,16 +282,6 @@ func setOpenApiOrgVdcNetworkData(d *schema.ResourceData, orgVdcNetwork *types.Op
 		}
 	}
 
-	//if orgVdcNetwork.OwnerRef != nil && isVdcGroupUrn(orgVdcNetwork.OwnerRef.ID) {
-	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
-	//} else {
-	//	dSet(d, "owner_id", "")
-	//}
-
-	//if orgVdcNetwork.OwnerRef != nil && !isVdcGroupUrn(orgVdcNetwork.OwnerRef.ID) {
-	//	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
-	//}
-
 	return nil
 }
 
@@ -324,6 +289,7 @@ func getOpenApiOrgVdcNetworkType(d *schema.ResourceData, vdc *govcd.Vdc) (*types
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
+		OrgVdc:      &types.OpenApiReference{ID: vdc.Vdc.ID},
 
 		NetworkType: types.OrgVdcNetworkTypeRouted,
 
@@ -350,13 +316,6 @@ func getOpenApiOrgVdcNetworkType(d *schema.ResourceData, vdc *govcd.Vdc) (*types
 			},
 		},
 	}
-
-	ownerId := d.Get("owner_id").(string)
-	orgVdcNetworkConfig.OwnerRef = &types.OpenApiReference{ID: ownerId}
-	//if ownerId != "" {
-	//} else {
-	//	orgVdcNetworkConfig.OwnerRef = &types.OpenApiReference{ID: vdc.Vdc.ID}
-	//}
 
 	return orgVdcNetworkConfig, nil
 }

@@ -148,13 +148,3 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 
 	return nil
 }
-
-//func getOwnerOrVdc(d *schema.ResourceData, vcdClient *VCDClient) {
-//	inheritedVdcField := vcdClient.Vdc
-//	vdcField := d.Get("vdc").(string)
-//	ownerIdField := d.Get("owner_id").(string)
-//	startingVdcId := d.Get("starting_vdc_id").(string)
-//
-//
-//
-//}
