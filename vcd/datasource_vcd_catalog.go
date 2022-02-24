@@ -61,8 +61,6 @@ func datasourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for catalog metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
 			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,

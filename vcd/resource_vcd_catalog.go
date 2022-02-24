@@ -8,8 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
@@ -91,8 +89,6 @@ func resourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Key and value pairs for catalog metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
 			},
 		},
 	}
