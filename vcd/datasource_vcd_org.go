@@ -111,7 +111,7 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 
 	if err != nil {
-		log.Printf("Org with id %s not found. Setting ID to nothing", identifier)
+		log.Printf("Org with ID %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
 		return diag.Errorf("org %s not found: %s", identifier, err)
 	}

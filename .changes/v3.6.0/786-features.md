@@ -1,1 +1,1 @@
-* `vcd_org_group` datasource allows to fetch an Organization Group to use it with other resources [GH-786]
+* **New Data source:** `vcd_org_group` allows to fetch an Organization Group to use it with other resources [GH-786]
