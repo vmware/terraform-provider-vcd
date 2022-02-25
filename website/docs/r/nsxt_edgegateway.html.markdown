@@ -28,9 +28,13 @@ data "vcd_external_network_v2" "nsxt-ext-net" {
   name = "nsxt-edge"
 }
 
+data "vcd_org_vdc" "vdc1" {
+  name = "existing-vdc"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org         = "my-org"
-  vdc         = "nsxt-vdc"
+  owner_id    = data.vcd_org_vdc.vdc1.id
   name        = "nsxt-edge"
   description = "Description"
 
@@ -39,9 +43,10 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
     gateway       = "10.150.191.253"
     prefix_length = "19"
-    # primary_ip should fall into defined "allocated_ips" range as otherwise
-    # next apply will report additional range of "allocated_ips" with the range
-    # containing single "primary_ip" and will cause non-empty plan.
+    # primary_ip should fall into defined "allocated_ips" 
+    # range as otherwise next apply will report additional
+    # range of "allocated_ips" with the range containing 
+    # single "primary_ip" and will cause non-empty plan.
     primary_ip = "10.150.160.137"
     allocated_ips {
       start_address = "10.150.160.137"
@@ -62,9 +67,13 @@ data "vcd_external_network_v2" "nsxt-ext-net" {
   name = "nsxt-edge"
 }
 
+data "vcd_org_vdc" "vdc1" {
+  name = "existing-vdc"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org         = "my-org"
-  vdc         = "nsxt-vdc"
+  owner_id    = data.vcd_org_vdc.vdc1.id
   name        = "nsxt-edge"
   description = "Description"
 
@@ -77,9 +86,10 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
     gateway       = "10.150.191.253"
     prefix_length = "19"
-    # primary_ip should fall into defined "allocated_ips" range as otherwise
-    # next apply will report additional range of "allocated_ips" with the range
-    # containing single "primary_ip" and will cause non-empty plan.
+    # primary_ip should fall into defined "allocated_ips" 
+    # range as otherwise next apply will report additional
+    # range of "allocated_ips" with the range containing 
+    # single "primary_ip" and will cause non-empty plan.
     primary_ip = "10.150.160.137"
     allocated_ips {
       start_address = "10.150.160.137"
@@ -135,11 +145,24 @@ data "vcd_vdc_group" "group1" {
   name = "existing-group"
 }
 
+data "vcd_org_vdc" "vdc-1" {
+  name = "existing-group"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org          = "my-org"
-  vdc          = "nsxt-vdc"
-  vdc_group_id = data.vcd_vdc_group.group1.id
-  
+  org      = "my-org"
+  owner_id = data.vcd_vdc_group.group1.id
+
+  # VDC Group cannot be created directly in VDC Group - it 
+  # must originate in some VDC (belonging to destination VDC Group)
+  #
+  # `starting_vdc_id` field is optional. If only VDC Group 
+  # ID is specified in `owner_id` field - this resource 
+  # will will pick a random member
+  # VDC to precreate it and will move to destination
+  # VDC Group in a single apply cycle
+  starting_vdc_id = data.vcd_org_vdc.vdc-1.id
+
   name        = "nsxt-edge"
   description = "Description"
 
@@ -152,10 +175,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
     gateway       = "10.150.191.253"
     prefix_length = "19"
-    # primary_ip should fall into defined "allocated_ips" range as otherwise
-    # next apply will report additional range of "allocated_ips" with the range
-    # containing single "primary_ip" and will cause non-empty plan.
-    primary_ip = "10.150.160.137"
+    primary_ip    = "10.150.160.137"
     allocated_ips {
       start_address = "10.150.160.137"
       end_address   = "10.150.160.137"
@@ -171,7 +191,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
       end_address   = "77.77.77.12"
     }
   }
-
 }
 ```
 
@@ -181,9 +200,20 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
-* `vdc_group_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC group **Note.** Data source [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group)
-  can be used to lookup ID by name.
+* `vdc` - (Optional) **Deprecated** in favor of `owner_id`. The name of VDC that owns the edge
+  gateway. Can be inherited from `provider` configuration if not defined here.
+* `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note.** Data sources
+  [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) or
+  [vcd_org_vdc](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) can be used to lookup IDs by
+
+~> Only one of `vdc` or `owner_id` can be specified. `owner_id` takes precedence over `vdc`
+definition at provider level.
+
+~> When a VDC Group ID is specified in `owner_id` field, the Edge Gateway will be created in VDC 
+  (random member of VDC Group or specified in `starting_vdc_id`)
+* `starting_vdc_id` - (Optional, *v3.6+*,*VCD 10.2+*)  If `owner_id` is a VDC Group, this field
+  allows to specify initial VDC for Edge Gateway (this can define Egress location of traffic in the
+  VDC Group) **Note.** It can only be used when `owner_id` is a VDC Group.
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
 * `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)

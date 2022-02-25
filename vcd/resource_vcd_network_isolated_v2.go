@@ -264,7 +264,7 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc)
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		OrgVdc:      &types.OpenApiReference{ID: vdc.Vdc.ID},
+		OwnerRef:    &types.OpenApiReference{ID: vdc.Vdc.ID},
 
 		NetworkType: types.OrgVdcNetworkTypeIsolated,
 		Shared:      takeBoolPointer(d.Get("is_shared").(bool)),

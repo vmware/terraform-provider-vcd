@@ -3,13 +3,15 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdCatalogItem() *schema.Resource {
@@ -289,14 +291,14 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := vAppTemplate.DeleteMetadata(k)
+			err := vAppTemplate.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err := vAppTemplate.AddMetadata(k, v.(string))
+			err := vAppTemplate.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}

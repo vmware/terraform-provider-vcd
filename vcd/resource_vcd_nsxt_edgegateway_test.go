@@ -190,23 +190,6 @@ func testAccCheckVcdNsxtEdgeGatewayDestroy(edgeName string) resource.TestCheckFu
 	}
 }
 
-func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) string {
-	// Lookup available Edge Clusters to explicitly specify for edge gateway
-	_, vdc, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
-	if err != nil {
-		t.Errorf("error retrieving vdc: %s", err)
-		t.FailNow()
-	}
-
-	eClusters, err := vdc.GetAllNsxtEdgeClusters(nil)
-	if len(eClusters) < 1 {
-		t.Errorf("no edge clusters found: %s", err)
-		t.FailNow()
-	}
-
-	return eClusters[0].NsxtEdgeCluster.ID
-}
-
 func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
@@ -286,13 +269,6 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
-					//resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
-					//resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip", nsxtExtNet.ExternalNetwork.Subnets.Values[0].IPRanges.Values[0].EndAddress),
-					//resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
-					//	"gateway":       nsxtExtNet.ExternalNetwork.Subnets.Values[0].Gateway,
-					//	"prefix_length": strconv.Itoa(nsxtExtNet.ExternalNetwork.Subnets.Values[0].PrefixLength),
-					//	"primary_ip":    nsxtExtNet.ExternalNetwork.Subnets.Values[0].IPRanges.Values[0].EndAddress,
-					//}),
 				),
 			},
 			{
@@ -300,15 +276,12 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Ignoring total field count '%' and 'starting_vdc_id' because it does not make sense for data source
 					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.ds", []string{"starting_vdc_id", "%"}),
-					//stateDumper(),
 				),
 			},
 			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
-					//resourceFieldsEqual("data.vcd_nsxt_edgegateway.ds", "vcd_nsxt_edgegateway.nsxt-edge", nil),
-					//stateDumper(),
 				),
 			},
 		},
@@ -374,7 +347,7 @@ data "vcd_nsxt_edgegateway" "ds" {
   vdc = vcd_org_vdc.newVdc.0.name
 
   name     = vcd_nsxt_edgegateway.nsxt-edge.name
-  owner_id = vcd_vdc_group.test1.id
+  # owner_id = vcd_vdc_group.test1.id
 }
 `
 
@@ -673,7 +646,7 @@ func TestAccVcdNsxtEdgeGatewayVdcUpdateFails(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", "newVdc"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
 				),
 			},
 		},
@@ -768,3 +741,20 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 `
+
+func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) string {
+	// Lookup available Edge Clusters to explicitly specify for edge gateway
+	_, vdc, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
+	if err != nil {
+		t.Errorf("error retrieving vdc: %s", err)
+		t.FailNow()
+	}
+
+	eClusters, err := vdc.GetAllNsxtEdgeClusters(nil)
+	if len(eClusters) < 1 {
+		t.Errorf("no edge clusters found: %s", err)
+		t.FailNow()
+	}
+
+	return eClusters[0].NsxtEdgeCluster.ID
+}

@@ -10,23 +10,9 @@ description: |-
 
 Provides a VMware Cloud Director NSX-T edge gateway data source. This can be used to read NSX-T edge gateway configurations.
 
--> **Note:** This data source uses new VMware Cloud Director
-[OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.1.1+* and NSX-T *3.0+*.
-
 Supported in provider *v3.1+*.
 
-## Example Usage
-
-```hcl
-data "vcd_nsxt_edgegateway" "t1" {
-  org  = "myorg"
-  vdc  = "my-nsxt-vdc"
-  name = "nsxt-edge-gateway"
-}
-```
-
-## Example Usage (Edge Gateway belonging to VDC group)
+## Example Usage (NSX-T Edge Gateway belonging to VDC group)
 
 ```hcl
 data "vcd_vdc_group" "group1" {
@@ -34,10 +20,23 @@ data "vcd_vdc_group" "group1" {
 }
 
 data "vcd_nsxt_edgegateway" "t1" {
-  org          = "myorg"
-  vdc          = "my-nsxt-vdc"
-  vdc_group_id = data.vcd_vdc_group.group1.id
-  name = "nsxt-edge-gateway"
+  org      = "myorg"
+  owner_id = data.vcd_vdc_group.group1.id
+  name     = "nsxt-edge-gateway"
+}
+```
+
+## Example Usage (NSX-T Edge Gateway belonging to VDC)
+
+```hcl
+data "vcd_org_vdc" "vdc1" {
+  name = "existing-vdc"
+}
+
+data "vcd_nsxt_edgegateway" "t1" {
+  org      = "myorg"
+  owner_id = data.vcd_org_vdc.vdc1.id
+  name     = "nsxt-edge-gateway"
 }
 ```
 
@@ -45,11 +44,14 @@ data "vcd_nsxt_edgegateway" "t1" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
-* `vdc_group_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC group that this Edge Gateway belongs to.
-**Note.** Data source [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) can be used to lookup 
-ID by name.
+* `org` - (Optional) The name of organization to which the NSX-T Edge Gateway belongs. Optional if
+  defined at provider level.
+* `vdc` - (Optional)  **Deprecated** - please use `owner_id` field. The name of VDC that owns the
+  NSX-T Edge Gateway. Optional if defined at provider level.
+* `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) **Replaces** `owner_id`The ID of VDC group that this
+Edge Gateway belongs to. **Note.** Data source
+[vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) can be used to lookup ID
+by name.
 * `name` - (Required) NSX-T Edge Gateway name.
 
 ## Attribute reference

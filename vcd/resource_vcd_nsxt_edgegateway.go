@@ -360,12 +360,12 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 		log.Printf("[TRACE] NSX-T Edge Gateway create 'owner_id' field is set and is VDC group. 'starting_vdc_id' is not set. Choosing random starting VDC")
 
 		// Lookup Org
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving Org: %s", err)
 		}
 
-		vdcGroup, err := adminOrg.GetVdcGroupById(ownerIdField)
+		vdcGroup, err := org.GetVdcGroupById(ownerIdField)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving VDC group: %s", err)
 		}
@@ -379,12 +379,12 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 	case vdcField != "":
 		log.Printf("[TRACE] NSX-T Edge Gateway 'vdc' field is set in resource")
 
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving Org: %s", err)
 		}
 
-		vdc, err := adminOrg.GetVDCByName(vdcField, false)
+		vdc, err := org.GetVDCByName(vdcField, false)
 		if err != nil {
 			return "", fmt.Errorf("error finding VDC '%s': %s", vdcField, err)
 		}
@@ -394,12 +394,12 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 	case inheritedVdcField != "" && vdcField == "" && ownerIdField == "":
 		log.Printf("[TRACE] NSX-T Edge Gateway 'vdc' field is inherited from provider configuration. `vdc` and `owner_id` are not set in resource.")
 
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving Org: %s", err)
 		}
 
-		vdc, err := adminOrg.GetVDCByName(inheritedVdcField, false)
+		vdc, err := org.GetVDCByName(inheritedVdcField, false)
 		if err != nil {
 			return "", fmt.Errorf("error finding VDC '%s': %s", inheritedVdcField, err)
 		}
@@ -432,12 +432,12 @@ func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 	case vdcField != "":
 		log.Printf("[TRACE] NSX-T Edge Gateway update 'vdc' field is set in resource")
 
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving Org: %s", err)
 		}
 
-		vdc, err := adminOrg.GetVDCByName(vdcField, false)
+		vdc, err := org.GetVDCByName(vdcField, false)
 		if err != nil {
 			return "", fmt.Errorf("error finding VDC '%s': %s", vdcField, err)
 		}
@@ -446,12 +446,12 @@ func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 	case inheritedVdcField != "" && vdcField == "" && ownerIdField == "":
 		log.Printf("[TRACE] NSX-T Edge Gateway update 'vdc' field is inherited from provider. `vdc` and `owner_id` are not set")
 
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving Org: %s", err)
 		}
 
-		vdc, err := adminOrg.GetVDCByName(inheritedVdcField, false)
+		vdc, err := org.GetVDCByName(inheritedVdcField, false)
 		if err != nil {
 			return "", fmt.Errorf("error finding VDC '%s': %s", inheritedVdcField, err)
 		}

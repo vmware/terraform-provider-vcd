@@ -15,41 +15,43 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdNsxtEdgeGatewayRead,
 		Schema: map[string]*schema.Schema{
-			"org": &schema.Schema{
+			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"vdc": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+			"vdc": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				ConflictsWith: []string{"owner_id"},
 			},
-			"owner_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "ID of VDC group (if applicable)",
+			"owner_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC group (if applicable)",
+				ConflictsWith: []string{"vdc"},
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Edge Gateway name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Edge Gateway description",
 			},
-			"dedicate_external_network": &schema.Schema{
+			"dedicate_external_network": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Dedicating the External Network will enable Route Advertisement for this Edge Gateway.",
 			},
-			"external_network_id": &schema.Schema{
+			"external_network_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "External network ID",
@@ -100,7 +102,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Primary IP address of edge gateway",
 			},
-			"edge_cluster_id": &schema.Schema{
+			"edge_cluster_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "NSX-T Edge Cluster ID.",
@@ -118,12 +120,27 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
 	}
 
-	//if vdc.IsNsxv() {
-	//	return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
-	//}
+	// Validate if VDC or VDC Group is NSX-T backed
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
+	usedFieldId, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
+
+	if err != nil {
+		return diag.Errorf("error finding VDC ID: %s", err)
+	}
+
+	isNsxt, err := isBackedByNsxt(org, usedFieldId)
+	if err != nil {
+		return diag.Errorf("error ")
+	}
+
+	if !isNsxt {
+		return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
+	}
+	// EOF validate if VDC or VDC Group is NSX-T backed
 
 	var edge *govcd.NsxtEdgeGateway
-
 	edgeGatewayName := d.Get("name").(string)
 	ownerId := d.Get("owner_id").(string)
 	switch {
@@ -141,10 +158,67 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 
 	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error reading NSX-T edge gateway data: %s", err))
+		return diag.FromErr(fmt.Errorf("error reading NSX-T Edge Gateway data: %s", err))
 	}
 
 	d.SetId(edge.EdgeGateway.ID)
 
 	return nil
+}
+
+// pickVdcIdByPriority picks primary field to be used from the specified ones. The priority is such
+// * `owner_id`
+// * `vdc` at resource level
+// * `vdc` inherited from provider configuration
+func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) (string, error) {
+	if ownerIdField != "" {
+		return ownerIdField, nil
+	}
+
+	if vdcField != "" {
+		vdc, err := org.GetVDCByName(vdcField, false)
+		if err != nil {
+			return "", fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+		}
+		return vdc.Vdc.ID, nil
+	}
+
+	if inheritedVdcField != "" {
+		vdc, err := org.GetVDCByName(inheritedVdcField, false)
+		if err != nil {
+			return "", fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+		}
+		return vdc.Vdc.ID, nil
+	}
+
+	return "", fmt.Errorf("none of the fields `owner_id`, `vdc` and provider inherited `vdc`")
+}
+
+// isBackedByNsxt accepts VDC or VDC Group ID and checks if it is backed by NSX-T
+func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
+	var vdcOrGroup vdcOrVdcGroupVerifier
+	var err error
+
+	switch {
+	case govcd.OwnerIsVdc(vdcOrVdcGroupId):
+		vdcOrGroup, err = org.GetVDCById(vdcOrVdcGroupId, false)
+		if err != nil {
+			return false, err
+		}
+	case govcd.OwnerIsVdcGroup(vdcOrVdcGroupId):
+		vdcOrGroup, err = org.GetVdcGroupById(vdcOrVdcGroupId)
+		if err != nil {
+			return false, err
+		}
+	default:
+		return false, fmt.Errorf("error determining VDC type by ID '%s'", vdcOrVdcGroupId)
+	}
+
+	return vdcOrGroup.IsNsxt(), nil
+}
+
+// vdcOrVdcGroupVerifier is an interface to access IsNsxt() on VDC or VDC Group method `IsNsxt`
+// (used in isBackedByNsxt)
+type vdcOrVdcGroupVerifier interface {
+	IsNsxt() bool
 }

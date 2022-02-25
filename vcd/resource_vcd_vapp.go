@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 const vAppUnknownStatus = "-unknown-status-"
@@ -225,23 +226,15 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			task, err := vapp.DeleteMetadata(k)
+			err := vapp.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %#v", err)
 			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
 		}
 		for k, v := range newMetadata {
-			task, err := vapp.AddMetadata(k, v.(string))
+			err := vapp.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
 	}
