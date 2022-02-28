@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
 
