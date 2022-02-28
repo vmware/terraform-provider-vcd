@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -55,6 +56,11 @@ func datasourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key and value pairs for catalog metadata",
 			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,
@@ -112,6 +118,12 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
+	metadata, err := catalog.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
+		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
+	}
+
 	dSet(d, "description", catalog.Catalog.Description)
 	dSet(d, "created", catalog.Catalog.DateCreated)
 	dSet(d, "name", catalog.Catalog.Name)
@@ -121,5 +133,11 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		dSet(d, "cache_enabled", catalog.Catalog.PublishExternalCatalogParams.IsCachedEnabled)
 		dSet(d, "preserve_identity_information", catalog.Catalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 	}
+
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
+	}
+
 	return nil
 }

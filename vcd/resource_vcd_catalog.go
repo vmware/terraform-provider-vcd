@@ -3,11 +3,11 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
 
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -86,6 +86,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Sensitive:   true,
 				Description: "An optional password to access the catalog. Only ASCII characters are allowed in a valid password.",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key and value pairs for catalog metadata",
+			},
 		},
 	}
 }
@@ -128,6 +133,11 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	}
+
+	err = createOrUpdateAdminCatalogMetadata(d, meta)
+	if err != nil {
+		return diag.Errorf("error adding catalog metadata: %s", err)
 	}
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
@@ -195,6 +205,18 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "preserve_identity_information", false)
 		dSet(d, "password", "")
 	}
+
+	metadata, err := adminCatalog.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
+		return err
+	}
+
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return err
+	}
+
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
 	return nil
@@ -258,6 +280,11 @@ func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	}
+
+	err = createOrUpdateAdminCatalogMetadata(d, meta)
+	if err != nil {
+		return diag.Errorf("error updating catalog metadata: %s", err)
 	}
 
 	return resourceVcdCatalogRead(ctx, d, meta)
@@ -326,4 +353,50 @@ func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}) error {
+
+	log.Printf("[TRACE] adding/updating metadata for catalog")
+
+	vcdClient := meta.(*VCDClient)
+
+	org, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	catalog, err := org.GetAdminCatalogByName(d.Get("name").(string), false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog.")
+		return fmt.Errorf("unable to find catalog: %s", err)
+	}
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := catalog.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err = catalog.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }
