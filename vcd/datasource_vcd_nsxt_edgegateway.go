@@ -28,12 +28,13 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:      true,
 				Description:   "The name of VDC to use, optional if defined at provider level",
 				ConflictsWith: []string{"owner_id"},
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
 			},
 			"owner_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				Description:   "ID of VDC group (if applicable)",
+				Description:   "ID of VDC or VDC group",
 				ConflictsWith: []string{"vdc"},
 			},
 			"name": {
@@ -75,7 +76,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"primary_ip": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "IP address on the edge gateway ",
+							Description: "IP address on the edge gateway",
 						},
 						"allocated_ips": {
 							Type:        schema.TypeSet,
@@ -124,21 +125,11 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 	inheritedVdcField := vcdClient.Vdc
 	vdcField := d.Get("vdc").(string)
 	ownerIdField := d.Get("owner_id").(string)
-	usedFieldId, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
 
+	err = valdateIfVdcOrVdcGroupIsNsxt(org, inheritedVdcField, vdcField, ownerIdField)
 	if err != nil {
-		return diag.Errorf("error finding VDC ID: %s", err)
+		return diag.FromErr(err)
 	}
-
-	isNsxt, err := isBackedByNsxt(org, usedFieldId)
-	if err != nil {
-		return diag.Errorf("error ")
-	}
-
-	if !isNsxt {
-		return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
-	}
-	// EOF validate if VDC or VDC Group is NSX-T backed
 
 	var edge *govcd.NsxtEdgeGateway
 	edgeGatewayName := d.Get("name").(string)
@@ -162,6 +153,27 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(edge.EdgeGateway.ID)
+
+	return nil
+}
+
+// valdateIfVdcOrVdcGroupIsNsxt evaluates VDC field priority using pickVdcIdByPriority and then
+// checks if that VDC or VDC Group is an NSX-T one and returns an error if not
+func valdateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) error {
+	usedFieldId, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
+
+	if err != nil {
+		return fmt.Errorf("error finding VDC ID: %s", err)
+	}
+
+	isNsxt, err := isBackedByNsxt(org, usedFieldId)
+	if err != nil {
+		return fmt.Errorf("error ")
+	}
+
+	if !isNsxt {
+		return fmt.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
+	}
 
 	return nil
 }

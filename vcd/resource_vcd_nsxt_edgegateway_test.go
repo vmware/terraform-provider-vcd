@@ -344,10 +344,10 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 const edgeVdcGroupDS = edgeVdcGroup + `
 data "vcd_nsxt_edgegateway" "ds" {
   org = "{{.Org}}"
-  vdc = vcd_org_vdc.newVdc.0.name
+  #  vdc = vcd_org_vdc.newVdc.0.name
 
   name     = vcd_nsxt_edgegateway.nsxt-edge.name
-  # owner_id = vcd_vdc_group.test1.id
+  owner_id = vcd_vdc_group.test1.id
 }
 `
 

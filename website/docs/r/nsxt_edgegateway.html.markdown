@@ -205,15 +205,19 @@ The following arguments are supported:
 * `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note.** Data sources
   [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) or
   [vcd_org_vdc](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) can be used to lookup IDs by
+  name
 
 ~> Only one of `vdc` or `owner_id` can be specified. `owner_id` takes precedence over `vdc`
 definition at provider level.
 
-~> When a VDC Group ID is specified in `owner_id` field, the Edge Gateway will be created in VDC 
-  (random member of VDC Group or specified in `starting_vdc_id`)
+~> When a VDC Group ID is specified in `owner_id` field, the Edge Gateway will be created in VDC
+  (random member of VDC Group or specified in `starting_vdc_id`). Main use case of `starting_vdc_id`
+  is to pick egress traffic origin for multi datacenter VDC Groups.
+
 * `starting_vdc_id` - (Optional, *v3.6+*,*VCD 10.2+*)  If `owner_id` is a VDC Group, this field
   allows to specify initial VDC for Edge Gateway (this can define Egress location of traffic in the
-  VDC Group) **Note.** It can only be used when `owner_id` is a VDC Group.
+  VDC Group) **Note.** It can only be used when `owner_id` is a VDC Group. 
+
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
 * `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)

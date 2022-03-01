@@ -249,9 +249,9 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 const testAccNsxtEdgeGatewayMultipleSubnetsDS = testAccNsxtEdgeGatewayMultipleSubnets + `
 # skip-binary-test: resource and data source cannot refer itself in a single file
 data "vcd_nsxt_edgegateway" "egw-ds" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.NsxtVdc}}"
-  name                    = "{{.NsxtEdgeGatewayVcd}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
 }
 `
 
@@ -296,8 +296,8 @@ func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 const testAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv = `
 # skip-binary-test: should fail on purpose because NSX-T datasource should not accept NSX-V edge gateway
 data "vcd_nsxt_edgegateway" "nsxv-try" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.NsxvVdc}}"
-  name                    = "{{.NsxvEdgeGatewayName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxvVdc}}"
+  name = "{{.NsxvEdgeGatewayName}}"
 }
 `
