@@ -153,14 +153,14 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org      = "my-org"
   owner_id = data.vcd_vdc_group.group1.id
 
-  # VDC Group cannot be created directly in VDC Group - it 
-  # must originate in some VDC (belonging to destination VDC Group)
+  # VDC Group cannot be created directly in VDC Group - 
+  # it must originate in some VDC (belonging to 
+  # destination VDC Group)
   #
   # `starting_vdc_id` field is optional. If only VDC Group 
-  # ID is specified in `owner_id` field - this resource 
-  # will will pick a random member
-  # VDC to precreate it and will move to destination
-  # VDC Group in a single apply cycle
+  # ID is specified in `owner_id` field - this resource will
+  # will pick a random member VDC to precreate it and will 
+  # move to destination VDC Group in a single apply cycle
   starting_vdc_id = data.vcd_org_vdc.vdc-1.id
 
   name        = "nsxt-edge"
@@ -202,7 +202,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) **Deprecated** in favor of `owner_id`. The name of VDC that owns the edge
   gateway. Can be inherited from `provider` configuration if not defined here.
-* `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note.** Data sources
+* `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note:** Data sources
   [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) or
   [vcd_org_vdc](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) can be used to lookup IDs by
   name
@@ -216,11 +216,11 @@ definition at provider level.
 
 * `starting_vdc_id` - (Optional, *v3.6+*,*VCD 10.2+*)  If `owner_id` is a VDC Group, this field
   allows to specify initial VDC for Edge Gateway (this can define Egress location of traffic in the
-  VDC Group) **Note.** It can only be used when `owner_id` is a VDC Group. 
+  VDC Group) **Note:** It can only be used when `owner_id` is a VDC Group. 
 
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
-* `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
+* `external_network_id` - (Required) An external network ID. **Note:** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
 can be used to lookup ID by name.
 * `subnet` - (Required) One or more [subnets](#edgegateway-subnet) defined for edge gateway.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
