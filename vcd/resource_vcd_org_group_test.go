@@ -176,7 +176,13 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description2"),
 				),
 			},
-
+			resource.TestStep{
+				Config: ldapSetupConfig + groupConfigText2 + testAccVcdOrgGroupDS, // Datasource check
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("data.vcd_org_group.sourced_group1", "vcd_org_group.group1", nil),
+					resourceFieldsEqual("data.vcd_org_group.sourced_group2", "vcd_org_group.group2", nil),
+				),
+			},
 			resource.TestStep{
 				ResourceName:      "vcd_org_group.group1",
 				ImportState:       true,
@@ -267,6 +273,18 @@ resource "vcd_vapp_vm" "ldap-container" {
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
+}
+`
+
+const testAccVcdOrgGroupDS = `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
+
+data "vcd_org_group" "sourced_group1" {
+  name = vcd_org_group.group1.name
+}
+
+data "vcd_org_group" "sourced_group2" {
+  name = vcd_org_group.group2.name
 }
 `
 
