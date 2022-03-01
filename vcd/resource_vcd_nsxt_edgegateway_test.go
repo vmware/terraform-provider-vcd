@@ -280,6 +280,12 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
 				),
 			},
+			{
+				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, "TestAccVcdVdcGroupResource", params["NsxtEdgeGatewayVcd"].(string)),
+			},
 		},
 	})
 	postTestChecks(t)

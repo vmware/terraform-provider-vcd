@@ -214,9 +214,10 @@ definition at provider level.
   (random member of VDC Group or specified in `starting_vdc_id`). Main use case of `starting_vdc_id`
   is to pick egress traffic origin for multi datacenter VDC Groups.
 
-* `starting_vdc_id` - (Optional, *v3.6+*,*VCD 10.2+*)  If `owner_id` is a VDC Group, this field
-  allows to specify initial VDC for Edge Gateway (this can define Egress location of traffic in the
-  VDC Group) **Note:** It can only be used when `owner_id` is a VDC Group. 
+* `starting_vdc_id` - (Optional, *v3.6+*,*VCD 10.2+*)  If `owner_id` is a VDC Group, by default Edge
+  Gateway will be created in random member VDC and moved to destination VDC Group. This field allows
+  to specify initial VDC for Edge Gateway (this can define Egress location of traffic in the VDC
+  Group) **Note:** It can only be used when `owner_id` is a VDC Group. 
 
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
@@ -253,17 +254,22 @@ The following attributes are exported on this resource:
 
 ## Importing
 
-~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
-configuration. [More information.][docs-import]
+~> **Note:** The current implementation of Terraform import can only import resources into the
+state. It does not generate configuration. [More information.][docs-import]
 
 An existing edge gateway can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of org-name.vdc-name.nsxt-edge-name
-For example, using this structure, representing an edge gateway that was **not** created using Terraform:
+The path for this resource is made of `org-name.vdc-name.nsxt-edge-name` or
+`org-name.vdc-group-name.nsxt-edge-name` For example, using this structure, representing an edge
+gateway that was **not** created using Terraform:
 
 ```hcl
+data "vcd_org_vdc" "vdc-1" {
+  name = "vdc-name"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org         = "my-org"
-  vdc         = "nsxt-vdc"
+  owner_id    = data.vcd_org_vdc.vdc-1.id
   name        = "nsxt-edge"
   description = "Description"
 

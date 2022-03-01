@@ -228,9 +228,3 @@ func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
 
 	return vdcOrGroup.IsNsxt(), nil
 }
-
-// vdcOrVdcGroupVerifier is an interface to access IsNsxt() on VDC or VDC Group method `IsNsxt`
-// (used in isBackedByNsxt)
-type vdcOrVdcGroupVerifier interface {
-	IsNsxt() bool
-}
