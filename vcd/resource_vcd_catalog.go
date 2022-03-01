@@ -30,50 +30,50 @@ func resourceVcdCatalog() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"storage_profile_id": &schema.Schema{
+			"storage_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional storage profile ID",
 			},
-			"created": &schema.Schema{
+			"created": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Time stamp of when the catalog was created",
 			},
-			"delete_force": &schema.Schema{
+			"delete_force": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.",
 			},
-			"delete_recursive": &schema.Schema{
+			"delete_recursive": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.",
 			},
-			"publish_enabled": &schema.Schema{
+			"publish_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation.",
 			},
-			"cache_enabled": &schema.Schema{
+			"cache_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "True enables early catalog export to optimize synchronization",
 			},
-			"preserve_identity_information": &schema.Schema{
+			"preserve_identity_information": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -89,7 +89,27 @@ func resourceVcdCatalog() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Key and value pairs for catalog metadata",
+				Description: "Key and value pairs for catalog metadata.",
+			},
+			"catalog_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog version number.",
+			},
+			"owner_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Owner name from the catalog.",
+			},
+			"number_of_vapp_templates": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of vApps this catalog contains.",
+			},
+			"number_of_media": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of Medias this catalog contains.",
 			},
 		},
 	}
@@ -216,6 +236,9 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
+
+	dSet(d, "catalog_version", adminCatalog.AdminCatalog.VersionNumber)
+	dSet(d, "owner_name", adminCatalog.AdminCatalog.Owner.User.Name)
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
