@@ -65,6 +65,10 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
 					resource.TestCheckResourceAttr(resourceAddress, "storage_profile_id", ""),
 					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.catalog_metadata", "catalog Metadata"),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2"),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -77,6 +81,12 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
 						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:`)),
 					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.catalog_metadata", "catalog Metadata v2"),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2 v2"),
+					resource.TestCheckResourceAttr(
+						resourceAddress, "metadata.catalog_metadata3", "catalog Metadata3"),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -356,6 +366,11 @@ resource "vcd_catalog" "test-catalog" {
 
   delete_force      = "true"
   delete_recursive  = "true"
+
+  metadata = {
+    catalog_metadata  = "catalog Metadata"
+    catalog_metadata2 = "catalog Metadata2"
+  }
 }
 `
 
@@ -373,6 +388,12 @@ resource "vcd_catalog" "test-catalog" {
 
   delete_force      = "true"
   delete_recursive  = "true"
+
+  metadata = {
+    catalog_metadata  = "catalog Metadata v2"
+    catalog_metadata2 = "catalog Metadata2 v2"
+    catalog_metadata3 = "catalog Metadata3"
+  }
 }
 `
 
@@ -525,7 +546,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 			},
 		},
 		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{&types.VdcStorageProfileConfiguration{
-			Enabled: true,
+			Enabled: takeBoolPointer(true),
 			Units:   "MB",
 			Limit:   1024,
 			Default: true,

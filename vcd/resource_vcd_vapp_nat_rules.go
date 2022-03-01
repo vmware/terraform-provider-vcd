@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,12 +21,12 @@ const (
 
 func resourceVcdVappNetworkNatRules() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVappNetworkNatRulesCreate,
-		Delete: resourceVAppNetworkNatRulesDelete,
-		Read:   resourceVappNetworkNatRulesRead,
-		Update: resourceVappNetworkNatRulesUpdate,
+		CreateContext: resourceVappNetworkNatRulesCreate,
+		DeleteContext: resourceVAppNetworkNatRulesDelete,
+		ReadContext:   resourceVappNetworkNatRulesRead,
+		UpdateContext: resourceVappNetworkNatRulesUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappNetworkNatRulesImport,
+			StateContext: vappNetworkNatRulesImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -127,22 +129,22 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 	}
 }
 
-func resourceVappNetworkNatRulesCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourceVappNetworkNatRulesUpdate(d, meta)
+func resourceVappNetworkNatRulesCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVappNetworkNatRulesUpdate(ctx, d, meta)
 }
 
-func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVappNetworkNatRulesUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
@@ -151,17 +153,17 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	natType := d.Get("nat_type").(string)
 	netRules, err := expandVappNetworkNatRules(d, vapp, natType)
 	if err != nil {
-		return fmt.Errorf("error expanding NAT rules: %s", err)
+		return diag.Errorf("error expanding NAT rules: %s", err)
 	}
 	policy := allowTrafficInPolicy
-	if !d.Get("enable_ip_masquerade").(bool) && natType == portForwardingNatType {
+	if d.Get("enable_ip_masquerade").(bool) && natType == portForwardingNatType {
 		policy = allowTrafficPolicy
 	}
 	vappNetwork, err := vapp.UpdateNetworkNatRules(networkId, netRules, d.Get("enabled").(bool),
 		natType, policy)
 	if err != nil {
 		log.Printf("[INFO] Error setting NAT rules: %s", err)
-		return fmt.Errorf("error setting NAT rules: %s", err)
+		return diag.Errorf("error setting NAT rules: %s", err)
 	}
 
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
@@ -172,21 +174,21 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 
 	d.SetId(vappNetwork.ID)
 
-	return resourceVappNetworkNatRulesRead(d, meta)
+	return resourceVappNetworkNatRulesRead(ctx, d, meta)
 }
 
-func resourceVAppNetworkNatRulesDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVAppNetworkNatRulesDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
@@ -195,29 +197,29 @@ func resourceVAppNetworkNatRulesDelete(d *schema.ResourceData, meta interface{})
 	err = vapp.RemoveAllNetworkNatRules(d.Get("network_id").(string))
 	if err != nil {
 		log.Printf("[INFO] Error deleting NAT rules: %s", err)
-		return fmt.Errorf("error deleting NAT rules: %s", err)
+		return diag.Errorf("error deleting NAT rules: %s", err)
 	}
 
 	return nil
 }
 
-func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVappNetworkNatRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp network. %s", err)
+		return diag.Errorf("error finding vApp network. %s", err)
 	}
 
 	var rules []map[string]interface{}
@@ -246,16 +248,16 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	}
 	dSet(d, "enabled", vappNetwork.Configuration.Features.NatService.IsEnabled)
 	if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
-		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficInPolicy {
+		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficPolicy {
 		dSet(d, "enable_ip_masquerade", true)
 	} else if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
-		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficPolicy {
+		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficInPolicy {
 		dSet(d, "enable_ip_masquerade", false)
 	}
 	dSet(d, "nat_type", vappNetwork.Configuration.Features.NatService.NatType)
 	err = d.Set("rule", rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
@@ -324,6 +326,6 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 // Example resource name (_resource_name_): vcd_vapp_nat_rules.my_existing_nat_rules
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappNetworkNatRulesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappNetworkNatRulesImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	return vappNetworkRuleImport(d, meta, "vcd_vapp_nat_rules")
 }
