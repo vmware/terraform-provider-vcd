@@ -7,9 +7,7 @@
 package vcd
 
 import (
-	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -25,64 +23,57 @@ import (
 // https://code.vmware.com/apis/287/vcloud#/doc/doc/operations/DELETE-Organization.html
 func resourceOrg() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceOrgCreate,
-		ReadContext:   resourceOrgRead,
-		UpdateContext: resourceOrgUpdate,
-		DeleteContext: resourceOrgDelete,
+		Create: resourceOrgCreate,
+		Read:   resourceOrgRead,
+		Update: resourceOrgUpdate,
+		Delete: resourceOrgDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdOrgImport,
+			State: resourceVcdOrgImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"full_name": {
+			"full_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"description": {
+			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"is_enabled": {
+			"is_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     true,
 				Description: "True if this organization is enabled (allows login and all other operations).",
 			},
-			"deployed_vm_quota": {
+			"deployed_vm_quota": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
 				ValidateFunc: validation.IntAtLeast(0),
 				Description:  "Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. (0 = unlimited)",
 			},
-			"stored_vm_quota": {
+			"stored_vm_quota": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
 				ValidateFunc: validation.IntAtLeast(0),
 				Description:  "Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. (0 = unlimited)",
 			},
-			"can_publish_catalogs": {
+			"can_publish_catalogs": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
-			"metadata": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
-				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
-			},
-			"vapp_lease": {
+			"vapp_lease": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -90,25 +81,25 @@ func resourceOrg() *schema.Resource {
 				Description: "Defines lease parameters for vApps created in this organization",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"maximum_runtime_lease_in_sec": {
+						"maximum_runtime_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long vApps can run before they are automatically stopped (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"power_off_on_runtime_lease_expiration": {
+						"power_off_on_runtime_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "When true, vApps are powered off when the runtime lease expires. " +
 								"When false, vApps are suspended when the runtime lease expires",
 						},
-						"maximum_storage_lease_in_sec": {
+						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"delete_on_storage_lease_expiration": {
+						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "If true, storage for a vApp is deleted when the vApp's lease expires. " +
@@ -117,7 +108,7 @@ func resourceOrg() *schema.Resource {
 					},
 				},
 			},
-			"vapp_template_lease": {
+			"vapp_template_lease": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -125,13 +116,13 @@ func resourceOrg() *schema.Resource {
 				Description: "Defines lease parameters for vApp templates created in this organization",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"maximum_storage_lease_in_sec": {
+						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"delete_on_storage_lease_expiration": {
+						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. " +
@@ -140,18 +131,18 @@ func resourceOrg() *schema.Resource {
 					},
 				},
 			},
-			"delay_after_power_on_seconds": {
+			"delay_after_power_on_seconds": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Specifies this organization's default for virtual machine boot delay after power on.",
 			},
-			"delete_force": {
+			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_force=True with delete_recursive=True to remove an org and any objects it contains, regardless of their state.",
 			},
-			"delete_recursive": {
+			"delete_recursive": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
@@ -162,12 +153,12 @@ func resourceOrg() *schema.Resource {
 }
 
 // creates an organization based on defined resource
-func resourceOrgCreate(c context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	orgName, fullName, err := getOrgNames(d)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 	isEnabled := d.Get("is_enabled").(bool)
 	description := d.Get("description").(string)
@@ -179,29 +170,23 @@ func resourceOrgCreate(c context.Context, d *schema.ResourceData, m interface{})
 
 	if err != nil {
 		log.Printf("[DEBUG] Error creating Org: %s", err)
-		return diag.Errorf("[org creation] error creating Org %s: %s", orgName, err)
+		return fmt.Errorf("[org creation] error creating Org %s: %s", orgName, err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
 		log.Printf("[DEBUG] Error running Org creation task: %s", err)
-		return diag.Errorf("[org creation] error running Org (%s) creation task: %s", orgName, err)
+		return fmt.Errorf("[org creation] error running Org (%s) creation task: %s", orgName, err)
 	}
 
 	org, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return diag.Errorf("[org creation] error retrieving Org %s after creation: %s", orgName, err)
+		return fmt.Errorf("[org creation] error retrieving Org %s after creation: %s", orgName, err)
 	}
 	log.Printf("[TRACE] Org %s created with id: %s", orgName, org.AdminOrg.ID)
 
 	d.SetId(org.AdminOrg.ID)
-
-	err = createOrUpdateAdminOrgMetadata(d, org)
-	if err != nil {
-		return diag.Errorf("error adding metadata to Org: %s", err)
-	}
-
-	return resourceOrgRead(c, d, m)
+	return resourceOrgRead(d, m)
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
@@ -278,7 +263,7 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 }
 
 // Deletes org
-func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//DELETING
 	vcdClient := m.(*VCDClient)
@@ -287,7 +272,7 @@ func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{})
 
 	orgName, _, err := getOrgNames(d)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
 	identifier := d.Id()
@@ -302,7 +287,7 @@ func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{})
 	}
 
 	if err != nil {
-		return diag.Errorf("error fetching Org %s: %s", orgName, err)
+		return fmt.Errorf("error fetching Org %s: %s", orgName, err)
 	}
 
 	log.Printf("[TRACE] Org %s found", orgName)
@@ -312,20 +297,20 @@ func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{})
 	err = adminOrg.Delete(deleteForce, deleteRecursive)
 	if err != nil {
 		log.Printf("[DEBUG] Error deleting org %s: %s", orgName, err)
-		return diag.FromErr(err)
+		return err
 	}
 	log.Printf("[TRACE] Org %s deleted", orgName)
 	return nil
 }
 
 // Update the resource
-func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	vcdClient := m.(*VCDClient)
 
 	orgName, fullName, err := getOrgNames(d)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
 	identifier := d.Id()
@@ -340,7 +325,7 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	}
 
 	if err != nil {
-		return diag.Errorf("error fetching Org %s: %s", orgName, err)
+		return fmt.Errorf("error fetching Org %s: %s", orgName, err)
 	}
 
 	settings := getSettings(d)
@@ -352,22 +337,17 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings = settings.OrgVAppTemplateSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
 
-	err = createOrUpdateAdminOrgMetadata(d, adminOrg)
-	if err != nil {
-		return diag.Errorf("error updating metadata from Org: %s", err)
-	}
-
 	log.Printf("[TRACE] Org with id %s found", orgName)
 	task, err := adminOrg.Update()
 
 	if err != nil {
 		log.Printf("[DEBUG] Error updating Org %s : %s", orgName, err)
-		return diag.Errorf("error updating Org %s", err)
+		return fmt.Errorf("error updating Org %s", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
 		log.Printf("[DEBUG] Error completing update of Org %s : %s", orgName, err)
-		return diag.Errorf("error completing update of Org %s", err)
+		return fmt.Errorf("error completing update of Org %s", err)
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)
@@ -433,25 +413,16 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 		}
 	}
 
-	metadata, err := adminOrg.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to get Org metadata")
-		return fmt.Errorf("unable to get Org metadata %s", err)
-	}
-	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-		return fmt.Errorf("error setting metadata: %s", err)
-	}
-
 	return nil
 }
 
 // Retrieves an Org resource from vCD
-func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
 	identifier := d.Id()
@@ -479,7 +450,7 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	}
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
-	return diag.FromErr(setOrgData(d, adminOrg))
+	return setOrgData(d, adminOrg)
 }
 
 // resourceVcdOrgImport is responsible for importing the resource.
@@ -489,7 +460,7 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 // For this resource, the import path is just the org name.
 //
 // Example import path (id): orgName
-func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
 	vcdClient := meta.(*VCDClient)
@@ -520,36 +491,4 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 		return "", "", fmt.Errorf(`the value for "full_name" cannot be empty`)
 	}
 	return orgName, fullName, nil
-}
-
-func createOrUpdateAdminOrgMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
-	log.Printf("[TRACE] adding/updating metadata to Org")
-
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := adminOrg.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			_, err := adminOrg.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
 }

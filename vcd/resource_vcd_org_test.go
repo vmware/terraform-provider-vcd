@@ -44,7 +44,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
 		Steps: []resource.TestStep{
-			{
+			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdOrgExists("vcd_org."+orgNameTestAccVcdOrg),
@@ -205,7 +205,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 			ProviderFactories: testAccProviders,
 			CheckDestroy:      testAccCheckOrgDestroy(od.name),
 			Steps: []resource.TestStep{
-				{
+				resource.TestStep{
 					Config: configText,
 					Check: resource.ComposeTestCheckFunc(
 						testAccCheckVcdOrgExists("vcd_org."+od.name),
@@ -235,13 +235,9 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "vapp_template_lease.0.maximum_storage_lease_in_sec", fmt.Sprintf("%d", od.templStorageLease)),
 						resource.TestCheckResourceAttr(
 							resourceName, "vapp_template_lease.0.delete_on_storage_lease_expiration", fmt.Sprintf("%v", od.templDeleteOnLeaseExp)),
-						resource.TestCheckResourceAttr(
-							resourceName, "metadata.key1", "value1"),
-						resource.TestCheckResourceAttr(
-							resourceName, "metadata.key2", "value2"),
 					),
 				},
-				{
+				resource.TestStep{
 					Config: configTextUpdated,
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr(
@@ -260,7 +256,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "stored_vm_quota", fmt.Sprintf("%d", updateParams["StoredVmQuota"].(int))),
 					),
 				},
-				{
+				resource.TestStep{
 					ResourceName:      resourceName,
 					ImportState:       true,
 					ImportStateVerify: true,
@@ -360,10 +356,6 @@ resource "vcd_org" "{{.OrgName}}" {
   vapp_template_lease {
     maximum_storage_lease_in_sec          = {{.TemplStorageLease}}
     delete_on_storage_lease_expiration    = {{.TemplDeleteOnLeaseExp}}
-  }
-  metadata = {
-	key1 = "value1"
-	key2 = "value2"
   }
 }
 `
