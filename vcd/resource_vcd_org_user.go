@@ -286,7 +286,7 @@ func resourceVcdOrgUserCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	if userData.Password == "" && !userData.IsExternal {
-		return fmt.Errorf(`no password provided with either "password"" or "password_file" properties`)
+		return fmt.Errorf(`no password provided with either "password" or "password_file" properties`)
 	}
 	_, err = adminOrg.CreateUserSimple(*userData)
 	if err != nil {
