@@ -92,7 +92,7 @@ func resourceVcdCatalog() *schema.Resource {
 				Description: "Key and value pairs for catalog metadata.",
 			},
 			"catalog_version": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Catalog version number.",
 			},
@@ -202,6 +202,14 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
+	// catalog user view is retrieved to get the number of vApp templates and medias
+	catalog, err := adminOrg.GetCatalogById(adminCatalog.AdminCatalog.ID, false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
+		d.SetId("")
+		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+	}
+
 	// Check if storage profile is set. Although storage profile structure accepts a list, in UI only one can be picked
 	if adminCatalog.AdminCatalog.CatalogStorageProfiles != nil && len(adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile) > 0 {
 		// By default API does not return Storage Profile Name in response. It has ID and HREF, but not Name so name
@@ -238,7 +246,26 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 	}
 
 	dSet(d, "catalog_version", adminCatalog.AdminCatalog.VersionNumber)
-	dSet(d, "owner_name", adminCatalog.AdminCatalog.Owner.User.Name)
+	// dSet(d, "owner_name", adminCatalog.AdminCatalog.Owner.User.Name)
+
+	catalogItemTypes, err := catalog.QueryCatalogItemList()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve catalog items: %s", err)
+		return err
+	}
+
+	var numberOfVAppTemplates, numberOfMedia int
+	for _, v := range catalogItemTypes {
+		switch v.Type {
+		case "application/vnd.vmware.vcloud.media+xml":
+			numberOfMedia++
+		case "application/vnd.vmware.vcloud.vAppTemplate+xml":
+			numberOfVAppTemplates++
+		}
+	}
+
+	dSet(d, "number_of_vapp_templates", numberOfVAppTemplates)
+	dSet(d, "number_of_media", numberOfMedia)
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)

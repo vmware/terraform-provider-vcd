@@ -27,11 +27,20 @@ var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 func TestAccVcdCatalog(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":            testConfig.VCD.Org,
-		"CatalogName":    TestAccVcdCatalogName,
-		"Description":    TestAccVcdCatalogDescription,
-		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":           "catalog",
+		"Org":                    testConfig.VCD.Org,
+		"CatalogName":            TestAccVcdCatalogName,
+		"Description":            TestAccVcdCatalogDescription,
+		"StorageProfile":         testConfig.VCD.ProviderVdc.StorageProfile,
+		"CatalogItemName":        "TestCatalogItem",
+		"CatalogItemNameFromUrl": "Test",
+		"DescriptionFromUrl":     "Test",
+		"OvaPath":                testConfig.Ova.OvaPath,
+		"UploadProgressFromUrl":  testConfig.Ova.UploadProgress,
+		"CatalogMediaName":       "TestCatalogMedia",
+		"MediaPath":              testConfig.Media.MediaPath,
+		"UploadPieceSize":        testConfig.Media.UploadPieceSize,
+		"UploadProgress":         testConfig.Media.UploadProgress,
+		"Tags":                   "catalog",
 	}
 
 	configText := templateFill(testAccCheckVcdCatalog, params)
@@ -56,7 +65,7 @@ func TestAccVcdCatalog(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
-			// Provision catalog without storage profile
+			// Provision catalog without storage profile and a vApp template and media
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
@@ -69,6 +78,10 @@ func TestAccVcdCatalog(t *testing.T) {
 						resourceAddress, "metadata.catalog_metadata", "catalog Metadata"),
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2"),
+					//resource.TestCheckResourceAttr(),
+					//resource.TestCheckResourceAttr(),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -372,6 +385,29 @@ resource "vcd_catalog" "test-catalog" {
     catalog_metadata2 = "catalog Metadata2"
   }
 }
+
+resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogItemName}}"
+  description          = "{{.Description}}"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogMediaName}}"
+  description          = "{{.Description}}"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+
 `
 
 const testAccCheckVcdCatalogStep1 = `
