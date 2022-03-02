@@ -127,7 +127,7 @@ func resourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta int
 	}
 	err = d.Set("users_list", usersList)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("could not set users_list field: %s", err)
 	}
 
 	return nil

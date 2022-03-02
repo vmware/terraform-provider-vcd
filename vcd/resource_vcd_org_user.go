@@ -272,7 +272,7 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	}
 	err := d.Set("groups_list", groupsList)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not set groups_list field: %s", err)
 	}
 
 	return nil
