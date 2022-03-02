@@ -233,8 +233,6 @@ resource "vcd_org_user" "user1" {
   name           = "fry"
   role           = "Organization Administrator"
   is_external    = true
-  deployed_vm_quota = 0
-  stored_vm_quota = 0
 
   depends_on = [
     vcd_org_group.group1,
