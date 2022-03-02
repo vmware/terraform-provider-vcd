@@ -2,7 +2,9 @@ package vcd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"text/tabwriter"
@@ -14,11 +16,12 @@ import (
 
 func resourceVcdIndependentDisk() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdIndependentDiskCreate,
-		Read:   resourceVcdIndependentDiskRead,
-		Delete: resourceVcdIndependentDiskDelete,
+		CreateContext: resourceVcdIndependentDiskCreate,
+		ReadContext:   resourceVcdIndependentDiskRead,
+		UpdateContext: resourceVcdIndependentDiskUpdate,
+		DeleteContext: resourceVcdIndependentDiskDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdIndependentDiskImport,
+			StateContext: resourceVcdIndependentDiskImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -34,12 +37,12 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
@@ -57,39 +60,46 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ForceNew:    true,
 				Description: "size in MB",
 			},
-			"bus_type": &schema.Schema{
+			"bus_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Computed:     true,
 				ValidateFunc: validateBusType,
 			},
-			"bus_sub_type": &schema.Schema{
+			"bus_sub_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Computed:     true,
 				ValidateFunc: validateBusSubType,
 			},
-			"iops": &schema.Schema{
+			"iops": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "IOPS request for the created disk",
 			},
-			"owner_name": &schema.Schema{
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The owner name of the disk",
 			},
-			"datastore_name": &schema.Schema{
+			"datastore_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Datastore name",
 			},
-			"is_attached": &schema.Schema{
+			"is_attached": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the disk is already attached",
+			},
+			"metadata": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
+				Description: "Key value map of metadata to assign to this disk. Key and value can be any string.",
 			},
 		},
 	}
@@ -124,20 +134,20 @@ var busSubTypesFromValues = map[string]string{
 	"vmware.sata.ahci": "ahci",
 }
 
-func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdIndependentDiskCreate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	size, sizeProvided := d.GetOk("size_in_mb")
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	diskName := d.Get("name").(string)
 	diskRecord, err := vdc.QueryDisk(diskName)
 	if diskRecord != (govcd.DiskRecord{}) || err == nil {
-		return fmt.Errorf("disk with such name already exist : %s", diskName)
+		return diag.Errorf("disk with such name already exist : %s", diskName)
 	}
 
 	var diskCreateParams = &types.DiskCreateParams{
@@ -156,7 +166,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	if storageProfileValue != "" {
 		storageReference, err = vdc.FindStorageProfileReference(storageProfileValue)
 		if err != nil {
-			return fmt.Errorf("error finding storage profile %s", storageProfileValue)
+			return diag.Errorf("error finding storage profile %s", storageProfileValue)
 		}
 		diskCreateParams.Disk.StorageProfile = &types.Reference{HREF: storageReference.HREF}
 	}
@@ -175,65 +185,46 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 
 	task, err := vdc.CreateDisk(diskCreateParams)
 	if err != nil {
-		return fmt.Errorf("error creating independent disk: %s", err)
+		return diag.Errorf("error creating independent disk: %s", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error waiting to finish creation of independent disk: %s", err)
+		return diag.Errorf("error waiting to finish creation of independent disk: %s", err)
 	}
 
 	diskHref := task.Task.Owner.HREF
 	disk, err := vdc.GetDiskByHref(diskHref)
 	if err != nil {
-		return fmt.Errorf("unable to find disk with href %s: %s", diskHref, err)
+		return diag.Errorf("unable to find disk with href %s: %s", diskHref, err)
 	}
 
 	d.SetId(disk.Disk.Id)
 
-	return resourceVcdIndependentDiskRead(d, meta)
+	err = createOrUpdateDiskMetadata(d, disk)
+	if err != nil {
+		return diag.Errorf("error adding metadata to independent disk: %s", err)
+	}
+
+	return resourceVcdIndependentDiskRead(c, d, meta)
 }
 
-func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	identifier := d.Id()
-	var disk *govcd.Disk
-	if identifier != "" {
-		disk, err = vdc.GetDiskById(identifier, true)
-		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
-			d.SetId("")
-			return nil
-		}
-		if err != nil {
-			return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
-		}
-	} else {
-		identifier = d.Get("name").(string)
-		disks, err := vdc.GetDisksByName(identifier, true)
-		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
-			d.SetId("")
-			return nil
-		}
-		if err != nil {
-			return fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
-		}
-		if len(*disks) > 1 {
-			return fmt.Errorf("found more than one disk with name %s: %s", identifier, err)
-		}
-		disk = &(*disks)[0]
+	identifier, disk, err := getIndependentDiskFromResource(d, vdc)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
 	if err != nil {
-		return fmt.Errorf("unable to query disk with name %s: %s", identifier, err)
+		return diag.Errorf("unable to query disk with name %s: %s", identifier, err)
 	}
 
 	var diskRecord *types.DiskRecordType
@@ -244,10 +235,14 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if diskRecord == nil {
-		return fmt.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
+		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	setMainData(d, disk)
+	err = setMainData(d, disk)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	dSet(d, "datastore_name", diskRecord.DataStoreName)
 	dSet(d, "is_attached", diskRecord.IsAttached)
 
@@ -255,7 +250,62 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
+// Gets an independent disk data from the Terraform resource
+func getIndependentDiskFromResource(d *schema.ResourceData, vdc *govcd.Vdc) (string, *govcd.Disk, error) {
+	var disk *govcd.Disk
+	var err error
+
+	identifier := d.Id()
+	if identifier != "" {
+		disk, err = vdc.GetDiskById(identifier, true)
+		if govcd.IsNotFound(err) {
+			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return identifier, nil, nil
+		}
+		if err != nil {
+			return identifier, nil, fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+		}
+	} else {
+		identifier = d.Get("name").(string)
+		disks, err := vdc.GetDisksByName(identifier, true)
+		if govcd.IsNotFound(err) {
+			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return identifier, nil, nil
+		}
+		if err != nil {
+			return identifier, nil, fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
+		}
+		if len(*disks) > 1 {
+			return identifier, nil, fmt.Errorf("found more than one disk with name %s: %s", identifier, err)
+		}
+		disk = &(*disks)[0]
+	}
+	return identifier, disk, nil
+}
+
+func resourceVcdIndependentDiskUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChange("metadata") {
+		_, vdc, err := meta.(*VCDClient).GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		}
+
+		_, disk, err := getIndependentDiskFromResource(d, vdc)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		err = createOrUpdateDiskMetadata(d, disk)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return resourceVcdIndependentDiskRead(c, d, meta)
+}
+
+func setMainData(d *schema.ResourceData, disk *govcd.Disk) error {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -265,42 +315,52 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	dSet(d, "iops", disk.Disk.Iops)
 	dSet(d, "owner_name", disk.Disk.Owner.User.Name)
+
+	metadata, err := disk.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get Disk metadata")
+		return fmt.Errorf("unable to get Disk metadata %s", err)
+	}
+	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
+		return fmt.Errorf("error setting metadata: %s", err)
+	}
+	return nil
 }
 
-func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdIndependentDiskDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	diskRecord, err := vdc.QueryDisk(d.Get("name").(string))
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error finding disk : %#v", err)
+		return diag.Errorf("error finding disk : %#v", err)
 	}
 
 	if diskRecord.Disk.IsAttached {
-		return fmt.Errorf("can not remove disk as it is attached to vm")
+		return diag.Errorf("can not remove disk as it is attached to vm")
 	}
 
 	disk, err := vdc.GetDiskByHref(diskRecord.Disk.HREF)
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error getting disk : %#v", err)
+		return diag.Errorf("error getting disk : %#v", err)
 	}
 
 	task, err := disk.Delete()
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error deleting disk : %#v", err)
+		return diag.Errorf("error deleting disk : %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error waiting for deleting disk : %#v", err)
+		return diag.Errorf("error waiting for deleting disk : %#v", err)
 	}
 
 	return nil
@@ -326,7 +386,7 @@ var errHelpDiskImport = fmt.Errorf(`resource id must be specified in one of thes
 // Example resource name (_resource_name_): vcd_independent_disk.my-disk
 // Example import path (_the_id_string_): org-name.vdc-name.my-independent-disk-id
 // Example list path (_the_id_string_): list@org-name.vdc-name.my-independent-disk-name
-func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdIndependentDiskImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, diskName, diskId string
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
@@ -409,4 +469,36 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 	}
 
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpDiskImport, buf.String())
+}
+
+func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error {
+	log.Printf("[TRACE] adding/updating metadata to Org")
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := disk.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			_, err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }
