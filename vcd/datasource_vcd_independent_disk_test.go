@@ -37,7 +37,6 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"Tags":                 "disk",
 		"dataSourceName":       datasourceName,
 		"datasourceNameWithId": datasourceNameWithId,
-		"metadataValue":        "value1",
 	}
 
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
@@ -54,7 +53,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
-			{
+			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
@@ -64,13 +63,12 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1", params["metadataValue"].(string)),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
-			{
+			resource.TestStep{
 				Config: configTextWithId,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
@@ -116,9 +114,6 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
-  metadata = {
-    key1 = "{{.metadataValue}}"
-  }
 }
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {

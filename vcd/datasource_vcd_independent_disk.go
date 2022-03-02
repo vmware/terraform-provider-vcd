@@ -1,8 +1,8 @@
 package vcd
 
 import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,7 +12,7 @@ import (
 
 func datasourceVcIndependentDisk() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceVcdIndependentDiskRead,
+		Read: dataSourceVcdIndependentDiskRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -25,15 +25,15 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"id": {
+			"id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": {
+			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "independent disk description",
@@ -47,56 +47,51 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "size in MB",
 			},
-			"bus_type": {
+			"bus_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"bus_sub_type": {
+			"bus_sub_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"iops": {
+			"iops": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "IOPS request for the created disk",
 			},
-			"owner_name": {
+			"owner_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The owner name of the disk",
 			},
-			"datastore_name": {
+			"datastore_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Datastore name",
 			},
-			"is_attached": {
+			"is_attached": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the disk is already attached",
-			},
-			"metadata": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Key and value pairs for disk metadata",
 			},
 		},
 	}
 }
 
-func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	idValue := d.Get("id").(string)
 	nameValue := d.Get("name").(string)
 
 	if idValue == "" && nameValue == "" {
-		return diag.Errorf("`id` and `name` are empty. At least one is needed")
+		return errors.New("`id` and `name` are empty. At least one is needed")
 	}
 
 	identifier := idValue
@@ -108,27 +103,27 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 			return nil
 		}
 		if err != nil {
-			return diag.Errorf("unable to find disk with ID %s: %s", identifier, err)
+			return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
 		}
 	} else {
 		identifier = nameValue
 		disks, err := vdc.GetDisksByName(identifier, true)
 		if err != nil {
-			return diag.Errorf("unable to find disk with name %s: %s", identifier, err)
+			return fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
 		}
 		if len(*disks) > 1 {
 			var diskIds []string
 			for _, disk := range *disks {
 				diskIds = append(diskIds, disk.Disk.Id)
 			}
-			return diag.Errorf("found more than one disk with name %s. Disk ids are: %s. Please use `id` property", identifier, diskIds)
+			return fmt.Errorf("found more than one disk with name %s. Disk ids are: %s. Please use `id` property", identifier, diskIds)
 		}
 		disk = &(*disks)[0]
 	}
 
 	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
 	if err != nil {
-		return diag.Errorf("unable to query disk with name %s: %s", identifier, err)
+		return fmt.Errorf("unable to query disk with name %s: %s", identifier, err)
 	}
 
 	var diskRecord *types.DiskRecordType
@@ -139,14 +134,10 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 	}
 
 	if diskRecord == nil {
-		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
+		return fmt.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	err = setMainData(d, disk)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
+	setMainData(d, disk)
 	dSet(d, "datastore_name", diskRecord.DataStoreName)
 	dSet(d, "is_attached", diskRecord.IsAttached)
 
