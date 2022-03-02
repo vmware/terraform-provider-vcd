@@ -121,12 +121,14 @@ func resourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta int
 	dSet(d, "role", group.Group.Role.Name)
 	dSet(d, "provider_type", group.Group.ProviderType)
 	var usersList []string
-	if group.Group.UsersList != nil {
-		for _, userRef := range group.Group.UsersList.UserReference {
-			usersList = append(usersList, userRef.Name)
-		}
-		dSet(d, "users_list", usersList)
+	for _, userRef := range group.Group.UsersList.UserReference {
+		usersList = append(usersList, userRef.Name)
 	}
+	err = d.Set( "users_list", usersList)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 
 	return nil
 }
