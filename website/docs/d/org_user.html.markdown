@@ -56,7 +56,8 @@ The following arguments are supported:
 * `instant_messaging` - The Org User instant messaging.
 * `enabled` - True if the user is enabled and can log in.
 * `is_group_role` - True if this user has a group role.
-* `is_locked` - If the user account has been locked due to too many invalid login attempts, the value will be true. 
+* `is_locked` - If the user account has been locked due to too many invalid login attempts, the value will be true.
+* `is_external` - If the user account was imported from an external resource, like an LDAP.
 * `deployed_vm_quota` - Quota of vApps that this user can deploy. A value of 0 specifies an unlimited quota.
 * `stored_vm_quota` -  Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.
 * `id` - The ID of the Organization user

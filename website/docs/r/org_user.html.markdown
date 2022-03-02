@@ -99,10 +99,10 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level. If we 
   want to create a user at provider level, use "System" as org name.
 * `name` - (Required) A unique name for the user.
-* `password` - (Optional, but required if `password_file` was not given) The user password. This value is never returned 
+* `password` - (Optional, but required if `password_file` was not given and `is_external` is `false`) The user password. This value is never returned 
   on read. It is inspected on create and modify. To modify, fill with a different value. Note that if you remove the 
   password *on update*, Terraform will indicate that a change was occurring, but the empty password will be ignored by vCD.
-* `password_file` (Optional, but required if `password` was not given). A text file containing the password. Recommended
+* `password_file` (Optional, but required if `password` was not given and `is_external` is `false`). A text file containing the password. Recommended
   usage: after changing the password, run an apply again with the password blank.
   Using this property instead of `password` has the advantage that the sensitive data is not saved into Terraform state 
   file. The disadvantage is that a password change requires also changing the file name.
@@ -123,13 +123,17 @@ The following arguments are supported:
 * `instant_messaging` - (Optional) The Org User instant messaging.
 * `enabled` - (Optional) True if the user is enabled and can log in. The default is `true`.
 * `is_group_role` - (Optional) True if this user has a group role. The default is `false`.
-* `is_locked` - (Optional)aIf the user account has been locked due to too many invalid login attempts, the value will 
+* `is_locked` - (Optional) If the user account has been locked due to too many invalid login attempts, the value will 
   change to true (only the system can lock the user). To unlock the user re-set this flag to false. 
+* `is_external` - (Optional) If the user account is going to be imported from an external resource, like an LDAP.
+  In this case, `password` nor `password_file` are not required. Defaults to `false`.
 * `take_ownership` - (Optional) Take ownership of user's objects on deletion.
 * `deployed_vm_quota` - (Optional) Quota of vApps that this user can deploy. A value of 0 specifies an unlimited quota.
-  The default is 10.
+  The default is 0.
 * `stored_vm_quota` - (Optional) Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.
-  The default is 10.
+  The default is 0.
+* `groups_list` - (Read only) The list of group names to which this user belongs. It's only populated if the users
+  are created after the group (with `depends_on` the given group).
 
 ## Attribute Reference
 
