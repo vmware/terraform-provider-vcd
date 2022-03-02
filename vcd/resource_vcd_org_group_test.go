@@ -154,10 +154,13 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description1"),
+					resource.TestCheckResourceAttrSet("vcd_org_group.group1", "users_list"),
 					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description1"),
+					// This check should belong to vcd_org_user tests, but here is simpler and quicker
+					resource.TestCheckResourceAttrSet("vcd_org_user.user1", "groups_list"),
 				),
 			},
 			{

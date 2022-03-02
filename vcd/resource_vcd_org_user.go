@@ -75,28 +75,28 @@ func resourceVcdOrgUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Computed:	 true, // If IsExternal is true
+				Computed:    true, // If IsExternal is true
 				Description: "The user's full name",
 			},
 			"email_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Computed:	 true, // If IsExternal is true
+				Computed:    true, // If IsExternal is true
 				Description: "The user's email address",
 			},
 			"telephone": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Computed:	 true, // If IsExternal is true
+				Computed:    true, // If IsExternal is true
 				Description: "The user's telephone",
 			},
 			"instant_messaging": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Computed:	 true, // If IsExternal is true
+				Computed:    true, // If IsExternal is true
 				Description: "The user's telephone",
 			},
 			"enabled": {
@@ -139,15 +139,23 @@ func resourceVcdOrgUser() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    false,
-				Computed:	 true, // If IsExternal is true
+				Computed:    true, // If IsExternal is true
 				Description: "Quota of vApps that this user can deploy. A value of 0 specifies an unlimited quota.",
 			},
 			"stored_vm_quota": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    false,
-				Computed:	 true, // If IsExternal is true
+				Computed:    true, // If IsExternal is true
 				Description: "Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.",
+			},
+			"groups_list": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Read only. List of group names that this user belongs to",
 			},
 		},
 	}
@@ -256,6 +264,13 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	dSet(d, "stored_vm_quota", orgUser.User.StoredVmQuota)
 	if orgUser.User.Role != nil {
 		dSet(d, "role", orgUser.User.Role.Name)
+	}
+	var groupsList []string
+	if orgUser.User.GroupReferences != nil {
+		for _, groupRef := range orgUser.User.GroupReferences.GroupReference {
+			groupsList = append(groupsList, groupRef.Name)
+		}
+		dSet(d, "groups_list", groupsList)
 	}
 	return nil
 }

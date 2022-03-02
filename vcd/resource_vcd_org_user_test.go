@@ -111,7 +111,7 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				CheckDestroy:      nil,
 				Steps: []resource.TestStep{
-					resource.TestStep{
+					{
 						Config: configText,
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(
@@ -124,14 +124,15 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 							resource.TestCheckResourceAttr(
 								"vcd_org_user."+ud.name, "enabled", "true"),
 							resource.TestCheckResourceAttr(
-								"vcd_org_user."+ud.name, "deployed_vm_quota", "10"),
+								"vcd_org_user."+ud.name, "deployed_vm_quota", "0"),
 							resource.TestCheckResourceAttr(
-								"vcd_org_user."+ud.name, "stored_vm_quota", "10"),
+								"vcd_org_user."+ud.name, "stored_vm_quota", "0"),
 						),
 					},
 				},
 			})
 		}
+		fmt.Printf("a")
 	}
 	if willSkipTests {
 		t.Skip(acceptanceTestsSkipped)
@@ -200,7 +201,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				CheckDestroy:      testAccCheckVcdUserDestroy(ud.name),
 				Steps: []resource.TestStep{
-					resource.TestStep{
+					{
 						Config: configText,
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(
@@ -227,7 +228,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 								resourceName, "stored_vm_quota", fmt.Sprintf("%d", params["StoredVmQuota"].(int))),
 						),
 					},
-					resource.TestStep{
+					{
 						Config: configTextUpdated,
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(
@@ -242,7 +243,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 								resourceName, "stored_vm_quota", fmt.Sprintf("%d", updateParams["StoredVmQuota"].(int))),
 						),
 					},
-					resource.TestStep{
+					{
 						ResourceName:      resourceName,
 						ImportState:       true,
 						ImportStateVerify: true,
@@ -300,7 +301,7 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 			ProviderFactories: testAccProviders,
 			CheckDestroy:      nil,
 			Steps: []resource.TestStep{
-				resource.TestStep{
+				{
 					Config: configText,
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr(
