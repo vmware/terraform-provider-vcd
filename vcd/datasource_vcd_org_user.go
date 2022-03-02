@@ -81,8 +81,8 @@ func datasourceVcdOrgUser() *schema.Resource {
 					"will change to true (only the system can lock the user). ",
 			},
 			"is_external": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
 				Description: "If the user account was imported from an external resource, like an LDAP",
 			},
 			"deployed_vm_quota": {
@@ -96,8 +96,8 @@ func datasourceVcdOrgUser() *schema.Resource {
 				Description: "Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.",
 			},
 			"groups_list": {
-				Type:        schema.TypeList,
-				Computed:    true,
+				Type:     schema.TypeList,
+				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
