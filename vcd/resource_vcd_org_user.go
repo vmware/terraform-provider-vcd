@@ -269,7 +269,7 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	for _, groupRef := range orgUser.User.GroupReferences.GroupReference {
 		groupsList = append(groupsList, groupRef.Name)
 	}
-	err := d.Set( "groups_list", groupsList)
+	err := d.Set("groups_list", groupsList)
 	if err != nil {
 		return err
 	}
