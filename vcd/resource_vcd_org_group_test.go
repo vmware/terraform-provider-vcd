@@ -6,6 +6,7 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net"
 	"regexp"
 	"testing"
@@ -186,6 +187,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_org_group.sourced_group1", "vcd_org_group.group1", nil),
 					resourceFieldsEqual("data.vcd_org_group.sourced_group2", "vcd_org_group.group2", nil),
+					stateDumper(),
 				),
 			},
 			{
@@ -428,4 +430,11 @@ func (l *ldapConfigurator) orgConfigureLdap(ldapServerIp string) {
 		l.t.Errorf("failed configuring LDAP for Org '%s': %s", testConfig.VCD.Org, err)
 	}
 	fmt.Println(" Done")
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
 }
