@@ -39,7 +39,7 @@ func datasourceVcdOrgGroup() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "List of user names that belong to the group",
+				Description: "Set of user names that belong to the group",
 			},
 		},
 	}
