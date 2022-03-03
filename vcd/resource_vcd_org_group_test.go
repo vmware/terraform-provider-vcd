@@ -430,10 +430,3 @@ func (l *ldapConfigurator) orgConfigureLdap(ldapServerIp string) {
 	}
 	fmt.Println(" Done")
 }
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
