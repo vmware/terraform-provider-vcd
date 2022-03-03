@@ -6,7 +6,6 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"net"
 	"regexp"
 	"testing"
@@ -160,7 +159,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description1"),
 					// This check should belong to vcd_org_user tests, but here is simpler and quicker
-					stateDumper(),
 					resource.TestCheckResourceAttr("vcd_org_user.user1", "groups_list.0", "ship_crew"),
 				),
 			},
@@ -430,11 +428,4 @@ func (l *ldapConfigurator) orgConfigureLdap(ldapServerIp string) {
 		l.t.Errorf("failed configuring LDAP for Org '%s': %s", testConfig.VCD.Org, err)
 	}
 	fmt.Println(" Done")
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
 }
