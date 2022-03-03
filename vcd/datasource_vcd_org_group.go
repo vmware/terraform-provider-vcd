@@ -63,12 +63,14 @@ func datasourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta i
 	dSet(d, "provider_type", orgGroup.Group.ProviderType)
 	dSet(d, "description", orgGroup.Group.Description)
 	dSet(d, "role", orgGroup.Group.Role.Name)
-	var usersList []string
-	if orgGroup.Group.UsersList != nil {
-		for _, userRef := range orgGroup.Group.UsersList.UserReference {
-			usersList = append(usersList, userRef.Name)
-		}
-		dSet(d, "users_list", usersList)
+	var users []string
+	for _, userRef := range orgGroup.Group.UsersList.UserReference {
+		users = append(users, userRef.Name)
 	}
+	err = d.Set("users_list", convertStringsTotTypeSet(users))
+	if err != nil {
+		return diag.Errorf("could not set users_list field: %s", err)
+	}
+
 	return nil
 }
