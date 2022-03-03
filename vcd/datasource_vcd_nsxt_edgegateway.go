@@ -133,18 +133,24 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 
 	var edge *govcd.NsxtEdgeGateway
 	edgeGatewayName := d.Get("name").(string)
-	ownerId := d.Get("owner_id").(string)
 	switch {
-	case ownerId != "":
-		edge, err = org.GetNsxtEdgeGatewayByNameAndOwnerId(edgeGatewayName, ownerId)
+	case ownerIdField != "":
+		edge, err = org.GetNsxtEdgeGatewayByNameAndOwnerId(edgeGatewayName, ownerIdField)
 		if err != nil {
 			return diag.Errorf("error getting NSX-T Edge Gateway:%s", err)
 		}
-	case ownerId == "":
-		edge, err = org.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	case ownerIdField == "":
+		_, vdc, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
+		if err != nil {
+			return diag.Errorf("error getting VDC ID: %s", err)
+		}
+
+		edge, err = vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
 		}
+	default:
+		return diag.Errorf("error looking up Edge Gateway - switch did not match any cases")
 	}
 
 	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
@@ -160,7 +166,7 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 // valdateIfVdcOrVdcGroupIsNsxt evaluates VDC field priority using pickVdcIdByPriority and then
 // checks if that VDC or VDC Group is an NSX-T one and returns an error if not
 func valdateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) error {
-	usedFieldId, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
+	usedFieldId, _, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
 
 	if err != nil {
 		return fmt.Errorf("error finding VDC ID: %s", err)
@@ -182,28 +188,28 @@ func valdateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, o
 // * `owner_id`
 // * `vdc` at resource level
 // * `vdc` inherited from provider configuration
-func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) (string, error) {
+func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) (string, *govcd.Vdc, error) {
 	if ownerIdField != "" {
-		return ownerIdField, nil
+		return ownerIdField, nil, nil
 	}
 
 	if vdcField != "" {
 		vdc, err := org.GetVDCByName(vdcField, false)
 		if err != nil {
-			return "", fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
 		}
-		return vdc.Vdc.ID, nil
+		return vdc.Vdc.ID, vdc, nil
 	}
 
 	if inheritedVdcField != "" {
 		vdc, err := org.GetVDCByName(inheritedVdcField, false)
 		if err != nil {
-			return "", fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
 		}
-		return vdc.Vdc.ID, nil
+		return vdc.Vdc.ID, vdc, nil
 	}
 
-	return "", fmt.Errorf("none of the fields `owner_id`, `vdc` and provider inherited `vdc`")
+	return "", nil, fmt.Errorf("none of the fields `owner_id`, `vdc` and provider inherited `vdc`")
 }
 
 // isBackedByNsxt accepts VDC or VDC Group ID and checks if it is backed by NSX-T
