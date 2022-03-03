@@ -132,7 +132,6 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 				},
 			})
 		}
-		fmt.Printf("a")
 	}
 	if willSkipTests {
 		t.Skip(acceptanceTestsSkipped)
