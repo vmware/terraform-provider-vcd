@@ -97,7 +97,7 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata3", "catalog Metadata3"),
 					//resource.TestCheckResourceAttr(), // catalog owner
-					//resource.TestCheckResourceAttr(), // catalog version number
+					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
 				),
