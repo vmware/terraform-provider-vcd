@@ -78,10 +78,6 @@ func TestAccVcdCatalog(t *testing.T) {
 						resourceAddress, "metadata.catalog_metadata", "catalog Metadata"),
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2"),
-					//resource.TestCheckResourceAttr(),
-					//resource.TestCheckResourceAttr(),
-					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
-					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -100,6 +96,10 @@ func TestAccVcdCatalog(t *testing.T) {
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2 v2"),
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata3", "catalog Metadata3"),
+					//resource.TestCheckResourceAttr(), // catalog owner
+					//resource.TestCheckResourceAttr(), // catalog version number
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -391,7 +391,7 @@ resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   catalog = resource.vcd_catalog.test-catalog.name
 
   name                 = "{{.CatalogItemName}}"
-  description          = "{{.Description}}"
+  description          = "TestDescription"
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
@@ -402,7 +402,7 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   catalog = resource.vcd_catalog.test-catalog.name
 
   name                 = "{{.CatalogMediaName}}"
-  description          = "{{.Description}}"
+  description          = "TestDescription"
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
@@ -430,6 +430,28 @@ resource "vcd_catalog" "test-catalog" {
     catalog_metadata2 = "catalog Metadata2 v2"
     catalog_metadata3 = "catalog Metadata3"
   }
+}
+
+resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogItemName}}"
+  description          = "TestDescription"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogMediaName}}"
+  description          = "TestDescription"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
 }
 `
 

@@ -104,7 +104,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"number_of_vapp_templates": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Number of vApps this catalog contains.",
+				Description: "Number of vApps templates this catalog contains.",
 			},
 			"number_of_media": {
 				Type:        schema.TypeInt,
@@ -203,7 +203,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// catalog user view is retrieved to get the number of vApp templates and medias
-	catalog, err := adminOrg.GetCatalogById(adminCatalog.AdminCatalog.ID, false)
+	catalog, err := adminOrg.GetCatalogById(d.Id(), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
@@ -245,27 +245,20 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	dSet(d, "catalog_version", adminCatalog.AdminCatalog.VersionNumber)
+	dSet(d, "catalog_version", adminCatalog.AdminCatalog.Catalog.VersionNumber)
 	// dSet(d, "owner_name", adminCatalog.AdminCatalog.Owner.User.Name)
 
-	catalogItemTypes, err := catalog.QueryCatalogItemList()
+	vAppTemplates, err := catalog.QueryVappTemplateList()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve catalog items: %s", err)
-		return err
+		return fmt.Errorf("error retrieving catalog templates: %s", err)
 	}
+	dSet(d, "number_of_vapp_templates", len(vAppTemplates))
 
-	var numberOfVAppTemplates, numberOfMedia int
-	for _, v := range catalogItemTypes {
-		switch v.Type {
-		case "application/vnd.vmware.vcloud.media+xml":
-			numberOfMedia++
-		case "application/vnd.vmware.vcloud.vAppTemplate+xml":
-			numberOfVAppTemplates++
-		}
+	medias, err := catalog.QueryMediaList()
+	if err != nil {
+		return fmt.Errorf("error retrieving catalog medias: %s", err)
 	}
-
-	dSet(d, "number_of_vapp_templates", numberOfVAppTemplates)
-	dSet(d, "number_of_media", numberOfMedia)
+	dSet(d, "number_of_media", len(medias))
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
