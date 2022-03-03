@@ -62,6 +62,26 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for catalog metadata",
 			},
+			"catalog_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Catalog version number.",
+			},
+			/*"owner_name": { // owner_name is not available because catalog user view doesn't have this value
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Owner name from the catalog.",
+			},*/
+			"number_of_vapp_templates": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of vApps this catalog contains.",
+			},
+			"number_of_media": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of Medias this catalog contains.",
+			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -127,6 +147,7 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	dSet(d, "description", catalog.Catalog.Description)
 	dSet(d, "created", catalog.Catalog.DateCreated)
 	dSet(d, "name", catalog.Catalog.Name)
+	dSet(d, "catalog_version", catalog.Catalog.VersionNumber)
 	d.SetId(catalog.Catalog.ID)
 	if catalog.Catalog.PublishExternalCatalogParams != nil {
 		dSet(d, "publish_enabled", catalog.Catalog.PublishExternalCatalogParams.IsPublishedExternally)
@@ -138,6 +159,22 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
+
+	numberOfVAppTemplates, err := catalog.QueryVappTemplateList()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve vApp templates associated to this catalog: %s", err)
+		return diag.Errorf("There was an issue when retrieving vApp templates - %s", err)
+	}
+
+	dSet(d, "number_of_vapp_templates", len(numberOfVAppTemplates))
+
+	numberOfMedia, err := catalog.QueryMediaList()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve media items associated to this catalog: %s", err)
+		return diag.Errorf("There was an issue when retrieving media items - %s", err)
+	}
+
+	dSet(d, "number_of_media", len(numberOfMedia))
 
 	return nil
 }
