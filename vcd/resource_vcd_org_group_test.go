@@ -6,6 +6,7 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net"
 	"regexp"
 	"testing"
@@ -159,7 +160,8 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description1"),
 					// This check should belong to vcd_org_user tests, but here is simpler and quicker
-					resource.TestCheckResourceAttrSet("vcd_org_user.user1", "groups_list"),
+					stateDumper(),
+					resource.TestCheckResourceAttr("vcd_org_user.user1", "groups_list.0", "ship_crew"),
 				),
 			},
 			{
@@ -174,7 +176,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description2"),
 					// We check the users list here because it's when the group state is refreshed. In previous step,
 					// it would be nil as it didn't have users.
-					resource.TestCheckResourceAttrSet("vcd_org_group.group1", "users_list"),
+					resource.TestCheckResourceAttr("vcd_org_group.group1", "users_list.0", "fry"),
 					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role2),
@@ -428,4 +430,11 @@ func (l *ldapConfigurator) orgConfigureLdap(ldapServerIp string) {
 		l.t.Errorf("failed configuring LDAP for Org '%s': %s", testConfig.VCD.Org, err)
 	}
 	fmt.Println(" Done")
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
 }

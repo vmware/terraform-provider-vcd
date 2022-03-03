@@ -55,12 +55,12 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Description: "Existing role name to assign",
 			},
 			"users_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "Read only. List of user names that belong to the group",
+				Description: "Read only. Set of user names that belong to the group",
 			},
 		},
 	}
@@ -121,11 +121,11 @@ func resourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta int
 	dSet(d, "role", group.Group.Role.Name)
 	dSet(d, "provider_type", group.Group.ProviderType)
 
-	var usersList []string
+	var users []string
 	for _, userRef := range group.Group.UsersList.UserReference {
-		usersList = append(usersList, userRef.Name)
+		users = append(users, userRef.Name)
 	}
-	err = d.Set("users_list", usersList)
+	err = d.Set("users_list", convertStringsTotTypeSet(users))
 	if err != nil {
 		return diag.Errorf("could not set users_list field: %s", err)
 	}

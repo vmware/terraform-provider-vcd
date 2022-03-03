@@ -150,12 +150,12 @@ func resourceVcdOrgUser() *schema.Resource {
 				Description: "Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.",
 			},
 			"groups_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "Read only. List of group names that this user belongs to",
+				Description: "Read only. Set of group names that this user belongs to",
 			},
 		},
 	}
@@ -266,11 +266,11 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 		dSet(d, "role", orgUser.User.Role.Name)
 	}
 
-	var groupsList []string
+	var groups []string
 	for _, groupRef := range orgUser.User.GroupReferences.GroupReference {
-		groupsList = append(groupsList, groupRef.Name)
+		groups = append(groups, groupRef.Name)
 	}
-	err := d.Set("groups_list", groupsList)
+	err := d.Set("groups_list", convertStringsTotTypeSet(groups))
 	if err != nil {
 		return fmt.Errorf("could not set groups_list field: %s", err)
 	}
