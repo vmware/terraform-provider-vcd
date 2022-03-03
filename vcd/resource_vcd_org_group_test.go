@@ -6,7 +6,6 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"net"
 	"regexp"
 	"testing"
