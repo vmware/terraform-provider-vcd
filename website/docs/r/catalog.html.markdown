@@ -64,6 +64,14 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 * `password` - (Optional, *v3.6+*) An optional password to access the catalog. Only ASCII characters are allowed in a valid password.
 * `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign.
 
+## Attribute Reference
+
+* `catalog_version` - (*v3.6+*) Version number from this catalog.
+* `number_of_vapp_templates` - (*v3.6+*) Number of vApp templates available in this catalog.
+* `number_of_media` - (*v3.6+*) Number of media items available in this catalog.
+* `is_shared` - (*v3.6+*) Indicates if the catalog is shared.
+* `is_published` - (*v3.6+*) Indicates if the catalog is published.
+
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
