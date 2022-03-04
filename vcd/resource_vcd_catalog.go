@@ -96,11 +96,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Catalog version number.",
 			},
-			"owner_name": {
+			/*"owner_name": { // For some reason some catalogs when retrieved from API doesn't come with this field.
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Owner name from the catalog.",
-			},
+			},*/
 			"number_of_vapp_templates": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -110,6 +110,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of Medias this catalog contains.",
+			},
+			"date_created": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Date when the catalog was created",
 			},
 		},
 	}
@@ -259,6 +264,8 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error retrieving catalog medias: %s", err)
 	}
 	dSet(d, "number_of_media", len(medias))
+
+	dSet(d, "date_created", adminCatalog.AdminCatalog.Catalog.DateCreated)
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
