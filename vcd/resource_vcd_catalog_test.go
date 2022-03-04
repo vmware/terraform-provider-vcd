@@ -81,6 +81,8 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "0"),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "0"),
+					resource.TestCheckResourceAttr(resourceAddress, "is_shared", "false"),
+					resource.TestCheckResourceAttr(resourceAddress, "is_published", "false"),
 				),
 			},
 			// Set storage profile for existing catalog

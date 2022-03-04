@@ -111,6 +111,16 @@ func resourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Number of Medias this catalog contains.",
 			},
+			"is_shared": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates if the catalog is shared.",
+			},
+			"is_published": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates if the catalog is published.",
+			},
 		},
 	}
 }
@@ -259,6 +269,18 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error retrieving catalog medias: %s", err)
 	}
 	dSet(d, "number_of_media", len(medias))
+
+	dSet(d, "is_published", adminCatalog.AdminCatalog.IsPublished)
+
+	controlAccessParams, err := adminCatalog.GetAccessControl(false)
+	if err != nil {
+		return fmt.Errorf("error retrieving catalog access control: %s", err)
+	}
+	if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
+		dSet(d, "is_shared", true)
+	} else {
+		dSet(d, "is_shared", false)
+	}
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
