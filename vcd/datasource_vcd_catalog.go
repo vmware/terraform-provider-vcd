@@ -82,6 +82,16 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Number of Medias this catalog contains.",
 			},
+			"is_shared": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates if the catalog is shared.",
+			},
+			"is_published": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates if the catalog is published.",
+			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -175,6 +185,18 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	dSet(d, "number_of_media", len(numberOfMedia))
+
+	dSet(d, "is_published", catalog.Catalog.IsPublished)
+
+	controlAccessParams, err := catalog.GetAccessControl(false)
+	if err != nil {
+		return diag.Errorf("error retrieving catalog access control: %s", err)
+	}
+	if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
+		dSet(d, "is_shared", true)
+	} else {
+		dSet(d, "is_shared", false)
+	}
 
 	return nil
 }
