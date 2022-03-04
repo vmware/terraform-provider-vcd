@@ -82,11 +82,6 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Number of Medias this catalog contains.",
 			},
-			"date_created": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Date when the catalog was created",
-			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -172,8 +167,6 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	dSet(d, "number_of_vapp_templates", len(numberOfVAppTemplates))
-
-	dSet(d, "date_created", catalog.Catalog.DateCreated)
 
 	numberOfMedia, err := catalog.QueryMediaList()
 	if err != nil {

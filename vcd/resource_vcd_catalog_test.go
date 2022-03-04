@@ -81,7 +81,6 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "0"),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "0"),
-					resource.TestMatchResourceAttr(resourceAddress, "date_created", regexp.MustCompile(`^\S+`)),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -104,7 +103,6 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
-					resource.TestMatchResourceAttr(resourceAddress, "date_created", regexp.MustCompile(`^\S+`)),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
