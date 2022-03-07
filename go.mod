@@ -9,3 +9,7 @@ require (
 	github.com/kr/pretty v0.2.1
 	github.com/vmware/go-vcloud-director/v2 v2.15.0-alpha.3
 )
+
+replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.14.0-rc.3.0.20220307063248-3695df7b9abc
+
+//replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director

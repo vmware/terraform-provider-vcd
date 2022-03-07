@@ -1089,6 +1089,21 @@ func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.I
 	}
 }
 
+// importStateIdOrgNsxtVdcGroupObject can be used by all entities that depend on Org + NSX-T VDC
+// Group (such as Vapp, networks, edge gateway) in NSX-T VDC
+func importStateIdOrgNsxtVdcGroupObject(vcd TestConfig, vdcGroupName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			vdcGroupName +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
 // importStateIdNsxtManagerObject can be used by all entities that depend on NSX-T manager name + objectName
 func importStateIdNsxtManagerObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {

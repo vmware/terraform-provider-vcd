@@ -155,28 +155,26 @@ func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(key)
 }
 
-// locks an edge gateway resource
-// Differs from lockParentEdgeGtw in the resource name. When EGW is the parent,
-// it's named "edge_gateway". When it's the main resource, it's found at "name"
+// lockEdgeGateway locks an edge gateway resource
+// id field is used as key
 func (cli *VCDClient) lockEdgeGateway(d *schema.ResourceData) {
-	edgeGatewayName := d.Get("name").(string)
-	if edgeGatewayName == "" {
-		panic("edge gateway name not found")
+	edgeGatewayId := d.Id()
+	if edgeGatewayId == "" {
+		panic("edge gateway ID not found")
 	}
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGatewayName)
-	vcdMutexKV.kvLock(key)
+
+	vcdMutexKV.kvLock(edgeGatewayId)
 }
 
-// unlocks an edge gateway resource
-// Differs from unlockParentEdgeGtw in the resource name. When EGW is the parent,
-// it's named "edge_gateway". When it's the main resource, it's found at "name"
+// unlockEdgeGateway unlocks an Edge Gateway resource
+// id field is used as key
 func (cli *VCDClient) unlockEdgeGateway(d *schema.ResourceData) {
-	edgeGatewayName := d.Get("name").(string)
-	if edgeGatewayName == "" {
-		panic("edge gateway name not found")
+	edgeGatewayId := d.Id()
+	if edgeGatewayId == "" {
+		panic("edge gateway ID not found")
 	}
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGatewayName)
-	vcdMutexKV.kvUnlock(key)
+
+	vcdMutexKV.kvUnlock(edgeGatewayId)
 }
 
 // lockParentVappWithName locks using provided vappName.
@@ -246,9 +244,7 @@ func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
 }
 
 // function lockParentEdgeGtw locks using edge_gateway or edge_gateway_id name existing in resource parameters.
-// If edge_gateway_id is present it is being looked up and stored as name in the lock so that resources that use ID
-// and resources that use name can acquire the same lock.
-// Parent means the resource belongs to the edge gateway being locked
+// Edge Gateway is used as a lock key. If only `name` is present in resource - it will find the Edge Gateway itself
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
 	var edgeGtwIdValue string
 	var edgeGtwNameValue string
@@ -282,8 +278,7 @@ func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
 		panic("edge gateway ID not found")
 	}
 
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwIdValue)
-	vcdMutexKV.kvLock(key)
+	vcdMutexKV.kvLock(edgeGtwIdValue)
 }
 
 func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
@@ -319,8 +314,7 @@ func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 		panic("edge gateway ID not found")
 	}
 
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwIdValue)
-	vcdMutexKV.kvUnlock(key)
+	vcdMutexKV.kvUnlock(edgeGtwIdValue)
 }
 
 func (cli *VCDClient) getOrgName(d *schema.ResourceData) string {
