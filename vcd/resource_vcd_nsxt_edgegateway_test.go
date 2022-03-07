@@ -25,9 +25,6 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 
 	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1+)")
-	}
 
 	nsxtExtNet, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, testConfig.Nsxt.ExternalNetwork)
 	if err != nil {
