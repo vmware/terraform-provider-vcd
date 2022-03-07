@@ -759,3 +759,116 @@ func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) string {
 
 	return eClusters[0].NsxtEdgeCluster.ID
 }
+
+func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	skipNoNsxtConfiguration(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"Name":                      t.Name(),
+		"Description":               "myDescription",
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"NsxtVdc":                   testConfig.Nsxt.Vdc,
+
+		"NsxtEdgeGatewayVcd": t.Name() + "-edge",
+		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
+
+		"Tags": "vdcGroup gateway nsxt",
+	}
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccNsxtEdgeGatewayInVdc, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccNsxtEdgeGatewayInVdcDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "data.vcd_org_vdc.test", "id"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "data.vcd_org_vdc.test", "id"),
+					// Comparing data source and resource fields. Ignoring total field count '%' because data source does not have `starting_vdc_id`
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway.nsxt-edge", "vcd_nsxt_edgegateway.nsxt-edge", []string{"%"}),
+				),
+			},
+			{
+				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NsxtEdgeGatewayVcd"].(string)),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccNsxtEdgeGatewayInVdc = `
+data "vcd_external_network_v2" "existing-extnet" {
+  name = "{{.ExternalNetwork}}"
+}
+
+data "vcd_org_vdc" "test" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org  = "{{.Org}}"
+
+  owner_id = data.vcd_org_vdc.test.id
+  name     = "{{.NsxtEdgeGatewayVcd}}"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+
+  subnet {
+     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+`
+const testAccNsxtEdgeGatewayInVdcDS = testAccNsxtEdgeGatewayInVdc + `
+# skip-binary-test: Cannot have resource and data source in the same file
+data "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org      = "{{.Org}}"
+  owner_id = vcd_nsxt_edgegateway.nsxt-edge.owner_id
+  name     = vcd_nsxt_edgegateway.nsxt-edge.name
+}
+`

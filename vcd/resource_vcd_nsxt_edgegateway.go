@@ -361,6 +361,9 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 	var ownerId string
 
 	switch {
+	// `owner_id` is specified and is VDC.
+	case ownerIdField != "" && govcd.OwnerIsVdc(ownerIdField):
+		ownerId = ownerIdField
 	// `owner_id` is specified and is VDC Group. `starting_vdc_id` is specified.
 	// Initial `owner_id` for create operation should be `starting_vdc_id` which is later going to
 	// be moved to a VDC by a separate API call `createdEdgeGateway.MoveToVdcGroup`
@@ -419,7 +422,8 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 
 		ownerId = vdc.Vdc.ID
 	default:
-		return "", fmt.Errorf("error looking up ownerId field")
+		return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', starting_vdc_id='%s', inherited vdc='%s'",
+			ownerIdField, startingVdcId, vdcField, inheritedVdcField)
 	}
 
 	return ownerId, nil
@@ -472,7 +476,8 @@ func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 		ownerId = vdc.Vdc.ID
 
 	default:
-		return "", fmt.Errorf("error looking up ownerId field")
+		return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', starting_vdc_id='%s', inherited vdc='%s'",
+			ownerIdField, startingVdcId, vdcField, inheritedVdcField)
 	}
 	return ownerId, nil
 }
