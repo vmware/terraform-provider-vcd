@@ -44,6 +44,16 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
+			"can_publish_external_catalogs": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this organization is allowed to publish external catalogs.",
+			},
+			"can_subscribe_external_catalogs": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this organization is allowed to subscribe to external catalogs.",
+			},
 			"vapp_lease": &schema.Schema{
 				Type:     schema.TypeList,
 				Computed: true,
