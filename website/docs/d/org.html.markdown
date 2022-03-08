@@ -60,6 +60,8 @@ The following arguments are supported:
 * `delay_after_power_on_seconds` - Specifies this organization's default for virtual machine boot delay after power on.
 * `vapp_lease` - (*v2.7+*) - Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (*v2.7+*) - Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
+* `can_publish_external_catalogs` - (*v3.6+*) - True if this organization is allowed to publish external catalogs.
+* `can_subscribe_external_catalogs` - (*v3.6+*) - True if this organization is allowed to subscribe to external catalogs.
 
 <a id="vapp-lease"></a>
 ## vApp Lease
