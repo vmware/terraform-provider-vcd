@@ -73,6 +73,18 @@ func resourceOrg() *schema.Resource {
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
+			"can_publish_external_catalogs": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "True if this organization is allowed to publish external catalogs.",
+			},
+			"can_subscribe_external_catalogs": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "True if this organization is allowed to subscribe to external catalogs.",
+			},
 			"vapp_lease": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -243,12 +255,16 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	storedVmQuota := d.Get("stored_vm_quota").(int)
 	delay := d.Get("delay_after_power_on_seconds").(int)
 	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
+	canPublishExternalCatalogs := d.Get("can_publish_external_catalogs").(bool)
+	canSubscribeExternalCatalogs := d.Get("can_subscribe_external_catalogs").(bool)
 
 	generalSettings := &types.OrgGeneralSettings{
 		DeployedVMQuota:          deployedVmQuota,
 		StoredVMQuota:            storedVmQuota,
 		DelayAfterPowerOnSeconds: delay,
 		CanPublishCatalogs:       canPublishCatalogs,
+		CanPublishExternally:     canPublishExternalCatalogs,
+		CanSubscribe:             canSubscribeExternalCatalogs,
 	}
 
 	settings.OrgGeneralSettings = generalSettings
@@ -363,6 +379,8 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	dSet(d, "deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
 	dSet(d, "stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
 	dSet(d, "can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
+	dSet(d, "can_publish_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally)
+	dSet(d, "can_subscribe_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe)
 	dSet(d, "delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
 	var err error
 
