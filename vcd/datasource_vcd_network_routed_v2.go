@@ -160,7 +160,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.Errorf("error retrieving Edge Gateway structure: %s", err)
 		}
-		parentVdcOrVdcGroupId := anyEdgeGateway.OwnerRef.ID
+		parentVdcOrVdcGroupId := anyEdgeGateway.EdgeGateway.OwnerRef.ID
 
 		network, err = org.GetOpenApiOrgVdcNetworkByNameAndOwnerId(networkName, parentVdcOrVdcGroupId)
 		if err != nil {
@@ -170,7 +170,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 	case networkName != "":
 		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 		if err != nil {
-			return diag.Errorf("error ")
+			return diag.Errorf("error getting VDC: %s", err)
 		}
 
 		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))

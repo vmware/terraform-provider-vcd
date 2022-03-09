@@ -11,7 +11,7 @@ package vcd
 // * vcd_vdc_group.test1.id (VDC Group ID with two members listed above)
 
 const testAccVcdVdcGroupNew = `
-  resource "vcd_org_vdc" "newVdc" {
+resource "vcd_org_vdc" "newVdc" {
   count = 2
 
   name = "{{.TestName}}-${count.index}"
@@ -49,7 +49,7 @@ const testAccVcdVdcGroupNew = `
   delete_recursive           = true
   elasticity      			     = true
   include_vm_memory_overhead = true
-  }
+}
 
 resource "vcd_vdc_group" "test1" {
   org                   = "{{.Org}}"

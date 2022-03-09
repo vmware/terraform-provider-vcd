@@ -316,7 +316,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	}
 
 	if !isCreateOperation {
-		ownerId, err = getUpdateOwnerId(d, vcdClient, ownerIdField, startingVdcId, vdcField, inheritedVdcField)
+		ownerId, err = getUpdateOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
 	}
 
 	if err != nil {
@@ -438,7 +438,7 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 //
 // Note. Only one of `vdc` or `owner_id` (with optional `starting_vdc_id`) can be supplied. This is
 // enforce by Terraform schema definition.
-func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField string, startingVdcId string, vdcField string, inheritedVdcField string) (string, error) {
+func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField, vdcField, inheritedVdcField string) (string, error) {
 	var ownerId string
 
 	switch {
@@ -476,8 +476,8 @@ func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 		ownerId = vdc.Vdc.ID
 
 	default:
-		return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', starting_vdc_id='%s', inherited vdc='%s'",
-			ownerIdField, startingVdcId, vdcField, inheritedVdcField)
+		return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', inherited vdc='%s'",
+			ownerIdField, vdcField, inheritedVdcField)
 	}
 	return ownerId, nil
 }

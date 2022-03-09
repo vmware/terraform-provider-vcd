@@ -316,7 +316,7 @@ func getOpenApiOrgVdcNetworkType(d *schema.ResourceData, vcdClient *VCDClient) (
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: anyEdgeGateway.OwnerRef.ID},
+		OwnerRef:    &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
 
 		NetworkType: types.OrgVdcNetworkTypeRouted,
 

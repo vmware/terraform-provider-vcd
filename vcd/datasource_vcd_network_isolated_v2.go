@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -22,18 +23,26 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				ConflictsWith: []string{"owner_id"},
 			},
-			"name": &schema.Schema{
+			"owner_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC or VDC Group",
+				ConflictsWith: []string{"vdc"},
+			},
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
 				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				MinItems:     1,
@@ -47,42 +56,42 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 					},
 				},
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network description",
 			},
-			"is_shared": &schema.Schema{
+			"is_shared": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "NSX-V only - share this network with other VDCs in this organization",
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": &schema.Schema{
+			"prefix_length": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Network prefix",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "IP ranges used for static pool allocation in the network",
@@ -95,38 +104,62 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network read v2] error retrieving VDC: %s", err)
+		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
 	}
+
+	// Validate if VDC or VDC Group is NSX-T backed
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
 
 	if !nameOrFilterIsSet(d) {
 		return diag.Errorf(noNameOrFilterError, "vcd_network_isolated_v2")
 	}
 
-	name := d.Get("name").(string)
+	networkName := d.Get("name").(string)
 
 	// Try to search by filter if it exists
 	var network *govcd.OpenApiOrgVdcNetwork
 	filter, hasFilter := d.GetOk("filter")
-	if hasFilter && name == "" {
+	switch {
+	// User supplied `filter`, search in the `vdc` (in data source or inherited)
+	case hasFilter && networkName == "" && (vdcField != "" || inheritedVdcField != ""):
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("error getting VDC: %s", err)
+		}
 		network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "isolated")
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	// TODO - XML Query based API does not support VDC Group networks (does not return them)
+	// User supplied `filter` and `edge_gateway_id` (search scope can be detected - VDC or VDC Group)
+	// case hasFilter && edgeGatewayId != "":
+	// 	network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "isolated")
+	// 	if err != nil {
+	// 		return diag.FromErr(err)
+	// 	}
+	// User supplied `name` and also `edge_gateway_id`
+	case ownerIdField != "" && networkName != "":
+		network, err = org.GetOpenApiOrgVdcNetworkByNameAndOwnerId(networkName, ownerIdField)
+		if err != nil {
+			return diag.Errorf("[isolated network read v2] error getting Org VDC network: %s", err)
+		}
+	// Users supplied only `name` (VDC reference will be used from resource or inherited from provider)
+	case networkName != "":
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("error getting VDC: %s", err)
+		}
 
-	}
-
-	if name != "" {
 		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
 		if err != nil {
 			return diag.Errorf("[isolated network read v2] error getting Org VDC network: %s", err)
 		}
-	}
-
-	// Fix coverity warning
-	if network == nil {
-		return diag.Errorf("[isolated network read v2] error defining network")
+	default:
+		return diag.Errorf("error - not all parameters specified for network lookup")
 	}
 
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, network.OpenApiOrgVdcNetwork)

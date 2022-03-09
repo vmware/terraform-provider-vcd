@@ -168,7 +168,7 @@ func valdateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, o
 
 	isNsxt, err := isBackedByNsxt(org, usedFieldId)
 	if err != nil {
-		return fmt.Errorf("error ")
+		return fmt.Errorf("error checking if object is backed by NSX-T: %s", err)
 	}
 
 	if !isNsxt {

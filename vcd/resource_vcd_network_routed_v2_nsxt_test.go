@@ -221,6 +221,11 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 
 	configText1 := templateFill(testAccVcdNetworkRoutedV2NsxtOwnerVdcStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccVcdNetworkRoutedV2NsxtOwnerVdcStep1DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -236,8 +241,6 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 			{ // step 1
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
-					// sleepTester(),
 					cachedId.cacheTestResourceFieldValue("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", t.Name()),
@@ -259,6 +262,25 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
+			},
+			{ // step 1
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", t.Name()),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "edge_gateway_id"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.net1", "static_ip_pool.*", map[string]string{
+						"start_address": "1.1.1.10",
+						"end_address":   "1.1.1.20",
+					}),
+					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
+					// data source has `filter` field therefore total field number '%s' is ignored
+					resourceFieldsEqual("data.vcd_network_routed_v2.net1", "vcd_network_routed_v2.net1", []string{"%"}),
+				),
 			},
 		},
 	})
@@ -285,6 +307,13 @@ resource "vcd_network_routed_v2" "net1" {
 	start_address = "1.1.1.10"
     end_address = "1.1.1.20"
   }
+}
+`
+
+const testAccVcdNetworkRoutedV2NsxtOwnerVdcStep1DS = testAccVcdNetworkRoutedV2NsxtOwnerVdcStep1 + `
+data "vcd_network_routed_v2" "net1" {
+  name            = vcd_network_routed_v2.net1.name
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 }
 `
 
