@@ -44,11 +44,6 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		"StorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
 	}
 
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-
 	configTextVM := templateFill(testAccCheckVcdVAppHotUpdateVm, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 
@@ -79,20 +74,14 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 	step4func := resource.TestStep{}
 	var step5Check resource.TestCheckFunc
-	if vcdClient.Client.APIVCDMaxVersionIs("= 34.0") {
-		step4func = resource.TestStep{
-			Config:      configTextVMUpdateStep4,
-			ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`)}
-		step5Check = resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true")
-	} else {
-		step4func = resource.TestStep{
-			Config: configTextVMUpdateStep4,
-			Check: resource.ComposeAggregateTestCheckFunc(
-				testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
-			),
-		}
-		step5Check = testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1)
+
+	step4func = resource.TestStep{
+		Config: configTextVMUpdateStep4,
+		Check: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
+		),
 	}
+	step5Check = testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
