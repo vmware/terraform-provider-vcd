@@ -279,7 +279,7 @@ func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      configText,
-				ExpectError: regexp.MustCompile("please use 'vcd_edgegateway' for NSX-V backed VDC"),
+				ExpectError: regexp.MustCompile("this resource only supports NSX-T, but your entity is NSX-V backed"),
 			},
 		},
 	})

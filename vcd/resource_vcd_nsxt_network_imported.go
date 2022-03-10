@@ -109,6 +109,9 @@ func resourceVcdNsxtNetworkImportedCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network create] only System Administrator can operate NSX-T Imported networks")
 	}
 
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
+
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
@@ -139,6 +142,9 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("[nsxt imported network update] only System Administrator can operate NSX-T Imported networks")
 	}
+
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
@@ -221,6 +227,9 @@ func resourceVcdNsxtNetworkImportedDelete(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network delete] only System Administrator can operate NSX-T Imported networks")
 	}
 
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
+
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
@@ -295,6 +304,7 @@ func setOpenApiOrgVdcImportedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	dSet(d, "description", orgVdcNetwork.Description)
 	dSet(d, "nsxt_logical_switch_id", orgVdcNetwork.BackingNetworkId)
 	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
+	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
 
 	// Only one subnet can be defined although the structure accepts slice
 	dSet(d, "gateway", orgVdcNetwork.Subnets.Values[0].Gateway)

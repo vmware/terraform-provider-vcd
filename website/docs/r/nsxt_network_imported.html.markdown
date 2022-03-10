@@ -12,14 +12,26 @@ Provides a VMware Cloud Director Org VDC NSX-T Imported Network type. This can b
 
 Supported in provider *v3.2+* for NSX-T VDCs only.
 
--> This is **not Terraform imported** resource, but a special **Imported** type of **Org VDC network** in NSX-T VDC. Read more about Imported Network in [official VCD documentation]((https://docs.vmware.com/en/VMware-Cloud-Director/10.2/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-FB303D62-67EA-4209-BE4D-C3746481BCC8.html).
+-> Starting with **v3.6.0** Terraform provider VCD supports NSX-T VDC Groups and `vdc` fields (in
+resource and inherited from provider configuration) are deprecated. New field `owner_id` supports
+IDs of both VDC and VDC Groups. More about VDC Group support in a [VDC Groups
+guide](/providers/vmware/vcd/latest/docs/guides/vdc_groups).
+
+-> This is **not Terraform imported** resource, but a special **Imported** type of **Org VDC
+network** in NSX-T VDC. Read more about Imported Network in [official VCD
+documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-FB303D62-67EA-4209-BE4D-C3746481BCC8.html).
 
 ## Example Usage (NSX-T backed imported Org VDC network)
-
 ```hcl
+data "vcd_org_vdc" "main" {
+  org  = "my-org"
+  name = "my-nsxt-org-vdc"
+}
+
 resource "vcd_nsxt_network_imported" "nsxt-backed" {
-  org         = "my-org"
-  vdc         = "my-nsxt-org-vdc"
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.main.id
+
   name        = "nsxt-imported"
   description = "My NSX-T VDC Imported network type"
 
@@ -47,7 +59,10 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when
   connected as sysadmin working across different organisations
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `owner_id` (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
+and inherited from provider configuration)
+* `vdc` - (Optional) The name of VDC to use. **Deprecated**  in favor of new field `owner_id` which
+  supports VDC and VDC Group IDs.
 * `name` - (Required) A unique name for the network
 * `nsxt_logical_switch_name` - (Required) Unique name of an existing NSX-T segment. 
   **Note** it will never be refreshed because API does not allow reading this name after it is

@@ -243,6 +243,34 @@ func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(key)
 }
 
+// lockById locks on supplied ID field
+func (cli *VCDClient) lockById(id string) {
+	vcdMutexKV.kvLock(id)
+}
+
+// unlockById unlocks on supplied ID field
+func (cli *VCDClient) unlockById(id string) {
+	vcdMutexKV.kvUnlock(id)
+}
+
+// lockIfOwnerIsVdcGroup locks VDC Group based on `owner_id` field (if it is a VDC Group)
+func (cli *VCDClient) lockIfOwnerIsVdcGroup(d *schema.ResourceData) {
+	vdcGroupId := d.Get("owner_id")
+	vdcGroupIdValue := vdcGroupId.(string)
+	if govcd.OwnerIsVdcGroup(vdcGroupIdValue) {
+		vcdMutexKV.kvLock(vdcGroupIdValue)
+	}
+}
+
+// unLockIfOwnerIsVdcGroup unlocks VDC Group based on `owner_id` field (if it is a VDC Group)
+func (cli *VCDClient) unLockIfOwnerIsVdcGroup(d *schema.ResourceData) {
+	vdcGroupId := d.Get("owner_id")
+	vdcGroupIdValue := vdcGroupId.(string)
+	if govcd.OwnerIsVdcGroup(vdcGroupIdValue) {
+		vcdMutexKV.kvUnlock(vdcGroupIdValue)
+	}
+}
+
 // function lockParentEdgeGtw locks using edge_gateway or edge_gateway_id name existing in resource parameters.
 // Edge Gateway is used as a lock key. If only `name` is present in resource - it will find the Edge Gateway itself
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {

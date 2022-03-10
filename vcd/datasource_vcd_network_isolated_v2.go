@@ -110,7 +110,6 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
 	}
 
-	// Validate if VDC or VDC Group is NSX-T backed
 	inheritedVdcField := vcdClient.Vdc
 	vdcField := d.Get("vdc").(string)
 	ownerIdField := d.Get("owner_id").(string)

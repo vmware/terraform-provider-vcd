@@ -257,30 +257,6 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
 				),
 			},
-
-			// // Check that import works
-			// { // step 3
-			// 	ResourceName:      "vcd_network_isolated_v2.net1",
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	// ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
-			// 	ImportStateId: fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
-			// },
-
-			// { // step 4
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "static_ip_pool.#", "0"),
-			// 		resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_isolated_v2.net1", "owner_id"),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)

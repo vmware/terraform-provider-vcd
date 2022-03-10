@@ -441,7 +441,7 @@ func getOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField, vdcF
 	switch {
 	case ownerIdField != "":
 		log.Printf("[TRACE] 'owner_id' is set. Using it.")
-
+		return ownerIdField, nil
 	case vdcField != "":
 		log.Printf("[TRACE] 'vdc' field is set in resource")
 
@@ -470,6 +470,7 @@ func getOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField, vdcF
 
 		return vdc.Vdc.ID, nil
 	}
+
 	return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', inherited vdc='%s'",
 		ownerIdField, vdcField, inheritedVdcField)
 }

@@ -22,22 +22,19 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
-				Deprecated:  "Deprecated in favor of `edge_gateway_id`. Routed networks will inherit VDC from parent Edge Gateway.",
-			},
-			"owner_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "ID of VDC or VDC Group",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				Deprecated:    "Deprecated in favor of `edge_gateway_id`. Routed networks will inherit VDC from parent Edge Gateway.",
+				ConflictsWith: []string{"edge_gateway_id"},
 			},
 			"edge_gateway_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "Edge gateway name in which Routed network is located",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "Edge gateway name in which Routed network is located",
+				ConflictsWith: []string{"vdc"},
 			},
 			"name": {
 				Type:         schema.TypeString,
@@ -58,6 +55,11 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 						"ip":         elementIp,
 					},
 				},
+			},
+			"owner_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of VDC or VDC Group",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -122,7 +124,7 @@ var networkV2IpRangeComputed = &schema.Resource{
 func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("[routed network read v2] error retrieving VDC: %s", err)
 	}
@@ -139,8 +141,38 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 	filter, hasFilter := d.GetOk("filter")
 
 	switch {
-	// User supplied `filter`, search in the `vdc` (in data source or inherited)
-	case hasFilter && networkName == "":
+	// User supplied `filter` and also `edge_gateway_id` is present, search in the `vdc` (in data
+	// source or inherited)
+	case hasFilter && networkName == "" && edgeGatewayId != "":
+		// Lookup Edge Gateway to know parent VDC or VDC Group (routed networks always exists in the
+		// same VDC/VDC Group as Edge Gateway)
+		anyEdgeGateway, err := org.GetAnyEdgeGatewayById(edgeGatewayId)
+		if err != nil {
+			return diag.Errorf("error retrieving Edge Gateway structure: %s", err)
+		}
+		parentVdcOrVdcGroupId := anyEdgeGateway.EdgeGateway.OwnerRef.ID
+
+		if govcd.OwnerIsVdcGroup(parentVdcOrVdcGroupId) {
+			return diag.Errorf("filters do not support VDC Groups yet")
+		}
+
+		vdc, err := org.GetVDCById(parentVdcOrVdcGroupId, false)
+		if err != nil {
+			return diag.Errorf("error retrieving parent VDC: %s", err)
+		}
+
+		network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "routed")
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	// User supplied `filter` but `edge_gateway_id` is not present, therefore VDC must be looked up
+	// by legacy means
+	case hasFilter && networkName == "" && edgeGatewayId == "":
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("error retrieving VDC: %s", err)
+		}
+
 		network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "routed")
 		if err != nil {
 			return diag.FromErr(err)

@@ -14,12 +14,22 @@ delete isolated VDC networks (backed by NSX-T or NSX-V).
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
+-> Starting with **v3.6.0** Terraform provider VCD supports NSX-T VDC Groups and `vdc` fields (in
+resource and inherited from provider configuration) are deprecated. New field `owner_id` supports
+IDs of both VDC and VDC Groups. More about VDC Group support in a [VDC Groups
+guide](/providers/vmware/vcd/latest/docs/guides/vdc_groups).
+
 ## Example Usage (NSX-T backed isolated Org VDC network)
 
 ```hcl
+data "vcd_org_vdc" "main" {
+  org  = "my-org"
+  name = "my-nsxt-org-vdc"
+}
+
 resource "vcd_network_isolated_v2" "nsxt-backed" {
-  org = "my-org"
-  vdc = "my-nsxt-org-vdc"
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.main.id
 
   name        = "nsxt-isolated 1"
   description = "My isolated Org VDC network backed by NSX-T"
@@ -42,9 +52,14 @@ resource "vcd_network_isolated_v2" "nsxt-backed" {
 ## Example Usage (NSX-V backed isolated Org VDC network shared with other VDCs)
 
 ```hcl
+data "vcd_org_vdc" "main" {
+  org  = "my-org"
+  name = "my-nsxt-org-vdc"
+}
+
 resource "vcd_network_isolated_v2" "nsxv-backed" {
-  org = "my-org"
-  vdc = "my-nsxv-org-vdc"
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.main.id
 
   name        = "nsxv-isolated-network"
   description = "NSX-V isolated network"
@@ -67,7 +82,10 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful 
   when connected as sysadmin working across different organisations
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `owner_id` (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
+and inherited from provider configuration)
+* `vdc` - (Optional) The name of VDC to use. **Deprecated**  in favor of new field `owner_id` which
+  supports VDC and VDC Group IDs.
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network
 * `is_shared` - (Optional) **NSX-V only.** Defines if this network is shared between multiple VDCs

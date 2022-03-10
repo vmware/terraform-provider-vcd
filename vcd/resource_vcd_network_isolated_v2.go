@@ -99,6 +99,9 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
+
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("[routed network create v2] error retrieving Org: %s", err)
@@ -121,6 +124,9 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
@@ -183,6 +189,9 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 
 func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {

@@ -359,11 +359,6 @@ data "vcd_nsxt_edgegateway" "ds" {
 // Step 3 - updates the Edge Gateway to use `owner_id` field instead of `vdc` field (keeping the same VDC)
 // Step 4 - migrates the Edge Gateway to a VDC group
 // Step 5 - migrates the Edge Gateway to a different VDC than the starting one
-//
-// Note. At all times the resource must not be recreated which is ensured by setting lifecycle parameter
-// lifecycle {
-//   prevent_destroy = true
-// }
 func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
@@ -401,7 +396,6 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
 
-	params["FuncName"] = t.Name() + "-step2"
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(edgeVdcGroupMigration, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
@@ -491,10 +485,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
        end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
      }
   }
-
-  lifecycle {
-	prevent_destroy = true
-  }
 }
 `
 
@@ -520,10 +510,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
        start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
        end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
      }
-  }
-
-  lifecycle {
-	prevent_destroy = true
   }
 }
 `
@@ -552,9 +538,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
      }
   }
 
-  lifecycle {
-	prevent_destroy = true
-  }
 }
 `
 
