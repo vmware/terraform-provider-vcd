@@ -145,15 +145,6 @@ func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, met
 func resourceVcdOpenApiDhcpDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// VCD versions < 10.2 do not allow to execute "DELETE" therefore we emit warning and "return success" to prevent
-	// destroy errors breaking Terraform flow.
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		logForScreen("vcd_nsxt_network_dhcp", "vcd_nsxt_network_dhcp WARNING: for VCD versions < 10.2 DHCP pool "+
-			"removal is not supported. Destroy is a NO-OP for VCD versions < 10.2. "+
-			"Please recreate parent network to remove DHCP pools.\n")
-		return nil
-	}
-
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool delete] error retrieving VDC: %s", err)

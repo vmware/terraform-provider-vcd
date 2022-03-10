@@ -264,7 +264,8 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc)
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: vdc.Vdc.ID},
+		// On v35.0 onwards OrgVdc is not supported anymore. Using OwnerRef instead.
+		OwnerRef: &types.OpenApiReference{ID: vdc.Vdc.ID},
 
 		NetworkType: types.OrgVdcNetworkTypeIsolated,
 		Shared:      takeBoolPointer(d.Get("is_shared").(bool)),

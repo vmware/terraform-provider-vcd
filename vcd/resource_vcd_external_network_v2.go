@@ -2,7 +2,9 @@ package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -15,31 +17,31 @@ import (
 
 var networkV2IpScope = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"gateway": &schema.Schema{
+		"gateway": {
 			Type:         schema.TypeString,
 			Required:     true,
 			Description:  "Gateway of the network",
 			ValidateFunc: validation.IsIPAddress,
 		},
-		"prefix_length": &schema.Schema{
+		"prefix_length": {
 			Type:         schema.TypeInt,
 			Required:     true,
 			Description:  "Network mask",
 			ValidateFunc: validation.IntAtLeast(1),
 		},
-		"enabled": &schema.Schema{
+		"enabled": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
 			Description: "If subnet is enabled",
 		},
-		"static_ip_pool": &schema.Schema{
+		"static_ip_pool": {
 			Type:        schema.TypeSet,
 			Optional:    true,
 			Description: "IP ranges used for static pool allocation in the network",
 			Elem:        networkV2IpRange,
 		},
-		"dns1": &schema.Schema{
+		"dns1": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Description:  "Primary DNS server",
@@ -47,7 +49,7 @@ var networkV2IpScope = &schema.Resource{
 			// Only NSX-V allows configuring DNS
 			ConflictsWith: []string{"nsxt_network"},
 		},
-		"dns2": &schema.Schema{
+		"dns2": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Description:  "Secondary DNS server",
@@ -55,7 +57,7 @@ var networkV2IpScope = &schema.Resource{
 			// Only NSX-V allows configuring DNS
 			ConflictsWith: []string{"nsxt_network"},
 		},
-		"dns_suffix": &schema.Schema{
+		"dns_suffix": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "DNS suffix",
@@ -67,13 +69,13 @@ var networkV2IpScope = &schema.Resource{
 
 var networkV2IpRange = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"start_address": &schema.Schema{
+		"start_address": {
 			Type:         schema.TypeString,
 			Required:     true,
 			Description:  "Start address of the IP range",
 			ValidateFunc: validation.IsIPAddress,
 		},
-		"end_address": &schema.Schema{
+		"end_address": {
 			Type:         schema.TypeString,
 			Required:     true,
 			Description:  "End address of the IP range",
@@ -84,14 +86,14 @@ var networkV2IpRange = &schema.Resource{
 
 var networkV2NsxtNetwork = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"nsxt_manager_id": &schema.Schema{
+		"nsxt_manager_id": {
 			Type:        schema.TypeString,
 			Required:    true,
 			ForceNew:    true,
 			Description: "ID of NSX-T manager",
 		},
 		// NSX-T Tier 0 router backed external network
-		"nsxt_tier0_router_id": &schema.Schema{
+		"nsxt_tier0_router_id": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ForceNew:     true,
@@ -99,7 +101,7 @@ var networkV2NsxtNetwork = &schema.Resource{
 			ExactlyOneOf: []string{"nsxt_network.0.nsxt_tier0_router_id", "nsxt_network.0.nsxt_segment_name"},
 		},
 		// NSX-T segment backed external network (VCD 10.3+)
-		"nsxt_segment_name": &schema.Schema{
+		"nsxt_segment_name": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ForceNew:     true,
@@ -111,13 +113,13 @@ var networkV2NsxtNetwork = &schema.Resource{
 
 var networkV2VsphereNetwork = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"vcenter_id": &schema.Schema{
+		"vcenter_id": {
 			Type:        schema.TypeString,
 			Required:    true,
 			ForceNew:    true,
 			Description: "The vCenter server name",
 		},
-		"portgroup_id": &schema.Schema{
+		"portgroup_id": {
 			Type:        schema.TypeString,
 			Required:    true,
 			ForceNew:    true,
@@ -128,31 +130,31 @@ var networkV2VsphereNetwork = &schema.Resource{
 
 func resourceVcdExternalNetworkV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdExternalNetworkV2Create,
-		Update: resourceVcdExternalNetworkV2Update,
-		Delete: resourceVcdExternalNetworkV2Delete,
-		Read:   resourceVcdExternalNetworkV2Read,
+		CreateContext: resourceVcdExternalNetworkV2Create,
+		UpdateContext: resourceVcdExternalNetworkV2Update,
+		DeleteContext: resourceVcdExternalNetworkV2Delete,
+		ReadContext:   resourceVcdExternalNetworkV2Read,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdExternalNetworkV2Import,
+			StateContext: resourceVcdExternalNetworkV2Import,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Network name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Network description",
 			},
-			"ip_scope": &schema.Schema{
+			"ip_scope": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "A set of IP scopes for the network",
 				Elem:        networkV2IpScope,
 			},
-			"vsphere_network": &schema.Schema{
+			"vsphere_network": {
 				Type:         schema.TypeSet,
 				Optional:     true,
 				ExactlyOneOf: []string{"vsphere_network", "nsxt_network"},
@@ -161,7 +163,7 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				Description: "A set of port groups that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.",
 				Elem:        networkV2VsphereNetwork,
 			},
-			"nsxt_network": &schema.Schema{
+			"nsxt_network": {
 				Type:         schema.TypeList,
 				Optional:     true,
 				ExactlyOneOf: []string{"vsphere_network", "nsxt_network"},
@@ -174,38 +176,38 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 	}
 }
 
-func resourceVcdExternalNetworkV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdExternalNetworkV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 creation initiated")
 
 	err := externalNetworkV2ValidateApiVersionFeatures(d, vcdClient)
 	if err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	netType, err := getExternalNetworkV2Type(vcdClient, d, "")
 	if err != nil {
-		return fmt.Errorf("could not get network data: %s", err)
+		return diag.Errorf("could not get network data: %s", err)
 	}
 
 	extNet, err := govcd.CreateExternalNetworkV2(vcdClient.VCDClient, netType)
 	if err != nil {
-		return fmt.Errorf("error applying data: %s", err)
+		return diag.Errorf("error applying data: %s", err)
 	}
 
 	// Only store ID and leave all the rest to "READ"
 	d.SetId(extNet.ExternalNetwork.ID)
 
-	return resourceVcdExternalNetworkV2Read(d, meta)
+	return resourceVcdExternalNetworkV2Read(ctx, d, meta)
 }
 
-func resourceVcdExternalNetworkV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdExternalNetworkV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] update network V2 creation initiated")
 
 	extNet, err := govcd.GetExternalNetworkV2ById(vcdClient.VCDClient, d.Id())
 	if err != nil {
-		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
+		return diag.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
 	var knownNsxtSegmentId string
@@ -215,7 +217,7 @@ func resourceVcdExternalNetworkV2Update(d *schema.ResourceData, meta interface{}
 
 	netType, err := getExternalNetworkV2Type(vcdClient, d, knownNsxtSegmentId)
 	if err != nil {
-		return fmt.Errorf("could not get network data: %s", err)
+		return diag.Errorf("could not get network data: %s", err)
 	}
 
 	netType.ID = extNet.ExternalNetwork.ID
@@ -223,13 +225,13 @@ func resourceVcdExternalNetworkV2Update(d *schema.ResourceData, meta interface{}
 
 	_, err = extNet.Update()
 	if err != nil {
-		return fmt.Errorf("error updating external network V2: %s", err)
+		return diag.Errorf("error updating external network V2: %s", err)
 	}
 
-	return resourceVcdExternalNetworkV2Read(d, meta)
+	return resourceVcdExternalNetworkV2Read(ctx, d, meta)
 }
 
-func resourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdExternalNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 read initiated")
 
@@ -239,22 +241,31 @@ func resourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) 
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
+		return diag.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
-	return setExternalNetworkV2Data(d, extNet.ExternalNetwork, vcdClient)
+	err = setExternalNetworkV2Data(d, extNet.ExternalNetwork, vcdClient)
+	if err != nil {
+		return diag.Errorf("%s", err)
+	}
+
+	return nil
 }
 
-func resourceVcdExternalNetworkV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdExternalNetworkV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 creation initiated")
 
 	extNet, err := govcd.GetExternalNetworkV2ById(vcdClient.VCDClient, d.Id())
 	if err != nil {
-		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
+		return diag.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
-	return extNet.Delete()
+	err = extNet.Delete()
+	if err != nil {
+		return diag.Errorf("%s", err)
+	}
+	return nil
 }
 
 // resourceVcdExternalNetworkV2Import is responsible for importing the resource.
@@ -265,7 +276,7 @@ func resourceVcdExternalNetworkV2Delete(d *schema.ResourceData, meta interface{}
 //
 // Example import path (id): externalNetworkName
 // Example import command:   terraform import vcd_external_network_v2.externalNetworkResourceName externalNetworkName
-func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdExternalNetworkV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	extNetRes, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, d.Id())
@@ -383,20 +394,6 @@ func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceDat
 		}
 	}
 
-	// external network API has changed field from types.ExternalNetworkV2Backings.BackingType to
-	// types.ExternalNetworkV2Backings.BackingTypeValue in version 35.0 (VCD 10.2). This resource must still support
-	// both versions therefore field translation is required.
-	//
-	// The main code branch works with newer field values, but VCD 10.1 is still supported at this time
-	// This loop translates requests to still work with pre VCD 10.2 versions.
-	// TO-DO remove this translation with VCD 10.1 EOL
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") { // types.ExternalNetworkV2Backings.BackingType
-		for index := range backings.Values {
-			backings.Values[index].BackingType = backings.Values[index].BackingTypeValue
-			backings.Values[index].BackingTypeValue = ""
-		}
-	}
-
 	return backings, nil
 }
 
@@ -496,18 +493,6 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 	err := d.Set("ip_scope", subnetSet)
 	if err != nil {
 		return fmt.Errorf("error setting 'ip_scope' block: %s", err)
-	}
-
-	// external network API has changed field from types.ExternalNetworkV2Backings.BackingType to
-	// types.ExternalNetworkV2Backings.BackingTypeValue in version 35.0 (VCD 10.2). This resource must still support
-	// both versions therefore field translation is required.
-	//
-	// The main code branch works with newer field values, but VCD 10.1 is still supported at this time
-	// This loop translates requests to still work with pre VCD 10.2 versions.
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") { // types.ExternalNetworkV2Backings.BackingType
-		for index := range net.NetworkBackings.Values {
-			net.NetworkBackings.Values[index].BackingTypeValue = net.NetworkBackings.Values[index].BackingType
-		}
 	}
 
 	// Switch on first value of backing ID. If it is NSX-T - it can be only one block (limited by schema).
