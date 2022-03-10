@@ -126,7 +126,7 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 	vdcField := d.Get("vdc").(string)
 	ownerIdField := d.Get("owner_id").(string)
 
-	err = valdateIfVdcOrVdcGroupIsNsxt(org, inheritedVdcField, vdcField, ownerIdField)
+	err = valdateIfVdcOrVdcGroupIsNsxt(d, org, vcdClient, inheritedVdcField, vdcField, ownerIdField)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,74 +157,23 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-// valdateIfVdcOrVdcGroupIsNsxt evaluates VDC field priority using pickVdcIdByPriority and then
-// checks if that VDC or VDC Group is an NSX-T one and returns an error if not
-func valdateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) error {
-	usedFieldId, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
+// valdateIfVdcOrVdcGroupIsNsxt picks VDC / VDC Group field by priority and check if it is NSX-T
+// backed. If not - ir returns an error.
+func valdateIfVdcOrVdcGroupIsNsxt(d *schema.ResourceData, org *govcd.Org, vdcClient *VCDClient, inheritedVdcField, vdcField, ownerIdField string) error {
+	ownerId, err := getOwnerId(d, vdcClient, ownerIdField, vdcField, inheritedVdcField)
 
 	if err != nil {
 		return fmt.Errorf("error finding VDC ID: %s", err)
 	}
 
-	isNsxt, err := isBackedByNsxt(org, usedFieldId)
+	vdcOrGroup, err := getVdcOrVdcGroupVerifierByOwnerId(org, ownerId)
 	if err != nil {
-		return fmt.Errorf("error checking if object is backed by NSX-T: %s", err)
+		return fmt.Errorf("error identifying VDC or VDC Group by Owner ID '%s' : %s", ownerId, err)
 	}
 
-	if !isNsxt {
-		return fmt.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
+	if !vdcOrGroup.IsNsxt() {
+		return fmt.Errorf("this resource only supports NSX-T, but your entity is NSX-V backed")
 	}
 
 	return nil
-}
-
-// pickVdcIdByPriority picks primary field to be used from the specified ones. The priority is such
-// * `owner_id`
-// * `vdc` at resource level
-// * `vdc` inherited from provider configuration
-func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) (string, error) {
-	if ownerIdField != "" {
-		return ownerIdField, nil
-	}
-
-	if vdcField != "" {
-		vdc, err := org.GetVDCByName(vdcField, false)
-		if err != nil {
-			return "", fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
-		}
-		return vdc.Vdc.ID, nil
-	}
-
-	if inheritedVdcField != "" {
-		vdc, err := org.GetVDCByName(inheritedVdcField, false)
-		if err != nil {
-			return "", fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
-		}
-		return vdc.Vdc.ID, nil
-	}
-
-	return "", fmt.Errorf("none of the fields `owner_id`, `vdc` and provider inherited `vdc`")
-}
-
-// isBackedByNsxt accepts VDC or VDC Group ID and checks if it is backed by NSX-T
-func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
-	var vdcOrGroup vdcOrVdcGroupVerifier
-	var err error
-
-	switch {
-	case govcd.OwnerIsVdc(vdcOrVdcGroupId):
-		vdcOrGroup, err = org.GetVDCById(vdcOrVdcGroupId, false)
-		if err != nil {
-			return false, err
-		}
-	case govcd.OwnerIsVdcGroup(vdcOrVdcGroupId):
-		vdcOrGroup, err = org.GetVdcGroupById(vdcOrVdcGroupId)
-		if err != nil {
-			return false, err
-		}
-	default:
-		return false, fmt.Errorf("error determining VDC type by ID '%s'", vdcOrVdcGroupId)
-	}
-
-	return vdcOrGroup.IsNsxt(), nil
 }

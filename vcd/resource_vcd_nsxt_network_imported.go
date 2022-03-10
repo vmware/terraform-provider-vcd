@@ -31,58 +31,67 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				ConflictsWith: []string{"owner_id"},
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
 			},
-			"name": &schema.Schema{
+			"owner_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC or VDC Group",
+				ConflictsWith: []string{"vdc"},
+			},
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Network name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Network description",
 			},
-			"nsxt_logical_switch_name": &schema.Schema{
+			"nsxt_logical_switch_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Name of existing NSX-T Logical Switch",
 			},
-			"nsxt_logical_switch_id": &schema.Schema{
+			"nsxt_logical_switch_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "ID of existing NSX-T Logical Switch",
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": &schema.Schema{
+			"prefix_length": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Network prefix",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "IP ranges used for static pool allocation in the network",
@@ -100,21 +109,21 @@ func resourceVcdNsxtNetworkImportedCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network create] only System Administrator can operate NSX-T Imported networks")
 	}
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt imported network create] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
 	}
 
-	if !vdc.IsNsxt() {
-		return diag.Errorf("[nsxt imported network create] this resource supports only NSX-T")
-	}
+	// if !vdc.IsNsxt() {
+	// 	return diag.Errorf("[nsxt imported network create] this resource supports only NSX-T")
+	// }
 
-	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, true)
+	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vcdClient, true)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
+	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
 		return diag.Errorf("[nsxt imported network create] error creating Org VDC imported network: %s", err)
 	}
@@ -131,16 +140,12 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network update] only System Administrator can operate NSX-T Imported networks")
 	}
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt imported network update] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
 	}
 
-	if !vdc.IsNsxt() {
-		return diag.Errorf("[nsxt imported network update] this resource supports only NSX-T")
-	}
-
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found -
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -150,12 +155,12 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network update] error getting Org VDC network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, false)
+	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vcdClient, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// Feed in backing network ID, because it cannot be looked up
+	// Feed in backing network ID, because it cannot be looked up after assignment to importable network
 	networkType.BackingNetworkId = orgNetwork.OpenApiOrgVdcNetwork.BackingNetworkId
 
 	// Explicitly add ID to the new type because function `getOpenApiOrgVdcNetworkType` only sets other fields
@@ -176,16 +181,20 @@ func resourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[nsxt imported network read] only System Administrator can operate NSX-T Imported networks")
 	}
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt imported network read] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
 	}
+	// _, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	// if err != nil {
+	// 	return diag.Errorf("[nsxt imported network read] error retrieving VDC: %s", err)
+	// }
 
-	if !vdc.IsNsxt() {
-		return diag.Errorf("[nsxt imported network read] this resource supports only NSX-T")
-	}
+	// if !vdc.IsNsxt() {
+	// 	return diag.Errorf("[nsxt imported network read] this resource supports only NSX-T")
+	// }
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found - unset ID
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -212,16 +221,12 @@ func resourceVcdNsxtNetworkImportedDelete(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network delete] only System Administrator can operate NSX-T Imported networks")
 	}
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt imported network delete] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
 	}
 
-	if !vdc.IsNsxt() {
-		return diag.Errorf("[nsxt imported network delete] this resource supports only NSX-T")
-	}
-
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
 		return diag.Errorf("[nsxt imported network delete] error getting Org VDC network: %s", err)
 	}
@@ -243,20 +248,29 @@ func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.Resourc
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return nil, fmt.Errorf("[nsxt imported network import] only System Administrator can operate NSX-T Imported networks")
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrGroup vdcOrVdcGroupHandler
+	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+
+	// VDC was not found - attempt to find a VDC Group
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrGroup, err = adminOrg.GetVdcGroupByName(vdcName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
+		}
+
 	}
 
-	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-	if err != nil {
-		return nil, fmt.Errorf("[nsxt imported network import] unable to find VDC %s: %s ", vdcName, err)
+	if !vdcOrGroup.IsNsxt() {
+		return nil, fmt.Errorf("imported networks are only supported in NSX-T backed environments")
 	}
 
-	if !vdc.IsNsxt() {
-		return nil, fmt.Errorf("[nsxt imported network import] this resource supports only NSX-T")
-	}
-
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(networkName)
+	orgNetwork, err := vdcOrGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
 		return nil, fmt.Errorf("[nsxt imported network import] error reading network with name '%s': %s", networkName, err)
 	}
@@ -267,20 +281,20 @@ func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.Resourc
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
+	// dSet(d, "vdc", vdcName)
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func setOpenApiOrgVdcImportedNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
-	// Note. VCD does not export `nsxt_logical_switch_name` and there is no API to retrieve it once consumed therefore
-	// there is no way to read name once it is set.
+	// Note. VCD does not export `nsxt_logical_switch_name` and there is no API to retrieve it once
+	// consumed (assigned to imported network) therefore there is no way to read name once it is set
 
 	dSet(d, "name", orgVdcNetwork.Name)
 	dSet(d, "description", orgVdcNetwork.Description)
-
 	dSet(d, "nsxt_logical_switch_id", orgVdcNetwork.BackingNetworkId)
+	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
 
 	// Only one subnet can be defined although the structure accepts slice
 	dSet(d, "gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
@@ -310,12 +324,20 @@ func setOpenApiOrgVdcImportedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	return nil
 }
 
-func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc, isCreate bool) (*types.OpenApiOrgVdcNetwork, error) {
+func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDClient, isCreate bool) (*types.OpenApiOrgVdcNetwork, error) {
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
+
+	ownerId, err := getOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
+	if err != nil {
+		return nil, fmt.Errorf("error finding owner reference: %s", err)
+	}
 
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: vdc.Vdc.ID},
+		OwnerRef:    &types.OpenApiReference{ID: ownerId},
 
 		// 'OPAQUE' type is used for imported network
 		NetworkType: types.OrgVdcNetworkTypeOpaque,
@@ -336,10 +358,20 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc,
 		},
 	}
 
-	// Lookup NSX-T logical switch in Create phase only, because there is no API to return the network after it is
-	// consumed
+	// Lookup NSX-T logical switch in Create phase only, because there is no API to return the
+	// network after it is consumed
 	if isCreate {
-		nsxtImportableSwitch, err := vdc.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
+		org, err := vcdClient.GetOrgFromResource(d)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Org: %s", err)
+		}
+
+		vdcOrGroup, err := getVdcOrVdcGroupVerifierByOwnerId(org, ownerId)
+		if err != nil {
+			return nil, fmt.Errorf("error identifying VDC or VDC Group by Owner ID '%s' :%s", ownerId, err)
+		}
+
+		nsxtImportableSwitch, err := vdcOrGroup.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
 		if err != nil {
 			return nil, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
 		}

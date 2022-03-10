@@ -27,6 +27,7 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				Description:   "The name of VDC to use, optional if defined at provider level",
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
 				ConflictsWith: []string{"owner_id"},
 			},
 			"owner_id": {

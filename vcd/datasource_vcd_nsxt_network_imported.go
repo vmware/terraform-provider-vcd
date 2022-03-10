@@ -22,10 +22,19 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
+				ConflictsWith: []string{"owner_id"},
+			},
+			"owner_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC or VDC Group",
+				ConflictsWith: []string{"vdc"},
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,

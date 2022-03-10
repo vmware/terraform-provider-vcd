@@ -267,7 +267,7 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 	vcdClient := meta.(*VCDClient)
 
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupVerifier
+	var vdcOrGroup vdcOrVdcGroupHandler
 	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 
 	// VDC was not found - attempt to find a VDC Group
@@ -312,11 +312,11 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	var err error
 
 	if isCreateOperation {
-		ownerId, err = getCreateOwnerId(d, vcdClient, ownerIdField, startingVdcId, vdcField, inheritedVdcField)
+		ownerId, err = getCreateOwnerIdWithStartingVdcId(d, vcdClient, ownerIdField, startingVdcId, vdcField, inheritedVdcField)
 	}
 
 	if !isCreateOperation {
-		ownerId, err = getUpdateOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
+		ownerId, err = getOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
 	}
 
 	if err != nil {
@@ -346,7 +346,8 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	return &edgeGatewayType, nil
 }
 
-// getCreateOwnerId defines how `owner_id` is defined for create operations
+// getCreateOwnerIdWithStartingVdcId defines how `owner_id` is defined for NSX-T Edge Gateway create
+// operation.
 // Create has a few possible scenarios for getting ownerRef which can be a VDC or a VDC Group.
 // NSX-T Edge Gateway cannot be created directly in VDC group
 // * `owner_id` and `starting_vdc_id` are set. `owner_id` is a VDC Group
@@ -357,7 +358,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 //
 // Note. Only one of `vdc` or `owner_id` (with optional `starting_vdc_id`) can be supplied. This is
 // enforce by Terraform schema definition.
-func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField string, startingVdcId string, vdcField string, inheritedVdcField string) (string, error) {
+func getCreateOwnerIdWithStartingVdcId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField string, startingVdcId string, vdcField string, inheritedVdcField string) (string, error) {
 	var ownerId string
 
 	switch {
@@ -429,25 +430,20 @@ func getCreateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 	return ownerId, nil
 }
 
-// getUpdateOwnerId defines how `owner_id` is defined for update operations
-// update behaves differently than create as `ownerRef` can have a VDC group set directly. A few
-// scenarios can happen:
+// getOwnerId defines how `owner_id` is picked from update behaves differently than create as
+// `ownerRef` can have a VDC group set directly. A few scenarios can happen (listed by priority):
 // * `owner_id` is set - using it
 // * `vdc` field is set in the resource - using it
 // * Neither `vdc`, nor `owner_id` fields are set in the resource. `vdc` is inherited from `provider` section
 //
-// Note. Only one of `vdc` or `owner_id` (with optional `starting_vdc_id`) can be supplied. This is
-// enforce by Terraform schema definition.
-func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField, vdcField, inheritedVdcField string) (string, error) {
-	var ownerId string
-
+// Note. Only one of `vdc` or `owner_id`. This is enforced by Terraform schema definition.
+func getOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField, vdcField, inheritedVdcField string) (string, error) {
 	switch {
 	case ownerIdField != "":
-		log.Printf("[TRACE] NSX-T Edge Gateway update - 'owner_id' is set. Using it.")
-		ownerId = ownerIdField
+		log.Printf("[TRACE] 'owner_id' is set. Using it.")
 
 	case vdcField != "":
-		log.Printf("[TRACE] NSX-T Edge Gateway update 'vdc' field is set in resource")
+		log.Printf("[TRACE] 'vdc' field is set in resource")
 
 		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
@@ -458,10 +454,9 @@ func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 		if err != nil {
 			return "", fmt.Errorf("error finding VDC '%s': %s", vdcField, err)
 		}
-
-		ownerId = vdc.Vdc.ID
+		return vdc.Vdc.ID, nil
 	case inheritedVdcField != "" && vdcField == "" && ownerIdField == "":
-		log.Printf("[TRACE] NSX-T Edge Gateway update 'vdc' field is inherited from provider. `vdc` and `owner_id` are not set")
+		log.Printf("[TRACE] 'vdc' field is inherited from provider. `vdc` and `owner_id` are not set")
 
 		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
@@ -473,13 +468,10 @@ func getUpdateOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField
 			return "", fmt.Errorf("error finding VDC '%s': %s", inheritedVdcField, err)
 		}
 
-		ownerId = vdc.Vdc.ID
-
-	default:
-		return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', inherited vdc='%s'",
-			ownerIdField, vdcField, inheritedVdcField)
+		return vdc.Vdc.ID, nil
 	}
-	return ownerId, nil
+	return "", fmt.Errorf("error looking up ownerId field owner_id='%s', vdc='%s', inherited vdc='%s'",
+		ownerIdField, vdcField, inheritedVdcField)
 }
 
 func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGatewaySubnetValue {
@@ -607,12 +599,4 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 	}
 
 	return nil
-}
-
-// vdcOrVdcGroupVerifier is an interface to access IsNsxt() and GetNsxtEdgeGatewayByName() on VDC or
-// VDC Group method `IsNsxt` (used in isBackedByNsxt and resourceVcdNsxtEdgeGatewayImport)
-type vdcOrVdcGroupVerifier interface {
-	IsNsxt() bool
-	GetNsxtEdgeGatewayByName(name string) (*govcd.NsxtEdgeGateway, error)
-	GetOpenApiOrgVdcNetworkByName(name string) (*govcd.OpenApiOrgVdcNetwork, error)
 }

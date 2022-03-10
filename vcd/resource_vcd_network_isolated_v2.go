@@ -211,7 +211,7 @@ func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceD
 	vcdClient := meta.(*VCDClient)
 
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupVerifier
+	var vdcOrGroup vdcOrVdcGroupHandler
 	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if govcd.ContainsNotFound(err) {
 		adminOrg, err := vcdClient.GetAdminOrg(orgName)
@@ -282,7 +282,7 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	vdcField := d.Get("vdc").(string)
 	ownerIdField := d.Get("owner_id").(string)
 
-	ownerId, err := getUpdateOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
+	ownerId, err := getOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
 	if err != nil {
 		return nil, fmt.Errorf("error finding owner reference: %s", err)
 	}

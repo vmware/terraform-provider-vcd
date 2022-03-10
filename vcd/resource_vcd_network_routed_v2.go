@@ -114,7 +114,7 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network create v2] error retrieving Org: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, vcdClient)
+	networkType, err := getOpenApiOrgVdcRoutedNetworkType(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +150,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network update v2] error getting Org VDC network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, vcdClient)
+	networkType, err := getOpenApiOrgVdcRoutedNetworkType(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -227,7 +227,7 @@ func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceDat
 	vcdClient := meta.(*VCDClient)
 
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupVerifier
+	var vdcOrGroup vdcOrVdcGroupHandler
 	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if govcd.ContainsNotFound(err) {
 		adminOrg, err := vcdClient.GetAdminOrg(orgName)
@@ -297,7 +297,7 @@ func setOpenApiOrgVdcNetworkData(d *schema.ResourceData, orgVdcNetwork *types.Op
 	return nil
 }
 
-func getOpenApiOrgVdcNetworkType(d *schema.ResourceData, vcdClient *VCDClient) (*types.OpenApiOrgVdcNetwork, error) {
+func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDClient) (*types.OpenApiOrgVdcNetwork, error) {
 	// Must get any type of Edge Gateway because this resource supports NSX-V and NSX-T Routed
 	// networks. This resource must inherit OwnerRef.ID from parent Edge Gateway because when
 	// migrating NSX-T Edge Gateway to/from VDC Group - routed network migrates together
