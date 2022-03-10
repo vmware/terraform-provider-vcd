@@ -711,11 +711,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		var vm *govcd.VM
 
 		if vappName == "" {
-			// Build a standalone VM
-			if vmComputePolicy != nil && vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-				util.Logger.Printf("[Warning] compute policy is ignored because VCD version doesn't support it")
-				vmComputePolicy = nil
-			}
 			vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
 			if vmTemplate == nil {
 				return fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
@@ -1035,11 +1030,8 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		}
 	}
 
-	// due the bug in VCD 10.1 hot update possible for adding new or update existing network, removing of network has to be done with cold update
-	// There are a few cases when hot NIC updates are not possible:
-	// * VCD 10.1 does not allow to remove NICs
 	// * Primary NIC cannot be removed on a powered on VM
-	if d.HasChange("network") && !isNetworkRemovedInVcd101(d, meta) && !isPrimaryNicRemoved(d) {
+	if d.HasChange("network") && !isPrimaryNicRemoved(d) {
 		networkConnectionSection, err := networksToConfig(d, vdc, vapp, vcdClient)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
@@ -1147,16 +1139,6 @@ func addRemoveMetaData(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-// isNetworkRemovedInVcd101 returns true only if network removed and VCD version 10.1
-func isNetworkRemovedInVcd101(d *schema.ResourceData, meta interface{}) bool {
-	vcdClient := meta.(*VCDClient)
-	oldNetworksRaw, newNetworkRaw := d.GetChange("network")
-	oldNetworks := oldNetworksRaw.([]interface{})
-	newNetworks := newNetworkRaw.([]interface{})
-	// return true only VCD version 10.1
-	return len(oldNetworks) > len(newNetworks) && vcdClient.Client.APIVCDMaxVersionIs("= 34.0")
-}
-
 // isPrimaryNicRemoved checks if new schema has a primary NIC at all
 func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 	_, newNetworkRaw := d.GetChange("network")
@@ -1210,12 +1192,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		return err
 	}
 
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		if _, ok := d.GetOk("sizing_policy_id"); ok {
-			return fmt.Errorf("'sizing_policy_id' only available for VCD 10.0+")
-		}
-	}
-
 	vmStatusBeforeUpdate, err := vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
@@ -1253,7 +1229,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
 			cpusNeedsColdChange = true
 		}
-		if d.HasChange("network") && (isNetworkRemovedInVcd101(d, meta) || isPrimaryNicRemoved(d)) {
+		if d.HasChange("network") && isPrimaryNicRemoved(d) {
 			networksNeedsColdChange = true
 		}
 	}

@@ -22,10 +22,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (VCD 10.2+)")
-	}
 	skipNoNsxtAlbConfiguration(t)
 
 	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
@@ -737,9 +733,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 	}
 
 	vcdClient := createSystemTemporaryVCDConnection()
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (VCD 10.2+)")
-	}
+
 	skipNoNsxtAlbConfiguration(t)
 
 	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
