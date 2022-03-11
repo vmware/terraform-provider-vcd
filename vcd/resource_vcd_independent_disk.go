@@ -95,8 +95,8 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Description: "True if the disk is already attached",
 			},
 			"metadata": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:        schema.TypeMap,
+				Optional:    true,
 				Description: "Key value map of metadata to assign to this disk. Key and value can be any string.",
 			},
 		},

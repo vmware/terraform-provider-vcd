@@ -36,7 +36,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"Tags":                 "disk",
 		"dataSourceName":       datasourceName,
 		"datasourceNameWithId": datasourceNameWithId,
-		"metadataKey":        	"key1",
+		"metadataKey":          "key1",
 		"metadataValue":        "value1",
 	}
 

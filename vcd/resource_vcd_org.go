@@ -76,8 +76,8 @@ func resourceOrg() *schema.Resource {
 				Description: "True if this organization is allowed to share catalogs.",
 			},
 			"metadata": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:        schema.TypeMap,
+				Optional:    true,
 				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
 			},
 			"vapp_lease": {

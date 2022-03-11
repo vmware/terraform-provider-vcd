@@ -171,8 +171,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			"TemplStorageLease":     od.templStorageLease,
 			"TemplDeleteOnLeaseExp": od.templDeleteOnLeaseExp,
 			"Tags":                  "org",
-			"MetadataKey":        	"key1",
-			"MetadataValue":        "value1",
+			"MetadataKey":           "key1",
+			"MetadataValue":         "value1",
 		}
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
@@ -263,12 +263,12 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "deployed_vm_quota", fmt.Sprintf("%d", updateParams["DeployedVmQuota"].(int))),
 						resource.TestCheckResourceAttr(
 							resourceName, "stored_vm_quota", fmt.Sprintf("%d", updateParams["StoredVmQuota"].(int))),
+						resource.TestCheckNoResourceAttr(
+							resourceName, "metadata.key1"),
 						resource.TestCheckResourceAttr(
 							resourceName, "metadata.key3", "value3"),
 						resource.TestCheckResourceAttr(
 							resourceName, "metadata.key2", "value2"),
-						stateDumper(),
-						sleepTester(),
 					),
 				},
 				{
