@@ -16,10 +16,7 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
-	}
+
 	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
@@ -138,10 +135,6 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(false)
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can create Provider scoped Application Port Profiles")
-	}
-
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
 	}
 
 	var params = StringMap{

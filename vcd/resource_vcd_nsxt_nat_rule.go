@@ -315,20 +315,13 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 		InternalAddresses:        d.Get("internal_address").(string),
 		SnatDestinationAddresses: d.Get("snat_destination_address").(string),
 		Logging:                  d.Get("logging").(bool),
+		DnatExternalPort:         d.Get("dnat_external_port").(string),
 	}
 
 	if client.Client.APIVCDMaxVersionIs(">= 36.0") {
 		nsxtNatRule.Type = d.Get("rule_type").(string)
 	} else {
 		nsxtNatRule.RuleType = d.Get("rule_type").(string)
-	}
-
-	// DnatExternalPort field was replacement for InternalPort field. When using API < 35.2 InternalPort field should be
-	// used.
-	if client.Client.APIVCDMaxVersionIs("< 35.2") {
-		nsxtNatRule.InternalPort = d.Get("dnat_external_port").(string)
-	} else {
-		nsxtNatRule.DnatExternalPort = d.Get("dnat_external_port").(string)
 	}
 
 	if appPortProf, ok := d.GetOk("app_port_profile_id"); ok {
@@ -353,6 +346,7 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 	dSet(d, "snat_destination_address", rule.SnatDestinationAddresses)
 	dSet(d, "logging", rule.Logging)
 	dSet(d, "enabled", rule.Enabled)
+	dSet(d, "dnat_external_port", rule.DnatExternalPort)
 	if rule.ApplicationPortProfile != nil {
 		dSet(d, "app_port_profile_id", rule.ApplicationPortProfile.ID)
 	}
@@ -362,12 +356,6 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 		// firewall_match and priority are new fields introduces in VCD 10.2.2
 		dSet(d, "firewall_match", rule.FirewallMatch)
 		dSet(d, "priority", rule.Priority)
-		// Before v35.2 the field to use is rule.InternalPort
-		dSet(d, "dnat_external_port", rule.DnatExternalPort)
-	}
-
-	if client.Client.APIVCDMaxVersionIs("< 35.2") {
-		dSet(d, "dnat_external_port", rule.InternalPort)
 	}
 
 	// API V36.0+ uses Type field instead of RuleType

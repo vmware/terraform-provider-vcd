@@ -58,6 +58,7 @@ The following arguments are supported:
 * `stored_vm_quota` - Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization.
 * `can_publish_catalogs` - True if this organization is allowed to share catalogs.
 * `delay_after_power_on_seconds` - Specifies this organization's default for virtual machine boot delay after power on.
+* `metadata` - (*v3.6+*) - Key value map of metadata assigned to this organization.
 * `vapp_lease` - (*v2.7+*) - Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (*v2.7+*) - Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 

@@ -78,8 +78,6 @@ func resourceOrg() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
 				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
 			},
 			"vapp_lease": {

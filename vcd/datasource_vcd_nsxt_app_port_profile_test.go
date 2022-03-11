@@ -17,10 +17,7 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
-	}
+
 	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
@@ -63,10 +60,7 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
-	}
+
 	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
@@ -101,10 +95,7 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
-	}
+
 	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{

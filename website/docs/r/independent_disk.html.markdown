@@ -48,6 +48,7 @@ The following arguments are supported:
 * `bus_type` - (Optional) Disk bus type. Values can be: `IDE`, `SCSI`, `SATA` 
 * `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI` and `ahci` for `SATA`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
+* `metadata` - (*v3.6+*) - (Optional) Key value map of metadata to assign to this disk.
 
 ## Attribute reference
 
