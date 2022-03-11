@@ -5,6 +5,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"testing"
 	"time"
 
@@ -170,6 +171,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			"TemplStorageLease":     od.templStorageLease,
 			"TemplDeleteOnLeaseExp": od.templDeleteOnLeaseExp,
 			"Tags":                  "org",
+			"MetadataKey":        	"key1",
+			"MetadataValue":        "value1",
 		}
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
@@ -186,6 +189,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 		updateParams["Description"] = params["Description"].(string) + " updated"
 		updateParams["CanPublishCatalogs"] = !params["CanPublishCatalogs"].(bool)
 		updateParams["IsEnabled"] = !params["IsEnabled"].(bool)
+		updateParams["MetadataKey"] = "key3"
+		updateParams["MetadataValue"] = "value3"
 
 		configTextUpdated := templateFill(testAccCheckVcdOrgFull, updateParams)
 		if vcdShortTest {
@@ -258,6 +263,12 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "deployed_vm_quota", fmt.Sprintf("%d", updateParams["DeployedVmQuota"].(int))),
 						resource.TestCheckResourceAttr(
 							resourceName, "stored_vm_quota", fmt.Sprintf("%d", updateParams["StoredVmQuota"].(int))),
+						resource.TestCheckResourceAttr(
+							resourceName, "metadata.key3", "value3"),
+						resource.TestCheckResourceAttr(
+							resourceName, "metadata.key2", "value2"),
+						stateDumper(),
+						sleepTester(),
 					),
 				},
 				{
@@ -362,8 +373,23 @@ resource "vcd_org" "{{.OrgName}}" {
     delete_on_storage_lease_expiration    = {{.TemplDeleteOnLeaseExp}}
   }
   metadata = {
-	key1 = "value1"
+    {{.MetadataKey}} = "{{.MetadataValue}}"
 	key2 = "value2"
   }
 }
 `
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(1 * time.Minute)
+		return nil
+	}
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}

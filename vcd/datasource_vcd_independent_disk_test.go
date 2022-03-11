@@ -5,10 +5,9 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -37,10 +36,16 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"Tags":                 "disk",
 		"dataSourceName":       datasourceName,
 		"datasourceNameWithId": datasourceNameWithId,
+		"metadataKey":        	"key1",
 		"metadataValue":        "value1",
 	}
 
+	params["FuncName"] = t.Name() + "-Step1"
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
+	params["metadataKey"] = "key3"
+	params["metadataValue"] = "value3"
+	params["FuncName"] = t.Name() + "-Step2"
+	configText2 := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
 	params["FuncName"] = t.Name() + "-withId"
 	configTextWithId := templateFill(testAccCheckVcdDataSourceIndependentDiskWithId, params)
 	if vcdShortTest {
@@ -64,10 +69,18 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1", params["metadataValue"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1", "value1"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
 					testCheckDiskNonStringOutputs(),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key2", "value2"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key3", "value3"),
 				),
 			},
 			{
@@ -117,7 +130,8 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
   metadata = {
-    key1 = "{{.metadataValue}}"
+    {{.metadataKey}} = "{{.metadataValue}}"
+	key2 = "value2"
   }
 }
 
