@@ -3,16 +3,16 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_group"
 sidebar_current: "docs-vcd-datasource-org-group"
 description: |-
-Provides a data source for VMware Cloud Director Organization groups.
+  Provides a data source for VMware Cloud Director Organization Groups.
 ---
 
 # vcd\_org\_group
 
-Provides a data source for VMware Cloud Director Organization groups. This can be used to fetch organization groups already defined in `SAML` or `LDAP`.
+Provides a data source for VMware Cloud Director Organization Groups. This can be used to fetch organization groups already defined in `SAML` or `LDAP`.
 
 Supported in provider *v3.6+*
 
-## Example Usage to fetch an Organization group
+## Example Usage to fetch an Organization Group
 
 ```hcl
 data "vcd_org_group" "org1" {

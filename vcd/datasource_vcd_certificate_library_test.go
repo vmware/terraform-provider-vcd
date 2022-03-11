@@ -24,9 +24,6 @@ func TestAccVcdLibraryCertificateDS(t *testing.T) {
 	}
 
 	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
-	}
 
 	certificates, err := getAvailableCertificate(vcdClient)
 	if err != nil {

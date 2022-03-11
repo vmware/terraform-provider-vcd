@@ -315,7 +315,8 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc,
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		OrgVdc:      &types.OpenApiReference{ID: vdc.Vdc.ID},
+		// On v35.0 onwards OrgVdc is not supported anymore. Using OwnerRef instead.
+		OwnerRef: &types.OpenApiReference{ID: vdc.Vdc.ID},
 
 		// 'OPAQUE' type is used for imported network
 		NetworkType: types.OrgVdcNetworkTypeOpaque,

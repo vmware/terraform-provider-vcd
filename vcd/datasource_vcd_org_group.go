@@ -22,8 +22,9 @@ func datasourceVcdOrgGroup() *schema.Resource {
 				Description: "Name of the group to lookup",
 			},
 			"provider_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Identity provider type - 'SAML' or 'INTEGRATED' for local or LDAP",
 			},
 			"description": {
 				Type:     schema.TypeString,
