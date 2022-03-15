@@ -27,13 +27,13 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
 				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				MinItems:     1,
@@ -47,46 +47,51 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 					},
 				},
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network description",
 			},
-			"is_shared": &schema.Schema{
+			"is_shared": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "NSX-V only - share this network with other VDCs in this organization",
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": &schema.Schema{
+			"prefix_length": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Network prefix",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
 			},
 		},
 	}

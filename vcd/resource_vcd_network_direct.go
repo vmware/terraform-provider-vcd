@@ -20,7 +20,7 @@ func resourceVcdNetworkDirect() *schema.Resource {
 			State: resourceVcdNetworkDirectImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique name for this network",
@@ -38,52 +38,57 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional description for the network",
 			},
-			"external_network": &schema.Schema{
+			"external_network": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the external network",
 			},
-			"external_network_gateway": &schema.Schema{
+			"external_network_gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway of the external network",
 			},
-			"external_network_netmask": &schema.Schema{
+			"external_network_netmask": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Net mask of the external network",
 			},
-			"external_network_dns1": &schema.Schema{
+			"external_network_dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Main DNS of the external network",
 			},
-			"external_network_dns2": &schema.Schema{
+			"external_network_dns2": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Secondary DNS of the external network",
 			},
-			"external_network_dns_suffix": &schema.Schema{
+			"external_network_dns_suffix": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix of the external network",
 			},
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network Hypertext Reference",
 			},
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
 			},
 		},
 	}

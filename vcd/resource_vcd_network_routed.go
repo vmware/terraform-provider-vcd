@@ -23,7 +23,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			State: resourceVcdNetworkRoutedImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique name for the network",
@@ -42,20 +42,20 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the edge gateway",
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional description for the network",
 			},
 
-			"interface_type": &schema.Schema{
+			"interface_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "internal",
@@ -66,7 +66,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				DiffSuppressFunc: suppressNetworkUpgradedInterface(),
 			},
 
-			"netmask": &schema.Schema{
+			"netmask": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -75,7 +75,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -83,66 +83,66 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "First DNS server to use",
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Second DNS server to use",
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network Hypertext Reference",
 			},
 
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
-			"dhcp_pool": &schema.Schema{
+			"dhcp_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
 							ValidateFunc: validation.IsIPAddress,
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
 							ValidateFunc: validation.IsIPAddress,
 						},
 
-						"default_lease_time": &schema.Schema{
+						"default_lease_time": {
 							Type:        schema.TypeInt,
 							Computed:    true, // vCD doesn't process this field as input. It sets the value to max_lease_time
 							Description: "The default DHCP lease time to use",
 						},
 
-						"max_lease_time": &schema.Schema{
+						"max_lease_time": {
 							Type:        schema.TypeInt,
 							Default:     7200,
 							Optional:    true,
@@ -152,20 +152,20 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				},
 				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
 							ValidateFunc: validation.IsIPAddress,
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
@@ -174,6 +174,11 @@ func resourceVcdNetworkRouted() *schema.Resource {
 					},
 				},
 				Set: resourceVcdNetworkStaticIpPoolHash,
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
 			},
 		},
 	}

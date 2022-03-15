@@ -38,23 +38,23 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway ID in which Routed network should be located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Network name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Network description",
 			},
-			"interface_type": &schema.Schema{
+			"interface_type": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "internal",
@@ -62,36 +62,41 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
 				DiffSuppressFunc: suppressCase,
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": &schema.Schema{
+			"prefix_length": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Network prefix",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRange,
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
 			},
 		},
 	}
