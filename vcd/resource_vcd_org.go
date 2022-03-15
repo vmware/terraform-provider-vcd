@@ -350,11 +350,6 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings = settings.OrgVAppTemplateSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
 
-	err = createOrUpdateAdminOrgMetadata(d, adminOrg)
-	if err != nil {
-		return diag.Errorf("error updating metadata from Org: %s", err)
-	}
-
 	log.Printf("[TRACE] Org with id %s found", orgName)
 	task, err := adminOrg.Update()
 
@@ -366,6 +361,11 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	if err != nil {
 		log.Printf("[DEBUG] Error completing update of Org %s : %s", orgName, err)
 		return diag.Errorf("error completing update of Org %s", err)
+	}
+
+	err = createOrUpdateAdminOrgMetadata(d, adminOrg)
+	if err != nil {
+		return diag.Errorf("error updating metadata from Org: %s", err)
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)

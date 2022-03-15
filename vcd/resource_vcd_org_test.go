@@ -5,7 +5,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"testing"
 	"time"
 
@@ -378,18 +377,3 @@ resource "vcd_org" "{{.OrgName}}" {
   }
 }
 `
-
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(1 * time.Minute)
-		return nil
-	}
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
