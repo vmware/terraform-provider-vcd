@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -138,7 +139,45 @@ func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error retrieving network %s after creation", networkName)
 	}
 	d.SetId(network.OrgVDCNetwork.ID)
+
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("error adding metadata to independent disk: %s", err)
+	}
+	
 	return resourceVcdNetworkDirectRead(d, meta)
+}
+
+func createOrUpdateNetworkMetadata(d *schema.ResourceData, network *govcd.OrgVDCNetwork) error {
+	log.Printf("[TRACE] adding/updating metadata to Network")
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := network.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := network.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }
 
 func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) error {
