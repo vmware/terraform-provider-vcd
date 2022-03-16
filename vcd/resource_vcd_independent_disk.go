@@ -293,7 +293,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.Errorf("error waiting to finish updating of independent disk: %s", err)
 		}
 
-		diagErr = attachBackVms(sliceOfVmsHrefs, vcdClient, disk, diskDetailsForReAttach)
+		diagErr = attachBackVms(vcdClient, disk, diskDetailsForReAttach, sliceOfVmsHrefs)
 		if diagErr != nil {
 			return diagErr
 		}
@@ -304,14 +304,14 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 
 func lockVms(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
-		key := fmt.Sprintf("independentDisLock:%s", vmHref)
+		key := fmt.Sprintf("independentDiskLock:%s", vmHref)
 		vcdMutexKV.kvLock(key)
 	}
 }
 
 func unlockVms(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
-		key := fmt.Sprintf("independentDisLock:%s", vmHref)
+		key := fmt.Sprintf("independentDiskUnlock:%s", vmHref)
 		vcdMutexKV.kvUnlock(key)
 	}
 }
@@ -362,7 +362,7 @@ func detachVms(vcdClient *VCDClient, disk *govcd.Disk, sliceOfVmsHrefs []string)
 }
 
 // attachBackVms reattaches independent disks back to VMs
-func attachBackVms(sliceOfVmsHrefs []string, vcdClient *VCDClient, disk *govcd.Disk, diskDetailsForReAttach map[string]types.DiskSettings) diag.Diagnostics {
+func attachBackVms(vcdClient *VCDClient, disk *govcd.Disk, diskDetailsForReAttach map[string]types.DiskSettings, sliceOfVmsHrefs []string) diag.Diagnostics {
 	for _, vmHref := range sliceOfVmsHrefs {
 		vm, err := vcdClient.Client.GetVMByHref(vmHref)
 		if err != nil {
