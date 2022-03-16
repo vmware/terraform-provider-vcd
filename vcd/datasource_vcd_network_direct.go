@@ -1,10 +1,14 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 func datasourceVcdNetworkDirect() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdNetworkDirectRead,
+		ReadContext: datasourceVcdNetworkDirectRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
@@ -91,6 +95,6 @@ func datasourceVcdNetworkDirect() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdNetworkDirectRead(d, meta, "datasource")
+func datasourceVcdNetworkDirectRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkDirectRead(c, d, meta, "datasource")
 }

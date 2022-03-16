@@ -1,14 +1,15 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdNetworkIsolatedRead,
+		ReadContext: datasourceVcdNetworkIsolatedRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
@@ -140,17 +141,17 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdNetworkIsolatedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	if vdc.IsNsxt() {
 		logForScreen("vcd_network_isolated", "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkIsolatedRead(d, meta, "datasource")
+	return genericVcdNetworkIsolatedRead(c, d, meta, "datasource")
 }

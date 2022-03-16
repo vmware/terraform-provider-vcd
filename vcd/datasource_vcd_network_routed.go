@@ -1,14 +1,15 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdNetworkRoutedRead,
+		ReadContext: datasourceVcdNetworkRoutedRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
@@ -165,17 +166,17 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdNetworkRoutedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	if vdc.IsNsxt() {
 		logForScreen("vcd_network_routed", "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkRoutedRead(d, meta, "datasource")
+	return genericVcdNetworkRoutedRead(c, d, meta, "datasource")
 }
