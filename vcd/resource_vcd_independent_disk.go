@@ -470,7 +470,7 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 }
 
 func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error {
-	log.Printf("[TRACE] adding/updating metadata to Org")
+	log.Printf("[TRACE] adding/updating metadata to Disk")
 
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")
