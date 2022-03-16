@@ -28,12 +28,14 @@ func testAccCheckVcdVAppVmExists(vappName, vmName, node string, vapp *govcd.VApp
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		vapp, err := vdc.GetVAppByName(vappName, false)
+		newVapp, err := vdc.GetVAppByName(vappName, false)
 		if err != nil {
 			return err
 		}
 
-		newVm, err := vapp.GetVMByName(vmName, false)
+		*vapp = *newVapp
+
+		newVm, err := newVapp.GetVMByName(vmName, false)
 
 		if err != nil {
 			return err

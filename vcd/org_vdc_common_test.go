@@ -37,10 +37,13 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 			"StorageProfileDefault": false,
 		})
 		if err == nil {
+			fmt.Printf("[INFO] second storage profile will be used in test\n")
 			params["SecondStorageProfile"] = buf.String()
 		} else {
 			fmt.Printf("[WARNING] error reported while filling second storage profile details: %s\n", err)
 		}
+	} else {
+		fmt.Printf("[WARNING] second storage profile will not be used in test\n")
 	}
 
 	params["FuncName"] = t.Name() + "-Update"
@@ -161,7 +164,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					testConditionalCheck(secondStorageProfile != "",
 						testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
 							"name":    secondStorageProfile,
-							"enabled": "true",
+							"enabled": "false",
 							"default": "false",
 							"limit":   "20480",
 						})),
@@ -404,7 +407,7 @@ const additionalStorageProfile = `
   #START_STORAGE_PROFILE
   storage_profile {
     name    = "{{.StorageProfileName}}"
-    enabled = true
+    enabled = false
     limit   = 20480
     default = {{.StorageProfileDefault}}
   }

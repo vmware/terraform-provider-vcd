@@ -23,9 +23,6 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 	}
 
 	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
-	}
 
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
@@ -79,9 +76,6 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient == nil {
 		t.Skip(t.Name() + " requires a connection to set the tests")
-	}
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
 	}
 
 	if !vcdClient.Client.IsSysAdmin {

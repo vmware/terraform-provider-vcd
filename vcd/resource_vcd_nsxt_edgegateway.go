@@ -281,7 +281,8 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Open
 			Subnets:   types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)},
 			Dedicated: d.Get("dedicate_external_network").(bool),
 		}},
-		OrgVdc: &types.OpenApiReference{
+		// On v35.0 onwards OrgVdc is not supported anymore. Using OwnerRef instead.
+		OwnerRef: &types.OpenApiReference{
 			ID: vdc.Vdc.ID,
 		},
 	}

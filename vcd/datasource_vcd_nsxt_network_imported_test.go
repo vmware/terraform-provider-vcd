@@ -17,9 +17,7 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	}
 
 	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
-		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
-	}
+
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}
