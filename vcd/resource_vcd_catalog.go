@@ -96,11 +96,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Catalog version number.",
 			},
-			/*"owner_name": { // For some reason some catalogs when retrieved from API doesn't come with this field.
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Owner name from the catalog.",
-			},*/
+			},
 			"number_of_vapp_templates": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -212,12 +212,11 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
-	// catalog user view is retrieved to get the number of vApp templates and medias
-	catalog, err := adminOrg.GetCatalogById(d.Id(), false)
+	// Catalog record is retrieved to get the number of vApp templates, medias and owner name
+	adminCatalogRecord, err := adminOrg.FindAdminCatalogRecords(adminCatalog.AdminCatalog.Name) // Is this returning one even though there are catalogs with similar names?
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
-		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+		log.Printf("[DEBUG] Unable to find catalog record: %s", err)
+		return err
 	}
 
 	// Check if storage profile is set. Although storage profile structure accepts a list, in UI only one can be picked
@@ -255,32 +254,12 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	dSet(d, "catalog_version", adminCatalog.AdminCatalog.Catalog.VersionNumber)
-	// dSet(d, "owner_name", adminCatalog.AdminCatalog.Owner.User.Name)
-
-	vAppTemplates, err := catalog.QueryVappTemplateList()
-	if err != nil {
-		return fmt.Errorf("error retrieving catalog templates: %s", err)
-	}
-	dSet(d, "number_of_vapp_templates", len(vAppTemplates))
-
-	medias, err := catalog.QueryMediaList()
-	if err != nil {
-		return fmt.Errorf("error retrieving catalog medias: %s", err)
-	}
-	dSet(d, "number_of_media", len(medias))
-
-	dSet(d, "is_published", adminCatalog.AdminCatalog.IsPublished)
-
-	controlAccessParams, err := adminCatalog.GetAccessControl(false)
-	if err != nil {
-		return fmt.Errorf("error retrieving catalog access control: %s", err)
-	}
-	if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
-		dSet(d, "is_shared", true)
-	} else {
-		dSet(d, "is_shared", false)
-	}
+	dSet(d, "catalog_version", adminCatalog.AdminCatalog.VersionNumber)
+	dSet(d, "owner_name", adminCatalogRecord[0].OwnerName)
+	dSet(d, "number_of_vapp_templates", adminCatalogRecord[0].NumberOfVAppTemplates)
+	dSet(d, "number_of_media", adminCatalogRecord[0].NumberOfMedia)
+	dSet(d, "is_published", adminCatalogRecord[0].IsPublished)
+	dSet(d, "is_shared", adminCatalogRecord[0].IsShared)
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
