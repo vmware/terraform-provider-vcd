@@ -249,6 +249,17 @@ func resourceVcdNetworkIsolatedCreate(c context.Context, d *schema.ResourceData,
 		return diag.Errorf("error: %s", err)
 	}
 
+	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
+	if err != nil {
+		return diag.Errorf("error retrieving network %s after creation", networkName)
+	}
+	d.SetId(network.OrgVDCNetwork.ID)
+
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("error adding metadata to network: %s", err)
+	}
+
 	return resourceVcdNetworkIsolatedRead(c, d, meta)
 }
 
@@ -466,6 +477,11 @@ func resourceVcdNetworkIsolatedUpdate(c context.Context, d *schema.ResourceData,
 	err = network.Update()
 	if err != nil {
 		return diag.Errorf("error updating isolated network: %s", err)
+	}
+
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("error updating isolated network metadata: %s", err)
 	}
 
 	// The update returns already a network. No need to retrieve it twice
