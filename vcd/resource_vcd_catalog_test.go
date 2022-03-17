@@ -79,6 +79,7 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2"),
 					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
+					resource.TestMatchResourceAttr(resourceAddress, "owner_name", regexp.MustCompile(`^\S+$`)),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "0"),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "0"),
 					resource.TestCheckResourceAttr(resourceAddress, "is_shared", "false"),
@@ -101,8 +102,8 @@ func TestAccVcdCatalog(t *testing.T) {
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2 v2"),
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata3", "catalog Metadata3"),
-					//resource.TestCheckResourceAttr(), // catalog owner
 					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
+					resource.TestMatchResourceAttr(resourceAddress, "owner_name", regexp.MustCompile(`^\S+$`)),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
 					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
 				),
