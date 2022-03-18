@@ -260,19 +260,21 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.Errorf("error fetching independent disk: %s", err)
 		}
 
-		sliceOfVmsHrefs, err := disk.GetAttachedVmsHrefs()
+		diskAttachedVmsHrefs, err := disk.GetAttachedVmsHrefs()
 		if err != nil {
 			return diag.Errorf("error resourceVcdIndependentDiskUpdate faced issue fetching attached VMs")
 		}
 
-		// add global lock for shared disks to avoid deadlock possibility when different independent shared disks used by same VMs
-		lockGloballyIfNeeded(sliceOfVmsHrefs)
-		defer unlockGloballyIfNeeded(sliceOfVmsHrefs)
+		// Add global lock for shared disks to avoid deadlock possibility when different independent shared disks used by same VMs
+		if len(diskAttachedVmsHrefs) > 1 {
+			lockSharedDiskOpsGlobally()
+			defer unlockSharedDiskOpsGlobally()
+		}
 		//lock VMs as another independent disk resource can be doing update with same VM
-		lockVms(sliceOfVmsHrefs)
-		defer unlockVms(sliceOfVmsHrefs)
+		lockVms(diskAttachedVmsHrefs)
+		defer unlockVms(diskAttachedVmsHrefs)
 
-		diskDetailsForReAttach, diagErr := detachVms(vcdClient, disk, sliceOfVmsHrefs)
+		diskDetailsForReAttach, diagErr := detachVms(vcdClient, disk, diskAttachedVmsHrefs)
 		if diagErr != nil {
 			return diagErr
 		}
@@ -298,7 +300,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.Errorf("error waiting to finish updating of independent disk: %s", err)
 		}
 
-		diagErr = attachBackVms(vcdClient, disk, diskDetailsForReAttach, sliceOfVmsHrefs)
+		diagErr = attachBackVms(vcdClient, disk, diskDetailsForReAttach, diskAttachedVmsHrefs)
 		if diagErr != nil {
 			return diagErr
 		}
@@ -307,16 +309,12 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
-func lockGloballyIfNeeded(sliceOfVmsHrefs []string) {
-	if len(sliceOfVmsHrefs) > 1 {
-		vcdMutexKV.kvLock(globalIndependentDiskLockKey)
-	}
+func lockSharedDiskOpsGlobally() {
+	vcdMutexKV.kvLock(globalIndependentDiskLockKey)
 }
 
-func unlockGloballyIfNeeded(sliceOfVmsHrefs []string) {
-	if len(sliceOfVmsHrefs) > 1 {
-		vcdMutexKV.kvUnlock(globalIndependentDiskLockKey)
-	}
+func unlockSharedDiskOpsGlobally() {
+	vcdMutexKV.kvUnlock(globalIndependentDiskLockKey)
 }
 
 func lockVms(sliceOfVmsHrefs []string) {
@@ -328,7 +326,7 @@ func lockVms(sliceOfVmsHrefs []string) {
 
 func unlockVms(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
-		key := fmt.Sprintf("independentDiskUnlock:%s", vmHref)
+		key := fmt.Sprintf("independentDiskLock:%s", vmHref)
 		vcdMutexKV.kvUnlock(key)
 	}
 }
