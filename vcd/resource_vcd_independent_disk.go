@@ -275,7 +275,9 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			lockIndependentDiskOpsGlobally()
 			defer unlockIndependentDiskOpsGlobally()
 		}
-		//lock VMs as another independent disk resource can be doing update with same VM
+		// Lock on attached VMs as another independent disk resource attached to the same VMs may be already doing an update
+		// DiskA attached to VM1 -> locks VM1
+		// DiskB attached to VM1 -> locks VM1 when DiskA releases lock for VM1
 		lockVmsForIndependentDisks(diskAttachedVmsHrefs)
 		defer unlockVmsForIndependentDisks(diskAttachedVmsHrefs)
 
