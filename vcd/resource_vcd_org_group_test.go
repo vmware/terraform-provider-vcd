@@ -186,6 +186,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_org_group.sourced_group1", "vcd_org_group.group1", nil),
 					resourceFieldsEqual("data.vcd_org_group.sourced_group2", "vcd_org_group.group2", nil),
+					resourceFieldsEqual("data.vcd_org_usergb.sourced_user1", "vcd_org_user.user1", nil),
 				),
 			},
 			{
@@ -301,6 +302,10 @@ data "vcd_org_group" "sourced_group1" {
 
 data "vcd_org_group" "sourced_group2" {
   name = vcd_org_group.group2.name
+}
+
+data "vcd_org_user" "sourced_user1" {
+  name = "fry"
 }
 `
 

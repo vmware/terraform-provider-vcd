@@ -96,7 +96,7 @@ func datasourceVcdOrgUser() *schema.Resource {
 				Description: "Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.",
 			},
 			"groups_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

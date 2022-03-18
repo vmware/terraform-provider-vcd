@@ -159,7 +159,7 @@ func resourceVcdOrgGroupUpdate(ctx context.Context, d *schema.ResourceData, meta
 	if d.HasChange("description") {
 		group.Group.Description = d.Get("description").(string)
 	}
-	group.Group.UsersList = nil
+
 	err = group.Update()
 	if err != nil {
 		return diag.Errorf("error updating group %s: %s", group.Group.Name, err)
