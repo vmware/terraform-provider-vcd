@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -118,7 +117,7 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		vcdClient = meta.(*VCDClient)
 		err       error
 		adminOrg  *govcd.AdminOrg
-		catalog   *govcd.Catalog
+		catalog   *govcd.AdminCatalog
 	)
 
 	if !nameOrFilterIsSet(d) {
@@ -141,7 +140,7 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	if hasFilter {
 		catalog, err = getCatalogByFilter(adminOrg, filter, vcdClient.Client.IsSysAdmin)
 	} else {
-		catalog, err = adminOrg.GetCatalogByNameOrId(identifier, false)
+		catalog, err = adminOrg.GetAdminCatalogByNameOrId(identifier, false)
 	}
 	if err != nil {
 		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
@@ -155,15 +154,15 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
 	}
 
-	dSet(d, "description", catalog.Catalog.Description)
-	dSet(d, "created", catalog.Catalog.DateCreated)
-	dSet(d, "name", catalog.Catalog.Name)
+	dSet(d, "description", catalog.AdminCatalog.Description)
+	dSet(d, "created", catalog.AdminCatalog.DateCreated)
+	dSet(d, "name", catalog.AdminCatalog.Name)
 
-	d.SetId(catalog.Catalog.ID)
-	if catalog.Catalog.PublishExternalCatalogParams != nil {
-		dSet(d, "publish_enabled", catalog.Catalog.PublishExternalCatalogParams.IsPublishedExternally)
-		dSet(d, "cache_enabled", catalog.Catalog.PublishExternalCatalogParams.IsCachedEnabled)
-		dSet(d, "preserve_identity_information", catalog.Catalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
+	d.SetId(catalog.AdminCatalog.ID)
+	if catalog.AdminCatalog.PublishExternalCatalogParams != nil {
+		dSet(d, "publish_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
+		dSet(d, "cache_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
+		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 	}
 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
@@ -171,30 +170,19 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	// Get catalog records
-
-	catalogRecords, err := adminOrg.QueryCatalogList()
+	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
+	catalogRecords, err := adminOrg.FindCatalogRecords(catalog.AdminCatalog.Name)
 	if err != nil {
-		return diag.Errorf("There was an issue when retrieving catalog records - %s", err)
+		log.Printf("[DEBUG] Unable to find catalog record: %s", err)
+		return diag.Errorf("There was an issue when retrieving the catalog records - %s", err)
 	}
 
-	var catalogRecord *types.CatalogRecord
-	for _, v := range catalogRecords {
-		if v.Name == catalog.Catalog.Name {
-			catalogRecord = v
-		}
-	}
-
-	if catalogRecord == nil {
-		return diag.Errorf("There is no catalog record associated with this catalog")
-	}
-
-	dSet(d, "catalog_version", catalog.Catalog.VersionNumber)
-	dSet(d, "owner_name", catalogRecord.OwnerName)
-	dSet(d, "number_of_vapp_templates", catalogRecord.NumberOfVAppTemplates)
-	dSet(d, "number_of_media", catalogRecord.NumberOfMedia)
-	dSet(d, "is_published", catalogRecord.IsPublished)
-	dSet(d, "is_shared", catalogRecord.IsShared)
+	dSet(d, "catalog_version", catalog.AdminCatalog.VersionNumber)
+	dSet(d, "owner_name", catalogRecords[0].OwnerName)
+	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
+	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
+	dSet(d, "is_published", catalogRecords[0].IsPublished)
+	dSet(d, "is_shared", catalogRecords[0].IsShared)
 
 	return nil
 }
