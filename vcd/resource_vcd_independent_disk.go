@@ -15,6 +15,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+const globalIndependentDiskLockKey = "globalIndependentDiskLockKey"
+
 func resourceVcdIndependentDisk() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdIndependentDiskCreate,
@@ -263,6 +265,9 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.Errorf("error resourceVcdIndependentDiskUpdate faced issue fetching attached VMs")
 		}
 
+		// add global lock for shared disks to avoid deadlock possibility when different independent shared disks used by same VMs
+		lockGloballyIfNeeded(sliceOfVmsHrefs)
+		defer unlockGloballyIfNeeded(sliceOfVmsHrefs)
 		//lock VMs as another independent disk resource can be doing update with same VM
 		lockVms(sliceOfVmsHrefs)
 		defer unlockVms(sliceOfVmsHrefs)
@@ -300,6 +305,18 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 
 	}
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
+}
+
+func lockGloballyIfNeeded(sliceOfVmsHrefs []string) {
+	if len(sliceOfVmsHrefs) > 1 {
+		vcdMutexKV.kvLock(globalIndependentDiskLockKey)
+	}
+}
+
+func unlockGloballyIfNeeded(sliceOfVmsHrefs []string) {
+	if len(sliceOfVmsHrefs) > 1 {
+		vcdMutexKV.kvUnlock(globalIndependentDiskLockKey)
+	}
 }
 
 func lockVms(sliceOfVmsHrefs []string) {
