@@ -212,8 +212,8 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
-	// Catalog record is retrieved to get the number of vApp templates, medias and owner name
-	adminCatalogRecord, err := adminOrg.FindAdminCatalogRecords(adminCatalog.AdminCatalog.Name) // Is this returning one even though there are catalogs with similar names?
+	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
+	catalogRecords, err := adminOrg.FindCatalogRecords(adminCatalog.AdminCatalog.Name)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog record: %s", err)
 		return err
@@ -255,11 +255,11 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 	}
 
 	dSet(d, "catalog_version", adminCatalog.AdminCatalog.VersionNumber)
-	dSet(d, "owner_name", adminCatalogRecord[0].OwnerName)
-	dSet(d, "number_of_vapp_templates", adminCatalogRecord[0].NumberOfVAppTemplates)
-	dSet(d, "number_of_media", adminCatalogRecord[0].NumberOfMedia)
-	dSet(d, "is_published", adminCatalogRecord[0].IsPublished)
-	dSet(d, "is_shared", adminCatalogRecord[0].IsShared)
+	dSet(d, "owner_name", catalogRecords[0].OwnerName)
+	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
+	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
+	dSet(d, "is_published", catalogRecords[0].IsPublished)
+	dSet(d, "is_shared", catalogRecords[0].IsShared)
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
