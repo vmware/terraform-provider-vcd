@@ -15,6 +15,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// key for independent disk resource lock when disk type is shared and attached more than one VM
 const globalIndependentDiskLockKey = "globalIndependentDiskLockKey"
 
 func resourceVcdIndependentDisk() *schema.Resource {
@@ -309,14 +310,17 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
+// lockSharedDiskOpsGlobally acquire lock for independent disk resource using key `globalIndependentDiskLockKey`
 func lockSharedDiskOpsGlobally() {
 	vcdMutexKV.kvLock(globalIndependentDiskLockKey)
 }
 
+// unlockSharedDiskOpsGlobally release lock for independent disk resource using key `globalIndependentDiskLockKey`
 func unlockSharedDiskOpsGlobally() {
 	vcdMutexKV.kvUnlock(globalIndependentDiskLockKey)
 }
 
+// lockVms acquire locks to VMs which independent disk is attached
 func lockVms(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
 		key := fmt.Sprintf("independentDiskLock:%s", vmHref)
@@ -324,6 +328,7 @@ func lockVms(sliceOfVmsHrefs []string) {
 	}
 }
 
+// lockVms release locks to VMs which independent disk is attached
 func unlockVms(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
 		key := fmt.Sprintf("independentDiskLock:%s", vmHref)
