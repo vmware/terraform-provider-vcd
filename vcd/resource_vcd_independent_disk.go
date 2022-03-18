@@ -266,7 +266,10 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.Errorf("error resourceVcdIndependentDiskUpdate faced issue fetching attached VMs")
 		}
 
-		// Add global lock for shared disks to avoid deadlock possibility when different independent shared disks used by same VMs
+		// Lock on resource if independent disk is shared between more than one VM. This allows to avoid deadlock below when different independent shared disks try to acquire locks on same VMs
+		// Avoids situation like this:
+		// DiskA attached to VM2 and VM1 -> locked VM2, but can't lock VM1 because
+		// DiskB attached to VM1 and VM2 -> locked VM1, but can't lock VM2 (because it was locked by DiskA already)
 		if len(diskAttachedVmsHrefs) > 1 {
 			lockSharedDiskOpsGlobally()
 			defer unlockSharedDiskOpsGlobally()
