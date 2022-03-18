@@ -272,12 +272,12 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		// DiskA attached to VM2 and VM1 -> locked VM2, but can't lock VM1 because
 		// DiskB attached to VM1 and VM2 -> locked VM1, but can't lock VM2 (because it was locked by DiskA already)
 		if len(diskAttachedVmsHrefs) > 1 {
-			lockSharedDiskOpsGlobally()
-			defer unlockSharedDiskOpsGlobally()
+			lockIndependentDiskOpsGlobally()
+			defer unlockIndependentDiskOpsGlobally()
 		}
 		//lock VMs as another independent disk resource can be doing update with same VM
-		lockVms(diskAttachedVmsHrefs)
-		defer unlockVms(diskAttachedVmsHrefs)
+		lockVmsForIndependentDisks(diskAttachedVmsHrefs)
+		defer unlockVmsForIndependentDisks(diskAttachedVmsHrefs)
 
 		diskDetailsForReAttach, diagErr := detachVms(vcdClient, disk, diskAttachedVmsHrefs)
 		if diagErr != nil {
@@ -314,26 +314,26 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
-// lockSharedDiskOpsGlobally acquire lock for independent disk resource using key `globalIndependentDiskLockKey`
-func lockSharedDiskOpsGlobally() {
+// lockIndependentDiskOpsGlobally acquire lock for independent disk resource using key `globalIndependentDiskLockKey`
+func lockIndependentDiskOpsGlobally() {
 	vcdMutexKV.kvLock(globalIndependentDiskLockKey)
 }
 
-// unlockSharedDiskOpsGlobally release lock for independent disk resource using key `globalIndependentDiskLockKey`
-func unlockSharedDiskOpsGlobally() {
+// unlockIndependentDiskOpsGlobally release lock for independent disk resource using key `globalIndependentDiskLockKey`
+func unlockIndependentDiskOpsGlobally() {
 	vcdMutexKV.kvUnlock(globalIndependentDiskLockKey)
 }
 
-// lockVms acquire locks to VMs which independent disk is attached
-func lockVms(sliceOfVmsHrefs []string) {
+// lockVmsForIndependentDisks acquire locks to VMs which independent disk is attached
+func lockVmsForIndependentDisks(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
 		key := fmt.Sprintf("independentDiskLock:%s", vmHref)
 		vcdMutexKV.kvLock(key)
 	}
 }
 
-// lockVms release locks to VMs which independent disk is attached
-func unlockVms(sliceOfVmsHrefs []string) {
+// unlockVmsForIndependentDisks release locks to VMs which independent disk is attached
+func unlockVmsForIndependentDisks(sliceOfVmsHrefs []string) {
 	for _, vmHref := range sliceOfVmsHrefs {
 		key := fmt.Sprintf("independentDiskLock:%s", vmHref)
 		vcdMutexKV.kvUnlock(key)
