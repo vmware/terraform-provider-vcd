@@ -15,7 +15,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// key for independent disk resource lock when disk type is shared and attached more than one VM
+// Key for independent disk resource lock when disk type is shared and attached to more than one VM
 const globalIndependentDiskLockKey = "globalIndependentDiskLockKey"
 
 func resourceVcdIndependentDisk() *schema.Resource {
