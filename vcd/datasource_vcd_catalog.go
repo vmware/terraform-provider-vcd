@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -67,11 +68,11 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Catalog version number.",
 			},
-			/*"owner_name": { // owner_name is not available because catalog user view doesn't have this value
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Owner name from the catalog.",
-			},*/
+			},
 			"number_of_vapp_templates": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -157,7 +158,7 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	dSet(d, "description", catalog.Catalog.Description)
 	dSet(d, "created", catalog.Catalog.DateCreated)
 	dSet(d, "name", catalog.Catalog.Name)
-	dSet(d, "catalog_version", catalog.Catalog.VersionNumber)
+
 	d.SetId(catalog.Catalog.ID)
 	if catalog.Catalog.PublishExternalCatalogParams != nil {
 		dSet(d, "publish_enabled", catalog.Catalog.PublishExternalCatalogParams.IsPublishedExternally)
@@ -170,33 +171,30 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	numberOfVAppTemplates, err := catalog.QueryVappTemplateList()
+	// Get catalog records
+
+	catalogRecords, err := adminOrg.QueryCatalogList()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve vApp templates associated to this catalog: %s", err)
-		return diag.Errorf("There was an issue when retrieving vApp templates - %s", err)
+		return diag.Errorf("There was an issue when retrieving catalog records - %s", err)
 	}
 
-	dSet(d, "number_of_vapp_templates", len(numberOfVAppTemplates))
-
-	numberOfMedia, err := catalog.QueryMediaList()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve media items associated to this catalog: %s", err)
-		return diag.Errorf("There was an issue when retrieving media items - %s", err)
+	var catalogRecord *types.CatalogRecord
+	for _, v := range catalogRecords {
+		if v.Name == catalog.Catalog.Name {
+			catalogRecord = v
+		}
 	}
 
-	dSet(d, "number_of_media", len(numberOfMedia))
-
-	dSet(d, "is_published", catalog.Catalog.IsPublished)
-
-	controlAccessParams, err := catalog.GetAccessControl(false)
-	if err != nil {
-		return diag.Errorf("error retrieving catalog access control: %s", err)
+	if catalogRecord == nil {
+		return diag.Errorf("There is no catalog record associated with this catalog")
 	}
-	if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
-		dSet(d, "is_shared", true)
-	} else {
-		dSet(d, "is_shared", false)
-	}
+
+	dSet(d, "catalog_version", catalog.Catalog.VersionNumber)
+	dSet(d, "owner_name", catalogRecord.OwnerName)
+	dSet(d, "number_of_vapp_templates", catalogRecord.NumberOfVAppTemplates)
+	dSet(d, "number_of_media", catalogRecord.NumberOfMedia)
+	dSet(d, "is_published", catalogRecord.IsPublished)
+	dSet(d, "is_shared", catalogRecord.IsShared)
 
 	return nil
 }
