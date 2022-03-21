@@ -234,6 +234,17 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
+	metadata, err := network.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find network metadata: %s", err)
+		return diag.FromErr(err)
+	}
+
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	return nil

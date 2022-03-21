@@ -5,13 +5,13 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
+	"strconv"
+	"testing"
+	"time"
 )
 
 func init() {
@@ -603,6 +603,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "metadata.key3", updateDef.metadataValue),
 					resource.TestCheckResourceAttr(
 						resourceDef, "metadata.key2", "value2"),
+						sleepTester(),
 				),
 			},
 		}
@@ -1188,3 +1189,11 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
   }
 }
 `
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(1 * time.Minute)
+		return nil
+	}
+}
