@@ -28,9 +28,13 @@ data "vcd_external_network_v2" "nsxt-ext-net" {
   name = "nsxt-edge"
 }
 
+data "vcd_org_vdc" "vdc1" {
+  name = "existing-vdc"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org         = "my-org"
-  vdc         = "nsxt-vdc"
+  owner_id    = data.vcd_org_vdc.vdc1.id
   name        = "nsxt-edge"
   description = "Description"
 
@@ -39,9 +43,10 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
     gateway       = "10.150.191.253"
     prefix_length = "19"
-    # primary_ip should fall into defined "allocated_ips" range as otherwise
-    # next apply will report additional range of "allocated_ips" with the range
-    # containing single "primary_ip" and will cause non-empty plan.
+    # primary_ip should fall into defined "allocated_ips" 
+    # range as otherwise next apply will report additional
+    # range of "allocated_ips" with the range containing 
+    # single "primary_ip" and will cause non-empty plan.
     primary_ip = "10.150.160.137"
     allocated_ips {
       start_address = "10.150.160.137"
@@ -62,9 +67,13 @@ data "vcd_external_network_v2" "nsxt-ext-net" {
   name = "nsxt-edge"
 }
 
+data "vcd_org_vdc" "vdc1" {
+  name = "existing-vdc"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org         = "my-org"
-  vdc         = "nsxt-vdc"
+  owner_id    = data.vcd_org_vdc.vdc1.id
   name        = "nsxt-edge"
   description = "Description"
 
@@ -77,9 +86,10 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
     gateway       = "10.150.191.253"
     prefix_length = "19"
-    # primary_ip should fall into defined "allocated_ips" range as otherwise
-    # next apply will report additional range of "allocated_ips" with the range
-    # containing single "primary_ip" and will cause non-empty plan.
+    # primary_ip should fall into defined "allocated_ips" 
+    # range as otherwise next apply will report additional
+    # range of "allocated_ips" with the range containing 
+    # single "primary_ip" and will cause non-empty plan.
     primary_ip = "10.150.160.137"
     allocated_ips {
       start_address = "10.150.160.137"
@@ -120,15 +130,98 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 ```
 
 
+## Example Usage (Assigning NSX-T Edge Gateway to VDC group)
+
+```hcl
+data "vcd_nsxt_edge_cluster" "secondary" {
+  name = "edge-cluster-two"
+}
+
+data "vcd_external_network_v2" "nsxt-ext-net" {
+  name = "nsxt-edge"
+}
+
+data "vcd_vdc_group" "group1" {
+  name = "existing-group"
+}
+
+data "vcd_org_vdc" "vdc-1" {
+  name = "existing-group"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org      = "my-org"
+  owner_id = data.vcd_vdc_group.group1.id
+
+  # VDC Group cannot be created directly in VDC Group - 
+  # it must originate in some VDC (belonging to 
+  # destination VDC Group)
+  #
+  # `starting_vdc_id` field is optional. If only VDC Group 
+  # ID is specified in `owner_id` field - this resource will
+  # will pick a random member VDC to precreate it and will 
+  # move to destination VDC Group in a single apply cycle
+  starting_vdc_id = data.vcd_org_vdc.vdc-1.id
+
+  name        = "nsxt-edge"
+  description = "Description"
+
+  external_network_id       = data.vcd_external_network_v2.nsxt-ext-net.id
+  dedicate_external_network = true
+
+  # Custom edge cluster reference
+  edge_cluster_id = data.vcd_nsxt_edge_cluster.secondary.id
+
+  subnet {
+    gateway       = "10.150.191.253"
+    prefix_length = "19"
+    primary_ip    = "10.150.160.137"
+    allocated_ips {
+      start_address = "10.150.160.137"
+      end_address   = "10.150.160.137"
+    }
+  }
+
+  subnet {
+    gateway       = "77.77.77.1"
+    prefix_length = "26"
+
+    allocated_ips {
+      start_address = "77.77.77.10"
+      end_address   = "77.77.77.12"
+    }
+  }
+}
+```
+
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
+* `vdc` - (Optional) **Deprecated** in favor of `owner_id`. The name of VDC that owns the edge
+  gateway. Can be inherited from `provider` configuration if not defined here.
+* `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note:** Data sources
+  [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) or
+  [vcd_org_vdc](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) can be used to lookup IDs by
+  name
+
+~> Only one of `vdc` or `owner_id` can be specified. `owner_id` takes precedence over `vdc`
+definition at provider level.
+
+~> When a VDC Group ID is specified in `owner_id` field, the Edge Gateway will be created in VDC
+  (random member of VDC Group or specified in `starting_vdc_id`). Main use case of `starting_vdc_id`
+  is to pick egress traffic origin for multi datacenter VDC Groups.
+
+* `starting_vdc_id` - (Optional, *v3.6+*,*VCD 10.2+*)  If `owner_id` is a VDC Group, by default Edge
+  Gateway will be created in random member VDC and moved to destination VDC Group. This field allows
+  to specify initial VDC for Edge Gateway (this can define Egress location of traffic in the VDC
+  Group) **Note:** It can only be used when `owner_id` is a VDC Group. 
+
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
-* `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
+* `external_network_id` - (Required) An external network ID. **Note:** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
 can be used to lookup ID by name.
 * `subnet` - (Required) One or more [subnets](#edgegateway-subnet) defined for edge gateway.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
@@ -161,17 +254,22 @@ The following attributes are exported on this resource:
 
 ## Importing
 
-~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
-configuration. [More information.][docs-import]
+~> **Note:** The current implementation of Terraform import can only import resources into the
+state. It does not generate configuration. [More information.][docs-import]
 
 An existing edge gateway can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of org-name.vdc-name.nsxt-edge-name
-For example, using this structure, representing an edge gateway that was **not** created using Terraform:
+The path for this resource is made of `org-name.vdc-name.nsxt-edge-name` or
+`org-name.vdc-group-name.nsxt-edge-name` For example, using this structure, representing an edge
+gateway that was **not** created using Terraform:
 
 ```hcl
+data "vcd_org_vdc" "vdc-1" {
+  name = "vdc-name"
+}
+
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   org         = "my-org"
-  vdc         = "nsxt-vdc"
+  owner_id    = data.vcd_org_vdc.vdc-1.id
   name        = "nsxt-edge"
   description = "Description"
 

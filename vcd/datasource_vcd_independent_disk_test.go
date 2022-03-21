@@ -5,9 +5,11 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/davecgh/go-spew/spew"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -38,6 +40,16 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"datasourceNameWithId": datasourceNameWithId,
 		"metadataKey":          "key1",
 		"metadataValue":        "value1",
+	}
+
+	// regexp for empty value
+	uuidMatchRegexp := regexp.MustCompile(`^$`)
+	vcdClient := createTemporaryVCDConnection(true)
+	sharingType := ""
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36") {
+		// from 36.0 API version value is returned
+		uuidMatchRegexp = regexp.MustCompile(`^\S+`)
+		sharingType = "None"
 	}
 
 	params["FuncName"] = t.Name() + "-Step1"
@@ -72,12 +84,17 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1", "value1"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchOutput("uuid", uuidMatchRegexp),
+					resource.TestCheckOutput("sharing_type", sharingType),
+					resource.TestCheckOutput("encrypted", "false"),
+					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
+					stateDumper(),
 					resource.TestCheckNoResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key2", "value2"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key3", "value3"),
@@ -95,6 +112,10 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "storage_profile", "*"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchOutput("uuid", uuidMatchRegexp),
+					resource.TestCheckOutput("sharing_type", sharingType),
+					resource.TestCheckOutput("encrypted", "false"),
+					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
@@ -137,7 +158,6 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {
   name       = vcd_independent_disk.{{.ResourceName}}.name
-  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {
@@ -151,6 +171,18 @@ output "datastore_name" {
 }
 output "is_attached" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.is_attached
+}
+output "encrypted" {
+  value = data.vcd_independent_disk.{{.dataSourceName}}.encrypted
+}
+output "sharing_type" {
+  value = data.vcd_independent_disk.{{.dataSourceName}}.sharing_type
+}
+output "uuid" {
+  value = data.vcd_independent_disk.{{.dataSourceName}}.uuid
+}
+output "attached_vm_ids" {
+  value = length(tolist(data.vcd_independent_disk.{{.dataSourceName}}.attached_vm_ids))
 }
 `
 
@@ -167,19 +199,37 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
   id         = vcd_independent_disk.{{.ResourceName}}.id
-  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
 }
 output "owner_name" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
 }
 output "datastore_name" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
 }
 output "is_attached" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
+}
+output "encrypted" {
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.encrypted
+}
+output "sharing_type" {
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.sharing_type
+}
+output "uuid" {
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.uuid
+}
+output "attached_vm_ids" {
+  value = length(tolist(data.vcd_independent_disk.{{.datasourceNameWithId}}.attached_vm_ids))
 }
 `
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}

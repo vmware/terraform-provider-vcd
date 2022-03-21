@@ -75,6 +75,29 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "True if the disk is already attached",
 			},
+			"encrypted": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if disk is encrypted",
+			},
+			"sharing_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
+			},
+			"uuid": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The UUID of this named disk's device backing",
+			},
+			"attached_vm_ids": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM IDs which are using the disk",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
@@ -142,13 +165,10 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	err = setMainData(d, disk)
+	err = setMainData(d, disk, diskRecord)
 	if err != nil {
-		return diag.FromErr(err)
+		diag.FromErr(err)
 	}
-
-	dSet(d, "datastore_name", diskRecord.DataStoreName)
-	dSet(d, "is_attached", diskRecord.IsAttached)
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
