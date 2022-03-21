@@ -1,1 +1,1 @@
-* Add `catalog_version`, `number_of_vapp_templates`, `number_of_media`, `is_shared`, `is_published` computed fields to catalog resource and datasource  [GH-800]
+* Add `catalog_version`, `number_of_vapp_templates`, `number_of_media`, `is_shared`, `is_published`, `publish_subscription_type` computed fields to catalog resource and datasource  [GH-800]
