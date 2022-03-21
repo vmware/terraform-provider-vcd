@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_independent\_disk
 
-Provides a VMware Cloud Director Independent disk data source. A independent disk data source can be used to reference an independent disk and use its 
+Provides a VMware Cloud Director Independent disk data source. An independent disk data source can be used to reference an independent disk and use its 
 data within other resources or data sources.
 
 Supported in provider *v2.5+*

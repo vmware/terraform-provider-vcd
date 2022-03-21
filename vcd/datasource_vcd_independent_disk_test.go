@@ -39,6 +39,16 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"datasourceNameWithId": datasourceNameWithId,
 	}
 
+	// regexp for empty value
+	uuidMatchRegexp := regexp.MustCompile(`^$`)
+	vcdClient := createTemporaryVCDConnection(true)
+	sharingType := ""
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36") {
+		// from 36.0 API version value is returned
+		uuidMatchRegexp = regexp.MustCompile(`^\S+`)
+		sharingType = "None"
+	}
+
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
 	params["FuncName"] = t.Name() + "-withId"
 	configTextWithId := templateFill(testAccCheckVcdDataSourceIndependentDiskWithId, params)
@@ -65,6 +75,10 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchOutput("uuid", uuidMatchRegexp),
+					resource.TestCheckOutput("sharing_type", sharingType),
+					resource.TestCheckOutput("encrypted", "false"),
+					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
@@ -80,6 +94,10 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "storage_profile", "*"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchOutput("uuid", uuidMatchRegexp),
+					resource.TestCheckOutput("sharing_type", sharingType),
+					resource.TestCheckOutput("encrypted", "false"),
+					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
 				),
 			},
@@ -118,7 +136,6 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {
   name       = vcd_independent_disk.{{.ResourceName}}.name
-  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {
@@ -132,6 +149,18 @@ output "datastore_name" {
 }
 output "is_attached" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.is_attached
+}
+output "encrypted" {
+  value = data.vcd_independent_disk.{{.dataSourceName}}.encrypted
+}
+output "sharing_type" {
+  value = data.vcd_independent_disk.{{.dataSourceName}}.sharing_type
+}
+output "uuid" {
+  value = data.vcd_independent_disk.{{.dataSourceName}}.uuid
+}
+output "attached_vm_ids" {
+  value = length(tolist(data.vcd_independent_disk.{{.dataSourceName}}.attached_vm_ids))
 }
 `
 
@@ -148,19 +177,30 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
   id         = vcd_independent_disk.{{.ResourceName}}.id
-  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
 }
 output "owner_name" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
 }
 output "datastore_name" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
 }
 output "is_attached" {
-  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
+}
+output "encrypted" {
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.encrypted
+}
+output "sharing_type" {
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.sharing_type
+}
+output "uuid" {
+  value = data.vcd_independent_disk.{{.datasourceNameWithId}}.uuid
+}
+output "attached_vm_ids" {
+  value = length(tolist(data.vcd_independent_disk.{{.datasourceNameWithId}}.attached_vm_ids))
 }
 `

@@ -1,8 +1,8 @@
 package vcd
 
 import (
-	"errors"
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,7 +12,7 @@ import (
 
 func datasourceVcIndependentDisk() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceVcdIndependentDiskRead,
+		ReadContext: dataSourceVcdIndependentDiskRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -75,23 +75,46 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "True if the disk is already attached",
 			},
+			"encrypted": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if disk is encrypted",
+			},
+			"sharing_type": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
+			},
+			"uuid": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The UUID of this named disk's device backing",
+			},
+			"attached_vm_ids": &schema.Schema{
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM IDs which are using the disk",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
 
-func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	idValue := d.Get("id").(string)
 	nameValue := d.Get("name").(string)
 
 	if idValue == "" && nameValue == "" {
-		return errors.New("`id` and `name` are empty. At least one is needed")
+		return diag.Errorf("`id` and `name` are empty. At least one is needed")
 	}
 
 	identifier := idValue
@@ -103,27 +126,27 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 			return nil
 		}
 		if err != nil {
-			return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+			return diag.Errorf("unable to find disk with ID %s: %s", identifier, err)
 		}
 	} else {
 		identifier = nameValue
 		disks, err := vdc.GetDisksByName(identifier, true)
 		if err != nil {
-			return fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
+			return diag.Errorf("unable to find disk with name %s: %s", identifier, err)
 		}
 		if len(*disks) > 1 {
 			var diskIds []string
 			for _, disk := range *disks {
 				diskIds = append(diskIds, disk.Disk.Id)
 			}
-			return fmt.Errorf("found more than one disk with name %s. Disk ids are: %s. Please use `id` property", identifier, diskIds)
+			return diag.Errorf("found more than one disk with name %s. Disk ids are: %s. Please use `id` property", identifier, diskIds)
 		}
 		disk = &(*disks)[0]
 	}
 
 	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
 	if err != nil {
-		return fmt.Errorf("unable to query disk with name %s: %s", identifier, err)
+		return diag.Errorf("unable to query disk with name %s: %s", identifier, err)
 	}
 
 	var diskRecord *types.DiskRecordType
@@ -134,12 +157,13 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if diskRecord == nil {
-		return fmt.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
+		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	setMainData(d, disk)
-	dSet(d, "datastore_name", diskRecord.DataStoreName)
-	dSet(d, "is_attached", diskRecord.IsAttached)
+	err = setMainData(d, disk, diskRecord)
+	if err != nil {
+		diag.FromErr(err)
+	}
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
