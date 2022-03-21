@@ -16,7 +16,7 @@ func datasourceVcdCatalog() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
@@ -120,24 +120,20 @@ func datasourceVcdCatalog() *schema.Resource {
 func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
 		vcdClient = meta.(*VCDClient)
-		err       error
-		adminOrg  *govcd.AdminOrg
 		catalog   *govcd.AdminCatalog
 	)
 
 	if !nameOrFilterIsSet(d) {
 		return diag.Errorf(noNameOrFilterError, "vcd_catalog")
 	}
-	orgName := d.Get("org").(string)
-	identifier := d.Get("name").(string)
-	log.Printf("[TRACE] Reading Org %s", orgName)
-	adminOrg, err = vcdClient.VCDClient.GetAdminOrgByName(orgName)
 
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		log.Printf("[DEBUG] Org %s not found.", orgName)
-		return diag.Errorf("Org %s not found.", orgName)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
-	log.Printf("[TRACE] Org %s found", orgName)
+	log.Printf("[TRACE] Org %s found", adminOrg.AdminOrg.Name)
+
+	identifier := d.Get("name").(string)
 
 	filter, hasFilter := d.GetOk("filter")
 
