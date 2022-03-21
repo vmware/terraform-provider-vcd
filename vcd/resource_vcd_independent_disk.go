@@ -249,12 +249,17 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	if d.HasChanges("size_in_mb", "storage_profile", "description") {
-		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrgAndVdc, err)
-		}
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+	}
 
+	disk, err := vdc.GetDiskById(d.Id(), true)
+	if err != nil {
+		return diag.Errorf("error fetching independent disk: %s", err)
+	}
+
+	if d.HasChanges("size_in_mb", "storage_profile", "description") {
 		storageProfileValue := d.Get("storage_profile").(string)
 		var storageProfileRef *types.Reference
 
@@ -264,11 +269,6 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 				return diag.Errorf("error finding storage profile %s", storageProfileValue)
 			}
 			storageProfileRef = &types.Reference{HREF: storageReference.HREF}
-		}
-
-		disk, err := vdc.GetDiskById(d.Id(), true)
-		if err != nil {
-			return diag.Errorf("error fetching independent disk: %s", err)
 		}
 
 		diskAttachedVmsHrefs, err := disk.GetAttachedVmsHrefs()
@@ -323,12 +323,13 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 			return diagErr
 		}
 
-		err = createOrUpdateDiskMetadata(d, disk)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
 	}
+
+	err = createOrUpdateDiskMetadata(d, disk)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 

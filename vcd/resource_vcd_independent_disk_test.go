@@ -51,7 +51,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"Catalog":                  testSuiteCatalogName,
 		"CatalogItem":              testSuiteCatalogOVAItem,
 		"metadataValue":            "value1",
-		"metadataValueUpdate":		"value2",
+		"metadataValueUpdate":      "value2",
 	}
 
 	// regexp for empty value

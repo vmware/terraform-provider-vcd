@@ -5,7 +5,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"regexp"
 	"testing"
 
@@ -94,7 +93,6 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					stateDumper(),
 					resource.TestCheckNoResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key2", "value2"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key3", "value3"),
@@ -226,10 +224,3 @@ output "attached_vm_ids" {
   value = length(tolist(data.vcd_independent_disk.{{.datasourceNameWithId}}.attached_vm_ids))
 }
 `
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
