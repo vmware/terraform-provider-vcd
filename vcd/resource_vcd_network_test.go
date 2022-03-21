@@ -1099,6 +1099,11 @@ resource "vcd_network_direct" "{{.ResourceName}}" {
   org              = "{{.Org}}"
   vdc              = "{{.Vdc}}"
   external_network = "{{.ExternalNetwork}}"
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+    key2 = "value2"
+  }
 }
 `
 
@@ -1114,6 +1119,11 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
   static_ip_pool {
     start_address = "{{.StartStaticIpAddress1}}"
     end_address   = "{{.EndStaticIpAddress1}}"
+  }
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+    key2 = "value2"
   }
 }
 `
