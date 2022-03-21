@@ -271,6 +271,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		// Avoids situation like this:
 		// DiskA attached to VM2 and VM1 -> locked VM2, but can't lock VM1 because
 		// DiskB attached to VM1 and VM2 -> locked VM1, but can't lock VM2 (because it was locked by DiskA already)
+		// This is "blind" lock as it locks resource even independent disks are attached to different VMs.
 		if len(diskAttachedVmsHrefs) > 1 {
 			lockIndependentDiskOpsGlobally()
 			defer unlockIndependentDiskOpsGlobally()
