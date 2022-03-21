@@ -114,12 +114,17 @@ func resourceVcdCatalog() *schema.Resource {
 			"is_shared": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Indicates if the catalog is shared.",
+				Description: "True if this catalog is shared.",
 			},
 			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Indicates if the catalog is published.",
+				Description: "True if this catalog is shared to all organizations.",
+			},
+			"publish_subscription_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
 			},
 		},
 	}
@@ -254,12 +259,13 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	dSet(d, "catalog_version", adminCatalog.AdminCatalog.VersionNumber)
+	dSet(d, "catalog_version", catalogRecords[0].Version)
 	dSet(d, "owner_name", catalogRecords[0].OwnerName)
 	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
 	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
 	dSet(d, "is_published", catalogRecords[0].IsPublished)
 	dSet(d, "is_shared", catalogRecords[0].IsShared)
+	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
