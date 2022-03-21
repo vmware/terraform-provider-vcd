@@ -161,7 +161,7 @@ func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceDat
 	ownerIdField := d.Get("owner_id").(string)
 	if ownerIdField != "" && govcd.OwnerIsVdcGroup(ownerIdField) {
 		log.Printf("[TRACE] NSX-T Edge Gateway update - 'owner_id' is specified and is VDC group. Moving it to VDC Group '%s'", ownerIdField)
-		_, err := createdEdgeGateway.MoveToVdc(ownerIdField)
+		_, err := createdEdgeGateway.MoveToVdcOrVdcGroup(ownerIdField)
 		if err != nil {
 			return diag.Errorf("error assigning NSX-T Edge Gateway to VDC Group: %s", err)
 		}
