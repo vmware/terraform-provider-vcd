@@ -67,10 +67,12 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 ## Attribute Reference
 
 * `catalog_version` - (*v3.6+*) Version number from this catalog.
+* `owner_name` - (*v3.6+*) Owner of the catalog.
 * `number_of_vapp_templates` - (*v3.6+*) Number of vApp templates available in this catalog.
 * `number_of_media` - (*v3.6+*) Number of media items available in this catalog.
 * `is_shared` - (*v3.6+*) Indicates if the catalog is shared.
-* `is_published` - (*v3.6+*) Indicates if the catalog is published.
+* `is_published` - (*v3.6+*) Indicates if this catalog is shared to all organizations.
+* `publish_subscription_type` - (*v3.6+*) Shows if the catalog is published, if it is a subscription from another one or none of those.
 
 ## Importing
 
