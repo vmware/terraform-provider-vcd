@@ -60,7 +60,9 @@ terraform_minor=$(echo $terraform_version | tr '.' ' '| awk '{print $2}')
 check_empty "$terraform_minor" "terraform_version minor not detected"
 os=$(uname -s | tr '[A-Z]' '[a-z]')
 check_empty "$os" "operating system not detected"
-arch=${os}_amd64
+goos=$(go env GOOS)
+goarch=$(go env GOARCH)
+arch=${goos}_${goarch}
 
 
 # if terraform executable is 0.13+, we use the new path
