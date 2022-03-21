@@ -129,14 +129,14 @@ var busTypes = map[string]string{
 	"IDE":  "5",
 	"SCSI": "6",
 	"SATA": "20",
-	"NVME": "20",
+	"NVME": "20nvme",
 }
 
 var busTypesFromValues = map[string]string{
-	"5":  "IDE",
-	"6":  "SCSI",
-	"20": "SATA",
-	"21": "NVME", // in API NVME is 20, the same as SATA. In state file we save 21 to know if it's NVME or SATA
+	"5":      "IDE",
+	"6":      "SCSI",
+	"20":     "SATA",
+	"20nvme": "NVME", // in API NVME is 20, the same as SATA. In state file we save `20nvme` to know if it's NVME or SATA
 }
 
 var busSubTypes = map[string]string{
@@ -481,7 +481,7 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 	dSet(d, "size_in_mb", disk.Disk.SizeMb)
 	dSet(d, "bus_type", busTypesFromValues[disk.Disk.BusType])
 	if disk.Disk.BusSubType == "vmware.nvme.controller" {
-		dSet(d, "bus_type", busTypesFromValues["21"])
+		dSet(d, "bus_type", busTypesFromValues["20nvme"])
 	}
 	dSet(d, "bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	dSet(d, "iops", disk.Disk.Iops)
