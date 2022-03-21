@@ -9,8 +9,8 @@ description: |-
 # vcd\_independent\_disk
 
 Provides a VMware Cloud Director independent disk resource. This can be used to create and delete independent disks.
-Resource is capable to update independent disk attached to VM. When disk type IDE then VM required to be power off. Update detaches temporarily
-disks and attach back after changes are done.
+The resource is capable of updating independent disks attached to a VM. Update detaches the disks temporarily and attaches back after changes are done.
+When the disk type is IDE then VM is required to be powered off.
 
 ## Example Usage
 
