@@ -258,9 +258,11 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return err
+	if len(metadata.MetadataEntry) > 0 {
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return err
+		}
 	}
 
 	dSet(d, "catalog_version", catalogRecords[0].Version)
