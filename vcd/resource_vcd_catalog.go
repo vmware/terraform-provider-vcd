@@ -212,15 +212,19 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
+		if govcd.ContainsNotFound(err) {
+			log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
+			d.SetId("")
+			return nil
+		}
+
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := adminOrg.FindCatalogRecords(adminCatalog.AdminCatalog.Name)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog record: %s", err)
+		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
 		return err
 	}
 
