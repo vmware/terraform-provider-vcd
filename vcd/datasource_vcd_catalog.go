@@ -134,9 +134,8 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	adminOrg, err = vcdClient.VCDClient.GetAdminOrgByName(orgName)
 
 	if err != nil {
-		log.Printf("[DEBUG] Org %s not found. Setting ID to nothing", orgName)
-		d.SetId("")
-		return nil
+		log.Printf("[DEBUG] Org %s not found.", orgName)
+		return diag.Errorf("Org %s not found.", orgName)
 	}
 	log.Printf("[TRACE] Org %s found", orgName)
 
@@ -149,8 +148,14 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	if err != nil {
 		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
-		d.SetId("")
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
+	}
+
+	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
+	catalogRecords, err := adminOrg.FindCatalogRecords(catalog.AdminCatalog.Name)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
+		return diag.Errorf("There was an issue when retrieving the catalog records - %s", err)
 	}
 
 	metadata, err := catalog.GetMetadata()
@@ -173,13 +178,6 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
-	}
-
-	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
-	catalogRecords, err := adminOrg.FindCatalogRecords(catalog.AdminCatalog.Name)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog record: %s", err)
-		return diag.Errorf("There was an issue when retrieving the catalog records - %s", err)
 	}
 
 	dSet(d, "catalog_version", catalogRecords[0].Version)
