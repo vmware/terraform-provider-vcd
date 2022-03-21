@@ -267,7 +267,7 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 	vcdClient := meta.(*VCDClient)
 
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupHandler
+	var vdcOrGroup vdcOrVdcGroupVerifier
 	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 
 	// VDC was not found - attempt to find a VDC Group
@@ -600,4 +600,11 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 	}
 
 	return nil
+}
+
+// vdcOrVdcGroupVerifier is an interface to access IsNsxt() and GetNsxtEdgeGatewayByName() on VDC or
+// VDC Group method `IsNsxt` (used in isBackedByNsxt and resourceVcdNsxtEdgeGatewayImport)
+type vdcOrVdcGroupVerifier interface {
+	IsNsxt() bool
+	GetNsxtEdgeGatewayByName(name string) (*govcd.NsxtEdgeGateway, error)
 }
