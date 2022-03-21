@@ -585,13 +585,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceDef, "metadata.key1", def.metadataValue),
 					resource.TestCheckResourceAttr(
-						resourceDef, "metadata.key2", "key2"),
-					resource.TestCheckNoResourceAttr(
-						resourceDef, "metadata.key1"),
-					resource.TestCheckResourceAttr(
-						resourceDef, "metadata.key2", "key2"),
-					resource.TestCheckResourceAttr(
-						resourceDef, "metadata.key3", updateDef.metadataValue),
+						resourceDef, "metadata.key2", "value2"),
 				),
 			},
 			{
@@ -604,6 +598,11 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "description", updateDef.description),
 					resource.TestMatchResourceAttr(
 						resourceDef, "href", generatedHrefRegexp),
+					resource.TestCheckNoResourceAttr(resourceDef, "metadata.key1"),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key3", updateDef.metadataValue),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key2", "value2"),
 				),
 			},
 		}
@@ -695,7 +694,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceDef, "metadata.key1", def.metadataValue),
 					resource.TestCheckResourceAttr(
-						resourceDef, "metadata.key2", "key2"),
+						resourceDef, "metadata.key2", "value2"),
 				),
 			},
 			{
@@ -714,7 +713,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 					resource.TestCheckNoResourceAttr(
 						resourceDef, "metadata.key1"),
 					resource.TestCheckResourceAttr(
-						resourceDef, "metadata.key2", "key2"),
+						resourceDef, "metadata.key2", "value2"),
 					resource.TestCheckResourceAttr(
 						resourceDef, "metadata.key3", updateDef.metadataValue),
 				),
@@ -1010,7 +1009,7 @@ resource "vcd_network_isolated" "{{.ResourceName}}" {
   }
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
-    key2 = value2
+    key2 = "value2"
   }
 }
 `
