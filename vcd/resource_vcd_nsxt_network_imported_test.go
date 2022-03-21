@@ -12,14 +12,8 @@ import (
 
 func TestAccVcdNsxtNetworkImported(t *testing.T) {
 	preTestChecks(t)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can create Imported networks")
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
 	skipNoNsxtConfiguration(t)
@@ -34,12 +28,17 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 		"Tags":              "network nsxt",
 	}
 
-	configText := templateFill(TestAccVcdNetworkImportedV2NsxtStep1, params)
+	configText := templateFill(testAccVcdNetworkImportedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(TestAccVcdNetworkImportedV2NsxtStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	// Ensure the resource is never recreated - ID stays the same
 	cachedId := &testCachedFieldValue{}
@@ -104,7 +103,7 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 	postTestChecks(t)
 }
 
-const TestAccVcdNetworkImportedV2NsxtStep1 = `
+const testAccVcdNetworkImportedV2NsxtStep1 = `
 resource "vcd_nsxt_network_imported" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -151,9 +150,8 @@ resource "vcd_nsxt_network_imported" "net1" {
 // on the first run
 func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 	preTestChecks(t)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
 	}
 	skipNoNsxtConfiguration(t)
 
@@ -176,6 +174,10 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 	configText2 := templateFill(testAccVcdNetworkImportedV2NsxtOwnerIsVdcStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	// Ensure the resource is never recreated - ID stays the same
 	cachedId := &testCachedFieldValue{}
 
@@ -298,6 +300,10 @@ func TestAccVcdNsxtNetworkImportedInVdcGroup(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
 
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+	}
+
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -405,6 +411,10 @@ resource "vcd_nsxt_network_imported" "net1" {
 func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
+		return
+	}
 
 	// String map to fill the template
 	var params = StringMap{

@@ -213,7 +213,12 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error - not all parameters specified for network lookup")
 	}
 
-	err = setOpenApiOrgVdcNetworkData(d, network.OpenApiOrgVdcNetwork)
+	if !network.IsRouted() {
+		return diag.Errorf("[routed network read v2] Org network with name '%s' found, but is not of type Routed (NAT_ROUTED) (type is '%s')",
+			network.OpenApiOrgVdcNetwork.Name, network.GetType())
+	}
+
+	err = setOpenApiOrgVdcRoutedNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network read v2] error setting Org VDC network data: %s", err)
 	}

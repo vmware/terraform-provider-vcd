@@ -163,6 +163,10 @@ resource "vcd_network_isolated_v2" "net1" {
 func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
+		return
+	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -230,7 +234,6 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
 					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
@@ -240,7 +243,6 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
 					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
@@ -250,7 +252,6 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
 					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
@@ -369,8 +370,7 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
-				ImportStateId: fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
+				ImportStateId:     fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["NsxtVdc"].(string), params["Name"].(string)),
 			},
 			{
 				Config: configText3,
@@ -389,49 +389,15 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 }
 
 const testAccVcdNetworkIsolatedV2NsxtInVdc = `
-resource "vcd_org_vdc" "newVdc" {
-
-  name = "{{.TestName}}"
+data "vcd_org_vdc" "existing" {
   org  = "{{.Org}}"
-
-  allocation_model  = "Flex"
-  network_pool_name = "{{.NetworkPool}}"
-  provider_vdc_name = "{{.ProviderVdc}}"
-
-  compute_capacity {
-    cpu {
-      allocated = "1024"
-      limit     = "1024"
-    }
-
-    memory {
-      allocated = "1024"
-      limit     = "1024"
-    }
-  }
-
-  storage_profile {
-    name    = "{{.ProviderVdcStorageProfile}}"
-    enabled = true
-    limit   = 10240
-    default = true
-  }
-
-  network_quota = 100
-
-  enabled                    = true
-  enable_thin_provisioning   = true
-  enable_fast_provisioning   = true
-  delete_force               = true
-  delete_recursive           = true
-  elasticity      			     = true
-  include_vm_memory_overhead = true
+  name = "{{.NsxtVdc}}"
 }
 
 resource "vcd_network_isolated_v2" "net1" {
   org  = "{{.Org}}"
   
-  owner_id = vcd_org_vdc.newVdc.id
+  owner_id = data.vcd_org_vdc.existing.id
   name     = "{{.NetworkName}}"
 
   gateway = "1.1.1.1"

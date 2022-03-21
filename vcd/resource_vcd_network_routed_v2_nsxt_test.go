@@ -328,6 +328,10 @@ data "vcd_network_routed_v2" "net1" {
 func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
+		return
+	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -353,15 +357,15 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
 
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(TestAccVcdNetworkRoutedV2NsxtMigrationStep2, params)
+	configText2 := templateFill(testAccVcdNetworkRoutedV2NsxtMigrationStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	params["FuncName"] = t.Name() + "-step3"
-	configText3 := templateFill(TestAccVcdNetworkRoutedV2NsxtMigrationStep3, params)
+	configText3 := templateFill(testAccVcdNetworkRoutedV2NsxtMigrationStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	params["FuncName"] = t.Name() + "-step4"
-	configText4 := templateFill(TestAccVcdNetworkRoutedV2NsxtMigrationStep4, params)
+	configText4 := templateFill(testAccVcdNetworkRoutedV2NsxtMigrationStep4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
 	if vcdShortTest {
@@ -467,7 +471,6 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 			{ // Applying the same step once more to be sure that vcd_network_routed_v2 has refreshed its fields after edge gateway was moved
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
 				),
@@ -478,30 +481,14 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
-				ImportStateId: fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
+				ImportStateId:     fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
 			},
-
-			// { // step 4
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "0"),
-			// 		resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)
 }
 
-const TestAccVcdNetworkRoutedV2NsxtMigrationStep2 = testAccVcdVdcGroupNew + `
+const testAccVcdNetworkRoutedV2NsxtMigrationStep2 = testAccVcdVdcGroupNew + `
 data "vcd_external_network_v2" "existing-extnet" {
 	name = "{{.ExternalNetwork}}"
 }
@@ -551,14 +538,10 @@ resource "vcd_network_routed_v2" "net1" {
 	start_address = "1.1.1.60"
     end_address = "1.1.1.70"
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 `
 
-const TestAccVcdNetworkRoutedV2NsxtMigrationStep3 = testAccVcdVdcGroupNew + `
+const testAccVcdNetworkRoutedV2NsxtMigrationStep3 = testAccVcdVdcGroupNew + `
 data "vcd_external_network_v2" "existing-extnet" {
 	name = "{{.ExternalNetwork}}"
 }
@@ -611,7 +594,7 @@ resource "vcd_network_routed_v2" "net1" {
 }
 `
 
-const TestAccVcdNetworkRoutedV2NsxtMigrationStep4 = testAccVcdVdcGroupNew + `
+const testAccVcdNetworkRoutedV2NsxtMigrationStep4 = testAccVcdVdcGroupNew + `
 data "vcd_external_network_v2" "existing-extnet" {
 	name = "{{.ExternalNetwork}}"
 }

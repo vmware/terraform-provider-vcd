@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -107,7 +106,7 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
+		return diag.Errorf("error retrieving Org: %s", err)
 	}
 
 	inheritedVdcField := vcdClient.Vdc
@@ -160,6 +159,11 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 		}
 	default:
 		return diag.Errorf("error - not all parameters specified for network lookup")
+	}
+
+	if !network.IsIsolated() {
+		return diag.Errorf("[isolated network read v2] Org network with name '%s' found, but is not of type Isolated (ISOLATED) (type is '%s')",
+			network.OpenApiOrgVdcNetwork.Name, network.GetType())
 	}
 
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, network.OpenApiOrgVdcNetwork)

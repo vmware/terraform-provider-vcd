@@ -101,7 +101,6 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 	}
 }
 
-// resourceVcdNsxtNetworkImportedCreate
 func resourceVcdNsxtNetworkImportedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -117,9 +116,15 @@ func resourceVcdNsxtNetworkImportedCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
 	}
 
-	// if !vdc.IsNsxt() {
-	// 	return diag.Errorf("[nsxt imported network create] this resource supports only NSX-T")
-	// }
+	// Validate if VDC or VDC Group is NSX-T backed
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
+
+	err = validateIfVdcOrVdcGroupIsNsxt(org, inheritedVdcField, vdcField, ownerIdField)
+	if err != nil {
+		return diag.Errorf("[nsxt imported network create] this resource supports only NSX-T: %s", err)
+	}
 
 	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vcdClient, true)
 	if err != nil {
@@ -136,11 +141,17 @@ func resourceVcdNsxtNetworkImportedCreate(ctx context.Context, d *schema.Resourc
 	return resourceVcdNsxtNetworkImportedRead(ctx, d, meta)
 }
 
-// resourceVcdNsxtNetworkImportedUpdate
 func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("[nsxt imported network update] only System Administrator can operate NSX-T Imported networks")
+	}
+
+	// `vdc` field is deprecated. `vdc` value should not be changed unless it is removal of the
+	// field at all to allow easy migration to `owner_id` path
+	if _, new := d.GetChange("vdc"); d.HasChange("vdc") && new.(string) != "" {
+		return diag.Errorf("changing 'vdc' field value is not supported. It can only be removed. " +
+			"Please use `owner_id` field for moving network to/from VDC Group")
 	}
 
 	vcdClient.lockIfOwnerIsVdcGroup(d)
@@ -148,7 +159,7 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
+		return diag.Errorf("[nsxt imported network update] error retrieving Org: %s", err)
 	}
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
@@ -179,8 +190,6 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 
 	return resourceVcdNsxtNetworkImportedRead(ctx, d, meta)
 }
-
-// resourceVcdNsxtNetworkImportedRead
 func resourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
@@ -191,14 +200,6 @@ func resourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.Errorf("[nsxt imported network create] error retrieving Org: %s", err)
 	}
-	// _, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	// if err != nil {
-	// 	return diag.Errorf("[nsxt imported network read] error retrieving VDC: %s", err)
-	// }
-
-	// if !vdc.IsNsxt() {
-	// 	return diag.Errorf("[nsxt imported network read] this resource supports only NSX-T")
-	// }
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found - unset ID
@@ -220,7 +221,6 @@ func resourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-// resourceVcdNsxtNetworkImportedDelete
 func resourceVcdNsxtNetworkImportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
@@ -248,7 +248,6 @@ func resourceVcdNsxtNetworkImportedDelete(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-// resourceVcdNsxtNetworkImportedImport
 func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
@@ -290,7 +289,6 @@ func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.Resourc
 	}
 
 	dSet(d, "org", orgName)
-	// dSet(d, "vdc", vdcName)
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil

@@ -99,12 +99,14 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
+	// issues when created in VDC.
 	vcdClient.lockIfOwnerIsVdcGroup(d)
 	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error retrieving Org: %s", err)
+		return diag.Errorf("[isolated network create v2] error retrieving Org: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vcdClient)
@@ -125,12 +127,21 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	// `vdc` field is deprecated. `vdc` value should not be changed unless it is removal of the
+	// field at all to allow easy migration to `owner_id` path
+	if _, new := d.GetChange("vdc"); d.HasChange("vdc") && new.(string) != "" {
+		return diag.Errorf("changing 'vdc' field value is not supported. It can only be removed. " +
+			"Please use `owner_id` field for moving network to/from VDC Group")
+	}
+
+	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
+	// issues when created in VDC.
 	vcdClient.lockIfOwnerIsVdcGroup(d)
 	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error retrieving Org: %s", err)
+		return diag.Errorf("[isolated network create v2] error retrieving Org: %s", err)
 	}
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
@@ -190,12 +201,14 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
+	// issues when created in VDC.
 	vcdClient.lockIfOwnerIsVdcGroup(d)
 	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error retrieving Org: %s", err)
+		return diag.Errorf("[isolated network create v2] error retrieving Org: %s", err)
 	}
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())

@@ -104,21 +104,31 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 func datasourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt imported network read] error retrieving VDC: %s", err)
+		return diag.Errorf("error retrieving Org: %s", err)
 	}
+
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
 
 	if !nameOrFilterIsSet(d) {
 		return diag.Errorf(noNameOrFilterError, "vcd_nsxt_network_imported")
 	}
 
-	name := d.Get("name").(string)
+	networkName := d.Get("name").(string)
 
 	// Try to search by filter if it exists
 	var network *govcd.OpenApiOrgVdcNetwork
 	filter, hasFilter := d.GetOk("filter")
-	if hasFilter && name == "" {
+	switch {
+	// User supplied `filter`, search in the `vdc` (in data source or inherited)
+	case hasFilter && networkName == "" && (vdcField != "" || inheritedVdcField != ""):
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("error getting VDC: %s", err)
+		}
 		// This is an "imported" network, but "isolated" is fed into filtering because
 		// network.LinkType for "imported" network has the same value as "isolated"
 		// (network.LinkType=2)
@@ -126,19 +136,32 @@ func datasourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.Resourc
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	// TODO - XML Query based API does not support VDC Group networks (does not return them)
+	// User supplied `filter` and `edge_gateway_id` (search scope can be detected - VDC or VDC Group)
+	// case hasFilter && edgeGatewayId != "":
+	// 	network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "imported")
+	// 	if err != nil {
+	// 		return diag.FromErr(err)
+	// 	}
+	// User supplied `name` and also `edge_gateway_id`
+	case ownerIdField != "" && networkName != "":
+		network, err = org.GetOpenApiOrgVdcNetworkByNameAndOwnerId(networkName, ownerIdField)
+		if err != nil {
+			return diag.Errorf("[imported network read v2] error getting Org VDC network: %s", err)
+		}
+	// Users supplied only `name` (VDC reference will be used from resource or inherited from provider)
+	case networkName != "":
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("error getting VDC: %s", err)
+		}
 
-	}
-
-	if name != "" {
 		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
 		if err != nil {
-			return diag.Errorf("[nsxt imported network read] error getting Org VDC network: %s", err)
+			return diag.Errorf("[imported network read v2] error getting Org VDC network: %s", err)
 		}
-	}
-
-	// Fix coverity warning
-	if network == nil {
-		return diag.Errorf("[datasourceVcdNsxtNetworkImportedRead] error defining network")
+	default:
+		return diag.Errorf("error - not all parameters specified for network lookup")
 	}
 
 	if !network.IsImported() {

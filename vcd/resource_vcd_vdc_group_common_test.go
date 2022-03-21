@@ -75,6 +75,13 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 		return
 	}
 
+	// use cache fields to check that IDs remain the same accross multiple steps (this proved that
+	// resources were not recreated)
+	edgeGatewayId := testCachedFieldValue{}
+	routedNetId := testCachedFieldValue{}
+	isolatedNetId := testCachedFieldValue{}
+	importedNetId := testCachedFieldValue{}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -85,15 +92,19 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
+					edgeGatewayId.cacheTestResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_org_vdc.newVdc.0", "id"),
 
+					routedNetId.cacheTestResourceFieldValue("vcd_network_routed_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.nsxt-backed", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
 					resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "owner_id", "vcd_org_vdc.newVdc.0", "id"),
 
+					isolatedNetId.cacheTestResourceFieldValue("vcd_network_isolated_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.nsxt-backed", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
 					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "owner_id", "vcd_org_vdc.newVdc.0", "id"),
 
+					importedNetId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.nsxt-backed", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_org_vdc.newVdc.0", "id"),
 				),
@@ -101,6 +112,7 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
+					edgeGatewayId.testCheckCachedResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "vdc", "vcd_vdc_group.test1", "name"),
 
@@ -111,10 +123,13 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					//
 					// resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					// resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
+					routedNetId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.nsxt-backed", "id"),
 
+					isolatedNetId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
 
+					importedNetId.testCheckCachedResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
 				),
@@ -124,15 +139,19 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 				// reports 'owner_id' and 'vdc' fields to correct name.
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
+					edgeGatewayId.testCheckCachedResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "vdc", "vcd_vdc_group.test1", "name"),
 
+					routedNetId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
 
+					isolatedNetId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
 
+					importedNetId.testCheckCachedResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
 				),

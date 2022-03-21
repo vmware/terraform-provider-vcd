@@ -43,9 +43,10 @@ VDC Group support requires:
 * Terraform Provider VCD 3.6+
 * VMware Cloud Director 10.2+
 
--> For changed fields the previous behavior is deprecated, but still supported. To use VDC Groups
-though, one needs to migrate to new configuration, which shouldn't require rebuilding
-infrastructure.
+-> For changed fields (these are usually `vdc` and `owner_id`) the previous behavior is deprecated,
+but still supported. To use VDC Groups though, one needs to migrate to new configuration, which
+shouldn't require rebuilding infrastructure.
+
 ## Terraform Provider VCD support 
 
 This document describes features that were introduced in Terraform Provider VCD 3.6.0+ for VDC Group
@@ -59,14 +60,15 @@ section.
 ### List of resources that support VDC Groups (NSX-T only)
 
 The following list of resources (and their corresponding data sources) support NSX-T VDC Groups (no
-NSX-V support is provided):
+NSX-V VDC Group support is provided):
 
 * [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway)
 * [vcd_network_routed_v2](/providers/vmware/vcd/latest/docs/resources/network_routed_v2)
 * [vcd_network_isolated_v2](/providers/vmware/vcd/latest/docs/resources/network_isolated_v2)
 * [vcd_nsxt_network_imported](/providers/vmware/vcd/latest/docs/resources/nsxt_network_imported)
 
-The next sub-sections will cover some specifics for resources that have it.
+The next sub-sections will cover some specifics for resources that have it. Resources that are not
+explicitly mentioned here simply introduce `owner_id` field over deprecated `vdc` field.
 
 #### Resource vcd_nsxt_edgegateway
 

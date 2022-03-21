@@ -45,7 +45,6 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "INTERNAL"),
-					// resource.TestCheckResourceAttrPair("data.vcd_edgegateway.existing", "id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
 			{
@@ -53,7 +52,6 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "SUBINTERFACE"),
-					// resource.TestCheckResourceAttrPair("data.vcd_edgegateway.existing", "id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
 			// Check that import works
@@ -112,7 +110,6 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
-					// resource.TestCheckResourceAttrPair("data.vcd_edgegateway.existing", "id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
 			// Check that import works

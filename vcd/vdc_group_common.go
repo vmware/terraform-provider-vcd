@@ -38,3 +38,75 @@ func getVdcOrVdcGroupVerifierByOwnerId(org *govcd.Org, ownerId string) (vdcOrVdc
 
 	return vdcOrGroup, nil
 }
+
+// validateIfVdcOrVdcGroupIsNsxt evaluates VDC field priority using pickVdcIdByPriority and then
+// checks if that VDC or VDC Group is an NSX-T one and returns an error if not
+func validateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) error {
+	usedFieldId, _, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
+
+	if err != nil {
+		return fmt.Errorf("error finding VDC ID: %s", err)
+	}
+
+	isNsxt, err := isBackedByNsxt(org, usedFieldId)
+	if err != nil {
+		return fmt.Errorf("error checking if VDC or VDC Group is backed by NSX-T: %s", err)
+	}
+
+	if !isNsxt {
+		return fmt.Errorf("this resource does not support NSX-V")
+	}
+
+	return nil
+}
+
+// pickVdcIdByPriority picks primary field to be used from the specified ones. The priority is such
+// * `owner_id`
+// * `vdc` at resource level
+// * `vdc` inherited from provider configuration
+func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) (string, *govcd.Vdc, error) {
+	if ownerIdField != "" {
+		return ownerIdField, nil, nil
+	}
+
+	if vdcField != "" {
+		vdc, err := org.GetVDCByName(vdcField, false)
+		if err != nil {
+			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+		}
+		return vdc.Vdc.ID, vdc, nil
+	}
+
+	if inheritedVdcField != "" {
+		vdc, err := org.GetVDCByName(inheritedVdcField, false)
+		if err != nil {
+			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+		}
+		return vdc.Vdc.ID, vdc, nil
+	}
+
+	return "", nil, fmt.Errorf("none of the fields `owner_id`, `vdc` and provider inherited `vdc`")
+}
+
+// isBackedByNsxt accepts VDC or VDC Group ID and checks if it is backed by NSX-T
+func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
+	var vdcOrGroup vdcOrVdcGroupVerifier
+	var err error
+
+	switch {
+	case govcd.OwnerIsVdc(vdcOrVdcGroupId):
+		vdcOrGroup, err = org.GetVDCById(vdcOrVdcGroupId, false)
+		if err != nil {
+			return false, err
+		}
+	case govcd.OwnerIsVdcGroup(vdcOrVdcGroupId):
+		vdcOrGroup, err = org.GetVdcGroupById(vdcOrVdcGroupId)
+		if err != nil {
+			return false, err
+		}
+	default:
+		return false, fmt.Errorf("error determining VDC type by ID '%s'", vdcOrVdcGroupId)
+	}
+
+	return vdcOrGroup.IsNsxt(), nil
+}
