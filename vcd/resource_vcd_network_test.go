@@ -529,6 +529,8 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		"Tags":                  "network",
 		"MetadataKey":           def.metadataKey,
 		"MetadataValue":         def.metadataValue,
+		"MetadataKey2":          "key2",
+		"MetadataValue2":        "value2",
 	}
 	var network govcd.OrgVDCNetwork
 	configText := templateFill(def.configText, params)
@@ -1008,7 +1010,7 @@ resource "vcd_network_isolated" "{{.ResourceName}}" {
   }
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
-    key2 = "value2"
+	{{.MetadataKey2}} = "{{.MetadataValue2}}"
   }
 }
 `
@@ -1101,7 +1103,7 @@ resource "vcd_network_direct" "{{.ResourceName}}" {
 
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
-    key2 = "value2"
+    {{.MetadataKey2}} = "{{.MetadataValue2}}"
   }
 }
 `
@@ -1122,7 +1124,7 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
 
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
-    key2 = "value2"
+    {{.MetadataKey2}} = "{{.MetadataValue2}}"
   }
 }
 `

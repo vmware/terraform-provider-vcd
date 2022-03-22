@@ -291,7 +291,7 @@ func resourceVcdNetworkRoutedCreate(c context.Context, d *schema.ResourceData, m
 
 	err = createOrUpdateNetworkMetadata(d, network)
 	if err != nil {
-		return diag.Errorf("error adding metadata to network: %s", err)
+		return diag.Errorf("error adding metadata to routed network: %s", err)
 	}
 
 	return resourceVcdNetworkRoutedRead(c, d, meta)
@@ -391,7 +391,7 @@ func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta
 
 	metadata, err := network.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find network metadata: %s", err)
+		log.Printf("[DEBUG] Unable to find routed network metadata: %s", err)
 		return diag.Errorf("[routed network read] unable to find network metadata %s", err)
 	}
 

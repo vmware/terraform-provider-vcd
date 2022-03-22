@@ -251,13 +251,13 @@ func resourceVcdNetworkIsolatedCreate(c context.Context, d *schema.ResourceData,
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
 	if err != nil {
-		return diag.Errorf("error retrieving network %s after creation", networkName)
+		return diag.Errorf("error retrieving isolated network %s after creation", networkName)
 	}
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	err = createOrUpdateNetworkMetadata(d, network)
 	if err != nil {
-		return diag.Errorf("error adding metadata to network: %s", err)
+		return diag.Errorf("error adding metadata to isolated network: %s", err)
 	}
 
 	return resourceVcdNetworkIsolatedRead(c, d, meta)
@@ -272,11 +272,11 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	var err error
 
 	switch origin {
-	case "resource", "urce":
+	case "resource", "datasource":
 		// From the resource creation or data source, we need to retrieve the network from scratch
 		vcdClient := meta.(*VCDClient)
 
-		network, err = getNetwork(d, vcdClient, origin == "urce", "isolated")
+		network, err = getNetwork(d, vcdClient, origin == "datasource", "isolated")
 
 		if err != nil {
 			if origin == "resource" {
@@ -340,7 +340,7 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 
 	metadata, err := network.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find network metadata: %s", err)
+		log.Printf("[DEBUG] Unable to find isolated network metadata: %s", err)
 		return diag.Errorf("[isolated network read] unable to find network metadata %s", err)
 	}
 

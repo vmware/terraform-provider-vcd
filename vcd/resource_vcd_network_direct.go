@@ -143,7 +143,7 @@ func resourceVcdNetworkDirectCreate(c context.Context, d *schema.ResourceData, m
 
 	err = createOrUpdateNetworkMetadata(d, network)
 	if err != nil {
-		return diag.Errorf("error adding metadata to network: %s", err)
+		return diag.Errorf("error adding metadata to direct network: %s", err)
 	}
 
 	return resourceVcdNetworkDirectRead(c, d, meta)
@@ -236,7 +236,7 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 
 	metadata, err := network.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find network metadata: %s", err)
+		log.Printf("[DEBUG] Unable to find direct network metadata: %s", err)
 		return diag.FromErr(err)
 	}
 
