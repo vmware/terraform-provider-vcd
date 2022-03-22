@@ -282,7 +282,6 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 
 // Deletes org
 func resourceOrgDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
 
 	//DELETING
 	vcdClient := m.(*VCDClient)
@@ -318,13 +317,13 @@ func resourceOrgDelete(ctx context.Context, d *schema.ResourceData, m interface{
 		log.Printf("[DEBUG] Error deleting org %s: %s", orgName, err)
 		return diag.FromErr(err)
 	}
+
 	log.Printf("[TRACE] Org %s deleted", orgName)
-	return diags
+	return nil
 }
 
 // Update the resource
 func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
 
 	vcdClient := m.(*VCDClient)
 
@@ -371,7 +370,7 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)
-	return diags
+	return nil
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
@@ -440,7 +439,6 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 
 // Retrieves an Org resource from vCD
 func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
 
 	vcdClient := m.(*VCDClient)
 
@@ -470,7 +468,7 @@ func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	if err != nil {
 		log.Printf("[DEBUG] Org %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return diags
+		return nil
 	}
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
@@ -479,7 +477,7 @@ func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+	return nil
 }
 
 // resourceVcdOrgImport is responsible for importing the resource.
