@@ -47,8 +47,8 @@ resource "vcd_org_vdc" "newVdc" {
   enable_fast_provisioning   = true
   delete_force               = true
   delete_recursive           = true
-  elasticity                 = true
   include_vm_memory_overhead = true
+  elasticity                 = true
 }
 
 resource "vcd_vdc_group" "test1" {
