@@ -146,7 +146,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 	case hasFilter && networkName == "" && edgeGatewayId != "":
 		// Lookup Edge Gateway to know parent VDC or VDC Group (routed networks always exists in the
 		// same VDC/VDC Group as Edge Gateway)
-		anyEdgeGateway, err := org.GetAnyEdgeGatewayById(edgeGatewayId)
+		anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(edgeGatewayId)
 		if err != nil {
 			return diag.Errorf("error retrieving Edge Gateway structure: %s", err)
 		}
@@ -188,7 +188,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 	case edgeGatewayId != "" && networkName != "":
 		// Lookup Edge Gateway to know parent VDC or VDC Group (routed networks always exists in the
 		// same VDC/VDC Group as Edge Gateway)
-		anyEdgeGateway, err := org.GetAnyEdgeGatewayById(edgeGatewayId)
+		anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(edgeGatewayId)
 		if err != nil {
 			return diag.Errorf("error retrieving Edge Gateway structure: %s", err)
 		}

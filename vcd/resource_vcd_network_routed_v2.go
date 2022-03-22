@@ -338,7 +338,7 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 		return nil, fmt.Errorf("error getting Org: %s", err)
 	}
 
-	anyEdgeGateway, err := org.GetAnyEdgeGatewayById(d.Get("edge_gateway_id").(string))
+	anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(d.Get("edge_gateway_id").(string))
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Edge Gateway structure: %s", err)
 	}
@@ -383,7 +383,7 @@ func getParentEdgeGatewayOwnerId(vcdClient *VCDClient, d *schema.ResourceData) (
 		return "", nil, fmt.Errorf("[routed network create v2] error retrieving Org: %s", err)
 	}
 
-	anyEdgeGateway, err := org.GetAnyEdgeGatewayById(d.Get("edge_gateway_id").(string))
+	anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(d.Get("edge_gateway_id").(string))
 	if err != nil {
 		return "", nil, fmt.Errorf("error retrieving Edge Gateway structure: %s", err)
 	}
