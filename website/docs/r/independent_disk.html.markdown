@@ -49,7 +49,7 @@ The following arguments are supported:
 * `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI`, `ahci` for `SATA` and (*v3.6+*) `nvmecontroller` for `NVME`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
 * `sharing_type` - (Optional, *v3.6+* and VCD 10.2+) This is the sharing type. Values can be: `DiskSharing`,`ControllerSharing`"
-* `metadata` - (*v3.6+*) - (Optional) Key value map of metadata to assign to this disk.
+* `metadata` - (*v3.6+*) - (Optional) Key value map of metadata to assign to this independent disk.
 
 
 ## Attribute reference

@@ -524,7 +524,7 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 
 	metadata, err := disk.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to get Disk metadata")
+		log.Printf("[DEBUG] Unable to get Independent disk metadata")
 		return fmt.Errorf("unable to get Independent disk metadata %s", err)
 	}
 	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {

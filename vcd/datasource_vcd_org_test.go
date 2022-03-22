@@ -108,7 +108,7 @@ resource "vcd_org" "{{.OrgName2}}" {
   delay_after_power_on_seconds    = data.vcd_org.{{.OrgName1}}.delay_after_power_on_seconds
   delete_force                    = "true"
   delete_recursive                = "true"
- vapp_lease {
+  vapp_lease {
     maximum_runtime_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_lease.0.maximum_runtime_lease_in_sec
     power_off_on_runtime_lease_expiration = data.vcd_org.{{.OrgName1}}.vapp_lease.0.power_off_on_runtime_lease_expiration
     maximum_storage_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_lease.0.maximum_storage_lease_in_sec
