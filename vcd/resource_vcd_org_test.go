@@ -71,83 +71,95 @@ func TestAccVcdOrgFull(t *testing.T) {
 		return
 	}
 	type testOrgData struct {
-		name                  string
-		enabled               bool
-		canPublishCatalogs    bool
-		deployedVmQuota       int
-		storedVmQuota         int
-		runtimeLease          int
-		powerOffonLeaseExp    bool
-		vappStorageLease      int
-		vappDeleteOnLeaseExp  bool
-		templStorageLease     int
-		templDeleteOnLeaseExp bool
+		name                         string
+		enabled                      bool
+		canPublishCatalogs           bool
+		canPublishExternalCatalogs   bool
+		canSubscribeExternalCatalogs bool
+		deployedVmQuota              int
+		storedVmQuota                int
+		runtimeLease                 int
+		powerOffonLeaseExp           bool
+		vappStorageLease             int
+		vappDeleteOnLeaseExp         bool
+		templStorageLease            int
+		templDeleteOnLeaseExp        bool
 	}
 	var orgList = []testOrgData{
 		{
-			name:                  "org1",
-			enabled:               true,
-			canPublishCatalogs:    false,
-			deployedVmQuota:       0,
-			storedVmQuota:         0,
-			runtimeLease:          0, // never expires
-			powerOffonLeaseExp:    true,
-			vappStorageLease:      0, // never expires
-			templDeleteOnLeaseExp: true,
-			templStorageLease:     0, // never expires
-			vappDeleteOnLeaseExp:  true,
+			name:                         "org1",
+			enabled:                      true,
+			canPublishCatalogs:           false,
+			canPublishExternalCatalogs:   false,
+			canSubscribeExternalCatalogs: false,
+			deployedVmQuota:              0,
+			storedVmQuota:                0,
+			runtimeLease:                 0, // never expires
+			powerOffonLeaseExp:           true,
+			vappStorageLease:             0, // never expires
+			templDeleteOnLeaseExp:        true,
+			templStorageLease:            0, // never expires
+			vappDeleteOnLeaseExp:         true,
 		},
 		{
-			name:                  "org2",
-			enabled:               false,
-			canPublishCatalogs:    true,
-			deployedVmQuota:       1,
-			storedVmQuota:         1,
-			runtimeLease:          3600, // 1 hour
-			powerOffonLeaseExp:    true,
-			vappStorageLease:      3600, // 1 hour
-			templDeleteOnLeaseExp: true,
-			templStorageLease:     3600, // 1 hour
-			vappDeleteOnLeaseExp:  true,
+			name:                         "org2",
+			enabled:                      false,
+			canPublishCatalogs:           true,
+			canPublishExternalCatalogs:   true,
+			canSubscribeExternalCatalogs: true,
+			deployedVmQuota:              1,
+			storedVmQuota:                1,
+			runtimeLease:                 3600, // 1 hour
+			powerOffonLeaseExp:           true,
+			vappStorageLease:             3600, // 1 hour
+			templDeleteOnLeaseExp:        true,
+			templStorageLease:            3600, // 1 hour
+			vappDeleteOnLeaseExp:         true,
 		},
 		{
-			name:                  "org3",
-			enabled:               true,
-			canPublishCatalogs:    true,
-			deployedVmQuota:       10,
-			storedVmQuota:         10,
-			runtimeLease:          3600 * 24, // 1 day
-			powerOffonLeaseExp:    false,
-			vappStorageLease:      3600 * 24 * 30, // 1 month
-			templDeleteOnLeaseExp: false,
-			templStorageLease:     3600 * 24 * 365, // 1 year
-			vappDeleteOnLeaseExp:  false,
+			name:                         "org3",
+			enabled:                      true,
+			canPublishCatalogs:           true,
+			canPublishExternalCatalogs:   true,
+			canSubscribeExternalCatalogs: false,
+			deployedVmQuota:              10,
+			storedVmQuota:                10,
+			runtimeLease:                 3600 * 24, // 1 day
+			powerOffonLeaseExp:           false,
+			vappStorageLease:             3600 * 24 * 30, // 1 month
+			templDeleteOnLeaseExp:        false,
+			templStorageLease:            3600 * 24 * 365, // 1 year
+			vappDeleteOnLeaseExp:         false,
 		},
 		{
-			name:                  "org4",
-			enabled:               false,
-			canPublishCatalogs:    false,
-			deployedVmQuota:       100,
-			storedVmQuota:         100,
-			runtimeLease:          3600 * 24 * 15, // 15 days
-			powerOffonLeaseExp:    false,
-			vappStorageLease:      3600 * 24 * 15, // 15 days
-			templDeleteOnLeaseExp: false,
-			templStorageLease:     3600 * 24 * 15, // 15 days
-			vappDeleteOnLeaseExp:  false,
+			name:                         "org4",
+			enabled:                      false,
+			canPublishCatalogs:           false,
+			canPublishExternalCatalogs:   true,
+			canSubscribeExternalCatalogs: true,
+			deployedVmQuota:              100,
+			storedVmQuota:                100,
+			runtimeLease:                 3600 * 24 * 15, // 15 days
+			powerOffonLeaseExp:           false,
+			vappStorageLease:             3600 * 24 * 15, // 15 days
+			templDeleteOnLeaseExp:        false,
+			templStorageLease:            3600 * 24 * 15, // 15 days
+			vappDeleteOnLeaseExp:         false,
 		},
 		{
-			name:                  "org5",
-			enabled:               true,
-			canPublishCatalogs:    true,
-			deployedVmQuota:       200,
-			storedVmQuota:         200,
-			runtimeLease:          3600 * 24 * 7, // 7 days (the default)
-			powerOffonLeaseExp:    false,
-			vappStorageLease:      3600 * 24 * 14, // 14 days (the default)
-			templDeleteOnLeaseExp: false,
-			templStorageLease:     3600 * 24 * 30, // 30 days (the default)
-			vappDeleteOnLeaseExp:  false,
+			name:                         "org5",
+			enabled:                      true,
+			canPublishCatalogs:           true,
+			canPublishExternalCatalogs:   false,
+			canSubscribeExternalCatalogs: true,
+			deployedVmQuota:              200,
+			storedVmQuota:                200,
+			runtimeLease:                 3600 * 24 * 7, // 7 days (the default)
+			powerOffonLeaseExp:           false,
+			vappStorageLease:             3600 * 24 * 14, // 14 days (the default)
+			templDeleteOnLeaseExp:        false,
+			templStorageLease:            3600 * 24 * 30, // 30 days (the default)
+			vappDeleteOnLeaseExp:         false,
 		},
 	}
 	willSkip := false
@@ -155,21 +167,23 @@ func TestAccVcdOrgFull(t *testing.T) {
 	for _, od := range orgList {
 
 		var params = StringMap{
-			"FuncName":              "TestAccVcdOrgFull" + "_" + od.name,
-			"OrgName":               od.name,
-			"FullName":              "Full " + od.name,
-			"Description":           "Organization " + od.name,
-			"CanPublishCatalogs":    od.canPublishCatalogs,
-			"DeployedVmQuota":       od.deployedVmQuota,
-			"StoredVmQuota":         od.storedVmQuota,
-			"IsEnabled":             od.enabled,
-			"RuntimeLease":          od.runtimeLease,
-			"PowerOffOnLeaseExp":    od.powerOffonLeaseExp,
-			"VappStorageLease":      od.vappStorageLease,
-			"VappDeleteOnLeaseExp":  od.vappDeleteOnLeaseExp,
-			"TemplStorageLease":     od.templStorageLease,
-			"TemplDeleteOnLeaseExp": od.templDeleteOnLeaseExp,
-			"Tags":                  "org",
+			"FuncName":                     "TestAccVcdOrgFull" + "_" + od.name,
+			"OrgName":                      od.name,
+			"FullName":                     "Full " + od.name,
+			"Description":                  "Organization " + od.name,
+			"CanPublishCatalogs":           od.canPublishCatalogs,
+			"CanPublishExternalCatalogs":   od.canPublishExternalCatalogs,
+			"CanSubscribeExternalCatalogs": od.canSubscribeExternalCatalogs,
+			"DeployedVmQuota":              od.deployedVmQuota,
+			"StoredVmQuota":                od.storedVmQuota,
+			"IsEnabled":                    od.enabled,
+			"RuntimeLease":                 od.runtimeLease,
+			"PowerOffOnLeaseExp":           od.powerOffonLeaseExp,
+			"VappStorageLease":             od.vappStorageLease,
+			"VappDeleteOnLeaseExp":         od.vappDeleteOnLeaseExp,
+			"TemplStorageLease":            od.templStorageLease,
+			"TemplDeleteOnLeaseExp":        od.templDeleteOnLeaseExp,
+			"Tags":                         "org",
 			"MetadataKey":           "key1",
 			"MetadataValue":         "value1",
 		}
@@ -187,6 +201,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 		updateParams["FullName"] = params["FullName"].(string) + " updated"
 		updateParams["Description"] = params["Description"].(string) + " updated"
 		updateParams["CanPublishCatalogs"] = !params["CanPublishCatalogs"].(bool)
+		updateParams["CanPublishExternalCatalogs"] = !params["CanPublishExternalCatalogs"].(bool)
+		updateParams["CanSubscribeExternalCatalogs"] = !params["CanSubscribeExternalCatalogs"].(bool)
 		updateParams["IsEnabled"] = !params["IsEnabled"].(bool)
 		updateParams["MetadataKey"] = "key3"
 		updateParams["MetadataValue"] = "value3"
@@ -196,10 +212,10 @@ func TestAccVcdOrgFull(t *testing.T) {
 			willSkip = true
 			continue
 		}
-		fmt.Printf("org: %-5s - enabled %-5v - catalogs %-5v - quotas [%3d %3d] - vapp {%10d %5v %10d %5v} - tmpl {%10d %5v}\n",
-			od.name, od.enabled, od.canPublishCatalogs, od.deployedVmQuota, od.storedVmQuota,
-			od.runtimeLease, od.powerOffonLeaseExp, od.vappStorageLease, od.vappDeleteOnLeaseExp,
-			od.templStorageLease, od.templDeleteOnLeaseExp)
+		fmt.Printf("org: %-5s - enabled %-5v - catalogs %-5v - externalCatalogs %-5v - subscribeExternalCatalogs %-5v - quotas [%3d %3d] - vapp {%10d %5v %10d %5v} - tmpl {%10d %5v}\n",
+			od.name, od.enabled, od.canPublishCatalogs, od.canPublishExternalCatalogs, od.canSubscribeExternalCatalogs,
+			od.deployedVmQuota, od.storedVmQuota, od.runtimeLease, od.powerOffonLeaseExp, od.vappStorageLease,
+			od.vappDeleteOnLeaseExp, od.templStorageLease, od.templDeleteOnLeaseExp)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpdated)
 
@@ -223,6 +239,10 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "is_enabled", fmt.Sprintf("%v", od.enabled)),
 						resource.TestCheckResourceAttr(
 							resourceName, "can_publish_catalogs", fmt.Sprintf("%v", od.canPublishCatalogs)),
+						resource.TestCheckResourceAttr(
+							resourceName, "can_publish_external_catalogs", fmt.Sprintf("%v", od.canPublishExternalCatalogs)),
+						resource.TestCheckResourceAttr(
+							resourceName, "can_subscribe_external_catalogs", fmt.Sprintf("%v", od.canSubscribeExternalCatalogs)),
 						resource.TestCheckResourceAttr(
 							resourceName, "deployed_vm_quota", fmt.Sprintf("%d", od.deployedVmQuota)),
 						resource.TestCheckResourceAttr(
@@ -258,6 +278,10 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "description", updateParams["Description"].(string)),
 						resource.TestCheckResourceAttr(
 							resourceName, "can_publish_catalogs", fmt.Sprintf("%v", !od.canPublishCatalogs)),
+						resource.TestCheckResourceAttr(
+							resourceName, "can_publish_external_catalogs", fmt.Sprintf("%v", !od.canPublishExternalCatalogs)),
+						resource.TestCheckResourceAttr(
+							resourceName, "can_subscribe_external_catalogs", fmt.Sprintf("%v", !od.canSubscribeExternalCatalogs)),
 						resource.TestCheckResourceAttr(
 							resourceName, "deployed_vm_quota", fmt.Sprintf("%d", updateParams["DeployedVmQuota"].(int))),
 						resource.TestCheckResourceAttr(
@@ -352,15 +376,17 @@ resource "vcd_org" "{{.OrgName}}" {
 
 const testAccCheckVcdOrgFull = `
 resource "vcd_org" "{{.OrgName}}" {
-  name                 = "{{.OrgName}}"
-  full_name            = "{{.FullName}}"
-  description          = "{{.Description}}"
-  can_publish_catalogs = "{{.CanPublishCatalogs}}"
-  deployed_vm_quota    = {{.DeployedVmQuota}}
-  stored_vm_quota      = {{.StoredVmQuota}}
-  is_enabled           = "{{.IsEnabled}}"
-  delete_force         = "true"
-  delete_recursive     = "true"
+  name                            = "{{.OrgName}}"
+  full_name                       = "{{.FullName}}"
+  description                     = "{{.Description}}"
+  can_publish_catalogs            = "{{.CanPublishCatalogs}}"
+  can_publish_external_catalogs   = "{{.CanPublishExternalCatalogs}}"
+  can_subscribe_external_catalogs = "{{.CanSubscribeExternalCatalogs}}"
+  deployed_vm_quota               = {{.DeployedVmQuota}}
+  stored_vm_quota                 = {{.StoredVmQuota}}
+  is_enabled                      = "{{.IsEnabled}}"
+  delete_force                    = "true"
+  delete_recursive                = "true"
   vapp_lease {
     maximum_runtime_lease_in_sec          = {{.RuntimeLease}}
     power_off_on_runtime_lease_expiration = {{.PowerOffOnLeaseExp}}

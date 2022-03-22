@@ -1,6 +1,6 @@
 // /*****************************************************************
 // * terraform-provider-vcloud-director
-// * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+// * Copyright (c) 2022 VMware, Inc. All Rights Reserved.
 // * SPDX-License-Identifier: BSD-2-Clause
 // ******************************************************************/
 
@@ -75,12 +75,19 @@ func resourceOrg() *schema.Resource {
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
-			"metadata": {
-				Type:        schema.TypeMap,
+			"can_publish_external_catalogs":{
+				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
+				Default:     false,
+				Description: "True if this organization is allowed to publish external catalogs.",
 			},
-			"vapp_lease": {
+			"can_subscribe_external_catalogs": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "True if this organization is allowed to subscribe to external catalogs.",
+			},
+			"vapp_lease":{
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -160,7 +167,7 @@ func resourceOrg() *schema.Resource {
 }
 
 // creates an organization based on defined resource
-func resourceOrgCreate(c context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	orgName, fullName, err := getOrgNames(d)
@@ -199,7 +206,7 @@ func resourceOrgCreate(c context.Context, d *schema.ResourceData, m interface{})
 		return diag.Errorf("error adding metadata to Org: %s", err)
 	}
 
-	return resourceOrgRead(c, d, m)
+	return resourceOrgRead(ctx, d, m)
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
@@ -256,12 +263,16 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	storedVmQuota := d.Get("stored_vm_quota").(int)
 	delay := d.Get("delay_after_power_on_seconds").(int)
 	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
+	canPublishExternalCatalogs := d.Get("can_publish_external_catalogs").(bool)
+	canSubscribeExternalCatalogs := d.Get("can_subscribe_external_catalogs").(bool)
 
 	generalSettings := &types.OrgGeneralSettings{
 		DeployedVMQuota:          deployedVmQuota,
 		StoredVMQuota:            storedVmQuota,
 		DelayAfterPowerOnSeconds: delay,
 		CanPublishCatalogs:       canPublishCatalogs,
+		CanPublishExternally:     canPublishExternalCatalogs,
+		CanSubscribe:             canSubscribeExternalCatalogs,
 	}
 
 	settings.OrgGeneralSettings = generalSettings
@@ -312,6 +323,7 @@ func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{})
 		log.Printf("[DEBUG] Error deleting org %s: %s", orgName, err)
 		return diag.FromErr(err)
 	}
+
 	log.Printf("[TRACE] Org %s deleted", orgName)
 	return nil
 }
@@ -381,6 +393,8 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	dSet(d, "deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
 	dSet(d, "stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
 	dSet(d, "can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
+	dSet(d, "can_publish_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally)
+	dSet(d, "can_subscribe_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe)
 	dSet(d, "delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
 	var err error
 
@@ -445,6 +459,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 
 // Retrieves an Org resource from vCD
 func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -477,7 +492,12 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	}
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
-	return diag.FromErr(setOrgData(d, adminOrg))
+
+	err = setOrgData(d, adminOrg)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // resourceVcdOrgImport is responsible for importing the resource.
