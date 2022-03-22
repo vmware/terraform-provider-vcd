@@ -3,9 +3,8 @@ package vcd
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"log"
 )
 
 func datasourceVcdOrg() *schema.Resource {
@@ -44,6 +43,16 @@ func datasourceVcdOrg() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this organization is allowed to share catalogs.",
+			},
+			"can_publish_external_catalogs": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this organization is allowed to publish external catalogs.",
+			},
+			"can_subscribe_external_catalogs": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
 			"vapp_lease": {
 				Type:     schema.TypeList,
@@ -104,6 +113,8 @@ func datasourceVcdOrg() *schema.Resource {
 }
 
 func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	vcdClient := meta.(*VCDClient)
 
 	identifier := d.Get("name").(string)
@@ -117,9 +128,10 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	}
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
+
 	err = setOrgData(d, adminOrg)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+	return diags
 }
