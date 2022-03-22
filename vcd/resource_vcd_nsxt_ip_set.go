@@ -36,18 +36,18 @@ func resourceVcdNsxtIpSet() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "IP set name",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge Gateway ID in which IP Set is located",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP set description",
@@ -113,7 +113,7 @@ func resourceVcdNsxtIpSetUpdate(ctx context.Context, d *schema.ResourceData, met
 	return resourceVcdNsxtIpSetRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtIpSetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtIpSetRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -138,7 +138,7 @@ func resourceVcdNsxtIpSetRead(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVcdNsxtIpSetDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtIpSetDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -163,7 +163,7 @@ func resourceVcdNsxtIpSetDelete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceVcdNsxtIpSetImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtIpSetImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge_gateway_name.ip_set_name")
