@@ -27,13 +27,13 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": {
+			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
 				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
-			"filter": {
+			"filter": &schema.Schema{
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				MinItems:     1,
@@ -47,56 +47,51 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 					},
 				},
 			},
-			"edge_gateway_id": {
+			"edge_gateway_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Edge gateway name in which Routed network is located",
 			},
-			"description": {
+			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network description",
 			},
-			"interface_type": {
+			"interface_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE'",
 			},
-			"gateway": {
+			"gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": {
+			"prefix_length": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Network prefix",
 			},
-			"dns1": {
+			"dns1": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": {
+			"dns2": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": {
+			"dns_suffix": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": {
+			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
-			},
-			"metadata": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
 			},
 		},
 	}
@@ -104,12 +99,12 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 
 var networkV2IpRangeComputed = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"start_address": {
+		"start_address": &schema.Schema{
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Start address of the IP range",
 		},
-		"end_address": {
+		"end_address": &schema.Schema{
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "End address of the IP range",
