@@ -160,6 +160,17 @@ resource "vcd_network_isolated_v2" "net1" {
 }
 `
 
+//TestAccVcdNetworkIsolatedV2NsxtMigration aims to test backwards compatibility of `vdc` field (in
+//resource and inherited from provider configuration) and the possibility to migrate configuration
+//from `vdc` field to `owner_id` without recreating resource.
+// * Step 1 - creates prerequisites - 2 VDCs and a VDC Group
+// * Step 2 - creates an Isolated network using legacy (pre 3.6.0) configuration by using a VDC field
+// * Step 3 - replaces field `vdc` with `owner_id` using ID for the same VDC which was used to create in Step 2
+// * Step 4 - migrates Isolated network to a VDC Group by using VDC Group ID for `owner_id`
+// * Step 5 - verifies that `terraform import` works when an imported network is a member of VDC
+// Group
+// * Step 6 - migrates Isolated network from VDC Group back to VDC (using the same configuration as in Step 3)
+// * Step 7 - checks out that import of network being in different VDC still works
 func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
@@ -203,9 +214,9 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 	configText4 := templateFill(testAccVcdNetworkIsolatedV2NsxtMigrationStep4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
-	params["FuncName"] = t.Name() + "-step5"
-	configText5 := templateFill(testAccVcdNetworkIsolatedV2NsxtMigrationStep3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
+	params["FuncName"] = t.Name() + "-step6"
+	configText6 := templateFill(testAccVcdNetworkIsolatedV2NsxtMigrationStep6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText6)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -250,13 +261,25 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5,
+				ResourceName:      "vcd_network_isolated_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
+			},
+			{
+				Config: configText6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
 				),
+			},
+			{
+				ResourceName:      "vcd_network_isolated_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name()+"-1", t.Name()),
 			},
 		},
 	})
@@ -281,8 +304,8 @@ resource "vcd_network_isolated_v2" "net1" {
 
 const testAccVcdNetworkIsolatedV2NsxtMigrationStep3 = testAccVcdVdcGroupNew + `
 resource "vcd_network_isolated_v2" "net1" {
-  org       = "{{.Org}}"
-  owner_id  = vcd_org_vdc.newVdc.0.id
+  org      = "{{.Org}}"
+  owner_id = vcd_org_vdc.newVdc.0.id
 
   name = "{{.NetworkName}}"
   
@@ -312,6 +335,23 @@ resource "vcd_network_isolated_v2" "net1" {
 	  end_address = "1.1.1.20"
 	}
   }
+`
+
+const testAccVcdNetworkIsolatedV2NsxtMigrationStep6 = testAccVcdVdcGroupNew + `
+resource "vcd_network_isolated_v2" "net1" {
+  org      = "{{.Org}}"
+  owner_id = vcd_org_vdc.newVdc.1.id
+
+  name = "{{.NetworkName}}"
+  
+  gateway = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+	start_address = "1.1.1.10"
+	end_address = "1.1.1.20"
+  }
+}
 `
 
 func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {

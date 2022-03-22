@@ -140,7 +140,7 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 	// 	if err != nil {
 	// 		return diag.FromErr(err)
 	// 	}
-	// User supplied `name` and also `edge_gateway_id`
+	// User supplied `name` and also `owner_id`
 	case ownerIdField != "" && networkName != "":
 		network, err = org.GetOpenApiOrgVdcNetworkByNameAndOwnerId(networkName, ownerIdField)
 		if err != nil {

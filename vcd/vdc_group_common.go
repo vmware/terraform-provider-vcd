@@ -43,7 +43,6 @@ func getVdcOrVdcGroupVerifierByOwnerId(org *govcd.Org, ownerId string) (vdcOrVdc
 // checks if that VDC or VDC Group is an NSX-T one and returns an error if not
 func validateIfVdcOrVdcGroupIsNsxt(org *govcd.Org, inheritedVdcField, vdcField, ownerIdField string) error {
 	usedFieldId, _, err := pickVdcIdByPriority(org, inheritedVdcField, vdcField, ownerIdField)
-
 	if err != nil {
 		return fmt.Errorf("error finding VDC ID: %s", err)
 	}
