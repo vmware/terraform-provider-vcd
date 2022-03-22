@@ -1,15 +1,15 @@
 package vcd
 
 import (
-	"fmt"
-	"log"
-
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"log"
 )
 
 func datasourceVcdOrg() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdOrgRead,
+		ReadContext: datasourceVcdOrgRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -43,6 +43,16 @@ func datasourceVcdOrg() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this organization is allowed to share catalogs.",
+			},
+			"can_publish_external_catalogs": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this organization is allowed to publish external catalogs.",
+			},
+			"can_subscribe_external_catalogs": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
 			"vapp_lease": &schema.Schema{
 				Type:     schema.TypeList,
@@ -102,7 +112,9 @@ func datasourceVcdOrg() *schema.Resource {
 	}
 }
 
-func datasourceVcdOrgRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdOrgRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	vcdClient := meta.(*VCDClient)
 
 	identifier := d.Get("name").(string)
@@ -112,9 +124,14 @@ func datasourceVcdOrgRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return fmt.Errorf("org %s not found: %s", identifier, err)
+		return diag.Errorf("org %s not found: %s", identifier, err)
 	}
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
-	return setOrgData(d, adminOrg)
+
+	err = setOrgData(d, adminOrg)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diags
 }
