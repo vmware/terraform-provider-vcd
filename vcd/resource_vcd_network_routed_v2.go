@@ -257,21 +257,21 @@ func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceDat
 	vcdClient := meta.(*VCDClient)
 
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupHandler
-	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if govcd.ContainsNotFound(err) {
 		adminOrg, err := vcdClient.GetAdminOrg(orgName)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
 		}
 
-		vdcOrGroup, err = adminOrg.GetVdcGroupByName(vdcName)
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
 		if err != nil {
 			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
 		}
 	}
 
-	orgNetwork, err := vdcOrGroup.GetOpenApiOrgVdcNetworkByName(networkName)
+	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Org VDC network '%s': %s", networkName, err)
 	}

@@ -19,16 +19,16 @@ type vdcOrVdcGroupHandler interface {
 // interface type `vdcOrVdcGroupHandler` so that some functions can be called directly without
 // careing if the object is VDC or VDC Group
 func getVdcOrVdcGroupVerifierByOwnerId(org *govcd.Org, ownerId string) (vdcOrVdcGroupHandler, error) {
-	var vdcOrGroup vdcOrVdcGroupHandler
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
 	var err error
 	switch {
 	case govcd.OwnerIsVdc(ownerId):
-		vdcOrGroup, err = org.GetVDCById(ownerId, false)
+		vdcOrVdcGroup, err = org.GetVDCById(ownerId, false)
 		if err != nil {
 			return nil, err
 		}
 	case govcd.OwnerIsVdcGroup(ownerId):
-		vdcOrGroup, err = org.GetVdcGroupById(ownerId)
+		vdcOrVdcGroup, err = org.GetVdcGroupById(ownerId)
 		if err != nil {
 			return nil, err
 		}
@@ -36,7 +36,7 @@ func getVdcOrVdcGroupVerifierByOwnerId(org *govcd.Org, ownerId string) (vdcOrVdc
 		return nil, fmt.Errorf("error determining VDC type by ID '%s'", ownerId)
 	}
 
-	return vdcOrGroup, nil
+	return vdcOrVdcGroup, nil
 }
 
 // validateIfVdcOrVdcGroupIsNsxt evaluates VDC field priority using pickVdcIdByPriority and then
@@ -89,17 +89,17 @@ func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdFie
 
 // isBackedByNsxt accepts VDC or VDC Group ID and checks if it is backed by NSX-T
 func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
-	var vdcOrGroup vdcOrVdcGroupVerifier
+	var vdcOrVdcGroup vdcOrVdcGroupVerifier
 	var err error
 
 	switch {
 	case govcd.OwnerIsVdc(vdcOrVdcGroupId):
-		vdcOrGroup, err = org.GetVDCById(vdcOrVdcGroupId, false)
+		vdcOrVdcGroup, err = org.GetVDCById(vdcOrVdcGroupId, false)
 		if err != nil {
 			return false, err
 		}
 	case govcd.OwnerIsVdcGroup(vdcOrVdcGroupId):
-		vdcOrGroup, err = org.GetVdcGroupById(vdcOrVdcGroupId)
+		vdcOrVdcGroup, err = org.GetVdcGroupById(vdcOrVdcGroupId)
 		if err != nil {
 			return false, err
 		}
@@ -107,5 +107,5 @@ func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
 		return false, fmt.Errorf("error determining VDC type by ID '%s'", vdcOrVdcGroupId)
 	}
 
-	return vdcOrGroup.IsNsxt(), nil
+	return vdcOrVdcGroup.IsNsxt(), nil
 }

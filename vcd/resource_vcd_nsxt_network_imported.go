@@ -257,8 +257,8 @@ func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.Resourc
 
 	vcdClient := meta.(*VCDClient)
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupHandler
-	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 
 	// VDC was not found - attempt to find a VDC Group
 	if govcd.ContainsNotFound(err) {
@@ -267,18 +267,18 @@ func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.Resourc
 			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
 		}
 
-		vdcOrGroup, err = adminOrg.GetVdcGroupByName(vdcName)
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
 		if err != nil {
 			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
 		}
 
 	}
 
-	if !vdcOrGroup.IsNsxt() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, fmt.Errorf("imported networks are only supported in NSX-T backed environments")
 	}
 
-	orgNetwork, err := vdcOrGroup.GetOpenApiOrgVdcNetworkByName(networkName)
+	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
 		return nil, fmt.Errorf("[nsxt imported network import] error reading network with name '%s': %s", networkName, err)
 	}
@@ -374,12 +374,12 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 			return nil, fmt.Errorf("error retrieving Org: %s", err)
 		}
 
-		vdcOrGroup, err := getVdcOrVdcGroupVerifierByOwnerId(org, ownerId)
+		vdcOrVdcGroup, err := getVdcOrVdcGroupVerifierByOwnerId(org, ownerId)
 		if err != nil {
 			return nil, fmt.Errorf("error identifying VDC or VDC Group by Owner ID '%s' :%s", ownerId, err)
 		}
 
-		nsxtImportableSwitch, err := vdcOrGroup.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
+		nsxtImportableSwitch, err := vdcOrVdcGroup.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
 		if err != nil {
 			return nil, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
 		}

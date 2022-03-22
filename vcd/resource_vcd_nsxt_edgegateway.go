@@ -267,8 +267,8 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 	vcdClient := meta.(*VCDClient)
 
 	// define an interface type to match VDC and VDC Groups
-	var vdcOrGroup vdcOrVdcGroupVerifier
-	_, vdcOrGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	var vdcOrVdcGroup vdcOrVdcGroupVerifier
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 
 	// VDC was not found - attempt to find a VDC Group
 	if govcd.ContainsNotFound(err) {
@@ -277,18 +277,18 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
 		}
 
-		vdcOrGroup, err = adminOrg.GetVdcGroupByName(vdcName)
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
 		if err != nil {
 			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
 		}
 
 	}
 
-	if !vdcOrGroup.IsNsxt() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, fmt.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
 	}
 
-	edge, err := vdcOrGroup.GetNsxtEdgeGatewayByName(edgeName)
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}
