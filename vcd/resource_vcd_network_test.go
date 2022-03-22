@@ -1010,7 +1010,7 @@ resource "vcd_network_isolated" "{{.ResourceName}}" {
   }
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
-	{{.MetadataKey2}} = "{{.MetadataValue2}}"
+    {{.MetadataKey2}} = "{{.MetadataValue2}}"
   }
 }
 `
