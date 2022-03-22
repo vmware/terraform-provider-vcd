@@ -323,7 +323,7 @@ data "vcd_network_routed_v2" "net1" {
 // * Step 1 - creates prerequisites - VDC Group and 2 VDCs
 // * Step 2 - creates an Edge Gateway and a routed network attached to it
 // * Step 3 - leaves the Edge Gateway as it is, but removed `vdc` field
-// * Step 4 - migrates the Edge Gateway to VDC group and observes that routed networks moves
+// * Step 4 - migrates the Edge Gateway to VDC Group and observes that routed networks moves
 // together and reflects it
 func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)

@@ -26,7 +26,7 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 				Optional:      true,
 				ForceNew:      true,
 				Description:   "The name of VDC to use, optional if defined at provider level",
-				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC Group IDs",
 				ConflictsWith: []string{"owner_id"},
 			},
 			"owner_id": {

@@ -199,7 +199,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 	}
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
@@ -357,7 +357,7 @@ data "vcd_nsxt_edgegateway" "ds" {
 // Step 1 - sets up prerequisites (a VDC Group with 2 VDCs in it)
 // Step 2 - creates an Edge Gateway in a VDC using deprecated `vdc` field
 // Step 3 - updates the Edge Gateway to use `owner_id` field instead of `vdc` field (keeping the same VDC)
-// Step 4 - migrates the Edge Gateway to a VDC group
+// Step 4 - migrates the Edge Gateway to a VDC Group
 // Step 5 - migrates the Edge Gateway to a different VDC than the starting one
 func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 	preTestChecks(t)
@@ -369,7 +369,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(false)
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
 	skipNoNsxtConfiguration(t)

@@ -28,7 +28,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:      true,
 				Description:   "The name of VDC to use, optional if defined at provider level",
 				ConflictsWith: []string{"owner_id"},
-				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC group IDs",
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC Group IDs",
 			},
 			"name": {
 				Type:        schema.TypeString,

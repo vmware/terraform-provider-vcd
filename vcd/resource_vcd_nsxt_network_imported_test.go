@@ -399,7 +399,7 @@ resource "vcd_nsxt_network_imported" "net1" {
 `
 
 // TestAccVcdNetworkImportedNsxtMigration aims to test migration scenario from pre 3.6.0 configuration
-// to new one using `owner_id` and VDC group support
+// to new one using `owner_id` and VDC Group support
 // * Step 1 - creates prerequisite VDCs and VDC Group
 // * Step 2 - creates an imported network using `vdc` field
 // * Step 3 - removes `vdc` field from configuration and uses `owner_id` pointing to the same VDC

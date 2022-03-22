@@ -29,7 +29,7 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(false)
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
