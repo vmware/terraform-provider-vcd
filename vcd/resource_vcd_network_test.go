@@ -1008,6 +1008,7 @@ resource "vcd_network_isolated" "{{.ResourceName}}" {
     start_address = "{{.StartStaticIpAddress1}}"
     end_address   = "{{.EndStaticIpAddress1}}"
   }
+
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
     {{.MetadataKey2}} = "{{.MetadataValue2}}"
