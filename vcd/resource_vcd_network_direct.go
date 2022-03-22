@@ -150,7 +150,7 @@ func resourceVcdNetworkDirectCreate(c context.Context, d *schema.ResourceData, m
 }
 
 func createOrUpdateNetworkMetadata(d *schema.ResourceData, network *govcd.OrgVDCNetwork) error {
-	log.Printf(fmt.Sprintf("[TRACE] adding/updating metadata to network of type %s", network.OrgVDCNetwork.Type))
+	log.Printf("[TRACE] adding/updating metadata to Network")
 
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")
