@@ -50,7 +50,9 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"VmName":                   t.Name(),
 		"Catalog":                  testSuiteCatalogName,
 		"CatalogItem":              testSuiteCatalogOVAItem,
+		"metadataKey":              "key1",
 		"metadataValue":            "value1",
+		"metadataKeyUpdate":        "key2",
 		"metadataValueUpdate":      "value2",
 	}
 
@@ -116,7 +118,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
-					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata.key1", "value1"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKey"].(string), params["metadataValue"].(string)),
 				),
 			},
 			{
@@ -136,7 +138,8 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
-					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata.key1", "value2"),
+					resource.TestCheckNoResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKey"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKeyUpdate"].(string), params["metadataValueUpdate"].(string)),
 				),
 			},
 			{
@@ -355,7 +358,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
   metadata = {
-    key1 = "{{.metadataValue}}"
+    {{.metadataKey}} = "{{.metadataValue}}"
   }
 }
 `
@@ -372,7 +375,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileNameUpdate}}"
   metadata = {
-    key1 = "{{.metadataValueUpdate}}"
+    {{.metadataKeyUpdate}} = "{{.metadataValueUpdate}}"
   }
 }
 `
