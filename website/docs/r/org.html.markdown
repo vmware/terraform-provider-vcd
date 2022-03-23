@@ -50,32 +50,32 @@ The following arguments are supported:
 
 * `name` - (Required) Org name
 * `full_name` - (Required) Org full name
-* `delete_recursive` - (Required) - pass `delete_recursive`=true as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal.
-* `delete_force` - (Required) - pass `delete_force=true` and `delete_recursive=true` to remove an organization or VDC and any objects it contains, regardless of their state.
-* `is_enabled` - (Optional) - True if this organization is enabled (allows login and all other operations). Default is `true`.
-* `description` - (Optional) - Org description. Default is empty.
-* `deployed_vm_quota` - (Optional) - Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. Default is unlimited (0)
-* `stored_vm_quota` - (Optional) - Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. Default is unlimited (0)
-* `can_publish_catalogs` - (Optional) - True if this organization is allowed to share catalogs. Default is `true`.
-* `can_publish_external_catalogs` - (Optional; *v3.6+*) - True if this organization is allowed to publish external catalogs. Default is `false`.
-* `can_subscribe_external_catalogs` - (Optional; *v3.6+*) - True if this organization is allowed to subscribe to external catalogs. Default is `false`.
-* `delay_after_power_on_seconds` - (Optional) - Specifies this organization's default for virtual machine boot delay after power on. Default is `0`.
+* `delete_recursive` - (Required) Pass `delete_recursive=true` as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal.
+* `delete_force` - (Required) Pass `delete_force=true` and `delete_recursive=true` to remove an organization or VDC and any objects it contains, regardless of their state.
+* `is_enabled` - (Optional) True if this organization is enabled (allows login and all other operations). Default is `true`.
+* `description` - (Optional) Org description. Default is empty.
+* `deployed_vm_quota` - (Optional) Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. Default is unlimited (0)
+* `stored_vm_quota` - (Optional) Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. Default is unlimited (0)
+* `can_publish_catalogs` - (Optional) True if this organization is allowed to share catalogs. Default is `true`.
+* `can_publish_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to publish external catalogs. Default is `false`.
+* `can_subscribe_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to subscribe to external catalogs. Default is `false`.
+* `delay_after_power_on_seconds` - (Optional) Specifies this organization's default for virtual machine boot delay after power on. Default is `0`.
 * `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this organization.
-* `vapp_lease` - (Optional; *v2.7+*) - Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
-* `vapp_template_lease` - (Optional; *v2.7+*) - Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
+* `vapp_lease` - (Optional; *v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
+* `vapp_template_lease` - (Optional; *v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 
 <a id="vapp-lease"></a>
 ## vApp Lease
 
 The `vapp_lease` section contains lease parameters for vApps created in the current organization, as defined below:
 
-* `maximum_runtime_lease_in_sec` - (Required) - How long vApps can run before they are automatically stopped (in seconds). 0 means never expires. Values accepted from 3600+
+* `maximum_runtime_lease_in_sec` - (Required) How long vApps can run before they are automatically stopped (in seconds). 0 means never expires. Values accepted from 3600+
 <br>Note: Default when the whole `vapp_lease` block is omitted is 604800 (7 days) but may vary depending on vCD version
-* `power_off_on_runtime_lease_expiration` - (Required) - When true, vApps are powered off when the runtime lease expires. When false, vApps are suspended when the runtime lease expires.
+* `power_off_on_runtime_lease_expiration` - (Required) When true, vApps are powered off when the runtime lease expires. When false, vApps are suspended when the runtime lease expires.
 <br>Note: Default when the whole `vapp_lease` block is omitted is false
-* `maximum_storage_lease_in_sec` - (Required) - How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
+* `maximum_storage_lease_in_sec` - (Required) How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
 <br>Note: Default when the whole `vapp_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
-* `delete_on_storage_lease_expiration` - (Required) - If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted.
+* `delete_on_storage_lease_expiration` - (Required) If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted.
 <br>Note: Default when the whole `vapp_lease` block is omitted is false
 
 <a id="vapp-template-lease"></a>
@@ -83,9 +83,9 @@ The `vapp_lease` section contains lease parameters for vApps created in the curr
 
 The `vapp_template_lease` section contains lease parameters for vApp templates created in the current organization, as defined below:
 
-* `maximum_storage_lease_in_sec` - (Required) - How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
+* `maximum_storage_lease_in_sec` - (Required) How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
 <br>Note: Default when the whole `vapp_template_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
-* `delete_on_storage_lease_expiration` - (Required) - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted. 
+* `delete_on_storage_lease_expiration` - (Required) If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted. 
 <br>Note: Default when the whole `vapp_template_lease` block is omitted is false
 
 ## Importing
