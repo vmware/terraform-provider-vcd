@@ -6,6 +6,7 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net"
 	"regexp"
 	"testing"
@@ -118,6 +119,13 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	// groupIdRegex is reused a few times in tests to match IDs
 	groupIdRegex := regexp.MustCompile(`^urn:vcloud:group:`)
 
+	stateDumper := func() resource.TestCheckFunc {
+		return func(s *terraform.State) error {
+			spew.Dump(s)
+			return nil
+		}
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -184,9 +192,10 @@ func TestAccVcdOrgGroup(t *testing.T) {
 			{
 				Config: ldapSetupConfig + groupConfigText2 + testAccVcdOrgGroupDS, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
+					stateDumper(),
 					resourceFieldsEqual("data.vcd_org_group.sourced_group1", "vcd_org_group.group1", nil),
 					resourceFieldsEqual("data.vcd_org_group.sourced_group2", "vcd_org_group.group2", nil),
-					resourceFieldsEqual("data.vcd_org_user.sourced_user1", "vcd_org_user.user1", nil),
+					resourceFieldsEqual("data.vcd_org_user.sourced_user1", "vcd_org_user.user1", []string{"%"}),
 				),
 			},
 			{
