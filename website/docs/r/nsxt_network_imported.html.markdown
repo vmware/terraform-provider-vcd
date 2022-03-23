@@ -101,7 +101,7 @@ configuration. [More information.][docs-import]
 
 
 An existing NSX-T VDC Imported network can be [imported][docs-import] into this Terraform resource via supplying its path.
-The path for this resource is made of orgName.vdcName.networkName.
+The path for this resource is made of `org-name.vdc-or-vdc-group-name.network-name`.
 For example, using this structure, representing an NSX-T Imported Network that was **not** created using Terraform:
 
 ```hcl

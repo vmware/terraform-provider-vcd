@@ -134,7 +134,7 @@ Static IP Pools support the following attributes:
 configuration. [More information.][docs-import]
 
 An existing routed network can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of `OrgName.vdcOrVdcGroupName.NetworkName`.
+The path for this resource is made of `OrgName.vdc-or-vdc-group-name.NetworkName`.
 For example, using this structure, representing a routed network that was **not** created using Terraform:
 
 ```hcl
