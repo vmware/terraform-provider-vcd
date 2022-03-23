@@ -157,6 +157,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_pool":                             resourceVcdAlbPool(),                          // 3.5
 	"vcd_nsxt_alb_virtual_service":                  resourceVcdAlbVirtualService(),                // 3.5
 	"vcd_vdc_group":                                 resourceVdcGroup(),                            // 3.5
+	"vcd_nsxt_distributed_firewall":                 resourceVcdNsxtDistributedFirewall(),          // 3.6
 }
 
 // Provider returns a terraform.ResourceProvider.
