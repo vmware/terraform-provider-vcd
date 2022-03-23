@@ -108,6 +108,11 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Description: "Specifies this organization's default for virtual machine boot delay after power on.",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key and value pairs for organization metadata",
+			},
 		},
 	}
 }

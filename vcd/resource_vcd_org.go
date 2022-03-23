@@ -75,7 +75,7 @@ func resourceOrg() *schema.Resource {
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
-			"can_publish_external_catalogs":{
+			"can_publish_external_catalogs": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -87,7 +87,7 @@ func resourceOrg() *schema.Resource {
 				Default:     false,
 				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
-			"vapp_lease":{
+			"vapp_lease": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -161,6 +161,11 @@ func resourceOrg() *schema.Resource {
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_recursive=True to remove the org and any objects it contains that are in a state that normally allows removal.",
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
 			},
 		},
 	}
