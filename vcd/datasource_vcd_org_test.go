@@ -21,10 +21,10 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 	orgName1 := testConfig.VCD.Org
 	orgName2 := orgName1 + "-clone"
 	var params = StringMap{
-		"FuncName":      "TestAccVcdDatasourceOrg",
-		"OrgName1":      orgName1,
-		"OrgName2":      orgName2,
-		"Tags":          "org",
+		"FuncName": "TestAccVcdDatasourceOrg",
+		"OrgName1": orgName1,
+		"OrgName2": orgName2,
+		"Tags":     "org",
 	}
 
 	configText := templateFill(testAccCheckVcdDatasourceOrg, params)
@@ -137,6 +137,8 @@ resource "vcd_org" "{{.OrgName2}}" {
 `
 
 const testAccCheckVcdDatasourceOrgMetadata = `
+# skip-binary-test: this test checks metadata read on datasources
+
 data "vcd_org" "sourced_{{.OrgName2}}" {
   name = "{{.OrgName2}}"
 }

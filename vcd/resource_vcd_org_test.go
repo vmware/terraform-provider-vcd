@@ -85,8 +85,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 		vappDeleteOnLeaseExp         bool
 		templStorageLease            int
 		templDeleteOnLeaseExp        bool
-		metadataKey					 string
-		metadataValue				 string
+		metadataKey                  string
+		metadataValue                string
 	}
 	var orgList = []testOrgData{
 		{
@@ -103,8 +103,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			templDeleteOnLeaseExp:        true,
 			templStorageLease:            0, // never expires
 			vappDeleteOnLeaseExp:         true,
-			metadataKey:				  "key1",
-			metadataValue:			      "value1",
+			metadataKey:                  "key1",
+			metadataValue:                "value1",
 		},
 		{
 			name:                         "org2",
@@ -120,8 +120,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			templDeleteOnLeaseExp:        true,
 			templStorageLease:            3600, // 1 hour
 			vappDeleteOnLeaseExp:         true,
-			metadataKey:				  "key2",
-			metadataValue:			      "value2",
+			metadataKey:                  "key2",
+			metadataValue:                "value2",
 		},
 		{
 			name:                         "org3",
@@ -137,8 +137,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			templDeleteOnLeaseExp:        false,
 			templStorageLease:            3600 * 24 * 365, // 1 year
 			vappDeleteOnLeaseExp:         false,
-			metadataKey:				  "key3",
-			metadataValue:			      "value3",
+			metadataKey:                  "key3",
+			metadataValue:                "value3",
 		},
 		{
 			name:                         "org4",
@@ -154,8 +154,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			templDeleteOnLeaseExp:        false,
 			templStorageLease:            3600 * 24 * 15, // 15 days
 			vappDeleteOnLeaseExp:         false,
-			metadataKey:				  "key4",
-			metadataValue:			      "value4",
+			metadataKey:                  "key4",
+			metadataValue:                "value4",
 		},
 		{
 			name:                         "org5",
@@ -171,8 +171,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			templDeleteOnLeaseExp:        false,
 			templStorageLease:            3600 * 24 * 30, // 30 days (the default)
 			vappDeleteOnLeaseExp:         false,
-			metadataKey:				  "key5",
-			metadataValue:			      "value5",
+			metadataKey:                  "key5",
+			metadataValue:                "value5",
 		},
 	}
 	willSkip := false
@@ -300,7 +300,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 						resource.TestCheckNoResourceAttr(
 							resourceName, fmt.Sprintf("metadata.%s", od.metadataKey)),
 						resource.TestCheckResourceAttr(
-							resourceName, "metadata."+updateParams["MetadataKey"].(string),  updateParams["MetadataValue"].(string)),
+							resourceName, "metadata."+updateParams["MetadataKey"].(string), updateParams["MetadataValue"].(string)),
 					),
 				},
 				{
