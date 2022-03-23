@@ -126,7 +126,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[routed network read v2] error retrieving Org: %s", err)
 	}
 
 	networkName := d.Get("name").(string)

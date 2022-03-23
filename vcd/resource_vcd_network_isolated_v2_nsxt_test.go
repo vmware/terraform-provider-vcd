@@ -67,7 +67,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 			resource.TestStep{ // step 2
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					cachedId.cacheTestResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "description", "updated NSX-T isolated network test"),
@@ -94,7 +94,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 			resource.TestStep{ // step 4
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					cachedId.cacheTestResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "description", ""),
@@ -160,9 +160,9 @@ resource "vcd_network_isolated_v2" "net1" {
 }
 `
 
-//TestAccVcdNetworkIsolatedV2NsxtMigration aims to test backwards compatibility of `vdc` field (in
-//resource and inherited from provider configuration) and the possibility to migrate configuration
-//from `vdc` field to `owner_id` without recreating resource.
+// TestAccVcdNetworkIsolatedV2NsxtMigration aims to test backwards compatibility of `vdc` field (in
+// resource and inherited from provider configuration) and the possibility to migrate configuration
+// from `vdc` field to `owner_id` without recreating resource.
 // * Step 1 - creates prerequisites - 2 VDCs and a VDC Group
 // * Step 2 - creates an Isolated network using legacy (pre 3.6.0) configuration by using a VDC field
 // * Step 3 - replaces field `vdc` with `owner_id` using ID for the same VDC which was used to create in Step 2
@@ -415,7 +415,7 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					cachedId.cacheTestResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
@@ -456,5 +456,170 @@ data "vcd_network_isolated_v2" "net1" {
   
   owner_id = vcd_network_isolated_v2.net1.owner_id
   name     = vcd_network_isolated_v2.net1.name
+}
+`
+
+// TestAccVcdNetworkIsolatedV2InheritedVdc tests that Isolated network can be created by using `vdc`
+// field inherited from provider in NSX-T VDC
+// * Step 1 - Rely on configuration comming from `provider` configuration for `vdc` value
+// * Step 2 - Test that import works correctly
+// * Step 3 - Test that data source works correctly
+// * Step 4 - Start using `vdc` fields in resource and make sure it is not recreated
+// * Step 5 - Test that import works correctly
+// * Step 6 - Test data source
+// Note. It does not test `org` field inheritance because our import sets it by default.
+func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
+	preTestChecks(t)
+	skipNoNsxtConfiguration(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"NsxtVdc":     testConfig.Nsxt.Vdc,
+		"NetworkName": t.Name(),
+
+		// This particular field is consumed by `templateFill` to generate binary tests with correct
+		// default VDC (NSX-T)
+		"PrVdc": testConfig.Nsxt.Vdc,
+
+		"Tags": "network",
+	}
+
+	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
+	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
+	// after this test.
+	restoreDefaultVdcFunc := overrideDefaultVdcForTest(testConfig.Nsxt.Vdc)
+	defer restoreDefaultVdcFunc()
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccVcdNetworkIsolatedV2InheritedVdcStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccVcdNetworkIsolatedV2InheritedVdcStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccVcdNetworkIsolatedV2InheritedVdcStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
+	params["FuncName"] = t.Name() + "-step6"
+	configText6 := templateFill(testAccVcdNetworkIsolatedV2InheritedVdcStep6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText6)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	cachedId := &testCachedFieldValue{}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+
+		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+				),
+			},
+			{
+				ResourceName:      "vcd_network_isolated_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+					// Total field count ('%') differs because data source has additional field 'filter'
+					resourceFieldsEqual("data.vcd_network_isolated_v2.net1", "vcd_network_isolated_v2.net1", []string{"%"}),
+				),
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+				),
+			},
+			{
+				ResourceName:      "vcd_network_isolated_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+			},
+			{
+				Config: configText6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+					resourceFieldsEqual("data.vcd_network_isolated_v2.net1", "vcd_network_isolated_v2.net1", []string{"%"}),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNetworkIsolatedV2InheritedVdcStep1 = `
+resource "vcd_network_isolated_v2" "net1" {
+  org  = "{{.Org}}"
+  name = "{{.NetworkName}}"
+
+  gateway = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address = "1.1.1.20"
+  }
+}
+`
+
+const testAccVcdNetworkIsolatedV2InheritedVdcStep3 = testAccVcdNetworkIsolatedV2InheritedVdcStep1 + `
+# skip-binary-test: Data Source test
+data "vcd_network_isolated_v2" "net1" {
+  org  = "{{.Org}}"
+  name = "{{.NetworkName}}"
+}
+`
+
+const testAccVcdNetworkIsolatedV2InheritedVdcStep4 = `
+resource "vcd_network_isolated_v2" "net1" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NetworkName}}"
+
+  gateway = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address = "1.1.1.20"
+  }
+}
+`
+
+const testAccVcdNetworkIsolatedV2InheritedVdcStep6 = testAccVcdNetworkIsolatedV2InheritedVdcStep4 + `
+# skip-binary-test: Data Source test
+data "vcd_network_isolated_v2" "net1" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NetworkName}}"
 }
 `

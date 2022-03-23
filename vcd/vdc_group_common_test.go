@@ -3,6 +3,11 @@
 
 package vcd
 
+import (
+	"fmt"
+	"os"
+)
+
 // testAccVcdVdcGroupNew is a helper definition to setup VDC Group for testing integration with other
 // components
 // Useful field names:
@@ -60,3 +65,29 @@ resource "vcd_vdc_group" "test1" {
   dfw_enabled = "{{.Dfw}}"
 }
 `
+
+// overrideDefaultVdcForTest overrides default `vdc` value in `provider` section until it is
+// reverted by using the returned func
+//
+// Simple use case is:
+// restoreVdc := overrideDefaultVdcForTest(temporaryVdcFieldValue)
+// defer restoreVdc()
+//
+// Note. When using in tests don't forget to override "PrVdc" field in 'params' for 'templateFill'
+// fill function so that binary tests are rendered correctly as well.
+func overrideDefaultVdcForTest(temporaryVdcFieldValue string) func() {
+	originalVdcValue := os.Getenv("VCD_VDC")
+	// testConfigOriginalVdcValue := testConfig.VCD.Vdc
+
+	if vcdTestVerbose {
+		fmt.Printf("# Overriding 'vdc' field in provider configuration to be '%s' instead of '%s'\n", temporaryVdcFieldValue, originalVdcValue)
+	}
+
+	os.Setenv("VCD_VDC", temporaryVdcFieldValue)
+	return func() {
+		if vcdTestVerbose {
+			fmt.Printf("# Restoring 'vdc' field in provider configuration be '%s'\n", originalVdcValue)
+		}
+		os.Setenv("VCD_VDC", originalVdcValue)
+	}
+}

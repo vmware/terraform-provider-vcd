@@ -646,3 +646,257 @@ resource "vcd_network_routed_v2" "net1" {
   }
 }
 `
+
+// TestAccVcdNetworkRoutedV2InheritedVdc tests that NSX-T Edge Gateway network can be created by
+// using `vdc` field inherited from provider in NSX-T VDC
+// * Step 1 - Rely on configuration comming from `provider` configuration for `vdc` value
+// * Step 2 - Test that import works correctly
+// * Step 3 - Test that data source works correctly
+// * Step 4 - Start using `vdc` fields in resource and make sure it is not recreated
+// * Step 5 - Test that import works correctly
+// * Step 6 - Test data source
+// Note. It does not test `org` field inheritance because our import sets it by default.
+func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
+	preTestChecks(t)
+	skipNoNsxtConfiguration(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"NsxtVdc":            testConfig.Nsxt.Vdc,
+		"NetworkName":        t.Name(),
+		"NsxtEdgeGatewayVcd": "nsxt-edge-test",
+		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
+
+		// This particular field is consumed by `templateFill` to generate binary tests with correct
+		// default VDC (NSX-T)
+		"PrVdc": testConfig.Nsxt.Vdc,
+
+		"Tags": "network",
+	}
+
+	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
+	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
+	// after this test.
+	restoreDefaultVdcFunc := overrideDefaultVdcForTest(testConfig.Nsxt.Vdc)
+	defer restoreDefaultVdcFunc()
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccVcdNetworkRoutedV2InheritedVdcStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccVcdNetworkRoutedV2InheritedVdcStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccVcdNetworkRoutedV2InheritedVdcStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
+	params["FuncName"] = t.Name() + "-step6"
+	configText6 := templateFill(testAccVcdNetworkRoutedV2InheritedVdcStep6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText6)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	cacheEdgeGatewaydId := &testCachedFieldValue{}
+	cacheRoutedNetId := &testCachedFieldValue{}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+
+		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cacheEdgeGatewaydId.cacheTestResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
+
+					cacheRoutedNetId.cacheTestResourceFieldValue("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+				),
+			},
+			{
+				ResourceName:      "vcd_network_routed_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				// field nsxt_logical_switch_name cannot be read during import because VCD does not
+				// provider API for reading it after being consumed
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cacheEdgeGatewaydId.testCheckCachedResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway.nsxt-edge", "vcd_nsxt_edgegateway.nsxt-edge", []string{"%"}),
+
+					cacheRoutedNetId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+					resourceFieldsEqual("data.vcd_network_routed_v2.net1", "vcd_network_routed_v2.net1", []string{"%"}),
+				),
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cacheEdgeGatewaydId.testCheckCachedResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
+
+					cacheRoutedNetId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+				),
+			},
+			{
+				ResourceName:      "vcd_network_routed_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				// field nsxt_logical_switch_name cannot be read during import because VCD does not
+				// provide API for reading it after being consumed
+				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name"},
+			},
+			{
+				Config: configText6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cacheEdgeGatewaydId.testCheckCachedResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", testConfig.Nsxt.Vdc),
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway.nsxt-edge", "vcd_nsxt_edgegateway.nsxt-edge", []string{"%"}),
+
+					cacheRoutedNetId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "vdc", testConfig.Nsxt.Vdc),
+					resourceFieldsEqual("data.vcd_network_routed_v2.net1", "vcd_network_routed_v2.net1", []string{"%"}),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNetworkRoutedV2InheritedVdcStep1 = `
+data "vcd_external_network_v2" "existing-extnet" {
+	name = "{{.ExternalNetwork}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+
+  subnet {
+     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+
+resource "vcd_network_routed_v2" "net1" {
+  org  = "{{.Org}}"
+  name = "{{.NetworkName}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  gateway = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+	start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+}
+`
+
+const testAccVcdNetworkRoutedV2InheritedVdcStep3 = testAccVcdNetworkRoutedV2InheritedVdcStep1 + `
+# skip-binary-test: Data Source test
+data "vcd_network_routed_v2" "net1" {
+  org  = "{{.Org}}"
+  name = "{{.NetworkName}}"
+}
+
+data "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
+}
+`
+
+const testAccVcdNetworkRoutedV2InheritedVdcStep4 = `
+data "vcd_external_network_v2" "existing-extnet" {
+	name = "{{.ExternalNetwork}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+
+  subnet {
+     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+
+resource "vcd_network_routed_v2" "net1" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NetworkName}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  gateway = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+	start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+}
+`
+
+const testAccVcdNetworkRoutedV2InheritedVdcStep6 = testAccVcdNetworkRoutedV2InheritedVdcStep4 + `
+# skip-binary-test: Data Source test
+data "vcd_network_routed_v2" "net1" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NetworkName}}"
+}
+
+data "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
+}
+`

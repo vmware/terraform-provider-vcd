@@ -580,6 +580,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Token + "#" +
 		c.ApiToken + "#" +
 		c.SysOrg + "#" +
+		c.Vdc + "#" +
 		c.Href
 	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(rawData)))
 

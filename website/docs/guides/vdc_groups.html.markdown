@@ -112,8 +112,13 @@ variable "nsxt_segment_name" {
   type = string
 }
 
+variable "vdc_group_name" {
+  type = string
+}
+
 data "vcd_vdc_group" "main" {
-  org = var.org_name
+  org  = var.org_name
+  name = var.vdc_group_name 
 }
 
 data "vcd_external_network_v2" "nsxt-ext-net" {
