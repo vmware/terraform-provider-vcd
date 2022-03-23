@@ -41,6 +41,14 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"metadataValue":        "value1",
 	}
 
+	// Updated parameters for step2
+	var updateParams = make(StringMap)
+	for k, v := range params {
+		updateParams[k] = v
+	}
+	updateParams["metadataKey"] = "key2"
+	updateParams["metadataValue"] = "value2"
+
 	// regexp for empty value
 	uuidMatchRegexp := regexp.MustCompile(`^$`)
 	vcdClient := createTemporaryVCDConnection(true)
@@ -53,10 +61,8 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-Step1"
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
-	params["metadataKey"] = "key3"
-	params["metadataValue"] = "value3"
-	params["FuncName"] = t.Name() + "-Step2"
-	configText2 := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
+	updateParams["FuncName"] = t.Name() + "-Step2"
+	configText2 := templateFill(testAccCheckVcdDataSourceIndependentDisk, updateParams)
 	params["FuncName"] = t.Name() + "-withId"
 	configTextWithId := templateFill(testAccCheckVcdDataSourceIndependentDiskWithId, params)
 	if vcdShortTest {
@@ -80,7 +86,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1", params["metadataValue"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata."+params["metadataKey"].(string), params["metadataValue"].(string)),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("uuid", uuidMatchRegexp),
@@ -93,9 +99,8 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckNoResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key1"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key2", "value2"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata.key3", params["metadataValue"].(string)),
+					resource.TestCheckNoResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata."+params["metadataKey"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata."+updateParams["metadataKey"].(string), updateParams["metadataValue"].(string)),
 				),
 			},
 			{
@@ -150,7 +155,6 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   storage_profile = "{{.storageProfileName}}"
   metadata = {
     {{.metadataKey}} = "{{.metadataValue}}"
-	key2 = "value2"
   }
 }
 
