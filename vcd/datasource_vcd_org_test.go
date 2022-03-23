@@ -21,10 +21,12 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 	orgName1 := testConfig.VCD.Org
 	orgName2 := orgName1 + "-clone"
 	var params = StringMap{
-		"FuncName": "TestAccVcdDatasourceOrg",
-		"OrgName1": orgName1,
-		"OrgName2": orgName2,
-		"Tags":     "org",
+		"FuncName":      "TestAccVcdDatasourceOrg",
+		"OrgName1":      orgName1,
+		"OrgName2":      orgName2,
+		"Tags":          "org",
+		"MetadataKey":   "key1",
+		"MetadataValue": "value1",
 	}
 
 	configText := templateFill(testAccCheckVcdDatasourceOrg, params)
@@ -94,8 +96,8 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 				Config: configText + configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
-						datasource2, "metadata.key1",
-						resourceName2, "metadata.key1"),
+						datasource2, "metadata."+params["MetadataKey"].(string),
+						resourceName2, "metadata."+params["MetadataKey"].(string)),
 				),
 			},
 		},
@@ -131,13 +133,13 @@ resource "vcd_org" "{{.OrgName2}}" {
     delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.delete_on_storage_lease_expiration
   }
   metadata = {
-    key1 = "value1"
+    {{.MetadataKey}} = "{{.MetadataValue}}"
   }
 }
 `
 
 const testAccCheckVcdDatasourceOrgMetadata = `
-# skip-binary-test: this test checks metadata read on datasources
+# skip-binary-test: this test requires an org with metadata from another TF file
 
 data "vcd_org" "sourced_{{.OrgName2}}" {
   name = "{{.OrgName2}}"
