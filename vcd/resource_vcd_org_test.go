@@ -63,6 +63,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 	})
 	postTestChecks(t)
 }
+
 func TestAccVcdOrgFull(t *testing.T) {
 	preTestChecks(t)
 

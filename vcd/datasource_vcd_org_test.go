@@ -25,11 +25,11 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 		"OrgName1":      orgName1,
 		"OrgName2":      orgName2,
 		"Tags":          "org",
-		"MetadataKey":   "key1",
-		"MetadataValue": "value1",
 	}
 
 	configText := templateFill(testAccCheckVcdDatasourceOrg, params)
+	params["FuncName"] = params["FuncName"].(string) + "Metadata"
+	configText2 := templateFill(testAccCheckVcdDatasourceOrgMetadata, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -39,6 +39,8 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 
 	datasource1 := "data.vcd_org." + orgName1
 	resourceName2 := "vcd_org." + orgName2
+	datasource2 := "data.vcd_org.sourced_" + orgName2
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -86,9 +88,14 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 					resource.TestCheckResourceAttrPair(
 						datasource1, "vapp_template_lease.0.delete_on_storage_lease_expiration",
 						resourceName2, "vapp_template_lease.0.delete_on_storage_lease_expiration"),
+				),
+			},
+			{
+				Config: configText + configText2,
+				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
-						datasource1, "metadata."+params["MetadataKey"].(string),
-						resourceName2, "metadata."+params["MetadataKey"].(string)),
+						datasource2, "metadata.key1",
+						resourceName2, "metadata.key1"),
 				),
 			},
 		},
@@ -124,7 +131,13 @@ resource "vcd_org" "{{.OrgName2}}" {
     delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.delete_on_storage_lease_expiration
   }
   metadata = {
-    {{.MetadataKey}} = "{{.MetadataValue}}"
+    key1 = "value1"
   }
+}
+`
+
+const testAccCheckVcdDatasourceOrgMetadata = `
+data "vcd_org" "sourced_{{.OrgName2}}" {
+  name = "{{.OrgName2}}"
 }
 `
