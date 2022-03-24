@@ -162,6 +162,11 @@ func resourceOrg() *schema.Resource {
 				ForceNew:    false,
 				Description: "When destroying use delete_recursive=True to remove the org and any objects it contains that are in a state that normally allows removal.",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
+			},
 		},
 	}
 }
@@ -200,6 +205,12 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	log.Printf("[TRACE] Org %s created with id: %s", orgName, org.AdminOrg.ID)
 
 	d.SetId(org.AdminOrg.ID)
+
+	err = createOrUpdateAdminOrgMetadata(d, org)
+	if err != nil {
+		return diag.Errorf("error adding metadata to Org: %s", err)
+	}
+
 	return resourceOrgRead(ctx, d, m)
 }
 
@@ -369,6 +380,11 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 		return diag.Errorf("error completing update of Org %s", err)
 	}
 
+	err = createOrUpdateAdminOrgMetadata(d, adminOrg)
+	if err != nil {
+		return diag.Errorf("error updating metadata from Org: %s", err)
+	}
+
 	log.Printf("[TRACE] Org %s updated", orgName)
 	return nil
 }
@@ -432,6 +448,15 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	metadata, err := adminOrg.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get Org metadata")
+		return fmt.Errorf("unable to get Org metadata %s", err)
+	}
+	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
+		return fmt.Errorf("error setting metadata: %s", err)
 	}
 
 	return nil
@@ -518,4 +543,36 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 		return "", "", fmt.Errorf(`the value for "full_name" cannot be empty`)
 	}
 	return orgName, fullName, nil
+}
+
+func createOrUpdateAdminOrgMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
+	log.Printf("[TRACE] adding/updating metadata to Org")
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := adminOrg.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := adminOrg.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }
