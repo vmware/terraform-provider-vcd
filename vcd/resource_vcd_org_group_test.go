@@ -24,7 +24,7 @@ import (
 // LDAP configuration will be removed after test run
 // More about LDAP testing container - https://github.com/rroemhild/docker-test-openldap
 //
-// Note. External network must be properly configured (including DNS records) and must be able to
+// Note: External network must be properly configured (including DNS records) and must be able to
 // access internet so that it can download docker image. Also the environment where test is run must
 // be able to access external network IP so that monitoring is possible.
 func TestAccVcdOrgGroup(t *testing.T) {
@@ -129,7 +129,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 0 - sets up direct network, vApp and VM with LDAP server and captures NIC 0 IP
 			// so that before step 1 LDAP can be configured (using TestStep.PreConfig)
-			resource.TestStep{
+			{
 				PreConfig: func() { fmt.Println("# Setting up LDAP server") },
 				Config:    ldapSetupConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -140,7 +140,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					nic0Ip.cacheTestResourceFieldValue("vcd_vapp_vm.ldap-container", "network.0.ip"),
 				),
 			},
-			resource.TestStep{
+			{
 				// Step 1 - the configureLdapFunc has all required variables stored to perform LDAP
 				// configuration on Org defined in testing config after testing LDAP server was
 				// configured in Step0. `Config` is the same as for step 0
@@ -149,7 +149,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				// server built in Step 0
 				Config: ldapSetupConfig + groupConfigText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// sleepTester(),
 					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role1),
@@ -158,26 +157,37 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description1"),
+					// This check should belong to vcd_org_user tests, but here is simpler and quicker
+					resource.TestCheckResourceAttr("vcd_org_user.user1", "group_names.0", "ship_crew"),
 				),
 			},
-			resource.TestStep{
+			{
 				// ldapSetupConfig is still used in Config so that Terraform does not destroy LDAP
 				// server built in Step 0
 				Config: ldapSetupConfig + groupConfigText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// sleepTester(),
 					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role2),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description2"),
+					// We check the user_names set here because it's populated when the group state is refreshed. In previous step,
+					// it would be nil as it didn't have users.
+					resource.TestCheckResourceAttr("vcd_org_group.group1", "user_names.0", "fry"),
 					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role2),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description2"),
 				),
 			},
-
-			resource.TestStep{
+			{
+				Config: ldapSetupConfig + groupConfigText2 + testAccVcdOrgGroupDS, // Datasource check
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("data.vcd_org_group.sourced_group1", "vcd_org_group.group1", nil),
+					resourceFieldsEqual("data.vcd_org_group.sourced_group2", "vcd_org_group.group2", nil),
+					resourceFieldsEqual("data.vcd_org_user.sourced_user1", "vcd_org_user.user1", []string{"%", "user_id"}),
+				),
+			},
+			{
 				ResourceName:      "vcd_org_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -220,6 +230,17 @@ resource "vcd_org_group" "group2" {
   name          = "admin_staff"
   role          = "{{.RoleName}}"
   description   = "{{.Description}}"
+}
+
+resource "vcd_org_user" "user1" {
+  provider_type  = "INTEGRATED"
+  name           = "fry"
+  role           = "Organization Administrator"
+  is_external    = true
+
+  depends_on = [
+    vcd_org_group.group1,
+  ]
 }
 `
 
@@ -267,6 +288,22 @@ resource "vcd_vapp_vm" "ldap-container" {
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
+}
+`
+
+const testAccVcdOrgGroupDS = `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
+
+data "vcd_org_group" "sourced_group1" {
+  name = vcd_org_group.group1.name
+}
+
+data "vcd_org_group" "sourced_group2" {
+  name = vcd_org_group.group2.name
+}
+
+data "vcd_org_user" "sourced_user1" {
+  name = "fry"
 }
 `
 

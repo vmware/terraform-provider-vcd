@@ -61,7 +61,8 @@ The following arguments are supported:
     * `vApp User`
     * `Console Access Only`
     * `Defer to Identity Provider`
-
+* `user_names` - (Read only) The set of user names that belong to this group. It's only populated if the users
+  are created after the group (with `depends_on` the given group).
 
 ## Attribute Reference
 
