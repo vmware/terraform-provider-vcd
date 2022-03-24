@@ -130,7 +130,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 ```
 
 
-## Example Usage (Assigning NSX-T Edge Gateway to VDC group)
+## Example Usage (Assigning NSX-T Edge Gateway to VDC Group)
 
 ```hcl
 data "vcd_nsxt_edge_cluster" "secondary" {

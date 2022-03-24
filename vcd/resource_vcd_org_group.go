@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -13,12 +15,12 @@ import (
 
 func resourceVcdOrgGroup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdOrgGroupCreate,
-		Read:   resourceVcdOrgGroupRead,
-		Update: resourceVcdOrgGroupUpdate,
-		Delete: resourceVcdOrgGroupDelete,
+		CreateContext: resourceVcdOrgGroupCreate,
+		ReadContext:   resourceVcdOrgGroupRead,
+		UpdateContext: resourceVcdOrgGroupUpdate,
+		DeleteContext: resourceVcdOrgGroupDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdOrgGroupImport,
+			StateContext: resourceVcdOrgGroupImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -29,44 +31,52 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true, // vCD does not allow to change group name
+				ForceNew:    true, // VCD does not allow to change group name
 				Description: "Group name",
 			},
-			"provider_type": &schema.Schema{
+			"provider_type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true, // vCD does not allow to change provider type
+				ForceNew:     true, // VCD does not allow to change provider type
 				Description:  "Identity provider type - 'SAML' or 'INTEGRATED' for LDAP",
 				ValidateFunc: validation.StringInSlice([]string{"SAML", "INTEGRATED"}, false),
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description",
 			},
-			"role": &schema.Schema{
+			"role": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Existing role name to assign",
+			},
+			"user_names": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Read only. Set of user names that belong to the group",
 			},
 		},
 	}
 }
 
-func resourceVcdOrgGroupCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	roleName := d.Get("role").(string)
 	role, err := adminOrg.GetRoleReference(roleName)
 	if err != nil {
-		return fmt.Errorf("unable to find role %s: %s", roleName, err)
+		return diag.Errorf("unable to find role %s: %s", roleName, err)
 	}
 
 	newGroup := govcd.NewGroup(&vcdClient.Client, adminOrg)
@@ -80,19 +90,19 @@ func resourceVcdOrgGroupCreate(d *schema.ResourceData, meta interface{}) error {
 
 	createdGroup, err := adminOrg.CreateGroup(newGroup.Group)
 	if err != nil {
-		return fmt.Errorf("error creating group %s: %s", groupDefinition.Name, err)
+		return diag.Errorf("error creating group %s: %s", groupDefinition.Name, err)
 	}
 
 	d.SetId(createdGroup.Group.ID)
 
-	return resourceVcdOrgGroupRead(d, meta)
+	return resourceVcdOrgGroupRead(ctx, d, meta)
 }
 
-func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
@@ -103,7 +113,7 @@ func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("error finding group %s: %s", d.Id(), err)
+		return diag.Errorf("error finding group %s: %s", d.Id(), err)
 	}
 
 	dSet(d, "name", group.Group.Name)
@@ -111,19 +121,28 @@ func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 	dSet(d, "role", group.Group.Role.Name)
 	dSet(d, "provider_type", group.Group.ProviderType)
 
+	var users []string
+	for _, userRef := range group.Group.UsersList.UserReference {
+		users = append(users, userRef.Name)
+	}
+	err = d.Set("user_names", convertStringsTotTypeSet(users))
+	if err != nil {
+		return diag.Errorf("could not set user_names field: %s", err)
+	}
+
 	return nil
 }
 
-func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("error finding group for update %s: %s", d.Id(), err)
+		return diag.Errorf("error finding group for update %s: %s", d.Id(), err)
 	}
 
 	// Role change
@@ -131,7 +150,7 @@ func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
 		roleName := d.Get("role").(string)
 		role, err := adminOrg.GetRoleReference(roleName)
 		if err != nil {
-			return fmt.Errorf("unable to find role %s: %s", roleName, err)
+			return diag.Errorf("unable to find role %s: %s", roleName, err)
 		}
 		group.Group.Role = role
 	}
@@ -143,27 +162,27 @@ func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	err = group.Update()
 	if err != nil {
-		return fmt.Errorf("error updating group %s: %s", group.Group.Name, err)
+		return diag.Errorf("error updating group %s: %s", group.Group.Name, err)
 	}
 
-	return resourceVcdOrgGroupRead(d, meta)
+	return resourceVcdOrgGroupRead(ctx, d, meta)
 }
 
-func resourceVcdOrgGroupDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("error finding group for deletion %s: %s", d.Id(), err)
+		return diag.Errorf("error finding group for deletion %s: %s", d.Id(), err)
 	}
 
 	err = group.Delete()
 	if err != nil {
-		return fmt.Errorf("could not delete group %s: %s", group.Group.Name, err)
+		return diag.Errorf("could not delete group %s: %s", group.Group.Name, err)
 	}
 
 	return nil
@@ -175,7 +194,7 @@ func resourceVcdOrgGroupDelete(d *schema.ResourceData, meta interface{}) error {
 //
 // Example import path (id): my-org.my-group
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdOrgGroupImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgGroupImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.org_group")

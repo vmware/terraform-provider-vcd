@@ -33,61 +33,61 @@ func resourceOrg() *schema.Resource {
 			StateContext: resourceVcdOrgImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"full_name": &schema.Schema{
+			"full_name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"is_enabled": &schema.Schema{
+			"is_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     true,
 				Description: "True if this organization is enabled (allows login and all other operations).",
 			},
-			"deployed_vm_quota": &schema.Schema{
+			"deployed_vm_quota": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
 				ValidateFunc: validation.IntAtLeast(0),
 				Description:  "Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. (0 = unlimited)",
 			},
-			"stored_vm_quota": &schema.Schema{
+			"stored_vm_quota": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
 				ValidateFunc: validation.IntAtLeast(0),
 				Description:  "Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. (0 = unlimited)",
 			},
-			"can_publish_catalogs": &schema.Schema{
+			"can_publish_catalogs": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
-			"can_publish_external_catalogs": &schema.Schema{
+			"can_publish_external_catalogs": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "True if this organization is allowed to publish external catalogs.",
 			},
-			"can_subscribe_external_catalogs": &schema.Schema{
+			"can_subscribe_external_catalogs": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
-			"vapp_lease": &schema.Schema{
+			"vapp_lease": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -95,25 +95,25 @@ func resourceOrg() *schema.Resource {
 				Description: "Defines lease parameters for vApps created in this organization",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"maximum_runtime_lease_in_sec": &schema.Schema{
+						"maximum_runtime_lease_in_sec": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long vApps can run before they are automatically stopped (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"power_off_on_runtime_lease_expiration": &schema.Schema{
+						"power_off_on_runtime_lease_expiration": {
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "When true, vApps are powered off when the runtime lease expires. " +
 								"When false, vApps are suspended when the runtime lease expires",
 						},
-						"maximum_storage_lease_in_sec": &schema.Schema{
+						"maximum_storage_lease_in_sec": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"delete_on_storage_lease_expiration": &schema.Schema{
+						"delete_on_storage_lease_expiration": {
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "If true, storage for a vApp is deleted when the vApp's lease expires. " +
@@ -122,7 +122,7 @@ func resourceOrg() *schema.Resource {
 					},
 				},
 			},
-			"vapp_template_lease": &schema.Schema{
+			"vapp_template_lease": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -130,13 +130,13 @@ func resourceOrg() *schema.Resource {
 				Description: "Defines lease parameters for vApp templates created in this organization",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"maximum_storage_lease_in_sec": &schema.Schema{
+						"maximum_storage_lease_in_sec": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"delete_on_storage_lease_expiration": &schema.Schema{
+						"delete_on_storage_lease_expiration": {
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. " +
@@ -145,18 +145,18 @@ func resourceOrg() *schema.Resource {
 					},
 				},
 			},
-			"delay_after_power_on_seconds": &schema.Schema{
+			"delay_after_power_on_seconds": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Specifies this organization's default for virtual machine boot delay after power on.",
 			},
-			"delete_force": &schema.Schema{
+			"delete_force": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_force=True with delete_recursive=True to remove an org and any objects it contains, regardless of their state.",
 			},
-			"delete_recursive": &schema.Schema{
+			"delete_recursive": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
@@ -172,7 +172,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	orgName, fullName, err := getOrgNames(d)
 	if err != nil {
-		return diag.Errorf("%s", err)
+		return diag.FromErr(err)
 	}
 	isEnabled := d.Get("is_enabled").(bool)
 	description := d.Get("description").(string)
@@ -281,7 +281,7 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 }
 
 // Deletes org
-func resourceOrgDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	//DELETING
 	vcdClient := m.(*VCDClient)
@@ -323,7 +323,7 @@ func resourceOrgDelete(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 // Update the resource
-func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	vcdClient := m.(*VCDClient)
 
@@ -438,7 +438,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 }
 
 // Retrieves an Org resource from vCD
-func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	vcdClient := m.(*VCDClient)
 
@@ -487,7 +487,7 @@ func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{})
 // For this resource, the import path is just the org name.
 //
 // Example import path (id): orgName
-func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
 	vcdClient := meta.(*VCDClient)
