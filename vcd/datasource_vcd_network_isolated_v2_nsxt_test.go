@@ -27,7 +27,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 	}
 
 	params["FuncName"] = t.Name() + "-DS"
-	configText := templateFill(TestAccVcdNetworkIsolatedV2NsxtStep1, params)
+	configText := templateFill(testAccVcdNetworkIsolatedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
 	params["FuncName"] = t.Name() + "-DS-step2"
@@ -82,7 +82,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNetworkIsolatedV2NsxtDS = TestAccVcdNetworkIsolatedV2NsxtStep1 + `
+const testAccVcdNetworkIsolatedV2NsxtDS = testAccVcdNetworkIsolatedV2NsxtStep1 + `
 data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -90,7 +90,7 @@ data "vcd_network_isolated_v2" "ds" {
 }
 `
 
-const testAccVcdNetworkIsolatedV2NsxtDSStep3 = TestAccVcdNetworkIsolatedV2NsxtStep1 + `
+const testAccVcdNetworkIsolatedV2NsxtDSStep3 = testAccVcdNetworkIsolatedV2NsxtStep1 + `
 data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -101,7 +101,7 @@ data "vcd_network_isolated_v2" "ds" {
 }
 `
 
-const testAccVcdNetworkIsolatedV2NsxtDSStep4 = TestAccVcdNetworkIsolatedV2NsxtStep1 + `
+const testAccVcdNetworkIsolatedV2NsxtDSStep4 = testAccVcdNetworkIsolatedV2NsxtStep1 + `
 data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
