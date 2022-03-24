@@ -41,12 +41,12 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "independent disk description",
@@ -61,26 +61,26 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Required:    true,
 				Description: "size in MB",
 			},
-			"bus_type": &schema.Schema{
+			"bus_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Computed:     true,
 				ValidateFunc: validateBusType,
 			},
-			"bus_sub_type": &schema.Schema{
+			"bus_sub_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Computed:     true,
 				ValidateFunc: validateBusSubType,
 			},
-			"encrypted": &schema.Schema{
+			"encrypted": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if disk is encrypted",
 			},
-			"sharing_type": &schema.Schema{
+			"sharing_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -88,38 +88,43 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"DiskSharing", "ControllerSharing"}, false),
 				Description:  "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
 			},
-			"uuid": &schema.Schema{
+			"uuid": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The UUID of this named disk's device backing",
 			},
-			"iops": &schema.Schema{
+			"iops": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "IOPS request for the created disk",
 			},
-			"owner_name": &schema.Schema{
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The owner name of the disk",
 			},
-			"datastore_name": &schema.Schema{
+			"datastore_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Datastore name",
 			},
-			"is_attached": &schema.Schema{
+			"is_attached": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the disk is already attached",
 			},
-			"attached_vm_ids": &schema.Schema{
+			"attached_vm_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "Set of VM IDs which are using the disk",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this disk. Key and value can be any string.",
 			},
 		},
 	}
@@ -233,18 +238,28 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(disk.Disk.Id)
 
+	err = createOrUpdateDiskMetadata(d, disk)
+	if err != nil {
+		return diag.Errorf("error adding metadata to independent disk: %s", err)
+	}
+
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
 func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	if d.HasChanges("size_in_mb", "storage_profile", "description") {
-		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrgAndVdc, err)
-		}
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+	}
 
+	disk, err := vdc.GetDiskById(d.Id(), true)
+	if err != nil {
+		return diag.Errorf("error fetching independent disk: %s", err)
+	}
+
+	if d.HasChanges("size_in_mb", "storage_profile", "description") {
 		storageProfileValue := d.Get("storage_profile").(string)
 		var storageProfileRef *types.Reference
 
@@ -254,11 +269,6 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 				return diag.Errorf("error finding storage profile %s", storageProfileValue)
 			}
 			storageProfileRef = &types.Reference{HREF: storageReference.HREF}
-		}
-
-		disk, err := vdc.GetDiskById(d.Id(), true)
-		if err != nil {
-			return diag.Errorf("error fetching independent disk: %s", err)
 		}
 
 		diskAttachedVmsHrefs, err := disk.GetAttachedVmsHrefs()
@@ -314,6 +324,12 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 
 	}
+
+	err = createOrUpdateDiskMetadata(d, disk)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
@@ -411,7 +427,7 @@ func attachBackVms(vcdClient *VCDClient, disk *govcd.Disk, diskDetailsForReAttac
 	return nil
 }
 
-func resourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -505,10 +521,20 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 	if err != nil {
 		return fmt.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
+
+	metadata, err := disk.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get Independent disk metadata")
+		return fmt.Errorf("unable to get Independent disk metadata %s", err)
+	}
+	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
+		return fmt.Errorf("error setting metadata: %s", err)
+	}
+
 	return nil
 }
 
-func resourceVcdIndependentDiskDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIndependentDiskDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -567,7 +593,7 @@ var errHelpDiskImport = fmt.Errorf(`resource id must be specified in one of thes
 // Example resource name (_resource_name_): vcd_independent_disk.my-disk
 // Example import path (_the_id_string_): org-name.vdc-name.my-independent-disk-id
 // Example list path (_the_id_string_): list@org-name.vdc-name.my-independent-disk-name
-func resourceVcdIndependentDiskImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdIndependentDiskImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, diskName, diskId string
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
@@ -671,4 +697,36 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error flushing buffer: %s", err))
 	}
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpDiskImport, buf.String())
+}
+
+func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error {
+	log.Printf("[TRACE] adding/updating metadata to Disk")
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := disk.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }

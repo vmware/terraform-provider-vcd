@@ -21,13 +21,17 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 	orgName1 := testConfig.VCD.Org
 	orgName2 := orgName1 + "-clone"
 	var params = StringMap{
-		"FuncName": "TestAccVcdDatasourceOrg",
-		"OrgName1": orgName1,
-		"OrgName2": orgName2,
-		"Tags":     "org",
+		"FuncName":      "TestAccVcdDatasourceOrg",
+		"OrgName1":      orgName1,
+		"OrgName2":      orgName2,
+		"Tags":          "org",
+		"MetadataKey":   "key1",
+		"MetadataValue": "value1",
 	}
 
 	configText := templateFill(testAccCheckVcdDatasourceOrg, params)
+	params["FuncName"] = params["FuncName"].(string) + "Metadata"
+	configText2 := templateFill(testAccCheckVcdDatasourceOrgMetadata, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -37,12 +41,14 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 
 	datasource1 := "data.vcd_org." + orgName1
 	resourceName2 := "vcd_org." + orgName2
+	datasource2 := "data.vcd_org.sourced_" + orgName2
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgName2),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdOrgExists(resourceName2),
@@ -86,6 +92,14 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 						resourceName2, "vapp_template_lease.0.delete_on_storage_lease_expiration"),
 				),
 			},
+			{
+				Config: configText + configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						datasource2, "metadata."+params["MetadataKey"].(string),
+						resourceName2, "metadata."+params["MetadataKey"].(string)),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -108,7 +122,7 @@ resource "vcd_org" "{{.OrgName2}}" {
   delay_after_power_on_seconds    = data.vcd_org.{{.OrgName1}}.delay_after_power_on_seconds
   delete_force                    = "true"
   delete_recursive                = "true"
- vapp_lease {
+  vapp_lease {
     maximum_runtime_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_lease.0.maximum_runtime_lease_in_sec
     power_off_on_runtime_lease_expiration = data.vcd_org.{{.OrgName1}}.vapp_lease.0.power_off_on_runtime_lease_expiration
     maximum_storage_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_lease.0.maximum_storage_lease_in_sec
@@ -118,5 +132,16 @@ resource "vcd_org" "{{.OrgName2}}" {
     maximum_storage_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.maximum_storage_lease_in_sec
     delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.delete_on_storage_lease_expiration
   }
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+  }
+}
+`
+
+const testAccCheckVcdDatasourceOrgMetadata = `
+# skip-binary-test: this test requires an org with metadata from another TF file
+
+data "vcd_org" "sourced_{{.OrgName2}}" {
+  name = "{{.OrgName2}}"
 }
 `

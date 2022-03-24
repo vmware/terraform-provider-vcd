@@ -35,26 +35,32 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "'vdc' is deprecated and ineffective. Routed networks will inherit VDC setting from parent Edge Gateway",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"owner_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of VDC or VDC Group",
+			},
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway ID in which Routed network should be located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Network name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Network description",
 			},
-			"interface_type": &schema.Schema{
+			"interface_type": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "internal",
@@ -62,32 +68,32 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
 				DiffSuppressFunc: suppressCase,
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": &schema.Schema{
+			"prefix_length": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Network prefix",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "IP ranges used for static pool allocation in the network",
@@ -97,24 +103,33 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 	}
 }
 
-// resourceVcdNetworkRoutedV2Create
 func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	// Handling locks on a routed network is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	parentEdgeGatewayOwnerId, org, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[routed network create v2] error finding parent Edge Gateway: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, vdc)
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		vcdClient.lockById(parentEdgeGatewayOwnerId)
+		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
+	} else {
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+	}
+
+	networkType, err := getOpenApiOrgVdcRoutedNetworkType(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
+	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
 		return diag.Errorf("[routed network create v2] error creating Org VDC routed network: %s", err)
 	}
@@ -124,19 +139,28 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
-// resourceVcdNetworkRoutedV2Update
 func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	// Handling locks on a routed network is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	parentEdgeGatewayOwnerId, org, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed network update v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[routed network create v2] error finding parent Edge Gateway: %s", err)
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		vcdClient.lockById(parentEdgeGatewayOwnerId)
+		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
+	} else {
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+	}
+
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found -
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -146,7 +170,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network update v2] error getting Org VDC network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, vdc)
+	networkType, err := getOpenApiOrgVdcRoutedNetworkType(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -162,16 +186,15 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
-// resourceVcdNetworkRoutedV2Read
 func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[routed network create v2] error retrieving Org: %s", err)
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found - unset ID
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -181,7 +204,7 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[routed network read v2] error getting Org VDC network: %s", err)
 	}
 
-	err = setOpenApiOrgVdcNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
+	err = setOpenApiOrgVdcRoutedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network read v2] error setting Org VDC network data: %s", err)
 	}
@@ -191,19 +214,28 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// resourceVcdNetworkRoutedV2Delete
 func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	// Handling locks on a routed network is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	parentEdgeGatewayOwnerId, org, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed network delete v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[routed network delete v2] error finding parent Edge Gateway: %s", err)
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		vcdClient.lockById(parentEdgeGatewayOwnerId)
+		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
+	} else {
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+	}
+
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
 		return diag.Errorf("[routed network delete v2] error getting Org VDC network: %s", err)
 	}
@@ -216,23 +248,32 @@ func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-// resourceVcdNetworkRoutedV2Import
 func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[routed network import v2] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
-
 	vcdClient := meta.(*VCDClient)
-	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-	if err != nil {
-		return nil, fmt.Errorf("[routed network import v2] unable to find VDC %s: %s ", vdcName, err)
+
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
+		}
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(networkName)
+	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("[routed network import v2] error reading network with name '%s': %s", networkName, err)
+		return nil, fmt.Errorf("error retrieving Org VDC network '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsRouted() {
@@ -247,10 +288,11 @@ func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func setOpenApiOrgVdcNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
-
+func setOpenApiOrgVdcRoutedNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
 	dSet(d, "name", orgVdcNetwork.Name)
 	dSet(d, "description", orgVdcNetwork.Description)
+	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
+	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
 
 	if orgVdcNetwork.Connection != nil {
 		dSet(d, "edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
@@ -285,12 +327,26 @@ func setOpenApiOrgVdcNetworkData(d *schema.ResourceData, orgVdcNetwork *types.Op
 	return nil
 }
 
-func getOpenApiOrgVdcNetworkType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.OpenApiOrgVdcNetwork, error) {
+func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDClient) (*types.OpenApiOrgVdcNetwork, error) {
+	// Must get any type of Edge Gateway because this resource supports NSX-V and NSX-T Routed
+	// networks. This resource must inherit OwnerRef.ID from parent Edge Gateway because when
+	// migrating NSX-T Edge Gateway to/from VDC Group - routed network migrates together
+	// automatically. Because of this reason it is best to avoid requiring Owner ID specification
+	// for routed network at all.
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("error getting Org: %s", err)
+	}
+
+	anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(d.Get("edge_gateway_id").(string))
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Edge Gateway structure: %s", err)
+	}
+
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		// On v35.0 onwards OrgVdc is not supported anymore. Using OwnerRef instead.
-		OwnerRef: &types.OpenApiReference{ID: vdc.Vdc.ID},
+		OwnerRef:    &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
 
 		NetworkType: types.OrgVdcNetworkTypeRouted,
 
@@ -319,4 +375,18 @@ func getOpenApiOrgVdcNetworkType(d *schema.ResourceData, vdc *govcd.Vdc) (*types
 	}
 
 	return orgVdcNetworkConfig, nil
+}
+
+func getParentEdgeGatewayOwnerId(vcdClient *VCDClient, d *schema.ResourceData) (string, *govcd.Org, error) {
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return "", nil, fmt.Errorf("[routed network create v2] error retrieving Org: %s", err)
+	}
+
+	anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(d.Get("edge_gateway_id").(string))
+	if err != nil {
+		return "", nil, fmt.Errorf("error retrieving Edge Gateway structure: %s", err)
+	}
+
+	return anyEdgeGateway.EdgeGateway.OwnerRef.ID, org, nil
 }

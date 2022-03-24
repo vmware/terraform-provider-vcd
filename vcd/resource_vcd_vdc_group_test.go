@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdVdcGroupResource tests that VDC group can be managed
+// TestAccVcdVdcGroupResource tests that VDC Group can be managed
 func TestAccVcdVdcGroupResource(t *testing.T) {
 	preTestChecks(t)
 
@@ -25,7 +25,7 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(false)
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
@@ -69,7 +69,7 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 	runVdcGroupTest(t, params)
 }
 
-// TestAccVcdVdcGroupResourceAsOrgUser tests that VDC group can be managed by Org user
+// TestAccVcdVdcGroupResourceAsOrgUser tests that VDC Group can be managed by Org user
 func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 	preTestChecks(t)
 
@@ -79,7 +79,7 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 	}
 
 	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC group")
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
