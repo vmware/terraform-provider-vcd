@@ -616,6 +616,10 @@ resource "vcd_nsxt_network_imported" "net1" {
 func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
 
 	// String map to fill the template
 	var params = StringMap{
