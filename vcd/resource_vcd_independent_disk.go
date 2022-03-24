@@ -722,7 +722,7 @@ func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error 
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}

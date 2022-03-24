@@ -568,7 +568,7 @@ func createOrUpdateAdminOrgMetadata(d *schema.ResourceData, adminOrg *govcd.Admi
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err := adminOrg.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			err := adminOrg.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}
