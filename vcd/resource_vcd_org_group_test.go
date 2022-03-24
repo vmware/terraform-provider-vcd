@@ -159,7 +159,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description1"),
 					// This check should belong to vcd_org_user tests, but here is simpler and quicker
-					resource.TestCheckResourceAttr("vcd_org_user.user1", "groups_list.0", "ship_crew"),
+					resource.TestCheckResourceAttr("vcd_org_user.user1", "group_names.0", "ship_crew"),
 				),
 			},
 			{
@@ -174,7 +174,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description2"),
 					// We check the users list here because it's when the group state is refreshed. In previous step,
 					// it would be nil as it didn't have users.
-					resource.TestCheckResourceAttr("vcd_org_group.group1", "users_list.0", "fry"),
+					resource.TestCheckResourceAttr("vcd_org_group.group1", "user_names.0", "fry"),
 					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role2),

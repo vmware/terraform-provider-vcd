@@ -34,7 +34,7 @@ func datasourceVcdOrgGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"users_list": {
+			"user_names": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Schema{
@@ -68,9 +68,9 @@ func datasourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta i
 	for _, userRef := range orgGroup.Group.UsersList.UserReference {
 		users = append(users, userRef.Name)
 	}
-	err = d.Set("users_list", convertStringsTotTypeSet(users))
+	err = d.Set("user_names", convertStringsTotTypeSet(users))
 	if err != nil {
-		return diag.Errorf("could not set users_list field: %s", err)
+		return diag.Errorf("could not set user_names field: %s", err)
 	}
 
 	return nil

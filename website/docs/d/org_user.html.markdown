@@ -61,6 +61,6 @@ The following arguments are supported:
 * `deployed_vm_quota` - Quota of vApps that this user can deploy. A value of 0 specifies an unlimited quota.
 * `stored_vm_quota` -  Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.
 * `id` - The ID of the Organization user
-* `groups_list` - The set of group names to which this user belongs. It's only populated if the users
+* `group_names` - The set of group names to which this user belongs. It's only populated if the users
     are created after the group (with this user having a `depends_on` of the given group).
 

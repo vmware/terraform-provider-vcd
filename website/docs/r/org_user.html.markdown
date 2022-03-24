@@ -132,7 +132,7 @@ The following arguments are supported:
   The default is 0.
 * `stored_vm_quota` - (Optional) Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.
   The default is 0.
-* `groups_list` - (Read only) The set of group names to which this user belongs. It's only populated if the users
+* `group_names` - (Read only) The set of group names to which this user belongs. It's only populated if the users
   are created after the group (with this user having a `depends_on` of the given group).
 
 ## Attribute Reference
