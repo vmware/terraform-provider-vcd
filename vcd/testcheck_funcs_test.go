@@ -37,6 +37,9 @@ func (c *testCachedFieldValue) cacheTestResourceFieldValue(resource, field strin
 		}
 		// Store the value in cache
 		c.fieldValue = value
+		if vcdTestVerbose {
+			fmt.Printf("# stored field '%s' with value '%s'\n", field, c.fieldValue)
+		}
 		return nil
 	}
 }
@@ -57,7 +60,10 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 			return fmt.Errorf("field %s in resource %s does not exist", field, resource)
 		}
 
-		debugPrintf("# Comparing field %s '%s==%s' in resource '%s'", field, value, c.fieldValue, resource)
+		if vcdTestVerbose {
+			fmt.Printf("# Comparing field '%s' '%s==%s' in resource '%s'\n", field, value, c.fieldValue, resource)
+		}
+
 		if value != c.fieldValue {
 			return fmt.Errorf("got '%s - %s' field value %s, expected: %s",
 				resource, field, value, c.fieldValue)

@@ -545,3 +545,37 @@ used in the documentation index.
 
 
 When both the environment variable and the command line option are possible, the environment variable gets evaluated first.
+
+## Troubleshooting code issues
+
+### Functions for dumping state and pause during acceptance testing
+
+These functions match signature of Terraform's own `resource.TestCheckResourceAttr` and can be
+dropped in for troubleshooting problems. 
+
+This function will dump the state at the test run (while executing all field evaluations). It can
+help troubleshooting why some fields fail and find typos, wrong state, etc.
+
+```go
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
+```
+
+This function can pause test run in the middle which gives the chance to investigate environment
+(UI, API calls, etc)
+
+```go
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(4 * time.Minute)
+		fmt.Println("finished sleeping")
+		return nil
+	}
+}
+```
+
