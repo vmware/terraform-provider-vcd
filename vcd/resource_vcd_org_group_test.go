@@ -149,7 +149,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				// server built in Step 0
 				Config: ldapSetupConfig + groupConfigText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// sleepTester(),
 					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role1),
@@ -167,12 +166,11 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				// server built in Step 0
 				Config: ldapSetupConfig + groupConfigText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// sleepTester(),
 					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role2),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description2"),
-					// We check the users list here because it's when the group state is refreshed. In previous step,
+					// We check the user_names set here because it's populated when the group state is refreshed. In previous step,
 					// it would be nil as it didn't have users.
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "user_names.0", "fry"),
 					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
