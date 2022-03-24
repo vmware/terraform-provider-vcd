@@ -25,15 +25,15 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"id": &schema.Schema{
+			"id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "independent disk description",
@@ -47,50 +47,50 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "size in MB",
 			},
-			"bus_type": &schema.Schema{
+			"bus_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"bus_sub_type": &schema.Schema{
+			"bus_sub_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"iops": &schema.Schema{
+			"iops": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "IOPS request for the created disk",
 			},
-			"owner_name": &schema.Schema{
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The owner name of the disk",
 			},
-			"datastore_name": &schema.Schema{
+			"datastore_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Datastore name",
 			},
-			"is_attached": &schema.Schema{
+			"is_attached": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the disk is already attached",
 			},
-			"encrypted": &schema.Schema{
+			"encrypted": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if disk is encrypted",
 			},
-			"sharing_type": &schema.Schema{
+			"sharing_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
 			},
-			"uuid": &schema.Schema{
+			"uuid": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The UUID of this named disk's device backing",
 			},
-			"attached_vm_ids": &schema.Schema{
+			"attached_vm_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "Set of VM IDs which are using the disk",
@@ -98,11 +98,16 @@ func datasourceVcIndependentDisk() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key and value pairs for disk metadata",
+			},
 		},
 	}
 }
 
-func dataSourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
