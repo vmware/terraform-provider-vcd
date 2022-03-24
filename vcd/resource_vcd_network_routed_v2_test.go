@@ -40,14 +40,14 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "INTERNAL"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
@@ -55,7 +55,7 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 				),
 			},
 			// Check that import works
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -95,7 +95,7 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
@@ -113,7 +113,7 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 				),
 			},
 			// Check that import works
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -149,6 +149,5 @@ resource "vcd_network_routed_v2" "net1" {
 	start_address = "1.1.1.10"
     end_address = "1.1.1.20"
   }
-  
 }
 `

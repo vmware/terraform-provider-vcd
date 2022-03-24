@@ -14,12 +14,17 @@ delete routed VDC networks (backed by NSX-T or NSX-V).
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
+-> Starting with **v3.6.0** Terraform provider VCD supports NSX-T VDC Groups and `vdc` fields (in
+resource and inherited from provider configuration) are deprecated. `vcd_network_routed_v2` will
+inherit VDC or VDC Group membership from parent Edge Gateway specified in `edge_gateway_id` field.
+More about VDC Group support in a [VDC Groups
+guide](/providers/vmware/vcd/latest/docs/guides/vdc_groups).
+
 ## Example Usage (NSX-T backed routed Org VDC network)
 
 ```hcl
 resource "vcd_network_routed_v2" "nsxt-backed" {
   org         = "my-org"
-  vdc         = "my-nsxt-org-vdc"
   name        = "nsxt-routed 1"
   description = "My routed Org VDC network backed by NSX-T"
 
@@ -77,7 +82,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 ```hcl
 resource "vcd_network_routed_v2" "nsxv-backed" {
   org         = "my-org"
-  vdc         = "my-nsxv-org-vdc"
   name        = "nsxv-routed-network"
   description = "NSX-V routed network"
 
@@ -101,7 +105,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when
   connected as sysadmin working across different organisations
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `vdc` - (Optional) **Deprecated** The name of VDC to use. *v3.6+* inherits parent VDC or VDC Group
+  from `edge_gateway_id`)
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network
 * `interface_type` - (Optional) An interface for the network. One of `internal` (default), `subinterface`, 
@@ -129,14 +134,13 @@ Static IP Pools support the following attributes:
 configuration. [More information.][docs-import]
 
 An existing routed network can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of orgName.vdcName.networkName.
+The path for this resource is made of `OrgName.vdc-or-vdc-group-name.NetworkName`.
 For example, using this structure, representing a routed network that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_network_routed_v2" "tf-mynet" {
   name = "my-net"
   org  = "my-org"
-  vdc  = "my-vdc"
   # ...
 }
 ```
