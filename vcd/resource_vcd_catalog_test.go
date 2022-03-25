@@ -147,7 +147,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		"Tags":           "catalog",
 	}
 
-	configText := templateFill(testAccCheckVcdCatalogStep1, params)
+	configText := templateFill(testAccCheckVcdCatalogWithStorageProfile, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	if vcdShortTest {
@@ -459,6 +459,29 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
+}
+`
+
+const testAccCheckVcdCatalogWithStorageProfile = `
+data "vcd_storage_profile" "sp" {
+	name = "{{.StorageProfile}}"
+}
+
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name               = "{{.CatalogName}}"
+  description        = "{{.Description}}"
+  storage_profile_id = data.vcd_storage_profile.sp.id
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+
+  metadata = {
+    catalog_metadata  = "catalog Metadata v2"
+    catalog_metadata2 = "catalog Metadata2 v2"
+    catalog_metadata3 = "catalog Metadata3"
+  }
 }
 `
 
