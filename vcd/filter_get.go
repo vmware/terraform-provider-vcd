@@ -38,7 +38,7 @@ func getEntityByFilter(search searchByFilterFunc, queryType, label string, filte
 }
 
 // getCatalogByFilter finds a catalog using a filter block
-func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool) (*govcd.Catalog, error) {
+func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool) (*govcd.AdminCatalog, error) {
 	queryType := types.QtCatalog
 	if isSysAdmin {
 		queryType = types.QtAdminCatalog
@@ -52,7 +52,7 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 		return nil, err
 	}
 
-	catalog, err := org.GetCatalogByHref(queryItem.GetHref())
+	catalog, err := org.GetAdminCatalogByHref(queryItem.GetHref())
 	if err != nil {
 		return nil, fmt.Errorf("[getCatalogByFilter] error retrieving catalog %s: %s", queryItem.GetName(), err)
 	}

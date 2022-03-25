@@ -30,50 +30,50 @@ func resourceVcdCatalog() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"storage_profile_id": &schema.Schema{
+			"storage_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional storage profile ID",
 			},
-			"created": &schema.Schema{
+			"created": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Time stamp of when the catalog was created",
 			},
-			"delete_force": &schema.Schema{
+			"delete_force": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.",
 			},
-			"delete_recursive": &schema.Schema{
+			"delete_recursive": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.",
 			},
-			"publish_enabled": &schema.Schema{
+			"publish_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation.",
 			},
-			"cache_enabled": &schema.Schema{
+			"cache_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "True enables early catalog export to optimize synchronization",
 			},
-			"preserve_identity_information": &schema.Schema{
+			"preserve_identity_information": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -89,7 +89,42 @@ func resourceVcdCatalog() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Key and value pairs for catalog metadata",
+				Description: "Key and value pairs for catalog metadata.",
+			},
+			"catalog_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Catalog version number.",
+			},
+			"owner_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Owner name from the catalog.",
+			},
+			"number_of_vapp_templates": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of vApps templates this catalog contains.",
+			},
+			"number_of_media": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of Medias this catalog contains.",
+			},
+			"is_shared": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog is shared.",
+			},
+			"is_published": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog is shared to all organizations.",
+			},
+			"publish_subscription_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
 			},
 		},
 	}
@@ -177,8 +212,12 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
+		if govcd.ContainsNotFound(err) {
+			log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
+			d.SetId("")
+			return nil
+		}
+
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
@@ -212,7 +251,14 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if len(metadata.MetadataEntry) > 0 {
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = setCatalogData(d, adminOrg, adminCatalog.AdminCatalog.Name)
 	if err != nil {
 		return err
 	}
@@ -398,5 +444,24 @@ func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}
 			}
 		}
 	}
+	return nil
+}
+
+func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, catalogName string) error {
+	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
+	catalogRecords, err := adminOrg.FindCatalogRecords(catalogName)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
+		return fmt.Errorf("unable to retrieve catalog record - %s", err)
+	}
+
+	dSet(d, "catalog_version", catalogRecords[0].Version)
+	dSet(d, "owner_name", catalogRecords[0].OwnerName)
+	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
+	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
+	dSet(d, "is_published", catalogRecords[0].IsPublished)
+	dSet(d, "is_shared", catalogRecords[0].IsShared)
+	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+
 	return nil
 }
