@@ -147,13 +147,6 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
-	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
-	catalogRecords, err := adminOrg.FindCatalogRecords(catalog.AdminCatalog.Name)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
-		return diag.Errorf("There was an issue when retrieving the catalog records - %s", err)
-	}
-
 	metadata, err := catalog.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
@@ -176,13 +169,10 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	dSet(d, "catalog_version", catalogRecords[0].Version)
-	dSet(d, "owner_name", catalogRecords[0].OwnerName)
-	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
-	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
-	dSet(d, "is_published", catalogRecords[0].IsPublished)
-	dSet(d, "is_shared", catalogRecords[0].IsShared)
-	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+	err = setCatalogRecordValuesToSchema(d, adminOrg, catalog.AdminCatalog.Name)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }
