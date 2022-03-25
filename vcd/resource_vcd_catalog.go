@@ -221,13 +221,6 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
-	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
-	catalogRecords, err := adminOrg.FindCatalogRecords(adminCatalog.AdminCatalog.Name)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
-		return err
-	}
-
 	// Check if storage profile is set. Although storage profile structure accepts a list, in UI only one can be picked
 	if adminCatalog.AdminCatalog.CatalogStorageProfiles != nil && len(adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile) > 0 {
 		// By default API does not return Storage Profile Name in response. It has ID and HREF, but not Name so name
@@ -265,13 +258,10 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	dSet(d, "catalog_version", catalogRecords[0].Version)
-	dSet(d, "owner_name", catalogRecords[0].OwnerName)
-	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
-	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
-	dSet(d, "is_published", catalogRecords[0].IsPublished)
-	dSet(d, "is_shared", catalogRecords[0].IsShared)
-	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+	err = setCatalogRecordValuesToSchema(d, adminOrg, adminCatalog.AdminCatalog.Name)
+	if err != nil {
+		return err
+	}
 
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
@@ -454,5 +444,24 @@ func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}
 			}
 		}
 	}
+	return nil
+}
+
+func setCatalogRecordValuesToSchema(d *schema.ResourceData, adminOrg *govcd.AdminOrg, catalogName string) error {
+	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
+	catalogRecords, err := adminOrg.FindCatalogRecords(catalogName)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
+		return fmt.Errorf("unable to retrieve catalog record - %s", err)
+	}
+
+	dSet(d, "catalog_version", catalogRecords[0].Version)
+	dSet(d, "owner_name", catalogRecords[0].OwnerName)
+	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
+	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
+	dSet(d, "is_published", catalogRecords[0].IsPublished)
+	dSet(d, "is_shared", catalogRecords[0].IsShared)
+	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+
 	return nil
 }
