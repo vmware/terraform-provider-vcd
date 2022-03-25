@@ -258,7 +258,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	err = setCatalogRecordValuesToSchema(d, adminOrg, adminCatalog.AdminCatalog.Name)
+	err = setCatalogData(d, adminOrg, adminCatalog.AdminCatalog.Name)
 	if err != nil {
 		return err
 	}
@@ -447,7 +447,7 @@ func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-func setCatalogRecordValuesToSchema(d *schema.ResourceData, adminOrg *govcd.AdminOrg, catalogName string) error {
+func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, catalogName string) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := adminOrg.FindCatalogRecords(catalogName)
 	if err != nil {
