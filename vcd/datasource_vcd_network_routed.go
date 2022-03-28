@@ -1,16 +1,17 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdNetworkRoutedRead,
+		ReadContext: datasourceVcdNetworkRoutedRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
@@ -28,91 +29,91 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The name of the edge gateway",
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Optional description for the network",
 			},
 
-			"interface_type": &schema.Schema{
+			"interface_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Which interface to use (one of `internal`, `subinterface`, `distributed`)",
 			},
 
-			"netmask": &schema.Schema{
+			"netmask": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The netmask for the new network",
 			},
 
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The gateway of this network",
 			},
 
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "First DNS server to use",
 			},
 
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Second DNS server to use",
 			},
 
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network Hypertext Reference",
 			},
 
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
-			"dhcp_pool": &schema.Schema{
+			"dhcp_pool": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The first address in the IP Range",
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The final address in the IP Range",
 						},
 
-						"default_lease_time": &schema.Schema{
+						"default_lease_time": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "The default DHCP lease time to use",
 						},
 
-						"max_lease_time": &schema.Schema{
+						"max_lease_time": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "HThe maximum DHCP lease time to use",
@@ -121,19 +122,19 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 				},
 				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The first address in the IP Range",
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The final address in the IP Range",
@@ -142,7 +143,7 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 				},
 				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,
@@ -156,21 +157,26 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 					},
 				},
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+			},
 		},
 	}
 }
 
-func datasourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdNetworkRoutedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	if vdc.IsNsxt() {
 		logForScreen("vcd_network_routed", "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkRoutedRead(d, meta, "datasource")
+	return genericVcdNetworkRoutedRead(c, d, meta, "datasource")
 }

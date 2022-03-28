@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -12,15 +14,15 @@ import (
 
 func resourceVcdNetworkDirect() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNetworkDirectCreate,
-		Read:   resourceVcdNetworkDirectRead,
-		Update: resourceVcdNetworkDirectUpdate,
-		Delete: resourceVcdNetworkDelete,
+		CreateContext: resourceVcdNetworkDirectCreate,
+		ReadContext:   resourceVcdNetworkDirectRead,
+		UpdateContext: resourceVcdNetworkDirectUpdate,
+		DeleteContext: resourceVcdNetworkDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNetworkDirectImport,
+			StateContext: resourceVcdNetworkDirectImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique name for this network",
@@ -38,73 +40,78 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional description for the network",
 			},
-			"external_network": &schema.Schema{
+			"external_network": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the external network",
 			},
-			"external_network_gateway": &schema.Schema{
+			"external_network_gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway of the external network",
 			},
-			"external_network_netmask": &schema.Schema{
+			"external_network_netmask": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Net mask of the external network",
 			},
-			"external_network_dns1": &schema.Schema{
+			"external_network_dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Main DNS of the external network",
 			},
-			"external_network_dns2": &schema.Schema{
+			"external_network_dns2": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Secondary DNS of the external network",
 			},
-			"external_network_dns_suffix": &schema.Schema{
+			"external_network_dns_suffix": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix of the external network",
 			},
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network Hypertext Reference",
 			},
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+			},
 		},
 	}
 }
 
-func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkDirectCreate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("creation of a vcd_network_direct requires system administrator privileges")
+		return diag.Errorf("creation of a vcd_network_direct requires system administrator privileges")
 	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	externalNetworkName := d.Get("external_network").(string)
 	networkName := d.Get("name").(string)
 	externalNetwork, err := vcdClient.GetExternalNetworkByName(externalNetworkName)
 	if err != nil {
-		return fmt.Errorf("unable to find external network %s (%s)", externalNetworkName, err)
+		return diag.Errorf("unable to find external network %s (%s)", externalNetworkName, err)
 	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
@@ -125,27 +132,65 @@ func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) er
 
 	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
 	if err != nil {
-		return fmt.Errorf("error: %s", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
 	if err != nil {
-		return fmt.Errorf("error retrieving network %s after creation", networkName)
+		return diag.Errorf("error retrieving network %s after creation", networkName)
 	}
 	d.SetId(network.OrgVDCNetwork.ID)
-	return resourceVcdNetworkDirectRead(d, meta)
+
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("error adding metadata to direct network: %s", err)
+	}
+
+	return resourceVcdNetworkDirectRead(c, d, meta)
 }
 
-func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdNetworkDirectRead(d, meta, "resource")
+func createOrUpdateNetworkMetadata(d *schema.ResourceData, network *govcd.OrgVDCNetwork) error {
+	log.Printf("[TRACE] adding/updating metadata to Network")
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := network.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := network.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }
 
-func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func resourceVcdNetworkDirectRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkDirectRead(c, d, meta, "resource")
+}
+
+func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
+		return diag.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
 	}
 
 	network, err := getNetwork(d, vcdClient, origin == "datasource", "direct")
@@ -156,7 +201,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[direct network read] network not found: %s", err)
+		return diag.Errorf("[direct network read] network not found: %s", err)
 	}
 
 	dSet(d, "name", network.OrgVDCNetwork.Name)
@@ -168,7 +213,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 	// Org Users can't create a direct network, but should be able to see the connection info.
 	networkList, err := vdc.GetNetworkList()
 	if err != nil {
-		return fmt.Errorf("error retrieving network list for VDC %s : %s", vdc.Vdc.Name, err)
+		return diag.Errorf("error retrieving network list for VDC %s : %s", vdc.Vdc.Name, err)
 	}
 	var currentNetwork *types.QueryResultOrgVdcNetworkRecordType
 	for _, net := range networkList {
@@ -177,7 +222,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 		}
 	}
 	if currentNetwork == nil {
-		return fmt.Errorf("error retrieving network %s from network list", network.OrgVDCNetwork.Name)
+		return diag.Errorf("error retrieving network %s from network list", network.OrgVDCNetwork.Name)
 	}
 	dSet(d, "external_network", currentNetwork.ConnectedTo)
 	dSet(d, "external_network_netmask", currentNetwork.Netmask)
@@ -189,19 +234,30 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
+	metadata, err := network.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find direct network metadata: %s", err)
+		return diag.FromErr(err)
+	}
+
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	return nil
 }
 
-func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkDirectUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("update of a vcd_network_direct requires system administrator privileges")
+		return diag.Errorf("update of a vcd_network_direct requires system administrator privileges")
 	}
 	network, err := getNetwork(d, vcdClient, false, "direct")
 	if err != nil {
-		return fmt.Errorf("[direct network update] error getting network: %s", err)
+		return diag.Errorf("[direct network update] error getting network: %s", err)
 	}
 
 	networkName := d.Get("name").(string)
@@ -211,10 +267,15 @@ func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) er
 
 	err = network.Update()
 	if err != nil {
-		return fmt.Errorf("[direct network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
+		return diag.Errorf("[direct network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 
-	return resourceVcdNetworkDirectRead(d, meta)
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("[direct network update] error updating network metadata: %s", err)
+	}
+
+	return resourceVcdNetworkDirectRead(c, d, meta)
 }
 
 func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool, wanted string) (*govcd.OrgVDCNetwork, error) {
@@ -268,7 +329,7 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool,
 // Example resource name (_resource_name_): vcd_network_direct.my-network
 // Example import path (_the_id_string_): org.vdc.my-network
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdNetworkDirectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNetworkDirectImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[direct network import] resource name must be specified as org-name.vdc-name.network-name")

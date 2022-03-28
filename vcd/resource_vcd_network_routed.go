@@ -2,7 +2,9 @@ package vcd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -15,15 +17,15 @@ import (
 
 func resourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNetworkRoutedCreate,
-		Read:   resourceVcdNetworkRoutedRead,
-		Delete: resourceVcdNetworkDeleteLocked,
-		Update: resourceVcdNetworkRoutedUpdate,
+		CreateContext: resourceVcdNetworkRoutedCreate,
+		ReadContext:   resourceVcdNetworkRoutedRead,
+		DeleteContext: resourceVcdNetworkDeleteLocked,
+		UpdateContext: resourceVcdNetworkRoutedUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNetworkRoutedImport,
+			StateContext: resourceVcdNetworkRoutedImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique name for the network",
@@ -42,20 +44,20 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the edge gateway",
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional description for the network",
 			},
 
-			"interface_type": &schema.Schema{
+			"interface_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "internal",
@@ -66,7 +68,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				DiffSuppressFunc: suppressNetworkUpgradedInterface(),
 			},
 
-			"netmask": &schema.Schema{
+			"netmask": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -75,7 +77,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -83,66 +85,66 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "First DNS server to use",
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Second DNS server to use",
 				ValidateFunc: validation.IsIPAddress,
 			},
 
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network Hypertext Reference",
 			},
 
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
-			"dhcp_pool": &schema.Schema{
+			"dhcp_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
 							ValidateFunc: validation.IsIPAddress,
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
 							ValidateFunc: validation.IsIPAddress,
 						},
 
-						"default_lease_time": &schema.Schema{
+						"default_lease_time": {
 							Type:        schema.TypeInt,
 							Computed:    true, // vCD doesn't process this field as input. It sets the value to max_lease_time
 							Description: "The default DHCP lease time to use",
 						},
 
-						"max_lease_time": &schema.Schema{
+						"max_lease_time": {
 							Type:        schema.TypeInt,
 							Default:     7200,
 							Optional:    true,
@@ -152,20 +154,20 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				},
 				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
 							ValidateFunc: validation.IsIPAddress,
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
@@ -175,11 +177,16 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				},
 				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+			},
 		},
 	}
 }
 
-func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkRoutedCreate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockParentEdgeGtw(d)
@@ -187,7 +194,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	if vdc.IsNsxt() {
@@ -197,7 +204,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 	edgeGatewayName := d.Get("edge_gateway").(string)
 	edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
 	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		return diag.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	gatewayName := d.Get("gateway").(string)
@@ -208,7 +215,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 
 	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
@@ -222,7 +229,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		Configuration: &types.NetworkConfiguration{
 			FenceMode: "natRouted",
 			IPScopes: &types.IPScopes{
-				IPScope: []*types.IPScope{&types.IPScope{
+				IPScope: []*types.IPScope{{
 					IsInherited: false,
 					Gateway:     gatewayName,
 					Netmask:     netMask,
@@ -254,47 +261,52 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		if distributedAllowed {
 			orgVDCNetwork.Configuration.DistributedInterface = &trueValue
 		} else {
-			return fmt.Errorf("interface 'distributed' requested, but distributed routing is not enabled in edge gateway '%s'", edgeGateway.EdgeGateway.Name)
+			return diag.Errorf("interface 'distributed' requested, but distributed routing is not enabled in edge gateway '%s'", edgeGateway.EdgeGateway.Name)
 		}
 	}
 
 	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
 	if err != nil {
-		return fmt.Errorf("error: %s", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
 	if err != nil {
-		return fmt.Errorf("error finding network: %s", err)
+		return diag.Errorf("error finding network: %s", err)
 	}
 
 	if dhcp, ok := d.GetOk("dhcp_pool"); ok {
 		task, err := edgeGateway.AddDhcpPool(network.OrgVDCNetwork, dhcp.(*schema.Set).List())
 		if err != nil {
-			return fmt.Errorf("error adding DHCP pool: %s", err)
+			return diag.Errorf("error adding DHCP pool: %s", err)
 		}
 
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
+			return diag.Errorf(errorCompletingTask, err)
 		}
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	return resourceVcdNetworkRoutedRead(d, meta)
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("error adding metadata to routed network: %s", err)
+	}
+
+	return resourceVcdNetworkRoutedRead(c, d, meta)
 }
 
-func resourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdNetworkRoutedRead(d, meta, "resource")
+func resourceVcdNetworkRoutedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkRoutedRead(c, d, meta, "resource")
 }
 
-func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	network, err := getNetwork(d, vcdClient, origin == "datasource", "routed")
@@ -305,7 +317,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[routed network read] error retrieving Org VDC network  %s", err)
+		return diag.Errorf("[routed network read] error retrieving Org VDC network  %s", err)
 	}
 	edgeGatewayName := d.Get("edge_gateway").(string)
 
@@ -313,14 +325,14 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	if edgeGatewayName == "" {
 		edgeGatewayName, err = vdc.FindEdgeGatewayNameByNetwork(network.OrgVDCNetwork.Name)
 		if err != nil {
-			return fmt.Errorf("[routed network read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
+			return diag.Errorf("[routed network read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 		}
 		dSet(d, "edge_gateway", edgeGatewayName)
 	}
 	edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
 	if err != nil {
 		log.Printf("[DEBUG] error retrieving edge gateway")
-		return fmt.Errorf("[routed network read] error retrieving edge gateway %s: %s", edgeGatewayName, err)
+		return diag.Errorf("[routed network read] error retrieving edge gateway %s: %s", edgeGatewayName, err)
 	}
 
 	dSet(d, "name", network.OrgVDCNetwork.Name)
@@ -346,7 +358,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 		}
 		err := d.Set("dhcp_pool", newSet)
 		if err != nil {
-			return fmt.Errorf("[routed network read] dhcp set: %s", err)
+			return diag.Errorf("[routed network read] dhcp set: %s", err)
 		}
 	}
 
@@ -360,7 +372,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 		}
 		err := d.Set("static_ip_pool", newSet)
 		if err != nil {
-			return fmt.Errorf("[routed network read] static_ip set: %s", err)
+			return diag.Errorf("[routed network read] static_ip set: %s", err)
 		}
 	}
 
@@ -376,6 +388,17 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 		}
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
+
+	metadata, err := network.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find routed network metadata: %s", err)
+		return diag.Errorf("[routed network read] unable to find network metadata %s", err)
+	}
+
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("[routed network read] unable to set network metadata %s", err)
+	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -437,34 +460,34 @@ func getDhcpFromEdgeGateway(networkHref string, edgeGateway *govcd.EdgeGateway) 
 	return dhcpConfig
 }
 
-func resourceVcdNetworkDeleteLocked(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkDeleteLocked(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	return resourceVcdNetworkDelete(d, meta)
+	return resourceVcdNetworkDelete(c, d, meta)
 }
 
-func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkDelete(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("[routed network delete] error retrieving Org VDC network: %s", err)
+		return diag.Errorf("[routed network delete] error retrieving Org VDC network: %s", err)
 	}
 
 	task, err := network.Delete()
 	if err != nil {
-		return fmt.Errorf("error deleting network: %s", err)
+		return diag.Errorf("error deleting network: %s", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
@@ -542,7 +565,7 @@ func resourceVcdNetworkRoutedDhcpPoolHash(v interface{}) int {
 // Example resource name (_resource_name_): vcd_network_routed.my-network
 // Example import path (_the_id_string_): org.vdc.my-network
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNetworkRoutedImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[routed network import] resource name must be specified as org-name.vdc-name.network-name")
@@ -577,7 +600,7 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceVcdNetworkRoutedUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkRoutedUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -596,14 +619,14 @@ func resourceVcdNetworkRoutedUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 	network, err := getNetwork(d, vcdClient, false, "routed")
 	if err != nil {
-		return fmt.Errorf("[routed network update] error getting network %s: %s", identifier, err)
+		return diag.Errorf("[routed network update] error getting network %s: %s", identifier, err)
 	}
 	network.OrgVDCNetwork.Name = networkName
 	network.OrgVDCNetwork.Description = description
 	network.OrgVDCNetwork.IsShared = d.Get("shared").(bool)
 	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	trueValue := true
@@ -624,30 +647,35 @@ func resourceVcdNetworkRoutedUpdate(d *schema.ResourceData, meta interface{}) er
 
 	err = network.Update()
 	if err != nil {
-		return fmt.Errorf("[routed network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
+		return diag.Errorf("[routed network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 	if d.HasChange("dhcp_pool") {
 		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+			return diag.Errorf(errorRetrievingOrgAndVdc, err)
 		}
 		edgeGatewayName := d.Get("edge_gateway").(string)
 		edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
 		if err != nil {
-			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+			return diag.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 		if dhcp, ok := d.GetOk("dhcp_pool"); ok {
 			task, err := edgeGateway.AddDhcpPool(network.OrgVDCNetwork, dhcp.(*schema.Set).List())
 			if err != nil {
-				return fmt.Errorf("error updating DHCP pool: %s", err)
+				return diag.Errorf("error updating DHCP pool: %s", err)
 			}
 
 			err = task.WaitTaskCompletion()
 			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+				return diag.Errorf(errorCompletingTask, err)
 			}
 		}
 	}
 
-	return resourceVcdNetworkRoutedRead(d, meta)
+	err = createOrUpdateNetworkMetadata(d, network)
+	if err != nil {
+		return diag.Errorf("[routed network update] error updating network metadata: %s", err)
+	}
+
+	return resourceVcdNetworkRoutedRead(c, d, meta)
 }
