@@ -50,6 +50,10 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"VmName":                   t.Name(),
 		"Catalog":                  testSuiteCatalogName,
 		"CatalogItem":              testSuiteCatalogOVAItem,
+		"metadataKey":              "key1",
+		"metadataValue":            "value1",
+		"metadataKeyUpdate":        "key2",
+		"metadataValueUpdate":      "value2",
 	}
 
 	// regexp for empty value
@@ -96,7 +100,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
@@ -114,9 +118,10 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKey"].(string), params["metadataValue"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
@@ -133,16 +138,18 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", sharingType),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
+					resource.TestCheckNoResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKey"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKeyUpdate"].(string), params["metadataValueUpdate"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "vcd_independent_disk." + resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
-			resource.TestStep{
+			{
 				Config: configTextWithoutOptionals,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceNameSecond),
@@ -155,7 +162,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "is_attached", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:   configTextNvme,
 				SkipFunc: vcdVersionIs103,
 				Check: resource.ComposeTestCheckFunc(
@@ -175,7 +182,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:   configTextNvmeUpdate,
 				SkipFunc: vcdVersionIs103,
 				Check: resource.ComposeTestCheckFunc(
@@ -195,7 +202,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextAttachedToVm,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
@@ -229,7 +236,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "attached_vm_ids.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextAttachedToVmUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
@@ -350,6 +357,9 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
+  metadata = {
+    {{.metadataKey}} = "{{.metadataValue}}"
+  }
 }
 `
 
@@ -364,6 +374,9 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileNameUpdate}}"
+  metadata = {
+    {{.metadataKeyUpdate}} = "{{.metadataValueUpdate}}"
+  }
 }
 `
 

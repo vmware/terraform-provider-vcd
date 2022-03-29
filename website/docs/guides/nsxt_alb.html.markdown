@@ -15,7 +15,7 @@ VMware NSX Advanced Load Balancer. _System administrators_ can enable and config
 for VDCs backed by NSX-T.
 
 Load balancing services are associated with NSX-T Edge Gateways, which can be scoped either to an organization VDC
-backed by NSX-T VDC or to a VDC group with NSX-T Data Center network provider type.
+backed by NSX-T VDC or to a VDC Group with NSX-T Data Center network provider type.
 
 To use the virtual infrastructure provided by NSX-T Advanced Load Balancer, register your NSX-T Cloud instances with
 VMware Cloud Director. Controllers serve as a central control plane for load balancing services. After registering

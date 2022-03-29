@@ -11,6 +11,7 @@ import (
 
 func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	preTestChecks(t)
+	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -21,8 +22,6 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -35,7 +34,7 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	}
 
 	params["FuncName"] = t.Name() + "-DS"
-	configText := templateFill(TestAccVcdNetworkImportedV2NsxtStep1, params)
+	configText := templateFill(testAccVcdNetworkImportedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
 	params["FuncName"] = t.Name() + "-DS-step2"
@@ -90,7 +89,7 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNetworkImportedNsxtDS = TestAccVcdNetworkImportedV2NsxtStep1 + `
+const testAccVcdNetworkImportedNsxtDS = testAccVcdNetworkImportedV2NsxtStep1 + `
 data "vcd_nsxt_network_imported" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -98,7 +97,7 @@ data "vcd_nsxt_network_imported" "ds" {
 }
 `
 
-const testAccVcdNetworkImportedNsxtDSStep3 = TestAccVcdNetworkImportedV2NsxtStep1 + `
+const testAccVcdNetworkImportedNsxtDSStep3 = testAccVcdNetworkImportedV2NsxtStep1 + `
 data "vcd_nsxt_network_imported" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -109,7 +108,7 @@ data "vcd_nsxt_network_imported" "ds" {
 }
 `
 
-const testAccVcdNetworkImportedNsxtDSStep4 = TestAccVcdNetworkImportedV2NsxtStep1 + `
+const testAccVcdNetworkImportedNsxtDSStep4 = testAccVcdNetworkImportedV2NsxtStep1 + `
 data "vcd_nsxt_network_imported" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"

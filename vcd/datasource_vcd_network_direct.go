@@ -1,12 +1,16 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 func datasourceVcdNetworkDirect() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdNetworkDirectRead,
+		ReadContext: datasourceVcdNetworkDirectRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
@@ -23,52 +27,52 @@ func datasourceVcdNetworkDirect() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Optional description for the network",
 			},
-			"external_network": &schema.Schema{
+			"external_network": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The name of the external network",
 			},
-			"external_network_gateway": &schema.Schema{
+			"external_network_gateway": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway of the external network",
 			},
-			"external_network_netmask": &schema.Schema{
+			"external_network_netmask": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Net mask of the external network",
 			},
-			"external_network_dns1": &schema.Schema{
+			"external_network_dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Main DNS of the external network",
 			},
-			"external_network_dns2": &schema.Schema{
+			"external_network_dns2": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Secondary DNS of the external network",
 			},
-			"external_network_dns_suffix": &schema.Schema{
+			"external_network_dns_suffix": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix of the external network",
 			},
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network Hypertext Reference",
 			},
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,
@@ -82,10 +86,15 @@ func datasourceVcdNetworkDirect() *schema.Resource {
 					},
 				},
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+			},
 		},
 	}
 }
 
-func datasourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdNetworkDirectRead(d, meta, "datasource")
+func datasourceVcdNetworkDirectRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkDirectRead(c, d, meta, "datasource")
 }

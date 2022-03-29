@@ -20,7 +20,7 @@ func resourceVcdOrgUser() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -40,30 +40,30 @@ func resourceVcdOrgUser() *schema.Resource {
 				ForceNew:    false,
 				Description: "Role within the organization",
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      false,
 				Sensitive:     true,
 				ConflictsWith: []string{"password_file"},
 				Description: "The user's password. This value is never returned on read. " +
-					`Either "password" or "password_file" must be included on creation.`,
+					`Either "password" or "password_file" must be included on creation unless is_external is true.`,
 			},
-			"password_file": &schema.Schema{
+			"password_file": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      false,
 				ConflictsWith: []string{"password"},
 				Description: "Name of a file containing the user's password. " +
-					`Either "password_file" or "password" must be included on creation.`,
+					`Either "password_file" or "password" must be included on creation unless is_external is true.`,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				Description: "The user's description",
 			},
-			"provider_type": &schema.Schema{
+			"provider_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  govcd.OrgUserProviderIntegrated,
@@ -71,45 +71,49 @@ func resourceVcdOrgUser() *schema.Resource {
 				Description: "Identity provider type for this this user. One of: 'INTEGRATED', 'SAML', 'OAUTH'. " +
 					"When empty, the default value 'INTEGRATED' is used.",
 			},
-			"full_name": &schema.Schema{
+			"full_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
+				Computed:    true, // If IsExternal is true
 				Description: "The user's full name",
 			},
-			"email_address": &schema.Schema{
+			"email_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
+				Computed:    true, // If IsExternal is true
 				Description: "The user's email address",
 			},
-			"telephone": &schema.Schema{
+			"telephone": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
+				Computed:    true, // If IsExternal is true
 				Description: "The user's telephone",
 			},
-			"instant_messaging": &schema.Schema{
+			"instant_messaging": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
+				Computed:    true, // If IsExternal is true
 				Description: "The user's telephone",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				ForceNew:    false,
 				Description: "True if the user is enabled and can log in.",
 			},
-			"is_group_role": &schema.Schema{
+			"is_group_role": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				ForceNew:    false,
 				Description: "True if this user has a group role.",
 			},
-			"is_locked": &schema.Schema{
+			"is_locked": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
@@ -117,26 +121,41 @@ func resourceVcdOrgUser() *schema.Resource {
 					"will change to true (only the system can lock the user). " +
 					"To unlock the user re-set this flag to false.",
 			},
-			"take_ownership": &schema.Schema{
+			"is_external": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "True if this user is imported from an external resource, like an LDAP.",
+			},
+			"take_ownership": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				ForceNew:    false,
 				Description: "Take ownership of user's objects on deletion.",
 			},
-			"deployed_vm_quota": &schema.Schema{
+			"deployed_vm_quota": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Default:     10,
 				ForceNew:    false,
+				Computed:    true, // If IsExternal is true
 				Description: "Quota of vApps that this user can deploy. A value of 0 specifies an unlimited quota.",
 			},
-			"stored_vm_quota": &schema.Schema{
+			"stored_vm_quota": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Default:     10,
 				ForceNew:    false,
+				Computed:    true, // If IsExternal is true
 				Description: "Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.",
+			},
+			"group_names": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Read only. Set of group names that this user belongs to",
 			},
 		},
 	}
@@ -172,9 +191,14 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	userData.ProviderType = d.Get("provider_type").(string)
 	userData.IsEnabled = d.Get("enabled").(bool)
 	userData.IsLocked = d.Get("is_locked").(bool)
+	userData.IsExternal = d.Get("is_external").(bool)
 	userData.DeployedVmQuota = d.Get("deployed_vm_quota").(int)
 	userData.StoredVmQuota = d.Get("stored_vm_quota").(int)
 	userData.IM = d.Get("instant_messaging").(string)
+
+	if userData.IsExternal {
+		return &userData, adminOrg, nil
+	}
 
 	password := d.Get("password").(string)
 	if password != "" {
@@ -235,11 +259,22 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	dSet(d, "instant_messaging", orgUser.User.IM)
 	dSet(d, "enabled", orgUser.User.IsEnabled)
 	dSet(d, "is_locked", orgUser.User.IsLocked)
+	dSet(d, "is_external", orgUser.User.IsExternal)
 	dSet(d, "deployed_vm_quota", orgUser.User.DeployedVmQuota)
 	dSet(d, "stored_vm_quota", orgUser.User.StoredVmQuota)
 	if orgUser.User.Role != nil {
 		dSet(d, "role", orgUser.User.Role.Name)
 	}
+
+	var groups []string
+	for _, groupRef := range orgUser.User.GroupReferences.GroupReference {
+		groups = append(groups, groupRef.Name)
+	}
+	err := d.Set("group_names", convertStringsTotTypeSet(groups))
+	if err != nil {
+		return fmt.Errorf("could not set group_names field: %s", err)
+	}
+
 	return nil
 }
 
@@ -250,8 +285,8 @@ func resourceVcdOrgUserCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	if userData.Password == "" {
-		return fmt.Errorf(`no password provided with either "password"" or "password_file" properties`)
+	if userData.Password == "" && !userData.IsExternal {
+		return fmt.Errorf(`no password provided with either "password" or "password_file" properties`)
 	}
 	_, err = adminOrg.CreateUserSimple(*userData)
 	if err != nil {

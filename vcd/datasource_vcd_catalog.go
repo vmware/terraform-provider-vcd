@@ -16,7 +16,7 @@ func datasourceVcdCatalog() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
@@ -62,6 +62,41 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for catalog metadata",
 			},
+			"catalog_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Catalog version number.",
+			},
+			"owner_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Owner name from the catalog.",
+			},
+			"number_of_vapp_templates": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of vApps this catalog contains.",
+			},
+			"number_of_media": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of Medias this catalog contains.",
+			},
+			"is_shared": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog is shared.",
+			},
+			"is_published": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog is shared to all organizations.",
+			},
+			"publish_subscription_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
+			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -85,36 +120,30 @@ func datasourceVcdCatalog() *schema.Resource {
 func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
 		vcdClient = meta.(*VCDClient)
-		err       error
-		adminOrg  *govcd.AdminOrg
-		catalog   *govcd.Catalog
+		catalog   *govcd.AdminCatalog
 	)
 
 	if !nameOrFilterIsSet(d) {
 		return diag.Errorf(noNameOrFilterError, "vcd_catalog")
 	}
-	orgName := d.Get("org").(string)
-	identifier := d.Get("name").(string)
-	log.Printf("[TRACE] Reading Org %s", orgName)
-	adminOrg, err = vcdClient.VCDClient.GetAdminOrgByName(orgName)
 
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		log.Printf("[DEBUG] Org %s not found. Setting ID to nothing", orgName)
-		d.SetId("")
-		return nil
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
-	log.Printf("[TRACE] Org %s found", orgName)
+	log.Printf("[TRACE] Org %s found", adminOrg.AdminOrg.Name)
+
+	identifier := d.Get("name").(string)
 
 	filter, hasFilter := d.GetOk("filter")
 
 	if hasFilter {
 		catalog, err = getCatalogByFilter(adminOrg, filter, vcdClient.Client.IsSysAdmin)
 	} else {
-		catalog, err = adminOrg.GetCatalogByNameOrId(identifier, false)
+		catalog, err = adminOrg.GetAdminCatalogByNameOrId(identifier, false)
 	}
 	if err != nil {
 		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
-		d.SetId("")
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
@@ -124,19 +153,25 @@ func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
 	}
 
-	dSet(d, "description", catalog.Catalog.Description)
-	dSet(d, "created", catalog.Catalog.DateCreated)
-	dSet(d, "name", catalog.Catalog.Name)
-	d.SetId(catalog.Catalog.ID)
-	if catalog.Catalog.PublishExternalCatalogParams != nil {
-		dSet(d, "publish_enabled", catalog.Catalog.PublishExternalCatalogParams.IsPublishedExternally)
-		dSet(d, "cache_enabled", catalog.Catalog.PublishExternalCatalogParams.IsCachedEnabled)
-		dSet(d, "preserve_identity_information", catalog.Catalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
+	dSet(d, "description", catalog.AdminCatalog.Description)
+	dSet(d, "created", catalog.AdminCatalog.DateCreated)
+	dSet(d, "name", catalog.AdminCatalog.Name)
+
+	d.SetId(catalog.AdminCatalog.ID)
+	if catalog.AdminCatalog.PublishExternalCatalogParams != nil {
+		dSet(d, "publish_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
+		dSet(d, "cache_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
+		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 	}
 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
+	}
+
+	err = setCatalogData(d, adminOrg, catalog.AdminCatalog.Name)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil

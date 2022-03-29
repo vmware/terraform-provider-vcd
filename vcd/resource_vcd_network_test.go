@@ -5,13 +5,12 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
+	"strconv"
+	"testing"
 )
 
 func init() {
@@ -34,6 +33,8 @@ type networkDef struct {
 	configText            string
 	resourceName          string
 	interfaceName         string
+	metadataKey           string
+	metadataValue         string
 }
 
 const (
@@ -67,6 +68,8 @@ func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 		endStaticIpAddress1:   "192.168.2.50",
 		configText:            testAccCheckVcdNetworkIsolatedStatic1,
 		resourceName:          "vcd_network_isolated",
+		metadataKey:           "key1",
+		metadataValue:         "value1",
 	}
 	var updateDef = networkDef{
 		name:                  isolatedStaticNetwork1 + "-update",
@@ -75,6 +78,8 @@ func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 		endStaticIpAddress1:   "192.168.2.45",
 		configText:            testAccCheckVcdNetworkIsolatedStatic1,
 		resourceName:          "vcd_network_isolated",
+		metadataKey:           "key3",
+		metadataValue:         "value3",
 	}
 
 	runTest(def, updateDef, t)
@@ -200,6 +205,8 @@ func TestAccVcdNetworkRoutedStatic1(t *testing.T) {
 		endStaticIpAddress1:   "10.10.102.50",
 		configText:            testAccCheckVcdNetworkRoutedStatic1,
 		resourceName:          "vcd_network_routed",
+		metadataKey:           "key1",
+		metadataValue:         "value1",
 	}
 	var updateDef = networkDef{
 		name:                  routedStaticNetwork1 + "-update",
@@ -208,6 +215,8 @@ func TestAccVcdNetworkRoutedStatic1(t *testing.T) {
 		endStaticIpAddress1:   "10.10.102.45",
 		configText:            testAccCheckVcdNetworkRoutedStatic1,
 		resourceName:          "vcd_network_routed",
+		metadataKey:           "key3",
+		metadataValue:         "value3",
 	}
 	runTest(def, updateDef, t)
 	postTestChecks(t)
@@ -448,12 +457,16 @@ func TestAccVcdNetworkDirect(t *testing.T) {
 		externalNetwork: testConfig.Networking.ExternalNetwork,
 		configText:      testAccCheckVcdNetworkDirect,
 		resourceName:    "vcd_network_direct",
+		metadataKey:     "key1",
+		metadataValue:   "value1",
 	}
 	var updateDef = networkDef{
 		name:            directNetwork + "-update",
 		externalNetwork: testConfig.Networking.ExternalNetwork,
 		configText:      testAccCheckVcdNetworkDirect,
 		resourceName:    "vcd_network_direct",
+		metadataKey:     "key3",
+		metadataValue:   "value3",
 	}
 	runTest(def, updateDef, t)
 	postTestChecks(t)
@@ -482,6 +495,18 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	if updateDef.defaultLeaseTime == 0 {
 		updateDef.defaultLeaseTime = 3600
 	}
+	if def.metadataKey == "" {
+		def.metadataKey = "key1"
+	}
+	if updateDef.metadataKey == "" {
+		updateDef.metadataKey = "key1"
+	}
+	if def.metadataValue == "" {
+		def.metadataValue = "value1"
+	}
+	if updateDef.metadataValue == "" {
+		updateDef.metadataValue = "value1"
+	}
 	var params = StringMap{
 		"Org":                   testConfig.VCD.Org,
 		"Vdc":                   testConfig.VCD.Vdc,
@@ -502,6 +527,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		"FuncName":              networkName,
 		"InterfaceType":         def.interfaceName,
 		"Tags":                  "network",
+		"MetadataKey":           def.metadataKey,
+		"MetadataValue":         def.metadataValue,
+		"MetadataKey2":          "key2",
+		"MetadataValue2":        "value2",
 	}
 	var network govcd.OrgVDCNetwork
 	configText := templateFill(def.configText, params)
@@ -526,6 +555,8 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	params["FuncName"] = updateDef.name
 	params["MaxLeaseTime"] = updateDef.maxLeaseTime
 	params["DefaultLeaseTime"] = updateDef.defaultLeaseTime
+	params["MetadataKey"] = updateDef.metadataKey
+	params["MetadataValue"] = updateDef.metadataValue
 
 	updateConfigText := templateFill(fmt.Sprintf("\n# skip-binary-test only for updates\n%s", def.configText), params)
 
@@ -542,7 +573,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	switch def.name {
 	case directNetwork:
 		steps = []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -552,9 +583,13 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "description", def.description),
 					resource.TestMatchResourceAttr(
 						resourceDef, "href", generatedHrefRegexp),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key1", def.metadataValue),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key2", "value2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(updateDef.name, &network),
@@ -564,12 +599,17 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "description", updateDef.description),
 					resource.TestMatchResourceAttr(
 						resourceDef, "href", generatedHrefRegexp),
+					resource.TestCheckNoResourceAttr(resourceDef, "metadata.key1"),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key3", updateDef.metadataValue),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key2", "value2"),
 				),
 			},
 		}
 	case isolatedMixedNetwork2:
 		steps = []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -584,7 +624,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "href", generatedHrefRegexp),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(updateDef.name, &network),
@@ -606,7 +646,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		}
 	case isolatedStaticNetwork2, routedStaticNetwork2, routedStaticNetworkSub2, routedStaticNetworkDist, routedStaticNetworkDist2:
 		steps = []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -621,7 +661,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "href", generatedHrefRegexp),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(updateDef.name, &network),
@@ -639,7 +679,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		}
 	case routedStaticNetwork1, isolatedStaticNetwork1:
 		steps = []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -652,9 +692,13 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
 						resourceDef, "href", generatedHrefRegexp),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key1", def.metadataValue),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key2", "value2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(updateDef.name, &network),
@@ -667,12 +711,18 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
 						resourceDef, "href", generatedHrefRegexp),
+					resource.TestCheckNoResourceAttr(
+						resourceDef, "metadata.key1"),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key2", "value2"),
+					resource.TestCheckResourceAttr(
+						resourceDef, "metadata.key3", updateDef.metadataValue),
 				),
 			},
 		}
 	case routedMixedNetwork, isolatedMixedNetwork1, routedMixedNetworkSub:
 		steps = []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -687,7 +737,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "href", generatedHrefRegexp),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(updateDef.name, &network),
@@ -705,7 +755,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		}
 	case isolatedDhcpNetwork, routedDhcpNetwork, routedDhcpNetworkSub:
 		steps = []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -720,7 +770,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "href", generatedHrefRegexp),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
@@ -958,6 +1008,11 @@ resource "vcd_network_isolated" "{{.ResourceName}}" {
     start_address = "{{.StartStaticIpAddress1}}"
     end_address   = "{{.EndStaticIpAddress1}}"
   }
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+    {{.MetadataKey2}} = "{{.MetadataValue2}}"
+  }
 }
 `
 
@@ -1046,6 +1101,11 @@ resource "vcd_network_direct" "{{.ResourceName}}" {
   org              = "{{.Org}}"
   vdc              = "{{.Vdc}}"
   external_network = "{{.ExternalNetwork}}"
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+    {{.MetadataKey2}} = "{{.MetadataValue2}}"
+  }
 }
 `
 
@@ -1061,6 +1121,11 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
   static_ip_pool {
     start_address = "{{.StartStaticIpAddress1}}"
     end_address   = "{{.EndStaticIpAddress1}}"
+  }
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+    {{.MetadataKey2}} = "{{.MetadataValue2}}"
   }
 }
 `

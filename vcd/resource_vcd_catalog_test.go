@@ -27,11 +27,20 @@ var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 func TestAccVcdCatalog(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":            testConfig.VCD.Org,
-		"CatalogName":    TestAccVcdCatalogName,
-		"Description":    TestAccVcdCatalogDescription,
-		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":           "catalog",
+		"Org":                    testConfig.VCD.Org,
+		"CatalogName":            TestAccVcdCatalogName,
+		"Description":            TestAccVcdCatalogDescription,
+		"StorageProfile":         testConfig.VCD.ProviderVdc.StorageProfile,
+		"CatalogItemName":        "TestCatalogItem",
+		"CatalogItemNameFromUrl": "Test",
+		"DescriptionFromUrl":     "Test",
+		"OvaPath":                testConfig.Ova.OvaPath,
+		"UploadProgressFromUrl":  testConfig.Ova.UploadProgress,
+		"CatalogMediaName":       "TestCatalogMedia",
+		"MediaPath":              testConfig.Media.MediaPath,
+		"UploadPieceSize":        testConfig.Media.UploadPieceSize,
+		"UploadProgress":         testConfig.Media.UploadProgress,
+		"Tags":                   "catalog",
 	}
 
 	configText := templateFill(testAccCheckVcdCatalog, params)
@@ -56,7 +65,7 @@ func TestAccVcdCatalog(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
-			// Provision catalog without storage profile
+			// Provision catalog without storage profile and a vApp template and media
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
@@ -69,6 +78,13 @@ func TestAccVcdCatalog(t *testing.T) {
 						resourceAddress, "metadata.catalog_metadata", "catalog Metadata"),
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2"),
+					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
+					resource.TestMatchResourceAttr(resourceAddress, "owner_name", regexp.MustCompile(`^\S+$`)),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "0"),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "0"),
+					resource.TestCheckResourceAttr(resourceAddress, "is_shared", "false"),
+					resource.TestCheckResourceAttr(resourceAddress, "is_published", "false"),
+					resource.TestMatchResourceAttr(resourceAddress, "publish_subscription_type", regexp.MustCompile(`^(PUBLISHED|SUBSCRIBED|UNPUBLISHED)$`)),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -87,6 +103,10 @@ func TestAccVcdCatalog(t *testing.T) {
 						resourceAddress, "metadata.catalog_metadata2", "catalog Metadata2 v2"),
 					resource.TestCheckResourceAttr(
 						resourceAddress, "metadata.catalog_metadata3", "catalog Metadata3"),
+					resource.TestMatchResourceAttr(resourceAddress, "catalog_version", regexp.MustCompile(`^\d+`)),
+					resource.TestMatchResourceAttr(resourceAddress, "owner_name", regexp.MustCompile(`^\S+$`)),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_vapp_templates", "1"),
+					resource.TestCheckResourceAttr(resourceAddress, "number_of_media", "1"),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -127,7 +147,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		"Tags":           "catalog",
 	}
 
-	configText := templateFill(testAccCheckVcdCatalogStep1, params)
+	configText := templateFill(testAccCheckVcdCatalogWithStorageProfile, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	if vcdShortTest {
@@ -372,9 +392,77 @@ resource "vcd_catalog" "test-catalog" {
     catalog_metadata2 = "catalog Metadata2"
   }
 }
+
+resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogItemName}}"
+  description          = "TestDescription"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogMediaName}}"
+  description          = "TestDescription"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+
 `
 
 const testAccCheckVcdCatalogStep1 = `
+data "vcd_storage_profile" "sp" {
+	name = "{{.StorageProfile}}"
+}
+
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name               = "{{.CatalogName}}"
+  description        = "{{.Description}}"
+  storage_profile_id = data.vcd_storage_profile.sp.id
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+
+  metadata = {
+    catalog_metadata  = "catalog Metadata v2"
+    catalog_metadata2 = "catalog Metadata2 v2"
+    catalog_metadata3 = "catalog Metadata3"
+  }
+}
+
+resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogItemName}}"
+  description          = "TestDescription"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
+  catalog = resource.vcd_catalog.test-catalog.name
+
+  name                 = "{{.CatalogMediaName}}"
+  description          = "TestDescription"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+}
+`
+
+const testAccCheckVcdCatalogWithStorageProfile = `
 data "vcd_storage_profile" "sp" {
 	name = "{{.StorageProfile}}"
 }

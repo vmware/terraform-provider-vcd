@@ -31,52 +31,62 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				ConflictsWith: []string{"owner_id"},
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which supports both - VDC and VDC Group IDs",
 			},
-			"name": &schema.Schema{
+			"owner_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC or VDC Group",
+				ConflictsWith: []string{"vdc"},
+			},
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Network name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Network description",
 			},
-			"is_shared": &schema.Schema{
+			"is_shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Computed:    true,
 				Description: "NSX-V only - share this network with other VDCs in this organization. Default - false",
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Gateway IP address",
 			},
-			"prefix_length": &schema.Schema{
+			"prefix_length": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Network prefix",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS server 1",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS suffix",
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "IP ranges used for static pool allocation in the network",
@@ -86,21 +96,25 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 	}
 }
 
-// resourceVcdNetworkIsolatedV2Create
 func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
+	// issues when created in VDC.
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
+
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 create] error retrieving VDC: %s", err)
+		return diag.Errorf("[isolated network create v2] error retrieving Org: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vdc)
+	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
+	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
 		return diag.Errorf("[isolated network v2 create] error creating Org VDC isolated network: %s", err)
 	}
@@ -110,16 +124,27 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
 
-// resourceVcdNetworkIsolatedV2Update
 func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error retrieving VDC: %s", err)
+	// `vdc` field is deprecated. `vdc` value should not be changed unless it is removal of the
+	// field at all to allow easy migration to `owner_id` path
+	if _, new := d.GetChange("vdc"); d.HasChange("vdc") && new.(string) != "" {
+		return diag.Errorf("changing 'vdc' field value is not supported. It can only be removed. " +
+			"Please use `owner_id` field for moving network to/from VDC Group")
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
+	// issues when created in VDC.
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
+
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf("[isolated network create v2] error retrieving Org: %s", err)
+	}
+
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found -
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -129,7 +154,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network v2 update] error getting Org VDC network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vdc)
+	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,16 +170,15 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
 
-// resourceVcdNetworkIsolatedV2Read
 func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("[isolated network v2 read] error retrieving VDC: %s", err)
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	// If object is not found - unset ID
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
@@ -174,16 +198,20 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-// resourceVcdNetworkIsolatedV2Delete
 func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
+	// issues when created in VDC.
+	vcdClient.lockIfOwnerIsVdcGroup(d)
+	defer vcdClient.unLockIfOwnerIsVdcGroup(d)
+
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error retrieving VDC: %s", err)
+		return diag.Errorf("[isolated network create v2] error retrieving Org: %s", err)
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
+	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
 		return diag.Errorf("[isolated network v2 delete] error getting Org VDC network: %s", err)
 	}
@@ -196,23 +224,32 @@ func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-// resourceVcdNetworkIsolatedV2Import
 func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[isolated network v2 import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
-
 	vcdClient := meta.(*VCDClient)
-	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-	if err != nil {
-		return nil, fmt.Errorf("[isolated network v2 import] unable to find VDC %s: %s ", vdcName, err)
+
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
+		}
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(networkName)
+	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("[isolated network v2 import] error reading network with name '%s': %s", networkName, err)
+		return nil, fmt.Errorf("error retrieving Org VDC network '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsIsolated() {
@@ -228,9 +265,11 @@ func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceD
 }
 
 func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
-
 	dSet(d, "name", orgVdcNetwork.Name)
 	dSet(d, "description", orgVdcNetwork.Description)
+
+	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
+	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
 
 	// Only one subnet can be defined although the structure accepts slice
 	dSet(d, "gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
@@ -260,12 +299,20 @@ func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	return nil
 }
 
-func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.OpenApiOrgVdcNetwork, error) {
+func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDClient) (*types.OpenApiOrgVdcNetwork, error) {
+	inheritedVdcField := vcdClient.Vdc
+	vdcField := d.Get("vdc").(string)
+	ownerIdField := d.Get("owner_id").(string)
+
+	ownerId, err := getOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
+	if err != nil {
+		return nil, fmt.Errorf("error finding owner reference: %s", err)
+	}
+
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		// On v35.0 onwards OrgVdc is not supported anymore. Using OwnerRef instead.
-		OwnerRef: &types.OpenApiReference{ID: vdc.Vdc.ID},
+		OwnerRef:    &types.OpenApiReference{ID: ownerId},
 
 		NetworkType: types.OrgVdcNetworkTypeIsolated,
 		Shared:      takeBoolPointer(d.Get("is_shared").(bool)),
