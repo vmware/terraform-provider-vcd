@@ -1,0 +1,6 @@
+* `resource/vcd_network_direct` add support for `metadata` so this field can be set when creating/updating direct networks. [GH-804]
+* `datasource/vcd_network_direct` add support for `metadata` so this field can be retrieved when reading from direct networks. [GH-804]
+* `resource/vcd_network_isolated` add support for `metadata` so this field can be set when creating/updating isolated networks. [GH-804]
+* `datasource/vcd_network_isolated` add support for `metadata` so this field can be retrieved when reading from isolated networks. [GH-804]
+* `resource/vcd_network_routed` add support for `metadata` so this field can be set when creating/updating routed networks. [GH-804]
+* `datasource/vcd_network_routed` add support for `metadata` so this field can be retrieved when reading from routed networks. [GH-804]
