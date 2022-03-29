@@ -78,8 +78,8 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 						"action": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
-							Description:  "Defines if the rule should 'ALLOW' or 'DROP' matching traffic",
-							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP"}, false),
+							Description:  "Defines if the rule should 'ALLOW', 'DROP', 'REJECT' matching traffic",
+							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP", "REJECT"}, false),
 						},
 						"enabled": &schema.Schema{
 							Type:        schema.TypeBool,
@@ -310,8 +310,8 @@ func getNsxtFirewallTypes(d *schema.ResourceData) []*types.NsxtFirewallRule {
 			}
 
 			if oneRuleMapInterface["app_port_profile_ids"] != nil {
-				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["app_port_profile_ids"].(*schema.Set))
-				result[index].ApplicationPortProfiles = convertSliceOfStringsToOpenApiReferenceIds(sourceGroups)
+				appPortProfileIds := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["app_port_profile_ids"].(*schema.Set))
+				result[index].ApplicationPortProfiles = convertSliceOfStringsToOpenApiReferenceIds(appPortProfileIds)
 			}
 		}
 		return result
