@@ -11,7 +11,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// TestAccVcdNsxtIpSetEmptyStart starts with an IP set with no IP addresses defined, updates it and tries to add IP
+// TestAccVcdNsxtIpSetEmptyStart starts with an IP Set with no IP addresses defined, updates it and tries to add IP
 // addresses
 func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 	preTestChecks(t)
@@ -689,7 +689,7 @@ resource "vcd_nsxt_ip_set" "set1" {
 }
 `
 
-// TestAccVcdNsxtIpSetInheritedVdc tests that NSX-T Edge Gateway IP set can be created by
+// TestAccVcdNsxtIpSetInheritedVdc tests that NSX-T Edge Gateway IP Set can be created by
 // using `vdc` field inherited from provider in NSX-T VDC
 // * Step 1 - Rely on configuration coming from `provider` configuration for `vdc` value
 // * Step 2 - Test that import works correctly

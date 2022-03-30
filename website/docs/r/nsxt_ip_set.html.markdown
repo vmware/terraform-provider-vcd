@@ -3,23 +3,23 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_ip_set"
 sidebar_current: "docs-vcd-resource-nsxt-ip-set"
 description: |-
-  Provides a resource to manage NSX-T IP Set. IP sets are groups of objects to which the firewall rules apply. Combining
-  multiple objects into IP sets helps reduce the total number of firewall rules to be created.
+  Provides a resource to manage NSX-T IP Set. IP Sets are groups of objects to which the firewall rules apply. Combining
+  multiple objects into IP Sets helps reduce the total number of firewall rules to be created.
 ---
 
 # vcd\_nsxt\_ip\_set
 
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
-Provides a resource to manage NSX-T IP Set. IP sets are groups of objects to which the firewall rules apply. Combining 
-multiple objects into IP sets helps reduce the total number of firewall rules to be created.
+Provides a resource to manage NSX-T IP Set. IP Sets are groups of objects to which the firewall rules apply. Combining 
+multiple objects into IP Sets helps reduce the total number of firewall rules to be created.
 
--> Starting with **v3.6.0** Terraform provider VCD supports NSX-T VDC Groups and `vdc` fields (in
-resource and inherited from provider configuration) are deprecated. `vcd_nsxt_ip_set` will
-inherit VDC or VDC Group membership from parent Edge Gateway specified in `edge_gateway_id` field.
+-> Starting with **v3.6.0** `vcd_nsxt_ip_set` added support for VDC Groups.
+The `vdc` field (in resource or inherited from provider configuration) is deprecated, as `vcd_nsxt_ip_set` will
+inherit the VDC Group or VDC membership from a parent Edge Gateway specified in the `edge_gateway_id` field.
 More about VDC Group support in a [VDC Groups guide](/providers/vmware/vcd/latest/docs/guides/vdc_groups).
 
-## Example Usage (IP set with multiple IP address ranges defined)
+## Example Usage (IP Set with multiple IP address ranges defined)
 
 ```hcl
 data "vcd_nsxt_edgegateway" "main" {
@@ -51,7 +51,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
+* `vdc` - (Deprecated;Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
   in favor of `edge_gateway_id` field.
 * `name` - (Required) A unique name for IP Set
 * `description` - (Optional) An optional description of the IP Set

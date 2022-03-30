@@ -34,7 +34,7 @@ func resourceVcdNsxtIpSet() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
-				Deprecated:  "Deprecated in favor of `edge_gateway_id`. IP sets will inherit VDC from parent Edge Gateway.",
+				Deprecated:  "Deprecated in favor of `edge_gateway_id`. IP Sets will inherit VDC from parent Edge Gateway.",
 			},
 			"owner_id": {
 				Type:        schema.TypeString,
@@ -44,18 +44,18 @@ func resourceVcdNsxtIpSet() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "IP set name",
+				Description: "IP Set name",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Edge gateway name in which Routed network is located",
+				Description: "Edge Gateway name in which IP Set is located",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "IP set description",
+				Description: "IP Set description",
 			},
 			"ip_addresses": {
 				Type:        schema.TypeSet,
@@ -111,7 +111,7 @@ func getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient *VCDClient, d *sche
 		return "", nil, fmt.Errorf("[nsxt ip set %s] error retrieving Edge Gateway structure: %s", action, err)
 	}
 	if anyEdgeGateway.IsNsxv() {
-		return "", nil, fmt.Errorf("[nsxt ip set %s] NSXV edge gateway not supported", action)
+		return "", nil, fmt.Errorf("[nsxt ip set %s] NSX-V edge gateway not supported", action)
 	}
 
 	nsxtEdgeGateway, err := anyEdgeGateway.GetNsxtEdgeGateway()

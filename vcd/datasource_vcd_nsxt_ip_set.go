@@ -25,12 +25,12 @@ func datasourceVcdNsxtIpSet() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
-				Deprecated:  "Deprecated in favor of `edge_gateway_id`. IP set will inherit VDC from parent Edge Gateway.",
+				Deprecated:  "Deprecated in favor of `edge_gateway_id`. IP Set will inherit VDC from parent Edge Gateway.",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "IP set name",
+				Description: "IP Set name",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -46,7 +46,7 @@ func datasourceVcdNsxtIpSet() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "IP set description",
+				Description: "IP Set description",
 			},
 			"ip_addresses": {
 				Type:        schema.TypeSet,
@@ -81,7 +81,7 @@ func datasourceVcdNsxtIpSetRead(ctx context.Context, d *schema.ResourceData, met
 			return diag.Errorf("[nsxt ip set read] error retrieving Edge Gateway structure: %s", err)
 		}
 		if anyEdgeGateway.IsNsxv() {
-			return diag.Errorf("[nsxt ip set read] NSXV edge gateway not supported")
+			return diag.Errorf("[nsxt ip set read] NSX-V edge gateway not supported")
 		}
 
 		parentVdcOrVdcGroupId = anyEdgeGateway.EdgeGateway.OwnerRef.ID
@@ -110,7 +110,7 @@ func datasourceVcdNsxtIpSetRead(ctx context.Context, d *schema.ResourceData, met
 			}
 		}
 	} else {
-		return diag.Errorf("error - not all parameters specified for NSX-T IP set lookup")
+		return diag.Errorf("error - not all parameters specified for NSX-T IP Set lookup")
 	}
 
 	err = setNsxtIpSetData(d, ipSet.NsxtFirewallGroup, parentVdcOrVdcGroupId)

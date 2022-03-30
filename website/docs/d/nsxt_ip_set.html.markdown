@@ -3,16 +3,16 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_ip_set"
 sidebar_current: "docs-vcd-datasource-nsxt-ip-set"
 description: |-
-  Provides a data source to read NSX-T IP Set. IP sets are groups of objects to which the firewall rules apply. 
-  Combining multiple objects into IP sets helps reduce the total number of firewall rules to be created.
+  Provides a data source to read NSX-T IP Set. IP Sets are groups of objects to which the firewall rules apply. 
+  Combining multiple objects into IP Sets helps reduce the total number of firewall rules to be created.
 ---
 
 # vcd\_nsxt\_ip\_set
 
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
-Provides a data source to read NSX-T IP Set. IP sets are groups of objects to which the firewall rules apply. Combining
-multiple objects into IP sets helps reduce the total number of firewall rules to be created.
+Provides a data source to read NSX-T IP Set. IP Sets are groups of objects to which the firewall rules apply. Combining
+multiple objects into IP Sets helps reduce the total number of firewall rules to be created.
 
 ## Example Usage
 
