@@ -51,7 +51,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Deprecated;Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
+* `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
   in favor of `edge_gateway_id` field.
 * `name` - (Required) A unique name for IP Set
 * `description` - (Optional) An optional description of the IP Set
