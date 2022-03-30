@@ -49,6 +49,7 @@ func resourceVcdNsxtIpSet() *schema.Resource {
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Edge Gateway name in which IP Set is located",
 			},
 			"description": {
