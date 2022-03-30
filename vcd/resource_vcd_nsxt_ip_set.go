@@ -48,8 +48,7 @@ func resourceVcdNsxtIpSet() *schema.Resource {
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 				Description: "Edge Gateway name in which IP Set is located",
 			},
 			"description": {
@@ -162,7 +161,7 @@ func resourceVcdNsxtIpSetRead(_ context.Context, d *schema.ResourceData, meta in
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt ip set create] error retrieving Org: %s", err)
+		return diag.Errorf("[nsxt ip set read] error retrieving Org: %s", err)
 	}
 
 	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "read")
@@ -178,7 +177,7 @@ func resourceVcdNsxtIpSetRead(_ context.Context, d *schema.ResourceData, meta in
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
 		vdcGroup, err := adminOrg.GetVdcGroupById(parentEdgeGatewayOwnerId)
 		if err != nil {
-			return diag.Errorf("[nsxt ip set resource read] error finding VDC Group by id '%s': %s", parentEdgeGatewayOwnerId, err)
+			return diag.Errorf("[nsxt ip set resource read] error finding VDC Group by ID '%s': %s", parentEdgeGatewayOwnerId, err)
 		}
 
 		ipSet, err = vdcGroup.GetNsxtFirewallGroupById(d.Id())
@@ -275,7 +274,7 @@ func resourceVcdNsxtIpSetImport(_ context.Context, d *schema.ResourceData, meta 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
 		vdcGroup, err := adminOrg.GetVdcGroupById(parentEdgeGatewayOwnerId)
 		if err != nil {
-			return nil, fmt.Errorf("[nsxt ip set resource import] error finding VDC Group by id '%s': %s", parentEdgeGatewayOwnerId, err)
+			return nil, fmt.Errorf("[nsxt ip set resource import] error finding VDC Group by ID '%s': %s", parentEdgeGatewayOwnerId, err)
 		}
 
 		ipSet, err = vdcGroup.GetNsxtFirewallGroupByName(ipSetName, types.FirewallGroupTypeIpSet)

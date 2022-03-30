@@ -548,7 +548,7 @@ func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 				),
 			},
 
-			// // Check that import works
+			// Check that import works
 			{
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
