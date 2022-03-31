@@ -1194,6 +1194,22 @@ func importStateIdVmObject(orgName, vdcName, vappName, vmName, objectIdentifier 
 	}
 }
 
+// importStateIdNsxtEdgeGatewayObjectUsingVdcGroup used by all entities that depend on Org + NSX-T edge gateway (such as IP Sets, Security Groups)
+func importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(vdcGroupName, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || vdcGroupName == "" || edgeGatewayName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path for object %s", objectName)
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			vdcGroupName +
+			ImportSeparator +
+			edgeGatewayName +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
 // setBoolFlag binds a flag to a boolean variable (passed as pointer)
 // it also uses an optional environment variable that, if set, will
 // update the variable before binding it to the flag.
