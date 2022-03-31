@@ -4,7 +4,6 @@
 package vcd
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 
@@ -27,19 +26,19 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
-		t.Skip(fmt.Sprintf("unable to get vcdClient: %s", err))
+		t.Skipf("unable to get vcdClient: %s", err)
 	}
 	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
 	if err != nil {
-		t.Skip(fmt.Sprintf("authentication error: %s", err))
+		t.Skipf("authentication error: %s", err)
 	}
 	org, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {
-		t.Skip(fmt.Sprintf("unable to get Org: %s, err: %s", testConfig.VCD.Org, err))
+		t.Skipf("unable to get Org: %s, err: %s", testConfig.VCD.Org, err)
 	}
 	vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
 	if err != nil {
-		t.Skip(fmt.Sprintf("unable to get VDC: %s, err: %s", testConfig.VCD.Vdc, err))
+		t.Skipf("unable to get VDC: %s, err: %s", testConfig.VCD.Vdc, err)
 	}
 
 	var configText string
