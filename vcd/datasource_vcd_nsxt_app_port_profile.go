@@ -101,12 +101,14 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 
 	name := d.Get("name").(string)
 	scope := d.Get("scope").(string)
+	contextIdField := d.Get("context_id").(string)
+	nsxtManagerId := d.Get("nsxt_manager_id").(string)
 
 	queryParams := url.Values{}
+	switch {
 	// For `TENANT` scope Org and VDC or the specified `context_id` matter. It would set _context
-	// filter to be searching for App Port Profiles in specific
-	if strings.EqualFold(scope, types.ApplicationPortProfileScopeTenant) {
-		contextIdField := d.Get("context_id").(string)
+	// filter to be searching for App Port Profiles in specific context
+	case strings.EqualFold(scope, types.ApplicationPortProfileScopeTenant):
 		dataSourceVdcField := d.Get("vdc").(string)
 		inheritedVdcField := vcdClient.Vdc
 		contextId, err := pickAppPortProfileContextFilterByPriority(vcdClient, d, inheritedVdcField, dataSourceVdcField, contextIdField)
@@ -114,9 +116,21 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 			return diag.Errorf("error identifying correct context filter: %s", err)
 		}
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextId))
-	} else {
+	// For PROVIDER scoped App Port Profiles context_id of Network Provider can be specified
+	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && contextIdField != "":
+		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextIdField))
+	// Deprecated field 'nsxt_manager_id' can be specified as  context for PROVIDER scoped App Port Profiles
+	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && nsxtManagerId != "":
+		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, nsxtManagerId))
+	default:
+		// For "SYSTEM" or "PROVIDER" scoped Application Port Profiles context can be ignored.
+		// * For "SYSTEM" this is correct behavior
+		// * For "PROVIDER" it can match App Port Profiles when multiple NSX-T Managers are
+		// configured, but this is left for backwards compatibility
+		// * (TODO V4- do not support PROVIDER scope without `context_id` field)
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s", name, scope))
 	}
+
 	allAppPortProfiles, err := org.GetAllNsxtAppPortProfiles(queryParams, scope)
 
 	if err != nil {
