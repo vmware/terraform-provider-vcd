@@ -27,7 +27,7 @@ data "vcd_nsxt_app_port_profile" "custom" {
 }
 ```
 
-## Example Usage 2 (Find an Application Port Profile defined by Tenant)
+## Example Usage 2 (Find an Application Port Profile defined by Tenant in a VDC Group)
 
 ```hcl
 data "vcd_nsxt_app_port_profile" "custom" {
@@ -38,7 +38,7 @@ data "vcd_nsxt_app_port_profile" "custom" {
 }
 ```
 
-## Example Usage 3 (Find a System defined  Application Port Profile)
+## Example Usage 3 (Find a System defined Application Port Profile)
 
 ```hcl
 data "vcd_nsxt_app_port_profile" "custom" {
@@ -54,6 +54,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
+* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated fields `vdc`
 * `name` - (Required)  - Unique name of existing Security Group.
 * `scope` - (Required)  - `SYSTEM`, `PROVIDER`, or `TENANT`.
 

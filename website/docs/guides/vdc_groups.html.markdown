@@ -66,6 +66,7 @@ NSX-V VDC Group support is provided):
 * [vcd_network_routed_v2](/providers/vmware/vcd/latest/docs/resources/network_routed_v2)
 * [vcd_network_isolated_v2](/providers/vmware/vcd/latest/docs/resources/network_isolated_v2)
 * [vcd_nsxt_network_imported](/providers/vmware/vcd/latest/docs/resources/nsxt_network_imported)
+* [vcd_nsxt_app_port_profile](/providers/vmware/vcd/latest/docs/resources/nsxt_app_port_profile)
 
 The next sub-sections will cover some specifics for resources that have it. Resources that are not
 explicitly mentioned here simply introduce `owner_id` field over deprecated `vdc` field.
@@ -187,6 +188,20 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
   static_ip_pool {
     start_address = "4.1.1.10"
     end_address   = "4.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_app_port_profile" "custom" {
+  org  = "datacloud"
+  name = "custom_app_prof"
+
+  context_id = data.vcd_vdc_group.main.id
+
+  description = "Application port profile for custom"
+  scope       = "TENANT"
+
+  app_port {
+    protocol = "ICMPv4"
   }
 }
 ```

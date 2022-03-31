@@ -36,3 +36,7 @@ tmp/
 # Test exclusions
 !command/test-fixtures/**/*.tfstate
 !command/test-fixtures/**/.terraform/
+
+# Go workspace
+go.work
+
