@@ -106,16 +106,12 @@ func resourceVcdNsxtAppPortProfile() *schema.Resource {
 
 func resourceVcdNsxtAppPortProfileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	// contextId := d.Get("context_id").(string)
-	// if contextId != "" {
 
-	// }
-
-	// scope := d.Get("scope").(string)
-	// err := validateScope(scope, d.Get("nsxt_manager_id").(string), d.Get("org").(string))
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	scope := d.Get("scope").(string)
+	err := validateScope(scope, d.Get("context_id").(string), d.Get("nsxt_manager_id").(string), d.Get("org").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
@@ -140,11 +136,11 @@ func resourceVcdNsxtAppPortProfileCreate(ctx context.Context, d *schema.Resource
 func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// scope := d.Get("scope").(string)
-	// err := validateScope(scope, d.Get("nsxt_manager_id").(string), d.Get("org").(string))
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	scope := d.Get("scope").(string)
+	err := validateScope(scope, d.Get("context_id").(string), d.Get("nsxt_manager_id").(string), d.Get("org").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
@@ -310,9 +306,9 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 	return []*schema.ResourceData{d}, nil
 }
 
-func validateScope(scope, nsxtManagerId, orgName string) error {
-	if scope == types.ApplicationPortProfileScopeProvider && nsxtManagerId == "" {
-		return fmt.Errorf("scope 'PROVIDER' requires NSX-T Manager ID")
+func validateScope(scope, nsxtManagerId, contextId, orgName string) error {
+	if scope == types.ApplicationPortProfileScopeProvider && (nsxtManagerId == "" && contextId == "") {
+		return fmt.Errorf("scope 'PROVIDER' requires 'context_id' to be NSX-T Manager ID")
 	}
 
 	if scope == types.ApplicationPortProfileScopeProvider && strings.ToUpper(orgName) != "SYSTEM" {

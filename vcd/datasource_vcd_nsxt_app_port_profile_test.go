@@ -4,13 +4,10 @@
 package vcd
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // TestAccVcdNsxtAppPortProfileDsSystem tests if a built-in SYSTEM scope application port profile can be read
@@ -317,12 +314,3 @@ data "vcd_nsxt_app_port_profile" "custom-legacy-config2" {
   scope = "{{.Scope}}"
 }
 `
-
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(4 * time.Minute)
-		fmt.Println("finished sleeping")
-		return nil
-	}
-}
