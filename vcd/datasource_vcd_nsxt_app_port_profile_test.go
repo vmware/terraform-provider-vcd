@@ -195,7 +195,38 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtAppPortProfileMultiOrgPreCreate = testAccCheckVcdDatasourceOrg + `
+const testAccVcdNsxtAppPortProfileMultiOrgPreCreate = `
+data "vcd_org" "{{.OrgName1}}" {
+  name = "{{.OrgName1}}"
+}
+
+resource "vcd_org" "{{.OrgName2}}" {
+  name                            = "{{.OrgName2}}"
+  full_name                       = data.vcd_org.{{.OrgName1}}.full_name
+  can_publish_catalogs            = data.vcd_org.{{.OrgName1}}.can_publish_catalogs
+  can_publish_external_catalogs   = data.vcd_org.{{.OrgName1}}.can_publish_external_catalogs
+  can_subscribe_external_catalogs = data.vcd_org.{{.OrgName1}}.can_subscribe_external_catalogs
+  deployed_vm_quota               = data.vcd_org.{{.OrgName1}}.deployed_vm_quota
+  stored_vm_quota                 = data.vcd_org.{{.OrgName1}}.stored_vm_quota
+  is_enabled                      = data.vcd_org.{{.OrgName1}}.is_enabled
+  delay_after_power_on_seconds    = data.vcd_org.{{.OrgName1}}.delay_after_power_on_seconds
+  delete_force                    = "true"
+  delete_recursive                = "true"
+  vapp_lease {
+    maximum_runtime_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_lease.0.maximum_runtime_lease_in_sec
+    power_off_on_runtime_lease_expiration = data.vcd_org.{{.OrgName1}}.vapp_lease.0.power_off_on_runtime_lease_expiration
+    maximum_storage_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_lease.0.maximum_storage_lease_in_sec
+    delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_lease.0.delete_on_storage_lease_expiration
+  }
+  vapp_template_lease {
+    maximum_storage_lease_in_sec          = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.maximum_storage_lease_in_sec
+    delete_on_storage_lease_expiration    = data.vcd_org.{{.OrgName1}}.vapp_template_lease.0.delete_on_storage_lease_expiration
+  }
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+  }
+}
+
 data "vcd_org_vdc" "existingVdc" {
   org  = "{{.Org}}"
   name = "{{.NsxtVdc}}"
