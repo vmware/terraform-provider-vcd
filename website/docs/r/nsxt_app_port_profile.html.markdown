@@ -42,7 +42,7 @@ data "vcd_org_vdc" "v1" {
 }
 
 resource "vcd_nsxt_app_port_profile" "custom-app" {
-  org = "my-org"
+  org        = "my-org"
   context_id = vcd_org_vdc.v1.id
 
   name        = "custom app profile"
