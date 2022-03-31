@@ -73,8 +73,9 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
 * `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level.
+  Deprecated and replaced by `context_id`
 * `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated fields `vdc`
-  and `nsxt_manager_id`
+  and `nsxt_manager_id`. It accepts VDC, VDC Group or NSX-T Manager ID. 
 * `name` - (Required) A unique name for Security Group
 * `scope` - (Required) Application Port Profile scope - `PROVIDER`, `TENANT`
 * `nsxt_manager_id` - (Deprecated; Optional) Required only when `scope` is `PROVIDER`. Deprecated

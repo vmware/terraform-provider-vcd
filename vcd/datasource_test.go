@@ -191,7 +191,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		case "org_network_id":
 			templateFields = templateFields + `org_network_id = "urn:vcloud:network:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 		case "scope":
-			templateFields = templateFields + `scope = "TENANT"` + "\n"
+			templateFields = templateFields + `scope = "PROVIDER"` + "\n"
 		case "controller_id":
 			templateFields = templateFields + `controller_id = "urn:vcloud:loadBalancerController:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		}

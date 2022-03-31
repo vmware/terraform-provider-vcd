@@ -103,16 +103,17 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 	scope := d.Get("scope").(string)
 
 	queryParams := url.Values{}
-	// For non `PROVIDER` scope Org and VDC matter
-	if !strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) {
+	// For `TENANT` scope Org and VDC or the specified `context_id` matter. It would set _context
+	// filter to be searching for App Port Profiles in specific
+	if strings.EqualFold(scope, types.ApplicationPortProfileScopeTenant) {
 		contextIdField := d.Get("context_id").(string)
 		dataSourceVdcField := d.Get("vdc").(string)
 		inheritedVdcField := vcdClient.Vdc
-		contextField, err := pickAppPortProfileContextFilterByPriority(vcdClient, d, inheritedVdcField, dataSourceVdcField, contextIdField)
+		contextId, err := pickAppPortProfileContextFilterByPriority(vcdClient, d, inheritedVdcField, dataSourceVdcField, contextIdField)
 		if err != nil {
 			return diag.Errorf("error identifying correct context filter: %s", err)
 		}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextField))
+		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextId))
 	} else {
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s", name, scope))
 	}
