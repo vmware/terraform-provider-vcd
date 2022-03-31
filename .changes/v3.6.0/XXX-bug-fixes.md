@@ -1,1 +1,0 @@
-* Fix bug in datasource/vcd_nsxt_app_port_profile where TENANT scoped lookup could fail [GH-YYY]
