@@ -1505,13 +1505,13 @@ func preTestChecks(t *testing.T) {
 	}
 	if fileExists(vcdSkipAllFile) {
 		vcdSkipCount += 1
-		t.Skip(fmt.Sprintf("File '%s' found at %s. Test %s skipped", vcdSkipAllFile, timeStamp(), t.Name()))
+		t.Skipf("File '%s' found at %s. Test %s skipped", vcdSkipAllFile, timeStamp(), t.Name())
 	}
 	if vcdSkipPattern != "" {
 		re := regexp.MustCompile(vcdSkipPattern)
 		if re.MatchString(t.Name()) {
 			vcdSkipCount += 1
-			t.Skip(fmt.Sprintf("Skip pattern '%s' matches test name '%s'", vcdSkipPattern, t.Name()))
+			t.Skipf("Skip pattern '%s' matches test name '%s'", vcdSkipPattern, t.Name())
 		}
 	}
 	skipEnvVar := fmt.Sprintf("skip-%s", t.Name())
@@ -1521,12 +1521,12 @@ func preTestChecks(t *testing.T) {
 	}
 	if os.Getenv(skipEnvVar) != "" {
 		vcdSkipCount += 1
-		t.Skip(fmt.Sprintf("variable '%s' was set.", skipEnvVar))
+		t.Skipf("variable '%s' was set.", skipEnvVar)
 	}
 	// If this test has run already, we skip it
 	if isTestInFile(t.Name(), "pass") {
 		vcdSkipCount += 1
-		t.Skip(fmt.Sprintf("test '%s' found in '%s' ", t.Name(), getTestListFile("pass")))
+		t.Skipf("test '%s' found in '%s' ", t.Name(), getTestListFile("pass"))
 	}
 	if vcdReRunFailed {
 		if !isTestInFile(t.Name(), "fail") {
