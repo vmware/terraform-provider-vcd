@@ -105,7 +105,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when
   connected as sysadmin working across different organisations
-* `vdc` - (Optional) **Deprecated** The name of VDC to use. *v3.6+* inherits parent VDC or VDC Group
+* `vdc` - (Deprecated; Optional) The name of VDC to use. *v3.6+* inherits parent VDC or VDC Group
   from `edge_gateway_id`)
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network

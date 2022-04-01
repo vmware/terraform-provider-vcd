@@ -30,16 +30,16 @@ func testAccCheckOpenApiVcdNetworkDestroy(vdcName, networkName string) resource.
 
 func testAccCheckOpenApiNsxtAppPortDestroy(appPortProfileName, scope string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// 	conn := testAccProvider.Meta().(*VCDClient)
-		// 	org, err := conn.GetOrgByName(testConfig.VCD.Org)
-		// 	if err != nil {
-		// 		return fmt.Errorf(errorRetrievingVdcFromOrg, appPortProfileName, testConfig.VCD.Org, err)
-		// 	}
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, appPortProfileName, testConfig.VCD.Org, err)
+		}
 
-		// 	_, err = org.GetNsxtAppPortProfileByName(appPortProfileName, scope)
-		// 	if err == nil {
-		// 		return fmt.Errorf("'%s' Application Port Profile still exists", appPortProfileName)
-		// 	}
+		_, err = org.GetNsxtAppPortProfileByName(appPortProfileName, scope)
+		if err == nil {
+			return fmt.Errorf("'%s' Application Port Profile still exists", appPortProfileName)
+		}
 
 		return nil
 	}

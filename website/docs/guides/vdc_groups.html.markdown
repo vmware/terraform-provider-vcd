@@ -94,6 +94,19 @@ directly from parent Edge Gateway (specified in `edge_gateway_id`). The reason f
 routed Org VDC networks travel to and from VDC Groups with parent Edge Gateway and this does not
 work well with Terraform concept.
 
+#### Resource vcd_nsxt_app_port_profile
+
+NSX-T Application Port Profiles that can be used in regular and Distributed Firewalls can be defined
+in multiple contexts - VDC, VDC Group and NSX-T Manager (network provider). This resource introduced
+a new field `context_id` which accepts IDs for mentioned entities. 
+
+Scope of Application Port Profiles can be one of `SYSTEM`, `TENANT` or `PROVIDER`. UI behaves a bit
+differently and it has only two views - "Default Applications" and "Custom Applications". "Default
+Applications" are the `SYSTEM` scoped ones, while "Custom Applications" show `TENANT` and `PROVIDER`
+scoped applications.
+
+In UI it also does not matter if the Application Port Profile is created in NSX-T Edge Gateway or
+VDC Group - they are still shown in both views. 
 
 ## Complete example for configuration with VDC Groups
 

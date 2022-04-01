@@ -36,7 +36,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
 * `edge_gateway_id` - (Optional; *v3.6+*) Replaces `vdc` field and helps to identify exact Org
   Network
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
+* `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
   in favor of `edge_gateway_id` field.
 * `name` - (Required) A unique name for the network (optional when `filter` is used)
 * `filter` - (Optional) Retrieves the data source using one or more filter parameters. **Note**

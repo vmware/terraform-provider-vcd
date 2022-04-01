@@ -87,8 +87,8 @@ func resourceVcdNsxtAppPortProfile() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				// Not going to force new resource to leave a way out for configuration migration
-				// from `nsxt_manager_id` to `context_id` field.
+				// Not forcing new resource to leave a way out for configuration migration from
+				// `nsxt_manager_id` to `context_id` field.
 				ForceNew:      false,
 				Description:   "ID of NSX-T manager. Only required for 'PROVIDER' scope",
 				Deprecated:    "Deprecated in favor of 'context_id'",

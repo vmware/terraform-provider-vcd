@@ -179,13 +179,10 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-
-					// sleepTester(),
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_app_port_profile.custom", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_app_port_profile.custom-legacy-config", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_app_port_profile.custom2", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_app_port_profile.custom-legacy-config2", "id"),
-
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_app_port_profile.custom", "id", "data.vcd_nsxt_app_port_profile.custom-legacy-config", "id"),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_app_port_profile.custom2", "id", "data.vcd_nsxt_app_port_profile.custom-legacy-config2", "id"),
 				),
