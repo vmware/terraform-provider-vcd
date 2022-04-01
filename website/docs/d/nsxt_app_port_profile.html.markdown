@@ -60,7 +60,7 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations.
 * `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level.
   Deprecated and replaced by `context_id`
-* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated fieldd `vdc`.
+* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated field `vdc`.
 * `name` - (Required)  - Unique name of existing Security Group.
 * `scope` - (Required)  - `SYSTEM`, `PROVIDER`, or `TENANT`.
 
