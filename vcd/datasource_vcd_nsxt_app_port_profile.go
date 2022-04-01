@@ -119,7 +119,7 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 	// For PROVIDER scoped App Port Profiles context_id of Network Provider can be specified
 	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && contextIdField != "":
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextIdField))
-	// Deprecated field 'nsxt_manager_id' can be specified as  context for PROVIDER scoped App Port Profiles
+	// Deprecated field 'nsxt_manager_id' can be specified as context for PROVIDER scoped App Port Profiles
 	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && nsxtManagerId != "":
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, nsxtManagerId))
 	default:
@@ -127,7 +127,8 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 		// * For "SYSTEM" this is correct behavior
 		// * For "PROVIDER" it can match App Port Profiles when multiple NSX-T Managers are
 		// configured, but this is left for backwards compatibility
-		// * (TODO V4- do not support PROVIDER scope without `context_id` field)
+		//
+		// TODO V4 - remove support for PROVIDER scope without `context_id` field
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s", name, scope))
 	}
 
