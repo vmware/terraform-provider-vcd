@@ -328,7 +328,7 @@ func runSearchTest(entityType, label string, t *testing.T) {
 	}
 	filters, err := getFiltersForAvailableEntities(entityType, generateData)
 	if err != nil {
-		t.Skip(fmt.Sprintf("error getting available %s : %s", label, err))
+		t.Skipf("error getting available %s : %s", label, err)
 		return
 	}
 
