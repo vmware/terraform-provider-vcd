@@ -5,10 +5,9 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -57,7 +56,7 @@ func TestAccVcdStorageProfileDS(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_storage_profile.sp", "iops_settings.default_disk_iops", regexp.MustCompile(`\d*`)),
 					resource.TestMatchResourceAttr("data.vcd_storage_profile.sp", "iops_settings.disk_iops_per_gb_max", regexp.MustCompile(`\d*`)),
 					resource.TestMatchResourceAttr("data.vcd_storage_profile.sp", "iops_settings.iops_limit", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("data.vcd_storage_profile.sp", "metadata.#", "0"),
+					resource.TestCheckResourceAttr("data.vcd_storage_profile.sp", "metadata.%", "0"),
 					checkStorageProfileOriginatesInParentVdc("data.vcd_storage_profile.sp",
 						params["StorageProfileName"].(string),
 						params["Org"].(string),
