@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -92,6 +93,11 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRange,
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+			},
 		},
 	}
 }
@@ -120,6 +126,11 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	if err != nil {
+		return diag.Errorf("[isolated network v2 create] error adding metadata to Org VDC isolated network: %s", err)
+	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
@@ -167,6 +178,11 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network v2 update] error updating Org VDC network: %s", err)
 	}
 
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	if err != nil {
+		return diag.Errorf("[isolated network v2 update] error updating Org VDC network metadata: %s", err)
+	}
+
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
 
@@ -194,6 +210,16 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+
+	metadata, err := orgNetwork.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
+		return diag.Errorf("[isolated network v2 read] unable to find Org VDC network metadata %s", err)
+	}
+	err = d.Set("metadata", getMetadataStruct(metadata))
+	if err != nil {
+		return diag.Errorf("[isolated network v2 read] unable to set Org VDC network metadata %s", err)
+	}
 
 	return nil
 }
@@ -334,4 +360,36 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	}
 
 	return orgVdcNetworkConfig, nil
+}
+
+func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
+	log.Printf("[TRACE] adding/updating metadata to Network V2")
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := network.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := network.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }

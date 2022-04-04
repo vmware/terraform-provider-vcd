@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -99,6 +100,11 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRange,
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+			},
 		},
 	}
 }
@@ -135,6 +141,11 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	if err != nil {
+		return diag.Errorf("[routed network create v2] error adding metadata to Org VDC routed network: %s", err)
+	}
 
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
@@ -183,6 +194,11 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network update v2] error updating Org VDC network: %s", err)
 	}
 
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	if err != nil {
+		return diag.Errorf("[routed network v2 update] error updating Org VDC network metadata: %s", err)
+	}
+
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
@@ -210,6 +226,16 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+
+	metadata, err := orgNetwork.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
+		return diag.Errorf("[routed network read v2] unable to find Org VDC network metadata %s", err)
+	}
+	err = d.Set("metadata", getMetadataStruct(metadata))
+	if err != nil {
+		return diag.Errorf("[routed network v2 read] unable to set Org VDC network metadata %s", err)
+	}
 
 	return nil
 }
