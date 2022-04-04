@@ -41,16 +41,16 @@ func prepareUserData(t *testing.T) []userTestData {
 		password := []byte(orgUserPasswordText)
 		file, err := os.Create(orgUserPasswordFile)
 		if err != nil {
-			t.Skip(fmt.Sprintf("error creating file %s: %s", orgUserPasswordFile, err))
+			t.Skipf("error creating file %s: %s", orgUserPasswordFile, err)
 		}
 		writer := bufio.NewWriter(file)
 		count, err := writer.Write(password)
 		if err != nil || count == 0 {
-			t.Skip(fmt.Sprintf("error writing to file %s (written bytes %d): %s", orgUserPasswordFile, count, err))
+			t.Skipf("error writing to file %s (written bytes %d): %s", orgUserPasswordFile, count, err)
 		}
 		err = writer.Flush()
 		if err != nil {
-			t.Skip(fmt.Sprintf("error flushing file %s: %s", orgUserPasswordFile, err))
+			t.Skipf("error flushing file %s: %s", orgUserPasswordFile, err)
 		}
 		_ = file.Close()
 	}
