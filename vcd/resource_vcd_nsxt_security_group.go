@@ -121,11 +121,13 @@ func resourceVcdSecurityGroupCreate(ctx context.Context, d *schema.ResourceData,
 		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
 		securityGroup = getNsxtSecurityGroupType(d, parentEdgeGatewayOwnerId)
 		vdcOrVdcGroup, err = org.GetVdcGroupById(parentEdgeGatewayOwnerId)
+		diag.Errorf("[nsxt security group create] error retrieving VDC Group with ID %s: %s", parentEdgeGatewayOwnerId, err)
 	} else {
 		vcdClient.lockParentEdgeGtw(d)
 		defer vcdClient.unLockParentEdgeGtw(d)
 		securityGroup = getNsxtSecurityGroupType(d, d.Get("edge_gateway_id").(string))
 		vdcOrVdcGroup, err = org.GetVDCById(parentEdgeGatewayOwnerId, false)
+		diag.Errorf("[nsxt security group create] error retrieving VDC with ID %s: %s", parentEdgeGatewayOwnerId, err)
 	}
 
 	createdFwGroup, err := nsxtEdgeGateway.CreateNsxtFirewallGroup(securityGroup)
@@ -161,11 +163,13 @@ func resourceVcdSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData,
 		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
 		updateSecurityGroup = getNsxtSecurityGroupType(d, parentEdgeGatewayOwnerId)
 		vdcOrVdcGroup, err = org.GetVdcGroupById(parentEdgeGatewayOwnerId)
+		diag.Errorf("[nsxt security group update] error retrieving VDC Group with ID %s: %s", parentEdgeGatewayOwnerId, err)
 	} else {
 		vcdClient.lockParentEdgeGtw(d)
 		defer vcdClient.unLockParentEdgeGtw(d)
 		updateSecurityGroup = getNsxtSecurityGroupType(d, d.Get("edge_gateway_id").(string))
 		vdcOrVdcGroup, err = org.GetVDCById(parentEdgeGatewayOwnerId, false)
+		diag.Errorf("[nsxt security group update] error retrieving VDC with ID %s: %s", parentEdgeGatewayOwnerId, err)
 	}
 
 	securityGroup, err := nsxtEdgeGateway.GetNsxtFirewallGroupById(d.Id())
