@@ -232,7 +232,7 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 		log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
 		return diag.Errorf("[routed network read v2] unable to find Org VDC network metadata %s", err)
 	}
-	err = d.Set("metadata", getMetadataStruct(metadata))
+	err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
 	if err != nil {
 		return diag.Errorf("[routed network v2 read] unable to set Org VDC network metadata %s", err)
 	}

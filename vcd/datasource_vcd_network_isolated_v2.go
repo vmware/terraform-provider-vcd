@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"log"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -174,6 +175,16 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[isolated network read v2] error setting Org VDC network data: %s", err)
+	}
+
+	metadata, err := network.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
+		return diag.Errorf("[isolated network read v2] unable to find Org VDC network metadata %s", err)
+	}
+	err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
+	if err != nil {
+		return diag.Errorf("[isolated network read v2] unable to set Org VDC network metadata %s", err)
 	}
 
 	d.SetId(network.OpenApiOrgVdcNetwork.ID)
