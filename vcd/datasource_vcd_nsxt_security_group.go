@@ -26,7 +26,7 @@ func datasourceVcdNsxtSecurityGroup() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
-				Deprecated:  "Deprecated in favor of `edge_gateway_id`. IP Set will inherit VDC from parent Edge Gateway.",
+				Deprecated:  "Deprecated in favor of `edge_gateway_id`. Security Group will inherit VDC from parent Edge Gateway.",
 			},
 			"name": {
 				Type:        schema.TypeString,
