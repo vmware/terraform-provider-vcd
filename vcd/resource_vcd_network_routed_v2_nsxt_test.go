@@ -18,11 +18,15 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
-		"NetworkName": t.Name(),
-		"Tags":        "network",
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"EdgeGw":               testConfig.Nsxt.EdgeGateway,
+		"NetworkName":          t.Name(),
+		"Tags":                 "network",
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
+		"MetadataKeyUpdated":   "key1",
+		"MetadataValueUpdated": "value2",
 	}
 
 	configText := templateFill(TestAccVcdNetworkRoutedV2NsxtStep1, params)
@@ -65,6 +69,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
@@ -93,6 +98,9 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.60",
 						"end_address":   "1.1.1.70",
 					}),
+					resource.TestCheckNoResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKey"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
+
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
@@ -146,6 +154,10 @@ resource "vcd_network_routed_v2" "net1" {
 	start_address = "1.1.1.10"
     end_address = "1.1.1.20"
   }
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+  }
 }
 `
 
@@ -180,6 +192,10 @@ resource "vcd_network_routed_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.60"
     end_address = "1.1.1.70"
+  }
+
+  metadata = {
+    {{.MetadataKeyUpdated}} = "{{.MetadataValueUpdated}}"
   }
 }
 `
