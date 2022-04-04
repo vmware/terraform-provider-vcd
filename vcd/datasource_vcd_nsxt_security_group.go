@@ -75,13 +75,13 @@ func datasourceVcdSecurityGroupRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[nsxt security group read] error retrieving Org: %s", err)
 	}
 
-	ipSetName := d.Get("name").(string)
+	securityGroupName := d.Get("name").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	var securityGroup *govcd.NsxtFirewallGroup
 	var parentVdcOrVdcGroupId string
 
-	if ipSetName == "" || edgeGatewayId == "" {
+	if securityGroupName == "" || edgeGatewayId == "" {
 		return diag.Errorf("error - not all parameters specified for NSX-T Security Group lookup")
 	}
 	// Lookup Edge Gateway to know parent VDC or VDC Group
@@ -90,7 +90,7 @@ func datasourceVcdSecurityGroupRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[nsxt security group read] error retrieving Edge Gateway structure: %s", err)
 	}
 	if anyEdgeGateway.IsNsxv() {
-		return diag.Errorf("[nsxt security group read] NSX-V edge gateway not supported")
+		return diag.Errorf("[nsxt security group read] NSX-V Edge Gateway not supported")
 	}
 
 	parentVdcOrVdcGroupId = anyEdgeGateway.EdgeGateway.OwnerRef.ID
@@ -101,7 +101,7 @@ func datasourceVcdSecurityGroupRead(ctx context.Context, d *schema.ResourceData,
 			return diag.Errorf("could not retrieve VDC Group with ID '%s': %s", d.Id(), err)
 		}
 
-		// Name uniqueness is enforced by VCD for types.FirewallGroupTypeIpSet
+		// Name uniqueness is enforced by VCD for types.FirewallGroupTypeSecurityGroup
 		securityGroup, err = vdcGroup.GetNsxtFirewallGroupByName(d.Get("name").(string), types.FirewallGroupTypeSecurityGroup)
 		if err != nil {
 			return diag.Errorf("[nsxt security group read] error getting NSX-T Security Group with Name '%s': %s", d.Get("name").(string), err)
