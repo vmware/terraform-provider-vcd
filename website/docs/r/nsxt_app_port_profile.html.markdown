@@ -22,6 +22,7 @@ NSX-T Data Center, you can create custom Application Port Profiles.
 
 ```hcl
 resource "vcd_nsxt_app_port_profile" "icmpv4" {
+  org         = "System"
   name        = "ICMP custom profile"
   description = "Application port profile for ICMPv4"
 
@@ -43,7 +44,7 @@ data "vcd_org_vdc" "v1" {
 
 resource "vcd_nsxt_app_port_profile" "custom-app" {
   org        = "my-org"
-  context_id = vcd_org_vdc.v1.id
+  context_id = data.vcd_org_vdc.v1.id
 
   name        = "custom app profile"
   description = "Application port profile for custom application"

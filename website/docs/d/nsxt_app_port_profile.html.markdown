@@ -20,10 +20,10 @@ services on the Edge Gateway.
 
 ```hcl
 data "vcd_nsxt_app_port_profile" "custom" {
-  org   = "my-org"
-  vdc   = "my-nsxt-vdc"
-  name  = "WINS"
-  scope = "PROVIDER"
+  org        = "System"
+  context_id = data.vcd_nsxt_manager.first.id
+  name       = "WINS"
+  scope      = "PROVIDER"
 }
 ```
 
