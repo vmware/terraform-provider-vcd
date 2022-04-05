@@ -110,8 +110,8 @@ named `my-nsxt-manager-name`.
 
 * `TENANT` scoped import path is:
 ```
-terraform import vcd_nsxt_app_port_profile.imported my-org.my-nsxt-vdc-org-vdc-group.my-app-port-profile-name
+terraform import vcd_nsxt_app_port_profile.imported my-org.my-nsxt-vdc-or-vdc-group.my-app-port-profile-name
 ```
 
 This would import NSX-T Application Port Profile named `my-app-port-profile-name` defined in Org `my-org` and NSX-T
-VDC/VDC Group - `my-nsxt-vdc-org-vdc-group`
+VDC/VDC Group - `my-nsxt-vdc-or-vdc-group`
