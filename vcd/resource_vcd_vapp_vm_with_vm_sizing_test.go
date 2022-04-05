@@ -67,7 +67,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
 	if err != nil {
-		t.Skip(fmt.Sprintf("authentication error: %s", err))
+		t.Skipf("authentication error: %s", err)
 	}
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip("Test can only run as System admin")

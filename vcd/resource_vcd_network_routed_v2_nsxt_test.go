@@ -490,7 +490,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 				),
 			},
 
-			// // Check that import works
+			// Check that import works
 			{ // step 3
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
