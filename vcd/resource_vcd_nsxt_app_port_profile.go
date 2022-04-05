@@ -220,7 +220,7 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 
 	// There are two paths of possible import of differently scoped NSX-T Application Port Profiles
 	// * PROVIDER (path contains 2 pieces nsxt_manager_name.app_port_profile_name)
-	// * TENANT (path contains 3 pieces org-name.vdc-name.app_port_profile_name)
+	// * TENANT (path contains 3 pieces org-name.vdc-or-vdc-group-name.app_port_profile_name)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -272,33 +272,38 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 		dSet(d, "context_id", nsxtManagerUrn)
 
 	case 3: // TENANT scope
-		orgName, vdcName, appPortProfileName := resourceURI[0], resourceURI[1], resourceURI[2]
+		orgName, vdcOrVdcGroupName, appPortProfileName := resourceURI[0], resourceURI[1], resourceURI[2]
 
-		org, err := vcdClient.GetOrgByName(orgName)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-		}
-		vdc, err := org.GetVDCByName(vdcName, false)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+		// define an interface type to match VDC and VDC Groups
+		var vdcOrVdcGroup vdcOrVdcGroupHandler
+		_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+		if govcd.ContainsNotFound(err) {
+			adminOrg, err := vcdClient.GetAdminOrg(orgName)
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+			}
+
+			vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+			if err != nil {
+				return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+			}
 		}
 
-		if !vdc.IsNsxt() {
-			return nil, errors.New("security groups are only supported by NSX-T VDCs")
+		if !vdcOrVdcGroup.IsNsxt() {
+			return nil, errors.New("this resource for Application Port Profiles are only supported by NSX-T VDCs/VDC Groups")
 		}
 
-		nsxtAppPortProfile, err = org.GetNsxtAppPortProfileByName(appPortProfileName, types.ApplicationPortProfileScopeTenant)
+		nsxtAppPortProfile, err = vdcOrVdcGroup.GetNsxtAppPortProfileByName(appPortProfileName, types.ApplicationPortProfileScopeTenant)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find Application Port Profile '%s': %s", appPortProfileName, err)
 		}
 
 		dSet(d, "org", orgName)
-		dSet(d, "vdc", vdcName)
 
 	default:
 		return nil, fmt.Errorf("resource path must be specified in one of two formats, based on Application Port Profile scope:\n" +
 			"* PROVIDER (path contains 2 pieces nsxt_manager_name.app_port_profile_name)\n" +
-			"* TENANT (path contains 3 pieces org-name.vdc-name.app_port_profile_name)")
+			"* TENANT (path contains 3 pieces org-name.vdc-name-or-vdc-group-name.app_port_profile_name)")
 	}
 
 	d.SetId(nsxtAppPortProfile.NsxtAppPortProfile.ID)

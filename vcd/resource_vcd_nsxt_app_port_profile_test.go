@@ -119,6 +119,8 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 				ImportStateVerify: true,
 				// This will generate import name of org_name.vdc_name.app_profile_name
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, "custom_app_prof-updated"),
+				// Not setting VDC anymore as it is deprecated
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -592,6 +594,15 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 						"protocol": "ICMPv4",
 					}),
 				),
+			},
+			{
+				ResourceName:      "vcd_nsxt_app_port_profile.custom",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// This will generate import name of org_name.vdc_group_name.app_profile_name
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), "custom_app_prof"),
+				// context_id cannot be read once it is set, while VDC is deprecated and `import`is not supposed to set it
+				ImportStateVerifyIgnore: []string{"context_id"},
 			},
 		},
 	})
