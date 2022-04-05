@@ -101,7 +101,7 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 
 	name := d.Get("name").(string)
 	scope := d.Get("scope").(string)
-	contextIdField := d.Get("context_id").(string)
+	contextIdFieldValue := d.Get("context_id").(string)
 	nsxtManagerId := d.Get("nsxt_manager_id").(string)
 
 	queryParams := url.Values{}
@@ -109,16 +109,14 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 	// For `TENANT` scope Org and VDC or the specified `context_id` matter. It would set _context
 	// filter to be searching for App Port Profiles in specific context
 	case strings.EqualFold(scope, types.ApplicationPortProfileScopeTenant):
-		dataSourceVdcField := d.Get("vdc").(string)
-		inheritedVdcField := vcdClient.Vdc
-		contextId, err := pickAppPortProfileContextFilterByPriority(vcdClient, d, inheritedVdcField, dataSourceVdcField, contextIdField)
+		contextId, err := pickAppPortProfileContextFilterByPriority(vcdClient, d, contextIdFieldValue)
 		if err != nil {
 			return diag.Errorf("error identifying correct context filter: %s", err)
 		}
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextId))
 	// For PROVIDER scoped App Port Profiles context_id of Network Provider can be specified
-	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && contextIdField != "":
-		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextIdField))
+	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && contextIdFieldValue != "":
+		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextIdFieldValue))
 	// Deprecated field 'nsxt_manager_id' can be specified as context for PROVIDER scoped App Port Profiles
 	case strings.EqualFold(scope, types.ApplicationPortProfileScopeProvider) && nsxtManagerId != "":
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, nsxtManagerId))
@@ -135,7 +133,7 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 	allAppPortProfiles, err := org.GetAllNsxtAppPortProfiles(queryParams, scope)
 
 	if err != nil {
-		return diag.Errorf("error retrieving Application Port Profiles: %s", err)
+		return diag.Errorf("error retrieving NSX-T Application Port Profiles: %s", err)
 	}
 
 	if len(allAppPortProfiles) == 0 {
@@ -162,7 +160,7 @@ func datasourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.Resource
 // * Priority 1 -> 'context_id' field
 // * Priority 2 -> 'vdc' field in data source
 // * Priority 3 -> 'vdc' field inherited from provider configuration
-func pickAppPortProfileContextFilterByPriority(vcdClient *VCDClient, d *schema.ResourceData, inheritedVdcField, dataSourceVdcField, contextIdField string) (string, error) {
+func pickAppPortProfileContextFilterByPriority(vcdClient *VCDClient, d *schema.ResourceData, contextIdField string) (string, error) {
 	// Context ID can be returned directly, VDC must be looked up to return its ID
 	if contextIdField != "" {
 		return contextIdField, nil
