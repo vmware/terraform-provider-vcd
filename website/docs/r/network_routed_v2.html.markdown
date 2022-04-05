@@ -119,6 +119,7 @@ The following arguments are supported:
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
   virtual machines; see [IP Pools](#ip-pools) below for details.
+* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this network.
 
 <a id="ip-pools"></a>
 ## IP Pools
