@@ -520,15 +520,6 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 	return metadataMap
 }
 
-// Converts to terraform understandable structure
-func getOpenApiMetadataStruct(metadata []*types.OpenApiMetadata) StringMap {
-	metadataMap := make(StringMap, len(metadata))
-	for _, metadataEntry := range metadata {
-		metadataMap[metadataEntry.KeyValue.Key] = metadataEntry.KeyValue.Value.Value
-	}
-	return metadataMap
-}
-
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	vdcName := d.Get("name").(string)

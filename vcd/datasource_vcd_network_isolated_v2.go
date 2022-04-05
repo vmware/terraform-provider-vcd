@@ -182,7 +182,7 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 		log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
 		return diag.Errorf("[isolated network read v2] unable to find Org VDC network metadata %s", err)
 	}
-	err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("[isolated network read v2] unable to set Org VDC network metadata %s", err)
 	}

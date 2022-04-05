@@ -95,8 +95,8 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
 			},
 		},
 	}
@@ -140,7 +140,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	// `vdc` field is deprecated. `vdc` value should not be changed unless it is removal of the
 	// field at all to allow easy migration to `owner_id` path
-	if _, new := d.GetChange("vdc"); d.HasChange("vdc") && new.(string) != "" {
+	if _, newValue := d.GetChange("vdc"); d.HasChange("vdc") && newValue.(string) != "" {
 		return diag.Errorf("changing 'vdc' field value is not supported. It can only be removed. " +
 			"Please use `owner_id` field for moving network to/from VDC Group")
 	}
@@ -170,7 +170,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	// Explicitly add ID to the new type because function `getOpenApiOrgVdcIsolatedNetworkType` only sets other fields
+	// Explicitly add ID to the newValue type because function `getOpenApiOrgVdcIsolatedNetworkType` only sets other fields
 	networkType.ID = d.Id()
 
 	_, err = orgNetwork.Update(networkType)
@@ -186,7 +186,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
 
-func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -216,7 +216,7 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 		log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
 		return diag.Errorf("[isolated network v2 read] unable to find Org VDC network metadata %s", err)
 	}
-	err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("[isolated network v2 read] unable to set Org VDC network metadata %s", err)
 	}
@@ -224,7 +224,7 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
@@ -250,7 +250,7 @@ func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNetworkIsolatedV2Import(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[isolated network v2 import] resource name must be specified as org-name.vdc-name.network-name")

@@ -29,7 +29,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		"Tags":                 "network nsxt",
 		"MetadataKey":          "key1",
 		"MetadataValue":        "value1",
-		"MetadataKeyUpdated":   "key1",
+		"MetadataKeyUpdated":   "key2",
 		"MetadataValueUpdated": "value2",
 	}
 
@@ -66,7 +66,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
-					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata"+params["MetadataKey"].(string), params["MetadataValue"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{ // step 2
@@ -87,8 +87,8 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.30",
 						"end_address":   "1.1.1.40",
 					}),
-					resource.TestCheckNoResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKey"].(string)),
-					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata"+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
+					resource.TestCheckNoResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 				),
 			},
 			// Check that import works

@@ -102,8 +102,8 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
 			},
 		},
 	}
@@ -202,7 +202,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
-func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -232,7 +232,7 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 		log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
 		return diag.Errorf("[routed network read v2] unable to find Org VDC network metadata %s", err)
 	}
-	err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("[routed network v2 read] unable to set Org VDC network metadata %s", err)
 	}
@@ -240,7 +240,7 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkRoutedV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks on a routed network is conditional. There are two scenarios:
@@ -274,7 +274,7 @@ func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNetworkRoutedV2Import(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[routed network import v2] resource name must be specified as org-name.vdc-name.network-name")

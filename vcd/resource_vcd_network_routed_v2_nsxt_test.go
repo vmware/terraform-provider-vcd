@@ -25,7 +25,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 		"Tags":                 "network",
 		"MetadataKey":          "key1",
 		"MetadataValue":        "value1",
-		"MetadataKeyUpdated":   "key1",
+		"MetadataKeyUpdated":   "key2",
 		"MetadataValueUpdated": "value2",
 	}
 
@@ -55,8 +55,6 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 			{ // step 1
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
-					// sleepTester(),
 					cachedId.cacheTestResourceFieldValue("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", "nsxt-routed-test-initial"),
@@ -69,7 +67,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
-					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKey"].(string), params["MetadataValue"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
@@ -98,8 +96,8 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.60",
 						"end_address":   "1.1.1.70",
 					}),
-					resource.TestCheckNoResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKey"].(string)),
-					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata"+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
+					resource.TestCheckNoResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),

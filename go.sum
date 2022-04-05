@@ -44,8 +44,8 @@ github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 h1:YoJbenK9C6
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7/go.mod h1:z4/9nQmJSSwwds7ejkxaJwO37dru3geImFUdJlaLzQo=
 github.com/acomagu/bufpipe v1.0.3 h1:fxAGrHZTgQ9w5QqVItgzwj235/uYZYgbXitB+dLupOk=
 github.com/acomagu/bufpipe v1.0.3/go.mod h1:mxdxdup/WdsKVreO5GpW4+M/1CE2sMG4jeGJ2sYmHc4=
-github.com/adambarreiro/go-vcloud-director/v2 v2.15.0-alpha.1.0.20220401135345-cc195cbd973f h1:/NhRT7CJeYVNWZKv1OmnMVo0vGW8MTT99KSFGdkOeik=
-github.com/adambarreiro/go-vcloud-director/v2 v2.15.0-alpha.1.0.20220401135345-cc195cbd973f/go.mod h1:2BS1yw61VN34WI0/nUYoInFvBc3Zcuf84d4ESiAAl68=
+github.com/adambarreiro/go-vcloud-director/v2 v2.15.0-alpha.1.0.20220405074407-7b8364380832 h1:lzt13NSVRvee94H/AjPrYdoRf1Gin5BcwgFu8lO/xWA=
+github.com/adambarreiro/go-vcloud-director/v2 v2.15.0-alpha.1.0.20220405074407-7b8364380832/go.mod h1:2BS1yw61VN34WI0/nUYoInFvBc3Zcuf84d4ESiAAl68=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=

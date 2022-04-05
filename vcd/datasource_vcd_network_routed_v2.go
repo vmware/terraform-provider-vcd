@@ -127,7 +127,7 @@ var networkV2IpRangeComputed = &schema.Resource{
 	},
 }
 
-func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -234,7 +234,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 		log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
 		return diag.Errorf("[routed network read v2] unable to find Org VDC network metadata %s", err)
 	}
-	err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("[routed network read v2] unable to set Org VDC network metadata %s", err)
 	}
