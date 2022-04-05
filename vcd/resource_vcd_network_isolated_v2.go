@@ -170,7 +170,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	// Explicitly add ID to the newValue type because function `getOpenApiOrgVdcIsolatedNetworkType` only sets other fields
+	// Explicitly add ID to the new type because function `getOpenApiOrgVdcIsolatedNetworkType` only sets other fields
 	networkType.ID = d.Id()
 
 	_, err = orgNetwork.Update(networkType)

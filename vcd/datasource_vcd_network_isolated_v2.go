@@ -107,7 +107,7 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)

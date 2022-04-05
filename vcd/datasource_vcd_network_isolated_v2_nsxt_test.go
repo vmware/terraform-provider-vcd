@@ -20,10 +20,14 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"NetworkName": t.Name(),
-		"Tags":        "network nsxt",
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"NetworkName":          t.Name(),
+		"Tags":                 "network nsxt",
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
+		"MetadataKeyUpdated":   "key2",
+		"MetadataValueUpdated": "value2",
 	}
 
 	params["FuncName"] = t.Name() + "-DS"
