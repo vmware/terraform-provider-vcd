@@ -137,14 +137,14 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error creating Org VDC routed network: %s", err)
+		return diag.Errorf("[routed network create v2] error creating Routed network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error adding metadata to Org VDC routed network: %s", err)
+		return diag.Errorf("[routed network create v2] error adding metadata to Routed network: %s", err)
 	}
 
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
@@ -178,7 +178,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[routed network update v2] error getting Org VDC network: %s", err)
+		return diag.Errorf("[routed network update v2] error getting Routed network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcRoutedNetworkType(d, vcdClient)
@@ -191,12 +191,12 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[routed network update v2] error updating Org VDC network: %s", err)
+		return diag.Errorf("[routed network update v2] error updating Routed network: %s", err)
 	}
 
 	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
 	if err != nil {
-		return diag.Errorf("[routed network v2 update] error updating Org VDC network metadata: %s", err)
+		return diag.Errorf("[routed network v2 update] error updating Routed network metadata: %s", err)
 	}
 
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
@@ -217,12 +217,12 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error getting Org VDC network: %s", err)
+		return diag.Errorf("[routed network read v2] error getting Routed network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcRoutedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error setting Org VDC network data: %s", err)
+		return diag.Errorf("[routed network read v2] error setting Routed network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -230,11 +230,11 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 	metadata, err := orgNetwork.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
-		return diag.Errorf("[routed network read v2] unable to find Org VDC network metadata %s", err)
+		return diag.Errorf("[routed network read v2] unable to find Routed network metadata %s", err)
 	}
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
-		return diag.Errorf("[routed network v2 read] unable to set Org VDC network metadata %s", err)
+		return diag.Errorf("[routed network v2 read] unable to set Routed network metadata %s", err)
 	}
 
 	return nil
@@ -263,12 +263,12 @@ func resourceVcdNetworkRoutedV2Delete(_ context.Context, d *schema.ResourceData,
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[routed network delete v2] error getting Org VDC network: %s", err)
+		return diag.Errorf("[routed network delete v2] error getting Routed network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[routed network delete v2] error deleting Org VDC network: %s", err)
+		return diag.Errorf("[routed network delete v2] error deleting Routed network: %s", err)
 	}
 
 	return nil
@@ -299,7 +299,7 @@ func resourceVcdNetworkRoutedV2Import(_ context.Context, d *schema.ResourceData,
 
 	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving Org VDC network '%s': %s", networkName, err)
+		return nil, fmt.Errorf("error retrieving Routed network '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsRouted() {

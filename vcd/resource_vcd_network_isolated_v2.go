@@ -122,14 +122,14 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 create] error creating Org VDC isolated network: %s", err)
+		return diag.Errorf("[isolated network v2 create] error creating Isolated network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 create] error adding metadata to Org VDC isolated network: %s", err)
+		return diag.Errorf("[isolated network v2 create] error adding metadata to Isolated network: %s", err)
 	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
@@ -162,7 +162,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error getting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error getting Isolated network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vcdClient)
@@ -175,12 +175,12 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error updating Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error updating Isolated network: %s", err)
 	}
 
 	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error updating Org VDC network metadata: %s", err)
+		return diag.Errorf("[isolated network v2 update] error updating Isolated network metadata: %s", err)
 	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
@@ -201,12 +201,12 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] error getting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 read] error getting Isolated network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] error setting Org VDC network data: %s", err)
+		return diag.Errorf("[isolated network v2 read] error setting Isolated network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -214,11 +214,11 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 	metadata, err := orgNetwork.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
-		return diag.Errorf("[isolated network v2 read] unable to find Org VDC network metadata %s", err)
+		return diag.Errorf("[isolated network v2 read] unable to find Isolated network metadata %s", err)
 	}
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] unable to set Org VDC network metadata %s", err)
+		return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)
 	}
 
 	return nil
@@ -239,12 +239,12 @@ func resourceVcdNetworkIsolatedV2Delete(_ context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error getting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error getting Isolated network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error deleting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error deleting Isolated network: %s", err)
 	}
 
 	return nil
@@ -275,7 +275,7 @@ func resourceVcdNetworkIsolatedV2Import(_ context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving Org VDC network '%s': %s", networkName, err)
+		return nil, fmt.Errorf("error retrieving Isolated network '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsIsolated() {
