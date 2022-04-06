@@ -84,8 +84,8 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations
 * `owner_id` (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
 and inherited from provider configuration)
-* `vdc` - (Optional) The name of VDC to use. **Deprecated**  in favor of new field `owner_id` which
-  supports VDC and VDC Group IDs.
+* `vdc` - (Deprecated; Optional) The name of VDC to use. **Deprecated**  in favor of new field
+  `owner_id` which supports VDC and VDC Group IDs.
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network
 * `is_shared` - (Optional) **NSX-V only.** Defines if this network is shared between multiple VDCs

@@ -20,25 +20,30 @@ services on the Edge Gateway.
 
 ```hcl
 data "vcd_nsxt_app_port_profile" "custom" {
-  org   = "my-org"
-  vdc   = "my-nsxt-vdc"
-  name  = "WINS"
-  scope = "PROVIDER"
+  org        = "System"
+  context_id = data.vcd_nsxt_manager.first.id
+  name       = "WINS"
+  scope      = "PROVIDER"
 }
 ```
 
-## Example Usage 2 (Find an Application Port Profile defined by Tenant)
+## Example Usage 2 (Find an Application Port Profile defined by Tenant in a VDC Group)
 
 ```hcl
+data "vcd_vdc_group" "g1" {
+  org  = "myOrg"
+  name = "myVDC"
+}
+
 data "vcd_nsxt_app_port_profile" "custom" {
-  org   = "my-org"
-  vdc   = "my-nsxt-vdc"
-  name  = "SSH"
-  scope = "TENANT"
+  org        = "my-org"
+  context_id = data.vcd_vdc_group.g1.id
+  name       = "SSH-custom"
+  scope      = "TENANT"
 }
 ```
 
-## Example Usage 3 (Find a System defined  Application Port Profile)
+## Example Usage 3 (Find a System defined Application Port Profile)
 
 ```hcl
 data "vcd_nsxt_app_port_profile" "custom" {
@@ -53,7 +58,9 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
+* `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level.
+  Deprecated and replaced by `context_id`
+* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated field `vdc`.
 * `name` - (Required)  - Unique name of existing Security Group.
 * `scope` - (Required)  - `SYSTEM`, `PROVIDER`, or `TENANT`.
 

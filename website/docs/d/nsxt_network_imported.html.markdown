@@ -53,8 +53,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
 * `owner_id` (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
 and inherited from provider configuration)
-* `vdc` - (Optional) The name of VDC to use. **Deprecated**  in favor of new field `owner_id` which
-  supports VDC and VDC Group IDs.
+* `vdc` - (Deprecated; Optional) The name of VDC to use. **Deprecated**  in favor of new field
+  `owner_id` which supports VDC and VDC Group IDs.
 * `name` - (Required) A unique name for the network (optional when `filter` is used)
 * `filter` - (Optional) Retrieves the data source using one or more filter parameters
 
