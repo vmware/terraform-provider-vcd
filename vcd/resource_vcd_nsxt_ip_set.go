@@ -72,7 +72,7 @@ func resourceVcdNsxtIpSet() *schema.Resource {
 func resourceVcdNsxtIpSetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "create")
+	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "nsxt ip set create")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -99,33 +99,10 @@ func resourceVcdNsxtIpSetCreate(ctx context.Context, d *schema.ResourceData, met
 	return resourceVcdNsxtIpSetRead(ctx, d, meta)
 }
 
-func getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient *VCDClient, d *schema.ResourceData, action string) (string, *govcd.NsxtEdgeGateway, error) {
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return "", nil, fmt.Errorf("[nsxt ip set create] error retrieving Org: %s", err)
-	}
-
-	// Lookup Edge Gateway to know parent VDC or VDC Group
-	anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(d.Get("edge_gateway_id").(string))
-	if err != nil {
-		return "", nil, fmt.Errorf("[nsxt ip set %s] error retrieving Edge Gateway structure: %s", action, err)
-	}
-	if anyEdgeGateway.IsNsxv() {
-		return "", nil, fmt.Errorf("[nsxt ip set %s] NSX-V edge gateway not supported", action)
-	}
-
-	nsxtEdgeGateway, err := anyEdgeGateway.GetNsxtEdgeGateway()
-	if err != nil {
-		return "", nil, fmt.Errorf("[nsxt ip set %s] could not retrieve NSX-T Edge Gateway with ID '%s': %s", action, d.Id(), err)
-	}
-
-	return anyEdgeGateway.EdgeGateway.OwnerRef.ID, nsxtEdgeGateway, nil
-}
-
 func resourceVcdNsxtIpSetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "update")
+	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "nsxt ip set update")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -165,7 +142,7 @@ func resourceVcdNsxtIpSetRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("[nsxt ip set read] error retrieving Org: %s", err)
 	}
 
-	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "read")
+	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "nsxt ip set read")
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -210,7 +187,7 @@ func resourceVcdNsxtIpSetRead(_ context.Context, d *schema.ResourceData, meta in
 
 func resourceVcdNsxtIpSetDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "delete")
+	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "nsxt ip set delete")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -280,7 +257,7 @@ func resourceVcdNsxtIpSetImport(_ context.Context, d *schema.ResourceData, meta 
 
 		ipSet, err = vdcGroup.GetNsxtFirewallGroupByName(ipSetName, types.FirewallGroupTypeIpSet)
 		if err != nil {
-			return nil, fmt.Errorf("[nsxt ip set resource import] error getting NSX-T IP Set with ID '%s': %s", d.Id(), err)
+			return nil, fmt.Errorf("[nsxt ip set resource import] error getting NSX-T IP Set '%s': %s", ipSetName, err)
 		}
 	} else {
 		ipSet, err = nsxtEdgeGateway.GetNsxtFirewallGroupByName(ipSetName, types.FirewallGroupTypeIpSet)
