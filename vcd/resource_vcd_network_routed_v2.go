@@ -227,14 +227,17 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	metadata, err := orgNetwork.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
-		return diag.Errorf("[routed network read v2] unable to find Routed network metadata %s", err)
-	}
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("[routed network v2 read] unable to set Routed network metadata %s", err)
+	// Metadata is not supported when the network is in a VDC Group
+	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		metadata, err := orgNetwork.GetMetadata()
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
+			return diag.Errorf("[routed network read v2] unable to find Routed network metadata %s", err)
+		}
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return diag.Errorf("[routed network v2 read] unable to set Routed network metadata %s", err)
+		}
 	}
 
 	return nil

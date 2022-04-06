@@ -209,8 +209,9 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
-
-		"Tags": "network",
+		"MetadataKey":               "key1",
+		"MetadataValue":             "value1",
+		"Tags":                      "network",
 	}
 
 	params["FuncName"] = t.Name() + "-newVdc"
@@ -255,6 +256,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -264,6 +266,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -273,13 +276,15 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "true"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
-				ResourceName:      "vcd_network_isolated_v2.net1",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
+				ResourceName:            "vcd_network_isolated_v2.net1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"metadata"}, // Network is in a VDC Group, so it can't import metadata
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
 			},
 			{
 				Config: configText6,
@@ -288,6 +293,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -314,6 +320,10 @@ resource "vcd_network_isolated_v2" "net1" {
 	start_address = "1.1.1.10"
     end_address = "1.1.1.20"
   }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
+  }
 }
 `
 
@@ -330,6 +340,10 @@ resource "vcd_network_isolated_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.10"
 	end_address = "1.1.1.20"
+  }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
 }
 `
@@ -349,7 +363,11 @@ resource "vcd_network_isolated_v2" "net1" {
 	  start_address = "1.1.1.10"
 	  end_address = "1.1.1.20"
 	}
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
+}
 `
 
 const testAccVcdNetworkIsolatedV2NsxtMigrationStep6 = testAccVcdVdcGroupNew + `
@@ -365,6 +383,10 @@ resource "vcd_network_isolated_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.10"
 	end_address = "1.1.1.20"
+  }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
 }
 `

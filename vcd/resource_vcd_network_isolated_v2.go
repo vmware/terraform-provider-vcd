@@ -211,14 +211,17 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	metadata, err := orgNetwork.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
-		return diag.Errorf("[isolated network v2 read] unable to find Isolated network metadata %s", err)
-	}
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)
+	// Metadata is not supported when the network is in a VDC Group
+	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		metadata, err := orgNetwork.GetMetadata()
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
+			return diag.Errorf("[isolated network v2 read] unable to find Isolated network metadata %s", err)
+		}
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)
+		}
 	}
 
 	return nil
@@ -364,6 +367,11 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 
 func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
 	log.Printf("[TRACE] adding/updating metadata to Network V2")
+
+	// Metadata is not supported when the network is in a VDC Group
+	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		return nil
+	}
 
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")

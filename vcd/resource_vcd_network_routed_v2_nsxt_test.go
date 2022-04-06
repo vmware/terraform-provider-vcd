@@ -362,7 +362,8 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
-
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
 		"Tags": "network",
 	}
 
@@ -424,6 +425,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 					}),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -453,6 +455,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 					}),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -480,6 +483,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 						"start_address": "1.1.1.60",
 						"end_address":   "1.1.1.70",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{ // Applying the same step once more to be sure that vcd_network_routed_v2 has refreshed its fields after edge gateway was moved
@@ -487,6 +491,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 					resource.TestMatchResourceAttr("vcd_network_routed_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 
@@ -495,6 +500,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{"metadata"}, // Network is in a VDC Group as the Edge Gateway moved, so it can't import metadata
 				ImportStateId:     fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
 			},
 		},
@@ -552,6 +558,10 @@ resource "vcd_network_routed_v2" "net1" {
 	start_address = "1.1.1.60"
     end_address = "1.1.1.70"
   }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
+  }
 }
 `
 
@@ -605,6 +615,10 @@ resource "vcd_network_routed_v2" "net1" {
 	start_address = "1.1.1.60"
     end_address = "1.1.1.70"
   }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
+  }
 }
 `
 
@@ -657,6 +671,10 @@ resource "vcd_network_routed_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.60"
     end_address = "1.1.1.70"
+  }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
 }
 `
