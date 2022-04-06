@@ -61,7 +61,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
 			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
 			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group" ||
-			dataSourceName == "vcd_nsxt_alb_pool" || dataSourceName == "vcd_nsxt_alb_virtual_service":
+			dataSourceName == "vcd_nsxt_alb_pool" || dataSourceName == "vcd_nsxt_alb_virtual_service" ||
+			dataSourceName == "vcd_nsxt_distributed_firewall":
 			skipNoNsxtAlbConfiguration(t)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
@@ -193,6 +194,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `context_id = "` + nsxtManagerUrn + `"` + "\n"
 			// Invalid fields which are required for some resources for search (usually they are used instead of `name`)
+		case "vdc_group_id":
+			templateFields = templateFields + `vdc_group_id = "urn:vcloud:vdcGroup:c19ec5b1-3403-4d00-b414-9da50066dc1e"` + "\n"
 		case "rule_id":
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":

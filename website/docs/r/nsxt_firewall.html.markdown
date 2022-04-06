@@ -92,7 +92,7 @@ Each Firewall Rule contains following attributes:
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
 * `direction` - (Required) One of `IN`, `OUT`, or `IN_OUT`
 * `ip_protocol` - (Required) One of `IPV4`,  `IPV6`, or `IPV4_IPV6`
-* `action` - (Required) Defines if it should `ALLOW`, `DROP`, `REJECT` traffic
+* `action` - (Required) Defines if it should `ALLOW` or `DROP` traffic
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
 * `source_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 

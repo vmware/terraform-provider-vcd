@@ -3,13 +3,13 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_distributed_firewall"
 sidebar_current: "docs-vcd-resource-nsxt-distributed-firewall"
 description: |-
-  The distributed firewall allows you to segment organization virtual data center entities, such as
+  The Distributed Firewall allows user to segment organization virtual data center entities, such as
   virtual machines, based on virtual machine names and attributes. 
 ---
 
 # vcd\_nsxt\_distributed\_firewall
 
-The distributed firewall allows you to segment organization virtual data center entities, such as
+The Distributed Firewall allows user to segment organization virtual data center entities, such as
 virtual machines, based on virtual machine names and attributes. 
 
 ## Example Usage
@@ -58,8 +58,8 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
     direction   = "OUT"
 
     # Below two fields are supported in VCD 10.3.2+
-    source_groups_excluded      =
-    destination_groups_excluded =
+    source_groups_excluded      = false
+    destination_groups_excluded = false
   }
 
   rule {
