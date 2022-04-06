@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_security_group"
 sidebar_current: "docs-vcd-resource-nsxt-security-group"
 description: |-
-  Provides a resource to manage NSX-T Security Group. Security groups are groups of data center
+  Provides a resource to manage NSX-T Security Group. Security Groups are groups of data center
   group networks to which distributed firewall rules apply. Grouping networks helps you to reduce
   the total number of distributed firewall rules to be created.
 ---
@@ -12,19 +12,28 @@ description: |-
 
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
-Provides a resource to manage NSX-T Security Group. Security groups are groups of data center group
+Provides a resource to manage NSX-T Security Group. Security Groups are groups of data center group
 networks to which distributed firewall rules apply. Grouping networks helps you to reduce the total
 number of distributed firewall rules to be created.
+
+-> Starting with **v3.6.0** `vcd_nsxt_security_group` added support for VDC Groups.
+The `vdc` field (in resource or inherited from provider configuration) is deprecated, as `vcd_nsxt_security_group` will
+inherit the VDC Group or VDC membership from a parent Edge Gateway specified in the `edge_gateway_id` field.
+More about VDC Group support in a [VDC Groups guide](/providers/vmware/vcd/latest/docs/guides/vdc_groups).
 
 ## Example Usage 1 (Security Group with member networks)
 
 ```hcl
+data "vcd_nsxt_edgegateway" "main" {
+  org  = "my-org" # Optional
+  name = "main-edge"
+}
+
 resource "vcd_nsxt_security_group" "frontend-servers" {
-  org = "my-org"
-  vdc = "my-nsxt-vdc"
+  org = "my-org" # Optional
 
   # Referring to a data source for existing NSX-T Edge Gateway
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.main.id
 
   name        = "frontend-servers"
   description = "Security Group for a network connecting the frontend servers"
@@ -35,9 +44,13 @@ resource "vcd_nsxt_security_group" "frontend-servers" {
 
 ## Example Usage 2 (Empty Security Group)
 ```hcl
+data "vcd_nsxt_edgegateway" "main" {
+  org  = "my-org" # Optional
+  name = "main-edge"
+}
+
 resource "vcd_nsxt_security_group" "group1" {
-  org = "my-org"
-  vdc = "my-nsxt-vdc"
+  org = "my-org" # Optional
 
   # Referring to a data source for existing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -53,7 +66,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
+* `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
+  in favor of `edge_gateway_id` field.
 * `name` - (Required) A unique name for Security Group
 * `description` - (Optional) An optional description of the Security Group
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
@@ -90,8 +104,10 @@ below:
 
 ```
 terraform import vcd_nsxt_security_group.imported my-org.my-org-vdc.my-nsxt-edge-gateway.my-security-group-name
+or
+terraform import vcd_nsxt_security_group.imported my-org.my-org-vdc-group-name.my-nsxt-edge-gateway.my-security-group-name
 ```
 
 The above would import the `my-security-group-name` Security Group config settings that are defined
 on NSX-T Edge Gateway `my-nsxt-edge-gateway` which is configured in organization named `my-org` and
-VDC named `my-org-vdc`.
+VDC named `my-org-vdc` or VDC Group `my-vdc-group-name.

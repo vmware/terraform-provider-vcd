@@ -66,6 +66,9 @@ NSX-V VDC Group support is provided):
 * [vcd_network_routed_v2](/providers/vmware/vcd/latest/docs/resources/network_routed_v2)
 * [vcd_network_isolated_v2](/providers/vmware/vcd/latest/docs/resources/network_isolated_v2)
 * [vcd_nsxt_network_imported](/providers/vmware/vcd/latest/docs/resources/nsxt_network_imported)
+* [vcd_nsxt_ip_set](/providers/vmware/vcd/latest/docs/resources/nsxt_ip_set)
+* [vcd_nsxt_app_port_profile](/providers/vmware/vcd/latest/docs/resources/nsxt_app_port_profile)
+* [vcd_nsxt_security_group](/providers/vmware/vcd/latest/docs/resources/nsxt_security_group)
 
 The next sub-sections will cover some specifics for resources that have it. Resources that are not
 explicitly mentioned here simply introduce `owner_id` field over deprecated `vdc` field.
@@ -92,6 +95,19 @@ directly from parent Edge Gateway (specified in `edge_gateway_id`). The reason f
 routed Org VDC networks travel to and from VDC Groups with parent Edge Gateway and this does not
 work well with Terraform concept.
 
+#### Resource vcd_nsxt_app_port_profile
+
+NSX-T Application Port Profiles that can be used in regular and Distributed Firewalls can be defined
+in multiple contexts - VDC, VDC Group and NSX-T Manager (network provider). This resource introduced
+a new field `context_id` which accepts IDs for mentioned entities. 
+
+Scope of Application Port Profiles can be one of `SYSTEM`, `TENANT` or `PROVIDER`. UI behaves a bit
+differently and it has only two views - "Default Applications" and "Custom Applications". "Default
+Applications" are the `SYSTEM` scoped ones, while "Custom Applications" show `TENANT` and `PROVIDER`
+scoped applications.
+
+In UI it also does not matter if the Application Port Profile is created in NSX-T Edge Gateway or
+VDC Group - they are still shown in both views. 
 
 ## Complete example for configuration with VDC Groups
 
@@ -187,6 +203,20 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
   static_ip_pool {
     start_address = "4.1.1.10"
     end_address   = "4.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_app_port_profile" "custom" {
+  org  = "datacloud"
+  name = "custom_app_prof"
+
+  context_id = data.vcd_vdc_group.main.id
+
+  description = "Application port profile for custom"
+  scope       = "TENANT"
+
+  app_port {
+    protocol = "ICMPv4"
   }
 }
 ```

@@ -51,8 +51,6 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 			{ // step 1
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// stateDumper(),
-					// sleepTester(),
 					cachedId.cacheTestResourceFieldValue("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", "nsxt-routed-test-initial"),
@@ -476,7 +474,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 				),
 			},
 
-			// // Check that import works
+			// Check that import works
 			{ // step 3
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
