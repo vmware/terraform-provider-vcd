@@ -20,7 +20,6 @@ import (
 // * vcd_nsxt_network_context_profile (data source only)
 // * vcd_vdc_group
 // * vcd_nsxt_edgegateway
-//
 func TestAccVcdDistributedFirewall(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
@@ -365,6 +364,7 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
 `
 
 const dfwStep3DS = dfwStep2 + `
+# skip-binary-test: Data Source test
 data "vcd_nsxt_distributed_firewall" "t1" {
   org          = "{{.Org}}"
   vdc_group_id = vcd_vdc_group.test1.id
@@ -389,6 +389,7 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
 `
 
 const dfwStep6DS = dfwStep4 + `
+# skip-binary-test: Data Source test
 data "vcd_nsxt_distributed_firewall" "t1" {
   org          = "{{.Org}}"
   vdc_group_id = vcd_vdc_group.test1.id
