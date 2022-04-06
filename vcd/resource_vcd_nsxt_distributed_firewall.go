@@ -367,7 +367,7 @@ func getDistributedFirewallTypes(vcdClient *VCDClient, d *schema.ResourceData) (
 				}
 
 				if destinationGroupsExcluded {
-					sliceOfRules[index].SourceGroupsExcluded = &destinationGroupsExcluded
+					sliceOfRules[index].DestinationGroupsExcluded = &destinationGroupsExcluded
 				}
 			} else {
 				if comment != "" {
