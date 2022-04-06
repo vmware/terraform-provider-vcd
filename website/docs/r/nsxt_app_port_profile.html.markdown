@@ -22,13 +22,12 @@ NSX-T Data Center, you can create custom Application Port Profiles.
 
 ```hcl
 resource "vcd_nsxt_app_port_profile" "icmpv4" {
-  org = "System"
-
+  org         = "System"
   name        = "ICMP custom profile"
   description = "Application port profile for ICMPv4"
 
-  scope           = "PROVIDER"
-  nsxt_manager_id = data.vcd_nsxt_manager.first.id
+  scope      = "PROVIDER"
+  context_id = data.vcd_nsxt_manager.first.id
 
   app_port {
     protocol = "ICMPv4"
@@ -36,11 +35,16 @@ resource "vcd_nsxt_app_port_profile" "icmpv4" {
 }
 ```
 
-## Example Usage 2 (Define Application Port Profile for particular NSX-T VDC)
+## Example Usage 2 (Define Application Port Profile for particular NSX-T VDC 'vdc1')
 ```hcl
+data "vcd_org_vdc" "v1" {
+  org  = "my-org"
+  name = "vdc1"
+}
+
 resource "vcd_nsxt_app_port_profile" "custom-app" {
-  org = "my-org"
-  vdc = "my-nsxt-vdc"
+  org        = "my-org"
+  context_id = data.vcd_org_vdc.v1.id
 
   name        = "custom app profile"
   description = "Application port profile for custom application"
@@ -69,10 +73,14 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
+* `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level.
+  Deprecated and replaced by `context_id`
+* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated fields `vdc`
+  and `nsxt_manager_id`. It accepts VDC, VDC Group or NSX-T Manager ID. 
 * `name` - (Required) A unique name for Security Group
 * `scope` - (Required) Application Port Profile scope - `PROVIDER`, `TENANT`
-* `nsxt_manager_id` - (Optional) Required only when `scope` is `PROVIDER`
+* `nsxt_manager_id` - (Deprecated; Optional) Required only when `scope` is `PROVIDER`. Deprecated
+  and replaced by `context_id`
 * `app_port` - (Required) At least one block of [Application Port definition](#app-port)
 
 
@@ -102,8 +110,8 @@ named `my-nsxt-manager-name`.
 
 * `TENANT` scoped import path is:
 ```
-terraform import vcd_nsxt_app_port_profile.imported my-org.my-nsxt-vdc.my-app-port-profile-name
+terraform import vcd_nsxt_app_port_profile.imported my-org.my-nsxt-vdc-or-vdc-group.my-app-port-profile-name
 ```
 
 This would import NSX-T Application Port Profile named `my-app-port-profile-name` defined in Org `my-org` and NSX-T
-VDC - `my-nsxt-vdc`
+VDC/VDC Group - `my-nsxt-vdc-or-vdc-group`

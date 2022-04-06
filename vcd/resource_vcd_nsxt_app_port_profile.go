@@ -52,33 +52,47 @@ func resourceVcdNsxtAppPortProfile() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				Deprecated:    "Deprecated in favor of 'context_id'",
+				ConflictsWith: []string{"context_id"},
 			},
-			"name": &schema.Schema{
+			"context_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "ID of VDC, VDC Group, or NSX-T Manager",
+				ConflictsWith: []string{"nsxt_manager_id", "vdc"},
+			},
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Application Port Profile name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Application Port Profile description",
 			},
-			"scope": &schema.Schema{
+			"scope": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				Description:  "Scope - 'PROVIDER' or 'TENANT'",
 				ValidateFunc: validation.StringInSlice([]string{"PROVIDER", "TENANT"}, false),
 			},
-			"nsxt_manager_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "ID of NSX-T manager. Only required for 'PROVIDER' scope",
+			"nsxt_manager_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				// Not forcing new resource to leave a way out for configuration migration from
+				// `nsxt_manager_id` to `context_id` field.
+				ForceNew:      false,
+				Description:   "ID of NSX-T manager. Only required for 'PROVIDER' scope",
+				Deprecated:    "Deprecated in favor of 'context_id'",
+				ConflictsWith: []string{"context_id"},
 			},
 			"app_port": {
 				Type:     schema.TypeSet,
@@ -94,7 +108,7 @@ func resourceVcdNsxtAppPortProfileCreate(ctx context.Context, d *schema.Resource
 	vcdClient := meta.(*VCDClient)
 
 	scope := d.Get("scope").(string)
-	err := validateScope(scope, d.Get("nsxt_manager_id").(string), d.Get("org").(string))
+	err := validateScope(scope, d.Get("context_id").(string), d.Get("nsxt_manager_id").(string), d.Get("org").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -123,7 +137,7 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 	vcdClient := meta.(*VCDClient)
 
 	scope := d.Get("scope").(string)
-	err := validateScope(scope, d.Get("nsxt_manager_id").(string), d.Get("org").(string))
+	err := validateScope(scope, d.Get("context_id").(string), d.Get("nsxt_manager_id").(string), d.Get("org").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -206,7 +220,7 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 
 	// There are two paths of possible import of differently scoped NSX-T Application Port Profiles
 	// * PROVIDER (path contains 2 pieces nsxt_manager_name.app_port_profile_name)
-	// * TENANT (path contains 3 pieces org-name.vdc-name.app_port_profile_name)
+	// * TENANT (path contains 3 pieces org-name.vdc-or-vdc-group-name.app_port_profile_name)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -255,36 +269,41 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 		nsxtAppPortProfile = allNsxtAppPortProfiles[0]
 
 		dSet(d, "org", org.Org.Name)
-		dSet(d, "nsxt_manager_id", nsxtManagerUrn)
+		dSet(d, "context_id", nsxtManagerUrn)
 
 	case 3: // TENANT scope
-		orgName, vdcName, appPortProfileName := resourceURI[0], resourceURI[1], resourceURI[2]
+		orgName, vdcOrVdcGroupName, appPortProfileName := resourceURI[0], resourceURI[1], resourceURI[2]
 
-		org, err := vcdClient.GetOrgByName(orgName)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-		}
-		vdc, err := org.GetVDCByName(vdcName, false)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+		// define an interface type to match VDC and VDC Groups
+		var vdcOrVdcGroup vdcOrVdcGroupHandler
+		_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+		if govcd.ContainsNotFound(err) {
+			adminOrg, err := vcdClient.GetAdminOrg(orgName)
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+			}
+
+			vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+			if err != nil {
+				return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+			}
 		}
 
-		if !vdc.IsNsxt() {
-			return nil, errors.New("security groups are only supported by NSX-T VDCs")
+		if !vdcOrVdcGroup.IsNsxt() {
+			return nil, errors.New("this resource for Application Port Profiles are only supported by NSX-T VDCs/VDC Groups")
 		}
 
-		nsxtAppPortProfile, err = org.GetNsxtAppPortProfileByName(appPortProfileName, types.ApplicationPortProfileScopeTenant)
+		nsxtAppPortProfile, err = vdcOrVdcGroup.GetNsxtAppPortProfileByName(appPortProfileName, types.ApplicationPortProfileScopeTenant)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find Application Port Profile '%s': %s", appPortProfileName, err)
 		}
 
 		dSet(d, "org", orgName)
-		dSet(d, "vdc", vdcName)
 
 	default:
 		return nil, fmt.Errorf("resource path must be specified in one of two formats, based on Application Port Profile scope:\n" +
 			"* PROVIDER (path contains 2 pieces nsxt_manager_name.app_port_profile_name)\n" +
-			"* TENANT (path contains 3 pieces org-name.vdc-name.app_port_profile_name)")
+			"* TENANT (path contains 3 pieces org-name.vdc-name-or-vdc-group-name.app_port_profile_name)")
 	}
 
 	d.SetId(nsxtAppPortProfile.NsxtAppPortProfile.ID)
@@ -292,9 +311,9 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 	return []*schema.ResourceData{d}, nil
 }
 
-func validateScope(scope, nsxtManagerId, orgName string) error {
-	if scope == types.ApplicationPortProfileScopeProvider && nsxtManagerId == "" {
-		return fmt.Errorf("scope 'PROVIDER' requires NSX-T Manager ID")
+func validateScope(scope, nsxtManagerId, contextId, orgName string) error {
+	if scope == types.ApplicationPortProfileScopeProvider && (nsxtManagerId == "" && contextId == "") {
+		return fmt.Errorf("scope 'PROVIDER' requires 'context_id' to be NSX-T Manager ID")
 	}
 
 	if scope == types.ApplicationPortProfileScopeProvider && strings.ToUpper(orgName) != "SYSTEM" {
@@ -311,18 +330,30 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vcdClient
 		Scope:       d.Get("scope").(string),
 	}
 
-	switch strings.ToUpper(appPortProfileConfig.Scope) {
-	case types.ApplicationPortProfileScopeProvider:
-		nsxtManagerUrn := d.Get("nsxt_manager_id").(string)
-		appPortProfileConfig.ContextEntityId = nsxtManagerUrn
-	case types.ApplicationPortProfileScopeTenant:
-		appPortProfileConfig.OrgRef = &types.OpenApiReference{ID: org.Org.ID}
-		// Tenant scope requires VDC
-		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	// context_id can be VDC, VDC Group or NSX-T Manager (called 'network provider' in some docs)
+	contextId := d.Get("context_id").(string)
+	if contextId != "" {
+		appPortProfileConfig.ContextEntityId = contextId
+
+		// VDC and VDC Group based application port profiles contain Org References, while NSX-T
+		// Manager based ones - don't reference to Org
+		if govcd.OwnerIsVdcGroup(contextId) || govcd.OwnerIsVdc(contextId) {
+			appPortProfileConfig.OrgRef = &types.OpenApiReference{ID: org.Org.ID}
 		}
-		appPortProfileConfig.ContextEntityId = vdc.Vdc.ID
+	} else { // Legacy configuration method using `nsxt_manager_id` or `vdc` to define parent
+		switch strings.ToUpper(appPortProfileConfig.Scope) {
+		case types.ApplicationPortProfileScopeProvider:
+			nsxtManagerUrn := d.Get("nsxt_manager_id").(string)
+			appPortProfileConfig.ContextEntityId = nsxtManagerUrn
+		case types.ApplicationPortProfileScopeTenant:
+			appPortProfileConfig.OrgRef = &types.OpenApiReference{ID: org.Org.ID}
+			// Tenant scope requires VDC
+			_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+			if err != nil {
+				return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+			}
+			appPortProfileConfig.ContextEntityId = vdc.Vdc.ID
+		}
 	}
 
 	appPortSet := d.Get("app_port").(*schema.Set)
@@ -345,11 +376,14 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vcdClient
 
 // setNsxtAppPortProfileData sets Terraform schema from types.NsxtAppPortProfile
 //
-// Note. GET queries do not return nsxt_manager_ir for SYSTEM scope therefore it cannot be read.
+// Note. GET queries do not return ContextEntityId so it cannot be set
 func setNsxtAppPortProfileData(d *schema.ResourceData, appPortProfile *types.NsxtAppPortProfile) error {
 	dSet(d, "name", appPortProfile.Name)
 	dSet(d, "description", appPortProfile.Description)
 	dSet(d, "scope", appPortProfile.Scope)
+
+	// "read" returns 'null' for this field even in API V36.2 so it cannot be set
+	// dSet(d, "context_id", appPortProfile.ContextEntityId)
 
 	if appPortProfile.ApplicationPorts != nil && len(appPortProfile.ApplicationPorts) > 0 {
 
@@ -359,8 +393,8 @@ func setNsxtAppPortProfileData(d *schema.ResourceData, appPortProfile *types.Nsx
 			appPortMap := make(map[string]interface{})
 			appPortMap["protocol"] = value.Protocol
 
-			desitnationPortSet := convertStringsTotTypeSet(value.DestinationPorts)
-			appPortMap["port"] = desitnationPortSet
+			destinationPortSet := convertStringsTotTypeSet(value.DestinationPorts)
+			appPortMap["port"] = destinationPortSet
 
 			resultSet[index] = appPortMap
 
