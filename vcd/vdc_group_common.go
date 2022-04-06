@@ -15,6 +15,8 @@ type vdcOrVdcGroupHandler interface {
 	GetNsxtImportableSwitchByName(name string) (*govcd.NsxtImportableSwitch, error)
 	GetNsxtFirewallGroupByName(name, firewallGroupType string) (*govcd.NsxtFirewallGroup, error)
 	GetNsxtFirewallGroupById(id string) (*govcd.NsxtFirewallGroup, error)
+	GetNsxtAppPortProfileByName(name, scope string) (*govcd.NsxtAppPortProfile, error)
+	GetOpenApiOrgVdcNetworkById(id string) (*govcd.OpenApiOrgVdcNetwork, error)
 }
 
 // getVdcOrVdcGroupVerifierByOwnerId helps to find VDC or VDC Group by ownerId field and returns an
