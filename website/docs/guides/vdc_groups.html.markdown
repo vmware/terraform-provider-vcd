@@ -68,6 +68,7 @@ NSX-V VDC Group support is provided):
 * [vcd_nsxt_network_imported](/providers/vmware/vcd/latest/docs/resources/nsxt_network_imported)
 * [vcd_nsxt_ip_set](/providers/vmware/vcd/latest/docs/resources/nsxt_ip_set)
 * [vcd_nsxt_app_port_profile](/providers/vmware/vcd/latest/docs/resources/nsxt_app_port_profile)
+* [vcd_nsxt_security_group](/providers/vmware/vcd/latest/docs/resources/nsxt_security_group)
 
 The next sub-sections will cover some specifics for resources that have it. Resources that are not
 explicitly mentioned here simply introduce `owner_id` field over deprecated `vdc` field.
