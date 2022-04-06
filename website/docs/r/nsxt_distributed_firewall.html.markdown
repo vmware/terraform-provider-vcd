@@ -31,7 +31,7 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
     action      = "ALLOW"
     description = "description"
     # 'comment' field is only supported in VCD 10.3.2+
-    comment     = "My first rule to allow everything"
+    comment = "My first rule to allow everything"
   }
 
   rule {
@@ -45,7 +45,7 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
   }
 
   rule {
-    name        = "rule3"
+    name = "rule3"
     # 'REJECT' is only supported in VCD 10.3.2+
     action      = "REJECT"
     ip_protocol = "IPV4"
