@@ -362,9 +362,9 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
-		"MetadataKey":          "key1",
-		"MetadataValue":        "value1",
-		"Tags": "network",
+		"MetadataKey":               "key1",
+		"MetadataValue":             "value1",
+		"Tags":                      "network",
 	}
 
 	params["FuncName"] = t.Name() + "-newVdc"
@@ -497,11 +497,11 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 
 			// Check that import works
 			{ // step 3
-				ResourceName:      "vcd_network_routed_v2.net1",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "vcd_network_routed_v2.net1",
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"metadata"}, // Network is in a VDC Group as the Edge Gateway moved, so it can't import metadata
-				ImportStateId:     fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
+				ImportStateId:           fmt.Sprintf("%s.%s.%s", testConfig.VCD.Org, params["Name"].(string), params["Name"].(string)),
 			},
 		},
 	})
