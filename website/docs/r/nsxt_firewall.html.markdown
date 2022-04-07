@@ -85,7 +85,7 @@ The following arguments are supported:
 * `rule` (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions
 
 <a id="firewall-rule"></a>
-## Firwall Rule
+## Firewall Rule
 
 Each Firewall Rule contains following attributes:
 

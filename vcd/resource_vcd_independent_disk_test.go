@@ -5,9 +5,10 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"testing"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -66,11 +67,11 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		sharingType = "None"
 	}
 
-	vcdVersionIs103 := func() (bool, error) {
-		if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36") {
-			return true, nil
+	vcdVersionIsLowerThan1022 := func() (bool, error) {
+		if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 35.2") {
+			return false, nil
 		}
-		return false, nil
+		return true, nil
 	}
 
 	params["FuncName"] = t.Name() + "-Compatibility"
@@ -164,7 +165,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 			},
 			{
 				Config:   configTextNvme,
-				SkipFunc: vcdVersionIs103,
+				SkipFunc: vcdVersionIsLowerThan1022,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
@@ -184,7 +185,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 			},
 			{
 				Config:   configTextNvmeUpdate,
-				SkipFunc: vcdVersionIs103,
+				SkipFunc: vcdVersionIsLowerThan1022,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),

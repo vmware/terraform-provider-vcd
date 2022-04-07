@@ -50,7 +50,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 			t.Skipf("%s requires at least API version 34 (VCD 10.2+)", dataSourceName)
 		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster" ||
 			dataSourceName == "vcd_nsxt_security_group" || dataSourceName == "vcd_nsxt_nat_rule" ||
-			dataSourceName == "vcd_nsxt_app_port_profile" || dataSourceName == "vcd_nsxt_ip_set") &&
+			dataSourceName == "vcd_nsxt_app_port_profile" || dataSourceName == "vcd_nsxt_ip_set" ||
+			dataSourceName == "vcd_nsxt_network_context_profile") &&
 			(vcdClient.Client.APIVCDMaxVersionIs("< 34") || testConfig.Nsxt.Vdc == ""):
 			t.Skip("this datasource requires at least API version 34 (VCD 10.1+) and NSX-T VDC specified in configuration")
 		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
@@ -60,7 +61,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
 			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
 			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group" ||
-			dataSourceName == "vcd_nsxt_alb_pool" || dataSourceName == "vcd_nsxt_alb_virtual_service":
+			dataSourceName == "vcd_nsxt_alb_pool" || dataSourceName == "vcd_nsxt_alb_virtual_service" ||
+			dataSourceName == "vcd_nsxt_distributed_firewall":
 			skipNoNsxtAlbConfiguration(t)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
@@ -178,7 +180,22 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 				t.Errorf("error building URN for NSX-T manager")
 			}
 			templateFields = templateFields + `nsxt_manager_id = "` + nsxtManagerUrn + `"` + "\n"
+		case "context_id":
+			skipNoNsxtConfiguration(t)
+			// This test needs a valid nsxt_manager_id
+			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
+			if err != nil {
+				t.Skipf("No suitable NSX-T manager found for this test: %s", err)
+				return ""
+			}
+			nsxtManagerUrn, err := govcd.BuildUrnWithUuid("urn:vcloud:nsxtmanager:", extractUuid(nsxtManager[0].HREF))
+			if err != nil {
+				t.Errorf("error building URN for NSX-T manager")
+			}
+			templateFields = templateFields + `context_id = "` + nsxtManagerUrn + `"` + "\n"
 			// Invalid fields which are required for some resources for search (usually they are used instead of `name`)
+		case "vdc_group_id":
+			templateFields = templateFields + `vdc_group_id = "urn:vcloud:vdcGroup:c19ec5b1-3403-4d00-b414-9da50066dc1e"` + "\n"
 		case "rule_id":
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":

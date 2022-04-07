@@ -46,11 +46,11 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "TENANT"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "SYSTEM"),
 		),
 		Steps: []resource.TestStep{
 			{
@@ -167,11 +167,11 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "TENANT"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "SYSTEM"),
 		),
 		Steps: []resource.TestStep{
 			{
@@ -415,11 +415,11 @@ func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "TENANT"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
+			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "SYSTEM"),
 		),
 		Steps: []resource.TestStep{
 			{
@@ -483,10 +483,7 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdc(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
 		),
 		Steps: []resource.TestStep{
@@ -572,10 +569,7 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
 		),
 		Steps: []resource.TestStep{
@@ -676,10 +670,7 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
-			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "SYSTEM"),
 		),
 		Steps: []resource.TestStep{

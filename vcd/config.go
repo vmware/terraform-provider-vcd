@@ -253,6 +253,26 @@ func (cli *VCDClient) unlockById(id string) {
 	vcdMutexKV.kvUnlock(id)
 }
 
+// lockParentVdcGroup locks on VDC Group ID using 'vdc_group_id' field
+func (cli *VCDClient) lockParentVdcGroup(d *schema.ResourceData) {
+	vdcGroupId := d.Get("vdc_group_id").(string)
+	if vdcGroupId == "" {
+		panic("'vdc_group_id' is empty")
+	}
+
+	vcdMutexKV.kvLock(vdcGroupId)
+}
+
+// unlockParentVdcGroup unlocks on VDC Group ID using 'vdc_group_id' field
+func (cli *VCDClient) unlockParentVdcGroup(d *schema.ResourceData) {
+	vdcGroupId := d.Get("vdc_group_id").(string)
+	if vdcGroupId == "" {
+		panic("'vdc_group_id' is empty")
+	}
+
+	vcdMutexKV.kvUnlock(vdcGroupId)
+}
+
 // lockIfOwnerIsVdcGroup locks VDC Group based on `owner_id` field (if it is a VDC Group)
 func (cli *VCDClient) lockIfOwnerIsVdcGroup(d *schema.ResourceData) {
 	vdcGroupId := d.Get("owner_id")

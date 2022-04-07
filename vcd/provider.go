@@ -93,6 +93,9 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_pool":                             datasourceVcdAlbPool(),                          // 3.5
 	"vcd_nsxt_alb_virtual_service":                  datasourceVcdAlbVirtualService(),                // 3.5
 	"vcd_vdc_group":                                 datasourceVdcGroup(),                            // 3.5
+	"vcd_nsxt_distributed_firewall":                 datasourceVcdNsxtDistributedFirewall(),          // 3.6
+	"vcd_nsxt_network_context_profile":              datasourceVcdNsxtNetworkContextProfile(),        // 3.6
+
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -158,6 +161,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_pool":                             resourceVcdAlbPool(),                          // 3.5
 	"vcd_nsxt_alb_virtual_service":                  resourceVcdAlbVirtualService(),                // 3.5
 	"vcd_vdc_group":                                 resourceVdcGroup(),                            // 3.5
+	"vcd_nsxt_distributed_firewall":                 resourceVcdNsxtDistributedFirewall(),          // 3.6
 }
 
 // Provider returns a terraform.ResourceProvider.
