@@ -44,7 +44,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 						"description": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Description is not shown in UI",
+							Description: "Description (not shown in UI)",
 						},
 						"comment": {
 							Type:        schema.TypeString,
@@ -69,7 +69,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 						"enabled": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Defined if Firewall Rule is active",
+							Description: "Defines if Firewall Rule is active",
 						},
 						"logging": {
 							Type:        schema.TypeBool,
@@ -79,7 +79,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 						"source_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "A set of Source Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
+							Description: "A set of Source Firewall Group IDs (IP Sets or Security Groups). Empty means 'Any'",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -87,7 +87,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 						"destination_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "A set of Destination Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
+							Description: "A set of Destination Firewall Group IDs (IP Sets or Security Groups). Empty means 'Any'",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -95,7 +95,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 						"app_port_profile_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "A set of Application Port Profile IDs. Leaving it empty means 'Any'",
+							Description: "A set of Application Port Profile IDs.'",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -103,7 +103,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 						"network_context_profile_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "A set of Network Context Profile IDs. Leaving it empty means 'Any'",
+							Description: "A set of Network Context Profile IDs.",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -130,22 +130,22 @@ func datasourceVcdNsxtDistributedFirewallRead(ctx context.Context, d *schema.Res
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Read] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall DS Read] error retriving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Read] error retrieving VDC Group: %s", err)
+		return diag.Errorf("[Distributed Firewall DS Read] error retrieving VDC Group: %s", err)
 	}
 
 	fwRules, err := vdcGroup.GetDistributedFirewall()
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Read] error retrieving NSX-T Firewall Rules: %s", err)
+		return diag.Errorf("[Distributed Firewall DS Read] error retrieving NSX-T Firewall Rules: %s", err)
 	}
 
 	err = setDistributedFirewallData(vcdClient, fwRules.DistributedFirewallRuleContainer, d, vdcGroup.VdcGroup.Id)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Read] error storing NSX-T Firewall data to schema: %s", err)
+		return diag.Errorf("[Distributed Firewall DS Read] error storing NSX-T Firewall data to schema: %s", err)
 	}
 
 	d.SetId(vdcGroup.VdcGroup.Id)

@@ -3,13 +3,13 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_network_context_profile"
 sidebar_current: "docs-vcd-data-source-nsxt-network-context-profile"
 description: |-
-  Provider a data source for NSX-T Network Context Profile lookup to later be used in Distributed
+  Provides a data source for NSX-T Network Context Profile lookup to later be used in Distributed
   Firewall.
 ---
 
 # vcd\_nsxt\_network\_context\_profile
 
-Provider a data source for NSX-T Network Context Profile lookup to later be used in Distributed
+Provides a data source for NSX-T Network Context Profile lookup to later be used in Distributed
 Firewall.
 
 ## Example Usage (SYSTEM scope network context profile lookup in a VDC Group)

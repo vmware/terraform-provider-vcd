@@ -32,6 +32,10 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
     description = "description"
     # 'comment' field is only supported in VCD 10.3.2+
     comment = "My first rule to allow everything"
+
+    source_ids             = [data.vcd_nsxt_ip_set.set1.id, data.vcd_nsxt_ip_set.set2.id]
+    source_groups_excluded = true # Negates value of 'source_id' (VCD 10.3.2+)
+    app_port_profile_ids   = [data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
   }
 
   rule {
@@ -46,7 +50,7 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
 
   rule {
     name = "rule3"
-    # 'REJECT' is only supported in VCD 10.3.2+
+    # 'REJECT' is only supported in VCD 10.2.2+
     action      = "REJECT"
     ip_protocol = "IPV4"
   }
@@ -87,22 +91,21 @@ The following arguments are supported:
 Each Firewall Rule contains following attributes:
 
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
-* `description` - (Optional) Explanatory name for firewall rule (uniqueness not enforced)
-* `comment` - (Optional; VCD 10.3.2+)) Comment field
+* `comment` - (Optional; *VCD 10.3.2+*)) Comment field shown in UI
+* `description` - (Optional) Description of firewall rule (not shown in UI)
 * `direction` - (Optional) One of `IN`, `OUT`, or `IN_OUT`. (default `IN_OUT`)
 * `ip_protocol` - (Optional) One of `IPV4`,  `IPV6`, or `IPV4_IPV6` (default `IPV4_IPV6`)
 * `action` - (Required) Defines if it should `ALLOW`, `DROP`, `REJECT` traffic. `REJECT` is only
-  supported in VCD 10.3.2+
+  supported in VCD 10.2.2+
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
 * `source_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`).
 Leaving it empty matches `Any` (all)
 * `destination_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security
 groups`). Leaving it empty matches `Any` (all)
-* `app_port_profile_ids` - (Optional) A set of Application Port Profiles. Leaving it empty matches
-  `Any` (all)
-* `network_context_profile_ids` - (Optional) A set of Network Context Profiles. Leaving it empty
-  matches none. Can be looked up using `vcd_nsxt_network_context_profile` data source.
+* `app_port_profile_ids` - (Optional) An optional set of Application Port Profiles.
+* `network_context_profile_ids` - (Optional) An optional set of Network Context Profiles. Can be
+  looked up using `vcd_nsxt_network_context_profile` data source.
 * `source_groups_excluded` (Optional; VCD 10.3.2+) - reverses value of `source_ids` for the rule to
   match everything except specified IDs.
 * `destination_groups_excluded` (Optional; VCD 10.3.2+) - reverses value of `destination_ids` for
@@ -113,8 +116,8 @@ groups`). Leaving it empty matches `Any` (all)
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-Existing Firewall Rules can be [imported][docs-import] into this resource via supplying the full dot
-separated path for your VDC Group Name. An example is below:
+Existing Distributed Firewall Rules can be [imported][docs-import] into this resource via supplying
+the full dot separated path for your VDC Group Name. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 

@@ -11,15 +11,8 @@ import (
 )
 
 // TestAccVcdDistributedFirewall goal is to try out diverse configuration of rules. This test should
-// support running on all environments. There are a few additional tests which explicitly check new
-// features introduced in newer VCD versions:
-// * vcd_nsxt_distributed_firewall
-// * vcd_nsxt_app_port_profile
-// * vcd_nsxt_ip_set
-// * vcd_nsxt_security_group
-// * vcd_nsxt_network_context_profile (data source only)
-// * vcd_vdc_group
-// * vcd_nsxt_edgegateway
+// support running on all supported versions of VCD. There are a few additional tests which
+// explicitly check new features introduced in newer VCD versions having versions in their names.
 func TestAccVcdDistributedFirewall(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {

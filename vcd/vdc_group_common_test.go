@@ -63,7 +63,7 @@ resource "vcd_vdc_group" "test1" {
   participating_vdc_ids = vcd_org_vdc.newVdc.*.id
   
   dfw_enabled           = "{{.Dfw}}"
-  default_policy_status = {{if .DefaultPolicy }}true{{else}}false{{end}}
+  default_policy_status = {{if eq .DefaultPolicy "true" }}true{{else}}false{{end}}
 }
 `
 
