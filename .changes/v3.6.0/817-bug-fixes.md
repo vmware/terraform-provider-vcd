@@ -1,1 +1,0 @@
-* Fix bug regarding `getCatalogByFilter` function [GH-817]
