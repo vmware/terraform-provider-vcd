@@ -52,7 +52,7 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 		return nil, err
 	}
 
-	catalog, err := org.GetAdminCatalogByHref(queryItem.GetHref())
+	catalog, err := org.GetAdminCatalogByNameOrId(queryItem.GetName(), false)
 	if err != nil {
 		return nil, fmt.Errorf("[getCatalogByFilter] error retrieving catalog %s: %s", queryItem.GetName(), err)
 	}
