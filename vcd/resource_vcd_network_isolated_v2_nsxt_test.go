@@ -23,10 +23,14 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"NetworkName": t.Name(),
-		"Tags":        "network nsxt",
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"NetworkName":          t.Name(),
+		"Tags":                 "network nsxt",
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
+		"MetadataKeyUpdated":   "key2",
+		"MetadataValueUpdated": "value2",
 	}
 
 	configText := templateFill(testAccVcdNetworkIsolatedV2NsxtStep1, params)
@@ -48,7 +52,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // step 1
+			{ // step 1
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.cacheTestResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
@@ -62,9 +66,10 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
-			resource.TestStep{ // step 2
+			{ // step 2
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
@@ -82,16 +87,18 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.30",
 						"end_address":   "1.1.1.40",
 					}),
+					resource.TestCheckNoResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 				),
 			},
 			// Check that import works
-			resource.TestStep{ // step 3
+			{ // step 3
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
 			},
-			resource.TestStep{ // step 4
+			{ // step 4
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue("vcd_network_isolated_v2.net1", "id"),
@@ -123,6 +130,10 @@ resource "vcd_network_isolated_v2" "net1" {
 	start_address = "1.1.1.10"
 	end_address   = "1.1.1.20"
   }
+
+  metadata = {
+    {{.MetadataKey}} = "{{.MetadataValue}}"
+  }
 }
 `
 
@@ -145,6 +156,10 @@ resource "vcd_network_isolated_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.30"
 	end_address   = "1.1.1.40"
+  }
+
+  metadata = {
+    {{.MetadataKeyUpdated}} = "{{.MetadataValueUpdated}}"
   }
 }
 `
@@ -194,8 +209,9 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
-
-		"Tags": "network",
+		"MetadataKey":               "key1",
+		"MetadataValue":             "value1",
+		"Tags":                      "network",
 	}
 
 	params["FuncName"] = t.Name() + "-newVdc"
@@ -240,6 +256,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -249,6 +266,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -258,13 +276,15 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "true"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
-				ResourceName:      "vcd_network_isolated_v2.net1",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
+				ResourceName:            "vcd_network_isolated_v2.net1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"metadata"}, // Network is in a VDC Group, so it can't import metadata
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
 			},
 			{
 				Config: configText6,
@@ -273,6 +293,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_network_isolated_v2.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
 			{
@@ -299,6 +320,10 @@ resource "vcd_network_isolated_v2" "net1" {
 	start_address = "1.1.1.10"
     end_address = "1.1.1.20"
   }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
+  }
 }
 `
 
@@ -315,6 +340,10 @@ resource "vcd_network_isolated_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.10"
 	end_address = "1.1.1.20"
+  }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
 }
 `
@@ -334,7 +363,11 @@ resource "vcd_network_isolated_v2" "net1" {
 	  start_address = "1.1.1.10"
 	  end_address = "1.1.1.20"
 	}
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
+}
 `
 
 const testAccVcdNetworkIsolatedV2NsxtMigrationStep6 = testAccVcdVdcGroupNew + `
@@ -350,6 +383,10 @@ resource "vcd_network_isolated_v2" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.10"
 	end_address = "1.1.1.20"
+  }
+
+  metadata = {
+   {{.MetadataKey}}  = "{{.MetadataValue}}"
   }
 }
 `

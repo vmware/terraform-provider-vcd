@@ -20,10 +20,14 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"NetworkName": t.Name(),
-		"Tags":        "network nsxt",
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"NetworkName":          t.Name(),
+		"Tags":                 "network nsxt",
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
+		"MetadataKeyUpdated":   "key2",
+		"MetadataValueUpdated": "value2",
 	}
 
 	params["FuncName"] = t.Name() + "-DS"
@@ -47,13 +51,13 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-isolated-test-initial"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id")),
 			},
 
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
@@ -61,7 +65,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
@@ -69,7 +73,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),

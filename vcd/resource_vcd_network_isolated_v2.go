@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -92,6 +93,11 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRange,
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+			},
 		},
 	}
 }
@@ -116,10 +122,15 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := org.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 create] error creating Org VDC isolated network: %s", err)
+		return diag.Errorf("[isolated network v2 create] error creating Isolated network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	if err != nil {
+		return diag.Errorf("[isolated network v2 create] error adding metadata to Isolated network: %s", err)
+	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
@@ -129,7 +140,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	// `vdc` field is deprecated. `vdc` value should not be changed unless it is removal of the
 	// field at all to allow easy migration to `owner_id` path
-	if _, new := d.GetChange("vdc"); d.HasChange("vdc") && new.(string) != "" {
+	if _, newValue := d.GetChange("vdc"); d.HasChange("vdc") && newValue.(string) != "" {
 		return diag.Errorf("changing 'vdc' field value is not supported. It can only be removed. " +
 			"Please use `owner_id` field for moving network to/from VDC Group")
 	}
@@ -151,7 +162,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error getting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error getting Isolated network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vcdClient)
@@ -164,13 +175,18 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error updating Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error updating Isolated network: %s", err)
+	}
+
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	if err != nil {
+		return diag.Errorf("[isolated network v2 update] error updating Isolated network metadata: %s", err)
 	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
 }
 
-func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -185,20 +201,33 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] error getting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 read] error getting Isolated network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] error setting Org VDC network data: %s", err)
+		return diag.Errorf("[isolated network v2 read] error setting Isolated network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
+	// Metadata is not supported when the network is in a VDC Group
+	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		metadata, err := orgNetwork.GetMetadata()
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
+			return diag.Errorf("[isolated network v2 read] unable to find Isolated network metadata %s", err)
+		}
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)
+		}
+	}
+
 	return nil
 }
 
-func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Only when a network is in VDC Group - it must lock parent VDC Group. It doesn't cause lock
@@ -213,18 +242,18 @@ func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error getting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error getting Isolated network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error deleting Org VDC network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error deleting Isolated network: %s", err)
 	}
 
 	return nil
 }
 
-func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNetworkIsolatedV2Import(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[isolated network v2 import] resource name must be specified as org-name.vdc-name.network-name")
@@ -249,7 +278,7 @@ func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving Org VDC network '%s': %s", networkName, err)
+		return nil, fmt.Errorf("error retrieving Isolated network '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsIsolated() {
@@ -334,4 +363,41 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	}
 
 	return orgVdcNetworkConfig, nil
+}
+
+func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
+	log.Printf("[TRACE] adding/updating metadata to Network V2")
+
+	// Metadata is not supported when the network is in a VDC Group
+	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		return nil
+	}
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := network.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := network.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }
