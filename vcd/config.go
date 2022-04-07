@@ -263,7 +263,7 @@ func (cli *VCDClient) lockParentVdcGroup(d *schema.ResourceData) {
 	vcdMutexKV.kvLock(vdcGroupId)
 }
 
-// unlockParentVdcGroup unlocks on VDC Group ID in 'vdc_group_id' field
+// unlockParentVdcGroup unlocks on VDC Group ID using 'vdc_group_id' field
 func (cli *VCDClient) unlockParentVdcGroup(d *schema.ResourceData) {
 	vdcGroupId := d.Get("vdc_group_id").(string)
 	if vdcGroupId == "" {
