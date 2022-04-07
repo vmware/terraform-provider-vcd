@@ -93,7 +93,9 @@ The following arguments are supported:
 <a id="firewall-rule"></a>
 ## Firewall Rule
 
-Each Firewall Rule contains following attributes (**order defines rule precedence**):
+-> Order of `rule` blocks defines order of firewall rules in the system.
+
+Each Firewall Rule contains following attributes:
 
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
 * `comment` - (Optional; *VCD 10.3.2+*) Comment field shown in UI
