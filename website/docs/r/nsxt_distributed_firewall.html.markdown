@@ -15,6 +15,10 @@ virtual machines, based on virtual machine names and attributes.
 ## Example Usage
 
 ```hcl
+data "vcd_vdc_group" "existing" {
+  org  = "my-org" # Optional, can be inherited from Provider configuration
+  name = "main-vdc-group"
+}
 
 data "vcd_nsxt_network_context_profile" "cp1" {
   context_id = vcd_vdc_group.test1.id
@@ -23,8 +27,8 @@ data "vcd_nsxt_network_context_profile" "cp1" {
 }
 
 resource "vcd_nsxt_distributed_firewall" "t1" {
-  org          = "datacloud"
-  vdc_group_id = vcd_vdc_group.test1.id
+  org          = "my-org" # Optional, can be inherited from Provider configuration
+  vdc_group_id = vcd_vdc_group.existing.id
 
   rule {
     name        = "rule1"
@@ -83,12 +87,13 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations.
 * `vdc_group_id` - (Required) The ID of VDC Group to manage Distributed Firewall in. Can be looked
   up using `vcd_vdc_group` resource or data source.
-* `rule` (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions
+* `rule` (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order**
+  defines firewall rule precedence
 
 <a id="firewall-rule"></a>
 ## Firwall Rule
 
-Each Firewall Rule contains following attributes:
+Each Firewall Rule contains following attributes (**order defines rule precedence**):
 
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
 * `comment` - (Optional; *VCD 10.3.2+*)) Comment field shown in UI
@@ -122,8 +127,8 @@ the full dot separated path for your VDC Group Name. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_distributed_firewall.imported my-org.my-vdc-group
+terraform import vcd_nsxt_distributed_firewall.imported my-org-name.my-vdc-group-name
 ```
 
-The above would import all firewall rules defined on VDC Group `my-vdc-group` which is configured in
-organization named `my-org`.
+The above would import all firewall rules defined on VDC Group `my-vdc-group-name` which is
+configured in organization named `my-org-name`.

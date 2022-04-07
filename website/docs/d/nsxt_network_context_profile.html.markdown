@@ -15,9 +15,8 @@ Firewall.
 ## Example Usage (SYSTEM scope network context profile lookup in a VDC Group)
 
 ```hcl
-
 data "vcd_vdc_group" "existing" {
-  org  = "my-org"
+  org  = "my-org" # Optional, can be inherited from Provider configuration
   name = "main-vdc-group"
 }
 

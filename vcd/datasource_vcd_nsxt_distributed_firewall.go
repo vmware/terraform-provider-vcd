@@ -15,15 +15,13 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc_group_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "The ID of VDC Group",
 			},
 			"rule": {
 				Type:        schema.TypeList, // Firewall rule order matters
@@ -125,7 +123,7 @@ func datasourceVcdNsxtDistributedFirewall() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxtDistributedFirewallRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtDistributedFirewallRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)

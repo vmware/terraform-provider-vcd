@@ -17,13 +17,11 @@ func datasourceVcdNsxtNetworkContextProfile() *schema.Resource {
 			"context_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Context ID can be one of VDC Group ID, ",
+				Description: "Context ID can be one of VDC, VDC Group, or NSX-T Manager ID",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
 			},
 			"scope": {
@@ -45,7 +43,7 @@ func datasourceVcdNsxtNetworkContextProfileRead(ctx context.Context, d *schema.R
 
 	nsxtNetworkContextProfile, err := govcd.GetNetworkContextProfilesByNameScopeAndContext(&vcdClient.Client, name, scope, contextId)
 	if err != nil {
-		return diag.Errorf("error finding Network Context Profile with name '%s', scope '%s' and context_id '%s': %s",
+		return diag.Errorf("[Network Context profile DS Read] error finding Network Context Profile with name '%s', scope '%s' and context_id '%s': %s",
 			name, scope, contextId, err)
 	}
 

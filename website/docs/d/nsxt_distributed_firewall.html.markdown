@@ -14,12 +14,12 @@ The Distributed Firewall data source reads all defined rules for a particular VD
 
 ```hcl
 data "vcd_vdc_group" "g1" {
-  org  = "my-org"
+  org  = "my-org" # Optional, can be inherited from Provider configuration
   name = "my-vdc-group"
 }
 
 data "vcd_nsxt_distributed_firewall" "t1" {
-  org          = "my-org"
+  org          = "my-org"  # Optional, can be inherited from Provider configuration
   vdc_group_id = data.vcd_vdc_group.g1.id
 }
 ```
@@ -28,8 +28,8 @@ data "vcd_nsxt_distributed_firewall" "t1" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined
-  at provider level.
+* `org` - (Optional) The name of organization in which Distributed Firewall is located. Optional if
+  defined at provider level.
 * `vdc_group_id` - (Required) The ID of a VDC Group
 
 ## Attribute Reference

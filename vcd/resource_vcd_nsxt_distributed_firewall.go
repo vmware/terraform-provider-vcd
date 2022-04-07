@@ -35,7 +35,7 @@ func resourceVcdNsxtDistributedFirewall() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "ID of VDC Group for Distributed Firewall",
 			},
 			"rule": {
 				Type:        schema.TypeList, // Firewall rule order matters

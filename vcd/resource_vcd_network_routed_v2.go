@@ -248,7 +248,7 @@ func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNetworkRoutedV2Import(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[routed network import v2] resource name must be specified as org-name.vdc-name.network-name or org-name.vdc-group-name.network-name")
