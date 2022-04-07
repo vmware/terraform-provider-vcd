@@ -91,12 +91,12 @@ The following arguments are supported:
   defines firewall rule precedence
 
 <a id="firewall-rule"></a>
-## Firwall Rule
+## Firewall Rule
 
 Each Firewall Rule contains following attributes (**order defines rule precedence**):
 
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
-* `comment` - (Optional; *VCD 10.3.2+*)) Comment field shown in UI
+* `comment` - (Optional; *VCD 10.3.2+*) Comment field shown in UI
 * `description` - (Optional) Description of firewall rule (not shown in UI)
 * `direction` - (Optional) One of `IN`, `OUT`, or `IN_OUT`. (default `IN_OUT`)
 * `ip_protocol` - (Optional) One of `IPV4`,  `IPV6`, or `IPV4_IPV6` (default `IPV4_IPV6`)
