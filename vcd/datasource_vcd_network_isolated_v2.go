@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"log"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -97,11 +98,16 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+			},
 		},
 	}
 }
 
-func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -169,6 +175,19 @@ func datasourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceD
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[isolated network read v2] error setting Org VDC network data: %s", err)
+	}
+
+	// Metadata is not supported when the network is in a VDC Group
+	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		metadata, err := network.GetMetadata()
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
+			return diag.Errorf("[isolated network read v2] unable to find Org VDC network metadata %s", err)
+		}
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return diag.Errorf("[isolated network read v2] unable to set Org VDC network metadata %s", err)
+		}
 	}
 
 	d.SetId(network.OpenApiOrgVdcNetwork.ID)

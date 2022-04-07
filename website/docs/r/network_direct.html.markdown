@@ -41,6 +41,7 @@ The following arguments are supported:
 * `external_network` - (Required) The name of the external network.
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.
+* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this network.
 
 ## Attribute reference
 
