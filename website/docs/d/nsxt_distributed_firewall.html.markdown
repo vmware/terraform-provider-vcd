@@ -19,7 +19,7 @@ data "vcd_vdc_group" "g1" {
 }
 
 data "vcd_nsxt_distributed_firewall" "t1" {
-  org          = "my-org"  # Optional, can be inherited from Provider configuration
+  org          = "my-org" # Optional, can be inherited from Provider configuration
   vdc_group_id = data.vcd_vdc_group.g1.id
 }
 ```
