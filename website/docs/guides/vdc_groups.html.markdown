@@ -265,7 +265,6 @@ data "vcd_nsxt_network_context_profile" "av" {
   name       = "360ANTIV"
 }
 
-
 resource "vcd_nsxt_distributed_firewall" "t1" {
   org          = var.org_name
   vdc_group_id = data.vcd_vdc_group.main.id
