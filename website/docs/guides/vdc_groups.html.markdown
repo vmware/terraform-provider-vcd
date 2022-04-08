@@ -69,6 +69,9 @@ NSX-V VDC Group support is provided):
 * [vcd_nsxt_ip_set](/providers/vmware/vcd/latest/docs/resources/nsxt_ip_set)
 * [vcd_nsxt_app_port_profile](/providers/vmware/vcd/latest/docs/resources/nsxt_app_port_profile)
 * [vcd_nsxt_security_group](/providers/vmware/vcd/latest/docs/resources/nsxt_security_group)
+* [vcd_nsxt_network_dhcp](/providers/vmware/vcd/latest/docs/resources/nsxt_network_dhcp)
+* [vcd_nsxt_distributed_firewall](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall)
+* [vcd_nsxt_network_context_profile](/providers/vmware/vcd/latest/docs/data-sources/nsxt_network_context_profile)
 
 The next sub-sections will cover some specifics for resources that have it. Resources that are not
 explicitly mentioned here simply introduce `owner_id` field over deprecated `vdc` field.
@@ -108,6 +111,11 @@ scoped applications.
 
 In UI it also does not matter if the Application Port Profile is created in NSX-T Edge Gateway or
 VDC Group - they are still shown in both views. 
+
+#### Resource vcd_nsxt_network_dhcp
+
+`vcd_nsxt_network_dhcp` continues to work how it worked before VDC Group rollout. It still requires
+correct `org` and `vdc` fields. The `vdc` field must have a name of any `vdc` in the VDC Group.
 
 ## Complete example for configuration with VDC Groups
 
@@ -174,6 +182,21 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
   }
 }
 
+resource "vcd_nsxt_network_dhcp" "pools" {
+  vdc            = var.vdc_name
+  org_network_id = vcd_network_routed_v2.nsxt-backed.id
+
+  pool {
+    start_address = "1.1.1.111"
+    end_address   = "1.1.1.112"
+  }
+
+  pool {
+    start_address = "1.1.1.211"
+    end_address   = "1.1.1.212"
+  }
+}
+
 resource "vcd_network_isolated_v2" "nsxt-backed" {
   org      = var.org_name
   owner_id = data.vcd_vdc_group.main.id
@@ -207,7 +230,7 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
 }
 
 resource "vcd_nsxt_app_port_profile" "custom" {
-  org  = "datacloud"
+  org  = var.org_name
   name = "custom_app_prof"
 
   context_id = data.vcd_vdc_group.main.id
@@ -216,7 +239,60 @@ resource "vcd_nsxt_app_port_profile" "custom" {
   scope       = "TENANT"
 
   app_port {
-    protocol = "ICMPv4"
+    protocol = "ICMPv6"
+  }
+}
+
+resource "vcd_nsxt_ip_set" "ipset1" {
+  org             = var.org_name
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name         = "local-gateway"
+  ip_addresses = ["10.1.1.1"]
+}
+
+resource "vcd_nsxt_security_group" "net" {
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "routed-network"
+  description = "Security Group containing routed network members"
+
+  member_org_network_ids = [vcd_network_routed_v2.nsxt-backed.id]
+}
+
+data "vcd_nsxt_network_context_profile" "av" {
+  context_id = data.vcd_vdc_group.main.id
+  name       = "360ANTIV"
+}
+
+resource "vcd_nsxt_distributed_firewall" "t1" {
+  org          = var.org_name
+  vdc_group_id = data.vcd_vdc_group.main.id
+
+  rule {
+    name    = "rule1"
+    action  = "ALLOW"
+    comment = "Accept "
+
+    source_ids      = [vcd_nsxt_security_group.net.id]
+    destination_ids = [vcd_nsxt_ip_set.ipset1.id]
+
+    network_context_profile_ids = [data.vcd_nsxt_network_context_profile.av.id]
+  }
+
+  rule {
+    name        = "rule5"
+    action      = "ALLOW"
+    ip_protocol = "IPV6"
+    direction   = "IN"
+
+    app_port_profile_ids = [vcd_nsxt_app_port_profile.custom.id]
+  }
+
+  rule {
+    name        = "drop all"
+    action      = "DROP"
+    ip_protocol = "IPV4"
   }
 }
 ```
