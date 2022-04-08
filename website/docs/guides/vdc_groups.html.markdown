@@ -114,8 +114,8 @@ VDC Group - they are still shown in both views.
 
 #### Resource vcd_nsxt_network_dhcp
 
-`vcd_nsxt_network_dhcp` continues to work it worked before VDC Group rollout. It still requires correct `org`
-and `vdc` fields. The `vdc` field must have a name of any `vdc` in the VDC Group.
+`vcd_nsxt_network_dhcp` continues to work how it worked before VDC Group rollout. It still requires
+correct `org` and `vdc` fields. The `vdc` field must have a name of any `vdc` in the VDC Group.
 
 ## Complete example for configuration with VDC Groups
 
