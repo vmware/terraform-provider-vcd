@@ -82,7 +82,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.  **Note.** If
+  the parent network belongs to VDC Group, any member VDC name must be supplied.
 * `org_network_id` - (Required) ID of parent Org VDC Routed network
 * `pool` - (Required) One or more blocks to define DHCP pool ranges. See [Pools](#pools) and example 
 for usage details.
