@@ -58,6 +58,9 @@ data "vcd_nsxt_network_context_profile" "p" {
 
 func TestAccVcdNsxtNetworkContextProfileInNsxtManager(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skipf("this test requires Sysadmin user to lookup NSX-T Manager")
+	}
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

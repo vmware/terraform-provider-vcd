@@ -140,6 +140,10 @@ data "vcd_nsxt_app_port_profile" "custom" {
 // This test is done to replicate and fix https://github.com/vmware/terraform-provider-vcd/issues/778
 func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skipf("this test requires Sysadmin user to create Org")
+	}
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -148,16 +152,17 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
-		"Org":            testConfig.VCD.Org,
-		"NsxtVdc":        testConfig.Nsxt.Vdc,
-		"ProfileName":    "Active Directory Server",
-		"Scope":          "TENANT",
-		"OrgName1":       testConfig.VCD.Org,
-		"OrgName2":       t.Name(),
-		"VdcName":        t.Name(),
-		"MetadataKey":    "k",
-		"MetadataValue":  "v",
-		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Org":                 testConfig.VCD.Org,
+		"NsxtVdc":             testConfig.Nsxt.Vdc,
+		"ProfileName":         "Active Directory Server",
+		"Scope":               "TENANT",
+		"OrgName1":            testConfig.VCD.Org,
+		"OrgName2":            t.Name(),
+		"VdcName":             t.Name(),
+		"MetadataKey":         "k",
+		"MetadataValue":       "v",
+		"StorageProfile":      testConfig.VCD.ProviderVdc.StorageProfile,
+		"NsxtProviderVdcName": testConfig.VCD.NsxtProviderVdc.Name,
 
 		"Tags": "nsxt network",
 	}

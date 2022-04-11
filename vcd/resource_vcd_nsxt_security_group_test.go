@@ -494,6 +494,9 @@ func testAccCheckNsxtFirewallGroupDestroy(vdcName, firewalGroupName, firewallGro
 // TestAccVcdNsxtSecurityGroupOwnerVdcGroup starts with creating the Security group with defined in VDC Group and later on removes them all
 func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skipf("this test requires Sysadmin user to create VDC Group")
+	}
 	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
