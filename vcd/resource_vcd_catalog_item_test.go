@@ -43,13 +43,26 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		"Tags":                          "catalog",
 	}
 
+	var skipOnVcd1020 bool
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 35.2") {
+		skipOnVcd1020 = true
+	}
+
 	configText := templateFill(testAccCheckVcdCatalogItemBasic, params)
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckVcdCatalogItemUpdate, params)
-	params["FuncName"] = t.Name() + "-FromUrl"
-	fromUrlConfigText := templateFill(testAccCheckVcdCatalogItemFromUrl, params)
-	params["FuncName"] = t.Name() + "-FromUrlUpdate"
-	fromUrlConfigTextUpdate := templateFill(testAccCheckVcdCatalogItemFromUrlUpdated, params)
+
+	var fromUrlConfigText string
+	var fromUrlConfigTextUpdate string
+
+	// Conditionally skipping `templateFill` for 10.2.0 to avoid creating failing binary tests
+	if !skipOnVcd1020 {
+		params["FuncName"] = t.Name() + "-FromUrl"
+		fromUrlConfigText = templateFill(testAccCheckVcdCatalogItemFromUrl, params)
+		params["FuncName"] = t.Name() + "-FromUrlUpdate"
+		fromUrlConfigTextUpdate = templateFill(testAccCheckVcdCatalogItemFromUrlUpdated, params)
+	}
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -94,7 +107,8 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				Config: fromUrlConfigText,
+				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
+				Config:   fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
@@ -110,7 +124,8 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				Config: fromUrlConfigTextUpdate,
+				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
+				Config:   fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
@@ -126,6 +141,10 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
+}
+
+func skipOnVcd10_2_0() {
+
 }
 
 func preRunChecks(t *testing.T) {
