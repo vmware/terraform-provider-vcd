@@ -143,10 +143,6 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	postTestChecks(t)
 }
 
-func skipOnVcd10_2_0() {
-
-}
-
 func preRunChecks(t *testing.T) {
 	testAccPreCheck(t)
 	checkOvaPath(t)
