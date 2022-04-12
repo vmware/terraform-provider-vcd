@@ -297,6 +297,9 @@ data "vcd_nsxt_ip_set" "ds" {
 // TestAccVcdNsxtIpSetOwnerVdcGroup starts with creating an IP Set with IP addresses defined in VDC Group and later on removes them all
 func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skipf("this test requires Sysadmin user to create prerequisites")
+	}
 	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
