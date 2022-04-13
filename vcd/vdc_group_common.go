@@ -75,7 +75,7 @@ func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdFie
 	if vdcField != "" {
 		vdc, err := org.GetVDCByName(vdcField, false)
 		if err != nil {
-			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdcField, err)
 		}
 		return vdc.Vdc.ID, vdc, nil
 	}
@@ -83,7 +83,7 @@ func pickVdcIdByPriority(org *govcd.Org, inheritedVdcField, vdcField, ownerIdFie
 	if inheritedVdcField != "" {
 		vdc, err := org.GetVDCByName(inheritedVdcField, false)
 		if err != nil {
-			return "", nil, fmt.Errorf("error finding VDC '%s': %s", vdc.Vdc.ID, err)
+			return "", nil, fmt.Errorf("error finding VDC '%s': %s", inheritedVdcField, err)
 		}
 		return vdc.Vdc.ID, vdc, nil
 	}
