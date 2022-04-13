@@ -1,11 +1,6 @@
 ## 3.6.0 (TBC)
 
 ## FEATURES
-* `vcd_catalog_item` allows using `ovf_url` to upload vApp template from URL ([#770](https://github.com/vmware/terraform-provider-vcd/pull/770))
-* `vcd_catalog_item` update allows changing `name` and `description` ([#770](https://github.com/vmware/terraform-provider-vcd/pull/770))
-* `vcd_catalog` allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation ([#772](https://github.com/vmware/terraform-provider-vcd/pull/772)], [[#773](https://github.com/vmware/terraform-provider-vcd/pull/773))
-* `vcd_vapp_vm`, `vcd_vm` allows configuring advanced compute settings (shares and reservations) for VM ([#779](https://github.com/vmware/terraform-provider-vcd/pull/779))
-* `vcd_independent_disk` allows creating additionally shared disks types by configuring `sharing_type` (VCD 10.3+). Also, add update support. Add new disk type `NVME` and new attributes `encrypted` and `uuid`. Import now allows listing all independent disks in VDC ([#789](https://github.com/vmware/terraform-provider-vcd/pull/789), [#810](https://github.com/vmware/terraform-provider-vcd/pull/810))
 * **New Data Source:** `vcd_org_group` allows to fetch an Organization Group to use it with other resources ([#798](https://github.com/vmware/terraform-provider-vcd/pull/798))
 * Add `catalog_version`, `number_of_vapp_templates`, `number_of_media`, `is_shared`, `is_published`, `publish_subscription_type` computed fields to catalog resource and datasource  ([#800](https://github.com/vmware/terraform-provider-vcd/pull/800))
 * Update `vcd_catalog` datasource so now it can take org from provider level or datasource level like modern resources/datasources ([#800](https://github.com/vmware/terraform-provider-vcd/pull/800))
@@ -15,6 +10,7 @@
   Firewall rules in VDC Groups ([#810](https://github.com/vmware/terraform-provider-vcd/pull/810))
 * **New Data Source:** `vcd_nsxt_network_context_profile` allows user to lookup Network Context
   Profile ID for usage in `vcd_nsxt_distributed_firewall` ([#810](https://github.com/vmware/terraform-provider-vcd/pull/810))
+
 
 ## IMPROVEMENTS
 * `resource/vcd_catalog` add support for `metadata` so this field can be set when creating/updating catalogs. ([#780](https://github.com/vmware/terraform-provider-vcd/pull/780))
@@ -47,7 +43,7 @@
 * `resource/vcd_nsxt_ip_set` and `datasource/vcd_nsxt_ip_set` support VDC Groups by inheriting parent VDC
 or VDC Group from Edge Gateway  ([#809](https://github.com/vmware/terraform-provider-vcd/pull/809))
 * Data source `vcd_storage_profile` supports `metadata` so this field can be populated when reading VDC storage profiles. ([#811](https://github.com/vmware/terraform-provider-vcd/pull/811))
-* **resource/vcd_nsxt_app_port_profile** and **datasource/vcd_nsxt_app_port_profile** add support
+* resource/vcd_nsxt_app_port_profile and datasource/vcd_nsxt_app_port_profile add support
   for VDC Groups with new field `context_id` ([#812](https://github.com/vmware/terraform-provider-vcd/pull/812))
 * `resource/vcd_nsxt_security_group` and `datasource/vcd_nsxt_security_group` support VDC Groups by inheriting parent VDC
 or VDC Group from Edge Gateway  ([#814](https://github.com/vmware/terraform-provider-vcd/pull/814))
@@ -55,6 +51,11 @@ or VDC Group from Edge Gateway  ([#814](https://github.com/vmware/terraform-prov
 * `datasource/vcd_network_isolated_v2` add support for `metadata` so this field can be retrieved when reading from isolated NSX-T networks. ([#816](https://github.com/vmware/terraform-provider-vcd/pull/816))
 * `resource/vcd_network_routed_v2` add support for `metadata` so this field can be set when creating/updating routed NSX-T networks. ([#816](https://github.com/vmware/terraform-provider-vcd/pull/816))
 * `datasource/vcd_network_routed_v2` add support for `metadata` so this field can be retrieved when reading from routed NSX-T networks. ([#816](https://github.com/vmware/terraform-provider-vcd/pull/816))
+* `vcd_catalog_item` allows using `ovf_url` to upload vApp template from URL ([#770](https://github.com/vmware/terraform-provider-vcd/pull/770))
+* `vcd_catalog_item` update allows changing `name` and `description` ([#770](https://github.com/vmware/terraform-provider-vcd/pull/770))
+* `vcd_catalog` allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation ([#772](https://github.com/vmware/terraform-provider-vcd/pull/772)], [[#773](https://github.com/vmware/terraform-provider-vcd/pull/773))
+* `vcd_vapp_vm`, `vcd_vm` allows configuring advanced compute settings (shares and reservations) for VM ([#779](https://github.com/vmware/terraform-provider-vcd/pull/779))
+* `vcd_independent_disk` allows creating additionally shared disks types by configuring `sharing_type` (VCD 10.3+). Also, add update support. Add new disk type `NVME` and new attributes `encrypted` and `uuid`. Import now allows listing all independent disks in VDC ([#789](https://github.com/vmware/terraform-provider-vcd/pull/789), [#810](https://github.com/vmware/terraform-provider-vcd/pull/810))
 
 ## BUG FIXES
 * Fixes Issue #754 where VDC creation with storage profile `enabled=false` wasn't working ([#781](https://github.com/vmware/terraform-provider-vcd/pull/781))
