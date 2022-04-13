@@ -75,24 +75,6 @@ or VDC Group from Edge Gateway  [GH-814]
 * Improve docs for `vcd_nsxt_network_dhcp` VDC Group support [GH-818]
 * Improves VDC Group guide documentation [GH-818]
 
-
-## BUG FIXES
-* Fixes Issue #754 where VDC creation with storage profile `enabled=false` wasn't working [GH-781]
-  
-* Fix Issue #611 when read of `vcd_vapp_vm` and `vcd_vm` resource failed when VM isn't found. Now allows Terraform to recreate resource when it isn't found. [GH-783]* Fix Issue #759 where enable_ip_masquerade handling in vcd_vapp_nat_rules resource wasn't correct [GH-784]* Fix bug in **datasource/vcd_nsxt_app_port_profile** where a lookup of a TENANT scope profile could
-  fail finding exact Application Port Profile in case Org has multiple VDCs [GH-812]
-## NOTES
-* Default values for `deployed_vm_quota` and `stored_vm_quota` for `org_user` have changed from 10 to 0 (unlimited) [GH-798]* Internal functions `lockParentEdgeGtw`, `unLockParentEdgeGtw`, `lockEdgeGateway`,
-  `unlockEdgeGateway` were converted to use just their ID for lock key instead of full path
-  `org:vdc:edge_id`. This is done because paths for VDC and VDC Groups can differ, but UUID is
-  unique so it makes it simpler to manage [GH-801]
-* Additional locking mechanisms `lockIfOwnerIsVdcGroup`, `unLockIfOwnerIsVdcGroup`, `lockById`,
-  `unlockById` [GH-801]
-* Bump `staticheck` tool to `2022.1` to support Go 1.18 and fix newly detected errors [GH-813]
-* Improve docs for `vcd_nsxt_network_dhcp` VDC Group support [GH-818]
-* Improves VDC Group guide documentation [GH-818]
-
-
 ## 3.5.1 (January 13, 2022)
 
 ## BUG FIXES
