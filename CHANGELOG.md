@@ -43,7 +43,7 @@
 * `resource/vcd_nsxt_ip_set` and `datasource/vcd_nsxt_ip_set` support VDC Groups by inheriting parent VDC
 or VDC Group from Edge Gateway  ([#809](https://github.com/vmware/terraform-provider-vcd/pull/809))
 * Data source `vcd_storage_profile` supports `metadata` so this field can be populated when reading VDC storage profiles. ([#811](https://github.com/vmware/terraform-provider-vcd/pull/811))
-* resource/vcd_nsxt_app_port_profile and datasource/vcd_nsxt_app_port_profile add support
+* `resource/vcd_nsxt_app_port_profile` and `datasource/vcd_nsxt_app_port_profile` add support
   for VDC Groups with new field `context_id` ([#812](https://github.com/vmware/terraform-provider-vcd/pull/812))
 * `resource/vcd_nsxt_security_group` and `datasource/vcd_nsxt_security_group` support VDC Groups by inheriting parent VDC
 or VDC Group from Edge Gateway  ([#814](https://github.com/vmware/terraform-provider-vcd/pull/814))
@@ -61,7 +61,7 @@ or VDC Group from Edge Gateway  ([#814](https://github.com/vmware/terraform-prov
 * Fixes Issue #754 where VDC creation with storage profile `enabled=false` wasn't working ([#781](https://github.com/vmware/terraform-provider-vcd/pull/781))
 * Fix Issue #611 when read of `vcd_vapp_vm` and `vcd_vm` resource failed when VM isn't found. Now allows Terraform to recreate resource when it isn't found. ([#783](https://github.com/vmware/terraform-provider-vcd/pull/783))
 * Fix Issue #759 where enable_ip_masquerade handling in vcd_vapp_nat_rules resource wasn't correct ([#784](https://github.com/vmware/terraform-provider-vcd/pull/784))
-* Fix bug in **datasource/vcd_nsxt_app_port_profile** where a lookup of a TENANT scope profile could
+* Fix bug in `datasource/vcd_nsxt_app_port_profile` where a lookup of a TENANT scope profile could
   fail finding exact Application Port Profile in case Org has multiple VDCs ([#812](https://github.com/vmware/terraform-provider-vcd/pull/812))
 
 ## NOTES
