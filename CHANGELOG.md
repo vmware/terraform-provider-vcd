@@ -1,6 +1,97 @@
 ## 3.6.0 (TBC)
 
-Changes in progress for v3.6.0 are available at [.changes/v3.6.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.6.0) until the release.
+## FEATURES
+* `vcd_catalog_item` allows using `ovf_url` to upload vApp template from URL [GH-770]
+* `vcd_catalog_item` update allows changing `name` and `description` [GH-770]
+* `vcd_catalog` allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation [GH-772], [GH-773]
+* `vcd_vapp_vm`, `vcd_vm` allows configuring advanced compute settings (shares and reservations) for VM [GH-779]
+* `vcd_independent_disk` allows creating additionally shared disks types by configuring `sharing_type` (VCD 10.3+). Also, add update support. Add new disk type `NVME` and new attributes `encrypted` and `uuid`. Import now allows listing all independent disks in VDC [GH-789, GH-810]
+* **New Data Source:** `vcd_org_group` allows to fetch an Organization Group to use it with other resources [GH-798]
+* Add `catalog_version`, `number_of_vapp_templates`, `number_of_media`, `is_shared`, `is_published`, `publish_subscription_type` computed fields to catalog resource and datasource  [GH-800]
+* Update `vcd_catalog` datasource so now it can take org from provider level or datasource level like modern resources/datasources [GH-800]
+* **New Resource:** `vcd_nsxt_distributed_firewall` manages Distributed Firewall Rules in VDC Groups
+  [GH-810]
+* **New Data Source:** `vcd_nsxt_distributed_firewall` provides lookup functionality for Distributed
+  Firewall rules in VDC Groups [GH-810]
+* **New Data Source:** `vcd_nsxt_network_context_profile` allows user to lookup Network Context
+  Profile ID for usage in `vcd_nsxt_distributed_firewall` [GH-810]
+
+## IMPROVEMENTS
+* `resource/vcd_catalog` add support for `metadata` so this field can be set when creating/updating catalogs. [GH-780]
+* `datasource/vcd_catalog` add support for `metadata` so this field can be retrieved when reading from catalogs. [GH-780]
+* `data/vcd_storage_profile` add IOPS settings properties `iops_limiting_enabled`, `maximum_disk_iops`, `default_disk_iops`, `disk_iops_per_gb_max`, `iops_limit` and other data attributes `limit`, `units`, `used_storage`, `default`, `enabled`, `iops_allocated` to the state [GH-782]
+* `resource/vcd_nsxt_edgegateway` and `datasource/vcd_nsxt_edgegateway` support VDC Groups via new
+  field `owner_id` replacing `vdc` [GH-793]
+* Update codebase to be compatible with changes in go-vcloud-director due to bump to VCD API V35.0 [GH-795]
+* `vcd_org` resource adds support for `metadata` so this field can be set when creating/updating organizations. [GH-797]
+* `vcd_org` data source adds support for `metadata` so this field can be retrieved when reading from organizations. [GH-797]
+* `vcd_independent_disk` resource adds support for `metadata` so this field can be set when creating/updating independent disks. [GH-797]
+* `vcd_independent_disk` data source adds support for `metadata` so this field can be retrieved when reading from independent disks. [GH-797]
+* `vcd_org_user` resource and data source have now `is_external` attribute to support the importing of LDAP users into the Organization [GH-798]
+* `vcd_org_user` resource does not have a default value for `deployed_vm_quota` and `stored_vm_quota`. Local users will have unlimited quota by default, imported from LDAP will have no quota [GH-798]
+* `vcd_org_user` resource and data source have now `group_names` attribute to list group names if the user comes from an LDAP group [GH-798]
+* `vcd_org_group` resource and data source have now `user_names` attribute to list user names if the user was imported from LDAP [GH-798]
+* `resource/vcd_network_routed_v2` and `datasource/vcd_network_routed_v2` support VDC Groups by
+  inheriting parent VDC or VDC Group from Edge Gateway  [GH-801]
+* `resource/vcd_network_isolated_v2` and `datasource/vcd_network_isolated_v2` support VDC Groups via
+  new field `owner_id` replacing `vdc` [GH-801]
+* `resource/vcd_nsxt_network_imported` and `datasource/vcd_nsxt_network_imported` support VDC Groups
+  via new field `owner_id` replacing `vdc`  [GH-801]
+* Add support for `can_publish_external_catalogs` and `can_subscribe_external_catalogs` in `datasource_vcd_org` and `resource_vcd_org` [GH-803]
+* `resource/vcd_network_direct` add support for `metadata` so this field can be set when creating/updating direct networks. [GH-804]
+* `datasource/vcd_network_direct` add support for `metadata` so this field can be retrieved when reading from direct networks. [GH-804]
+* `resource/vcd_network_isolated` add support for `metadata` so this field can be set when creating/updating isolated networks. [GH-804]
+* `datasource/vcd_network_isolated` add support for `metadata` so this field can be retrieved when reading from isolated networks. [GH-804]
+* `resource/vcd_network_routed` add support for `metadata` so this field can be set when creating/updating routed networks. [GH-804]
+* `datasource/vcd_network_routed` add support for `metadata` so this field can be retrieved when reading from routed networks. [GH-804]
+* `resource/vcd_nsxt_ip_set` and `datasource/vcd_nsxt_ip_set` support VDC Groups by inheriting parent VDC
+or VDC Group from Edge Gateway  [GH-809]
+* Data source `vcd_storage_profile` supports `metadata` so this field can be populated when reading VDC storage profiles. [GH-811]
+* **resource/vcd_nsxt_app_port_profile** and **datasource/vcd_nsxt_app_port_profile** add support
+  for VDC Groups with new field `context_id` [GH-812]
+* `resource/vcd_nsxt_security_group` and `datasource/vcd_nsxt_security_group` support VDC Groups by inheriting parent VDC
+or VDC Group from Edge Gateway  [GH-814]
+* `resource/vcd_network_isolated_v2` add support for `metadata` so this field can be set when creating/updating isolated NSX-T networks. [GH-816]
+* `datasource/vcd_network_isolated_v2` add support for `metadata` so this field can be retrieved when reading from isolated NSX-T networks. [GH-816]
+* `resource/vcd_network_routed_v2` add support for `metadata` so this field can be set when creating/updating routed NSX-T networks. [GH-816]
+* `datasource/vcd_network_routed_v2` add support for `metadata` so this field can be retrieved when reading from routed NSX-T networks. [GH-816]
+
+## BUG FIXES
+* Fixes Issue #754 where VDC creation with storage profile `enabled=false` wasn't working [GH-781]
+* Fix Issue #611 when read of `vcd_vapp_vm` and `vcd_vm` resource failed when VM isn't found. Now allows Terraform to recreate resource when it isn't found. [GH-783]
+* Fix Issue #759 where enable_ip_masquerade handling in vcd_vapp_nat_rules resource wasn't correct [GH-784]
+* Fix bug in **datasource/vcd_nsxt_app_port_profile** where a lookup of a TENANT scope profile could
+  fail finding exact Application Port Profile in case Org has multiple VDCs [GH-812]
+
+## NOTES
+* Default values for `deployed_vm_quota` and `stored_vm_quota` for `org_user` have changed from 10 to 0 (unlimited) [GH-798]
+* Internal functions `lockParentEdgeGtw`, `unLockParentEdgeGtw`, `lockEdgeGateway`,
+  `unlockEdgeGateway` were converted to use just their ID for lock key instead of full path
+  `org:vdc:edge_id`. This is done because paths for VDC and VDC Groups can differ, but UUID is
+  unique so it makes it simpler to manage [GH-801]
+* Additional locking mechanisms `lockIfOwnerIsVdcGroup`, `unLockIfOwnerIsVdcGroup`, `lockById`,
+  `unlockById` [GH-801]
+* Bump `staticheck` tool to `2022.1` to support Go 1.18 and fix newly detected errors [GH-813]
+* Improve docs for `vcd_nsxt_network_dhcp` VDC Group support [GH-818]
+* Improves VDC Group guide documentation [GH-818]
+
+
+## BUG FIXES
+* Fixes Issue #754 where VDC creation with storage profile `enabled=false` wasn't working [GH-781]
+  
+* Fix Issue #611 when read of `vcd_vapp_vm` and `vcd_vm` resource failed when VM isn't found. Now allows Terraform to recreate resource when it isn't found. [GH-783]* Fix Issue #759 where enable_ip_masquerade handling in vcd_vapp_nat_rules resource wasn't correct [GH-784]* Fix bug in **datasource/vcd_nsxt_app_port_profile** where a lookup of a TENANT scope profile could
+  fail finding exact Application Port Profile in case Org has multiple VDCs [GH-812]
+## NOTES
+* Default values for `deployed_vm_quota` and `stored_vm_quota` for `org_user` have changed from 10 to 0 (unlimited) [GH-798]* Internal functions `lockParentEdgeGtw`, `unLockParentEdgeGtw`, `lockEdgeGateway`,
+  `unlockEdgeGateway` were converted to use just their ID for lock key instead of full path
+  `org:vdc:edge_id`. This is done because paths for VDC and VDC Groups can differ, but UUID is
+  unique so it makes it simpler to manage [GH-801]
+* Additional locking mechanisms `lockIfOwnerIsVdcGroup`, `unLockIfOwnerIsVdcGroup`, `lockById`,
+  `unlockById` [GH-801]
+* Bump `staticheck` tool to `2022.1` to support Go 1.18 and fix newly detected errors [GH-813]
+* Improve docs for `vcd_nsxt_network_dhcp` VDC Group support [GH-818]
+* Improves VDC Group guide documentation [GH-818]
+
 
 ## 3.5.1 (January 13, 2022)
 
