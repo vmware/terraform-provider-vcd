@@ -1,4 +1,4 @@
-## 3.6.0 (TBC)
+## 3.6.0 (April 14, 2022)
 
 ## FEATURES
 * **New Data Source:** `vcd_org_group` allows to fetch an Organization Group to use it with other resources ([#798](https://github.com/vmware/terraform-provider-vcd/pull/798))
