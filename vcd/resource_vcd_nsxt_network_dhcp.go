@@ -64,6 +64,15 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 				Description: "IP ranges used for DHCP pool allocation in the network",
 				Elem:        nsxtDhcpPoolSetSchema,
 			},
+			"dns_servers": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "The DNS server IPs to be assigned by this DHCP service. 2 values maximum.",
+				MaxItems:    2,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -89,6 +98,12 @@ func resourceVcdOpenApiDhcpCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dhcpType := getOpenAPIOrgVdcNetworkDhcpType(d)
+
+	// DnsServers is a feature added from API 36.1. If API is lower, this attribute is set to empty to avoid sending it
+	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+		dhcpType.DnsServers = []string{}
+	}
+
 	_, err = vdc.UpdateOpenApiOrgVdcNetworkDhcp(orgNetworkId, dhcpType)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool set] error setting DHCP pool for Org VDC network ID '%s': %s",
@@ -222,6 +237,15 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 		orgVdcNetDhcp.DhcpPools = dhcpPools
 	}
 
+	dnsServers, ok := d.GetOk("dns_servers")
+	if ok {
+		dnsServerSet := make([]string, len(dnsServers.([]interface{})))
+		for i, v := range dnsServers.([]interface{}) {
+			dnsServerSet[i] = v.(string)
+		}
+		orgVdcNetDhcp.DnsServers = dnsServerSet
+	}
+
 	return orgVdcNetDhcp
 }
 
@@ -244,6 +268,8 @@ func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiO
 			return err
 		}
 	}
+
+	d.Set("dns_servers", orgVdc.DnsServers)
 
 	return nil
 }
