@@ -87,6 +87,8 @@ The following arguments are supported:
 * `org_network_id` - (Required) ID of parent Org VDC Routed network
 * `pool` - (Required) One or more blocks to define DHCP pool ranges. See [Pools](#pools) and example 
 for usage details.
+* `dns_servers` - (Optional; *v3.7+*) - The DNS server IPs to be assigned by this DHCP service. Maximum two values. 
+This argument is supported from VCD 10.3.1+.
 
 ## Pools
 
