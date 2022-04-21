@@ -1,0 +1,1 @@
+* `vcd_nsxt_network_dhcp` resource now supports `dns_servers` [GH-830]
