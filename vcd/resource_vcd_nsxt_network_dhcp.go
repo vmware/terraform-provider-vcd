@@ -100,8 +100,9 @@ func resourceVcdOpenApiDhcpCreate(ctx context.Context, d *schema.ResourceData, m
 	dhcpType := getOpenAPIOrgVdcNetworkDhcpType(d)
 
 	// DnsServers is a feature added from API 36.1. If API is lower, this attribute is set to empty to avoid sending it
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
-		dhcpType.DnsServers = []string{}
+	_, ok := d.GetOk("dns_servers")
+	if ok && vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+		return diag.Errorf("`dns_servers` is supported from VCD 10.3.1+ version")
 	}
 
 	_, err = vdc.UpdateOpenApiOrgVdcNetworkDhcp(orgNetworkId, dhcpType)
