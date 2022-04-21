@@ -66,8 +66,8 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 						"end_address":   "7.1.1.140",
 					}),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.0", "8.8.8.8"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.1", "8.8.4.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.0", "8.8.4.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.1", "8.8.8.8"),
 				),
 			},
 			{
@@ -139,6 +139,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
     end_address   = "7.1.1.140"
   }
 
-  dns_servers = ["8.8.8.8", "8.8.4.4"]
+  dns_servers = ["8.8.4.4", "8.8.8.8"]
 }
 `
