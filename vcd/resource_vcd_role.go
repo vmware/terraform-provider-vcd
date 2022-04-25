@@ -51,7 +51,7 @@ func resourceVcdRole() *schema.Resource {
 			"rights": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "list of rights assigned to this role",
+				Description: "Set of rights assigned to this role",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
