@@ -282,7 +282,7 @@ func setNsxtIpSetData(d *schema.ResourceData, ipSetType *types.NsxtFirewallGroup
 	dSet(d, "name", ipSetType.Name)
 	dSet(d, "description", ipSetType.Description)
 
-	ipSetSet := convertStringsTotTypeSet(ipSetType.IpAddresses)
+	ipSetSet := convertStringsToTypeSet(ipSetType.IpAddresses)
 
 	err := d.Set("ip_addresses", ipSetSet)
 	if err != nil {

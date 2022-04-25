@@ -505,14 +505,14 @@ func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.Nsx
 	dSet(d, "logging", ipSecVpnConfig.Logging)
 	dSet(d, "security_profile", ipSecVpnConfig.SecurityType)
 
-	localNetworksSet := convertStringsTotTypeSet(ipSecVpnConfig.LocalEndpoint.LocalNetworks)
+	localNetworksSet := convertStringsToTypeSet(ipSecVpnConfig.LocalEndpoint.LocalNetworks)
 	err := d.Set("local_networks", localNetworksSet)
 	if err != nil {
 		return fmt.Errorf("error storing 'local_networks': %s", err)
 	}
 
 	dSet(d, "remote_ip_address", ipSecVpnConfig.RemoteEndpoint.RemoteAddress)
-	remoteNetworksSet := convertStringsTotTypeSet(ipSecVpnConfig.RemoteEndpoint.RemoteNetworks)
+	remoteNetworksSet := convertStringsToTypeSet(ipSecVpnConfig.RemoteEndpoint.RemoteNetworks)
 	err = d.Set("remote_networks", remoteNetworksSet)
 	if err != nil {
 		return fmt.Errorf("error storing 'remote_networks': %s", err)
@@ -573,15 +573,15 @@ func setNsxtIpSecVpnProfileTunnelConfigurationData(d *schema.ResourceData, tunne
 
 	secProfileMap := make(map[string]interface{})
 	secProfileMap["ike_version"] = tunnelConfig.IkeConfiguration.IkeVersion
-	secProfileMap["ike_encryption_algorithms"] = convertStringsTotTypeSet(tunnelConfig.IkeConfiguration.EncryptionAlgorithms)
-	secProfileMap["ike_digest_algorithms"] = convertStringsTotTypeSet(tunnelConfig.IkeConfiguration.DigestAlgorithms)
-	secProfileMap["ike_dh_groups"] = convertStringsTotTypeSet(tunnelConfig.IkeConfiguration.DhGroups)
+	secProfileMap["ike_encryption_algorithms"] = convertStringsToTypeSet(tunnelConfig.IkeConfiguration.EncryptionAlgorithms)
+	secProfileMap["ike_digest_algorithms"] = convertStringsToTypeSet(tunnelConfig.IkeConfiguration.DigestAlgorithms)
+	secProfileMap["ike_dh_groups"] = convertStringsToTypeSet(tunnelConfig.IkeConfiguration.DhGroups)
 	secProfileMap["ike_sa_lifetime"] = tunnelConfig.IkeConfiguration.SaLifeTime
 	secProfileMap["tunnel_pfs_enabled"] = tunnelConfig.TunnelConfiguration.PerfectForwardSecrecyEnabled
 	secProfileMap["tunnel_df_policy"] = tunnelConfig.TunnelConfiguration.DfPolicy
-	secProfileMap["tunnel_encryption_algorithms"] = convertStringsTotTypeSet(tunnelConfig.TunnelConfiguration.EncryptionAlgorithms)
-	secProfileMap["tunnel_digest_algorithms"] = convertStringsTotTypeSet(tunnelConfig.TunnelConfiguration.DigestAlgorithms)
-	secProfileMap["tunnel_dh_groups"] = convertStringsTotTypeSet(tunnelConfig.TunnelConfiguration.DhGroups)
+	secProfileMap["tunnel_encryption_algorithms"] = convertStringsToTypeSet(tunnelConfig.TunnelConfiguration.EncryptionAlgorithms)
+	secProfileMap["tunnel_digest_algorithms"] = convertStringsToTypeSet(tunnelConfig.TunnelConfiguration.DigestAlgorithms)
+	secProfileMap["tunnel_dh_groups"] = convertStringsToTypeSet(tunnelConfig.TunnelConfiguration.DhGroups)
 	secProfileMap["tunnel_sa_lifetime"] = tunnelConfig.TunnelConfiguration.SaLifeTime
 	secProfileMap["dpd_probe_internal"] = tunnelConfig.DpdConfiguration.ProbeInterval
 

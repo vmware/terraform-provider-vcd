@@ -461,8 +461,8 @@ func setNsxtAlbPoolData(d *schema.ResourceData, albPool *types.NsxtAlbPool) erro
 
 	associatedVirtualServiceIds := extractIdsFromOpenApiReferences(albPool.VirtualServiceRefs)
 	associatedVirtualServiceNames := extractNamesFromOpenApiReferences(albPool.VirtualServiceRefs)
-	associatedVirtualServiceIdsSet := convertStringsTotTypeSet(associatedVirtualServiceIds)
-	associatedVirtualServiceNameSet := convertStringsTotTypeSet(associatedVirtualServiceNames)
+	associatedVirtualServiceIdsSet := convertStringsToTypeSet(associatedVirtualServiceIds)
+	associatedVirtualServiceNameSet := convertStringsToTypeSet(associatedVirtualServiceNames)
 	err = d.Set("associated_virtual_service_ids", associatedVirtualServiceIdsSet)
 	if err != nil {
 		return fmt.Errorf("error setting 'associated_virtual_service_ids': %s", err)
@@ -553,7 +553,7 @@ func setNsxtAlbPoolMemberData(d *schema.ResourceData, members []types.NsxtAlbPoo
 			memberMap["ratio"] = *member.Ratio
 		}
 
-		memberMap["marked_down_by"] = convertStringsTotTypeSet(member.MarkedDownBy)
+		memberMap["marked_down_by"] = convertStringsToTypeSet(member.MarkedDownBy)
 		memberMap["health_status"] = member.HealthStatus
 		memberMap["detailed_health_message"] = member.DetailedHealthMessage
 
@@ -610,7 +610,7 @@ func setNsxtAlbPoolPersistenceProfileData(d *schema.ResourceData, persistencePro
 func setCertificateData(d *schema.ResourceData, albPool *types.NsxtAlbPool) error {
 	if albPool.CaCertificateRefs != nil {
 		certIds := extractIdsFromOpenApiReferences(albPool.CaCertificateRefs)
-		certIdSet := convertStringsTotTypeSet(certIds)
+		certIdSet := convertStringsToTypeSet(certIds)
 		err := d.Set("ca_certificate_ids", certIdSet)
 		if err != nil {
 			return fmt.Errorf("error setting 'ca_certificate_ids': %s", err)
@@ -626,7 +626,7 @@ func setCertificateData(d *schema.ResourceData, albPool *types.NsxtAlbPool) erro
 	}
 
 	if albPool.DomainNames != nil {
-		domainNameSet := convertStringsTotTypeSet(albPool.DomainNames)
+		domainNameSet := convertStringsToTypeSet(albPool.DomainNames)
 		err := d.Set("domain_names", domainNameSet)
 		if err != nil {
 			return fmt.Errorf("error setting 'domain_names': %s", err)

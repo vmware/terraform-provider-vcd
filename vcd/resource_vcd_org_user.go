@@ -270,7 +270,7 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	for _, groupRef := range orgUser.User.GroupReferences.GroupReference {
 		groups = append(groups, groupRef.Name)
 	}
-	err := d.Set("group_names", convertStringsTotTypeSet(groups))
+	err := d.Set("group_names", convertStringsToTypeSet(groups))
 	if err != nil {
 		return fmt.Errorf("could not set group_names field: %s", err)
 	}

@@ -257,13 +257,13 @@ func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceDa
 
 	for index, value := range fwRules {
 		sourceSlice := extractIdsFromOpenApiReferences(value.SourceFirewallGroups)
-		sourceSet := convertStringsTotTypeSet(sourceSlice)
+		sourceSet := convertStringsToTypeSet(sourceSlice)
 
 		destinationSlice := extractIdsFromOpenApiReferences(value.DestinationFirewallGroups)
-		destinationSet := convertStringsTotTypeSet(destinationSlice)
+		destinationSet := convertStringsToTypeSet(destinationSlice)
 
 		appPortProfileSlice := extractIdsFromOpenApiReferences(value.ApplicationPortProfiles)
-		appPortProfileSet := convertStringsTotTypeSet(appPortProfileSlice)
+		appPortProfileSet := convertStringsToTypeSet(appPortProfileSlice)
 
 		result[index] = map[string]interface{}{
 			"id":                   value.ID,

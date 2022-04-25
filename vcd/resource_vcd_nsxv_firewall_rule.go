@@ -649,27 +649,27 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	if err != nil {
 		return nil, fmt.Errorf("could not convert org network IDs to names: %s", err)
 	}
-	endpointNetworksSet := convertStringsTotTypeSet(endpointNetworkNames)
+	endpointNetworksSet := convertStringsToTypeSet(endpointNetworkNames)
 
 	// Convert virtual machine IDs to set
-	endpointVmSet := convertStringsTotTypeSet(endpointVMs)
+	endpointVmSet := convertStringsToTypeSet(endpointVMs)
 
 	// Convert `ip_addresses` to set
-	endpointIpsSet := convertStringsTotTypeSet(endpoint.IpAddresses)
+	endpointIpsSet := convertStringsToTypeSet(endpoint.IpAddresses)
 
 	// Convert `gateway_interfaces` vNic IDs to network names as the UI does it so
 	vnicGroupIdStrings, err := edgeVnicIdStringsToNetworkNames(endpoint.VnicGroupIds, edge)
 	if err != nil {
 		return nil, err
 	}
-	endpointGatewayInterfaceSet := convertStringsTotTypeSet(vnicGroupIdStrings)
+	endpointGatewayInterfaceSet := convertStringsToTypeSet(vnicGroupIdStrings)
 
 	// Convert ipset IDs to set of names and create a TypeSet of it
 	endpointIpSetNames, err := ipSetIdsToNames(endpointIpSets, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("could not IP set IDs to names: %s", err)
 	}
-	endpointIpSetSet := convertStringsTotTypeSet(endpointIpSetNames)
+	endpointIpSetSet := convertStringsToTypeSet(endpointIpSetNames)
 
 	// TODO uncomment when Security groups are supported
 	// Convert security group IDs to set
