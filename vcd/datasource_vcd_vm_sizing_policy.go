@@ -16,15 +16,15 @@ func datasourceVcdVmSizingPolicy() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"cpu": &schema.Schema{
+			"cpu": {
 				Computed: true,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
@@ -62,7 +62,7 @@ func datasourceVcdVmSizingPolicy() *schema.Resource {
 					},
 				},
 			},
-			"memory": &schema.Schema{
+			"memory": {
 				Computed: true,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{

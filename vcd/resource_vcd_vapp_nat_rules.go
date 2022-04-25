@@ -43,80 +43,80 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"vapp_id": &schema.Schema{
+			"vapp_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp identifier",
 			},
-			"network_id": &schema.Schema{
+			"network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp network identifier",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Enable or disable NAT service. Default is `true`.",
 			},
-			"nat_type": &schema.Schema{
+			"nat_type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{portForwardingNatType, ipTranslationNatType}, false),
 				Description:  "One of: `ipTranslation` (use IP translation), `portForwarding` (use port forwarding).",
 			},
-			"enable_ip_masquerade": &schema.Schema{
+			"enable_ip_masquerade": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "When enabled translates a virtual machine's private, internal IP address to a public IP address for outbound traffic.",
 			},
-			"rule": &schema.Schema{
+			"rule": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": &schema.Schema{
+						"id": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "ID of the rule. Can be used to track syslog messages.",
 						},
-						"mapping_mode": &schema.Schema{
+						"mapping_mode": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"automatic", "manual"}, false),
 							Description:  "Mapping mode. One of: `automatic`, `manual`",
 						},
-						"vm_id": &schema.Schema{
+						"vm_id": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "VM to which this rule applies.",
 						},
-						"vm_nic_id": &schema.Schema{
+						"vm_nic_id": {
 							Type:        schema.TypeInt,
 							Required:    true,
 							Description: "VM NIC ID to which this rule applies.",
 						},
-						"external_ip": &schema.Schema{
+						"external_ip": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.IsIPAddress,
 							Description:  "External IP address to forward to or External IP address to map to VM",
 						},
-						"external_port": &schema.Schema{
+						"external_port": {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Description: "External port to forward.",
 						},
-						"forward_to_port": &schema.Schema{
+						"forward_to_port": {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Description: "Internal port to forward.",
 						},
-						"protocol": &schema.Schema{
+						"protocol": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"TCP", "UDP", "TCP_UDP"}, false),

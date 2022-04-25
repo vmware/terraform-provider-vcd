@@ -11,32 +11,32 @@ func datasourceVcdRight() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceRightRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of Right.",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Right description",
 			},
-			"category_id": &schema.Schema{
+			"category_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "ID of the category for this right",
 			},
-			"bundle_key": &schema.Schema{
+			"bundle_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Key used for internationalization",
 			},
-			"right_type": &schema.Schema{
+			"right_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Type of the right",
 			},
-			"implied_rights": &schema.Schema{
+			"implied_rights": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "list of rights that are implied with this one",

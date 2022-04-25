@@ -15,37 +15,37 @@ func datasourceVcdResourceSchema() *schema.Resource {
 		Description: "Attributes of the resource",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": &schema.Schema{
+				"name": {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "attribute name",
 				},
-				"type": &schema.Schema{
+				"type": {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "attribute type",
 				},
-				"description": &schema.Schema{
+				"description": {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "attribute description",
 				},
-				"required": &schema.Schema{
+				"required": {
 					Type:        schema.TypeBool,
 					Computed:    true,
 					Description: "Is the attribute required",
 				},
-				"computed": &schema.Schema{
+				"computed": {
 					Type:        schema.TypeBool,
 					Computed:    true,
 					Description: "Is the attribute computed",
 				},
-				"optional": &schema.Schema{
+				"optional": {
 					Type:        schema.TypeBool,
 					Computed:    true,
 					Description: "Is the attribute optional",
 				},
-				"sensitive": &schema.Schema{
+				"sensitive": {
 					Type:        schema.TypeBool,
 					Computed:    true,
 					Description: "Is the attribute sensitive",
@@ -56,28 +56,28 @@ func datasourceVcdResourceSchema() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdResourceSchemaRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique name of the structure",
 			},
-			"resource_type": &schema.Schema{
+			"resource_type": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Which resource we should list",
 			},
 			"attributes": &Attribute,
-			"block_attributes": &schema.Schema{
+			"block_attributes": {
 				Computed: true,
 				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Name of the Block",
 						},
-						"nesting_mode": &schema.Schema{
+						"nesting_mode": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "How the block is nested",

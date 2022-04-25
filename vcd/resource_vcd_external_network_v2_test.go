@@ -86,7 +86,7 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -128,13 +128,13 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 					testCheckOutputNonEmpty("nsxt-tier0-router"), // Match any non empty string
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -298,7 +298,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -323,7 +323,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 					testCheckOutputNonEmpty("portgroup-id"), // Match any non empty string
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -362,7 +362,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 					testCheckOutputNonEmpty("portgroup-id"), // Match any non empty string because IDs may differ
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -513,7 +513,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config:      configText,
 				ExpectError: regexp.MustCompile(`NSX-T Segment backed External Network is only supported in VCD 10.3.0+`),
 			},
@@ -573,7 +573,7 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -613,13 +613,13 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -762,7 +762,7 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config:      configText,
 				ExpectError: regexp.MustCompile(`Invalid combination of arguments`),
 			},
@@ -889,7 +889,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
@@ -931,7 +931,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "nsxt_network.0.nsxt_segment_name"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_external_network_v2.ext-net-nsxt", "vcd_external_network_v2.ext-net-nsxt", nil),

@@ -89,7 +89,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(hotVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - create
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
@@ -123,7 +123,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 				),
 			},
 			// Step 1 - update - network changes
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
@@ -156,12 +156,12 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 				),
 			},
 			// Step 2 - update
-			resource.TestStep{
+			{
 				Config:      configTextVMUpdateStep2,
 				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
 			},
 			// Step 3 - update - add new network section
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
@@ -196,7 +196,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 			// Step 4 - update - remove network section
 			step4func,
 			// Step 5 - update - network changes
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),

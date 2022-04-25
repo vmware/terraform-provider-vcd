@@ -71,7 +71,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+TestAccVcdVdc),
@@ -132,7 +132,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 						"3"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+TestAccVcdVdc),
@@ -193,7 +193,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 						"1"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_org_vdc." + TestAccVcdVdc,
 				ImportState:       true,
 				ImportStateVerify: true,

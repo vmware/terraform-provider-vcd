@@ -52,7 +52,7 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccResourcesDestroyed,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMediaInserted("vcd_inserted_media."+TestAccVcdMediaInsert),

@@ -7,35 +7,35 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 		Read: datasourceVcdEdgeGatewayRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
 				Description:  "name of the edge gateway. (Optional when 'filter' is used)",
 			},
-			"org": &schema.Schema{
+			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"vdc": &schema.Schema{
+			"vdc": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"configuration": &schema.Schema{
+			"configuration": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Configuration of the vShield edge VM for this gateway. One of: compact, full ("Large"), full4 ("Quad Large"), x-large`,
 			},
-			"ha_enabled": &schema.Schema{
+			"ha_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable high availability on this edge gateway",
 			},
-			"default_external_network_ip": &schema.Schema{
+			"default_external_network_ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
@@ -48,53 +48,53 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"distributed_routing": &schema.Schema{
+			"distributed_routing": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable distributed routing",
 			},
-			"lb_enabled": &schema.Schema{
+			"lb_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable load balancing. (Disabled by default)",
 			},
-			"lb_acceleration_enabled": &schema.Schema{
+			"lb_acceleration_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable load balancer acceleration. (Disabled by default)",
 			},
-			"lb_logging_enabled": &schema.Schema{
+			"lb_logging_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable load balancer logging. (Disabled by default)",
 			},
-			"lb_loglevel": &schema.Schema{
+			"lb_loglevel": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 			},
-			"fw_enabled": &schema.Schema{
+			"fw_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable firewall. Default 'true'",
 			},
-			"fw_default_rule_logging_enabled": &schema.Schema{
+			"fw_default_rule_logging_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable logging for default rule. Default 'false'",
 			},
-			"fw_default_rule_action": &schema.Schema{
+			"fw_default_rule_action": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "'accept' or 'deny'. Default 'deny'",
 			},
-			"fips_mode_enabled": &schema.Schema{
+			"fips_mode_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
 			},
-			"use_default_route_for_dns_relay": &schema.Schema{
+			"use_default_route_for_dns_relay": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "If true, default gateway will be used for the edge gateways' default routing and DNS forwarding.(False by default)",
@@ -173,7 +173,7 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 					},
 				},
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,

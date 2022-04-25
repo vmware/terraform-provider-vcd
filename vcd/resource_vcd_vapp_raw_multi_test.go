@@ -43,7 +43,7 @@ func TestAccVcdVAppRawMulti(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppRawMultiDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppRawMultiExists(fmt.Sprintf("vcd_vapp.%s", params["VappName"].(string)), &vapp),

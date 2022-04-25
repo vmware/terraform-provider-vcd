@@ -71,7 +71,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
@@ -95,7 +95,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_limit", params["CpuLimit"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
@@ -118,7 +118,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm."+emptyVmName, "cpu_limit", params["CpuLimitUpdate"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),

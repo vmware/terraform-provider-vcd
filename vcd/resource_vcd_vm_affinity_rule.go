@@ -36,12 +36,12 @@ func resourceVcdVmAffinityRule() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "VM affinity rule name",
 			},
-			"polarity": &schema.Schema{
+			"polarity": {
 				Type:     schema.TypeString,
 				Required: true,
 				// Polarity can't change. If we want to, we need to create a new rule
@@ -49,14 +49,14 @@ func resourceVcdVmAffinityRule() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{types.PolarityAffinity, types.PolarityAntiAffinity}, false),
 				Description:  "One of 'Affinity', 'Anti-Affinity'",
 			},
-			"required": &schema.Schema{
+			"required": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
 				Description: "True if this affinity rule is required. When a rule is mandatory, " +
 					"a host failover will not power on the VM if doing so would violate the rule",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
@@ -132,7 +132,7 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 		IsMandatory: takeBoolPointer(required),
 		Polarity:    polarity,
 		VmReferences: []*types.VMs{
-			&types.VMs{
+			{
 				VMReference: vmReferences,
 			},
 		},

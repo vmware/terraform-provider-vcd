@@ -80,7 +80,7 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+vdcName),
@@ -131,7 +131,7 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data."+datasourceVdc, "name", testConfig.VCD.Vdc),

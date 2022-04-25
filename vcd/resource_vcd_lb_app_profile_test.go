@@ -63,7 +63,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // TCP
+			{ // TCP
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -82,7 +82,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 				),
 			},
-			resource.TestStep{ // UDP
+			{ // UDP
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -101,7 +101,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
 				),
 			},
-			resource.TestStep{ // HTTP - Cookie
+			{ // HTTP - Cookie
 				Config: configTextStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -129,7 +129,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				),
 			},
 
-			resource.TestStep{ // HTTP - Source IP
+			{ // HTTP - Source IP
 				Config: configTextStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -155,7 +155,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				),
 			},
 
-			resource.TestStep{ // HTTPS
+			{ // HTTPS
 				Config: configTextStep4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -179,7 +179,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "expiration", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_lb_app_profile.test",
 				ImportState:       true,
 				ImportStateVerify: true,

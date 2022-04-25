@@ -70,7 +70,7 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),

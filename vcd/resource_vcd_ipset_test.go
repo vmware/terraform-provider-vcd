@@ -45,7 +45,7 @@ func TestAccVcdIpSet(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdIpSetDestroy("vcd_nsxv_ip_set.test-ipset", params["IpSetName"].(string)),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_ip_set.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
@@ -60,7 +60,7 @@ func TestAccVcdIpSet(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_ip_set.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
@@ -75,13 +75,13 @@ func TestAccVcdIpSet(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxv_ip_set.test-ipset",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "TestAccVcdIpSet-changed"),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_ip_set.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
@@ -95,7 +95,7 @@ func TestAccVcdIpSet(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Taint:  []string{"vcd_nsxv_ip_set.test-ipset"}, // Force provisioning from scratch instead of update
 				Check: resource.ComposeAggregateTestCheckFunc(

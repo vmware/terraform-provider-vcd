@@ -41,74 +41,74 @@ func resourceVcdNsxtNatRule() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of NAT rule",
 			},
-			"rule_type": &schema.Schema{
+			"rule_type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				Description:  "Rule type - one of 'DNAT', 'NO_DNAT', 'SNAT', 'NO_SNAT', 'REFLEXIVE'",
 				ValidateFunc: validation.StringInSlice([]string{"DNAT", "NO_DNAT", "SNAT", "NO_SNAT", "REFLEXIVE"}, false),
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of NAT rule",
 			},
-			"external_address": &schema.Schema{
+			"external_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP address or CIDR of external network",
 			},
-			"internal_address": &schema.Schema{
+			"internal_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP address or CIDR of the virtual machines for which you are configuring NAT",
 			},
-			"app_port_profile_id": &schema.Schema{
+			"app_port_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Application Port Profile to apply for this rule",
 			},
-			"dnat_external_port": &schema.Schema{
+			"dnat_external_port": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "For DNAT only. Enter a port into which the DNAT rule is translating for the packets inbound to the virtual machines.",
 			},
-			"snat_destination_address": &schema.Schema{
+			"snat_destination_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "For SNAT only. If you want the rule to apply only for traffic to a specific domain, enter an IP address for this domain or an IP address range in CIDR format.",
 			},
-			"logging": &schema.Schema{
+			"logging": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Enable logging when this rule is applied",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Enables or disables this rule",
 			},
-			"firewall_match": &schema.Schema{
+			"firewall_match": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				Description:  "VCD 10.2.2+ Determines how the firewall matches the address during NATing if firewall stage is not skipped. One of 'MATCH_INTERNAL_ADDRESS', 'MATCH_EXTERNAL_ADDRESS', 'BYPASS'",
 				ValidateFunc: validation.StringInSlice([]string{"MATCH_INTERNAL_ADDRESS", "MATCH_EXTERNAL_ADDRESS", "BYPASS"}, false),
 			},
-			"priority": &schema.Schema{
+			"priority": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,

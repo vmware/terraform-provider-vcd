@@ -356,7 +356,7 @@ func runSearchTest(entityType, label string, t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check:  makeCheckFuncsFromMap(expectedResults),
 			},

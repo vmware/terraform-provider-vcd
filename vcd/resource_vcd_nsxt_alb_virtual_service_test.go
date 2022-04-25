@@ -106,7 +106,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
@@ -124,7 +124,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
@@ -134,7 +134,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_alb_pool.test", "associated_virtual_services.*", t.Name()),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
@@ -151,13 +151,13 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
@@ -183,13 +183,13 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText6, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText7,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
@@ -217,13 +217,13 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText8, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText9,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
@@ -251,13 +251,13 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_virtual_service.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
 			},
-			resource.TestStep{
+			{
 				Config: configText11, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
@@ -534,7 +534,7 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				PreConfig: configurePrerequisites, // Use temporary System session and setup all prerequisites using SDK
 				Config:    configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -553,7 +553,7 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
@@ -579,13 +579,13 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_virtual_service.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
 			},
-			resource.TestStep{
+			{
 				Config: configText4, // Test data source
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),

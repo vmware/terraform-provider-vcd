@@ -12,53 +12,53 @@ func datasourceVcdAlbServiceEngineGroup() *schema.Resource {
 		ReadContext: datasourceVcdAlbServiceEngineGroupRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NSX-T ALB Service Engine Group name",
 			},
-			"sync_on_refresh": &schema.Schema{
+			"sync_on_refresh": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Boolean value that shows if sync should be performed on every refresh",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group description",
 			},
-			"alb_cloud_id": &schema.Schema{
+			"alb_cloud_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB backing Cloud ID",
 			},
-			"reservation_model": &schema.Schema{
+			"reservation_model": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group reservation model. One of 'DEDICATED', 'SHARED'",
 			},
-			"max_virtual_services": &schema.Schema{
+			"max_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group maximum virtual services",
 			},
-			"reserved_virtual_services": &schema.Schema{
+			"reserved_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group reserved virtual services",
 			},
-			"deployed_virtual_services": &schema.Schema{
+			"deployed_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group deployed virtual services",
 			},
-			"ha_mode": &schema.Schema{
+			"ha_mode": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group HA mode",
 			},
-			"overallocated": &schema.Schema{
+			"overallocated": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Boolean value that shows if virtual services are overallocated",

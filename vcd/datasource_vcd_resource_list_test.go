@@ -130,7 +130,7 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),

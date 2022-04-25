@@ -40,7 +40,7 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
@@ -49,7 +49,7 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "memory_hot_add_enabled", "true"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),

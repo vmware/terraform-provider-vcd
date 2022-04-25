@@ -12,34 +12,34 @@ func datasourceVcdAlbImportableCloud() *schema.Resource {
 		ReadContext: datasourceVcdAlbImportableCloudRead,
 
 		Schema: map[string]*schema.Schema{
-			"controller_id": &schema.Schema{
+			"controller_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "NSX-T ALB Controller ID",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "NSX-T ALB Importable Cloud Name",
 			},
-			"already_imported": &schema.Schema{
+			"already_imported": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Flags if the NSX-T ALB Importable Cloud is already imported",
 			},
-			"network_pool_name": &schema.Schema{
+			"network_pool_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network pool name of NSX-T ALB Importable Cloud",
 			},
-			"network_pool_id": &schema.Schema{
+			"network_pool_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network pool ID NSX-T ALB Importable Cloud",
 			},
-			"transport_zone_name": &schema.Schema{
+			"transport_zone_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Transport zone name NSX-T ALB Importable Cloud",

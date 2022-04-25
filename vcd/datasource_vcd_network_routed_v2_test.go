@@ -57,14 +57,14 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_network_routed_v2.ds", "id"),
 					resource.TestCheckResourceAttr("data.vcd_network_routed_v2.ds", "id", data.network.ID),
 					resource.TestCheckResourceAttr("data.vcd_network_routed_v2.ds", "name", data.network.Name)),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_network_routed_v2.ds", "id"),

@@ -47,17 +47,17 @@ func datasourceVcdResourceList() *schema.Resource {
 				Optional:    true,
 				Description: "The name of the parent to the resources being retrieved",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique name of the Info",
 			},
-			"resource_type": &schema.Schema{
+			"resource_type": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Which resource we should list",
 			},
-			"list": &schema.Schema{
+			"list": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "Holds the list of requested resources",
@@ -65,7 +65,7 @@ func datasourceVcdResourceList() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"list_mode": &schema.Schema{
+			"list_mode": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "name",
@@ -79,7 +79,7 @@ func datasourceVcdResourceList() *schema.Resource {
 					"hierarchy", // The list will contain parent names + resource name for each item
 				}, true),
 			},
-			"name_id_separator": &schema.Schema{
+			"name_id_separator": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "  ",

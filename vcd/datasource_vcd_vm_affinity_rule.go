@@ -21,29 +21,29 @@ func datasourceVcdVmAffinityRule() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "rule_id"},
 				Description:  "VM affinity rule name. Used to retrieve a rule only when the name is unique",
 			},
-			"rule_id": &schema.Schema{
+			"rule_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "VM affinity rule ID. It's the preferred way of identifying a rule",
 			},
-			"polarity": &schema.Schema{
+			"polarity": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "One of 'Affinity', 'Anti-Affinity'",
 			},
-			"required": &schema.Schema{
+			"required": {
 				Type:     schema.TypeBool,
 				Computed: true,
 				Description: "True if this affinity rule is required. When a rule is mandatory, " +
 					"a host failover will not power on the VM if doing so would violate the rule",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this affinity rule is enabled",

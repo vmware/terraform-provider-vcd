@@ -22,72 +22,72 @@ func resourceVcdExternalNetwork() *schema.Resource {
 			State: resourceVcdExternalNetworkImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"ip_scope": &schema.Schema{
+			"ip_scope": {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
 				Description: "A list of IP scopes for the network",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"gateway": &schema.Schema{
+						"gateway": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
 							Description:  "Gateway of the network",
 							ValidateFunc: validation.IsIPAddress,
 						},
-						"netmask": &schema.Schema{
+						"netmask": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
 							Description:  "Network mask",
 							ValidateFunc: validation.IsIPAddress,
 						},
-						"dns1": &schema.Schema{
+						"dns1": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
 							Description:  "Primary DNS server",
 							ValidateFunc: validation.IsIPAddress,
 						},
-						"dns2": &schema.Schema{
+						"dns2": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
 							Description:  "Secondary DNS server",
 							ValidateFunc: validation.IsIPAddress,
 						},
-						"dns_suffix": &schema.Schema{
+						"dns_suffix": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
 							Description: "DNS suffix",
 						},
-						"static_ip_pool": &schema.Schema{
+						"static_ip_pool": {
 							Type:        schema.TypeList,
 							Optional:    true,
 							ForceNew:    true,
 							Description: "IP ranges used for static pool allocation in the network",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"start_address": &schema.Schema{
+									"start_address": {
 										Type:         schema.TypeString,
 										Required:     true,
 										ForceNew:     true,
 										Description:  "Start address of the IP range",
 										ValidateFunc: validation.IsIPAddress,
 									},
-									"end_address": &schema.Schema{
+									"end_address": {
 										Type:         schema.TypeString,
 										Required:     true,
 										ForceNew:     true,
@@ -100,26 +100,26 @@ func resourceVcdExternalNetwork() *schema.Resource {
 					},
 				},
 			},
-			"vsphere_network": &schema.Schema{
+			"vsphere_network": {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
 				Description: "A list of port groups that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"vcenter": &schema.Schema{
+						"vcenter": {
 							Type:        schema.TypeString,
 							Required:    true,
 							ForceNew:    true,
 							Description: "The vCenter server name",
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
 							ForceNew:    true,
 							Description: "The name of the port group",
 						},
-						"type": &schema.Schema{
+						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
@@ -129,7 +129,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 					},
 				},
 			},
-			"retain_net_info_across_deployments": &schema.Schema{
+			"retain_net_info_across_deployments": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
@@ -411,7 +411,7 @@ func getExternalNetworkResource(vcdClient *govcd.VCDClient, extNetIdentifier str
 	}
 
 	extNetRes["vsphere_network"] = []StringMap{
-		StringMap{
+		{
 			"name":    portGroupName,
 			"vcenter": virtualCenters[0].Name,
 			"type":    externalNetwork.ExternalNetwork.VimPortGroupRef.VimObjectType,

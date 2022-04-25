@@ -116,43 +116,43 @@ func resourceVcdEdgeGateway() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"org": &schema.Schema{
+			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"vdc": &schema.Schema{
+			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"configuration": &schema.Schema{
+			"configuration": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: `Configuration of the vShield edge VM for this gateway. One of: compact, full ("Large"), full4 ("Quad Large"), x-large`,
 			},
-			"ha_enabled": &schema.Schema{
+			"ha_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
 				Description: "Enable high availability on this edge gateway",
 			},
-			"default_external_network_ip": &schema.Schema{
+			"default_external_network_ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
@@ -165,32 +165,32 @@ func resourceVcdEdgeGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"distributed_routing": &schema.Schema{
+			"distributed_routing": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
 				Description: "Enable distributed routing",
 			},
-			"lb_enabled": &schema.Schema{
+			"lb_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancing. (Disabled by default)",
 			},
-			"lb_acceleration_enabled": &schema.Schema{
+			"lb_acceleration_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancer acceleration. (Disabled by default)",
 			},
-			"lb_logging_enabled": &schema.Schema{
+			"lb_logging_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancer logging. (Disabled by default)",
 			},
-			"lb_loglevel": &schema.Schema{
+			"lb_loglevel": {
 				Type:         schema.TypeString,
 				Default:      "info",
 				Optional:     true,
@@ -198,33 +198,33 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 			},
-			"fw_enabled": &schema.Schema{
+			"fw_enabled": {
 				Type:        schema.TypeBool,
 				Default:     true,
 				Optional:    true,
 				Description: "Enable firewall. Default 'true'",
 			},
-			"fw_default_rule_logging_enabled": &schema.Schema{
+			"fw_default_rule_logging_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable logging for default rule. Default 'false'",
 			},
-			"fw_default_rule_action": &schema.Schema{
+			"fw_default_rule_action": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "deny",
 				Description:  "'accept' or 'deny'. Default 'deny'",
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
-			"fips_mode_enabled": &schema.Schema{
+			"fips_mode_enabled": {
 				Type:        schema.TypeBool,
 				ForceNew:    true,
 				Optional:    true,
 				Default:     false,
 				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
 			},
-			"use_default_route_for_dns_relay": &schema.Schema{
+			"use_default_route_for_dns_relay": {
 				Type:        schema.TypeBool,
 				ForceNew:    true,
 				Optional:    true,

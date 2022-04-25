@@ -93,7 +93,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: testAccProviders,
 			Steps: []resource.TestStep{
-				resource.TestStep{
+				{
 					Config:      configText,
 					ExpectError: regexp.MustCompile(`.*` + regexp.QuoteMeta(govcd.ErrorEntityNotFound.Error()) + `.*`),
 				},

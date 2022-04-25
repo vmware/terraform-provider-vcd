@@ -58,7 +58,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdExternalNetworkExists("vcd_external_network."+TestAccVcdExternalNetwork, &externalNetwork),
@@ -88,7 +88,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 						resourceName, "retain_net_info_across_deployments", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,

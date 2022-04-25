@@ -81,7 +81,7 @@ func resourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "Shows the status of the vApp",
 			},
-			"lease": &schema.Schema{
+			"lease": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -89,13 +89,13 @@ func resourceVcdVApp() *schema.Resource {
 				Description: "Defines lease parameters for this vApp",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"runtime_lease_in_sec": &schema.Schema{
+						"runtime_lease_in_sec": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
-						"storage_lease_in_sec": &schema.Schema{
+						"storage_lease_in_sec": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							Description:  "How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires",

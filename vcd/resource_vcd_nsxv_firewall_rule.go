@@ -40,50 +40,50 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which Firewall Rule is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Firewall rule name",
 			},
-			"above_rule_id": &schema.Schema{
+			"above_rule_id": {
 				Type:        schema.TypeString,
 				ForceNew:    true,
 				Optional:    true,
 				Description: "This firewall rule will be inserted above the referred one",
 			},
-			"rule_type": &schema.Schema{
+			"rule_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
-			"rule_tag": &schema.Schema{
+			"rule_tag": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
 			},
-			"action": &schema.Schema{
+			"action": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "accept",
 				Description:  "'accept' or 'deny'. Default 'accept'",
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Whether the rule should be enabled. Default 'true'",
 			},
-			"logging_enabled": &schema.Schema{
+			"logging_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,

@@ -37,7 +37,7 @@ func TestAccVcdStandaloneVmShrinkCpu(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.shrink-vm", "", ""),

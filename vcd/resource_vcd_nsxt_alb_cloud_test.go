@@ -54,7 +54,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`\d*`)),
@@ -68,7 +68,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 					//resource.TestCheckResourceAttrSet("vcd_nsxt_alb_cloud.first", "health_message"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`\d*`)),
@@ -82,13 +82,13 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 					//resource.TestCheckResourceAttrSet("vcd_nsxt_alb_cloud.first", "health_message"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_cloud.first",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     "nsxt-cloud-renamed",
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// health_status and health_message might have different values purely because of time difference

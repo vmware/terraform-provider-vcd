@@ -59,13 +59,13 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_edgegateway."+edgeGatewayNameBasic, "default_external_network_ip", ipV4Regex),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic,
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -114,13 +114,13 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_edgegateway."+edgeGatewayNameBasic, "default_external_network_ip", ipV4Regex),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic,
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -204,7 +204,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-complex-networks"),
@@ -282,7 +282,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
 				),
 			},
-			resource.TestStep{
+			{
 				Taint:  []string{"vcd_edgegateway.egw"},
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -316,7 +316,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_loglevel", "info"),
 				),
 			},
-			resource.TestStep{ // step2 - import
+			{ // step2 - import
 				ResourceName:            "vcd_edgegateway.egw",
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -417,7 +417,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-rate-limits"),
@@ -429,7 +429,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Taint:  []string{"vcd_edgegateway.egw"},
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -442,7 +442,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{ // step2 - import
+			{ // step2 - import
 				ResourceName:            "vcd_edgegateway.egw",
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -533,7 +533,7 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 			testAccCheckVcdEdgeGatewayDestroy("parallel-1"),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw.0", "name", "parallel-0"),

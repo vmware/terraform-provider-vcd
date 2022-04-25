@@ -66,7 +66,7 @@ func TestAccVcdCatalog(t *testing.T) {
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
 			// Provision catalog without storage profile and a vApp template and media
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedId.cacheTestResourceFieldValue(resourceAddress, "id"),
@@ -88,7 +88,7 @@ func TestAccVcdCatalog(t *testing.T) {
 				),
 			},
 			// Set storage profile for existing catalog
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue(resourceAddress, "id"),
@@ -110,7 +110,7 @@ func TestAccVcdCatalog(t *testing.T) {
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
-			resource.TestStep{
+			{
 
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
@@ -121,7 +121,7 @@ func TestAccVcdCatalog(t *testing.T) {
 					testAccCheckVcdCatalogExists(resourceAddress),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceAddress,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -164,7 +164,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
 			// Provision with storage profile
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourceAddress),
@@ -277,7 +277,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourceAddress),
@@ -292,7 +292,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 					//resource.TestCheckResourceAttr(resourceAddress, "password", params[]),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextUpd1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourceAddress),
@@ -307,7 +307,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 					//resource.TestCheckResourceAttr(resourceAddress, "password", params[]),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextUpd2,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourceAddress),
@@ -539,7 +539,7 @@ func TestAccVcdCatalogSharedAccess(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					// There is no need to check for much resources - the main point is to have the VMs created
@@ -620,7 +620,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 		Xmlns:           types.XMLNamespaceVCloud,
 		AllocationModel: "Flex",
 		ComputeCapacity: []*types.ComputeCapacity{
-			&types.ComputeCapacity{
+			{
 				CPU: &types.CapacityWithUsage{
 					Units:     "MHz",
 					Allocated: 1024,
@@ -633,7 +633,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 				},
 			},
 		},
-		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{&types.VdcStorageProfileConfiguration{
+		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{{
 			Enabled: takeBoolPointer(true),
 			Units:   "MB",
 			Limit:   1024,
@@ -674,7 +674,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 		IsSharedToEveryone:  false,
 		EveryoneAccessLevel: &readOnly,
 		AccessSettings: &types.AccessSettingList{
-			AccessSetting: []*types.AccessSetting{&types.AccessSetting{
+			AccessSetting: []*types.AccessSetting{{
 				Subject: &types.LocalSubject{
 					HREF: existingOrg.AdminOrg.HREF,
 					Name: existingOrg.AdminOrg.Name,

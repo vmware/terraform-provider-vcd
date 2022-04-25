@@ -17,18 +17,18 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"catalog": &schema.Schema{
+			"catalog": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "catalog name where upload the Media file",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "filter"},
 				Description:  "media name (Optional when 'filter' is used)",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -39,42 +39,42 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 			},
-			"is_iso": &schema.Schema{
+			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is ISO",
 			},
-			"owner_name": &schema.Schema{
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Owner name",
 			},
-			"is_published": &schema.Schema{
+			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is in a published catalog",
 			},
-			"creation_date": &schema.Schema{
+			"creation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Creation date",
 			},
-			"size": &schema.Schema{
+			"size": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Media storage in Bytes",
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Media status",
 			},
-			"storage_profile_name": &schema.Schema{
+			"storage_profile_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Storage profile name",
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,

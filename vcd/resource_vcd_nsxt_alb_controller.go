@@ -25,39 +25,39 @@ func resourceVcdAlbController() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NSX-T ALB Controller name",
 			},
-			"url": &schema.Schema{
+			"url": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NSX-T ALB Controller URL",
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NSX-T ALB Controller Username",
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				Description: "NSX-T ALB Controller Password",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "NSX-T ALB Controller description",
 			},
-			"license_type": &schema.Schema{
+			"license_type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"BASIC", "ENTERPRISE"}, false),
 				Description:  "NSX-T ALB License type. One of 'BASIC', 'ENTERPRISE'",
 			},
-			"version": &schema.Schema{
+			"version": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Controller version",

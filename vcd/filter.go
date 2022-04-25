@@ -59,23 +59,23 @@ var (
 		Description: "metadata filter",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"key": &schema.Schema{
+				"key": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "Metadata key (field name)",
 				},
-				"is_system": &schema.Schema{
+				"is_system": {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Description: "True if is a metadata@SYSTEM key",
 				},
-				"value": &schema.Schema{
+				"value": {
 					Type:         schema.TypeString,
 					Required:     true,
 					Description:  `Metadata value (can be a regular expression if "use_api_search" is false)`,
 					ValidateFunc: validation.StringIsValidRegExp,
 				},
-				"type": &schema.Schema{
+				"type": {
 					Type:         schema.TypeString,
 					Optional:     true,
 					Default:      "STRING",
@@ -86,7 +86,7 @@ var (
 				// The default behavior is to fetch all items, including the metadata info, and filter it
 				// via regular expressions. The search by API is faster, although more strict: field types need
 				// to be provided, searches only for exact matches.
-				"use_api_search": &schema.Schema{
+				"use_api_search": {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Description: "If true, will search the vCD using native metadata query (without regular expressions)",

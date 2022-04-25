@@ -45,7 +45,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
@@ -54,7 +54,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
@@ -64,7 +64,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.guest.third.subkey`, "third-value"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),

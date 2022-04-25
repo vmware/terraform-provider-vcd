@@ -38,18 +38,18 @@ func resourceVcdAlbSettings() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway ID",
 			},
-			"is_active": &schema.Schema{
+			"is_active": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Defines if ALB is enabled on Edge Gateway",
 			},
-			"service_network_specification": &schema.Schema{
+			"service_network_specification": {
 				Type:        schema.TypeString,
 				ForceNew:    true,
 				Optional:    true,

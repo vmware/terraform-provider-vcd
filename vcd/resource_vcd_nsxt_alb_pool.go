@@ -42,29 +42,29 @@ func resourceVcdAlbPool() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway ID in which ALB Pool should be created",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of ALB Pool",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Boolean value if ALB Pool is enabled or not (default true)",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of ALB Pool",
 			},
-			"algorithm": &schema.Schema{
+			"algorithm": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Description: "Algorithm for choosing pool members (default LEAST_CONNECTIONS). Other `ROUND_ROBIN`," +
@@ -73,7 +73,7 @@ func resourceVcdAlbPool() *schema.Resource {
 				// Default is LEAST_CONNECTIONS even if no value is sent
 				Default: "LEAST_CONNECTIONS",
 			},
-			"default_port": &schema.Schema{
+			"default_port": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Default Port defines destination server port used by the traffic sent to the member (default 80)",
@@ -81,7 +81,7 @@ func resourceVcdAlbPool() *schema.Resource {
 				Default: 80,
 			},
 			//
-			"graceful_timeout_period": &schema.Schema{
+			"graceful_timeout_period": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Maximum time in minutes to gracefully disable pool member (default 1)",
@@ -113,7 +113,7 @@ func resourceVcdAlbPool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"cn_check_enabled": &schema.Schema{
+			"cn_check_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -127,7 +127,7 @@ func resourceVcdAlbPool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"passive_monitoring_enabled": &schema.Schema{
+			"passive_monitoring_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
@@ -150,22 +150,22 @@ func resourceVcdAlbPool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"member_count": &schema.Schema{
+			"member_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of members in the pool",
 			},
-			"up_member_count": &schema.Schema{
+			"up_member_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of members in the pool serving the traffic",
 			},
-			"enabled_member_count": &schema.Schema{
+			"enabled_member_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of enabled members in the pool",
 			},
-			"health_message": &schema.Schema{
+			"health_message": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Health message",
@@ -176,7 +176,7 @@ func resourceVcdAlbPool() *schema.Resource {
 
 var nsxtAlbPoolMember = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"enabled": &schema.Schema{
+		"enabled": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -224,16 +224,16 @@ var nsxtAlbPoolMember = &schema.Resource{
 
 var nsxtAlbPoolHealthMonitor = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"type": &schema.Schema{
+		"type": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Type of health monitor. One of `HTTP`, `HTTPS`, `TCP`, `UDP`, `PING`",
 		},
-		"name": &schema.Schema{
+		"name": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"system_defined": &schema.Schema{
+		"system_defined": {
 			Type:     schema.TypeBool,
 			Computed: true,
 		},
@@ -242,17 +242,17 @@ var nsxtAlbPoolHealthMonitor = &schema.Resource{
 
 var nsxtAlbPoolPersistenceProfile = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"name": &schema.Schema{
+		"name": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "System generated name of persistence profile",
 		},
-		"type": &schema.Schema{
+		"type": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Type of persistence strategy. One of `CLIENT_IP`, `HTTP_COOKIE`, `CUSTOM_HTTP_HEADER`, `APP_COOKIE`, `TLS`",
 		},
-		"value": &schema.Schema{
+		"value": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Value of attribute based on persistence type",
