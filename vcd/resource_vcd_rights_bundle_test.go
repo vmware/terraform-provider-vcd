@@ -50,7 +50,7 @@ func TestAccVcdRightsBundle(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRightsBundleDestroy(resourceDef),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRightsBundleExists(resourceDef),
@@ -61,7 +61,7 @@ func TestAccVcdRightsBundle(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "tenants.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRightsBundleExists(resourceDef),
@@ -71,7 +71,7 @@ func TestAccVcdRightsBundle(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "rights.#", "5"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceDef,
 				ImportState:       true,
 				ImportStateVerify: true,

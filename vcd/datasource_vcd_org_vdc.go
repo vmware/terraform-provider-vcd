@@ -44,20 +44,20 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				Description: "Organization to create the VDC in",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"allocation_model": &schema.Schema{
+			"allocation_model": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
-			"compute_capacity": &schema.Schema{
+			"compute_capacity": {
 				Computed: true,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
@@ -68,27 +68,27 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				},
 				Description: "The compute capacity allocated to this VDC.",
 			},
-			"nic_quota": &schema.Schema{
+			"nic_quota": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Maximum number of virtual NICs allowed in this VDC. Defaults to 0, which specifies an unlimited number.",
 			},
-			"network_quota": &schema.Schema{
+			"network_quota": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Maximum number of network objects that can be deployed in this VDC. Defaults to 0, which means no networks can be deployed.",
 			},
-			"vm_quota": &schema.Schema{
+			"vm_quota": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The maximum number of VMs that can be created in this VDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true.",
 			},
-			"storage_profile": &schema.Schema{
+			"storage_profile": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -122,63 +122,63 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				},
 				Description: "Storage profiles supported by this VDC.",
 			},
-			"memory_guaranteed": &schema.Schema{
+			"memory_guaranteed": {
 				Type:     schema.TypeFloat,
 				Computed: true,
 				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. " +
 					"For example, if this value is 0.75, then 75% of allocated resources are guaranteed. " +
 					"Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
 			},
-			"cpu_guaranteed": &schema.Schema{
+			"cpu_guaranteed": {
 				Type:     schema.TypeFloat,
 				Computed: true,
 				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. " +
 					"For example, if this value is 0.75, then 75% of allocated resources are guaranteed. " +
 					"Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
 			},
-			"cpu_speed": &schema.Schema{
+			"cpu_speed": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when AllocationModel is AllocationVApp or AllocationPool, and may not be less than 256 MHz. Defaults to 1000 MHz if the element is empty or missing.",
 			},
-			"enable_thin_provisioning": &schema.Schema{
+			"enable_thin_provisioning": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Boolean to request thin provisioning. Request will be honored only if the underlying datastore supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.",
 			},
-			"network_pool_name": &schema.Schema{
+			"network_pool_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The name of a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.",
 			},
-			"provider_vdc_name": &schema.Schema{
+			"provider_vdc_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "A reference to the Provider VDC from which this organization VDC is provisioned.",
 			},
-			"enable_fast_provisioning": &schema.Schema{
+			"enable_fast_provisioning": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Request for fast provisioning. Request will be honored only if the underlying datas tore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
 			},
 			//  Always null in the response to a GET request. On update, set to false to disallow the update if the AllocationModel is AllocationPool or ReservationPool
 			//  and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults to true if empty or missing.
-			"allow_over_commit": &schema.Schema{
+			"allow_over_commit": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.",
 			},
-			"enable_vm_discovery": &schema.Schema{
+			"enable_vm_discovery": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
-			"elasticity": &schema.Schema{
+			"elasticity": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the Flex VDC is elastic.",
 			},
-			"include_vm_memory_overhead": &schema.Schema{
+			"include_vm_memory_overhead": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the Flex VDC includes memory overhead into its accounting for admission control.",
@@ -196,7 +196,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"default_vm_sizing_policy_id": &schema.Schema{
+			"default_vm_sizing_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "ID of default VM sizing policy ID",

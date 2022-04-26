@@ -47,7 +47,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),
@@ -56,7 +56,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),
@@ -66,7 +66,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.third.subkey`, "third-value"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),

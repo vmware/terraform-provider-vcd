@@ -32,7 +32,7 @@ func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
@@ -49,7 +49,7 @@ func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 				),
 			},
 			// Check that import works
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,

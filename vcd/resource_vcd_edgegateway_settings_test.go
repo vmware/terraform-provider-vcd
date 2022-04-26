@@ -175,7 +175,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		//CheckDestroy: func(s *terraform.State) error {return nil},
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					// Check that the resource has the expected values
@@ -197,7 +197,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 					checkEdgeGatewaySettingsCorrespondence("fw_default_rule_action", "accept"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "vcd_edgegateway_settings." + testName,
 				ImportState:             true,
 				ImportStateVerify:       true,

@@ -11,43 +11,43 @@ func datasourceVcdAlbCloud() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdAlbCloudRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "NSX-T ALB Cloud name",
 			},
-			"controller_id": &schema.Schema{
+			"controller_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Importable Cloud ID",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Cloud description",
 			},
-			"importable_cloud_id": &schema.Schema{
+			"importable_cloud_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Importable Cloud ID",
 			},
-			"network_pool_name": &schema.Schema{
+			"network_pool_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network pool name of NSX-T ALB Cloud",
 			},
-			"network_pool_id": &schema.Schema{
+			"network_pool_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network pool ID NSX-T ALB Cloud",
 			},
-			"health_status": &schema.Schema{
+			"health_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Cloud health status",
 			},
-			"health_message": &schema.Schema{
+			"health_message": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Cloud detailed health message",

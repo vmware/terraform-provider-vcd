@@ -32,37 +32,37 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"catalog": &schema.Schema{
+			"catalog": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "catalog name where upload the Media file",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "media name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"media_path": &schema.Schema{
+			"media_path": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "absolute or relative path to Media file",
 			},
-			"upload_piece_size": &schema.Schema{
+			"upload_piece_size": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     1,
 				Description: "size of upload file piece size in mega bytes",
 			},
-			"show_upload_progress": &schema.Schema{
+			"show_upload_progress": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
@@ -75,37 +75,37 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 			},
-			"is_iso": &schema.Schema{
+			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is ISO",
 			},
-			"owner_name": &schema.Schema{
+			"owner_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Owner name",
 			},
-			"is_published": &schema.Schema{
+			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is in a published catalog",
 			},
-			"creation_date": &schema.Schema{
+			"creation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Creation date",
 			},
-			"size": &schema.Schema{
+			"size": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Media storage in Bytes",
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Media status",
 			},
-			"storage_profile_name": &schema.Schema{
+			"storage_profile_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Storage profile name",

@@ -33,23 +33,23 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which the LB Virtual Server is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique Virtual Server name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Virtual Server description",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Default:     true,
 				Optional:    true,
@@ -61,43 +61,43 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 				Description:  "IP address that the load balancer listens on",
 				ValidateFunc: validation.IsIPAddress,
 			},
-			"protocol": &schema.Schema{
+			"protocol": {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "Protocol that the virtual server accepts",
 				ValidateFunc: validateCase("lower"),
 			},
-			"port": &schema.Schema{
+			"port": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Port number that the load balancer listens on",
 			},
-			"enable_acceleration": &schema.Schema{
+			"enable_acceleration": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Enable virtual server acceleration",
 			},
-			"connection_limit": &schema.Schema{
+			"connection_limit": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Maximum concurrent connections that the virtual server can process",
 			},
-			"connection_rate_limit": &schema.Schema{
+			"connection_rate_limit": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Maximum incoming new connection requests per second",
 			},
-			"app_profile_id": &schema.Schema{
+			"app_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Application profile ID to be associated with the virtual server",
 			},
-			"server_pool_id": &schema.Schema{
+			"server_pool_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The server pool that the load balancer will use",
 			},
-			"app_rule_ids": &schema.Schema{
+			"app_rule_ids": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "List of attached application rule IDs",

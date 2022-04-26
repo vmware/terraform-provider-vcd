@@ -62,7 +62,7 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 			testAccCheckNsxtNatRuleDestroy("test-dnat-rule-updated"),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "id"),
@@ -79,14 +79,14 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 					natRuleId.cacheTestResourceFieldValue("vcd_nsxt_nat_rule.dnat", "id"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "id"),
 					resourceFieldsEqual("vcd_nsxt_nat_rule.dnat", "data.vcd_nsxt_nat_rule.nat", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "id"),
@@ -103,14 +103,14 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "id"),
 					resourceFieldsEqual("vcd_nsxt_nat_rule.dnat", "data.vcd_nsxt_nat_rule.nat", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "id"),
@@ -119,14 +119,14 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 				),
 			},
 			// Try to import by Name
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_nat_rule.dnat",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-dnat-rule-updated"),
 			},
 			// Try to import by rule UUID
-			resource.TestStep{
+			{
 				ResourceName: "vcd_nsxt_nat_rule.dnat",
 				ImportState:  true,
 				// Not using pre-built complete ID because ID is not known in advance. This field allows to specify
@@ -260,7 +260,7 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-no-dnat-rule"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.no-dnat", "id"),
@@ -273,7 +273,7 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "dnat_external_port", "7777"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_nat_rule.no-dnat",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -344,7 +344,7 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 			testAccCheckNsxtNatRuleDestroy("test-snat-rule-updated"),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "id"),
@@ -360,14 +360,14 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "logging", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "id"),
 					resourceFieldsEqual("vcd_nsxt_nat_rule.snat", "data.vcd_nsxt_nat_rule.nat", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "id"),
@@ -383,14 +383,14 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "logging", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "id"),
 					resourceFieldsEqual("vcd_nsxt_nat_rule.snat", "data.vcd_nsxt_nat_rule.nat", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_nat_rule.snat",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -466,7 +466,7 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-no-snat-rule"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.no-snat", "id"),
@@ -476,7 +476,7 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-snat", "internal_address", "11.11.11.0/24"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_nat_rule.no-snat",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -559,7 +559,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config:      configText1,
 				ExpectError: expectError,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -569,7 +569,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat-match", "priority", "10"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:      configText2,
 				ExpectError: expectError,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -579,7 +579,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat-match", "priority", "30"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:      configText3,
 				ExpectError: expectError,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -589,7 +589,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat-match", "priority", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_nat_rule.dnat-match",
 				ExpectError:       expectImportError,
 				ImportState:       true,
@@ -681,7 +681,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config:      configText1,
 				ExpectError: expectError,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -692,7 +692,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "priority", "10"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:      configText2,
 				ExpectError: expectError,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -703,7 +703,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "priority", "30"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:      configText3,
 				ExpectError: expectError,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -714,7 +714,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "priority", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_nat_rule.reflexive",
 				ExpectError:       expectImportError,
 				ImportState:       true,

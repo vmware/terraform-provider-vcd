@@ -66,7 +66,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
@@ -77,7 +77,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
@@ -85,14 +85,14 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_settings.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
 			},
 			// This step will "recreate" the resource because service_network_specification requires a rebuild
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
@@ -100,7 +100,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_settings.test",
 				ImportState:       true,
 				ImportStateVerify: true,

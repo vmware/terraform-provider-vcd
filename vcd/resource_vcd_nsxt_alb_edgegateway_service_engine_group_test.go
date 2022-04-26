@@ -58,7 +58,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
@@ -66,7 +66,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", regexp.MustCompile(`\d*`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
@@ -74,7 +74,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_edgegateway_service_engine_group.test",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -159,7 +159,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
@@ -168,7 +168,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
@@ -176,7 +176,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
@@ -185,7 +185,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_edgegateway_service_engine_group.test",
 				ImportState:       true,
 				ImportStateVerify: true,

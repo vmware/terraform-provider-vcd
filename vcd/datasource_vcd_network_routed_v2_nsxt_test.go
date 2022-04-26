@@ -52,13 +52,13 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-test-initial"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id")),
 			},
 
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
@@ -66,7 +66,7 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
@@ -74,7 +74,7 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),

@@ -56,7 +56,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
@@ -78,7 +78,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_vapp_vm." + vmName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -131,7 +131,7 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),

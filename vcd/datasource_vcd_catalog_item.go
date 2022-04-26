@@ -16,22 +16,22 @@ func datasourceVcdCatalogItem() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"catalog": &schema.Schema{
+			"catalog": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "catalog containing the item",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Name of the item. It is optional when a filter is provided",
 				ExactlyOneOf: []string{"name", "filter"},
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"created": &schema.Schema{
+			"created": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Time stamp of when the item was created",
@@ -41,7 +41,7 @@ func datasourceVcdCatalogItem() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for catalog item metadata",
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,

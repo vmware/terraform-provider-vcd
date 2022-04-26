@@ -70,7 +70,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1-updated"),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
@@ -91,7 +91,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
@@ -114,7 +114,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
@@ -130,7 +130,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
@@ -148,7 +148,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
@@ -167,7 +167,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
@@ -190,14 +190,14 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 			},
 
 			// Test import with IP addresses
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-tunnel-1"),
 			},
 			// Try to import by UUID
-			resource.TestStep{
+			{
 				ResourceName: "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
 				ImportState:  true,
 				// Not using pre-built complete ID because ID is not known in advance. This field allows to specify
@@ -341,7 +341,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1-updated"),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
@@ -382,7 +382,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.dpd_probe_internal", "30"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
@@ -426,7 +426,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.dpd_probe_internal", "30"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
@@ -451,7 +451,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.*", "AES_128"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
@@ -478,7 +478,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.*", "AES_128"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
@@ -500,7 +500,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),

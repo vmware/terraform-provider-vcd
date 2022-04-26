@@ -61,7 +61,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
@@ -78,7 +78,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_service_engine_group.first",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -88,7 +88,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 				// this field remains empty.
 				ImportStateVerifyIgnore: []string{"importable_service_engine_group_name"},
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
@@ -105,7 +105,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
@@ -114,7 +114,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_alb_service_engine_group.first", "vcd_nsxt_alb_service_engine_group.first", []string{"%"}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
@@ -131,7 +131,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "true"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),

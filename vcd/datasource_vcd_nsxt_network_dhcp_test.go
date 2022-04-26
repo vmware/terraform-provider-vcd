@@ -42,7 +42,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedDS(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // Define network and DHCP pools
+			{ // Define network and DHCP pools
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
@@ -52,7 +52,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedDS(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),

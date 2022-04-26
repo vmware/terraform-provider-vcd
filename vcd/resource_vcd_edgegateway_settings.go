@@ -21,53 +21,53 @@ func resourceVcdEdgeGatewaySettings() *schema.Resource {
 			State: resourceVcdEdgeGatewaySettingsImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"org": &schema.Schema{
+			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"vdc": &schema.Schema{
+			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_name": &schema.Schema{
+			"edge_gateway_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				Description:  "Name of the edge gateway. Required when 'edge_gateway_id' is not set",
 				ExactlyOneOf: []string{"edge_gateway_id", "edge_gateway_name"},
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				Description:  "ID of the edge gateway. Required when 'edge_gateway_name' is not set",
 				ExactlyOneOf: []string{"edge_gateway_id", "edge_gateway_name"},
 			},
-			"lb_enabled": &schema.Schema{
+			"lb_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancing. (Disabled by default)",
 			},
-			"lb_acceleration_enabled": &schema.Schema{
+			"lb_acceleration_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancer acceleration. (Disabled by default)",
 			},
-			"lb_logging_enabled": &schema.Schema{
+			"lb_logging_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancer logging. (Disabled by default)",
 				// Due to a VCD bug, this field can only be changed by a system administrator
 			},
-			"lb_loglevel": &schema.Schema{
+			"lb_loglevel": {
 				Type:         schema.TypeString,
 				Default:      "info",
 				Optional:     true,
@@ -76,19 +76,19 @@ func resourceVcdEdgeGatewaySettings() *schema.Resource {
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 				// Due to a VCD bug, this field can only be changed by a system administrator
 			},
-			"fw_enabled": &schema.Schema{
+			"fw_enabled": {
 				Type:        schema.TypeBool,
 				Default:     true,
 				Optional:    true,
 				Description: "Enable firewall. Default 'true'",
 			},
-			"fw_default_rule_logging_enabled": &schema.Schema{
+			"fw_default_rule_logging_enabled": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
 				Description: "Enable logging for default rule. Default 'false'",
 			},
-			"fw_default_rule_action": &schema.Schema{
+			"fw_default_rule_action": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "deny",

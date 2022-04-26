@@ -40,7 +40,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdNatRuleDestroy("vcd_nsxv_snat.test"),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // Step 0 - minimal configuration and data source
+			{ // Step 0 - minimal configuration and data source
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_snat.test", "id", regexp.MustCompile(`\d*`)),
@@ -68,7 +68,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "network_type", "data.vcd_nsxv_snat.data-test", "network_type"),
 				),
 			},
-			resource.TestStep{ // Step 1 - update
+			{ // Step 1 - update
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_snat.test", "id", regexp.MustCompile(`\d*`)),
@@ -82,7 +82,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "network_type", "org"),
 				),
 			},
-			resource.TestStep{ // Step 2 - resource import
+			{ // Step 2 - resource import
 				ResourceName:      "vcd_nsxv_snat.test",
 				ImportState:       true,
 				ImportStateVerify: true,

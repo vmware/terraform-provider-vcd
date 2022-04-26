@@ -70,7 +70,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // Single Line Script
+			{ // Single Line Script
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
@@ -84,7 +84,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 				),
 			},
 
-			resource.TestStep{ // Multi Line Script
+			{ // Multi Line Script
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
@@ -98,14 +98,14 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 				),
 			},
 
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_lb_app_rule.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppRuleName"].(string)),
 			},
 
-			resource.TestStep{ // Multi Line Script with invalid rule
+			{ // Multi Line Script with invalid rule
 				Config:      configText3,
 				ExpectError: regexp.MustCompile(`.*vShield Edge .* Not found pool name .* in rules.*`),
 				Check: resource.ComposeAggregateTestCheckFunc(

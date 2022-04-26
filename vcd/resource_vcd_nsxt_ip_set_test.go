@@ -54,7 +54,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set-changed", types.FirewallGroupTypeIpSet),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -63,7 +63,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ip_set.set1", "ip_addresses.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -72,7 +72,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ip_set.set1", "ip_addresses.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText11,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -84,13 +84,13 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 				),
 			},
 			// Test import with no IP addresses
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -105,7 +105,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 				),
 			},
 			// Test import with IP addresses
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -158,7 +158,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set-changed", types.FirewallGroupTypeIpSet),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -173,7 +173,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:.*$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -185,7 +185,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:.*$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText11,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -200,13 +200,13 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 				),
 			},
 			// Test import with IP addresses
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -339,7 +339,7 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -354,7 +354,7 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:.*$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_ip_set.set1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -365,7 +365,7 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 				),
 			},
 			// Test import with IP addresses
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,

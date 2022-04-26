@@ -37,42 +37,42 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"vapp_id": &schema.Schema{
+			"vapp_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp identifier",
 			},
-			"network_id": &schema.Schema{
+			"network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp network identifier",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Enable or disable firewall service. Default is `true`",
 			},
-			"default_action": &schema.Schema{
+			"default_action": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"allow", "drop"}, false),
 				Description:  "Specifies what to do should none of the rules match. Either `allow` or `drop`",
 			},
-			"log_default_action": &schema.Schema{
+			"log_default_action": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Flag to enable logging for default action. Default value is false.",
 			},
-			"rule": &schema.Schema{
+			"rule": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Rule name",
@@ -83,67 +83,67 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 							Default:     true,
 							Description: "'true' value will enable firewall rule",
 						},
-						"policy": &schema.Schema{
+						"policy": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"drop", "allow"}, false),
 							Description:  "One of: `drop` (drop packets that match the rule), `allow` (allow packets that match the rule to pass through the firewall)",
 						},
-						"protocol": &schema.Schema{
+						"protocol": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Default:      "any",
 							ValidateFunc: validation.StringInSlice([]string{"any", "icmp", "tcp", "udp", "tcp&udp"}, true),
 							Description:  "Specify the protocols to which the rule should be applied. One of: `any`, `icmp`, `tcp`, `udp`, `tcp&udp`",
 						},
-						"destination_port": &schema.Schema{
+						"destination_port": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Destination port to which this rule applies.",
 						},
-						"destination_ip": &schema.Schema{
+						"destination_ip": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Destination IP address to which the rule applies. A value of `Any` matches any IP address.",
 						},
-						"destination_vm_id": &schema.Schema{
+						"destination_vm_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Destination VM identifier",
 						},
-						"destination_vm_ip_type": &schema.Schema{
+						"destination_vm_ip_type": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"assigned", "NAT"}, false),
 							Description:  "The value can be one of: `assigned` - assigned internal IP will be automatically chosen. `NAT`: NATed external IP will be automatically chosen.",
 						},
-						"destination_vm_nic_id": &schema.Schema{
+						"destination_vm_nic_id": {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Description: "Destination VM NIC ID to which this rule applies.",
 						},
-						"source_port": &schema.Schema{
+						"source_port": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Source port to which this rule applies.",
 						},
-						"source_ip": &schema.Schema{
+						"source_ip": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Source IP address to which the rule applies. A value of `Any` matches any IP address.",
 						},
-						"source_vm_id": &schema.Schema{
+						"source_vm_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Source VM identifier",
 						},
-						"source_vm_ip_type": &schema.Schema{
+						"source_vm_ip_type": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"assigned", "NAT"}, false),
 							Description:  "The value can be one of: `assigned` - assigned internal IP will be automatically chosen. `NAT`: NATed external IP will be automatically chosen.",
 						},
-						"source_vm_nic_id": &schema.Schema{
+						"source_vm_nic_id": {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Description: "Source VM NIC ID to which this rule applies.",

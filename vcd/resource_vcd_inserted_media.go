@@ -30,31 +30,31 @@ func resourceVcdInsertedMedia() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"catalog": &schema.Schema{
+			"catalog": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "catalog name where to find media file",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "media name to use",
 			},
-			"vapp_name": &schema.Schema{
+			"vapp_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp to use",
 			},
-			"vm_name": &schema.Schema{
+			"vm_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "VM in vApp in which media will be inserted or ejected",
 			},
-			"eject_force": &schema.Schema{
+			"eject_force": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,

@@ -25,23 +25,23 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NSX-T ALB Service Engine Group name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "NSX-T ALB Service Engine Group description",
 			},
-			"alb_cloud_id": &schema.Schema{
+			"alb_cloud_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "NSX-T ALB backing Cloud ID",
 			},
-			"reservation_model": &schema.Schema{
+			"reservation_model": {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "NSX-T ALB Service Engine Group reservation model. One of 'DEDICATED', 'SHARED'",
@@ -50,38 +50,38 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 			// Ideally this should be a reference by ID and a data source for lookup. However, the Importable Service
 			// Engine Group API endpoint does not return entities once they are consumed, and it is impossible to make
 			// a data source.
-			"importable_service_engine_group_name": &schema.Schema{
+			"importable_service_engine_group_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "NSX-T ALB Importable Service Engine Group Name",
 			},
-			"max_virtual_services": &schema.Schema{
+			"max_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group maximum virtual services",
 			},
-			"reserved_virtual_services": &schema.Schema{
+			"reserved_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group reserved virtual services",
 			},
-			"deployed_virtual_services": &schema.Schema{
+			"deployed_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group deployed virtual services",
 			},
-			"ha_mode": &schema.Schema{
+			"ha_mode": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Service Engine Group HA mode",
 			},
-			"overallocated": &schema.Schema{
+			"overallocated": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Boolean value that shows if virtual services are overallocated",
 			},
-			"sync_on_refresh": &schema.Schema{
+			"sync_on_refresh": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,

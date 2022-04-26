@@ -56,7 +56,7 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "id"),
@@ -66,7 +66,7 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "prefix_length"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "id"),

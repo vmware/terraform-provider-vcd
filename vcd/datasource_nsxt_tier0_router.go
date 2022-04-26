@@ -14,17 +14,17 @@ func datasourceVcdNsxtTier0Router() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceNsxtTier0RouterRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of NSX-T Tier-0 router.",
 			},
-			"nsxt_manager_id": &schema.Schema{
+			"nsxt_manager_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "ID of NSX-T manager.",
 			},
-			"is_assigned": &schema.Schema{
+			"is_assigned": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if Tier-0 router is already assigned to external network.",

@@ -80,7 +80,7 @@ func TestAccVcdLibraryCertificateDS(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check:  resource.ComposeAggregateTestCheckFunc(checkFunctions...),
 			},

@@ -63,7 +63,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVmSizingPolicyDestroyed,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVmSizingPolicyExists(resource1),
@@ -111,7 +111,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource4, "memory.0.reservation_guarantee", params["MemoryReservation"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVmSizingPolicyExists(resource1),
@@ -160,7 +160,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				),
 			},
 			// Tests import by id
-			resource.TestStep{
+			{
 				ResourceName:            resource4,
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -168,14 +168,14 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"org"},
 			},
 			// Tests import by name
-			resource.TestStep{
+			{
 				ResourceName:            resource4,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, false),
 				ImportStateVerifyIgnore: []string{"org"},
 			},
-			resource.TestStep{
+			{
 				Config: dataSourceText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("description", params["Description"].(string)+"_updated"),

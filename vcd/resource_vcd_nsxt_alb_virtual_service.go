@@ -37,29 +37,29 @@ func resourceVcdAlbVirtualService() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway ID in which ALB Pool should be created",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of ALB Virtual Service",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of ALB Virtual Service",
 			},
-			"pool_id": &schema.Schema{
+			"pool_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Pool ID",
 			},
-			"service_engine_group_id": &schema.Schema{
+			"service_engine_group_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -70,18 +70,18 @@ func resourceVcdAlbVirtualService() *schema.Resource {
 				Optional:    true,
 				Description: "Optional certificate ID to use for exposing service",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Virtual Service is enabled or disabled (default true)",
 			},
-			"virtual_ip_address": &schema.Schema{
+			"virtual_ip_address": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Virtual IP address (VIP) for Virtual Service",
 			},
-			"application_profile_type": &schema.Schema{
+			"application_profile_type": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "HTTP, HTTPS, L4, L4_TLS",
@@ -97,23 +97,23 @@ func resourceVcdAlbVirtualService() *schema.Resource {
 
 var nsxtAlbVirtualServicePort = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"start_port": &schema.Schema{
+		"start_port": {
 			Type:        schema.TypeInt,
 			Required:    true,
 			Description: "Starting port in the range",
 		},
-		"end_port": &schema.Schema{
+		"end_port": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Description: "Last port in the range",
 		},
-		"ssl_enabled": &schema.Schema{
+		"ssl_enabled": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
 			Description: "Defines if certificate should be used",
 		},
-		"type": &schema.Schema{
+		"type": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "One of 'TCP_PROXY', 'TCP_FAST_PATH', 'UDP_FAST_PATH'",

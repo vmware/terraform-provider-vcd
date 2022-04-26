@@ -44,7 +44,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdDhcpRelaySettingsEmpty(),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "id", regexp.MustCompile(`^.*:dhcpRelay$`)),
@@ -71,7 +71,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*:dhcpRelay$`)),
@@ -89,7 +89,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxv_dhcp_relay.relay_config",
 				ImportState:       true,
 				ImportStateVerify: true,

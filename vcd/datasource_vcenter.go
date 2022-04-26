@@ -14,33 +14,33 @@ func datasourceVcdVcenter() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceVcenterRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of vCenter.",
 			},
-			"vcenter_version": &schema.Schema{
+			"vcenter_version": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "vCenter version",
 			},
-			"vcenter_host": &schema.Schema{
+			"vcenter_host": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "vCenter hostname",
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "vCenter status",
 			},
-			"is_enabled": &schema.Schema{
+			"is_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "vCenter version",
 			},
 			// In UI this field is called `connection`, but it is a reserved field in Terrraform
-			"connection_status": &schema.Schema{
+			"connection_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "vCenter connection state",

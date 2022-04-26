@@ -36,13 +36,13 @@ func resourceVmInternalDisk() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"vapp_name": &schema.Schema{
+			"vapp_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "The vApp this VM internal disk belongs to",
 			},
-			"vm_name": &schema.Schema{
+			"vm_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -83,7 +83,7 @@ func resourceVmInternalDisk() *schema.Resource {
 				Computed:    true,
 				Description: "Specifies the IOPS for the disk.",
 			},
-			"storage_profile": &schema.Schema{
+			"storage_profile": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,

@@ -43,7 +43,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogMediaDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia),
@@ -62,7 +62,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 					testCheckMediaNonStringOutputs(),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia),
@@ -78,7 +78,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata3", "mediaItem Metadata3"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_catalog_media." + TestAccVcdCatalogMedia,
 				ImportState:       true,
 				ImportStateVerify: true,

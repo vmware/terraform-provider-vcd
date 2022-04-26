@@ -21,27 +21,27 @@ func datasourceVcdNsxtEdgeCluster() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of NSX-T Edge Cluster",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of NSX-T Edge Cluster",
 			},
-			"node_count": &schema.Schema{
+			"node_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of nodes in NSX-T Edge Cluster",
 			},
-			"node_type": &schema.Schema{
+			"node_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Node type of NSX-T Edge Cluster",
 			},
-			"deployment_type": &schema.Schema{
+			"deployment_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Deployment type of NSX-T Edge Cluster",

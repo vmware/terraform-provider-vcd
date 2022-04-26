@@ -34,15 +34,15 @@ func resourceVcdVmSizingPolicy() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"cpu": &schema.Schema{
+			"cpu": {
 				Optional: true,
 				MinItems: 0,
 				MaxItems: 1,
@@ -94,7 +94,7 @@ func resourceVcdVmSizingPolicy() *schema.Resource {
 					},
 				},
 			},
-			"memory": &schema.Schema{
+			"memory": {
 				Optional: true,
 				MinItems: 0,
 				MaxItems: 1,

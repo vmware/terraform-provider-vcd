@@ -77,7 +77,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
@@ -86,7 +86,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
@@ -96,7 +96,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.third.subkey`, "third-value"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
@@ -105,7 +105,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 				),
 			},
 			// Validates that if vApp is missing, resource can be recreated and no error is thrown. Covers issue #611
-			resource.TestStep{
+			{
 				Config:             configText3,
 				PreConfig:          deleteVapp,
 				PlanOnly:           true,

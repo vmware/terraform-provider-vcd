@@ -266,16 +266,16 @@ func setDistributedFirewallData(vcdClient *VCDClient, dfwRules *types.Distribute
 	result := make([]interface{}, len(dfwRules.Values))
 	for index, value := range dfwRules.Values {
 		sourceSlice := extractIdsFromOpenApiReferences(value.SourceFirewallGroups)
-		sourceSet := convertStringsTotTypeSet(sourceSlice)
+		sourceSet := convertStringsToTypeSet(sourceSlice)
 
 		destinationSlice := extractIdsFromOpenApiReferences(value.DestinationFirewallGroups)
-		destinationSet := convertStringsTotTypeSet(destinationSlice)
+		destinationSet := convertStringsToTypeSet(destinationSlice)
 
 		appPortProfileSlice := extractIdsFromOpenApiReferences(value.ApplicationPortProfiles)
-		appPortProfileSet := convertStringsTotTypeSet(appPortProfileSlice)
+		appPortProfileSet := convertStringsToTypeSet(appPortProfileSlice)
 
 		netContextProfileSlice := extractIdsFromOpenApiReferences(value.NetworkContextProfiles)
-		netPortProfileSet := convertStringsTotTypeSet(netContextProfileSlice)
+		netPortProfileSet := convertStringsToTypeSet(netContextProfileSlice)
 
 		var actionFieldValue string
 		if vcdClient.Client.APIVCDMaxVersionIs(">= 35.2") {

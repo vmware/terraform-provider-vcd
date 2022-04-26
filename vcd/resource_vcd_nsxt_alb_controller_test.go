@@ -52,7 +52,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
@@ -63,7 +63,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "license_type", "ENTERPRISE"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
@@ -74,14 +74,14 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "license_type", "BASIC"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "vcd_nsxt_alb_controller.first",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           t.Name() + "-renamed",
 				ImportStateVerifyIgnore: []string{"password"},
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),

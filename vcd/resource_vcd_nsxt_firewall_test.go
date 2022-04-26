@@ -66,7 +66,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtFirewallRulesDestroy(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_firewall.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -83,7 +83,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.app_port_profile_ids.#", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_firewall.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -91,7 +91,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxt_firewall.testing", "data.vcd_nsxt_firewall.testing", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_firewall.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -129,7 +129,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.app_port_profile_ids.#", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_firewall.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)), // Firewall resource holds ID of Edge Gateway
@@ -138,7 +138,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxt_firewall.testing", "data.vcd_nsxt_firewall.testing", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_firewall.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -176,7 +176,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.app_port_profile_ids.#", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_firewall.testing",
 				ImportState:       true,
 				ImportStateVerify: true,

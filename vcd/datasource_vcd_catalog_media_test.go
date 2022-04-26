@@ -48,7 +48,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia),

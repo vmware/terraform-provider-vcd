@@ -25,49 +25,49 @@ func datasourceVcdNsxtFirewall() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge Gateway ID in which Firewall Rules are located",
 			},
-			"rule": &schema.Schema{
+			"rule": {
 				Type:        schema.TypeList, // Firewall rule order matters
 				Computed:    true,
 				Description: "List of firewall rules",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": &schema.Schema{
+						"id": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Firewall Rule ID",
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Firewall Rule name",
 						},
-						"direction": &schema.Schema{
+						"direction": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "IN OUT IN_OUT",
 						},
-						"ip_protocol": &schema.Schema{
+						"ip_protocol": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "IPV4,  IPV6, IPV4_IPV6",
 						},
-						"enabled": &schema.Schema{
+						"enabled": {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Firewall Rule name",
 						},
-						"logging": &schema.Schema{
+						"logging": {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Firewall Rule name",
 						},
-						"action": &schema.Schema{
+						"action": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},

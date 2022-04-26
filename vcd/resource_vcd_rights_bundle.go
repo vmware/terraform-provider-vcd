@@ -21,38 +21,38 @@ func resourceVcdRightsBundle() *schema.Resource {
 			StateContext: resourceVcdRightsBundleImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of rights bundle.",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Rights bundle description",
 			},
-			"bundle_key": &schema.Schema{
+			"bundle_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Key used for internationalization",
 			},
-			"read_only": &schema.Schema{
+			"read_only": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Whether this rights bundle is read-only",
 			},
-			"rights": &schema.Schema{
+			"rights": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "list of rights assigned to this rights bundle",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"publish_to_all_tenants": &schema.Schema{
+			"publish_to_all_tenants": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "When true, publishes the rights bundle to all tenants",
 			},
-			"tenants": &schema.Schema{
+			"tenants": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "list of tenants to which this rights bundle is published",

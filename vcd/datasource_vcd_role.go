@@ -11,7 +11,7 @@ func datasourceVcdRole() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceRoleRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of Role.",
@@ -22,22 +22,22 @@ func datasourceVcdRole() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Role description",
 			},
-			"bundle_key": &schema.Schema{
+			"bundle_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Key used for internationalization",
 			},
-			"read_only": &schema.Schema{
+			"read_only": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Whether this role is read-only",
 			},
-			"rights": &schema.Schema{
+			"rights": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "list of rights assigned to this role",

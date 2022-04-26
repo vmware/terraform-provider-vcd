@@ -69,7 +69,7 @@ func resourceVcdVAppVmUpdate(ctx context.Context, d *schema.ResourceData, meta i
 // VM Schema is defined as global so that it can be directly accessible in other places
 func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
-		"vapp_name": &schema.Schema{
+		"vapp_name": {
 			Type:        schema.TypeString,
 			Required:    vmType == vappVmType,
 			Optional:    vmType == standaloneVmType,
@@ -77,18 +77,18 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			ForceNew:    vmType == vappVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
-		"vm_type": &schema.Schema{
+		"vm_type": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: fmt.Sprintf("Type of VM: either '%s' or '%s'", vappVmType, standaloneVmType),
 		},
-		"name": &schema.Schema{
+		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
 			ForceNew:    true,
 			Description: "A name for the VM, unique within the vApp",
 		},
-		"computer_name": &schema.Schema{
+		"computer_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
@@ -107,93 +107,93 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			ForceNew:    true,
 			Description: "The name of VDC to use, optional if defined at provider level",
 		},
-		"template_name": &schema.Schema{
+		"template_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			ForceNew:    true,
 			Description: "The name of the vApp Template to use",
 		},
-		"vm_name_in_template": &schema.Schema{
+		"vm_name_in_template": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			ForceNew:    true,
 			Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
 		},
-		"catalog_name": &schema.Schema{
+		"catalog_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "The catalog name in which to find the given vApp Template or media for boot_image",
 		},
-		"description": &schema.Schema{
+		"description": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
 			Description: "The VM description",
 		},
-		"memory": &schema.Schema{
+		"memory": {
 			Type:         schema.TypeInt,
 			Optional:     true,
 			Computed:     true,
 			Description:  "The amount of RAM (in MB) to allocate to the VM",
 			ValidateFunc: validateMultipleOf4(),
 		},
-		"memory_reservation": &schema.Schema{
+		"memory_reservation": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
 		},
-		"memory_priority": &schema.Schema{
+		"memory_priority": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
 			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
 			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
 		},
-		"memory_shares": &schema.Schema{
+		"memory_shares": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "Custom priority for the resource. This is a read-only, unless the `memory_priority` is CUSTOM",
 		},
-		"memory_limit": &schema.Schema{
+		"memory_limit": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
 		},
-		"cpus": &schema.Schema{
+		"cpus": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "The number of virtual CPUs to allocate to the VM",
 		},
-		"cpu_cores": &schema.Schema{
+		"cpu_cores": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "The number of cores per socket",
 		},
-		"cpu_reservation": &schema.Schema{
+		"cpu_reservation": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
 		},
-		"cpu_priority": &schema.Schema{
+		"cpu_priority": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
 			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
 			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
 		},
-		"cpu_shares": &schema.Schema{
+		"cpu_shares": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
 			Description: "Custom priority for the resource. This is a read-only, unless the `cpu_priority` is CUSTOM",
 		},
-		"cpu_limit": &schema.Schema{
+		"cpu_limit": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Computed:    true,
@@ -206,43 +206,43 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			// a value of type String in this map.
 			Description: "Key value map of metadata to assign to this VM",
 		},
-		"href": &schema.Schema{
+		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
 			Description: "VM Hyper Reference",
 		},
-		"accept_all_eulas": &schema.Schema{
+		"accept_all_eulas": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
 			Description: "Automatically accept EULA if OVA has it",
 		},
-		"power_on": &schema.Schema{
+		"power_on": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
 			Description: "A boolean value stating if this VM should be powered on",
 		},
-		"storage_profile": &schema.Schema{
+		"storage_profile": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
 			Description: "Storage profile to override the default one",
 		},
-		"os_type": &schema.Schema{
+		"os_type": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
 			Description: "Operating System type. Possible values can be found in documentation.",
 		},
-		"hardware_version": &schema.Schema{
+		"hardware_version": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
 			Description: "Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.)",
 		},
-		"boot_image": &schema.Schema{
+		"boot_image": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Media name to add as boot image.",
@@ -381,7 +381,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 					Optional:    true,
 					Description: "Specifies the IOPS for the disk. Default is 0.",
 				},
-				"storage_profile": &schema.Schema{
+				"storage_profile": {
 					Type:        schema.TypeString,
 					ForceNew:    true,
 					Optional:    true,
@@ -429,14 +429,14 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 					Computed:    true,
 					Description: "Specifies the IOPS for the disk. Default is 0.",
 				},
-				"storage_profile": &schema.Schema{
+				"storage_profile": {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Storage profile to override the VM default one",
 				},
 			}},
 		},
-		"expose_hardware_virtualization": &schema.Schema{
+		"expose_hardware_virtualization": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
@@ -447,7 +447,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Key/value settings for guest properties",
 		},
-		"customization": &schema.Schema{
+		"customization": {
 			Optional:    true,
 			Computed:    true,
 			MinItems:    1,
@@ -549,7 +549,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Computed:    true,
 						Description: "Account organizational unit for domain name join",
 					},
-					"initscript": &schema.Schema{
+					"initscript": {
 						Type:        schema.TypeString,
 						Optional:    true,
 						Computed:    true,
@@ -2618,7 +2618,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 			NetworkConnectionSection: &types.NetworkConnectionSection{
 				PrimaryNetworkConnectionIndex: 0,
 				NetworkConnection: []*types.NetworkConnection{
-					&types.NetworkConnection{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
+					{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 			},
 			Description:               d.Get("description").(string),
 			GuestCustomizationSection: customizationSection,

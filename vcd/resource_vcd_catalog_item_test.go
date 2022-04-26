@@ -76,7 +76,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
@@ -90,7 +90,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 						resourceCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
@@ -106,7 +106,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
 				),
 			},
-			resource.TestStep{
+			{
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
@@ -123,7 +123,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
 				),
 			},
-			resource.TestStep{
+			{
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(

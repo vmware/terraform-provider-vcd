@@ -49,9 +49,9 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 	}
 
 	vappDefinition := map[string][]string{
-		"Test_EmptyVmVapp1": []string{"Test_EmptyVm1a", "Test_EmptyVm1b"},
-		"Test_EmptyVmVapp2": []string{"Test_EmptyVm2a", "Test_EmptyVm2b"},
-		"Test_EmptyVmVapp3": []string{"Test_EmptyVm3a", "Test_EmptyVm3b"},
+		"Test_EmptyVmVapp1": {"Test_EmptyVm1a", "Test_EmptyVm1b"},
+		"Test_EmptyVmVapp2": {"Test_EmptyVm2a", "Test_EmptyVm2b"},
+		"Test_EmptyVmVapp3": {"Test_EmptyVm3a", "Test_EmptyVm3b"},
 	}
 	vappList, err := makeVappGroup("TestAccVcdVmAffinityRule", vdc, vappDefinition)
 	if err != nil {
@@ -256,7 +256,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 		CheckDestroy:      testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
 		Steps: []resource.TestStep{
 			// Test creation
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.VCD.Vdc, &rule),
@@ -277,7 +277,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 				),
 			},
 			// Tests update
-			resource.TestStep{
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.VCD.Vdc, &rule),
@@ -294,7 +294,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 				),
 			},
 			// Tests import by name
-			resource.TestStep{
+			{
 				Config:            updateText,
 				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
@@ -302,7 +302,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, data.name+"-update"),
 			},
 			// Tests import by ID
-			resource.TestStep{
+			{
 				Config:            updateText,
 				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,

@@ -32,44 +32,44 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which the LB Application Profile is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique LB Application Profile name",
 			},
-			"type": &schema.Schema{
+			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validateCase("lower"),
 				Description: "Protocol type used to send requests to the server. One of 'tcp', " +
 					"'udp', 'http' org 'https'",
 			},
-			"enable_ssl_passthrough": &schema.Schema{
+			"enable_ssl_passthrough": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Description: "Enable SSL authentication to be passed through to the virtual " +
 					"server. Otherwise SSL authentication takes place at the destination address.",
 			},
-			"http_redirect_url": &schema.Schema{
+			"http_redirect_url": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Description: "The URL to which traffic that arrives at the destination address " +
 					"should be redirected. Only applies for types 'http' and 'https'",
 			},
-			"persistence_mechanism": &schema.Schema{
+			"persistence_mechanism": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validateCase("lower"),
 				Description: "Persistence mechanism for the profile. One of 'cookie', " +
 					"'ssl-sessionid', 'sourceip'",
 			},
-			"cookie_name": &schema.Schema{
+			"cookie_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Description: "Used to uniquely identify the session the first time a client " +
@@ -77,19 +77,19 @@ func resourceVcdLBAppProfile() *schema.Resource {
 					"subsequent requests in the session, so that they all go to the same virtual " +
 					"server. Only applies for persistence_mechanism 'cookie'",
 			},
-			"cookie_mode": &schema.Schema{
+			"cookie_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validateCase("lower"),
 				Description: "The mode by which the cookie should be inserted. One of 'insert', " +
 					"'prefix', or 'appsession'",
 			},
-			"expiration": &schema.Schema{
+			"expiration": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Length of time in seconds that persistence stays in effect",
 			},
-			"insert_x_forwarded_http_header": &schema.Schema{
+			"insert_x_forwarded_http_header": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
@@ -100,7 +100,7 @@ func resourceVcdLBAppProfile() *schema.Resource {
 			// TODO https://github.com/vmware/terraform-provider-vcd/issues/258
 			// This will not give much use without SSL certs being available. The only method to
 			// make use of it is by manually attaching certificates.
-			"enable_pool_side_ssl": &schema.Schema{
+			"enable_pool_side_ssl": {
 				Type:     schema.TypeBool,
 				Default:  false,
 				Optional: true,
