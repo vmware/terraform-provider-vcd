@@ -1,0 +1,1 @@
+* Adjust `role` data source and resource documentation for `rights` attribute to reflect its *Set* nature [GH-834]
