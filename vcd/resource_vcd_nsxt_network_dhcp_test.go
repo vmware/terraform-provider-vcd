@@ -80,7 +80,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:   configText2,
 				SkipFunc: vcdVersionIsLowerThan1031,
 				Check: resource.ComposeAggregateTestCheckFunc(
