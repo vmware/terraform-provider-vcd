@@ -270,7 +270,9 @@ func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiO
 		}
 	}
 
-	d.Set("dns_servers", orgVdc.DnsServers)
+	if len(orgVdc.DnsServers) > 0 {
+		d.Set("dns_servers", orgVdc.DnsServers)
+	}
 
 	return nil
 }
