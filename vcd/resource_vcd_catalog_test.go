@@ -239,6 +239,11 @@ resource "vcd_catalog" "test-catalog" {
 // published to external Org
 func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	
 	var params = StringMap{
 		"Org":                                testConfig.VCD.Org,
 		"Vdc":                                testConfig.VCD.Vdc,
@@ -256,7 +261,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 		"PreserveIdentityInformationUpdate2": false,
 	}
 
-	// This code snippet is to avoid having the org catalog publishing settings set to disable.
+	// TODO - This code snippet is to avoid having the org catalog publishing settings set to disable.
 	// There are some bugs in VCD that disable those options. This code snippet will be removed
 	// as soon as those bugs are solved.
 	vcdClient := createTemporaryVCDConnection(false)
