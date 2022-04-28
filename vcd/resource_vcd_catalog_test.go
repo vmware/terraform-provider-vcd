@@ -239,10 +239,6 @@ resource "vcd_catalog" "test-catalog" {
 // published to external Org
 func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	preTestChecks(t)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	var params = StringMap{
 		"Org":                                testConfig.VCD.Org,
@@ -259,6 +255,11 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 		"PreserveIdentityInformation":        true,
 		"PreserveIdentityInformationUpdate1": false,
 		"PreserveIdentityInformationUpdate2": false,
+	}
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
 	}
 
 	// TODO - This code snippet is to avoid having the org catalog publishing settings set to disable.
@@ -301,11 +302,6 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	params["FuncName"] = t.Name() + "step2"
 	configTextUpd2 := templateFill(testAccCheckVcdCatalogPublishedUpdate2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpd2)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	resourceAddress := "vcd_catalog.test-catalog"
 
