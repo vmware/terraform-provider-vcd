@@ -243,7 +243,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	
+
 	var params = StringMap{
 		"Org":                                testConfig.VCD.Org,
 		"Vdc":                                testConfig.VCD.Vdc,
