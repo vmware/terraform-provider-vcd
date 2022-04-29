@@ -52,6 +52,15 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 				Description: "IP ranges used for DHCP pool allocation in the network",
 				Elem:        datasourceNsxtDhcpPoolSetSchema,
 			},
+			"dns_servers": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "The DNS server IPs to be assigned by this DHCP service. 2 values maximum.",
+				MaxItems:    2,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
