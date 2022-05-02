@@ -37,8 +37,9 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -131,10 +132,9 @@ func resourceVcdNsxtFirewallCreateUpdate(ctx context.Context, d *schema.Resource
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -160,10 +160,9 @@ func resourceVcdNsxtFirewallRead(ctx context.Context, d *schema.ResourceData, me
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -191,10 +190,9 @@ func resourceVcdNsxtFirewallDelete(ctx context.Context, d *schema.ResourceData, 
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 
 	if err != nil {
 		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
@@ -241,7 +239,6 @@ func resourceVcdNsxtFirewallImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 	d.SetId(edge.EdgeGateway.ID)

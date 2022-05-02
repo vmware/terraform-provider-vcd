@@ -28,7 +28,6 @@ data "vcd_nsxt_edgegateway" "existing" {
 
 resource "vcd_nsxt_alb_settings" "org1" {
   org = "my-org"
-  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = true
@@ -43,7 +42,6 @@ resource "vcd_nsxt_alb_settings" "org1" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `is_active` - (Required) Boolean value `true` or `false` if ALB is enabled. **Note** Delete operation of this resource

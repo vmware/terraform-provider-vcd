@@ -24,7 +24,6 @@ environment, you always configure the rule from the perspective of your organiza
 ```hcl
 resource "vcd_nsxt_nat_rule" "snat" {
   org = "dainius"
-  vdc = "nsxt-vdc-dainius"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -44,7 +43,6 @@ resource "vcd_nsxt_nat_rule" "snat" {
 ```hcl
 resource "vcd_nsxt_nat_rule" "no-snat" {
   org = "dainius"
-  vdc = "nsxt-vdc-dainius"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -60,7 +58,6 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
 ```hcl
 resource "vcd_nsxt_nat_rule" "dnat" {
   org = "my-org"
-  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -96,7 +93,6 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 ```hcl
 resource "vcd_nsxt_nat_rule" "reflexive" {
   org = "my-org"
-  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -115,7 +111,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` data source
 * `name` - (Required) A name for NAT rule

@@ -35,8 +35,9 @@ func resourceVcdAlbSettings() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -68,10 +69,9 @@ func resourceVcdAlbSettingsCreateUpdate(ctx context.Context, d *schema.ResourceD
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -98,10 +98,9 @@ func vcdAlbSettingsRead(meta interface{}, d *schema.ResourceData, resourceType s
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		// Edge Gateway being not found means that this resource is removed. Data source should still return error.
 		if govcd.ContainsNotFound(err) && resourceType == "resource" {
@@ -129,10 +128,9 @@ func resourceVcdAlbSettingsDelete(ctx context.Context, d *schema.ResourceData, m
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}

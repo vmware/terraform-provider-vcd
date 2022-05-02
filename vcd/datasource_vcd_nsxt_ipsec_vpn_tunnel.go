@@ -24,6 +24,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -209,10 +210,9 @@ func datasourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.Resource
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -220,7 +220,7 @@ func datasourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.Resource
 	ipSecVpnTunnelName := d.Get("name").(string)
 	ipSecVpnTunnel, err := nsxtEdge.GetIpSecVpnTunnelByName(ipSecVpnTunnelName)
 	if err != nil {
-		return diag.Errorf("error retrieving NSX-T IPsec VPN Tunnel configuration with name '%s;: %s", ipSecVpnTunnelName, err)
+		return diag.Errorf("error retrieving NSX-T IPsec VPN Tunnel configuration with name '%s': %s", ipSecVpnTunnelName, err)
 	}
 
 	// Set general schema for configuration

@@ -18,7 +18,6 @@ outgoing network traffic to and from an NSX-T Data Center Edge Gateway.
 ```hcl
 resource "vcd_nsxt_firewall" "testing" {
   org = "my-org"
-  vdc = "my-nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
@@ -35,7 +34,6 @@ resource "vcd_nsxt_firewall" "testing" {
 ```hcl
 resource "vcd_nsxt_firewall" "testing" {
   org = "my-org"
-  vdc = "my-nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
@@ -79,7 +77,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` datasource
 * `rule` (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions

@@ -21,7 +21,6 @@ only one virtual service at a time.
 ```hcl
 resource "vcd_nsxt_alb_pool" "first-pool" {
   org = "sample"
-  vdc = "nsxt-vdc-sample"
 
   name            = "tiny-pool"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -37,7 +36,6 @@ resource "vcd_nsxt_alb_pool" "first-pool" {
 ```hcl
 resource "vcd_nsxt_alb_pool" "first-pool" {
   org = "sample"
-  vdc = "nsxt-vdc-sample"
 
   name            = "configured-pool"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -78,7 +76,6 @@ data "vcd_library_certificate" "sample-cert" {
 
 resource "vcd_nsxt_alb_pool" "sample-pool" {
   org = "sample"
-  vdc = "nsxt-vdc-sample"
 
   name            = "sample-cert-pool"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
@@ -95,7 +92,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `name` - (Required) A name for NSX-T ALB Pool
 * `description` - (Optional) An optional description NSX-T ALB Pool
 * `enabled` - (Optional) Boolean value if NSX-T ALB Pool should be enabled (default `true`)
