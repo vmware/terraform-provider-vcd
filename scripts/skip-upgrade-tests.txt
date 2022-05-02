@@ -196,3 +196,4 @@ vcd.ResourceSchema-vcd_vm.tf v3.5.1 "Member VMs expose advanced CPU/Memory param
 vcd.TestAccVcdVappNatRules.tf v3.5.1 "PR 784 fixed incorrect IP masquerade"
 vcd.TestAccVcdVappNatRules-step2.tf v3.5.1 "PR 784 fixed incorrect IP masquerade"
 vcd.TestAccVcdStandaloneVmTemplate.tf v3.5.1 "output field changes due to VM CPU/Memory params"
+vcd.TestAccVcdVmSizingPolicy.tf v3.6.0 "removed unneeded 'org' property"

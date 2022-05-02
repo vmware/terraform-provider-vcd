@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -694,7 +695,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		var sizingPolicy *types.VdcComputePolicy
 		var vmComputePolicy *types.ComputePolicy
 		if value, ok := d.GetOk("sizing_policy_id"); ok {
-			vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+			vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
 			if err != nil {
 				return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
 			}
@@ -1054,12 +1055,8 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 
 	if d.HasChange("sizing_policy_id") {
 		var sizingPolicy *types.VdcComputePolicy
-		org, _, err := vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingOrg, err)
-		}
 		value := d.Get("sizing_policy_id")
-		vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+		vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
 		if err != nil {
 			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
 		}
@@ -2643,7 +2640,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		AllEULAsAccepted: true,
 	}
 
-	err = addSizingPolicy(d, vcdClient, org, recomposeVAppParamsForEmptyVm)
+	err = addSizingPolicy(d, vcdClient, recomposeVAppParamsForEmptyVm)
 	if err != nil {
 		return nil, err
 	}
@@ -2740,7 +2737,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 	return newVm, nil
 }
 
-func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, recomposeVAppParamsForEmptyVm *types.RecomposeVAppParamsForEmptyVm) error {
+func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, recomposeVAppParamsForEmptyVm *types.RecomposeVAppParamsForEmptyVm) error {
 	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
 	if err != nil {
 		return fmt.Errorf("error constructing HREF for compute policy")
@@ -2748,7 +2745,7 @@ func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Or
 
 	if value, ok := d.GetOk("sizing_policy_id"); ok {
 		recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String() + value.(string)}}
-		sizingPolicy, err := org.GetVdcComputePolicyById(value.(string))
+		sizingPolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
 		if err != nil {
 			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
 		}

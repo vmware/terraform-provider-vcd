@@ -1,20 +1,22 @@
 package vcd
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdVmSizingPolicy() *schema.Resource {
 
 	return &schema.Resource{
-		Read: datasourceVcdVmSizingPolicyRead,
+		ReadContext: datasourceVcdVmSizingPolicyRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Deprecated:  "Unneeded property, which was included by mistake",
+				Description: "The name of organization to use - Deprecated and unneeded: will be ignored if used ",
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -95,6 +97,6 @@ func datasourceVcdVmSizingPolicy() *schema.Resource {
 }
 
 // datasourceVcdVmSizingPolicyRead reads a data source VM sizing policy
-func datasourceVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmSizingPolicyRead(d, meta)
+func datasourceVcdVmSizingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdVmSizingPolicyRead(ctx, d, meta)
 }

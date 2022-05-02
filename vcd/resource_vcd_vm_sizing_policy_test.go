@@ -24,7 +24,6 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"OrgName":     testConfig.VCD.Org,
 		"PolicyName":  "TestAccVcdVmSizingPolicy",
 		"Description": "TestAccVcdVmSizingPolicyDescription",
 
@@ -67,12 +66,10 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVmSizingPolicyExists(resource1),
-					resource.TestCheckResourceAttr(resource1, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource1, "name", params["PolicyName"].(string)+"_1"),
 					resource.TestCheckResourceAttr(resource1, "description", params["Description"].(string)+"_1"),
 
 					testAccCheckVmSizingPolicyExists(resource2),
-					resource.TestCheckResourceAttr(resource2, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource2, "name", params["PolicyName"].(string)+"_2"),
 					resource.TestCheckResourceAttr(resource2, "description", params["Description"].(string)+"_2"),
 
@@ -84,7 +81,6 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource2, "cpu.0.reservation_guarantee", params["CpuReservation"].(string)),
 
 					testAccCheckVmSizingPolicyExists(resource3),
-					resource.TestCheckResourceAttr(resource3, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource3, "name", params["PolicyName"].(string)+"_3"),
 					resource.TestCheckResourceAttr(resource3, "description", params["Description"].(string)+"_3"),
 
@@ -94,7 +90,6 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource3, "memory.0.reservation_guarantee", params["MemoryReservation"].(string)),
 
 					testAccCheckVmSizingPolicyExists(resource4),
-					resource.TestCheckResourceAttr(resource4, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource4, "name", params["PolicyName"].(string)+"_4"),
 					resource.TestCheckResourceAttr(resource4, "description", params["Description"].(string)+"_4"),
 
@@ -115,12 +110,10 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVmSizingPolicyExists(resource1),
-					resource.TestCheckResourceAttr(resource1, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource1, "name", params["PolicyName"].(string)+"_1"),
 					resource.TestCheckResourceAttr(resource1, "description", params["Description"].(string)+"_1"),
 
 					testAccCheckVmSizingPolicyExists(resource2),
-					resource.TestCheckResourceAttr(resource2, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource2, "name", params["PolicyName"].(string)+"_2"),
 					resource.TestCheckResourceAttr(resource2, "description", params["Description"].(string)+"_2"),
 
@@ -132,7 +125,6 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource2, "cpu.0.reservation_guarantee", params["CpuReservation"].(string)),
 
 					testAccCheckVmSizingPolicyExists(resource3),
-					resource.TestCheckResourceAttr(resource3, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource3, "name", params["PolicyName"].(string)+"_3"),
 					resource.TestCheckResourceAttr(resource3, "description", params["Description"].(string)+"_3"),
 
@@ -142,7 +134,6 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource3, "memory.0.reservation_guarantee", params["MemoryReservation"].(string)),
 
 					testAccCheckVmSizingPolicyExists(resource4),
-					resource.TestCheckResourceAttr(resource4, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(resource4, "name", params["PolicyName"].(string)+"_updated"),
 					resource.TestCheckResourceAttr(resource4, "description", params["Description"].(string)+"_updated"),
 
@@ -161,19 +152,17 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 			// Tests import by id
 			{
-				ResourceName:            resource4,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, true),
-				ImportStateVerifyIgnore: []string{"org"},
+				ResourceName:      resource4,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateVmSizingPolicyByIdOrName(resource4, true),
 			},
 			// Tests import by name
 			{
-				ResourceName:            resource4,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, false),
-				ImportStateVerifyIgnore: []string{"org"},
+				ResourceName:      resource4,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateVmSizingPolicyByIdOrName(resource4, false),
 			},
 			{
 				Config: dataSourceText,
@@ -198,7 +187,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	postTestChecks(t)
 }
 
-func importStateVmSizingPolicyByIdOrName(testConfig TestConfig, resourceName string, byId bool) resource.ImportStateIdFunc {
+func importStateVmSizingPolicyByIdOrName(resourceName string, byId bool) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -211,12 +200,7 @@ func importStateVmSizingPolicyByIdOrName(testConfig TestConfig, resourceName str
 			identifier = rs.Primary.Attributes["name"]
 		}
 
-		if testConfig.VCD.Org == "" || identifier == "" {
-			return "", fmt.Errorf("missing information to generate import path %s, %s", testConfig.VCD.Org, identifier)
-		}
-		return testConfig.VCD.Org +
-			ImportSeparator +
-			identifier, nil
+		return identifier, nil
 	}
 }
 
@@ -232,13 +216,7 @@ func testAccCheckVmSizingPolicyExists(name string) resource.TestCheckFunc {
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
-		}
-
-		_, err = adminOrg.GetVdcComputePolicyById(rs.Primary.ID)
+		_, err := conn.Client.GetVdcComputePolicyById(rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("VM sizing policy %s does not exist (%s)", rs.Primary.Attributes["name"], err)
 		}
@@ -249,17 +227,13 @@ func testAccCheckVmSizingPolicyExists(name string) resource.TestCheckFunc {
 
 func testAccCheckVmSizingPolicyDestroyed(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
+	var err error
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "vcd_org_vdc" && rs.Primary.Attributes["name"] != TestVmPolicy {
 			continue
 		}
 
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
-		}
-
-		_, err = adminOrg.GetVdcComputePolicyById(rs.Primary.ID)
+		_, err = conn.Client.GetVdcComputePolicyById(rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("VM sizing policy %s still exists", rs.Primary.ID)
@@ -275,13 +249,11 @@ func init() {
 
 const testAccCheckVmSizingPolicy_basic = `
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_1" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_1"
   description = "{{.Description}}_1"
 }
 
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_2" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_2"
   description = "{{.Description}}_2"
 
@@ -296,7 +268,6 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_2" {
 }
 
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_3" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_3"
   description = "{{.Description}}_3"
 
@@ -309,7 +280,6 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_3" {
 }
 
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_4" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_4"
   description = "{{.Description}}_4"
 
@@ -334,13 +304,11 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_4" {
 const testAccCheckVmSizingPolicy_update = `
 # skip-binary-test: only for updates
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_1" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_1"
   description = "{{.Description}}_1"
 }
 
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_2" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_2"
   description = "{{.Description}}_2"
 
@@ -355,7 +323,6 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_2" {
 }
 
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_3" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_3"
   description = "{{.Description}}_3"
 
@@ -368,7 +335,6 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_3" {
 }
 
 resource "vcd_vm_sizing_policy" "{{.PolicyName}}_4" {
-  org         = "{{.OrgName}}"
   name        = "{{.PolicyName}}_updated"
   description = "{{.Description}}_updated"
 
