@@ -106,6 +106,21 @@ func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.Resource
 }
 
 func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	// TBD
-	return nil, nil
+	vcdClient := meta.(*VCDClient)
+
+	securityTagName := d.Id()
+	taggedEntities, err := vcdClient.GetSecurityTaggedEntities(fmt.Sprintf("tag==%s", securityTagName))
+	if err != nil {
+		return nil, err
+	}
+
+	readEntities := make([]string, len(taggedEntities))
+	for i, entity := range taggedEntities {
+		readEntities[i] = entity.ID
+	}
+
+	dSet(d, "name", securityTagName)
+	d.Set("vm_ids", convertStringsToTypeSet(readEntities))
+
+	return []*schema.ResourceData{d}, nil
 }
