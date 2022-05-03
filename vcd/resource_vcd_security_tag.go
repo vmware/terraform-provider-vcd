@@ -41,6 +41,7 @@ func resourceVcdOpenApiSecurityTag() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "List of VM IDs that the security tags is going to be tied to",
+				MinItems:    1, // If vm_ids has nothing, the tag will be removed. We enforce to have at least 1 to avoid that behavior
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -53,9 +54,10 @@ func resourceVcdOpenApiSecurityTagCreate(ctx context.Context, d *schema.Resource
 	vcdClient := meta.(*VCDClient)
 
 	securityTagName := d.Get("name").(string)
+
 	securityTag := &types.SecurityTag{
 		Tag:      securityTagName,
-		Entities: d.Get("vm_ids").([]string),
+		Entities: convertSchemaSetToSliceOfStrings(d.Get("vm_ids").(*schema.Set)),
 	}
 	err := vcdClient.UpdateSecurityTag(securityTag)
 	if err != nil {
@@ -81,7 +83,7 @@ func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceDa
 		readEntities[i] = entity.ID
 	}
 
-	d.Set("vm_ids", readEntities)
+	d.Set("vm_ids", convertStringsToTypeSet(readEntities))
 	return nil
 }
 
