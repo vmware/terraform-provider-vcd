@@ -53,7 +53,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 0 - Create without customization flag
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVMCustomization("vcd_vm.test-vm", false),
@@ -65,7 +65,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 				),
 			},
 			// Step 1 - Update - change network configuration and force customization
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep1,
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
@@ -118,7 +118,7 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and force customization initially
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep2,
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
@@ -278,7 +278,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 1
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm", "", ""),
@@ -294,7 +294,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 				),
 			},
 			// Step 2 - join org domain (does not fail because enabled=false even though OS is not windows)
-			resource.TestStep{
+			{
 				// Taint:  []string{"vcd_vm.test-vm"},
 				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
 				// recreation of the VM
@@ -312,7 +312,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 				),
 			},
 			// Step 3 - join org domain enabled
-			resource.TestStep{
+			{
 				// Taint:  []string{"vcd_vm.test-vm"},
 				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
 				// recreation of the VM

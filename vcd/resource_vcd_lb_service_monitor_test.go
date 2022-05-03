@@ -54,7 +54,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", t.Name()),
@@ -78,7 +78,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "name", t.Name()),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", t.Name()+"-step1"),
@@ -87,7 +87,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 				),
 			},
 			// Check that import works
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_lb_service_monitor.lb-service-monitor",
 				ImportState:       true,
 				ImportStateVerify: true,

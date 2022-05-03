@@ -42,35 +42,35 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which IP Sec VPN configuration is located",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Enables or disables this configuration (default true)",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of IP Sec VPN Tunnel",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description IP Sec VPN Tunnel",
 			},
-			"pre_shared_key": &schema.Schema{
+			"pre_shared_key": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				Description: "Pre-Shared Key (PSK)",
 			},
-			"local_ip_address": &schema.Schema{
+			"local_ip_address": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "IPv4 Address for the endpoint. This has to be a sub-allocated IP on the Edge Gateway.",
@@ -84,7 +84,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"remote_ip_address": &schema.Schema{
+			"remote_ip_address": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Public IPv4 Address of the remote device terminating the VPN connection",
@@ -97,26 +97,26 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"logging": &schema.Schema{
+			"logging": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Sets whether logging for the tunnel is enabled or not. (default - false)",
 			},
-			"security_profile_customization": &schema.Schema{
+			"security_profile_customization": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    1,
 				Description: "Security profile customization",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"ike_version": &schema.Schema{
+						"ike_version": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "IKE version one of IKE_V1, IKE_V2, IKE_FLEX",
 							ValidateFunc: validation.StringInSlice([]string{"IKE_V1", "IKE_V2", "IKE_FLEX"}, false),
 						},
-						"ike_encryption_algorithms": &schema.Schema{
+						"ike_encryption_algorithms": {
 							Type:        schema.TypeSet,
 							Required:    true,
 							Description: "Encryption algorithms. One of SHA1, SHA2_256, SHA2_384, SHA2_512",
@@ -124,7 +124,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ike_digest_algorithms": &schema.Schema{
+						"ike_digest_algorithms": {
 							Type:     schema.TypeSet,
 							Optional: true,
 							Description: "Secure hashing algorithms to use during the IKE negotiation. One of SHA1, " +
@@ -133,7 +133,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ike_dh_groups": &schema.Schema{
+						"ike_dh_groups": {
 							Type:     schema.TypeSet,
 							Required: true,
 							Description: "Diffie-Hellman groups to be used if Perfect Forward Secrecy is enabled. One " +
@@ -142,21 +142,21 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ike_sa_lifetime": &schema.Schema{
+						"ike_sa_lifetime": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Description: "Security Association life time (in seconds). It is number of seconds " +
 								"before the IPsec tunnel needs to reestablish",
 						},
 
-						"tunnel_pfs_enabled": &schema.Schema{
+						"tunnel_pfs_enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     true,
 							Description: "Perfect Forward Secrecy Enabled or Disabled. Default (enabled)",
 						},
 
-						"tunnel_df_policy": &schema.Schema{
+						"tunnel_df_policy": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Default:      "COPY",
@@ -164,7 +164,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{"COPY", "CLEAR"}, false),
 						},
 
-						"tunnel_encryption_algorithms": &schema.Schema{
+						"tunnel_encryption_algorithms": {
 							Type:     schema.TypeSet,
 							Required: true,
 							Description: "Encryption algorithms to use in IPSec tunnel establishment. One of AES_128, " +
@@ -174,7 +174,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"tunnel_digest_algorithms": &schema.Schema{
+						"tunnel_digest_algorithms": {
 							Type:     schema.TypeSet,
 							Optional: true,
 							Description: "Digest algorithms to be used for message digest. One of SHA1, SHA2_256, " +
@@ -183,7 +183,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"tunnel_dh_groups": &schema.Schema{
+						"tunnel_dh_groups": {
 							Type:     schema.TypeSet,
 							Required: true,
 							Description: "Diffie-Hellman groups to be used is PFS is enabled. One of GROUP2, GROUP5, " +
@@ -192,12 +192,12 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"tunnel_sa_lifetime": &schema.Schema{
+						"tunnel_sa_lifetime": {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Description: "Security Association life time (in seconds)",
 						},
-						"dpd_probe_internal": &schema.Schema{
+						"dpd_probe_internal": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Description: "Value in seconds of dead probe detection interval. Minimum is 3 seconds and " +
@@ -207,23 +207,23 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				},
 			},
 			// Computed attributes from here
-			"security_profile": &schema.Schema{
+			"security_profile": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "Security type which is use for IPsec VPN Tunnel. It will be 'DEFAULT' if nothing is " +
 					"customized and 'CUSTOM' if some changes are applied",
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Overall IPsec VPN Tunnel Status",
 			},
-			"ike_service_status": &schema.Schema{
+			"ike_service_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status for the actual IKE Session for the given tunnel",
 			},
-			"ike_fail_reason": &schema.Schema{
+			"ike_fail_reason": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Provides more details of failure if the IKE service is not UP",
@@ -505,14 +505,14 @@ func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.Nsx
 	dSet(d, "logging", ipSecVpnConfig.Logging)
 	dSet(d, "security_profile", ipSecVpnConfig.SecurityType)
 
-	localNetworksSet := convertStringsTotTypeSet(ipSecVpnConfig.LocalEndpoint.LocalNetworks)
+	localNetworksSet := convertStringsToTypeSet(ipSecVpnConfig.LocalEndpoint.LocalNetworks)
 	err := d.Set("local_networks", localNetworksSet)
 	if err != nil {
 		return fmt.Errorf("error storing 'local_networks': %s", err)
 	}
 
 	dSet(d, "remote_ip_address", ipSecVpnConfig.RemoteEndpoint.RemoteAddress)
-	remoteNetworksSet := convertStringsTotTypeSet(ipSecVpnConfig.RemoteEndpoint.RemoteNetworks)
+	remoteNetworksSet := convertStringsToTypeSet(ipSecVpnConfig.RemoteEndpoint.RemoteNetworks)
 	err = d.Set("remote_networks", remoteNetworksSet)
 	if err != nil {
 		return fmt.Errorf("error storing 'remote_networks': %s", err)
@@ -573,15 +573,15 @@ func setNsxtIpSecVpnProfileTunnelConfigurationData(d *schema.ResourceData, tunne
 
 	secProfileMap := make(map[string]interface{})
 	secProfileMap["ike_version"] = tunnelConfig.IkeConfiguration.IkeVersion
-	secProfileMap["ike_encryption_algorithms"] = convertStringsTotTypeSet(tunnelConfig.IkeConfiguration.EncryptionAlgorithms)
-	secProfileMap["ike_digest_algorithms"] = convertStringsTotTypeSet(tunnelConfig.IkeConfiguration.DigestAlgorithms)
-	secProfileMap["ike_dh_groups"] = convertStringsTotTypeSet(tunnelConfig.IkeConfiguration.DhGroups)
+	secProfileMap["ike_encryption_algorithms"] = convertStringsToTypeSet(tunnelConfig.IkeConfiguration.EncryptionAlgorithms)
+	secProfileMap["ike_digest_algorithms"] = convertStringsToTypeSet(tunnelConfig.IkeConfiguration.DigestAlgorithms)
+	secProfileMap["ike_dh_groups"] = convertStringsToTypeSet(tunnelConfig.IkeConfiguration.DhGroups)
 	secProfileMap["ike_sa_lifetime"] = tunnelConfig.IkeConfiguration.SaLifeTime
 	secProfileMap["tunnel_pfs_enabled"] = tunnelConfig.TunnelConfiguration.PerfectForwardSecrecyEnabled
 	secProfileMap["tunnel_df_policy"] = tunnelConfig.TunnelConfiguration.DfPolicy
-	secProfileMap["tunnel_encryption_algorithms"] = convertStringsTotTypeSet(tunnelConfig.TunnelConfiguration.EncryptionAlgorithms)
-	secProfileMap["tunnel_digest_algorithms"] = convertStringsTotTypeSet(tunnelConfig.TunnelConfiguration.DigestAlgorithms)
-	secProfileMap["tunnel_dh_groups"] = convertStringsTotTypeSet(tunnelConfig.TunnelConfiguration.DhGroups)
+	secProfileMap["tunnel_encryption_algorithms"] = convertStringsToTypeSet(tunnelConfig.TunnelConfiguration.EncryptionAlgorithms)
+	secProfileMap["tunnel_digest_algorithms"] = convertStringsToTypeSet(tunnelConfig.TunnelConfiguration.DigestAlgorithms)
+	secProfileMap["tunnel_dh_groups"] = convertStringsToTypeSet(tunnelConfig.TunnelConfiguration.DhGroups)
 	secProfileMap["tunnel_sa_lifetime"] = tunnelConfig.TunnelConfiguration.SaLifeTime
 	secProfileMap["dpd_probe_internal"] = tunnelConfig.DpdConfiguration.ProbeInterval
 

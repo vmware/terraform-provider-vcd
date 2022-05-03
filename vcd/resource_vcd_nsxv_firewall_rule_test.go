@@ -69,7 +69,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.rule6"),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // Step 0 - configuration only with ip_addresses
+			{ // Step 0 - configuration only with ip_addresses
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule0", "id", regexp.MustCompile(`\d*`)),
@@ -147,7 +147,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxv_firewall_rule.rule0", "data.vcd_nsxv_firewall_rule.rule0", []string{"rule_id"}),
 				),
 			},
-			resource.TestStep{ // Step 1 - configuration only with gateway_interfaces (internal, external)
+			{ // Step 1 - configuration only with gateway_interfaces (internal, external)
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule1", "id", regexp.MustCompile(`\d*`)),
@@ -183,7 +183,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{ // Step 2 - configuration only with gateway_interfaces (lookup)
+			{ // Step 2 - configuration only with gateway_interfaces (lookup)
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule2", "id", regexp.MustCompile(`\d*`)),
@@ -218,7 +218,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{ // Step 3 - only org networks
+			{ // Step 3 - only org networks
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule3", "id", regexp.MustCompile(`\d*`)),
@@ -254,7 +254,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{ // Step 4
+			{ // Step 4
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule4", "id", regexp.MustCompile(`\d*`)),
@@ -344,7 +344,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxv_firewall_rule.rule4", "data.vcd_nsxv_firewall_rule.rule4", []string{"rule_id"}),
 				),
 			},
-			resource.TestStep{ // Step 5 -
+			{ // Step 5 -
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule5", "id", regexp.MustCompile(`\d*`)),
@@ -385,19 +385,19 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{ // Step 6 - resource import by real ID
+			{ // Step 6 - resource import by real ID
 				ResourceName:      "vcd_nsxv_firewall_rule.rule5",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_firewall_rule.rule5"),
 			},
-			resource.TestStep{ // Step 7 - resource import by UI Number
+			{ // Step 7 - resource import by UI Number
 				ResourceName:      "vcd_nsxv_firewall_rule.rule5",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateFirewallUiNumberByResourceName("vcd_nsxv_firewall_rule.rule5"),
 			},
-			resource.TestStep{ // Step 8 - two rules - one above another
+			{ // Step 8 - two rules - one above another
 				Config: configText8,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule6", "id", regexp.MustCompile(`\d*`)),
@@ -910,7 +910,7 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.ip_sets"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "id", regexp.MustCompile(`\d*`)),
@@ -947,7 +947,7 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "id", regexp.MustCompile(`\d*`)),
@@ -1085,7 +1085,7 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.vms"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.vms", "id", regexp.MustCompile(`\d*`)),
@@ -1120,7 +1120,7 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 				),
 			},
 
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.vms", "id", regexp.MustCompile(`\d*`)),

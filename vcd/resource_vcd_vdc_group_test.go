@@ -239,10 +239,10 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 
 		Steps: []resource.TestStep{
 			// initialize new VDC, this done separately as otherwise randomly fail due choose wrong connection
-			resource.TestStep{
+			{
 				Config: configTextPre,
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["Name"].(string)),
@@ -254,7 +254,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicy"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
@@ -266,7 +266,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
@@ -278,7 +278,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated2"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
@@ -290,11 +290,11 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated3"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:      configText5,
 				ExpectError: regexp.MustCompile("`default_policy_status` must be `false` when `dfw_enabled` is `false`."),
 			},
-			resource.TestStep{
+			{
 				Config: configText6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "name", params["NameUpdated"].(string)),
@@ -306,14 +306,14 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(resourceAddressVdcGroup, "default_policy_status", params["DefaultPolicyUpdated5"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText7,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(resourceAddressVdcGroup, "data.vcd_vdc_group.fetchCreated", []string{"participating_vdc_ids.#",
 						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status"}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            resourceAddressVdcGroup,
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -321,11 +321,11 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 				ImportStateVerifyIgnore: []string{"starting_vdc_id"},
 			},
 			// for clean destroy, otherwise randomly fail due choose wrong connection
-			resource.TestStep{
+			{
 				Config: configTextProvider,
 			},
 			// for clean destroy, otherwise randomly fail due choose wrong connection
-			resource.TestStep{
+			{
 				Config: configTextPre,
 			},
 		},

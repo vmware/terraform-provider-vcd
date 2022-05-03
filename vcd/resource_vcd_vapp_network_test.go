@@ -140,7 +140,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkExists(resourceName),
@@ -177,7 +177,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkExists(resourceName),
@@ -214,7 +214,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,

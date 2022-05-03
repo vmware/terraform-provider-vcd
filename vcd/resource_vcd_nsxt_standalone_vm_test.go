@@ -82,7 +82,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, orgName, vdcName),
@@ -117,7 +117,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_vm." + standaloneVmName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -130,11 +130,11 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip", "network_dhcp_wait_seconds"},
 			},
 			// This step ensures that VM and disk are removed, but networks are left
-			resource.TestStep{
+			{
 				Config: configText2,
 			},
 			// This step gives 10-second sleep timer so that cleanup bug is not hit in VCD 10.3
-			resource.TestStep{
+			{
 				Config:    configText2,
 				PreConfig: func() { time.Sleep(10 * time.Second) },
 			},
@@ -188,7 +188,7 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, orgName, vdcName),

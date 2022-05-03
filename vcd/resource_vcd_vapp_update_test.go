@@ -62,7 +62,7 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{
 			// Deploy vApp
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists(resourceName, &vapp),
@@ -71,7 +71,7 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 				),
 			},
 			// Rename vApp and update description
-			resource.TestStep{
+			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists(resourceName, &vapp),
@@ -80,7 +80,7 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 				),
 			},
 			// remove description
-			resource.TestStep{
+			{
 				Config: configRemoveDescription,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists(resourceName, &vapp),
@@ -89,7 +89,7 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 				),
 			},
 			// Restore original values
-			resource.TestStep{
+			{
 				Config: configTextRestore,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists(resourceName, &vapp),

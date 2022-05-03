@@ -76,7 +76,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 		CheckDestroy:      testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.VCD.Vdc, []string{"Vapp-AC-0", "Vapp-AC-1", "Vapp-AC-2", "Vapp-AC-3"}),
 		Steps: []resource.TestStep{
 			// Test creation
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.VCD.Vdc),
@@ -121,7 +121,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.VCD.Vdc),
@@ -144,7 +144,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 				)},
 
 			// Tests import by name
-			resource.TestStep{
+			{
 				Config:            configText,
 				ResourceName:      "vcd_vapp_access_control.AC-Vapp1",
 				ImportState:       true,
@@ -152,7 +152,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "Vapp-AC-1"),
 			},
 			// Tests import by ID
-			resource.TestStep{
+			{
 				Config:            configText,
 				ResourceName:      "vcd_vapp_access_control.AC-Vapp2",
 				ImportState:       true,

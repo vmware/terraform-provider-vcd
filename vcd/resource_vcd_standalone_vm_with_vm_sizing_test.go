@@ -97,7 +97,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroyByVdc(testAccVcdVdc),
 		Steps: []resource.TestStep{
 			// Step 0 - Create using sizing policy
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName1, "vcd_vm."+netVmName1),
@@ -150,7 +150,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 				),
 			},
 			// Step 1 - update
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName1, "vcd_vm."+netVmName1),

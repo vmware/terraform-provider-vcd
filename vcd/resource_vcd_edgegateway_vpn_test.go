@@ -47,7 +47,7 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVpnDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(

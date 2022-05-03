@@ -12,19 +12,19 @@ import (
 
 func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
-		"vapp_name": &schema.Schema{
+		"vapp_name": {
 			Type:        schema.TypeString,
 			Required:    vmType == vappVmType,
 			Optional:    vmType == standaloneVmType,
 			Computed:    vmType == standaloneVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
-		"vm_type": &schema.Schema{
+		"vm_type": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: fmt.Sprintf("Type of VM: either '%s' or '%s'", vappVmType, standaloneVmType),
 		},
-		"name": &schema.Schema{
+		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "A name for the VM, unique within the vApp",
@@ -40,68 +40,68 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:    true,
 			Description: "The name of VDC to use, optional if defined at provider level",
 		},
-		"computer_name": &schema.Schema{
+		"computer_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Computer name assigned to this virtual machine",
 		},
-		"description": &schema.Schema{
+		"description": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "The VM description",
 			// Currently, this field has the description of the OVA used to create the VM
 		},
-		"memory": &schema.Schema{
+		"memory": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The amount of RAM (in MB) to allocate to the VM",
 		},
-		"memory_reservation": &schema.Schema{
+		"memory_reservation": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
 		},
-		"memory_priority": &schema.Schema{
+		"memory_priority": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
 		},
-		"memory_shares": &schema.Schema{
+		"memory_shares": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "Custom priority for the resource",
 		},
-		"memory_limit": &schema.Schema{
+		"memory_limit": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited",
 		},
-		"cpus": &schema.Schema{
+		"cpus": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The number of virtual CPUs to allocate to the VM",
 		},
-		"cpu_cores": &schema.Schema{
+		"cpu_cores": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The number of cores per socket",
 		},
-		"cpu_reservation": &schema.Schema{
+		"cpu_reservation": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
 		},
-		"cpu_priority": &schema.Schema{
+		"cpu_priority": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
 		},
-		"cpu_shares": &schema.Schema{
+		"cpu_shares": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "Custom priority for the resource",
 		},
-		"cpu_limit": &schema.Schema{
+		"cpu_limit": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited",
@@ -111,22 +111,22 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Key value map of metadata to assign to this VM",
 		},
-		"href": &schema.Schema{
+		"href": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "VM Hyper Reference",
 		},
-		"storage_profile": &schema.Schema{
+		"storage_profile": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Storage profile used with the VM",
 		},
-		"os_type": &schema.Schema{
+		"os_type": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Operating System type.",
 		},
-		"hardware_version": &schema.Schema{
+		"hardware_version": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Virtual Hardware Version.",
@@ -254,14 +254,14 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 					Computed:    true,
 					Description: "Specifies the IOPS for the disk. Default is 0.",
 				},
-				"storage_profile": &schema.Schema{
+				"storage_profile": {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Storage profile to override the VM default one",
 				},
 			}},
 		},
-		"expose_hardware_virtualization": &schema.Schema{
+		"expose_hardware_virtualization": {
 			Type:        schema.TypeBool,
 			Computed:    true,
 			Description: "Expose hardware-assisted CPU virtualization to guest OS.",
@@ -272,7 +272,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "Key/value settings for guest properties",
 		},
 
-		"customization": &schema.Schema{
+		"customization": {
 			Computed:    true,
 			Type:        schema.TypeList,
 			Description: "Guest customization block",
@@ -350,7 +350,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 						Computed:    true,
 						Description: "Account organizational unit for domain name join",
 					},
-					"initscript": &schema.Schema{
+					"initscript": {
 						Type:        schema.TypeString,
 						Computed:    true,
 						Description: "Script to run on initial boot or with customization.force=true set",

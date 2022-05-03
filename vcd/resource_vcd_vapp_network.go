@@ -22,14 +22,14 @@ func resourceVcdVappNetwork() *schema.Resource {
 			State: resourceVcdVappNetworkImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp network name",
 				// we can't change network name as this results in ID (HREF) change
 			},
-			"vapp_name": &schema.Schema{
+			"vapp_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -48,41 +48,41 @@ func resourceVcdVappNetwork() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional description for the network",
 			},
-			"netmask": &schema.Schema{
+			"netmask": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Default:     "255.255.255.0",
 				Description: "Netmask address for a subnet. Default is 255.255.255.0",
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Gateway of the network",
 			},
-			"dns1": &schema.Schema{
+			"dns1": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Primary DNS server",
 			},
-			"dns2": &schema.Schema{
+			"dns2": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Secondary DNS server",
 			},
-			"dns_suffix": &schema.Schema{
+			"dns_suffix": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS suffix",
 			},
 
-			"guest_vlan_allowed": &schema.Schema{
+			"guest_vlan_allowed": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "True if Network allows guest VLAN tagging",
@@ -98,35 +98,35 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Default:     false,
 				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
 			},
-			"dhcp_pool": &schema.Schema{
+			"dhcp_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
 
-						"default_lease_time": &schema.Schema{
+						"default_lease_time": {
 							Type:     schema.TypeInt,
 							Default:  3600,
 							Optional: true,
 						},
 
-						"max_lease_time": &schema.Schema{
+						"max_lease_time": {
 							Type:     schema.TypeInt,
 							Default:  7200,
 							Optional: true,
 						},
 
-						"enabled": &schema.Schema{
+						"enabled": {
 							Type:     schema.TypeBool,
 							Default:  true,
 							Optional: true,
@@ -135,18 +135,18 @@ func resourceVcdVappNetwork() *schema.Resource {
 				},
 				Set: resourceVcdDhcpPoolHash,
 			},
-			"static_ip_pool": &schema.Schema{
+			"static_ip_pool": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_address": &schema.Schema{
+						"start_address": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"end_address": &schema.Schema{
+						"end_address": {
 							Type:     schema.TypeString,
 							Required: true,
 						},

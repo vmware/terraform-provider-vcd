@@ -32,23 +32,23 @@ func resourceVcdLBServerPool() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which the LB Server Pool is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique LB Server Pool name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Server pool description",
 			},
-			"algorithm": &schema.Schema{
+			"algorithm": {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "Balancing method for the service. One of 'ip-hash', 'round-robin', 'uri', 'leastconn', 'url', or 'httpheader'",
@@ -59,12 +59,12 @@ func resourceVcdLBServerPool() *schema.Resource {
 				Optional:    true,
 				Description: "Additional options for load balancing algorithm for httpheader or url algorithms",
 			},
-			"monitor_id": &schema.Schema{
+			"monitor_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Load Balancer Service Monitor ID",
 			},
-			"enable_transparency": &schema.Schema{
+			"enable_transparency": {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
@@ -82,7 +82,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Type:        schema.TypeString,
 							Description: "Pool member id (formatted as member-xx, where xx is a number)",
 						},
-						"condition": &schema.Schema{
+						"condition": {
 							Type:         schema.TypeString,
 							ForceNew:     false,
 							Required:     true,

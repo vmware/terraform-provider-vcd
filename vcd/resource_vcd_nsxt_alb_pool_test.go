@@ -124,7 +124,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -147,13 +147,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -184,13 +184,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText4, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -269,13 +269,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText6, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText7,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -312,13 +312,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText8, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText9,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -342,13 +342,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText10, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText11,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -370,13 +370,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "true"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText12, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText13,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -400,13 +400,13 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_alb_pool.test", "domain_names.*", "domain2"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_pool.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
 			},
-			resource.TestStep{
+			{
 				Config: configText15, // Datasource check
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
@@ -797,7 +797,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 		),
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				PreConfig: configurePrerequisites, // Use temporary System session and setup all prerequisites using SDK
 				Config:    configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -820,7 +820,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
@@ -891,14 +891,14 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "persistence_profile.0.value", ""),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_alb_pool.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
 			},
 			//
-			resource.TestStep{
+			{
 				Config: configText4, // Test data source
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),

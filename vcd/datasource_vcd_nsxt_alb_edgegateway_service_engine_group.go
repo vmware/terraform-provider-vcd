@@ -29,7 +29,7 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -40,7 +40,7 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 			// data source would require Provider level access and this would break workflow when tenant needs to
 			// reference service engine group ID in `vcd_nsxt_alb_virtual_service`. Because of that
 			// `service_engine_group_id` and `service_engine_group_name` are both supported but only one required.
-			"service_engine_group_name": &schema.Schema{
+			"service_engine_group_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -48,7 +48,7 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				Description:  "Service Engine Group Name which is attached to NSX-T Edge Gateway",
 				ExactlyOneOf: []string{"service_engine_group_name", "service_engine_group_id"},
 			},
-			"service_engine_group_id": &schema.Schema{
+			"service_engine_group_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -56,17 +56,17 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				Description:  "Service Engine Group ID which is attached to NSX-T Edge Gateway",
 				ExactlyOneOf: []string{"service_engine_group_name", "service_engine_group_id"},
 			},
-			"max_virtual_services": &schema.Schema{
+			"max_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Maximum number of virtual services to be used in this Service Engine Group",
 			},
-			"reserved_virtual_services": &schema.Schema{
+			"reserved_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of reserved virtual services for this Service Engine Group",
 			},
-			"deployed_virtual_services": &schema.Schema{
+			"deployed_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of reserved deployed virtual services for this Service Engine Group",

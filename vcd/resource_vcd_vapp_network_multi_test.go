@@ -89,7 +89,7 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkMultiDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkMultiExists("vcd_vapp_network."+resourceName1),

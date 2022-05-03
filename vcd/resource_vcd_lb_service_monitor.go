@@ -32,63 +32,63 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which the LB Service Monitor is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique LB Service Monitor name",
 			},
-			"interval": &schema.Schema{
+			"interval": {
 				Type:        schema.TypeInt,
 				Default:     10,
 				Optional:    true,
 				Description: "Interval in seconds at which a server is to be monitored (defaults to 10)",
 			},
-			"timeout": &schema.Schema{
+			"timeout": {
 				Type:        schema.TypeInt,
 				Default:     15,
 				Optional:    true,
 				Description: "Maximum time in seconds within which a response from the server must be received  (defaults to 15)",
 			},
-			"max_retries": &schema.Schema{
+			"max_retries": {
 				Type:        schema.TypeInt,
 				Default:     3,
 				Optional:    true,
 				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down  (defaults to 3)",
 			},
-			"type": &schema.Schema{
+			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "Way in which you want to send the health check request to the server. One of http, https, tcp, icmp, or udp",
 				ValidateFunc: validateCase("lower"),
 			},
-			"expected": &schema.Schema{
+			"expected": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "String that the monitor expects to match in the status line of the http or https response (for example, HTTP/1.1)",
 			},
-			"method": &schema.Schema{
+			"method": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Method to be used to detect server status. One of OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, or CONNECT",
 				ValidateFunc: validateCase("upper"),
 			},
-			"url": &schema.Schema{
+			"url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "URL to be used in the server status request",
 			},
-			"send": &schema.Schema{
+			"send": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Data to be sent",
 			},
-			"receive": &schema.Schema{
+			"receive": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "String to be matched in the response content",

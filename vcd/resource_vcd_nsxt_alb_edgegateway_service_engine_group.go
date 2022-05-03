@@ -36,36 +36,36 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge Gateway ID in which ALB Service Engine Group should be located",
 			},
-			"service_engine_group_id": &schema.Schema{
+			"service_engine_group_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Service Engine Group ID to attach to this NSX-T Edge Gateway",
 			},
-			"service_engine_group_name": &schema.Schema{
+			"service_engine_group_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Service Engine Group Name which is attached to NSX-T Edge Gateway",
 			},
-			"max_virtual_services": &schema.Schema{
+			"max_virtual_services": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
 				Description: "Maximum number of virtual services to be used in this Service Engine Group",
 			},
-			"reserved_virtual_services": &schema.Schema{
+			"reserved_virtual_services": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
 				Description: "Number of reserved virtual services for this Service Engine Group",
 			},
-			"deployed_virtual_services": &schema.Schema{
+			"deployed_virtual_services": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of deployed virtual services for this Service Engine Group",

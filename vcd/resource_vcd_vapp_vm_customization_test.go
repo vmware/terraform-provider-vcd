@@ -57,7 +57,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create without customization flag
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", false),
@@ -69,7 +69,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 				),
 			},
 			// Step 1 - Update - change network configuration and force customization
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep1,
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
@@ -127,7 +127,7 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and force customization initially
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep2,
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
@@ -327,7 +327,7 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and set set customization.force=false
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
@@ -380,7 +380,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 1
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
@@ -396,7 +396,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 				),
 			},
 			// Step 2 - join org domain (does not fail because enabled=false even though OS is not windows)
-			resource.TestStep{
+			{
 				// Taint:  []string{"vcd_vapp_vm.test-vm"},
 				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
 				// recreation of the VM
@@ -414,7 +414,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 				),
 			},
 			// Step 3 - join org domain enabled
-			resource.TestStep{
+			{
 				// Taint:  []string{"vcd_vapp_vm.test-vm"},
 				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
 				// recreation of the VM

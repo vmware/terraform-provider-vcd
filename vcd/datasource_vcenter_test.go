@@ -30,7 +30,7 @@ func TestAccVcdVcenter(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.vcd_vcenter.vc", "id", regexp.MustCompile("^urn:vcloud:vimserver:.*")),

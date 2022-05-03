@@ -69,9 +69,9 @@ func convertSchemaSetToSliceOfStrings(param *schema.Set) []string {
 	return result
 }
 
-// convertStringsTotTypeSet accepts a slice of strings and returns a *schema.Set suitable for storing in Terraform
+// convertStringsToTypeSet accepts a slice of strings and returns a *schema.Set suitable for storing in Terraform
 // set of strings
-func convertStringsTotTypeSet(param []string) *schema.Set {
+func convertStringsToTypeSet(param []string) *schema.Set {
 	sliceOfInterfaces := make([]interface{}, len(param))
 	for index, value := range param {
 		sliceOfInterfaces[index] = value

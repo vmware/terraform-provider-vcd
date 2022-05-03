@@ -21,64 +21,64 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which the NAT rule is located",
 			},
-			"rule_id": &schema.Schema{
+			"rule_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NAT rule ID for lookup",
 			},
-			"network_name": &schema.Schema{
+			"network_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Org or external network name",
 			},
-			"network_type": &schema.Schema{
+			"network_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Network type. One of 'ext', 'org'",
 			},
-			"rule_type": &schema.Schema{
+			"rule_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Possible values 'user', 'internal_high'",
 			},
-			"rule_tag": &schema.Schema{
+			"rule_tag": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Custom rule tag. Contains rule ID if tag was not set",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if the rule is enabled",
 			},
-			"logging_enabled": &schema.Schema{
+			"logging_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if logging is enabled for the rule",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NAT rule description",
 			},
-			"original_address": &schema.Schema{
+			"original_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "Original address or address range. This is the " +
 					"the destination address for DNAT rules.",
 			},
-			"protocol": &schema.Schema{
+			"protocol": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Protocol. One of 'tcp', 'udp', 'icmp', 'any'",
 			},
-			"icmp_type": &schema.Schema{
+			"icmp_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "ICMP type. Only supported when protocol is ICMP. One of `any`, " +
@@ -86,17 +86,17 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 					"`echo-reply`, `parameter-problem`, `redirect`, `router-advertisement`, `router-solicitation`, " +
 					"`source-quench`, `time-exceeded`, `timestamp-request`, `timestamp-reply`. Default `any`",
 			},
-			"original_port": &schema.Schema{
+			"original_port": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Original port. This is the destinationport for DNAT rules",
 			},
-			"translated_address": &schema.Schema{
+			"translated_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Translated address or address range",
 			},
-			"translated_port": &schema.Schema{
+			"translated_port": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Translated port",

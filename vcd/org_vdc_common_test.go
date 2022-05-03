@@ -63,7 +63,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+params["VdcName"].(string)),
@@ -119,7 +119,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						resourceDef, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testVcdVdcUpdated("vcd_org_vdc."+params["VdcName"].(string)),
@@ -195,7 +195,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				),
 			},
 			// Test removal of second storage profile
-			resource.TestStep{
+			{
 				Config: secondUpdateText,
 				// This test runs only if we have a second storage profile
 				Check: testConditionalCheck(secondStorageProfile != "", resource.ComposeTestCheckFunc(
@@ -210,7 +210,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					}),
 				)),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_org_vdc." + params["VdcName"].(string),
 				ImportState:       true,
 				ImportStateVerify: true,

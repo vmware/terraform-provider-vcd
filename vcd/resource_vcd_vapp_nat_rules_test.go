@@ -63,7 +63,7 @@ func TestAccVcdVappNatRules(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
@@ -95,21 +95,21 @@ func TestAccVcdVappNatRules(t *testing.T) {
 				),
 			},
 			// we can reuse importStateVappFirewallRuleObject as import is the same
-			resource.TestStep{ // Step 1 - resource import
+			{ // Step 1 - resource import
 				ResourceName:            "vcd_vapp_nat_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, vappNetworkName),
 				ImportStateVerifyIgnore: []string{"enable_ip_masquerade", "network_id", "org", "vdc"},
 			},
-			resource.TestStep{ // Step 2 - resource import by ID
+			{ // Step 2 - resource import by ID
 				ResourceName:            "vcd_vapp_nat_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),
 				ImportStateVerifyIgnore: []string{"enable_ip_masquerade", "network_id", "org", "vdc"},
 			},
-			resource.TestStep{ // Step 3 - update
+			{ // Step 3 - update
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
@@ -138,7 +138,7 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.1.forward_to_port", "800"),
 				),
 			},
-			resource.TestStep{ // Step 3 - delete
+			{ // Step 3 - delete
 				Config: configTextForDelete,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappNatRulesDeleted("vcd_vapp_org_network.vappAttachedNet"),

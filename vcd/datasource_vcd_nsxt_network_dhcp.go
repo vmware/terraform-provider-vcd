@@ -9,12 +9,12 @@ import (
 
 var datasourceNsxtDhcpPoolSetSchema = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"start_address": &schema.Schema{
+		"start_address": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Start address of DHCP pool IP range",
 		},
-		"end_address": &schema.Schema{
+		"end_address": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "End address of DHCP pool IP range",
@@ -40,17 +40,26 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"org_network_id": &schema.Schema{
+			"org_network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Parent Org VDC network name",
 			},
-			"pool": &schema.Schema{
+			"pool": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "IP ranges used for DHCP pool allocation in the network",
 				Elem:        datasourceNsxtDhcpPoolSetSchema,
+			},
+			"dns_servers": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "The DNS server IPs to be assigned by this DHCP service. 2 values maximum.",
+				MaxItems:    2,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}

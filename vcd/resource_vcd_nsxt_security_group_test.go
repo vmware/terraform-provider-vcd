@@ -48,7 +48,7 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group-changed", types.FirewallGroupTypeSecurityGroup),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -58,7 +58,7 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxt_security_group.group1", "member_vm_ids"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -68,7 +68,7 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxt_security_group.group1", "member_vm_ids"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -157,7 +157,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group-changed", types.FirewallGroupTypeSecurityGroup),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -174,7 +174,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:.*$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -193,7 +193,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 					resourceFieldsEqual("vcd_nsxt_security_group.group1", "data.vcd_nsxt_security_group.group1", []string{}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -204,7 +204,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:.*$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -381,15 +381,15 @@ func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config:      configText,
 				ExpectError: regexp.MustCompile(`please use 'vcd_nsxt_edgegateway' for NSX-T backed VDC`),
 			},
-			resource.TestStep{
+			{
 				Config:      configText1,
 				ExpectError: regexp.MustCompile(`error retrieving Edge Gateway structure`),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				// for NSX-T error is like: error creating NSX-T Firewall Group: error in HTTP POST request:
 				//BAD_REQUEST - [ 4533e9db-3680-435c-8f0d-d6e7636af5f7 ] Invalid Network c4472168-7e8d-4f93-b257-2194e9fc23d9
@@ -536,7 +536,7 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeSecurityGroup),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -553,7 +553,7 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdcGroup:.*$`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
@@ -565,7 +565,7 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 				),
 			},
 			// Test import with IP addresses
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,

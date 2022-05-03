@@ -20,17 +20,17 @@ func datasourceVcdIpSet() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "IP set name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP set description",
 			},
-			"is_inheritance_allowed": &schema.Schema{
+			"is_inheritance_allowed": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Allows visibility in underlying scopes (Default is true)",

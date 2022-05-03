@@ -48,7 +48,7 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 0 - Create with variations of all possible NICs
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
@@ -77,7 +77,7 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_vm.ds", "network_dhcp_wait_seconds", "300"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextVMDhcpWaitUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),

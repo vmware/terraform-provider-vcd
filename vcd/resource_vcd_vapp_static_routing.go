@@ -31,40 +31,40 @@ func resourceVcdVappNetworkStaticRouting() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"vapp_id": &schema.Schema{
+			"vapp_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp identifier",
 			},
-			"network_id": &schema.Schema{
+			"network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp network identifier",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Enable or disable static Routing. Default is `true`.",
 			},
-			"rule": &schema.Schema{
+			"rule": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Name for the static route.",
 						},
-						"network_cidr": &schema.Schema{
+						"network_cidr": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "network specification in CIDR.",
 						},
-						"next_hop_ip": &schema.Schema{
+						"next_hop_ip": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "IP Address of Next Hop router/gateway.",

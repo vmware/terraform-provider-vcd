@@ -56,7 +56,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmMultiDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, vappName2, vmName1),

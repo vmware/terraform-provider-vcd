@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -125,7 +126,7 @@ func resourceVcdOrgGroupRead(_ context.Context, d *schema.ResourceData, meta int
 	for _, userRef := range group.Group.UsersList.UserReference {
 		users = append(users, userRef.Name)
 	}
-	err = d.Set("user_names", convertStringsTotTypeSet(users))
+	err = d.Set("user_names", convertStringsToTypeSet(users))
 	if err != nil {
 		return diag.Errorf("could not set user_names field: %s", err)
 	}

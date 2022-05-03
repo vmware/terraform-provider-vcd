@@ -56,7 +56,7 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Check if result is UUID (e.g. 6c188839-ba06-4ceb-8255-2622fe69ce7c)

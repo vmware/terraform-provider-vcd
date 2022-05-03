@@ -66,7 +66,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create with variations of all possible NICs
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
@@ -160,7 +160,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 				),
 			},
 			// Step 1 - update
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
@@ -210,7 +210,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 				),
 			},
 			// Step 2 - update (remove all NICs)
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
@@ -219,7 +219,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 				),
 			},
 			// Step 3 - Add one nic of each type
-			resource.TestStep{
+			{
 				Config: configTextVMUpdateStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),

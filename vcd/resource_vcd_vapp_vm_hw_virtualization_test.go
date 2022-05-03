@@ -46,7 +46,7 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextStep0,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),
@@ -56,7 +56,7 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 						"vcd_vapp_vm."+vmNameHwVirt, "expose_hardware_virtualization", "false"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextStep1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),

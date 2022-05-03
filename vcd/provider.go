@@ -168,103 +168,103 @@ var globalResourceMap = map[string]*schema.Resource{
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"user": &schema.Schema{
+			"user": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
 				Description: "The user name for VCD API operations.",
 			},
 
-			"password": &schema.Schema{
+			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_PASSWORD", nil),
 				Description: "The user password for VCD API operations.",
 			},
-			"auth_type": &schema.Schema{
+			"auth_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
 				Description:  "'integrated', 'saml_adfs', 'token', and 'api_token' are the only ones supported now. 'integrated' is default.",
 				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token"}, false),
 			},
-			"saml_adfs_rpt_id": &schema.Schema{
+			"saml_adfs_rpt_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_SAML_ADFS_RPT_ID", nil),
 				Description: "Allows to specify custom Relaying Party Trust Identifier for auth_type=saml_adfs",
 			},
 
-			"token": &schema.Schema{
+			"token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_TOKEN", nil),
 				Description: "The token used instead of username/password for VCD API operations.",
 			},
 
-			"api_token": &schema.Schema{
+			"api_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_TOKEN", nil),
 				Description: "The API token used instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
 			},
 
-			"sysorg": &schema.Schema{
+			"sysorg": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_SYS_ORG", nil),
 				Description: "The VCD Org for user authentication",
 			},
 
-			"org": &schema.Schema{
+			"org": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_ORG", nil),
 				Description: "The VCD Org for API operations",
 			},
 
-			"vdc": &schema.Schema{
+			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_VDC", nil),
 				Description: "The VDC for API operations",
 			},
 
-			"url": &schema.Schema{
+			"url": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_URL", nil),
 				Description: "The VCD url for VCD API operations.",
 			},
 
-			"max_retry_timeout": &schema.Schema{
+			"max_retry_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_MAX_RETRY_TIMEOUT", 60),
 				Description: "Max num seconds to wait for successful response when operating on resources within vCloud (defaults to 60)",
 			},
 
-			"allow_unverified_ssl": &schema.Schema{
+			"allow_unverified_ssl": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_ALLOW_UNVERIFIED_SSL", false),
 				Description: "If set, VCDClient will permit unverifiable SSL certificates.",
 			},
 
-			"logging": &schema.Schema{
+			"logging": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING", false),
 				Description: "If set, it will enable logging of API requests and responses",
 			},
 
-			"logging_file": &schema.Schema{
+			"logging_file": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING_FILE", "go-vcloud-director.log"),
 				Description: "Defines the full name of the logging file for API calls (requires 'logging')",
 			},
-			"import_separator": &schema.Schema{
+			"import_separator": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),

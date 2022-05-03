@@ -13,12 +13,12 @@ func datasourceVcdPortgroup() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourcePortgroupRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of NSX-T Tier-0 router.",
 			},
-			"type": &schema.Schema{
+			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "Portgroup type. One of 'NETWORK', 'DV_PORTGROUP'",

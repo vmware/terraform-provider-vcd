@@ -13,17 +13,17 @@ import (
 
 var edgeVpnLocalSubnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"local_subnet_name": &schema.Schema{
+		"local_subnet_name": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 
-		"local_subnet_gateway": &schema.Schema{
+		"local_subnet_gateway": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 
-		"local_subnet_mask": &schema.Schema{
+		"local_subnet_mask": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
@@ -32,17 +32,17 @@ var edgeVpnLocalSubnetResource = &schema.Resource{
 
 var edgeVpnPeerSubnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"peer_subnet_name": &schema.Schema{
+		"peer_subnet_name": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 
-		"peer_subnet_gateway": &schema.Schema{
+		"peer_subnet_gateway": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 
-		"peer_subnet_mask": &schema.Schema{
+		"peer_subnet_mask": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
@@ -57,13 +57,13 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -81,63 +81,63 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"encryption_protocol": &schema.Schema{
+			"encryption_protocol": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"local_ip_address": &schema.Schema{
+			"local_ip_address": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"local_id": &schema.Schema{
+			"local_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"mtu": &schema.Schema{
+			"mtu": {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"peer_ip_address": &schema.Schema{
+			"peer_ip_address": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"peer_id": &schema.Schema{
+			"peer_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"shared_secret": &schema.Schema{
+			"shared_secret": {
 				Type:      schema.TypeString,
 				Required:  true,
 				ForceNew:  true,
 				Sensitive: true,
 			},
 
-			"local_subnets": &schema.Schema{
+			"local_subnets": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
 				Elem:     edgeVpnLocalSubnetResource,
 			},
 
-			"peer_subnets": &schema.Schema{
+			"peer_subnets": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
