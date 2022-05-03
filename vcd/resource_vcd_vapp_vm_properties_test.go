@@ -101,7 +101,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
-					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `guest_properties`),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.%`, "0"),
 				),
 			},
 			// Validates that if vApp is missing, resource can be recreated and no error is thrown. Covers issue #611
