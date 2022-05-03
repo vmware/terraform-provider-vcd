@@ -1,15 +1,16 @@
 package vcd
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"strings"
 	"testing"
 )
 
-// Test
 func TestAccVcdSecurityTag(t *testing.T) {
-	tagName1 := t.Name() + "-tag1"
-	tagName2 := t.Name() + "-tag2"
+	tag1 := strings.ToLower(t.Name() + "-tag1") // security tags are always lowercase in serverside
+	tag2 := strings.ToLower(t.Name() + "-tag2")
 
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
@@ -19,8 +20,8 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		"ComputerName": t.Name() + "-vm",
 		"Catalog":      testConfig.VCD.Catalog.Name,
 		"CatalogItem":  testConfig.VCD.Catalog.CatalogItem,
-		"SecurityTag1": tagName1,
-		"SecurityTag2": tagName2,
+		"SecurityTag1": tag1,
+		"SecurityTag2": tag2,
 	}
 
 	configText := templateFill(testAccSecurityTag, params)
@@ -33,12 +34,12 @@ func TestAccVcdSecurityTag(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckSecurityTagDestroy(),
+		CheckDestroy:      testAccCheckSecurityTagDestroy(tag1),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSecurityTagCreated(),
+					testAccCheckSecurityTagCreated(tag1),
 				),
 			},
 		},
@@ -67,22 +68,61 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   cpu_cores     = 1
 }
 
-resource "vcd_security_tag" "{{.tagName1}}" {
-  name = "{{.tagName1}}"
+resource "vcd_security_tag" "{{.SecurityTag1}}" {
+  name = "{{.SecurityTag1}}"
   vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
 }
 `
 
-func testAccCheckSecurityTagDestroy() resource.TestCheckFunc {
+func testAccCheckSecurityTagDestroy(securityTags ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TBD
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf("error retrieving the Org - %s", testConfig.VCD.Org)
+		}
+
+		securityTagValues, err := org.GetSecurityTagValues("")
+		if err != nil {
+			return fmt.Errorf("error retrieving Org %s security tags", testConfig.VCD.Org)
+		}
+
+		for _, tag := range securityTags {
+			for _, securityTagValue := range securityTagValues {
+				if securityTagValue.Tag == tag {
+					return fmt.Errorf("found tag %s after destroying", tag)
+				}
+			}
+		}
 		return nil
 	}
 }
 
-func testAccCheckSecurityTagCreated() resource.TestCheckFunc {
+func testAccCheckSecurityTagCreated(securityTags ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TBD
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf("error retrieving the Org - %s", testConfig.VCD.Org)
+		}
+
+		securityTagValues, err := org.GetSecurityTagValues("")
+		if err != nil {
+			return fmt.Errorf("error retrieving Org %s security tags", testConfig.VCD.Org)
+		}
+
+		for _, tag := range securityTags {
+			for i, securityTagValue := range securityTagValues {
+				if securityTagValue.Tag == tag {
+					break
+				}
+				if i == len(securityTagValues)-1 {
+					return fmt.Errorf("tag %s wasn't found", tag)
+				}
+			}
+		}
 		return nil
 	}
 }
