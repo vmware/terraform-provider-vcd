@@ -3,7 +3,6 @@ package vcd
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"text/tabwriter"
@@ -238,25 +237,27 @@ func resourceVcdNsxtNatRuleDelete(ctx context.Context, d *schema.ResourceData, m
 func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge_gateway_name.nat_rule_name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.nat_rule_name")
 	}
-	orgName, vdcName, edgeGatewayName, natRuleIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeGatewayName, natRuleIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetAdminOrg(orgName)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-	}
-	vdc, err := org.GetVDCByName(vdcName, false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+		}
 	}
 
-	if !vdc.IsNsxt() {
-		return nil, errors.New("vcd_nsxt_nat_rule is only supported by NSX-T VDCs")
-	}
-
-	edgeGateway, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
 	}
@@ -282,7 +283,6 @@ func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(natRule.NsxtNatRule.ID)
 

@@ -420,23 +420,30 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge_gateway_name.ipsec_tunnel_name")
 	}
-	orgName, vdcName, edgeGatewayName, ipSecVpnTunnelIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeGatewayName, ipSecVpnTunnelIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetAdminOrg(orgName)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-	}
-	vdc, err := org.GetVDCByName(vdcName, false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+		}
 	}
 
-	if !vdc.IsNsxt() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, errors.New("vcd_nsxt_ipsec_vpn_tunnel is only supported by NSX-T VDCs")
 	}
 
-	edgeGateway, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
 	}
@@ -463,7 +470,6 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(ipSecVpnTunnel.NsxtIpSecVpn.ID)
 

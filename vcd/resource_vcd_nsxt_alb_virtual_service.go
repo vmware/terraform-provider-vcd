@@ -208,22 +208,32 @@ func resourceVcdAlbVirtualServiceImport(ctx context.Context, d *schema.ResourceD
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.nsxt-edge-gw-name.virtual_service_name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.nsxt-edge-gw-name.virtual_service_name")
 	}
-	orgName, vdcName, edgeName, virtualServiceName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeName, virtualServiceName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", vdcName, err)
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+		}
 	}
 
-	if vdc.IsNsxv() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, fmt.Errorf("ALB Virtual Services are only supported on NSX-T. Please use 'vcd_lb_virtual_server' for NSX-V load balancers")
 	}
 
-	edge, err := vdc.GetNsxtEdgeGatewayByName(edgeName)
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
@@ -234,7 +244,6 @@ func resourceVcdAlbVirtualServiceImport(ctx context.Context, d *schema.ResourceD
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 
 	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
