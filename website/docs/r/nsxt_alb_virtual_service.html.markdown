@@ -170,8 +170,9 @@ via supplying path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_virtual_service.imported my-org.my-vdc.my-edge-gateway.my-virtual-service-name
+terraform import vcd_nsxt_alb_virtual_service.imported my-org.my-org-vdc-org-vdc-group-name.my-edge-gateway.my-virtual-service-name
 ```
 
-The above would import the `my-virtual-service-name` NSX-T ALB Virtual Service that is defined in NSX-T Edge Gateway
-`my-edge-gateway` inside Org `my-org` and VDC `my-vdc`.
+The above would import the `my-virtual-service-name` NSX-T ALB Virtual Service that is defined in
+NSX-T Edge Gateway `my-edge-gateway` inside Org `my-org` and VDC or VDC Group
+`my-org-vdc-org-vdc-group-name`.

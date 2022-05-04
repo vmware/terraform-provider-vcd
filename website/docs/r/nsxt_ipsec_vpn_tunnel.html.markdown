@@ -141,7 +141,7 @@ below:
 
 Supplying Name
 ```
-terraform import vcd_nsxt_ipsec_vpn_tunnel.imported my-org.my-org-vdc.my-nsxt-edge-gateway.my-ipsec-vpn-tunnel-name
+terraform import vcd_nsxt_ipsec_vpn_tunnel.imported my-org..my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway.my-ipsec-vpn-tunnel-name
 ```
 
 
@@ -157,9 +157,9 @@ vcd_nsxt_nat_rule.dnat: Importing from ID "my-org.nsxt-vdc.nsxt-gw.dnat1"...
 ID                                   Name    Local IP     Remote IP
 04fde766-2cbd-4986-93bb-7f57e59c6b19 tunnel1 1.1.1.1      2.2.2.2
 f40e3d68-cfa6-42ea-83ed-5571659b3e7b tunnel1 4.4.4.4      8.8.8.8
-$ terraform import vcd_nsxt_ipsec_vpn_tunnel.imported my-org.my-org-vdc.my-nsxt-edge-gateway.04fde766-2cbd-4986-93bb-7f57e59c6b19
+$ terraform import vcd_nsxt_ipsec_vpn_tunnel.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway.04fde766-2cbd-4986-93bb-7f57e59c6b19
 ```
 
 The above would import the `my-ipsec-vpn-tunnel-name` IPsec VPN Tunne config settings that are defined
 on NSX-T Edge Gateway `my-nsxt-edge-gateway` which is configured in organization named `my-org` and
-VDC named `my-org-vdc`.
+VDC or VDC Group named `my-org-vdc-org-vdc-group-name`.

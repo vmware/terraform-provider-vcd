@@ -191,8 +191,8 @@ via supplying path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_pool.imported my-org.my-vdc.my-edge-gateway.my-alb-pool
+terraform import vcd_nsxt_alb_pool.imported my-org.my-org-vdc-org-vdc-group-name.my-edge-gateway.my-alb-pool
 ```
 
-The above would import the `vcd_nsxt_alb_pool` NSX-T ALB Pool that is defined in VDC `my-vdc` of Org `my-org` for NSX-T
-Edge Gateway `my-edge-gateway`
+The above would import the `vcd_nsxt_alb_pool` NSX-T ALB Pool that is defined in VDC or VDC
+Group`my-org-vdc-org-vdc-group-name` of Org `my-org` for NSX-T Edge Gateway `my-edge-gateway`

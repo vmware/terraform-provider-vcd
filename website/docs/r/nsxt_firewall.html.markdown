@@ -110,8 +110,9 @@ below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_firewall.imported my-org.my-org-vdc.my-nsxt-edge-gateway
+terraform import vcd_nsxt_firewall.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway
 ```
 
 The above would import all firewall rules defined on NSX-T Edge Gateway `my-nsxt-edge-gateway` which
-is configured in organization named `my-org` and VDC named `my-org-vdc`.
+is configured in organization named `my-org` and VDC or VDC Group named
+`my-org-vdc-org-vdc-group-name`.

@@ -61,8 +61,8 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_settings.imported my-org.my-vdc.my-nsxt-edge-gateway-name
+terraform import vcd_nsxt_alb_settings.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway-name
 ```
 
-The above would import the NSX-T ALB General Settings for Edge Gateway named `my-nsxt-edge-gateway-name` in Org `my-org`
-and VDC `my-vdc`.
+The above would import the NSX-T ALB General Settings for Edge Gateway named
+`my-nsxt-edge-gateway-name` in Org `my-org` and VDC or VDC Group `my-org-vdc-org-vdc-group-name`.

@@ -69,9 +69,9 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_settings.imported my-org.my-vdc.my-nsxt-edge-gateway-name.service-engine-group-name
+terraform import vcd_nsxt_alb_settings.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway-name.service-engine-group-name
 ```
 
-The above would import the NSX-T Edge Gateway ALB Service Engine Group assignment configuration for Service Engine Group
-Name `service-engine-group-name` on  Edge Gateway named `my-nsxt-edge-gateway-name` in Org `my-org`
-and VDC `my-vdc`.
+The above would import the NSX-T Edge Gateway ALB Service Engine Group assignment configuration for
+Service Engine Group Name `service-engine-group-name` on  Edge Gateway named
+`my-nsxt-edge-gateway-name` in Org `my-org` and VDC or VDC Group `my-org-vdc-org-vdc-group-name`.
