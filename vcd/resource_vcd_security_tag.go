@@ -19,19 +19,6 @@ func resourceVcdOpenApiSecurityTag() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
-			},
-			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
-			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -59,7 +46,7 @@ func resourceVcdOpenApiSecurityTagCreate(ctx context.Context, d *schema.Resource
 		Tag:      securityTagName,
 		Entities: convertSchemaSetToSliceOfStrings(d.Get("vm_ids").(*schema.Set)),
 	}
-	err := vcdClient.UpdateSecurityTag(securityTag)
+	_, err := vcdClient.UpdateSecurityTag(securityTag)
 	if err != nil {
 		return diag.Errorf("error when setting up security tags - %s", err)
 	}
@@ -96,7 +83,7 @@ func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.Resource
 		Tag:      securityTagName,
 		Entities: []string{},
 	}
-	err := vcdClient.UpdateSecurityTag(securityTag)
+	_, err := vcdClient.UpdateSecurityTag(securityTag)
 	if err != nil {
 		return diag.Errorf("error when deleting security tag - %s", err)
 	}
