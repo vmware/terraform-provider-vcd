@@ -265,33 +265,24 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	// TODO - This code snippet is to avoid having the org catalog publishing settings set to disable.
 	// There are some bugs in VCD that disable those options. This code snippet will be removed
 	// as soon as those bugs are solved.
-	vcdClient := createTemporaryVCDConnection(false)
+	vcdClient := createSystemTemporaryVCDConnection()
 	adminOrg, err := vcdClient.GetAdminOrg(testConfig.VCD.Org)
 	if err != nil {
 		t.Errorf("couldn't retrieve the adminOrg for setting workaround for VCD bug - %s", err)
 	}
 
-	if vcdClient.Client.IsSysAdmin {
-		adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs = true
-		adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally = true
-		adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe = true
-		task, err := adminOrg.Update()
-		if err != nil {
-			t.Errorf("couldn't update the adminOrg settings for workaround for VCD bug - %s", err)
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			t.Errorf("the task that performs the VCD bug workaround didn't finish successfully - %s", err)
-		}
-	} else {
-		if !adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs ||
-			!adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally ||
-			!adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe {
-			t.Skip("TestAccVcdCatalogPublishedToExternalOrg needs to be skipped because org publishing settings are not right and org admin doesn't have permissions to set them")
-		}
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs = true
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally = true
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe = true
+	task, err := adminOrg.Update()
+	if err != nil {
+		t.Errorf("couldn't update the adminOrg settings for workaround for VCD bug - %s", err)
 	}
 
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		t.Errorf("the task that performs the VCD bug workaround didn't finish successfully - %s", err)
+	}
 	// End of the workaround
 
 	configText := templateFill(testAccCheckVcdCatalogPublished, params)
