@@ -90,6 +90,8 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	dnatRuleId := testCachedFieldValue{}
 	ipSecVpnTunnelId := testCachedFieldValue{}
 
+	parentVdcGroupName := t.Name()
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -196,6 +198,34 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_nat_rule.no-snat", "vcd_nsxt_nat_rule.no-snat", nil),
 					resourceFieldsEqual("data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "vcd_nsxt_ipsec_vpn_tunnel.tunnel1", nil),
 				),
+			},
+			{
+				ResourceName:            "vcd_nsxt_firewall.testing",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, parentVdcGroupName, t.Name()),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_nat_rule.snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "SNAT rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_nat_rule.no-snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "test-no-snat-rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "First"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
