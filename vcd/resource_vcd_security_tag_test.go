@@ -22,9 +22,13 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		"CatalogItem":  testConfig.VCD.Catalog.CatalogItem,
 		"SecurityTag1": tag1,
 		"SecurityTag2": tag2,
+		"FuncName":     t.Name(),
 	}
 
 	configText := templateFill(testAccSecurityTag, params)
+
+	params["FuncName"] = t.Name() + "-update"
+	configTextUpdate := templateFill(testAccSecurityTagUpdate, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -40,6 +44,12 @@ func TestAccVcdSecurityTag(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecurityTagCreated(tag1),
+				),
+			},
+			{
+				Config: configTextUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecurityTagCreated(tag1, tag2),
 				),
 			},
 		},
@@ -70,6 +80,37 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 resource "vcd_security_tag" "{{.SecurityTag1}}" {
   name = "{{.SecurityTag1}}"
+  vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
+}
+`
+
+const testAccSecurityTagUpdate = `
+resource "vcd_vapp" "{{.VappName}}" {
+  name = "{{.VappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.VmName}}" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "{{.VmName}}"
+  computer_name = "{{.ComputerName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+}
+
+resource "vcd_security_tag" "{{.SecurityTag1}}" {
+  name = "{{.SecurityTag1}}"
+  vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
+}
+
+resource "vcd_security_tag" "{{.SecurityTag2}}" {
+  name = "{{.SecurityTag2}}"
   vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
 }
 `
