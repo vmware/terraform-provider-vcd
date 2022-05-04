@@ -66,9 +66,9 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 	configText2 := templateFill(testAccVcdNsxtAlbVdcGroupIntegration2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
-	// params["FuncName"] = t.Name() + "step3"
-	// configText3 := templateFill(testAccVcdNsxtAlbVdcGroupIntegration3, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccVcdNsxtAlbVdcGroupIntegration3DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -129,6 +129,15 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), t.Name()+"-pool"),
 				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_alb_settings.test", "vcd_nsxt_alb_settings.test", nil),
+					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.assignment", nil),
+					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
+					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
+				),
 			},
 		},
 	})
@@ -339,5 +348,32 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
     end_port   = 81
     type       = "TCP_PROXY"
   }
+}
+`
+
+const testAccVcdNsxtAlbVdcGroupIntegration3DS = testAccVcdNsxtAlbVdcGroupIntegration2 + `
+# skip-binary-test: Data Source test
+data "vcd_nsxt_alb_settings" "test" {
+  org             = "{{.Org}}"
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+}
+
+data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
+  edge_gateway_id           = vcd_nsxt_edgegateway.nsxt-edge.id
+  service_engine_group_id   = vcd_nsxt_alb_service_engine_group.first.id
+}
+
+data "vcd_nsxt_alb_virtual_service" "test" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = vcd_nsxt_alb_virtual_service.test.name
+}
+
+data "vcd_nsxt_alb_pool" "test" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = vcd_nsxt_alb_pool.test.name
 }
 `

@@ -107,16 +107,12 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 func datasourceVcdAlbVirtualServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("error getting Org and VDC: %s", err)
+		return diag.Errorf("error getting Org: %s", err)
 	}
 
-	if vdc.IsNsxv() {
-		return diag.Errorf("ALB Virtual Services are only supported on NSX-T. Please use 'vcd_lb_virtual_server' for NSX-V load balancers")
-	}
-
-	nsxtEdge, err := vdc.GetNsxtEdgeGatewayById(d.Get("edge_gateway_id").(string))
+	nsxtEdge, err := org.GetNsxtEdgeGatewayById(d.Get("edge_gateway_id").(string))
 	if err != nil {
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}

@@ -70,6 +70,10 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	configText3 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep4DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -182,6 +186,15 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					importedNetId.testCheckCachedResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
+				),
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_firewall.testing", "vcd_nsxt_firewall.testing", nil),
+					resourceFieldsEqual("data.vcd_nsxt_nat_rule.snat", "vcd_nsxt_nat_rule.snat", nil),
+					resourceFieldsEqual("data.vcd_nsxt_nat_rule.no-snat", "vcd_nsxt_nat_rule.no-snat", nil),
+					resourceFieldsEqual("data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "vcd_nsxt_ipsec_vpn_tunnel.tunnel1", nil),
 				),
 			},
 		},
@@ -453,4 +466,35 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
     end_address   = "4.1.1.20"
   }
 }
+`
+
+const testAccVcdNsxVdcGroupCompleteMigrationStep4DS = testAccVcdNsxVdcGroupCompleteMigrationStep3 + `
+# skip-binary-test: Data Source test
+data "vcd_nsxt_firewall" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+}
+
+data "vcd_nsxt_nat_rule" "snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = "SNAT rule"
+}
+
+data "vcd_nsxt_nat_rule" "no-snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = "test-no-snat-rule"
+}
+
+data "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = "First"
+}
+
 `
