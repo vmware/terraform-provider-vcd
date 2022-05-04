@@ -196,7 +196,7 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_firewall.testing", "vcd_nsxt_firewall.testing", nil),
 					resourceFieldsEqual("data.vcd_nsxt_nat_rule.snat", "vcd_nsxt_nat_rule.snat", nil),
 					resourceFieldsEqual("data.vcd_nsxt_nat_rule.no-snat", "vcd_nsxt_nat_rule.no-snat", nil),
-					resourceFieldsEqual("data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "vcd_nsxt_ipsec_vpn_tunnel.tunnel1", nil),
+					resourceFieldsEqual("data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "vcd_nsxt_ipsec_vpn_tunnel.tunnel1", []string{"status", "ike_service_status", "ike_fail_reason"}),
 				),
 			},
 			{

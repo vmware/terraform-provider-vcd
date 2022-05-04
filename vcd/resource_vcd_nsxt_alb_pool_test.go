@@ -401,10 +401,11 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_alb_pool.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
+				ResourceName:            "vcd_nsxt_alb_pool.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			{
 				Config: configText15, // Datasource check
@@ -892,10 +893,11 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_alb_pool.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
+				ResourceName:            "vcd_nsxt_alb_pool.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["PoolName"].(string)),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			//
 			{
