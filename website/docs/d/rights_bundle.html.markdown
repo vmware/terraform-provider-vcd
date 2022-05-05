@@ -163,9 +163,9 @@ The following arguments are supported:
 
 * `description` - A description of the rights bundle
 * `bundle_key` - Key used for internationalization.
-* `rights` - List of rights assigned to this role
+* `rights` - Set of rights assigned to this role
 * `publish_to_all_tenants` - When true, publishes the rights bundle to all tenants
-* `tenants` - List of tenants to which this rights bundle gets published. Ignored if `publish_to_all_tenants` is true.
+* `tenants` - Set of tenants to which this rights bundle gets published. Ignored if `publish_to_all_tenants` is true.
 * `read_only` - Whether this rights bundle is read-only
 
 ## More information

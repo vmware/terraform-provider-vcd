@@ -40,9 +40,9 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the rights bundle.
 * `description` - (Required) A description of the rights bundle
-* `rights` - (Optional) List of rights assigned to this role
+* `rights` - (Optional) Set of rights assigned to this role
 * `publish_to_all_tenants` - (Required) When true, publishes the rights bundle to all tenants
-* `tenants` - (Optional) List of tenants to which this rights bundle gets published. Ignored if `publish_to_all_tenants` is true.
+* `tenants` - (Optional) Set of tenants to which this rights bundle gets published. Ignored if `publish_to_all_tenants` is true.
 
 ## Attribute Reference
 

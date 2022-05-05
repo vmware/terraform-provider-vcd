@@ -1,1 +1,2 @@
 * Adjust `role` data source and resource documentation for `rights` attribute to reflect its *Set* nature [GH-834]
+* Adjust `rights_bundle` data source and resource documentation for `rights` and `tenants` attribute to reflect its *Set* nature [GH-834]
