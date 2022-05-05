@@ -28,6 +28,7 @@ resource "vcd_security_tag" "my_tag" {
 
 The following arguments are supported:
 
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) The name of the security tag.
 * `vm_ids` - (Required) List of VM IDs that the security tag is going to be applied to.
 
