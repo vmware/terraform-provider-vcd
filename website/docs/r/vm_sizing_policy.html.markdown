@@ -23,7 +23,6 @@ CPU and memory properties of a VM sizing policy can't be updated in-place, so up
 
 ```hcl
 resource "vcd_vm_sizing_policy" "minSize" {
-  org         = "my-org" # Optional
   name        = "min-size"
   description = "smallest size"
 
@@ -48,12 +47,15 @@ resource "vcd_vm_sizing_policy" "minSize" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations
 * `name` - (Required) The name of VM sizing policy.
 * `description` - (Optional) description of VM sizing policy.
 * `cpu` - (Optional) Configures cpu policy; see [Cpu](#cpu) below for details.
 * `memory` - (Optional) Configures memory policy; see [Memory](#memory) below for details.
- 
+
+-> **Note:**  
+Previously, it was incorrectly stated that the `org` argument was required. In fact, it is not, and it has been deprecated in the resource schema.
+To preserve compatibility until the next release, though, the parameter is still parsed, but ignored.
+
 <a id="cpu"></a>
 ## CPU
  
@@ -86,11 +88,11 @@ via supplying the full dot separated path to VM sizing policy. An example is
 below:
 
 ```
-terraform import vcd_vm_sizing_policy.my-policy my-org.policy_name
+terraform import vcd_vm_sizing_policy.my-policy policy_name
 ```
 or using IDs:
 ```
-terraform import vcd_vm_sizing_policy.my-policy my-org.policy_id
+terraform import vcd_vm_sizing_policy.my-policy policy_id
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
@@ -102,13 +104,12 @@ at this stage will show the difference between the minimal configuration file an
 
 ### Listing VM sizing policies
 
-If you want to list IDs there is a special command **`terraform import vcd_vm_sizing_policy.imported list@org-name`**
-where `org-name` is the organization used. 
+If you want to list IDs there is a special command **`terraform import vcd_vm_sizing_policy.imported list@`**. 
 The output for this command should look similar to the one below:
 
 ```
-terraform import vcd_vm_sizing_policy.imported list@org-name
-vcd_vm_sizing_policy.import: Importing from ID "list@org-name"...
+terraform import vcd_vm_sizing_policy.imported list@
+vcd_vm_sizing_policy.import: Importing from ID "list@"...
 Retrieving all VM sizing policies
 No	ID									Name	
 --	--									----	
@@ -120,5 +121,5 @@ No	ID									Name
 Now to import VM sizing policy with ID urn:vcloud:vdcComputePolicy:446d623e-1eec-4c8c-8a14-2f7e6086546b one could supply this command:
 
 ```shell
-$ terraform import vcd_vm_sizing_policy.imported org-name.urn:vcloud:vdcComputePolicy:446d623e-1eec-4c8c-8a14-2f7e6086546b
+$ terraform import vcd_vm_sizing_policy.imported urn:vcloud:vdcComputePolicy:446d623e-1eec-4c8c-8a14-2f7e6086546b
 ```

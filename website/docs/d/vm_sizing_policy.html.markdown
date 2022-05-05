@@ -28,8 +28,11 @@ output "policyId" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) The name VM sizing policy
+
+-> **Note:**  
+Previously, it was incorrectly stated that the `org` argument was required. In fact, it is not, and it has been deprecated in the resource schema.
+To preserve compatibility until the next release, though, the parameter is still parsed, but ignored.
 
 All arguments defined in [`vcd_vm_sizing_policy`](/providers/vmware/vcd/latest/docs/resources/vm_sizing_policy#argument-reference) are supported.
 
