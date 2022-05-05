@@ -262,8 +262,8 @@ github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hd
 github.com/mattn/go-isatty v0.0.10 h1:qxFzApOv4WsAL965uUPIsXzAKCZxN2p9UqdhFS4ZW10=
 github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcMEpPG5Rm84=
 github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
-github.com/mikeletux/go-vcloud-director/v2 v2.16.0-alpha.1.0.20220504081014-66d63061533c h1:xxagDZ2Gk1yhJgmlqI0Rhqu+yZPQL32A6oSavo3NnUg=
-github.com/mikeletux/go-vcloud-director/v2 v2.16.0-alpha.1.0.20220504081014-66d63061533c/go.mod h1:2BS1yw61VN34WI0/nUYoInFvBc3Zcuf84d4ESiAAl68=
+github.com/mikeletux/go-vcloud-director/v2 v2.16.0-alpha.1.0.20220505133738-465d3803d077 h1:gafsqOU8wgEwNJJCDeGHgYKKrjnPjbMqJj04CqGhkRo=
+github.com/mikeletux/go-vcloud-director/v2 v2.16.0-alpha.1.0.20220505133738-465d3803d077/go.mod h1:2BS1yw61VN34WI0/nUYoInFvBc3Zcuf84d4ESiAAl68=
 github.com/mitchellh/cli v1.1.2/go.mod h1:6iaV0fGdElS6dPBx0EApTxHrcWvmJphyh2n8YBLPPZ4=
 github.com/mitchellh/copystructure v1.0.0/go.mod h1:SNtv71yrdKgLRyLFxmLdkAbkKEFWgYaq1OVrnRcwhnw=
 github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
