@@ -5,15 +5,18 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
 	"net/url"
+	"strings"
 )
 
-func resourceVcdOpenApiSecurityTag() *schema.Resource {
+func resourceVcdSecurityTag() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdOpenApiSecurityTagCreate,
+		CreateContext: resourceVcdOpenApiSecurityTagCreateUpdate,
 		ReadContext:   resourceVcdOpenApiSecurityTagRead,
-		UpdateContext: resourceVcdOpenApiSecurityTagCreate,
+		UpdateContext: resourceVcdOpenApiSecurityTagCreateUpdate,
 		DeleteContext: resourceVcdOpenApiSecurityTagDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdOpenApiSecurityTagImport,
@@ -45,7 +48,7 @@ func resourceVcdOpenApiSecurityTag() *schema.Resource {
 	}
 }
 
-func resourceVcdOpenApiSecurityTagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOpenApiSecurityTagCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -64,7 +67,7 @@ func resourceVcdOpenApiSecurityTagCreate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error when setting up security tags - %s", err)
 	}
 
-	d.SetId(securityTagName)
+	d.SetId(securityTagName) // Security tags doesn't have a real ID. That's why we use the name as ID here.
 
 	return resourceVcdOpenApiSecurityTagRead(ctx, d, meta)
 }
@@ -78,12 +81,14 @@ func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	securityTagName := d.Id()
-	filter := url.Values{
-		"filter": []string{"tag==" + securityTagName},
-	}
 
-	taggedEntities, err := org.GetAllSecurityTaggedEntities(filter)
+	taggedEntities, err := org.GetAllSecurityTaggedEntitiesByName(securityTagName)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			log.Printf("[DEBUG] Unable to find entities with security tag name: %s. Removing from tfstate", securityTagName)
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error retrieving tagged entities - %s", err)
 	}
 
@@ -92,7 +97,10 @@ func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceDa
 		readEntities[i] = entity.ID
 	}
 
-	d.Set("vm_ids", convertStringsToTypeSet(readEntities))
+	err = d.Set("vm_ids", convertStringsToTypeSet(readEntities))
+	if err != nil {
+		return diag.Errorf("could not set vm_ids field: %s", err)
+	}
 	return nil
 }
 
@@ -120,16 +128,21 @@ func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.Resource
 }
 
 func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
-
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as org.catalog")
 	}
 
-	securityTagName := d.Id()
+	orgName, securityTag := resourceURI[0], resourceURI[1]
+	vcdClient := meta.(*VCDClient)
+
+	org, err := vcdClient.GetOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+	}
+
 	filter := url.Values{
-		"filter": []string{"tag==" + securityTagName},
+		"filter": []string{"tag==" + securityTag},
 	}
 
 	taggedEntities, err := org.GetAllSecurityTaggedEntities(filter)
@@ -142,8 +155,13 @@ func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.Resource
 		readEntities[i] = entity.ID
 	}
 
-	dSet(d, "name", securityTagName)
-	d.Set("vm_ids", convertStringsToTypeSet(readEntities))
+	dSet(d, "org", orgName)
+	dSet(d, "name", securityTag)
+	err = d.Set("vm_ids", convertStringsToTypeSet(readEntities))
+	if err != nil {
+		return nil, fmt.Errorf("could not set vm_ids field: %s", err)
+	}
+	d.SetId(securityTag)
 
 	return []*schema.ResourceData{d}, nil
 }
