@@ -79,7 +79,8 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 }
 
 resource "vcd_security_tag" "{{.SecurityTag1}}" {
-  name = "{{.SecurityTag1}}"
+  org    = "{{.Org}}"
+  name   = "{{.SecurityTag1}}"
   vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
 }
 `
@@ -124,7 +125,7 @@ func testAccCheckSecurityTagDestroy(securityTags ...string) resource.TestCheckFu
 			return fmt.Errorf("error retrieving the Org - %s", testConfig.VCD.Org)
 		}
 
-		securityTagValues, err := org.GetSecurityTagValues("")
+		securityTagValues, err := org.GetAllSecurityTagValues(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving Org %s security tags", testConfig.VCD.Org)
 		}
@@ -149,7 +150,7 @@ func testAccCheckSecurityTagCreated(securityTags ...string) resource.TestCheckFu
 			return fmt.Errorf("error retrieving the Org - %s", testConfig.VCD.Org)
 		}
 
-		securityTagValues, err := org.GetSecurityTagValues("")
+		securityTagValues, err := org.GetAllSecurityTagValues(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving Org %s security tags", testConfig.VCD.Org)
 		}
