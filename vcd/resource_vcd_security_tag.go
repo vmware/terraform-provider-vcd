@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 )
 
 func resourceVcdOpenApiSecurityTag() *schema.Resource {
@@ -19,6 +20,13 @@ func resourceVcdOpenApiSecurityTag() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -40,13 +48,18 @@ func resourceVcdOpenApiSecurityTag() *schema.Resource {
 func resourceVcdOpenApiSecurityTagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
+	}
+
 	securityTagName := d.Get("name").(string)
 
 	securityTag := &types.SecurityTag{
 		Tag:      securityTagName,
 		Entities: convertSchemaSetToSliceOfStrings(d.Get("vm_ids").(*schema.Set)),
 	}
-	_, err := vcdClient.UpdateSecurityTag(securityTag)
+	_, err = org.UpdateSecurityTag(securityTag)
 	if err != nil {
 		return diag.Errorf("error when setting up security tags - %s", err)
 	}
@@ -59,8 +72,17 @@ func resourceVcdOpenApiSecurityTagCreate(ctx context.Context, d *schema.Resource
 func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
+	}
+
 	securityTagName := d.Id()
-	taggedEntities, err := vcdClient.GetSecurityTaggedEntities(fmt.Sprintf("tag==%s", securityTagName))
+	filter := url.Values{
+		"filter": []string{"tag==" + securityTagName},
+	}
+
+	taggedEntities, err := org.GetAllSecurityTaggedEntities(filter)
 	if err != nil {
 		return diag.Errorf("error retrieving tagged entities - %s", err)
 	}
@@ -77,13 +99,18 @@ func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceDa
 func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
+	}
+
 	securityTagName := d.Id()
 
 	securityTag := &types.SecurityTag{
 		Tag:      securityTagName,
 		Entities: []string{},
 	}
-	_, err := vcdClient.UpdateSecurityTag(securityTag)
+	_, err = org.UpdateSecurityTag(securityTag)
 	if err != nil {
 		return diag.Errorf("error when deleting security tag - %s", err)
 	}
@@ -95,8 +122,17 @@ func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.Resource
 func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
 	securityTagName := d.Id()
-	taggedEntities, err := vcdClient.GetSecurityTaggedEntities(fmt.Sprintf("tag==%s", securityTagName))
+	filter := url.Values{
+		"filter": []string{"tag==" + securityTagName},
+	}
+
+	taggedEntities, err := org.GetAllSecurityTaggedEntities(filter)
 	if err != nil {
 		return nil, err
 	}
