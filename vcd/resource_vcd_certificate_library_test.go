@@ -71,7 +71,7 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressOrgCert, "alias", params["Alias"].(string)),
@@ -92,7 +92,7 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddressSysPrivateCert, "certificate", regexp.MustCompile(`^\S+`)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddressOrgCert, "alias", params["AliasUpdate"].(string)),
@@ -105,7 +105,7 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceAddressSysPrivateCert, "certificate", regexp.MustCompile(`^\S+`)),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceAddressOrgCert,
 				ImportState:       true,
 				ImportStateVerify: true,

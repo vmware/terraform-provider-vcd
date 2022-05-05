@@ -34,17 +34,17 @@ func resourceVcdIpSet() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "IP set name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP set description",
 			},
-			"is_inheritance_allowed": &schema.Schema{
+			"is_inheritance_allowed": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,

@@ -92,7 +92,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextIde,
 				// expected to fail for allow_vm_reboot=false and bus_type = "ide" (VM needs to be power off to add IDE disk)
 				ExpectError: regexp.MustCompile(`.*The attempted operation cannot be performed in the current state \(Powered on\).*`),
@@ -105,7 +105,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					testCheckInternalDiskNonStringOutputs(internalDiskSize),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "size_in_mb", diskSize),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "description", "description-text"),
@@ -124,7 +124,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "iops", "0"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText_update1,
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "size_in_mb", biggerDiskSize),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "description", "description-text"),
@@ -145,7 +145,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "allow_vm_reboot", "true"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_vm_internal_disk." + diskResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -401,7 +401,7 @@ func TestAccVcdVmInternalDiskNvme(t *testing.T) {
 			testAccCheckVcdStandaloneVmDestroy(params["VmName"].(string), params["Org"].(string), params["Vdc"].(string)),
 		),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextNvme,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_vm.nvme", "id"),

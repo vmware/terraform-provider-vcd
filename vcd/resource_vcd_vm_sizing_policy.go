@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,30 +21,29 @@ import (
 func resourceVcdVmSizingPolicy() *schema.Resource {
 
 	return &schema.Resource{
-		Create: resourceVmSizingPolicyCreate,
-		Delete: resourceVmSizingPolicyDelete,
-		Read:   resourceVmSizingPolicyRead,
-		Update: resourceVmSizingPolicyUpdate,
+		CreateContext: resourceVmSizingPolicyCreate,
+		DeleteContext: resourceVmSizingPolicyDelete,
+		ReadContext:   resourceVmSizingPolicyRead,
+		UpdateContext: resourceVmSizingPolicyUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceVmSizingPolicyImport,
+			StateContext: resourceVmSizingPolicyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
+				Type:        schema.TypeString,
+				Deprecated:  "Unneeded property, which was included by mistake",
+				Optional:    true,
+				Description: "The name of organization to use - Deprecated and unneeded: will be ignored if used ",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"cpu": &schema.Schema{
+			"cpu": {
 				Optional: true,
 				MinItems: 0,
 				MaxItems: 1,
@@ -94,7 +95,7 @@ func resourceVcdVmSizingPolicy() *schema.Resource {
 					},
 				},
 			},
-			"memory": &schema.Schema{
+			"memory": {
 				Optional: true,
 				MinItems: 0,
 				MaxItems: 1,
@@ -136,95 +137,78 @@ func resourceVcdVmSizingPolicy() *schema.Resource {
 	}
 }
 
-func resourceVmSizingPolicyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVmSizingPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy creation initiated: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires System administrator privileges")
+		return diag.Errorf("functionality requires System administrator privileges")
 	}
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
 	params, err := getVmZingingPolicyInput(d, vcdClient)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[DEBUG] Creating VM sizing policy: %#v", params)
 
-	createdVmSizingPolicy, err := adminOrg.CreateVdcComputePolicy(params)
+	createdVmSizingPolicy, err := vcdClient.Client.CreateVdcComputePolicy(params)
 	if err != nil {
 		log.Printf("[DEBUG] Error VM sizing policy: %s", err)
-		return fmt.Errorf("error VM sizing policy: %s", err)
+		return diag.Errorf("error VM sizing policy: %s", err)
 	}
 
 	d.SetId(createdVmSizingPolicy.VdcComputePolicy.ID)
 	log.Printf("[TRACE] VM sizing policy created: %#v", createdVmSizingPolicy.VdcComputePolicy)
 
-	return resourceVmSizingPolicyRead(d, meta)
+	return resourceVmSizingPolicyRead(ctx, d, meta)
 }
 
 // resourceVcdVmAffinityRuleRead reads a resource VM affinity rule
-func resourceVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmSizingPolicyRead(d, meta)
+func resourceVmSizingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdVmSizingPolicyRead(ctx, d, meta)
 }
 
 // Fetches information about an existing VM sizing policy for a data definition
-func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error {
+func genericVcdVmSizingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy read initiated: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
-	orgName := d.Get("org").(string)
-	if orgName == "" {
-		orgName = vcdClient.Org
-	}
-	if orgName == "" {
-		return fmt.Errorf("empty Org name provided")
-	}
-	org, err := vcdClient.VCDClient.GetOrgByName(orgName)
-	if err != nil {
-		return fmt.Errorf("error retrieving Org %s: %s", orgName, err)
-	}
-
 	// The method variable stores the information about how we found the rule, for logging purposes
 	method := "id"
 
 	var policy *govcd.VdcComputePolicy
+	var err error
 	if d.Id() != "" {
-		policy, err = org.GetVdcComputePolicyById(d.Id())
+		policy, err = vcdClient.Client.GetVdcComputePolicyById(d.Id())
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
 			d.SetId("")
-			return fmt.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+			return diag.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
 		}
 	}
 
 	// The secondary method of retrieval is from name
 	if d.Id() == "" {
 		if policyName == "" {
-			return fmt.Errorf("both name and ID are empty")
+			return diag.Errorf("both name and ID are empty")
 		}
 		method = "name"
 		queryParams := url.Values{}
 		queryParams.Add("filter", "name=="+policyName)
-		filteredPoliciesByName, err := org.GetAllVdcComputePolicies(queryParams)
+		filteredPoliciesByName, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
 			d.SetId("")
-			return fmt.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+			return diag.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
 		}
 		if len(filteredPoliciesByName) != 1 {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s . Found Policies by name: %d. Removing from tfstate.", policyName, len(filteredPoliciesByName))
 			d.SetId("")
-			return fmt.Errorf("[DEBUG] Unable to find VM sizing policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
+			return diag.Errorf("[DEBUG] Unable to find VM sizing policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
 		}
 		policy = filteredPoliciesByName[0]
 		d.SetId(policy.VdcComputePolicy.ID)
@@ -232,14 +216,14 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 
 	// Fix coverity warning
 	if policy == nil {
-		return fmt.Errorf("[genericVcdVmSizingPolicyRead] error defining sizing policy")
+		return diag.Errorf("[genericVcdVmSizingPolicyRead] error defining sizing policy")
 	}
 	util.Logger.Printf("[TRACE] [get VM sizing policy] Retrieved by %s\n", method)
-	return setVmSizingPolicy(d, *policy.VdcComputePolicy)
+	return setVmSizingPolicy(ctx, d, *policy.VdcComputePolicy)
 }
 
 // setVmSizingPolicy sets object state from *govcd.VdcComputePolicy
-func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) error {
+func setVmSizingPolicy(ctx context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
 
 	dSet(d, "name", policy.Name)
 	dSet(d, "description", policy.Description)
@@ -279,7 +263,7 @@ func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) er
 		cpuList = append(cpuList, cpuMap)
 		err := d.Set("cpu", cpuList)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -306,7 +290,7 @@ func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) er
 		memoryList = append(memoryList, memoryMap)
 		err := d.Set("memory", memoryList)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -315,56 +299,46 @@ func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) er
 }
 
 //resourceVmSizingPolicyUpdate function updates resource with found configurations changes
-func resourceVmSizingPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVmSizingPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy update initiated: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	policy, err := adminOrg.GetVdcComputePolicyById(d.Id())
+	policy, err := vcdClient.Client.GetVdcComputePolicyById(d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyName)
-		return fmt.Errorf("unable to find VM sizing policy %s, error:  %s", policyName, err)
+		return diag.Errorf("unable to find VM sizing policy %s, error:  %s", policyName, err)
 	}
 
 	changedPolicy, err := getUpdatedVmSizingPolicyInput(d, policy)
 	if err != nil {
 		log.Printf("[DEBUG] Error updating VM sizing policy %s with error %s", policyName, err)
-		return fmt.Errorf("error updating VM sizing policy %s, err: %s", policyName, err)
+		return diag.Errorf("error updating VM sizing policy %s, err: %s", policyName, err)
 	}
 
 	_, err = changedPolicy.Update()
 	if err != nil {
 		log.Printf("[DEBUG] Error updating VM sizing policy %s with error %s", policyName, err)
-		return fmt.Errorf("error updating VM sizing policy %s, err: %s", policyName, err)
+		return diag.Errorf("error updating VM sizing policy %s, err: %s", policyName, err)
 	}
 
 	log.Printf("[TRACE] VM sizing policy update completed: %s", policyName)
-	return resourceVmSizingPolicyRead(d, meta)
+	return resourceVmSizingPolicyRead(ctx, d, meta)
 }
 
 // Deletes a VM sizing policy
-func resourceVmSizingPolicyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVmSizingPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy delete started: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires System administrator privileges")
+		return diag.Errorf("functionality requires System administrator privileges")
 	}
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	policy, err := adminOrg.GetVdcComputePolicyById(d.Id())
+	policy, err := vcdClient.Client.GetVdcComputePolicyById(d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate", policyName)
 		d.SetId("")
@@ -374,7 +348,7 @@ func resourceVmSizingPolicyDelete(d *schema.ResourceData, meta interface{}) erro
 	err = policy.Delete()
 	if err != nil {
 		log.Printf("[DEBUG] Error removing VM sizing policy %s, err: %s", policyName, err)
-		return fmt.Errorf("error removing VM sizing policy %s, err: %s", policyName, err)
+		return diag.Errorf("error removing VM sizing policy %s, err: %s", policyName, err)
 	}
 
 	log.Printf("[TRACE] VM sizing policy delete completed: %s", policyName)
@@ -522,7 +496,7 @@ func getMemoryInput(memoryPart []interface{}, params *types.VdcComputePolicy) (*
 }
 
 var errHelpVmSizingPolicyImport = fmt.Errorf(`resource id must be specified in one of these formats:
-'org-name.vm-sizing-policy-name', 'org-id.vm-sizing-policy-id' or 'list@org-name' to get a list of VM sizing policies with their IDs`)
+'vm-sizing-policy-name', 'vm-sizing-policy-id' or 'list@' to get a list of VM sizing policies with their IDs`)
 
 // resourceVmSizingPolicyImport is responsible for importing the resource.
 // The following steps happen as part of import
@@ -535,45 +509,36 @@ var errHelpVmSizingPolicyImport = fmt.Errorf(`resource id must be specified in o
 // based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_vm_sizing_policy.my_existing_policy_name
-// Example import path (_the_id_string_): org.my_existing_vm_sizing_policy_id
-// Example list path (_the_id_string_): list@org-name
+// Example import path (_the_id_string_): my_existing_vm_sizing_policy_id
+// Example list path (_the_id_string_): list@
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVmSizingPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVmSizingPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
 	log.Printf("[DEBUG] importing VM sizing policy resource with provided id %s", d.Id())
 
-	if len(resourceURI) != 1 && len(resourceURI) != 2 {
+	if len(resourceURI) != 1 {
 		return nil, errHelpVmSizingPolicyImport
 	}
 	if strings.Contains(d.Id(), "list@") {
-		commandOrgName := resourceURI[0]
-		commandOrgNameSplit := strings.Split(commandOrgName, "@")
-		if len(commandOrgNameSplit) != 2 {
-			return nil, errHelpVmSizingPolicyImport
-		}
-		orgId := commandOrgNameSplit[1]
-		return listVmSizingPoliciesForImport(meta, orgId)
+
+		return listVmSizingPoliciesForImport(meta)
 	} else {
-		orgId, policyId := resourceURI[0], resourceURI[1]
-		return getVmSizingPolicy(d, meta, orgId, policyId)
+		policyId := resourceURI[0]
+		return getVmSizingPolicy(d, meta, policyId)
 	}
 }
 
-func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, orgId, policyId string) ([]*schema.ResourceData, error) {
+func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgId)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, err)
-	}
-
 	var vmSizingPolicy *govcd.VdcComputePolicy
-	vmSizingPolicy, err = adminOrg.GetVdcComputePolicyById(policyId)
+	var err error
+	vmSizingPolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
 		queryParams.Add("filter", "name=="+policyId)
-		vmSizingPolicies, err := adminOrg.GetAllVdcComputePolicies(queryParams)
+		vmSizingPolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyId)
 			return nil, fmt.Errorf("unable to find VM sizing policy %s, err: %s", policyId, err)
@@ -585,30 +550,23 @@ func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, orgId, policyId
 		vmSizingPolicy = vmSizingPolicies[0]
 	}
 
-	if vcdClient.Org != adminOrg.AdminOrg.Name && vcdClient.Org != adminOrg.AdminOrg.ID {
-		dSet(d, "org", adminOrg.AdminOrg.Name)
-	}
-
 	dSet(d, "name", vmSizingPolicy.VdcComputePolicy.Name)
 	d.SetId(vmSizingPolicy.VdcComputePolicy.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.ResourceData, error) {
+func listVmSizingPoliciesForImport(meta interface{}) ([]*schema.ResourceData, error) {
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetAdminOrgByNameOrId(orgId)
-	if err != nil {
-		return nil, fmt.Errorf("[listVmSizingPoliciesForImport] unable to find Org %s: %s ", orgId, err)
-	}
+	var err error
 
 	buf := new(bytes.Buffer)
 	_, err = fmt.Fprintln(buf, "Retrieving all VM sizing policies")
 	if err != nil {
 		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
 	}
-	policies, err := org.GetAllVdcComputePolicies(nil)
+	policies, err := vcdClient.Client.GetAllVdcComputePolicies(nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
 	}
@@ -625,7 +583,12 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 	}
 
 	for index, policy := range policies {
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\n", index+1, policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		// If we don't skip the auto generated policies, we also get in the list the ones that are
+		// created and assigned to a VDC by default
+		if policy.VdcComputePolicy.IsAutoGenerated {
+			continue
+		}
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s \n", index+1, policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
 		if err != nil {
 			logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
 		}

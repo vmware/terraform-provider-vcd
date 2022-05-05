@@ -31,47 +31,47 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"catalog": &schema.Schema{
+			"catalog": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "catalog name where upload the OVA file",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "catalog item name",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"created": &schema.Schema{
+			"created": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Time stamp of when the item was created",
 			},
-			"ova_path": &schema.Schema{
+			"ova_path": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				ExactlyOneOf: []string{"ova_path", "ovf_url"},
 				Description:  "Absolute or relative path to OVA",
 			},
-			"ovf_url": &schema.Schema{
+			"ovf_url": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				ExactlyOneOf: []string{"ova_path", "ovf_url"},
 				Description:  "URL of OVF file",
 			},
-			"upload_piece_size": &schema.Schema{
+			"upload_piece_size": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     1,
 				Description: "size of upload file piece size in mega bytes",
 			},
-			"show_upload_progress": &schema.Schema{
+			"show_upload_progress": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "shows upload progress in stdout",

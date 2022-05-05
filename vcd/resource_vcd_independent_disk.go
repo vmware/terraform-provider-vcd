@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -516,7 +517,7 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 	for _, vmHref := range vmsHrefs {
 		attachedVmIds = append(attachedVmIds, extractUuid(vmHref))
 	}
-	attachedVmSet := convertStringsTotTypeSet(attachedVmIds)
+	attachedVmSet := convertStringsToTypeSet(attachedVmIds)
 	err = d.Set("attached_vm_ids", attachedVmSet)
 	if err != nil {
 		return fmt.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)

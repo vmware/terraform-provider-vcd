@@ -11,7 +11,7 @@ func datasourceVcdNsxtManager() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceNsxtManagerRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of NSX-T manager.",

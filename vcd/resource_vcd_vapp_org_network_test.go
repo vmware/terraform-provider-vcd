@@ -73,7 +73,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkExists(resourceName),
@@ -87,7 +87,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "is_fenced", params["isFenced"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkExists(resourceName),
@@ -101,7 +101,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "is_fenced", params["isFencedForUpdate"].(string)),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,

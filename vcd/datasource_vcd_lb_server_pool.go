@@ -23,23 +23,23 @@ func datasourceVcdLbServerPool() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which the LB Server Pool is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Server Pool name for lookup",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Server pool description",
 			},
-			"algorithm": &schema.Schema{
+			"algorithm": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Balancing method for the service",
@@ -49,12 +49,12 @@ func datasourceVcdLbServerPool() *schema.Resource {
 				Computed:    true,
 				Description: "Additional options for load balancing algorithm for http-header or url algorithms",
 			},
-			"monitor_id": &schema.Schema{
+			"monitor_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Load Balancer Service Monitor ID",
 			},
-			"enable_transparency": &schema.Schema{
+			"enable_transparency": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Makes client IP addresses visible to the backend servers",
@@ -69,7 +69,7 @@ func datasourceVcdLbServerPool() *schema.Resource {
 							Computed:    true,
 							Description: "Pool member id (formatted as member-xx, where xx is a number)",
 						},
-						"condition": &schema.Schema{
+						"condition": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Defines member state. One of enabled, drain, disabled.",

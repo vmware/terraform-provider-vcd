@@ -25,33 +25,33 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which IP Sec VPN configuration is located",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of IP Sec VPN configuration",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enables or disables this configuration (default true)",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of NAT rule",
 			},
-			"pre_shared_key": &schema.Schema{
+			"pre_shared_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Pre-Shared Key (PSK)",
 			},
-			"local_ip_address": &schema.Schema{
+			"local_ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IPv4 Address for the endpoint. This has to be a sub-allocated IP on the Edge Gateway.",
@@ -64,7 +64,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"remote_ip_address": &schema.Schema{
+			"remote_ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Public IPv4 Address of the remote device terminating the VPN connection",
@@ -77,23 +77,23 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"logging": &schema.Schema{
+			"logging": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Sets whether logging for the tunnel is enabled or not. (default - false)",
 			},
-			"security_profile_customization": &schema.Schema{
+			"security_profile_customization": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "Security profile customization",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"ike_version": &schema.Schema{
+						"ike_version": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "IKE version one of IKE_V1, IKE_V2, IKE_FLEX",
 						},
-						"ike_encryption_algorithms": &schema.Schema{
+						"ike_encryption_algorithms": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "Encryption algorithms. One of SHA1, SHA2_256, SHA2_384, SHA2_512",
@@ -101,7 +101,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ike_digest_algorithms": &schema.Schema{
+						"ike_digest_algorithms": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Description: "Secure hashing algorithms to use during the IKE negotiation. One of SHA1, " +
@@ -110,7 +110,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ike_dh_groups": &schema.Schema{
+						"ike_dh_groups": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Description: "Diffie-Hellman groups to be used if Perfect Forward Secrecy is enabled. One " +
@@ -119,26 +119,26 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ike_sa_lifetime": &schema.Schema{
+						"ike_sa_lifetime": {
 							Type:     schema.TypeInt,
 							Computed: true,
 							Description: "Security Association life time (in seconds). It is number of seconds " +
 								"before the IPsec tunnel needs to reestablish",
 						},
 
-						"tunnel_pfs_enabled": &schema.Schema{
+						"tunnel_pfs_enabled": {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Perfect Forward Secrecy Enabled or Disabled. Default (enabled)",
 						},
 
-						"tunnel_df_policy": &schema.Schema{
+						"tunnel_df_policy": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Policy for handling defragmentation bit. One of COPY, CLEAR",
 						},
 
-						"tunnel_encryption_algorithms": &schema.Schema{
+						"tunnel_encryption_algorithms": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Description: "Encryption algorithms to use in IPSec tunnel establishment. One of AES_128, " +
@@ -148,7 +148,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"tunnel_digest_algorithms": &schema.Schema{
+						"tunnel_digest_algorithms": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Description: "Digest algorithms to be used for message digest. One of SHA1, SHA2_256, " +
@@ -157,7 +157,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"tunnel_dh_groups": &schema.Schema{
+						"tunnel_dh_groups": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Description: "Diffie-Hellman groups to be used is PFS is enabled. One of GROUP2, GROUP5, " +
@@ -166,12 +166,12 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"tunnel_sa_lifetime": &schema.Schema{
+						"tunnel_sa_lifetime": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Security Association life time (in seconds)",
 						},
-						"dpd_probe_internal": &schema.Schema{
+						"dpd_probe_internal": {
 							Type:     schema.TypeInt,
 							Computed: true,
 							Description: "Value in seconds of dead probe detection interval. Minimum is 3 seconds and " +
@@ -180,23 +180,23 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					},
 				},
 			},
-			"security_profile": &schema.Schema{
+			"security_profile": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "Security type which is use for IPsec VPN Tunnel. It will be 'DEFAULT' if nothing is " +
 					"customized and 'CUSTOM' if some changes are applied",
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Overall IPsec VPN Tunnel Status",
 			},
-			"ike_service_status": &schema.Schema{
+			"ike_service_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status for the actual IKE Session for the given tunnel",
 			},
-			"ike_fail_reason": &schema.Schema{
+			"ike_fail_reason": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Provides more details of failure if the IKE service is not UP",

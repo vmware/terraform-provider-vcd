@@ -35,45 +35,45 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"vapp_id": &schema.Schema{
+			"vapp_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp identifier",
 			},
-			"shared_with_everyone": &schema.Schema{
+			"shared_with_everyone": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether the vApp is shared with everyone",
 			},
-			"everyone_access_level": &schema.Schema{
+			"everyone_access_level": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly, types.ControlAccessReadWrite, types.ControlAccessFullControl}, true),
 				Description:  "Access level when the vApp is shared with everyone (one of ReadOnly, Change, FullControl). Required when shared_with_everyone is set",
 			},
-			"shared_with": &schema.Schema{
+			"shared_with": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"user_id": &schema.Schema{
+						"user_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "ID of the user to which we are sharing. Required if group_id is not set",
 						},
-						"group_id": &schema.Schema{
+						"group_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "ID of the group to which we are sharing. Required if user_id is not set",
 						},
-						"subject_name": &schema.Schema{
+						"subject_name": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Name of the subject (group or user) with which we are sharing",
 						},
-						"access_level": &schema.Schema{
+						"access_level": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly, types.ControlAccessReadWrite, types.ControlAccessFullControl}, true),

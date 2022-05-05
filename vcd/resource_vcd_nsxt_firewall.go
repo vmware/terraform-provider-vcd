@@ -40,54 +40,54 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge Gateway ID in which Firewall Rule are located",
 			},
-			"rule": &schema.Schema{
+			"rule": {
 				Type:        schema.TypeList, // Firewall rule order matters
 				Required:    true,
 				MinItems:    1,
 				Description: "Ordered list of firewall rules",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": &schema.Schema{
+						"id": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Firewall Rule ID",
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Firewall Rule name",
 						},
-						"direction": &schema.Schema{
+						"direction": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Direction on which Firewall Rule applies (One of 'IN', 'OUT', 'IN_OUT')",
 							ValidateFunc: validation.StringInSlice([]string{"IN", "OUT", "IN_OUT"}, false),
 						},
-						"ip_protocol": &schema.Schema{
+						"ip_protocol": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Firewall Rule Protocol (One of 'IPV4', 'IPV6', 'IPV4_IPV6')",
 							ValidateFunc: validation.StringInSlice([]string{"IPV4", "IPV6", "IPV4_IPV6"}, false),
 						},
-						"action": &schema.Schema{
+						"action": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Defines if the rule should 'ALLOW' or 'DROP' matching traffic",
 							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP"}, false),
 						},
-						"enabled": &schema.Schema{
+						"enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     true,
 							Description: "Defined if Firewall Rule is active",
 						},
-						"logging": &schema.Schema{
+						"logging": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
@@ -257,13 +257,13 @@ func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceDa
 
 	for index, value := range fwRules {
 		sourceSlice := extractIdsFromOpenApiReferences(value.SourceFirewallGroups)
-		sourceSet := convertStringsTotTypeSet(sourceSlice)
+		sourceSet := convertStringsToTypeSet(sourceSlice)
 
 		destinationSlice := extractIdsFromOpenApiReferences(value.DestinationFirewallGroups)
-		destinationSet := convertStringsTotTypeSet(destinationSlice)
+		destinationSet := convertStringsToTypeSet(destinationSlice)
 
 		appPortProfileSlice := extractIdsFromOpenApiReferences(value.ApplicationPortProfiles)
-		appPortProfileSet := convertStringsTotTypeSet(appPortProfileSlice)
+		appPortProfileSet := convertStringsToTypeSet(appPortProfileSlice)
 
 		result[index] = map[string]interface{}{
 			"id":                   value.ID,

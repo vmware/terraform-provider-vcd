@@ -25,39 +25,39 @@ func datasourceVcdAlbPool() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway_id": &schema.Schema{
+			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway ID in which ALB Pool should be created",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of ALB Pool",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if NSX-T ALB Pool is enabled or disabled",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of ALB Pool",
 			},
-			"algorithm": &schema.Schema{
+			"algorithm": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Algorithm for choosing pool members (default LEAST_CONNECTIONS)",
 			},
 
-			"default_port": &schema.Schema{
+			"default_port": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Default Port defines destination server port used by the traffic sent to the member (default 80)",
 			},
-			"graceful_timeout_period": &schema.Schema{
+			"graceful_timeout_period": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Maximum time in minutes to gracefully disable pool member (default 1)",
@@ -68,7 +68,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 				Description: "ALB Pool Members",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"enabled": &schema.Schema{
+						"enabled": {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Shows is the member is enabled or not",
@@ -114,16 +114,16 @@ func datasourceVcdAlbPool() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": &schema.Schema{
+						"type": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Type of health monitor",
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"system_defined": &schema.Schema{
+						"system_defined": {
 							Type:     schema.TypeBool,
 							Computed: true,
 						},
@@ -135,17 +135,17 @@ func datasourceVcdAlbPool() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "System generated name of persistence profile",
 						},
-						"type": &schema.Schema{
+						"type": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Type of persistence strategy",
 						},
-						"value": &schema.Schema{
+						"value": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Value of attribute based on persistence type",
@@ -161,7 +161,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"cn_check_enabled": &schema.Schema{
+			"cn_check_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Boolean flag if common name check of the certificate should be enabled",
@@ -174,7 +174,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"passive_monitoring_enabled": &schema.Schema{
+			"passive_monitoring_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
@@ -197,22 +197,22 @@ func datasourceVcdAlbPool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"member_count": &schema.Schema{
+			"member_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of members in the pool",
 			},
-			"up_member_count": &schema.Schema{
+			"up_member_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of members in the pool serving the traffic",
 			},
-			"enabled_member_count": &schema.Schema{
+			"enabled_member_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of enabled members in the pool",
 			},
-			"health_message": &schema.Schema{
+			"health_message": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Health message",

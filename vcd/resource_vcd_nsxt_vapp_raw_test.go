@@ -57,7 +57,7 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdNsxtVAppRawDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNsxtVAppRawExists(fmt.Sprintf("vcd_vapp.%s", params["VappName"].(string)), &vapp),
@@ -73,11 +73,11 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 				),
 			},
 			// This step ensures that VM and disk are removed, but networks are left
-			resource.TestStep{
+			{
 				Config: configText2,
 			},
 			// This step gives 10-second sleep timer so that cleanup bug is not hit in VCD 10.3
-			resource.TestStep{
+			{
 				Config:    configText2,
 				PreConfig: func() { time.Sleep(10 * time.Second) },
 			},

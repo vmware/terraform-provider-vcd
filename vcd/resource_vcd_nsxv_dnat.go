@@ -35,65 +35,65 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
 			},
-			"network_name": &schema.Schema{
+			"network_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Org or external network name",
 			},
-			"network_type": &schema.Schema{
+			"network_type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
 				Description:  "Network type. One of 'ext', 'org'",
 			},
-			"rule_type": &schema.Schema{
+			"rule_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				Computed:    true,
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
-			"rule_tag": &schema.Schema{
+			"rule_tag": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     true,
 				Description: "Whether the rule should be enabled. Default 'true'",
 			},
-			"logging_enabled": &schema.Schema{
+			"logging_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     false,
 				Description: "Whether logging should be enabled for this rule. Default 'false'",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				Description: "NAT rule description",
 			},
-			"original_address": &schema.Schema{
+			"original_address": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 				Description: "Original address or address range. This is the " +
 					"the destination address for DNAT rules.",
 			},
-			"protocol": &schema.Schema{
+			"protocol": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         false,
@@ -101,7 +101,7 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				ValidateFunc:     validateCase("lower"),
 				Description:      "Protocol. Such as 'tcp', 'udp', 'icmp', 'any'",
 			},
-			"icmp_type": &schema.Schema{
+			"icmp_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     false,
@@ -111,20 +111,20 @@ func resourceVcdNsxvDnat() *schema.Resource {
 					"`echo-reply`, `parameter-problem`, `redirect`, `router-advertisement`, `router-solicitation`, " +
 					"`source-quench`, `time-exceeded`, `timestamp-request`, `timestamp-reply`. Default `any`",
 			},
-			"original_port": &schema.Schema{
+			"original_port": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         false,
 				DiffSuppressFunc: suppressWordToEmptyString("any"),
 				Description:      "Original port. This is the destination port for DNAT rules",
 			},
-			"translated_address": &schema.Schema{
+			"translated_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				Description: "Translated address or address range",
 			},
-			"translated_port": &schema.Schema{
+			"translated_port": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         false,

@@ -55,7 +55,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, orgName, vdcName),
@@ -81,7 +81,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_vm." + standaloneVmName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -134,7 +134,7 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, orgName, vdcName),

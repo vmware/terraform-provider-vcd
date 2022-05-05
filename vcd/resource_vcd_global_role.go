@@ -21,38 +21,38 @@ func resourceVcdGlobalRole() *schema.Resource {
 			StateContext: resourceVcdGlobalRoleImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of global role.",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Global role description",
 			},
-			"bundle_key": &schema.Schema{
+			"bundle_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Key used for internationalization",
 			},
-			"read_only": &schema.Schema{
+			"read_only": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Whether this global role is read-only",
 			},
-			"rights": &schema.Schema{
+			"rights": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "list of rights assigned to this global role",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"publish_to_all_tenants": &schema.Schema{
+			"publish_to_all_tenants": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "When true, publishes the global role to all tenants",
 			},
-			"tenants": &schema.Schema{
+			"tenants": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,

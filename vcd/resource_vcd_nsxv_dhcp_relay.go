@@ -49,7 +49,7 @@ func resourceVcdNsxvDhcpRelay() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -308,13 +308,13 @@ func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRel
 		return nil
 	}
 
-	relayServerIpAddressesSet := convertStringsTotTypeSet(relayServer.IpAddress)
+	relayServerIpAddressesSet := convertStringsToTypeSet(relayServer.IpAddress)
 	err := d.Set("ip_addresses", relayServerIpAddressesSet)
 	if err != nil {
 		return fmt.Errorf("could not save ip_addresses to schema: %s", err)
 	}
 
-	relayServerDomainNamesSet := convertStringsTotTypeSet(relayServer.Fqdns)
+	relayServerDomainNamesSet := convertStringsToTypeSet(relayServer.Fqdns)
 	err = d.Set("domain_names", relayServerDomainNamesSet)
 	if err != nil {
 		return fmt.Errorf("could not save domain_names to schema: %s", err)
@@ -324,7 +324,7 @@ func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRel
 		return fmt.Errorf("could not find names for all IP set IDs: %s", err)
 	}
 
-	relayServerIpSetNamesSet := convertStringsTotTypeSet(ipSetNames)
+	relayServerIpSetNamesSet := convertStringsToTypeSet(ipSetNames)
 	err = d.Set("ip_sets", relayServerIpSetNamesSet)
 	if err != nil {
 		return fmt.Errorf("could not save ip_sets to schema: %s", err)

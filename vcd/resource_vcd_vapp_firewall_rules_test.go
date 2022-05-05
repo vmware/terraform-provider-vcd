@@ -59,7 +59,7 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
@@ -122,21 +122,21 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enable_logging", "false"),
 				),
 			},
-			resource.TestStep{ // Step 1 - resource import
+			{ // Step 1 - resource import
 				ResourceName:            "vcd_vapp_firewall_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, vappNetworkName),
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
-			resource.TestStep{ // Step 2 - resource import by ID
+			{ // Step 2 - resource import by ID
 				ResourceName:            "vcd_vapp_firewall_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
-			resource.TestStep{ // Step 3 - update
+			{ // Step 3 - update
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),

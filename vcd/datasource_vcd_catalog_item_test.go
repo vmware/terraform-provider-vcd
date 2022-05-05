@@ -45,7 +45,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestCatalogItemDS),
@@ -65,7 +65,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 						resourceCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS,
 				ImportState:       true,
 				ImportStateVerify: true,

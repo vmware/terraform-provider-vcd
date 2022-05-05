@@ -35,12 +35,28 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 		return
 	}
 
+	vcdClient := createTemporaryVCDConnection(true)
+	vcdVersionIsLowerThan1031 := func() (bool, error) {
+		if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36.1") {
+			return false, nil
+		}
+		return true, nil
+	}
+
+	// This case is specific for VCD 10.3.1 onwards since dns servers are not present in previous versions
+	var configText2 string
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36.1") {
+		params["FuncName"] = t.Name() + "-step2"
+		configText2 = templateFill(testAccRoutedNetDhcpStep3, params)
+		debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
@@ -50,7 +66,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
@@ -64,7 +80,25 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 					}),
 				),
 			},
-			resource.TestStep{
+			{
+				Config:   configText2,
+				SkipFunc: vcdVersionIsLowerThan1031,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
+						"start_address": "7.1.1.100",
+						"end_address":   "7.1.1.110",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
+						"start_address": "7.1.1.130",
+						"end_address":   "7.1.1.140",
+					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.0", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.1", "1.0.0.1"),
+				),
+			},
+			{
 				ResourceName:      "vcd_nsxt_network_dhcp.pools",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -130,5 +164,26 @@ resource "vcd_nsxt_network_dhcp" "pools" {
     start_address = "7.1.1.130"
     end_address   = "7.1.1.140"
   }
+}
+`
+
+const testAccRoutedNetDhcpStep3 = testAccRoutedNetDhcpConfig + `
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  org_network_id = vcd_network_routed_v2.net1.id
+  
+  pool {
+    start_address = "7.1.1.100"
+    end_address   = "7.1.1.110"
+  }
+
+  pool {
+    start_address = "7.1.1.130"
+    end_address   = "7.1.1.140"
+  }
+
+  dns_servers = ["1.1.1.1", "1.0.0.1"]
 }
 `

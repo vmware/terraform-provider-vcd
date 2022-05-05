@@ -56,7 +56,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdNatRuleDestroy("vcd_nsxv_dnat.test2"),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // Step 0 - minimal configuration and data source
+			{ // Step 0 - minimal configuration and data source
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
@@ -88,7 +88,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "translated_port", "data.vcd_nsxv_dnat.data-test", "translated_port"),
 				),
 			},
-			resource.TestStep{ // Step 1 - update
+			{ // Step 1 - update
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
@@ -105,7 +105,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 				),
 			},
 
-			resource.TestStep{ // Step 2 - update with majority defaulted fields
+			{ // Step 2 - update with majority defaulted fields
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
@@ -121,7 +121,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "enabled", "true"),
 				),
 			},
-			resource.TestStep{ // Step 3 - switch nat rule to org network
+			{ // Step 3 - switch nat rule to org network
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
@@ -138,13 +138,13 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "enabled", "true"),
 				),
 			},
-			resource.TestStep{ // Step 4 - resource import
+			{ // Step 4 - resource import
 				ResourceName:      "vcd_nsxv_dnat.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_dnat.test"),
 			},
-			resource.TestStep{ // Step 5 - Another resource with different settings
+			{ // Step 5 - Another resource with different settings
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test2", "id", regexp.MustCompile(`\d*`)),

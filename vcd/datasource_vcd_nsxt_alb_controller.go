@@ -12,32 +12,32 @@ func datasourceVcdAlbController() *schema.Resource {
 		ReadContext: datasourceVcdAlbControllerRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "NSX-T ALB Controller name",
 			},
-			"url": &schema.Schema{
+			"url": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Controller URL",
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Controller Username",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Controller description",
 			},
-			"license_type": &schema.Schema{
+			"license_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB License type. One of 'BASIC', 'ENTERPRISE'",
 			},
-			"version": &schema.Schema{
+			"version": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NSX-T ALB Controller version",

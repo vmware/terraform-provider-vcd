@@ -57,7 +57,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
@@ -78,7 +78,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 						"vcd_vapp."+vappName, "lease.0.storage_lease_in_sec"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
@@ -95,7 +95,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `lease.0.storage_lease_in_sec`, fmt.Sprintf("%d", storageLease)),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_vapp." + vappName,
 				ImportState:       true,
 				ImportStateVerify: true,

@@ -50,7 +50,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdLbServerPoolDestroy(params["ServerPoolName"].(string)),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", t.Name()),
@@ -104,7 +104,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 				),
 			},
 			// configTextStep1 attaches monitor_id, changes some member settings
-			resource.TestStep{
+			{
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
@@ -209,7 +209,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 				),
 			},
 			// Check that import works
-			resource.TestStep{
+			{
 				ResourceName:      "vcd_lb_server_pool.server-pool",
 				ImportState:       true,
 				ImportStateVerify: true,

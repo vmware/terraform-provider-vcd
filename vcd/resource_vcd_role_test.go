@@ -47,7 +47,7 @@ func TestAccVcdRole(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRoleDestroy(resourceDef),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists(resourceDef),
@@ -55,7 +55,7 @@ func TestAccVcdRole(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "rights.#", "6"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists(resourceDef),
@@ -64,7 +64,7 @@ func TestAccVcdRole(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "rights.#", "5"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceDef,
 				ImportState:       true,
 				ImportStateVerify: true,

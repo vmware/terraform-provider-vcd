@@ -19,42 +19,42 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"edge_gateway": &schema.Schema{
+			"edge_gateway": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Edge gateway name in which the firewall rule is located",
 			},
-			"rule_id": &schema.Schema{
+			"rule_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Firewall rule ID for lookup",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Firewall rule name",
 			},
-			"rule_type": &schema.Schema{
+			"rule_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
-			"rule_tag": &schema.Schema{
+			"rule_tag": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
 			},
-			"action": &schema.Schema{
+			"action": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "'accept' or 'deny'. Default 'accept'",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Whether the rule should be enabled. Default 'true'",
 			},
-			"logging_enabled": &schema.Schema{
+			"logging_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Whether logging should be enabled for this rule. Default 'false'",

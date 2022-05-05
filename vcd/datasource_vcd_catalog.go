@@ -20,39 +20,39 @@ func datasourceVcdCatalog() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Name of the catalog. (Optional if 'filter' is used)",
 				ExactlyOneOf: []string{"name", "filter"},
 			},
-			"storage_profile_id": &schema.Schema{
+			"storage_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Storage profile ID",
 			},
-			"created": &schema.Schema{
+			"created": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Time stamp of when the catalog was created",
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"publish_enabled": &schema.Schema{
+			"publish_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation. Default is `false`.",
 			},
-			"cache_enabled": &schema.Schema{
+			"cache_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True enables early catalog export to optimize synchronization",
 			},
-			"preserve_identity_information": &schema.Schema{
+			"preserve_identity_information": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
@@ -97,7 +97,7 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,

@@ -14,12 +14,12 @@ import (
 
 var nsxtDhcpPoolSetSchema = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"start_address": &schema.Schema{
+		"start_address": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Start address of DHCP pool IP range",
 		},
-		"end_address": &schema.Schema{
+		"end_address": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "End address of DHCP pool IP range",
@@ -52,17 +52,26 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 
-			"org_network_id": &schema.Schema{
+			"org_network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Parent Org VDC network ID",
 			},
-			"pool": &schema.Schema{
+			"pool": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "IP ranges used for DHCP pool allocation in the network",
 				Elem:        nsxtDhcpPoolSetSchema,
+			},
+			"dns_servers": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "The DNS server IPs to be assigned by this DHCP service. 2 values maximum.",
+				MaxItems:    2,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -89,6 +98,13 @@ func resourceVcdOpenApiDhcpCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dhcpType := getOpenAPIOrgVdcNetworkDhcpType(d)
+
+	// DnsServers is a feature added from API 36.1. If API is lower, this attribute is set to empty to avoid sending it
+	_, ok := d.GetOk("dns_servers")
+	if ok && vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+		return diag.Errorf("`dns_servers` is supported from VCD 10.3.1+ version")
+	}
+
 	_, err = vdc.UpdateOpenApiOrgVdcNetworkDhcp(orgNetworkId, dhcpType)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool set] error setting DHCP pool for Org VDC network ID '%s': %s",
@@ -222,6 +238,15 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 		orgVdcNetDhcp.DhcpPools = dhcpPools
 	}
 
+	dnsServers, ok := d.GetOk("dns_servers")
+	if ok {
+		dnsServerSet := make([]string, len(dnsServers.([]interface{})))
+		for i, v := range dnsServers.([]interface{}) {
+			dnsServerSet[i] = v.(string)
+		}
+		orgVdcNetDhcp.DnsServers = dnsServerSet
+	}
+
 	return orgVdcNetDhcp
 }
 
@@ -243,6 +268,10 @@ func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiO
 		if err != nil {
 			return err
 		}
+	}
+
+	if len(orgVdc.DnsServers) > 0 {
+		d.Set("dns_servers", orgVdc.DnsServers)
 	}
 
 	return nil
