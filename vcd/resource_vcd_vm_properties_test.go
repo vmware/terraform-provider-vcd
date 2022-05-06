@@ -69,7 +69,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
-					resource.TestCheckNoResourceAttr("vcd_vm."+standaloneVmName, `guest_properties`),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.%`, "0"),
 				),
 			},
 		},

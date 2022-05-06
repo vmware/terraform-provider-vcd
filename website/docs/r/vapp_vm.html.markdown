@@ -274,6 +274,8 @@ resource "vcd_vapp_vm" "advancedVM" {
   cpu_limit       = "1000"
 }
 
+```
+
 ## Argument Reference
 
 The following arguments are supported:
