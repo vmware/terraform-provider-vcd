@@ -636,6 +636,8 @@ func getDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName
 	}
 
 	d.SetId(disk.Disk.Id)
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
 	dSet(d, "name", disk.Disk.Name)
 	return []*schema.ResourceData{d}, nil
 }

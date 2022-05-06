@@ -71,7 +71,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), "name", t.Name()),
-					resource.TestCheckNoResourceAttr("vcd_vapp."+t.Name(), `guest_properties`),
+					resource.TestCheckTypeSetElemAttr("vcd_vapp."+t.Name(), "guest_properties.*", "0"),
 				),
 			},
 		},

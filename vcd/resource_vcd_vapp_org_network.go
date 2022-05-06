@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
 )
 
 func resourceVcdVappOrgNetwork() *schema.Resource {
@@ -143,8 +144,9 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 				return fmt.Errorf("unable to get network ID from HREF: %s", err)
 			}
 			// name check needed for datasource to find network as don't have ID
-			if d.Id() == networkId || networkConfig.NetworkName == d.Get("org_network_name").(string) {
+			if extractUuid(d.Id()) == extractUuid(networkId) || networkConfig.NetworkName == d.Get("org_network_name").(string) {
 				vAppNetwork = networkConfig
+				break
 			}
 		}
 	}

@@ -80,10 +80,17 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	configTextWithoutOptionals := templateFill(testAccCheckVcdIndependentDiskWithoutOptionals, params)
 	params["FuncName"] = t.Name() + "-Update"
 	configTextForUpdate := templateFill(testAccCheckVcdIndependentDiskForUpdate, params)
-	params["FuncName"] = t.Name() + "-Nvme"
-	configTextNvme := templateFill(testAccCheckVcdIndependentDiskNvmeType, params)
-	params["FuncName"] = t.Name() + "-NvmeUpdate"
-	configTextNvmeUpdate := templateFill(testAccCheckVcdIndependentDiskNvmeTypeUpdate, params)
+
+	var configTextNvme string
+	var configTextNvmeUpdate string
+	if nvmeUnsupported, _ := vcdVersionIsLowerThan1022(); !nvmeUnsupported {
+		params["FuncName"] = t.Name() + "-Nvme"
+		configTextNvme = templateFill(testAccCheckVcdIndependentDiskNvmeType, params)
+		params["FuncName"] = t.Name() + "-NvmeUpdate"
+		configTextNvmeUpdate = templateFill(testAccCheckVcdIndependentDiskNvmeTypeUpdate, params)
+
+	}
+
 	params["FuncName"] = t.Name() + "-attachedToVm"
 	configTextAttachedToVm := templateFill(testAccCheckVcdIndependentDiskAttachedToVm, params)
 	params["FuncName"] = t.Name() + "-attachedToVmUpdate"
