@@ -32,8 +32,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the security tag.
 * `vm_ids` - (Required) List of VM IDs that the security tag is going to be applied to.
 
-**Important**:
-The ID of `vcd_security_tag` is set to its name since VCD behind the scenes doesn't create an ID.
+-> The ID of `vcd_security_tag` is set to its name since VCD behind the scenes doesn't create an ID.
 
 # Importing
 
