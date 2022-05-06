@@ -20,7 +20,7 @@ Supported in provider *v3.7+* and requires VCD 10.3.0+
 
 ```hcl
 resource "vcd_security_tag" "my_tag" {
-  name = "test-tag"
+  name   = "test-tag"
   vm_ids = [vcd_vm.my-vm-one.id, vcd_vm.my-vm-two.id]
 }
 ```
