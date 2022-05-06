@@ -14,7 +14,7 @@ func TestAccVcdSecurityTag(t *testing.T) {
 
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
-		"Vdc":          testConfig.VCD.Vdc,
+		"Vdc":          testConfig.Nsxt.Vdc,
 		"VappName":     t.Name() + "-vapp",
 		"VmName":       t.Name() + "-vm",
 		"ComputerName": t.Name() + "-vm",
@@ -34,6 +34,11 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		return
 	}
 
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
+		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
+	}
+
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -51,6 +56,12 @@ func TestAccVcdSecurityTag(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecurityTagCreated(tag1, tag2),
 				),
+			},
+			{
+				ResourceName:      fmt.Sprintf("vcd_security_tag.%s", tag1),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     testConfig.VCD.Org + "." + tag1,
 			},
 		},
 	})
