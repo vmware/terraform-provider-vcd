@@ -19,7 +19,7 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		"VmName":       t.Name() + "-vm",
 		"ComputerName": t.Name() + "-vm",
 		"Catalog":      testConfig.VCD.Catalog.Name,
-		"CatalogItem":  testConfig.VCD.Catalog.CatalogItem,
+		"Media":        testConfig.Media.MediaName,
 		"SecurityTag1": tag1,
 		"SecurityTag2": tag2,
 		"FuncName":     t.Name(),
@@ -77,16 +77,19 @@ resource "vcd_vapp" "{{.VappName}}" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  name          = "{{.VmName}}"
-  computer_name = "{{.ComputerName}}"
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
-  memory        = 1024
+  name          = "VmWithoutTemplate"
+  computer_name = "emptyVM"
+  memory        = 2048
   cpus          = 2
   cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
 }
 
 resource "vcd_security_tag" "{{.SecurityTag1}}" {
@@ -104,16 +107,19 @@ resource "vcd_vapp" "{{.VappName}}" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  name          = "{{.VmName}}"
-  computer_name = "{{.ComputerName}}"
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
-  memory        = 1024
+  name          = "VmWithoutTemplate"
+  computer_name = "emptyVM"
+  memory        = 2048
   cpus          = 2
   cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
 }
 
 resource "vcd_security_tag" "{{.SecurityTag1}}" {
