@@ -25,10 +25,6 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		"FuncName":     t.Name(),
 	}
 
-	configText := templateFill(testAccSecurityTag, params)
-
-	params["FuncName"] = t.Name() + "-update"
-	configTextUpdate := templateFill(testAccSecurityTagUpdate, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -38,6 +34,11 @@ func TestAccVcdSecurityTag(t *testing.T) {
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
 		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
 	}
+
+	configText := templateFill(testAccSecurityTag, params)
+
+	params["FuncName"] = t.Name() + "-update"
+	configTextUpdate := templateFill(testAccSecurityTagUpdate, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
