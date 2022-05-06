@@ -8,7 +8,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
-	"net/url"
 	"strings"
 )
 
@@ -67,7 +66,7 @@ func resourceVcdOpenApiSecurityTagCreateUpdate(ctx context.Context, d *schema.Re
 		return diag.Errorf("error when setting up security tags - %s", err)
 	}
 
-	d.SetId(securityTagName) // Security tags doesn't have a real ID. That's why we use the name as ID here.
+	d.SetId(securityTagName) // Security tags don't have a real ID. That's why we use the name as ID here.
 
 	return resourceVcdOpenApiSecurityTagRead(ctx, d, meta)
 }
@@ -141,11 +140,7 @@ func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.Resource
 		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
 	}
 
-	filter := url.Values{
-		"filter": []string{"tag==" + securityTag},
-	}
-
-	taggedEntities, err := org.GetAllSecurityTaggedEntities(filter)
+	taggedEntities, err := org.GetAllSecurityTaggedEntitiesByName(securityTag)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +150,6 @@ func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.Resource
 		readEntities[i] = entity.ID
 	}
 
-	dSet(d, "org", orgName)
 	dSet(d, "name", securityTag)
 	err = d.Set("vm_ids", convertStringsToTypeSet(readEntities))
 	if err != nil {
