@@ -39,11 +39,16 @@ The following arguments are supported:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing security tag can be [imported][docs-import] into this resource. An example is below:
+An existing security tag can be [imported][docs-import] into this resource via supplying its path.
+The path for this resource is made of org-name.security-tag-name
+An example is below:
 
 ```
 terraform import vcd_security_tag.my-tag my-org.my-security-tag-name
 ```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
 
 [docs-import]:https://www.terraform.io/docs/import/
 
