@@ -48,10 +48,10 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Org network will be looked up based on 'org_network_id' field",
 			},
-
 			"org_network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -79,22 +79,17 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 
 func resourceVcdOpenApiDhcpCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP pool set] error retrieving VDC: %s", err)
+		return diag.Errorf("[NSX-T DHCP pool set] error retrieving Org: %s", err)
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
 
 	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
-	orgVdcNet, err := vdc.GetOpenApiOrgVdcNetworkById(orgNetworkId)
+	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool create] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
-	}
-
-	if !orgVdcNet.IsRouted() || !vdc.IsNsxt() {
-		return diag.Errorf("[NSX-T DHCP pool set] DHCP configuration is only supported for Routed NSX-T networks: %s", err)
 	}
 
 	dhcpType := getOpenAPIOrgVdcNetworkDhcpType(d)
@@ -105,7 +100,7 @@ func resourceVcdOpenApiDhcpCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("`dns_servers` is supported from VCD 10.3.1+ version")
 	}
 
-	_, err = vdc.UpdateOpenApiOrgVdcNetworkDhcp(orgNetworkId, dhcpType)
+	_, err = orgVdcNet.UpdateDhcp(dhcpType)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool set] error setting DHCP pool for Org VDC network ID '%s': %s",
 			orgNetworkId, err)
@@ -125,7 +120,7 @@ func resourceVcdOpenApiDhcpUpdate(ctx context.Context, d *schema.ResourceData, m
 func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool read] error retrieving VDC: %s", err)
 	}
@@ -133,7 +128,7 @@ func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, met
 	orgNetworkId := d.Id()
 	// There may be cases when parent Org VDC network is no longer present. In that case we want to report that
 	// DHCP pool no longer exists without breaking Terraform read.
-	_, err = vdc.GetOpenApiOrgVdcNetworkById(orgNetworkId)
+	orgVdcNetwork, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -143,7 +138,7 @@ func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("[NSX-T DHCP pool read] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
 
-	pool, err := vdc.GetOpenApiOrgVdcNetworkDhcp(d.Id())
+	pool, err := orgVdcNetwork.GetOpenApiOrgVdcNetworkDhcp()
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool read] error retrieving DHCP pools for Org network ID '%s': %s",
 			d.Id(), err)
@@ -161,12 +156,17 @@ func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, met
 func resourceVcdOpenApiDhcpDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP pool delete] error retrieving VDC: %s", err)
+		return diag.Errorf("[NSX-T DHCP pool delete] error retrieving Org: %s", err)
 	}
 
-	err = vdc.DeleteOpenApiOrgVdcNetworkDhcp(d.Id())
+	orgVdcNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
+	if err != nil {
+		return diag.Errorf("[NSX-T DHCP pool delete] error retrieving parent Org VDC Network: %s", err)
+	}
+
+	err = orgVdcNetwork.DeletNetworkDhcp()
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool delete] error removing DHCP pool for Org network ID '%s': %s", d.Id(), err)
 	}
@@ -177,32 +177,37 @@ func resourceVcdOpenApiDhcpDelete(ctx context.Context, d *schema.ResourceData, m
 func resourceVcdOpenApiDhcpImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.org_network_name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-org-vdc-group-name.org_network_name")
 	}
-	orgName, vdcName, orgVdcNetworkName := resourceURI[0], resourceURI[1], resourceURI[2]
+	orgName, vdcOrVdcGroupName, orgVdcNetworkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetAdminOrg(orgName)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-	}
-	vdc, err := org.GetVDCByName(vdcName, false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+	// define an interface type to match VDC and VDC Groups
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+	if govcd.ContainsNotFound(err) {
+		adminOrg, err := vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+		}
 	}
 
 	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
-	orgVdcNet, err := vdc.GetOpenApiOrgVdcNetworkByName(orgVdcNetworkName)
+	orgVdcNet, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(orgVdcNetworkName)
 	if err != nil {
 		return nil, fmt.Errorf("[NSX-T DHCP pool import] error retrieving Org VDC network with name '%s': %s", orgVdcNetworkName, err)
 	}
 
-	if !orgVdcNet.IsRouted() || !vdc.IsNsxt() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, fmt.Errorf("[NSX-T DHCP pool import] DHCP configuration is only supported for Routed NSX-T networks: %s", err)
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	d.SetId(orgVdcNet.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil

@@ -70,6 +70,10 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	configText3 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
+	params["FuncName"] = t.Name() + "step5"
+	configText5 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep5DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -81,6 +85,7 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	routedNetId := testCachedFieldValue{}
 	isolatedNetId := testCachedFieldValue{}
 	importedNetId := testCachedFieldValue{}
+	networkDhcpPools := testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -107,6 +112,9 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					importedNetId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.nsxt-backed", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_org_vdc.newVdc.0", "id"),
+
+					networkDhcpPools.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp.pools", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_network_dhcp.pools", "id", "vcd_network_routed_v2.nsxt-backed", "id"),
 				),
 			},
 			{
@@ -132,6 +140,9 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					importedNetId.testCheckCachedResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
+
+					networkDhcpPools.testCheckCachedResourceFieldValue("vcd_nsxt_network_dhcp.pools", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_network_dhcp.pools", "id", "vcd_network_routed_v2.nsxt-backed", "id"),
 				),
 			},
 			{
@@ -154,6 +165,16 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					importedNetId.testCheckCachedResourceFieldValue("vcd_nsxt_network_imported.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
+
+					networkDhcpPools.testCheckCachedResourceFieldValue("vcd_nsxt_network_dhcp.pools", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_network_dhcp.pools", "id", "vcd_network_routed_v2.nsxt-backed", "id"),
+				),
+			},
+			{
+				// Data source testing
+				Config: configText5,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_nsxt_network_dhcp.pools", "data.vcd_nsxt_network_dhcp.pools", []string{"vdc"}),
 				),
 			},
 		},
@@ -200,6 +221,23 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
   static_ip_pool {
     start_address = "1.1.1.10"
     end_address   = "1.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.newVdc.0.name
+
+  org_network_id = vcd_network_routed_v2.nsxt-backed.id
+
+  pool {
+    start_address = "1.1.1.100"
+    end_address   = "1.1.1.110"
+  }
+
+  pool {
+    start_address = "1.1.1.111"
+    end_address   = "1.1.1.112"
   }
 }
 
@@ -274,6 +312,22 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
   }
 }
 
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org = "{{.Org}}"
+
+  org_network_id = vcd_network_routed_v2.nsxt-backed.id
+
+  pool {
+    start_address = "1.1.1.100"
+    end_address   = "1.1.1.110"
+  }
+
+  pool {
+    start_address = "1.1.1.111"
+    end_address   = "1.1.1.112"
+  }
+}
+
 resource "vcd_network_isolated_v2" "nsxt-backed" {
   org      = "{{.Org}}"
   owner_id = vcd_vdc_group.test1.id
@@ -304,5 +358,15 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
     start_address = "4.1.1.10"
     end_address   = "4.1.1.20"
   }
+}
+`
+
+const testAccVcdNsxVdcGroupCompleteMigrationStep5DS = testAccVcdNsxVdcGroupCompleteMigrationStep3 + `
+# skip-binary-test: Data Source test
+
+data "vcd_nsxt_network_dhcp" "pools" {
+  org = "{{.Org}}"
+
+  org_network_id = vcd_network_routed_v2.nsxt-backed.id
 }
 `
