@@ -14,12 +14,16 @@ import (
 func TestAccVcdSecurityTag(t *testing.T) {
 	tag1 := strings.ToLower(t.Name() + "-tag1") // security tags are always lowercase in serverside
 	tag2 := strings.ToLower(t.Name() + "-tag2")
+	vAppName := t.Name() + "-vapp"
+	firstVMName := t.Name() + "-vm"
+	secondVMName := t.Name() + "-vm2"
 
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.Nsxt.Vdc,
-		"VappName":     t.Name() + "-vapp",
-		"VmName":       t.Name() + "-vm",
+		"VappName":     vAppName,
+		"VmName":       firstVMName,
+		"VmName2":      secondVMName,
 		"ComputerName": t.Name() + "-vm",
 		"Catalog":      testConfig.VCD.Catalog.Name,
 		"Media":        testConfig.Media.MediaName,
@@ -53,12 +57,16 @@ func TestAccVcdSecurityTag(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecurityTagCreated(tag1),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
 				),
 			},
 			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecurityTagCreated(tag1, tag2),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
 				),
 			},
 			{
@@ -84,8 +92,24 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  name          = "VmWithoutTemplate"
+  name          = "{{.VmName}}"
   computer_name = "emptyVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
+}
+
+resource "vcd_vapp_vm" "{{.VmName2}}" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "{{.VmName2}}"
+  computer_name = "emptyVM2"
   memory        = 2048
   cpus          = 2
   cpu_cores     = 1
@@ -99,7 +123,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 resource "vcd_security_tag" "{{.SecurityTag1}}" {
   org    = "{{.Org}}"
   name   = "{{.SecurityTag1}}"
-  vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
+  vm_ids = [vcd_vapp_vm.{{.VmName}}.id, vcd_vapp_vm.{{.VmName2}}.id]
 }
 `
 
@@ -114,7 +138,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  name          = "VmWithoutTemplate"
+  name          = "{{.VmName}}"
   computer_name = "emptyVM"
   memory        = 2048
   cpus          = 2
@@ -126,9 +150,26 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   boot_image       = "{{.Media}}"
 }
 
+resource "vcd_vapp_vm" "{{.VmName2}}" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "{{.VmName2}}"
+  computer_name = "emptyVM2"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
+}
+
 resource "vcd_security_tag" "{{.SecurityTag1}}" {
-  name = "{{.SecurityTag1}}"
-  vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
+  org    = "{{.Org}}"
+  name   = "{{.SecurityTag1}}"
+  vm_ids = [vcd_vapp_vm.{{.VmName}}.id, vcd_vapp_vm.{{.VmName2}}.id]
 }
 
 resource "vcd_security_tag" "{{.SecurityTag2}}" {
@@ -187,5 +228,43 @@ func testAccCheckSecurityTagCreated(securityTags ...string) resource.TestCheckFu
 			}
 		}
 		return nil
+	}
+}
+
+func testAccCheckSecurityTagOnVMCreated(securityTag, vAppName, VMName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf("error retrieving the Org %s - %s", testConfig.VCD.Org, err)
+		}
+
+		vdc, err := org.GetVDCByName(testConfig.Nsxt.Vdc, false)
+		if err != nil {
+			return fmt.Errorf("error retrieving the VDC %s - %s", testConfig.Nsxt.Vdc, err)
+		}
+
+		vApp, err := vdc.GetVAppByName(vAppName, false)
+		if err != nil {
+			return fmt.Errorf("error retrieving the vApp %s - %s", vAppName, err)
+		}
+
+		vm, err := vApp.GetVMByName(VMName, false)
+		if err != nil {
+			return fmt.Errorf("error retrieving the VM %s - %s", VMName, err)
+		}
+
+		securityTaggedEntities, err := org.GetAllSecurityTaggedEntitiesByName(securityTag)
+		if err != nil {
+			return fmt.Errorf("error retrieving security tagged entities with tag name %s - %s", VMName, err)
+		}
+
+		for _, taggedVM := range securityTaggedEntities {
+			if taggedVM.ID == vm.VM.ID {
+				return nil
+			}
+		}
+		return fmt.Errorf("the VM %s is not tagged with security tag %s", VMName, securityTag)
 	}
 }
