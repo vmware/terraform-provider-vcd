@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -110,7 +111,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
