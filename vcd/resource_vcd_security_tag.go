@@ -150,6 +150,7 @@ func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.Resource
 		readEntities[i] = entity.ID
 	}
 
+	dSet(d, "org", orgName)
 	dSet(d, "name", securityTag)
 	err = d.Set("vm_ids", convertStringsToTypeSet(readEntities))
 	if err != nil {
