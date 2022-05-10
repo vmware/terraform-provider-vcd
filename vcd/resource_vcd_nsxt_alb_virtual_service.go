@@ -213,20 +213,9 @@ func resourceVcdAlbVirtualServiceImport(ctx context.Context, d *schema.ResourceD
 	orgName, vdcOrVdcGroupName, edgeName, virtualServiceName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
-
-	// define an interface type to match VDC and VDC Groups
-	var vdcOrVdcGroup vdcOrVdcGroupHandler
-	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
-	if govcd.ContainsNotFound(err) {
-		adminOrg, err := vcdClient.GetAdminOrg(orgName)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
-		}
-
-		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
-		if err != nil {
-			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
-		}
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
 	}
 
 	if !vdcOrVdcGroup.IsNsxt() {

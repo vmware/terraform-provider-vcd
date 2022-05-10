@@ -113,3 +113,29 @@ func isBackedByNsxt(org *govcd.Org, vdcOrVdcGroupId string) (bool, error) {
 
 	return vdcOrVdcGroup.IsNsxt(), nil
 }
+
+// lookupVdcOrVdcGroup is an import helper for entities whose parent can be:
+// * org-name.vdc-name
+// * org-name.vdc-group-name
+// It will return an interface type of `vdcOrVdcGroupHandler` which has common methods needed to
+// handle further actions in the Import functions for Terraform resources
+func lookupVdcOrVdcGroup(vcdClient *VCDClient, orgName, vdcOrVdcGroupName string) (vdcOrVdcGroupHandler, error) {
+	var vdcOrVdcGroup vdcOrVdcGroupHandler
+	var err error
+	_, vdcOrVdcGroup, err = vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+	if govcd.ContainsNotFound(err) {
+		var adminOrg *govcd.AdminOrg
+		adminOrg, err = vcdClient.GetAdminOrg(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
+		}
+
+		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+	}
+
+	return vdcOrVdcGroup, nil
+}
