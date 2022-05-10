@@ -255,12 +255,12 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 	return orgVdcNetDhcp
 }
 
-func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiOrgVdcNetworkDhcp, d *schema.ResourceData) error {
+func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdcNetwork *types.OpenApiOrgVdcNetworkDhcp, d *schema.ResourceData) error {
 	dSet(d, "org_network_id", orgNetworkId)
-	if len(orgVdc.DhcpPools) > 0 {
-		poolInterfaceSlice := make([]interface{}, len(orgVdc.DhcpPools))
+	if len(orgVdcNetwork.DhcpPools) > 0 {
+		poolInterfaceSlice := make([]interface{}, len(orgVdcNetwork.DhcpPools))
 
-		for index, pool := range orgVdc.DhcpPools {
+		for index, pool := range orgVdcNetwork.DhcpPools {
 			onePool := make(map[string]interface{})
 			onePool["start_address"] = pool.IPRange.StartAddress
 			onePool["end_address"] = pool.IPRange.EndAddress
@@ -275,8 +275,12 @@ func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdc *types.OpenApiO
 		}
 	}
 
-	if len(orgVdc.DnsServers) > 0 {
-		dSet(d, "dns_servers", orgVdc.DnsServers)
+	if len(orgVdcNetwork.DnsServers) > 0 {
+		// dSet(d, "dns_servers", orgVdcNetwork.DnsServers)
+		err := d.Set("dns_servers", orgVdcNetwork.DnsServers)
+		if err != nil {
+			return fmt.Errorf("error setting DNS servers: %s", err)
+		}
 	}
 
 	return nil
