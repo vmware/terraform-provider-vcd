@@ -44,7 +44,7 @@ func resourceVcdRightsBundle() *schema.Resource {
 			"rights": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "list of rights assigned to this rights bundle",
+				Description: "Set of rights assigned to this rights bundle",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"publish_to_all_tenants": {
@@ -55,7 +55,7 @@ func resourceVcdRightsBundle() *schema.Resource {
 			"tenants": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "list of tenants to which this rights bundle is published",
+				Description: "Set of tenants to which this rights bundle is published",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},

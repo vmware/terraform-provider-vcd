@@ -37,7 +37,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) The name of the role.
 * `description` - (Required) A description of the role
-* `rights` - (Optional) List of rights assigned to this role
+* `rights` - (Optional) Set of rights assigned to this role
 
 ## Attribute Reference
 

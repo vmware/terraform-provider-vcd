@@ -83,7 +83,7 @@ The following arguments are supported:
 * `read_only` - Whether this role is read-only
 * `description` - A description of the role
 * `bundle_key` - Key used for internationalization.
-* `rights` - List of rights assigned to this role
+* `rights` - Set of rights assigned to this role
 
 ## More information
 
