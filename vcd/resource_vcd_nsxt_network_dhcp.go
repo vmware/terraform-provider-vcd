@@ -276,7 +276,6 @@ func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdcNetwork *types.O
 	}
 
 	if len(orgVdcNetwork.DnsServers) > 0 {
-		// dSet(d, "dns_servers", orgVdcNetwork.DnsServers)
 		err := d.Set("dns_servers", orgVdcNetwork.DnsServers)
 		if err != nil {
 			return fmt.Errorf("error setting DNS servers: %s", err)
