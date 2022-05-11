@@ -63,6 +63,12 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 					assertVdcAccessControlIsSharedWithSpecificUser(userName2),
 				),
 			},
+			{
+				ResourceName:      fmt.Sprintf("vcd_org_vdc_access_control.%s", accessControlName),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     testConfig.VCD.Org + "." + testConfig.VCD.Vdc,
+			},
 		},
 	})
 }
