@@ -53,7 +53,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdNatRuleDestroy("vcd_nsxv_dnat.test2"),
 		Steps: []resource.TestStep{
 			{ // Step 0 - minimal configuration and data source

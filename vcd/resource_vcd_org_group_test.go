@@ -120,7 +120,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdGroupDestroy("admin_staff"),
 			testAccCheckVcdGroupDestroy("ship_crew"),

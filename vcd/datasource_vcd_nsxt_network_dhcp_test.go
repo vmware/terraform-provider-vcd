@@ -39,7 +39,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedDS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
 		Steps: []resource.TestStep{
 			{ // Define network and DHCP pools

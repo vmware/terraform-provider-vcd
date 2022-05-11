@@ -48,7 +48,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-isolated-test-initial"),
 		Steps: []resource.TestStep{
 			{

@@ -47,7 +47,7 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_static_routing." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

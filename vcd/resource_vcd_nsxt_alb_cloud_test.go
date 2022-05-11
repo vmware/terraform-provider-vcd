@@ -51,7 +51,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
 		Steps: []resource.TestStep{
 			{

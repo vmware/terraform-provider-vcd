@@ -60,7 +60,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
 		Steps: []resource.TestStep{
 			{ // TCP

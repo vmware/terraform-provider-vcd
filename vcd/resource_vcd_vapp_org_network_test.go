@@ -69,7 +69,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 
 	resourceName := "vcd_vapp_org_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{

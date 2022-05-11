@@ -33,7 +33,7 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -76,7 +76,7 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config:      configText1,
@@ -111,7 +111,7 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config:      configText1,
@@ -176,7 +176,7 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

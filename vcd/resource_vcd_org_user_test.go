@@ -107,7 +107,7 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 			fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
 			debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 			resource.Test(t, resource.TestCase{
-				PreCheck:          func() { testAccPreCheck(t) },
+				PreCheck:          func() { testParamsNotEmpty(t, params) },
 				ProviderFactories: testAccProviders,
 				CheckDestroy:      nil,
 				Steps: []resource.TestStep{
@@ -196,7 +196,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 			debugPrintf("#[DEBUG] UPDATED CONFIGURATION: %s", configTextUpdated)
 			resourceName := "vcd_org_user." + ud.name
 			resource.Test(t, resource.TestCase{
-				PreCheck:          func() { testAccPreCheck(t) },
+				PreCheck:          func() { testParamsNotEmpty(t, params) },
 				ProviderFactories: testAccProviders,
 				CheckDestroy:      testAccCheckVcdUserDestroy(ud.name),
 				Steps: []resource.TestStep{
@@ -296,7 +296,7 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 		fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 		resource.Test(t, resource.TestCase{
-			PreCheck:          func() { testAccPreCheck(t) },
+			PreCheck:          func() { testParamsNotEmpty(t, params) },
 			ProviderFactories: testAccProviders,
 			CheckDestroy:      nil,
 			Steps: []resource.TestStep{

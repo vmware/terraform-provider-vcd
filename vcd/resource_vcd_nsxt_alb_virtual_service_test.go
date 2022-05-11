@@ -96,7 +96,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
@@ -528,7 +528,7 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbPoolDestroy("vcd_nsxt_alb_pool.test"),
 		),

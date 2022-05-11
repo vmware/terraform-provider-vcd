@@ -251,7 +251,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	datasourceById := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_name"
 	datasourceByName := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_id"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
 		Steps: []resource.TestStep{

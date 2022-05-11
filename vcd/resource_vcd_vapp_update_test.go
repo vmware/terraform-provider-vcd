@@ -57,7 +57,7 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 
 	resourceName := "vcd_vapp." + vappName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{

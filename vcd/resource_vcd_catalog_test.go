@@ -61,7 +61,7 @@ func TestAccVcdCatalog(t *testing.T) {
 	cachedId := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
@@ -159,7 +159,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 	dataSourceAddress := "data.vcd_storage_profile.sp"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
@@ -273,7 +273,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	resourceAddress := "vcd_catalog.test-catalog"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
@@ -531,7 +531,7 @@ func TestAccVcdCatalogSharedAccess(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckVcdVAppVmDestroy(t.Name()),

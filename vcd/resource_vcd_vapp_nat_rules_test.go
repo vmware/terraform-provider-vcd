@@ -60,7 +60,7 @@ func TestAccVcdVappNatRules(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_nat_rules." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

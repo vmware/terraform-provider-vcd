@@ -55,7 +55,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
 		Steps: []resource.TestStep{
@@ -253,7 +253,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 
 		Steps: []resource.TestStep{
 			// initialize new VDC, this done separately as otherwise randomly fail due choose wrong connection
@@ -419,7 +419,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 
 		Steps: []resource.TestStep{
 			{
@@ -608,7 +608,7 @@ func TestAccVcdNsxtEdgeGatewayVdcUpdateFails(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
 		Steps: []resource.TestStep{
@@ -783,7 +783,7 @@ func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
 		Steps: []resource.TestStep{
 			{

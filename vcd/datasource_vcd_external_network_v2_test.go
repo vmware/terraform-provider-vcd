@@ -38,7 +38,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 
 	datasourceName := "data.vcd_external_network_v2.ext-net-nsxv"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

@@ -58,7 +58,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	resource3 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_3"
 	resource4 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_4"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVmSizingPolicyDestroyed,
 		Steps: []resource.TestStep{

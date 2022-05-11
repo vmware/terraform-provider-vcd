@@ -46,7 +46,7 @@ func TestAccVcdGlobalRole(t *testing.T) {
 
 	resourceDef := "vcd_global_role." + globalRoleName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckGlobalRoleDestroy(resourceDef),
 		Steps: []resource.TestStep{

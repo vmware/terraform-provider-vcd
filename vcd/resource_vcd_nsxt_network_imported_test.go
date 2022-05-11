@@ -16,7 +16,7 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
-	skipNoNsxtConfiguration(t)
+	//skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -45,8 +45,8 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		//PreCheck:          func() { testParamsNotEmpty(t, params) },
+		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
 				Config: configText,
@@ -153,7 +153,7 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	skipNoNsxtConfiguration(t)
+	//skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -183,8 +183,8 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		//PreCheck:          func() { testParamsNotEmpty(t, params) },
+		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
 				Config: configText,
@@ -315,7 +315,7 @@ func TestAccVcdNsxtNetworkImportedInVdcGroup(t *testing.T) {
 		"DefaultPolicy":             "false",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtImportSegment":         testConfig.Nsxt.NsxtImportSegment,
@@ -340,7 +340,7 @@ func TestAccVcdNsxtNetworkImportedInVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -463,7 +463,7 @@ func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 	cachedId := &testCachedFieldValue{}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -667,7 +667,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{

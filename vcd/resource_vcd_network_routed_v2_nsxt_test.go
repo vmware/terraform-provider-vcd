@@ -14,7 +14,6 @@ import (
 // TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
 func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -49,8 +48,8 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		//		PreCheck:          func() { testParamsNotEmpty(t, params) },
+		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
 				Config: configText,
@@ -222,7 +221,6 @@ resource "vcd_network_routed_v2" "net1" {
 // `vdc` field
 func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -249,7 +247,7 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
@@ -341,7 +339,6 @@ data "vcd_network_routed_v2" "net1" {
 // together and reflects it
 func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
 		return
@@ -358,7 +355,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 		"DefaultPolicy":             "false",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
@@ -392,7 +389,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -744,7 +741,7 @@ func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{

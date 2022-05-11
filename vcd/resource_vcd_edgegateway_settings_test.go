@@ -100,6 +100,12 @@ func getEdgeGatewayInfo() (*govcd.EdgeGateway, error) {
 func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	preTestChecks(t)
 
+	if testConfig.VCD.Org == "" ||
+		testConfig.VCD.Vdc == "" ||
+		testConfig.Networking.EdgeGateway == "" {
+		t.Skip("one or more elements needed for TestAccVcdEdgeGatewaySettingsFull are missing from the configuration file")
+	}
+
 	testName := "EdgeGatewaySettingsBasic"
 	var existingEgw *govcd.EdgeGateway
 	var fwSettings *types.FirewallConfigWithXml
@@ -171,7 +177,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	// Note: this test can't run in parallel, as it updates the main edge gateway in the vCD
 	// and it could interfere with other tests
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		//CheckDestroy: func(s *terraform.State) error {return nil},
 		Steps: []resource.TestStep{

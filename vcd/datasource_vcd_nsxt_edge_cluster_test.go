@@ -53,7 +53,7 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 
 	datasourceName := "data.vcd_nsxt_edge_cluster.ec"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

@@ -44,7 +44,7 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 	datasource2 := "data.vcd_org.sourced_" + orgName2
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgName2),
 		Steps: []resource.TestStep{

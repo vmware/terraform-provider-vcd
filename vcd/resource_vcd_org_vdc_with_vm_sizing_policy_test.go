@@ -67,7 +67,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION - update: %s", updateText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{

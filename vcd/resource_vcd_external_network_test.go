@@ -54,7 +54,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 
 	resourceName := "vcd_external_network." + TestAccVcdExternalNetwork
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroy,
 		Steps: []resource.TestStep{

@@ -29,7 +29,7 @@ func TestAccVcdNsxtNetworkContextProfileInVdc(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -88,7 +88,7 @@ func TestAccVcdNsxtNetworkContextProfileInNsxtManager(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION - step 3: %s", configText3)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

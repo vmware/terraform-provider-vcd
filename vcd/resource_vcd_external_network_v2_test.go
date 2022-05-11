@@ -82,7 +82,7 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
@@ -294,7 +294,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 
 	resourceName := "vcd_external_network_v2.ext-net-nsxv"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
@@ -510,7 +510,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -569,7 +569,7 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
@@ -759,7 +759,7 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		return
 	}
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -885,7 +885,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{

@@ -235,7 +235,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 
 		Steps: []resource.TestStep{
 			// initialize new VDC, this done separately as otherwise randomly fail due choose wrong connection

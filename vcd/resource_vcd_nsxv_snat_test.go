@@ -37,7 +37,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdNatRuleDestroy("vcd_nsxv_snat.test"),
 		Steps: []resource.TestStep{
 			{ // Step 0 - minimal configuration and data source

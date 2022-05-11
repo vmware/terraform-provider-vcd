@@ -71,7 +71,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 	resourceAC2 := "vcd_vapp_access_control.AC-Vapp2"
 	resourceAC3 := "vcd_vapp_access_control.AC-Vapp3"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.VCD.Vdc, []string{"Vapp-AC-0", "Vapp-AC-1", "Vapp-AC-2", "Vapp-AC-3"}),
 		Steps: []resource.TestStep{

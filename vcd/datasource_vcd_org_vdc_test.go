@@ -54,7 +54,7 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 			return
 		}
 
-		validateDataSource(t, configText, datasourceVdc)
+		validateDataSource(t, configText, datasourceVdc, params)
 	} else {
 		if vdc.Vdc.AllocationModel == "Flex" {
 			configText = templateFill(testAccCheckVcdVdcDatasource_basic_flex, params)
@@ -69,14 +69,14 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 			return
 		}
 
-		validateResourceAndDataSource(t, configText, datasourceVdc)
+		validateResourceAndDataSource(t, configText, datasourceVdc, params)
 	}
 	postTestChecks(t)
 }
 
-func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string) {
+func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string, params StringMap) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
@@ -125,9 +125,9 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 	})
 }
 
-func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
+func validateDataSource(t *testing.T, configText string, datasourceVdc string, params StringMap) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{

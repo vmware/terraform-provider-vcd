@@ -43,7 +43,7 @@ func TestAccVcdRole(t *testing.T) {
 
 	resourceDef := "vcd_role." + roleName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRoleDestroy(resourceDef),
 		Steps: []resource.TestStep{

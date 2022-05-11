@@ -36,28 +36,13 @@ func TestProvider_impl(t *testing.T) {
 }
 
 // When this function is called, the initialization in config_test.go has already happened.
-// Therefore, we can safely require that testConfig fields have been filled.
-func testAccPreCheck(t *testing.T) {
-	if testConfig.Provider.User == "" && testConfig.Provider.Token == "" {
-		t.Fatal("provider.user or provider.token must be set for acceptance tests")
-	}
-	if testConfig.Provider.Password == "" && testConfig.Provider.Token == "" {
-		t.Fatal("provider.password or provider.token must be set for acceptance tests")
-	}
-	if testConfig.Provider.SysOrg == "" {
-		t.Fatal("provider.sysOrg must be set for acceptance tests")
-	}
-	if testConfig.VCD.Org == "" {
-		t.Fatal("vcd.org must be set for acceptance tests")
-	}
-	if testConfig.Provider.Url == "" {
-		t.Fatal("provider.Url must be set for acceptance tests")
-	}
-	if testConfig.Networking.EdgeGateway == "" {
-		t.Fatal("networking.edgeGateway must be set for acceptance tests")
-	}
-	if testConfig.VCD.Vdc == "" {
-		t.Fatal("vcd.vdc must be set for acceptance tests")
+// Therefore, we can safely require that testConfig fields used in test params have been filled.
+func testParamsNotEmpty(t *testing.T, params StringMap) {
+
+	for key, value := range params {
+		if value == "" {
+			t.Skipf("%s must be set for acceptance tests", key)
+		}
 	}
 }
 

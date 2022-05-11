@@ -59,7 +59,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	resourceDef := "vcd_org_vdc." + params["VdcName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{

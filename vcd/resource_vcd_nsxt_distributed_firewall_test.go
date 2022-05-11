@@ -66,7 +66,7 @@ func TestAccVcdDistributedFirewall(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 
 		Steps: []resource.TestStep{
 			{
@@ -438,7 +438,7 @@ func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 
 		Steps: []resource.TestStep{
 			{
@@ -525,7 +525,7 @@ func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 
 		Steps: []resource.TestStep{
 			{

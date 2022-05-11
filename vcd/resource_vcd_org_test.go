@@ -40,7 +40,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 
 	resourceName := "vcd_org." + orgNameTestAccVcdOrg
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
 		Steps: []resource.TestStep{
@@ -234,7 +234,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 
 		resourceName := "vcd_org." + od.name
 		resource.Test(t, resource.TestCase{
-			PreCheck:          func() { testAccPreCheck(t) },
+			PreCheck:          func() { testParamsNotEmpty(t, params) },
 			ProviderFactories: testAccProviders,
 			CheckDestroy:      testAccCheckOrgDestroy(od.name),
 			Steps: []resource.TestStep{

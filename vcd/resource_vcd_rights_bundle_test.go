@@ -46,7 +46,7 @@ func TestAccVcdRightsBundle(t *testing.T) {
 
 	resourceDef := "vcd_rights_bundle." + rightsBundleName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRightsBundleDestroy(resourceDef),
 		Steps: []resource.TestStep{

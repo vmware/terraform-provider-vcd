@@ -31,7 +31,7 @@ func TestAccVcdVappVmDS(t *testing.T) {
 	resourceName := "data.vcd_vapp_vm.vm-ds"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

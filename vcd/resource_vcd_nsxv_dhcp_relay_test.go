@@ -35,13 +35,13 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 		return
 	}
 
-	if !edgeGatewayIsAdvanced() {
+	if !edgeGatewayIsAdvanced(t) {
 		t.Skip(t.Name() + "requires advanced edge gateway to work")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdDhcpRelaySettingsEmpty(),
 		Steps: []resource.TestStep{
 			{

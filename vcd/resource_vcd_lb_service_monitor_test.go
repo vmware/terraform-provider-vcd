@@ -45,13 +45,13 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 		return
 	}
 
-	if !edgeGatewayIsAdvanced() {
+	if !edgeGatewayIsAdvanced(t) {
 		t.Skip(t.Name() + "requires advanced edge gateway to work")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
 		Steps: []resource.TestStep{
 			{
@@ -116,12 +116,13 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 }
 
 // edgeGatewayIsAdvanced checks if edge gateway for testing is an advanced one
-func edgeGatewayIsAdvanced() bool {
+func edgeGatewayIsAdvanced(t *testing.T) bool {
 	conn := createTemporaryVCDConnection(false)
 
 	edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway)
 	if err != nil {
-		panic("unable to find edge gateway")
+		t.Errorf("unable to find edge gateway")
+		t.FailNow()
 	}
 
 	return edgeGateway.HasAdvancedNetworking()
