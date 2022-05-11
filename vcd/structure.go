@@ -96,6 +96,11 @@ func takeInt64Pointer(x int64) *int64 {
 	return &x
 }
 
+// takeStringPointer is a helper that returns the address of a `string`
+func takeStringPointer(x string) *string {
+	return &x
+}
+
 // extractUuid finds an UUID in the input string
 // Returns an empty string if no UUID was found
 func extractUuid(input string) string {
