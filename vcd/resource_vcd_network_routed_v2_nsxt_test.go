@@ -48,8 +48,8 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		//		PreCheck:          func() { testParamsNotEmpty(t, params) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		PreCheck:          func() { testParamsNotEmpty(t, params) },
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
 				Config: configText,
