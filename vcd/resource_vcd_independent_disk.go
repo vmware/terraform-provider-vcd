@@ -260,6 +260,13 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error fetching independent disk: %s", err)
 	}
 
+	if d.HasChanges("sharing_type") {
+		oldValue, newValue := d.GetChange("sharing_type")
+		if !strings.EqualFold(newValue.(string), oldValue.(string)) {
+			// See docs at https://developer.vmware.com/apis/1232/vmware-cloud-director/doc/doc///types/DiskType.html
+			return diag.Errorf("[independent disk update] sharing_type is immutable. It can only be set during disk creation")
+		}
+	}
 	if d.HasChanges("size_in_mb", "storage_profile", "description") {
 		storageProfileValue := d.Get("storage_profile").(string)
 		var storageProfileRef *types.Reference
