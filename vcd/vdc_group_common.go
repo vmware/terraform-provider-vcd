@@ -123,6 +123,9 @@ func lookupVdcOrVdcGroup(vcdClient *VCDClient, orgName, vdcOrVdcGroupName string
 	var vdcOrVdcGroup vdcOrVdcGroupHandler
 	var err error
 	_, vdcOrVdcGroup, err = vcdClient.GetOrgAndVdc(orgName, vdcOrVdcGroupName)
+	if err != nil && !govcd.ContainsNotFound(err) {
+		return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s' in Org %s: %s", vdcOrVdcGroupName, orgName, err)
+	}
 	if govcd.ContainsNotFound(err) {
 		var adminOrg *govcd.AdminOrg
 		adminOrg, err = vcdClient.GetAdminOrg(orgName)
@@ -131,10 +134,9 @@ func lookupVdcOrVdcGroup(vcdClient *VCDClient, orgName, vdcOrVdcGroupName string
 		}
 
 		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcOrVdcGroupName)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+		if err != nil {
+			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcOrVdcGroupName, err)
+		}
 	}
 
 	return vdcOrVdcGroup, nil
