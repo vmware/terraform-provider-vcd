@@ -2,11 +2,13 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"strings"
 )
 
 func resourceVcdOrgVdcAccessControl() *schema.Resource {
@@ -190,6 +192,46 @@ func resourceVdcVdcAccessControlDelete(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceVdcVdcAccessControlImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	// TBD
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as org.catalog")
+	}
+
+	orgName, vdcName := resourceURI[0], resourceURI[1]
+	vcdClient := meta.(*VCDClient)
+
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	accessControlParams, err := vdc.GetControlAccess()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't retrieve access control parameters - %s", err)
+	}
+
+	dSet(d, "org", orgName)
+	dSet(d, "vdc", vdcName)
+	dSet(d, "shared_with_everyone", accessControlParams.IsSharedToEveryone)
+	if accessControlParams.EveryoneAccessLevel != nil {
+		dSet(d, "everyone_access_level", *accessControlParams.EveryoneAccessLevel)
+	} else {
+		dSet(d, "everyone_access_level", "")
+	}
+	if accessControlParams.AccessSettings != nil {
+		accessControlListSet, err := accessControlListToSharedSet(accessControlParams.AccessSettings.AccessSetting)
+		if err != nil {
+			return nil, fmt.Errorf("error converting slice AccessSetting into set - %s", err)
+		}
+
+		err = d.Set("shared_with", accessControlListSet)
+		if err != nil {
+			return nil, fmt.Errorf("error setting shared_with attribute - %s", err)
+		}
+	}
+
+	d.SetId(vdc.Vdc.ID)
+
+	return []*schema.ResourceData{d}, nil
 	return nil, nil
 }
