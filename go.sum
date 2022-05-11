@@ -1,8 +1,8 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Didainius/go-vcloud-director/v2 v2.15.0-alpha.7.0.20220510104238-f4d7c1695309 h1:2+L1CWKyDQNMkHI/PXAEGT1vZv7rqXpkhypuNILyqns=
-github.com/Didainius/go-vcloud-director/v2 v2.15.0-alpha.7.0.20220510104238-f4d7c1695309/go.mod h1:2BS1yw61VN34WI0/nUYoInFvBc3Zcuf84d4ESiAAl68=
+github.com/Didainius/go-vcloud-director/v2 v2.15.0-alpha.7.0.20220511174553-630407ca5e57 h1:Ot1lHyM0kWni68O6/uI3G2gzgLu7V3zhP9Skv2BVCe8=
+github.com/Didainius/go-vcloud-director/v2 v2.15.0-alpha.7.0.20220511174553-630407ca5e57/go.mod h1:2BS1yw61VN34WI0/nUYoInFvBc3Zcuf84d4ESiAAl68=
 github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jBhyzoq1bpyYA=
 github.com/Microsoft/go-winio v0.4.16 h1:FtSW/jqD+l4ba5iPBj9CODVtgfYAD8w2wS923g/cFDk=
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=

@@ -70,6 +70,10 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	configText3 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep4DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
 	params["FuncName"] = t.Name() + "step5"
 	configText5 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep5DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
@@ -85,7 +89,13 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 	routedNetId := testCachedFieldValue{}
 	isolatedNetId := testCachedFieldValue{}
 	importedNetId := testCachedFieldValue{}
+	firewallId := testCachedFieldValue{}
+	snatRuleId := testCachedFieldValue{}
+	dnatRuleId := testCachedFieldValue{}
+	ipSecVpnTunnelId := testCachedFieldValue{}
 	networkDhcpPools := testCachedFieldValue{}
+
+	parentVdcGroupName := t.Name()
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -100,6 +110,14 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					edgeGatewayId.cacheTestResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_org_vdc.newVdc.0", "id"),
+
+					firewallId.cacheTestResourceFieldValue("vcd_nsxt_firewall.testing", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
+
+					snatRuleId.cacheTestResourceFieldValue("vcd_nsxt_nat_rule.snat", "id"),
+					dnatRuleId.cacheTestResourceFieldValue("vcd_nsxt_nat_rule.snat", "id"),
+
+					ipSecVpnTunnelId.cacheTestResourceFieldValue("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
 
 					routedNetId.cacheTestResourceFieldValue("vcd_network_routed_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.nsxt-backed", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
@@ -123,6 +141,14 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					edgeGatewayId.testCheckCachedResourceFieldValue("vcd_nsxt_edgegateway.nsxt-edge", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "vdc", "vcd_vdc_group.test1", "name"),
+
+					firewallId.testCheckCachedResourceFieldValue("vcd_nsxt_firewall.testing", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
+
+					snatRuleId.testCheckCachedResourceFieldValue("vcd_nsxt_nat_rule.snat", "id"),
+					dnatRuleId.testCheckCachedResourceFieldValue("vcd_nsxt_nat_rule.snat", "id"),
+
+					ipSecVpnTunnelId.testCheckCachedResourceFieldValue("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
 
 					// This test is explicitly skipped during apply because routed network migrates
 					// with Edge Gateway and first read might happen earlier than parent Edge
@@ -154,6 +180,14 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "vdc", "vcd_vdc_group.test1", "name"),
 
+					firewallId.testCheckCachedResourceFieldValue("vcd_nsxt_firewall.testing", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "vdc", fmt.Sprintf("%s-%s", t.Name(), "0")),
+
+					snatRuleId.testCheckCachedResourceFieldValue("vcd_nsxt_nat_rule.snat", "id"),
+					dnatRuleId.testCheckCachedResourceFieldValue("vcd_nsxt_nat_rule.snat", "id"),
+
+					ipSecVpnTunnelId.testCheckCachedResourceFieldValue("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
+
 					routedNetId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_network_routed_v2.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
@@ -171,7 +205,43 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 				),
 			},
 			{
-				// Data source testing
+				Config: configText4,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_firewall.testing", "vcd_nsxt_firewall.testing", nil),
+					resourceFieldsEqual("data.vcd_nsxt_nat_rule.snat", "vcd_nsxt_nat_rule.snat", nil),
+					resourceFieldsEqual("data.vcd_nsxt_nat_rule.no-snat", "vcd_nsxt_nat_rule.no-snat", nil),
+					resourceFieldsEqual("data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "vcd_nsxt_ipsec_vpn_tunnel.tunnel1", []string{"status", "ike_service_status", "ike_fail_reason"}),
+				),
+			},
+			{
+				ResourceName:            "vcd_nsxt_firewall.testing",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, parentVdcGroupName, t.Name()),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_nat_rule.snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "SNAT rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_nat_rule.no-snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "test-no-snat-rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "First"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
 				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_network_dhcp.pools", "data.vcd_nsxt_network_dhcp.pools", []string{"vdc"}),
@@ -205,6 +275,68 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
        end_address   = tolist(tolist(data.vcd_external_network_v2.nsxt-ext-net.ip_scope)[0].static_ip_pool)[0].end_address
      }
   }
+}
+
+resource "vcd_nsxt_firewall" "testing" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.newVdc.0.name
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  rule {
+    action      = "ALLOW"
+    name        = "allow all IPv4 traffic"
+    direction   = "IN_OUT"
+    ip_protocol = "IPV4"
+  }
+}
+
+resource "vcd_nsxt_nat_rule" "snat" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.newVdc.0.name
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "SNAT rule"
+  rule_type   = "SNAT"
+  description = "description"
+
+  # Using primary_ip from edge gateway
+  external_address         = tolist(vcd_nsxt_edgegateway.nsxt-edge.subnet)[0].primary_ip
+  internal_address         = "11.11.11.0/24"
+  snat_destination_address = "8.8.8.8"
+  logging                  = true
+}
+
+resource "vcd_nsxt_nat_rule" "no-snat" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.newVdc.0.name
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "test-no-snat-rule"
+  rule_type   = "NO_SNAT"
+  description = "description"
+
+  internal_address = "11.11.11.0/24"
+}
+
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.newVdc.0.name
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "First"
+  description = "testing tunnel"
+
+  pre_shared_key = "my-presharaed-key"
+  # Primary IP address of Edge Gateway pulled from data source
+  local_ip_address = tolist(vcd_nsxt_edgegateway.nsxt-edge.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address
+  remote_ip_address = "1.2.3.4"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
 }
 
 resource "vcd_network_routed_v2" "nsxt-backed" {
@@ -298,6 +430,64 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 
+resource "vcd_nsxt_firewall" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  rule {
+    action      = "ALLOW"
+    name        = "allow all IPv4 traffic"
+    direction   = "IN_OUT"
+    ip_protocol = "IPV4"
+  }
+}
+
+resource "vcd_nsxt_nat_rule" "snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "SNAT rule"
+  rule_type   = "SNAT"
+  description = "description"
+
+  # Using primary_ip from edge gateway
+  external_address         = tolist(vcd_nsxt_edgegateway.nsxt-edge.subnet)[0].primary_ip
+  internal_address         = "11.11.11.0/24"
+  snat_destination_address = "8.8.8.8"
+  logging                  = true
+}
+
+resource "vcd_nsxt_nat_rule" "no-snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "test-no-snat-rule"
+  rule_type   = "NO_SNAT"
+  description = "description"
+
+  internal_address = "11.11.11.0/24"
+}
+
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  name        = "First"
+  description = "testing tunnel"
+
+  pre_shared_key = "my-presharaed-key"
+  # Primary IP address of Edge Gateway pulled from data source
+  local_ip_address = tolist(vcd_nsxt_edgegateway.nsxt-edge.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address
+  remote_ip_address = "1.2.3.4"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+}
+
 resource "vcd_network_routed_v2" "nsxt-backed" {
   org             = "{{.Org}}"
   name            = "{{.Name}}-routed"
@@ -358,6 +548,36 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
     start_address = "4.1.1.10"
     end_address   = "4.1.1.20"
   }
+}
+`
+
+const testAccVcdNsxVdcGroupCompleteMigrationStep4DS = testAccVcdNsxVdcGroupCompleteMigrationStep3 + `
+# skip-binary-test: Data Source test
+data "vcd_nsxt_firewall" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+}
+
+data "vcd_nsxt_nat_rule" "snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = "SNAT rule"
+}
+
+data "vcd_nsxt_nat_rule" "no-snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = "test-no-snat-rule"
+}
+
+data "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  name            = "First"
 }
 `
 

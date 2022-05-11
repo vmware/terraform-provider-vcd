@@ -28,7 +28,6 @@ data "vcd_nsxt_edgegateway" "existing" {
 
 resource "vcd_nsxt_alb_settings" "org1" {
   org = "my-org"
-  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = true
@@ -43,7 +42,6 @@ resource "vcd_nsxt_alb_settings" "org1" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `is_active` - (Required) Boolean value `true` or `false` if ALB is enabled. **Note** Delete operation of this resource
@@ -63,8 +61,8 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_settings.imported my-org.my-vdc.my-nsxt-edge-gateway-name
+terraform import vcd_nsxt_alb_settings.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway-name
 ```
 
-The above would import the NSX-T ALB General Settings for Edge Gateway named `my-nsxt-edge-gateway-name` in Org `my-org`
-and VDC `my-vdc`.
+The above would import the NSX-T ALB General Settings for Edge Gateway named
+`my-nsxt-edge-gateway-name` in Org `my-org` and VDC or VDC Group `my-org-vdc-org-vdc-group-name`.

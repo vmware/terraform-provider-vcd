@@ -72,6 +72,13 @@ NSX-V VDC Group support is provided):
 * [vcd_nsxt_network_dhcp](/providers/vmware/vcd/latest/docs/resources/nsxt_network_dhcp)
 * [vcd_nsxt_distributed_firewall](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall)
 * [vcd_nsxt_network_context_profile](/providers/vmware/vcd/latest/docs/data-sources/nsxt_network_context_profile)
+* [vcd_nsxt_firewall](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
+* [vcd_nsxt_nat_rule](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule)
+* [vcd_nsxt_ipsec_vpn_tunnel](/providers/vmware/vcd/latest/docs/resources/nsxt_ipsec_vpn_tunnel)
+* [vcd_nsxt_alb_settings](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_settings)
+* [vcd_nsxt_alb_edgegateway_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_pool)
+* [vcd_nsxt_alb_virtual_service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service)
+* [vcd_nsxt_alb_pool](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_pool)
 
 The next sub-sections will cover some specifics for resources that have it. Resources that are not
 explicitly mentioned here simply introduce `owner_id` field over deprecated `vdc` field.
