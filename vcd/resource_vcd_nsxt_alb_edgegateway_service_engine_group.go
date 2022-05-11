@@ -33,8 +33,9 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -156,22 +157,21 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *s
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.nsxt-edge-gw-name.se-group-name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.vdc-name.nsxt-edge-gw-name.se-group-name")
 	}
-	orgName, vdcName, edgeName, seGroupName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeName, seGroupName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
-
-	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", vdcName, err)
+		return nil, err
 	}
 
-	if vdc.IsNsxv() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, fmt.Errorf("this resource is only supported for NSX-T Edge Gateways")
 	}
 
-	edge, err := vdc.GetNsxtEdgeGatewayByName(edgeName)
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}
@@ -183,7 +183,6 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *s
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 	d.SetId(seGroupAssignment.NsxtAlbServiceEngineGroupAssignment.ID)
 	return []*schema.ResourceData{d}, nil

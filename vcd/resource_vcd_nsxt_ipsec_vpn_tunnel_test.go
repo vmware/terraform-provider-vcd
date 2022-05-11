@@ -191,10 +191,11 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 
 			// Test import with IP addresses
 			{
-				ResourceName:      "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-tunnel-1"),
+				ResourceName:            "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-tunnel-1"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			// Try to import by UUID
 			{
@@ -202,8 +203,9 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 				ImportState:  true,
 				// Not using pre-built complete ID because ID is not known in advance. This field allows to specify
 				// prefix only and the ID itself is automatically suffixed by Terraform test framework
-				ImportStateIdPrefix: testConfig.VCD.Org + ImportSeparator + testConfig.Nsxt.Vdc + ImportSeparator + testConfig.Nsxt.EdgeGateway + ImportSeparator,
-				ImportStateVerify:   true,
+				ImportStateIdPrefix:     testConfig.VCD.Org + ImportSeparator + testConfig.Nsxt.Vdc + ImportSeparator + testConfig.Nsxt.EdgeGateway + ImportSeparator,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})

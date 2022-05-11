@@ -24,7 +24,6 @@ environment, you always configure the rule from the perspective of your organiza
 ```hcl
 resource "vcd_nsxt_nat_rule" "snat" {
   org = "dainius"
-  vdc = "nsxt-vdc-dainius"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -44,7 +43,6 @@ resource "vcd_nsxt_nat_rule" "snat" {
 ```hcl
 resource "vcd_nsxt_nat_rule" "no-snat" {
   org = "dainius"
-  vdc = "nsxt-vdc-dainius"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -60,7 +58,6 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
 ```hcl
 resource "vcd_nsxt_nat_rule" "dnat" {
   org = "my-org"
-  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -96,7 +93,6 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 ```hcl
 resource "vcd_nsxt_nat_rule" "reflexive" {
   org = "my-org"
-  vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -115,7 +111,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` data source
 * `name` - (Required) A name for NAT rule
@@ -192,9 +187,9 @@ ID                                   Name  Rule Type Internal Address   External
 04fde766-2cbd-4986-93bb-7f57e59c6b19 dnat1 DNAT      1.1.1.1            10.1.2.139
 f40e3d68-cfa6-42ea-83ed-5571659b3e7b dnat1 DNAT      2.2.2.2            10.1.2.139
 
-$ terraform import vcd_nsxt_nat_rule.imported my-org.my-org-vdc.my-nsxt-edge-gateway.0214a26b-fc30-4202-88e5-7ed551aa6c19
+$ terraform import vcd_nsxt_nat_rule.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway.0214a26b-fc30-4202-88e5-7ed551aa6c19
 ```
 
 The above would import the `my-nat-rule-name` NAT Rule config settings that are defined
 on NSX-T Edge Gateway `my-nsxt-edge-gateway` which is configured in organization named `my-org` and
-VDC named `my-org-vdc`.
+VDC or VDC Group named `my-org-vdc-org-vdc-group-name`.
