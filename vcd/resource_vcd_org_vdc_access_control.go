@@ -177,9 +177,6 @@ func resourceVdcVdcAccessControlDelete(ctx context.Context, d *schema.ResourceDa
 
 	controlAccessParams := &types.ControlAccessParams{
 		IsSharedToEveryone: false,
-		AccessSettings: &types.AccessSettingList{
-			AccessSetting: []*types.AccessSetting{},
-		},
 	}
 
 	_, err = vdc.SetControlAccess(controlAccessParams)
