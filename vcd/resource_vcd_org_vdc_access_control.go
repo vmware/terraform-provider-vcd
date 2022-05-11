@@ -105,7 +105,9 @@ func resourceVdcVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 			return diag.Errorf("error when reading shared_with from schema - %s", err)
 		}
 
-		accessControl.AccessSettings.AccessSetting = AccessSettings
+		accessControl.AccessSettings = &types.AccessSettingList{
+			AccessSetting: AccessSettings,
+		}
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -145,15 +147,20 @@ func resourceVdcVdcAccessControlRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	dSet(d, "shared_with_everyone", controlAccessParams.IsSharedToEveryone)
-	dSet(d, "everyone_access_level", *controlAccessParams.EveryoneAccessLevel)
-	accessControlListSet, err := accessControlListToSharedSet(controlAccessParams.AccessSettings.AccessSetting)
-	if err != nil {
-		return diag.Errorf("error converting slice AccessSetting into set - %s", err)
+	if controlAccessParams.EveryoneAccessLevel != nil {
+		dSet(d, "everyone_access_level", *controlAccessParams.EveryoneAccessLevel)
 	}
 
-	err = d.Set("shared_with", accessControlListSet)
-	if err != nil {
-		return diag.Errorf("error setting shared_with attribute - %s", err)
+	if controlAccessParams.AccessSettings != nil {
+		accessControlListSet, err := accessControlListToSharedSet(controlAccessParams.AccessSettings.AccessSetting)
+		if err != nil {
+			return diag.Errorf("error converting slice AccessSetting into set - %s", err)
+		}
+
+		err = d.Set("shared_with", accessControlListSet)
+		if err != nil {
+			return diag.Errorf("error setting shared_with attribute - %s", err)
+		}
 	}
 
 	return nil
