@@ -86,8 +86,8 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Computed:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DiskSharing", "ControllerSharing"}, false),
-				Description:  "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
+				ValidateFunc: validation.StringInSlice([]string{"DiskSharing", "ControllerSharing", "None"}, false),
+				Description:  "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`, `None`",
 			},
 			"uuid": {
 				Type:        schema.TypeString,
