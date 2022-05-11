@@ -103,7 +103,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	if testConfig.VCD.Org == "" ||
 		testConfig.VCD.Vdc == "" ||
 		testConfig.Networking.EdgeGateway == "" {
-		t.Skip("one or more elements needed for TestAccVcdEdgeGatewaySettingsFull are missing from the configuration file")
+		t.Skip("one or more elements needed for TestAccVcdEdgeGatewaySettingsBasic are missing from the configuration file")
 	}
 
 	testName := "EdgeGatewaySettingsBasic"
