@@ -37,7 +37,7 @@ func resourceVcdOrgVdcAccessControl() *schema.Resource {
 			"shared_with_everyone": {
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "Whether the vApp is shared with everyone",
+				Description: "Whether the VDC is shared with everyone",
 			},
 			"everyone_access_level": {
 				Type:         schema.TypeString,
