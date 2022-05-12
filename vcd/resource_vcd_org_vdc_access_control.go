@@ -117,7 +117,7 @@ func resourceVdcVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 		return diag.Errorf("error when retrieving VDC - %s", err)
 	}
 
-	_, err = vdc.SetControlAccess(&accessControl)
+	_, err = vdc.SetControlAccess(&accessControl, true)
 	if err != nil {
 		return diag.Errorf("error when setting VDC control access parameters - %s", err)
 	}
@@ -143,7 +143,7 @@ func resourceVdcVdcAccessControlRead(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	controlAccessParams, err := vdc.GetControlAccess()
+	controlAccessParams, err := vdc.GetControlAccess(true)
 	if err != nil {
 		return diag.Errorf("error getting control access parameters - %s", err)
 	}
@@ -181,7 +181,7 @@ func resourceVdcVdcAccessControlDelete(ctx context.Context, d *schema.ResourceDa
 		IsSharedToEveryone: false,
 	}
 
-	_, err = vdc.SetControlAccess(controlAccessParams)
+	_, err = vdc.SetControlAccess(controlAccessParams, true)
 	if err != nil {
 		return diag.Errorf("error when setting VDC control access parameters - %s", err)
 	}
@@ -205,7 +205,7 @@ func resourceVdcVdcAccessControlImport(ctx context.Context, d *schema.ResourceDa
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	accessControlParams, err := vdc.GetControlAccess()
+	accessControlParams, err := vdc.GetControlAccess(true)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve access control parameters - %s", err)
 	}
