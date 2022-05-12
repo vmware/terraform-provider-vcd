@@ -20,18 +20,18 @@ Supported in provider *v3.7+*
 
 ```hcl
 resource "vcd_org_vdc_access_control" "my_access_control" {
-  org                   = "my-org"
-  vdc                   = "my-vdc"
-  shared_with_everyone  = false
+  org                  = "my-org"
+  vdc                  = "my-vdc"
+  shared_with_everyone = false
 
   shared_with {
-    user_id             = vcd_org_user.my-user.id
-    access_level        = "ReadOnly"
+    user_id      = vcd_org_user.my-user.id
+    access_level = "ReadOnly"
   }
 
   shared_with {
-    user_id             = vcd_org_user.my-user2.id
-    access_level        = "ReadOnly"
+    user_id      = vcd_org_user.my-user2.id
+    access_level = "ReadOnly"
   }
 }
 ```
