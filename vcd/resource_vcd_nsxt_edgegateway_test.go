@@ -24,7 +24,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
+	skipNoConfiguration(t, StringMap{"Nsxt.ExternalNetwork": testConfig.Nsxt.ExternalNetwork})
 	vcdClient := createTemporaryVCDConnection(false)
 
 	nsxtExtNet, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, testConfig.Nsxt.ExternalNetwork)
@@ -372,8 +372,6 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -577,8 +575,6 @@ func TestAccVcdNsxtEdgeGatewayVdcUpdateFails(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
 		"NsxtVdc":                   testConfig.Nsxt.Vdc,
@@ -749,8 +745,6 @@ func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{

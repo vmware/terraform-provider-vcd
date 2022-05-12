@@ -27,7 +27,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	vcdClient := createTemporaryVCDConnection(false)
 	if !vcdClient.Client.IsSysAdmin {
@@ -35,11 +34,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	}
 
 	skipTestForVcdExactVersion(t, "10.2.2.17855680", "removal of standalone VM with NICs fails")
-
-	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
-		return
-	}
 
 	// making sure the VM name is unique
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())

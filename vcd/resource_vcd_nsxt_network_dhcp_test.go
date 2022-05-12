@@ -12,7 +12,6 @@ import (
 
 func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{

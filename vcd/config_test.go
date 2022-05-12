@@ -428,7 +428,7 @@ func templateFill(tmpl string, data StringMap) string {
 	nullableItems := []string{"Comment", "DirName"}
 	for _, item := range nullableItems {
 		if _, ok := data[item]; !ok {
-			data[item] = ""
+			data[item] = " "
 		}
 	}
 	if _, ok := data["CallerFileName"]; !ok {
@@ -1355,31 +1355,12 @@ func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc)
 	return f
 }
 
-// skipNoNsxtConfiguration allows to skip a test if NSX-T configuration is missing
-func skipNoNsxtConfiguration(t *testing.T) {
-	generalMessage := "Missing NSX-T config: "
-	if testConfig.VCD.NsxtProviderVdc.Name == "" {
-		t.Skip(generalMessage + "No provider VDC specified")
-	}
-	if testConfig.VCD.NsxtProviderVdc.NetworkPool == "" {
-		t.Skip(generalMessage + "No network pool specified")
-	}
-
-	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
-		t.Skip(generalMessage + "No storage profile specified")
-	}
-
-	if testConfig.Nsxt.Manager == "" {
-		t.Skip(generalMessage + "No NSX-T manager specified")
-	}
-	if testConfig.Nsxt.Tier0router == "" {
-		t.Skip(generalMessage + "No NSX-T Tier-0 specified")
-	}
-	if testConfig.Nsxt.Tier0routerVrf == "" {
-		t.Skip(generalMessage + "No VRF NSX-T Tier-0 specified")
-	}
-	if testConfig.Nsxt.NsxtImportSegment == "" {
-		t.Skip(generalMessage + "No NSX-T importable segment specified ")
+// skipNoConfiguration allows to skip a test if NSX-T configuration is missing
+func skipNoConfiguration(t *testing.T, paramsMap StringMap) {
+	for key, value := range paramsMap {
+		if value == "" {
+			t.Skipf("Missing test config: No %s specified", key)
+		}
 	}
 }
 

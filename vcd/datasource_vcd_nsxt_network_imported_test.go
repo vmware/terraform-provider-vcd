@@ -11,7 +11,6 @@ import (
 
 func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

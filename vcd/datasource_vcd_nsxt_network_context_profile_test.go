@@ -16,7 +16,6 @@ func TestAccVcdNsxtNetworkContextProfileInVdc(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
@@ -65,7 +64,6 @@ func TestAccVcdNsxtNetworkContextProfileInNsxtManager(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,

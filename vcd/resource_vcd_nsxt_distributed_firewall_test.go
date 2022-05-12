@@ -20,8 +20,6 @@ func TestAccVcdDistributedFirewall(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -404,8 +402,6 @@ func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 		t.Skipf("This test tests VCD 10.2.2+ (API V35.2+) features. Skipping.")
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -490,8 +486,6 @@ func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.2") {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{

@@ -15,7 +15,6 @@ import (
 // Profile customization
 func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -286,7 +285,6 @@ const testAccNsxtIpSecVpnTunnel3DS = testAccNsxtIpSecVpnTunnel3 + testAccNsxtIpS
 
 func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{

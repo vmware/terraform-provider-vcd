@@ -687,7 +687,6 @@ resource "vcd_network_routed_v2" "net1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return

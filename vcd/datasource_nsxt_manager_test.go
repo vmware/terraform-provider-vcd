@@ -18,8 +18,6 @@ func TestAccVcdDatasourceNsxtManager(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"FuncName":    t.Name(),
 		"NsxtManager": testConfig.Nsxt.Manager,

@@ -168,7 +168,9 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 		case "nsxt_manager_id":
-			skipNoNsxtConfiguration(t)
+			if testConfig.Nsxt.Manager == "" {
+				t.Skip("Missing NSX-T config: No NSX-T manager specified")
+			}
 			// This test needs a valid nsxt_manager_id
 			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {
@@ -181,7 +183,9 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `nsxt_manager_id = "` + nsxtManagerUrn + `"` + "\n"
 		case "context_id":
-			skipNoNsxtConfiguration(t)
+			if testConfig.Nsxt.Manager == "" {
+				t.Skip("Missing NSX-T config: No NSX-T manager specified")
+			}
 			// This test needs a valid nsxt_manager_id
 			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {

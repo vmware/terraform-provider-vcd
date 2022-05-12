@@ -19,7 +19,6 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	client := createTemporaryVCDConnection(false)
 

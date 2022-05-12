@@ -18,8 +18,6 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
@@ -61,8 +59,6 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
@@ -95,8 +91,6 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
@@ -148,8 +142,6 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,

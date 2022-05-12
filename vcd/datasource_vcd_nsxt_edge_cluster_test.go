@@ -12,7 +12,7 @@ import (
 
 func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
+	skipNoConfiguration(t, StringMap{"Nsxt.Vdc": testConfig.Nsxt.Vdc, "VCD.Org": testConfig.VCD.Org})
 
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")

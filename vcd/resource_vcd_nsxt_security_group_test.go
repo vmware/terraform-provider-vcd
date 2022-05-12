@@ -17,7 +17,6 @@ import (
 // attaching member networks
 func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -121,7 +120,6 @@ resource "vcd_nsxt_security_group" "group1" {
 // the same prerequisite resources.
 func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -346,7 +344,6 @@ data "vcd_nsxt_security_group" "group1" {
 // * Isolated Org Vdc network added as a member
 func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// This test is meant to fail
 	if vcdShortTest {
@@ -497,7 +494,6 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skipf("this test requires Sysadmin user to create VDC Group")
 	}
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -724,7 +720,6 @@ resource "vcd_nsxt_security_group" "group1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return

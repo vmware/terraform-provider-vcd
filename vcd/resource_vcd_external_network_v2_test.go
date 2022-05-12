@@ -44,7 +44,6 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10+)")
@@ -475,7 +474,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.0") {
 		t.Skip(t.Name() + " this test check requires API version <36.0 (VCD 10.3+)")
@@ -531,7 +529,6 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
 		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
@@ -725,7 +722,6 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10.1+)")
@@ -848,7 +844,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
 		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")

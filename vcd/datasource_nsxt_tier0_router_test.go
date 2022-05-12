@@ -33,8 +33,6 @@ func testAccVcdDatasourceNsxtTier0Router(t *testing.T, tier0RouterName string) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"FuncName":        t.Name(),
 		"NsxtManager":     testConfig.Nsxt.Manager,

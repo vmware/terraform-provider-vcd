@@ -12,7 +12,6 @@ import (
 
 func TestAccVcdOpenApiDhcpNsxtRoutedDS(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// This test creates a resource and uses datasource which is not possible in single file
 	// therefore skipping binary tests

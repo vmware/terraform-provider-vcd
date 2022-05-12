@@ -14,8 +14,6 @@ import (
 func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 	preTestChecks(t)
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
 		"NsxtVdc": testConfig.Nsxt.Vdc,
@@ -129,7 +127,6 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 
 func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -390,7 +387,6 @@ resource "vcd_nsxt_app_port_profile" "custom" {
 
 func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -468,8 +464,6 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdc(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
 		"NsxtVdc": testConfig.Nsxt.Vdc,
@@ -535,8 +529,6 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip("this test must pre-create VDC Group and cannot run in Org user mode")
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -632,8 +624,6 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip("this test must pre-create VDC Group and cannot run in Org user mode")
 	}
-
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,

@@ -19,8 +19,6 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                  testConfig.VCD.Org,
@@ -188,7 +186,6 @@ resource "vcd_network_isolated_v2" "net1" {
 // * Step 7 - checks out that import of network being in different VDC still works
 func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
 		return
@@ -393,7 +390,6 @@ resource "vcd_network_isolated_v2" "net1" {
 
 func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -507,7 +503,6 @@ data "vcd_network_isolated_v2" "net1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{

@@ -10,8 +10,6 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	skipNoNsxtConfiguration(t)
-
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{

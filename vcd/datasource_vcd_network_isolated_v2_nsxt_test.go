@@ -16,8 +16,6 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                  testConfig.VCD.Org,
