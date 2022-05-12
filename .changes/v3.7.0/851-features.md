@@ -1,0 +1,1 @@
+* Add `catalog_item_metadata` to resource and data source `catalog_item` to support metadata on CatalogItem entities [GH-851]
