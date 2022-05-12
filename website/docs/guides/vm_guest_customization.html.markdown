@@ -105,3 +105,14 @@ After applying the configuration one should be able to login using `core` user a
 password. In addition the hostname should be set to `core1. [Official Ignition
 docs](https://docs.fedoraproject.org/en-US/fedora-coreos/producing-ign/) have a lot more
 configuration options.
+
+## Guest Customization using CloudInit (OVF datasource)
+
+Configuration can be passed to CloudInit using
+[`guest_properties`](/providers/vmware/vcd/latest/docs/resources/vapp_vm#guest_properties) key value
+map in [`vcd_vapp_vm`](/providers/vmware/vcd/latest/docs/resources/vapp_vm) or
+[`vcd_vm`](/providers/vmware/vcd/latest/docs/resources/vm) resources.
+
+More about [CloudInit](https://cloudinit.readthedocs.io/en/latest/) and
+[OVF](https://cloudinit.readthedocs.io/en/latest/topics/datasources/ovf.html)
+[datasource](https://cloudinit.readthedocs.io/en/latest/topics/datasources.html)
