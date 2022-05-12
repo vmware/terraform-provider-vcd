@@ -152,7 +152,7 @@ func assertVdcAccessControlIsSharedWithEverybody() resource.TestCheckFunc {
 		}
 
 		if !controlAccessParams.IsSharedToEveryone {
-			fmt.Errorf("this VDC was expected to be shared with everyone but it is not")
+			return fmt.Errorf("this VDC was expected to be shared with everyone but it is not")
 		}
 
 		return nil
