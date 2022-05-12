@@ -79,9 +79,12 @@ func resourceVcdCatalogItem() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Optional:    true,
+				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
+			},
+			"catalog_item_metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
 				Description: "Key and value pairs for catalog item metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
 			},
 		},
 	}
