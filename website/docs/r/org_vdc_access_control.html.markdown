@@ -51,7 +51,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `shared_with_everyone` - (Required) Whether the VDC is shared with everyone.
-* `everyone_access_level` - (Optional) Access level when the VDC is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set.
+* `everyone_access_level` - (Optional) Access level when the VDC is shared with everyone (only `ReadOnly` is available). Required when shared_with_everyone is set.
 * `shared_with` - (Optional) one or more blocks defining a subject to which we are sharing.
   See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is set.
 
