@@ -1,5 +1,5 @@
-//go:build user || vdc || ALL || functional
-// +build user vdc ALL functional
+//go:build vdc || ALL || functional
+// +build vdc ALL functional
 
 package vcd
 
@@ -18,6 +18,7 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
+	orgUserPasswordFile := "org_user_pwd.txt"
 	userName1 := strings.ToLower(t.Name())
 	userName2 := strings.ToLower(t.Name()) + "2"
 	accessControlName := "test-access-control"
