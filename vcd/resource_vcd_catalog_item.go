@@ -296,14 +296,38 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		for _, k := range toBeRemovedMetadata {
 			err := vAppTemplate.DeleteMetadataEntry(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
+				return fmt.Errorf("error deleting metadata from catalog item's associated vApp template: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			err := vAppTemplate.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
+				return fmt.Errorf("error adding metadata to catalog item's associated vApp template: %s", err)
+			}
+		}
+	}
+	if d.HasChange("catalog_item_metadata") {
+		oldRaw, newRaw := d.GetChange("catalog_item_metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := catalogItem.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata from catalog item: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := catalogItem.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata to catalog item: %s", err)
 			}
 		}
 	}

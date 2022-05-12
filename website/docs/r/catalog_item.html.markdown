@@ -29,7 +29,6 @@ resource "vcd_catalog_item" "myNewCatalogItem" {
     license = "public"
     version = "v1"
   }
-  
   catalog_item_metadata = {
     environment = "production"
   }

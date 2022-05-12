@@ -85,9 +85,13 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceCatalogItem, "description", TestAccVcdCatalogItemDescription),
 					resource.TestCheckResourceAttr(
-						resourceCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+						resourceCatalogItem, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
-						resourceCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
+						resourceCatalogItem, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
+					resource.TestCheckResourceAttr(
+						resourceCatalogItem, "catalog_item_metadata.catalogItem_metadata4", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						resourceCatalogItem, "catalog_item_metadata.catalogItem_metadata5", "catalogItem Metadata2"),
 				),
 			},
 			{
@@ -99,11 +103,17 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "description", TestAccVcdCatalogItemDescription),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata v2"),
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2 v2"),
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.vapp_template_metadata2", "vApp Template Metadata2 v2"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "catalog_item_metadata.catalogItem_metadata", "catalogItem Metadata v2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "catalog_item_metadata.catalogItem_metadata2", "catalogItem Metadata2 v2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "catalog_item_metadata.catalogItem_metadata3", "catalogItem Metadata3"),
 				),
 			},
 			{
@@ -116,11 +126,17 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "description", TestAccVcdCatalogItemDescriptionFromUrl),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "catalog_item_metadata.catalogItem_metadata", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "catalog_item_metadata.catalogItem_metadata2", "catalogItem Metadata2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "catalog_item_metadata.catalogItem_metadata3", "catalogItem Metadata3"),
 				),
 			},
 			{
@@ -133,9 +149,13 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "description", TestAccVcdCatalogItemDescriptionFromUrlUpdated),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.catalogItem_metadata2", "catalogItem Metadata2_2"),
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "catalog_item_metadata.catalogItem_metadata", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "catalog_item_metadata.catalogItem_metadata2", "catalogItem Metadata2_2"),
 				),
 			},
 		},
@@ -233,6 +253,11 @@ const testAccCheckVcdCatalogItemBasic = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
+    vapp_template_metadata = "vApp Template Metadata"
+    vapp_template_metadata2 = "vApp Template Metadata2"
+  }
+
+  catalog_item_metadata = {
     catalogItem_metadata = "catalogItem Metadata"
     catalogItem_metadata2 = "catalogItem Metadata2"
   }
@@ -251,6 +276,12 @@ const testAccCheckVcdCatalogItemUpdate = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
+    vapp_template_metadata = "vApp Template Metadata v2"
+    vapp_template_metadata2 = "vApp Template Metadata2 v2"
+    vapp_template_metadata3 = "vApp Template Metadata3"
+  }
+
+  catalog_item_metadata = {
     catalogItem_metadata = "catalogItem Metadata v2"
     catalogItem_metadata2 = "catalogItem Metadata2 v2"
     catalogItem_metadata3 = "catalogItem Metadata3"
@@ -269,6 +300,12 @@ const testAccCheckVcdCatalogItemFromUrl = `
   show_upload_progress = "{{.UploadProgressFromUrl}}"
 
   metadata = {
+    vapp_template_metadata = "vApp Template Metadata"
+    vapp_template_metadata2 = "vApp Template Metadata2"
+    vapp_template_metadata3 = "vApp Template Metadata3"
+  }
+
+  catalog_item_metadata = {
     catalogItem_metadata = "catalogItem Metadata"
     catalogItem_metadata2 = "catalogItem Metadata2"
     catalogItem_metadata3 = "catalogItem Metadata3"
@@ -287,6 +324,11 @@ const testAccCheckVcdCatalogItemFromUrlUpdated = `
   show_upload_progress = "{{.UploadProgressFromUrl}}"
 
   metadata = {
+    vapp_template_metadata = "vApp Template Metadata"
+    vapp_template_metadata2 = "vApp Template Metadata2_2"
+  }
+
+  catalog_item_metadata = {
     catalogItem_metadata = "catalogItem Metadata"
     catalogItem_metadata2 = "catalogItem Metadata2_2"
   }
