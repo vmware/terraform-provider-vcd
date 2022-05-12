@@ -89,9 +89,9 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceCatalogItem, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
 					resource.TestCheckResourceAttr(
-						resourceCatalogItem, "catalog_item_metadata.catalogItem_metadata4", "catalogItem Metadata"),
+						resourceCatalogItem, "catalog_item_metadata.catalogItem_metadata", "catalogItem Metadata"),
 					resource.TestCheckResourceAttr(
-						resourceCatalogItem, "catalog_item_metadata.catalogItem_metadata5", "catalogItem Metadata2"),
+						resourceCatalogItem, "catalog_item_metadata.catalogItem_metadata2", "catalogItem Metadata2"),
 				),
 			},
 			{
