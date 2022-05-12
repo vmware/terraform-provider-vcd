@@ -1,5 +1,5 @@
-//go:build vdc || ALL || functional
-// +build vdc ALL functional
+//go:build user || vdc || ALL || functional
+// +build user vdc ALL functional
 
 package vcd
 
