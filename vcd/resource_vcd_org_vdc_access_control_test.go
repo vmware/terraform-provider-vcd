@@ -125,7 +125,7 @@ func testAccCheckVDCControlAccessDestroy() resource.TestCheckFunc {
 			return fmt.Errorf("error retrieving Org %s - %s", testConfig.VCD.Org, err)
 		}
 
-		controlAccessParams, err := vdc.GetControlAccess()
+		controlAccessParams, err := vdc.GetControlAccess(true)
 		if err != nil {
 			return fmt.Errorf("error retrieving VDC controll access parameters - %s", err)
 		}
@@ -146,7 +146,7 @@ func assertVdcAccessControlIsSharedWithEverybody() resource.TestCheckFunc {
 			return fmt.Errorf("error retrieving Org %s - %s", testConfig.VCD.Org, err)
 		}
 
-		controlAccessParams, err := vdc.GetControlAccess()
+		controlAccessParams, err := vdc.GetControlAccess(true)
 		if err != nil {
 			return fmt.Errorf("error retrieving VDC controll access parameters - %s", err)
 		}
@@ -168,7 +168,7 @@ func assertVdcAccessControlIsSharedWithSpecificUser(userName string) resource.Te
 			return fmt.Errorf("error retrieving Org %s - %s", testConfig.VCD.Org, err)
 		}
 
-		controlAccessParams, err := vdc.GetControlAccess()
+		controlAccessParams, err := vdc.GetControlAccess(true)
 		if err != nil {
 			return fmt.Errorf("error retrieving VDC controll access parameters - %s", err)
 		}
