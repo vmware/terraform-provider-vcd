@@ -52,20 +52,29 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `shared_with_everyone` - (Required) Whether the VDC is shared with everyone.
 * `everyone_access_level` - (Optional) Access level when the VDC is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set.
+* `shared_with` - (Optional) one or more blocks defining a subject to which we are sharing.
+  See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is set.
 
--> The ID of `vcd_security_tag` is set to its name since VCD behind the scenes doesn't create an ID.
+~> **Note:** Users must either set sharing for everybody using `shared_with_everyone` and `everyone_access_level` arguments or per user/group access using `shared_with` argument. Setting both will make the resource to error.
+
+## shared_with
+
+* `user_id` - (Optional) The ID of a user which we are sharing with. Required if `group_id` is not set.
+* `group_id` - (Optional) The ID of a group which we are sharing with. Required if `user_id` is not set.
+* `access_level` - (Required) The access level for the user or group to which we are sharing. (Only `ReadOnly` is available)
+* `subject_name` - (Computed) the name of the subject (group or user) which we are sharing with.
 
 # Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing security tag can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of org-name.security-tag-name
+An existing VDC access control can be [imported][docs-import] into this resource via supplying its path.
+The path for this resource is made of org-name.vdc-name
 An example is below:
 
 ```
-terraform import vcd_security_tag.my-tag my-org.my-security-tag-name
+terraform import vcd_org_vdc_access_control.my_access_control my-org.my-vdc
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
