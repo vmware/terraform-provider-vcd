@@ -233,5 +233,4 @@ func resourceVdcVdcAccessControlImport(ctx context.Context, d *schema.ResourceDa
 	d.SetId(vdc.Vdc.ID)
 
 	return []*schema.ResourceData{d}, nil
-	return nil, nil
 }
