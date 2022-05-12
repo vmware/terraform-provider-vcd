@@ -213,16 +213,25 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 		return diag.Errorf("Unable to find Vapp template: %s", err)
 	}
 
-	metadata, err := vAppTemplate.GetMetadata()
+	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
 	if err != nil {
-		return diag.Errorf("Unable to find meta data: %s", err)
+		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
 	}
+	catalogItemMetadata, err := catalogItem.GetMetadata()
+	if err != nil {
+		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
+	}
+
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
 	if err != nil {
-		return diag.Errorf("Unable to set meta data: %s", err)
+		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
+	}
+	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
 	}
 
 	return nil
@@ -323,7 +332,6 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 				return fmt.Errorf("error deleting metadata from catalog item: %s", err)
 			}
 		}
-		// Add new metadata
 		for k, v := range newMetadata {
 			err := catalogItem.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
