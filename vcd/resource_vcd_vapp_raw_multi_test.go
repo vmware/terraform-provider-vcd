@@ -32,6 +32,8 @@ func TestAccVcdVAppRawMulti(t *testing.T) {
 		"VmName3":     "TestAccVcdVAppRawVm3",
 		"Tags":        "multivm",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccCheckVcdVAppRawMulti, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -39,7 +41,6 @@ func TestAccVcdVAppRawMulti(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppRawMultiDestroy,
 		Steps: []resource.TestStep{

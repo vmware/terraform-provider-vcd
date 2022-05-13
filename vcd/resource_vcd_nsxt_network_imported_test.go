@@ -27,6 +27,7 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
 		"Tags":              "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNetworkImportedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -45,8 +46,7 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		//PreCheck:          func() { testParamsNotEmpty(t, params) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
 				Config: configText,
@@ -166,6 +166,7 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 
 		"Tags": "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNetworkImportedV2NsxtOwnerIsVdcStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -183,8 +184,7 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		//PreCheck:          func() { testParamsNotEmpty(t, params) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
 				Config: configText,
@@ -321,6 +321,7 @@ func TestAccVcdNsxtNetworkImportedInVdcGroup(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -339,7 +340,6 @@ func TestAccVcdNsxtNetworkImportedInVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -432,6 +432,7 @@ func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -461,7 +462,6 @@ func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 	cachedId := &testCachedFieldValue{}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -631,6 +631,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -663,9 +664,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-
-		PreCheck:     func() { testParamsNotEmpty(t, params) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

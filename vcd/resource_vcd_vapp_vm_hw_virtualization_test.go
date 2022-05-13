@@ -29,6 +29,7 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 		"ExposeHardwareVirtualization": "false",
 		"Tags":                         "vapp vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextStep0 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
@@ -42,7 +43,6 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep0)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		Steps: []resource.TestStep{

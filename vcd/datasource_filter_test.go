@@ -344,6 +344,8 @@ func runSearchTest(entityType, label string, t *testing.T) {
 		"FuncName": "search_" + label,
 		"Tags":     "search",
 	}
+	testParamsNotEmpty(t, params)
+
 	template, expectedResults, err := generateTemplates(filters)
 	if err != nil {
 		t.Skip("Error generating " + label + " templates - data source test skipped")
@@ -353,7 +355,6 @@ func runSearchTest(entityType, label string, t *testing.T) {
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

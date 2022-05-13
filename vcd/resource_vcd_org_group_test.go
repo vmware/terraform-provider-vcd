@@ -76,6 +76,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		"FuncName":     t.Name() + "-Step1",
 		"Description":  "Description1",
 	}
+	testParamsNotEmpty(t, params)
 
 	groupConfigText := templateFill(testAccOrgGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", groupConfigText)
@@ -120,7 +121,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdGroupDestroy("admin_staff"),
 			testAccCheckVcdGroupDestroy("ship_crew"),

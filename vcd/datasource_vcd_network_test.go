@@ -133,6 +133,8 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 		"FuncName":        "TestNetworkDirectDS",
 		"Tags":            "network",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -144,7 +146,6 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -200,11 +201,12 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 		"FuncName":    "TestNetworkRoutedDS",
 		"Tags":        "network",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -258,11 +260,12 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 		"FuncName":    "TestNetworkIsolatedDS",
 		"Tags":        "network",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

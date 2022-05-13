@@ -28,6 +28,8 @@ func TestAccVcdRole(t *testing.T) {
 		"FuncName":              roleName,
 		"Tags":                  "role",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccRole, params)
 
 	params["FuncName"] = roleUpdateName
@@ -43,7 +45,6 @@ func TestAccVcdRole(t *testing.T) {
 
 	resourceDef := "vcd_role." + roleName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRoleDestroy(resourceDef),
 		Steps: []resource.TestStep{

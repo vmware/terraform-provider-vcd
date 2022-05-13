@@ -36,6 +36,8 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		"VpnName":          vpnName,
 		"Tags":             "gateway",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccCheckVcdVpn_basic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -43,7 +45,6 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVpnDestroy,
 		Steps: []resource.TestStep{

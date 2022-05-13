@@ -31,6 +31,7 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 		"NetworkName":       t.Name(),
 		"Tags":              "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-DS"
 	configText := templateFill(testAccVcdNetworkImportedV2NsxtStep1, params)
@@ -50,7 +51,6 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-imported-test-initial"),
 		Steps: []resource.TestStep{
 			{

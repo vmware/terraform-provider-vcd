@@ -35,6 +35,8 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 		"ExternalIp":    testConfig.Networking.ExternalIp,
 		"Tags":          "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccVcdVappStaticRouting_routes, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappStaticRouting_routes_forUpdate, params)
@@ -47,7 +49,6 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_static_routing." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

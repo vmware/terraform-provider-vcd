@@ -35,6 +35,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 		"Tags":        "vapp vm",
 		"Media":       testConfig.Media.MediaName,
 	}
+	testParamsNotEmpty(t, params)
 
 	// Create objects for testing field values across update steps
 	nic0Mac := testCachedFieldValue{}
@@ -53,7 +54,6 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{

@@ -56,6 +56,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"metadataKeyUpdate":        "key2",
 		"metadataValueUpdate":      "value2",
 	}
+	testParamsNotEmpty(t, params)
 
 	// regexp for empty value
 	uuidMatchRegexp := regexp.MustCompile(`^$`)
@@ -104,7 +105,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForCompatibility)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{

@@ -47,13 +47,14 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		"Media":         testConfig.Media.MediaName,
 		"Tags":          "vapp vm nsxt",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(testAccCheckVcdNsxtVAppRaw_basicCleanup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdNsxtVAppRawDestroy,
 		Steps: []resource.TestStep{

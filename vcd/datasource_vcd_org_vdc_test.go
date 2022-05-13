@@ -23,6 +23,7 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":        vdcName,
 	}
+	testParamsNotEmpty(t, params)
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
@@ -76,7 +77,6 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string, params StringMap) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
@@ -127,7 +127,6 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 
 func validateDataSource(t *testing.T, configText string, datasourceVdc string, params StringMap) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{

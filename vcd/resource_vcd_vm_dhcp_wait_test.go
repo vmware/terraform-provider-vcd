@@ -27,6 +27,7 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 		"Tags":            "standaloneVm vm",
 		"DhcpWaitSeconds": 300,
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVmDhcpWait, params)
 
@@ -43,7 +44,6 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 	skipEnvVar := "VCD_SKIP_DHCP_CHECK"
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{

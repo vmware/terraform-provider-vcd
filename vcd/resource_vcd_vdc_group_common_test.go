@@ -57,6 +57,7 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 
 		"Tags": "vdc nsxt vdcGroup",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -84,7 +85,6 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config: configTextPre,

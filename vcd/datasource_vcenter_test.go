@@ -19,6 +19,8 @@ func TestAccVcdVcenter(t *testing.T) {
 	var params = StringMap{
 		"Vcenter": testConfig.Networking.Vcenter,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(datasourceTestVcenter, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -27,7 +29,6 @@ func TestAccVcdVcenter(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

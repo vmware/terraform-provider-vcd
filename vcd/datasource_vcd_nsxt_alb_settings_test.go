@@ -27,14 +27,13 @@ func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
 		"EdgeGw":  testConfig.Nsxt.EdgeGateway,
 		"Tags":    "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbSettingsDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
-
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

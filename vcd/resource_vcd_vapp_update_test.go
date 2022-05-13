@@ -26,9 +26,11 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 		"VappName":        vappName,
 		"VappDescription": vappDescription,
 		"FuncName":        t.Name(),
-		"Note":            "",
+		"Note":            " ",
 		"Tags":            "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccVcdVAppUpdate, params)
 
 	params["FuncName"] = t.Name() + "_update"
@@ -57,7 +59,6 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 
 	resourceName := "vcd_vapp." + vappName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{

@@ -53,6 +53,7 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 		"Description4":             "myDescription 4",
 		"Description4Update":       "myDescription 4 updated",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdLibraryCertificateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -68,8 +69,6 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
-
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

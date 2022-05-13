@@ -32,6 +32,8 @@ func TestAccVcdGlobalRole(t *testing.T) {
 		"FuncName":                    globalRoleName,
 		"Tags":                        "role",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccGlobalRole, params)
 
 	params["FuncName"] = globalRoleUpdateName
@@ -46,7 +48,6 @@ func TestAccVcdGlobalRole(t *testing.T) {
 
 	resourceDef := "vcd_global_role." + globalRoleName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckGlobalRoleDestroy(resourceDef),
 		Steps: []resource.TestStep{

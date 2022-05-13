@@ -21,6 +21,7 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 		"NetworkName":   t.Name(),
 		"Tags":          "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNetworkRoutedV2Nsxv, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -37,7 +38,6 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
@@ -80,6 +80,7 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 		"NetworkName":   t.Name(),
 		"Tags":          "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccVcdNetworkRoutedV2Nsxv, params)
@@ -92,7 +93,6 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{

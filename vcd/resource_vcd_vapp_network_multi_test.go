@@ -76,6 +76,7 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 		"dhcpEnabled":       "true",
 		"Tags":              "multinetwork",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVappNetworkMulti, params)
 	if vcdShortTest {
@@ -85,7 +86,6 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkMultiDestroy,
 		Steps: []resource.TestStep{

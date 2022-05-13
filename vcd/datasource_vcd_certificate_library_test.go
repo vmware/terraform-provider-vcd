@@ -38,6 +38,7 @@ func TestAccVcdLibraryCertificateDS(t *testing.T) {
 		"AliasSystem": certificates[1].CertificateLibrary.Alias,
 		"IdSystem":    certificates[1].CertificateLibrary.Id,
 	}
+	testParamsNotEmpty(t, params)
 
 	template := testAccVcdLibraryCertificateOrgDS
 	// add test part when test is run by System admin
@@ -77,8 +78,6 @@ func TestAccVcdLibraryCertificateDS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
-
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

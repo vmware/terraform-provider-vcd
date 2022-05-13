@@ -117,6 +117,7 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"retainIpMacEnabledForUpdate": "true",
 		"FuncName":                    "TestAccVcdVappNetwork_Nat",
 	}
+	testParamsNotEmpty(t, params)
 
 	runVappNetworkTest(t, params)
 	postTestChecks(t)
@@ -136,7 +137,6 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 
 	resourceName := "vcd_vapp_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{

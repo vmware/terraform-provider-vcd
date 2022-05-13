@@ -45,6 +45,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 		"Tags":     "lb lbAppRule",
 		"SkipTest": "",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdLBAppRule_OneLine, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -67,7 +68,6 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),
 		Steps: []resource.TestStep{
 			{ // Single Line Script

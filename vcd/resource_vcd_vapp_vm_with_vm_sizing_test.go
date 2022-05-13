@@ -55,6 +55,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"FlexMemoryOverheadValue":      "false",
 		"MemoryOverheadValueForAssert": "false",
 	}
+	testParamsNotEmpty(t, params)
 
 	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
 		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
@@ -89,7 +90,6 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroyByVdc(testAccVcdVdc, netVappName),
 		Steps: []resource.TestStep{

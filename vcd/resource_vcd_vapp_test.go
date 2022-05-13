@@ -40,6 +40,8 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 		"StorageLease":    storageLease,
 		"Tags":            "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
 
 	params["FuncName"] = "TestAccCheckVcdVApp_update"
@@ -53,7 +55,6 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{

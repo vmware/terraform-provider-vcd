@@ -49,6 +49,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 		"CpuReservationUpdate2":     "100",
 		"CpuLimitUpdate2":           "500",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVm_advancedCompute, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
@@ -67,7 +68,6 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{

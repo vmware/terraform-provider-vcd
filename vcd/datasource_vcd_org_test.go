@@ -28,6 +28,7 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 		"MetadataKey":   "key1",
 		"MetadataValue": "value1",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdDatasourceOrg, params)
 	params["FuncName"] = params["FuncName"].(string) + "Metadata"
@@ -44,7 +45,6 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 	datasource2 := "data.vcd_org.sourced_" + orgName2
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgName2),
 		Steps: []resource.TestStep{

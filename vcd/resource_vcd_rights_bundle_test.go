@@ -32,6 +32,8 @@ func TestAccVcdRightsBundle(t *testing.T) {
 		"FuncName":                      rightsBundleName,
 		"Tags":                          "role",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccRightsBundle, params)
 
 	params["FuncName"] = rightsBundleUpdateName
@@ -46,7 +48,6 @@ func TestAccVcdRightsBundle(t *testing.T) {
 
 	resourceDef := "vcd_rights_bundle." + rightsBundleName
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRightsBundleDestroy(resourceDef),
 		Steps: []resource.TestStep{

@@ -26,6 +26,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 		"NetworkName": testConfig.Networking.ExternalNetwork,
 		"Tags":        "gateway nat",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdEdgeDnatRule, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -53,7 +54,6 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdNatRuleDestroy("vcd_nsxv_dnat.test2"),
 		Steps: []resource.TestStep{
 			{ // Step 0 - minimal configuration and data source

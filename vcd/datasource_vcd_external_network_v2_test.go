@@ -31,6 +31,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 		"ExistingExternalNetwork": testConfig.Networking.ExternalNetwork,
 		"Tags":                    "network extnetwork",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(externalNetworkV2Datasource, params)
 
@@ -38,7 +39,6 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 
 	datasourceName := "data.vcd_external_network_v2.ext-net-nsxv"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

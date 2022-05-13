@@ -54,6 +54,8 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 		"EdgeGateway":        testConfig.Networking.EdgeGateway,
 		"retainIpMacEnabled": retainIpMacEnabled,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(datasourceTestVappNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -63,7 +65,6 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

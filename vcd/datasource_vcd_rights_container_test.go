@@ -179,12 +179,13 @@ func TestAccVcdRightsContainers(t *testing.T) {
 		"FuncName":         t.Name(),
 		"Tags":             "role",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccRightsContainerDS, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

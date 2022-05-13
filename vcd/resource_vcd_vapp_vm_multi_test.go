@@ -44,6 +44,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 		"diskResourceName":   diskResourceNameM,
 		"Tags":               "multivm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVAppVmMulti, params)
 	if vcdShortTest {
@@ -52,7 +53,6 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmMultiDestroy,
 		Steps: []resource.TestStep{

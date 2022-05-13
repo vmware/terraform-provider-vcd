@@ -25,13 +25,13 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 		"Scope":       "SYSTEM",
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -66,13 +66,13 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 		"Scope":       "PROVIDER",
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config:      configText1,
@@ -99,13 +99,13 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 		"Scope":       "TENANT",
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config:      configText1,
@@ -158,6 +158,7 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 
 		"Tags": "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileMultiOrgPreCreate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -168,7 +169,6 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

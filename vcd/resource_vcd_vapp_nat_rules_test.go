@@ -45,6 +45,8 @@ func TestAccVcdVappNatRules(t *testing.T) {
 		"ExternalIp":    testConfig.Networking.ExternalIp,
 		"Tags":          "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccVcdVappNatRules_rules, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappNatRules_rules_forUpdate, params)
@@ -60,7 +62,6 @@ func TestAccVcdVappNatRules(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_nat_rules." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

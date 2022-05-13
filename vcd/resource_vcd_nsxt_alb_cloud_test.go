@@ -32,6 +32,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbCloud, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -51,7 +52,6 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
 		Steps: []resource.TestStep{
 			{

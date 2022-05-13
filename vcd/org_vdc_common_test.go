@@ -23,6 +23,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
+	testParamsNotEmpty(t, params)
 
 	secondStorageProfile := params["ProviderVdcStorageProfile2"].(string)
 	configText := templateFill(testAccCheckVcdVdc_basic, params)
@@ -59,7 +60,6 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	resourceDef := "vcd_org_vdc." + params["VdcName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{

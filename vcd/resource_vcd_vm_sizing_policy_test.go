@@ -39,6 +39,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 		"MemoryLimit":       "2800",
 		"MemoryReservation": "0.3",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVmSizingPolicy_basic, params)
 	params["FuncName"] = t.Name() + "-Update"
@@ -58,7 +59,6 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	resource3 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_3"
 	resource4 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_4"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVmSizingPolicyDestroyed,
 		Steps: []resource.TestStep{

@@ -48,6 +48,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
 		"Tags":               "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdNsxtAlbVirtualServiceStep1, params)
@@ -96,7 +97,6 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
@@ -499,6 +499,7 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
 		"Tags":               "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdNsxtAlbVirtualServiceStep1OrgUser, params)
@@ -528,7 +529,6 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbPoolDestroy("vcd_nsxt_alb_pool.test"),
 		),

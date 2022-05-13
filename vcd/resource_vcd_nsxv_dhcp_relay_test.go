@@ -22,6 +22,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"Tags":        "gateway",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxvDhcpRelay, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -41,7 +42,6 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdDhcpRelaySettingsEmpty(),
 		Steps: []resource.TestStep{
 			{

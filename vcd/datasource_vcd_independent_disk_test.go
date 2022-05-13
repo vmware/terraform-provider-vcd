@@ -40,6 +40,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"metadataKey":          "key1",
 		"metadataValue":        "value1",
 	}
+	testParamsNotEmpty(t, params)
 
 	// Updated parameters for step2
 	var updateParams = make(StringMap)
@@ -72,7 +73,6 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{

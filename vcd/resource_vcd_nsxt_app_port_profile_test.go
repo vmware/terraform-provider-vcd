@@ -19,6 +19,7 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 		"NsxtVdc": testConfig.Nsxt.Vdc,
 		"Tags":    "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileTenantStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -41,7 +42,6 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
@@ -143,6 +143,7 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 		"NsxtManager": testConfig.Nsxt.Manager,
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileProviderStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -161,7 +162,6 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
@@ -403,12 +403,12 @@ func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 		"NsxtManager": testConfig.Nsxt.Manager,
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileProviderContextStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
@@ -469,12 +469,12 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdc(t *testing.T) {
 		"NsxtVdc": testConfig.Nsxt.Vdc,
 		"Tags":    "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileTenantContextStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
@@ -547,6 +547,7 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 
 		"Tags": "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -558,7 +559,6 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
@@ -642,6 +642,7 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 
 		"Tags": "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileConfigurationMigrationStep1, params)
@@ -657,7 +658,6 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),

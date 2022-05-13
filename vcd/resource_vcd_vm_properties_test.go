@@ -25,6 +25,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 		"VmName":      standaloneVmName,
 		"Tags":        "vm standaloneVm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVm_properties, params)
 
@@ -41,7 +42,6 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{

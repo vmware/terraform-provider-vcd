@@ -25,6 +25,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 		"Description": "Organization " + orgNameTestAccVcdOrg,
 		"Tags":        "org",
 	}
+	testParamsNotEmpty(t, params)
 
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdOrgBasic requires system admin privileges")
@@ -40,7 +41,6 @@ func TestAccVcdOrgBasic(t *testing.T) {
 
 	resourceName := "vcd_org." + orgNameTestAccVcdOrg
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
 		Steps: []resource.TestStep{
@@ -200,6 +200,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 			"MetadataKey":                  od.metadataKey,
 			"MetadataValue":                od.metadataValue,
 		}
+		testParamsNotEmpty(t, params)
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
 		// Prepare update
@@ -234,7 +235,6 @@ func TestAccVcdOrgFull(t *testing.T) {
 
 		resourceName := "vcd_org." + od.name
 		resource.Test(t, resource.TestCase{
-			PreCheck:          func() { testParamsNotEmpty(t, params) },
 			ProviderFactories: testAccProviders,
 			CheckDestroy:      testAccCheckOrgDestroy(od.name),
 			Steps: []resource.TestStep{

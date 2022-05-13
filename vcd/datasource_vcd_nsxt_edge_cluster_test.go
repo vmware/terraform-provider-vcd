@@ -46,6 +46,7 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 		"ExistingEdgeCluster": edgeClusters[0].NsxtEdgeCluster.Name,
 		"Tags":                "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(nsxtEdgeClusterDatasource, params)
 
@@ -53,7 +54,6 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 
 	datasourceName := "data.vcd_nsxt_edge_cluster.ec"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

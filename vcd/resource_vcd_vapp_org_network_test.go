@@ -27,6 +27,7 @@ func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 		"isFencedForUpdate":           "true",
 		"FuncName":                    "TestAccVcdVappOrgNetwork_NotFenced",
 	}
+	testParamsNotEmpty(t, params)
 
 	runVappOrgNetworkTest(t, params)
 	postTestChecks(t)
@@ -50,6 +51,7 @@ func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 		"isFencedForUpdate":           "true",
 		"FuncName":                    "TestAccVcdVappOrgNetwork_Fenced",
 	}
+	testParamsNotEmpty(t, params)
 
 	runVappOrgNetworkTest(t, params)
 	postTestChecks(t)
@@ -69,7 +71,6 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 
 	resourceName := "vcd_vapp_org_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{

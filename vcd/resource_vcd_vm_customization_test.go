@@ -33,6 +33,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 		"NetworkName": testConfig.TestEnvBuild.IsolatedNetwork,
 		"Tags":        "standaloneVm vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVmUpdateCustomization, params)
 
@@ -48,7 +49,6 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
@@ -104,6 +104,8 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 		"Tags":          "standaloneVm vm",
 		"Customization": "true",
 	}
+	testParamsNotEmpty(t, params)
+
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVmCreateCustomization, params)
 
@@ -113,7 +115,6 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
@@ -257,6 +258,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 		"VMName":      standaloneVmName,
 		"Tags":        "standaloneVm vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVmUpdateCustomizationSettings, params)
 
@@ -273,7 +275,6 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{

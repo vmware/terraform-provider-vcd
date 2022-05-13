@@ -37,6 +37,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
 		"StorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdHotUpdateVm, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
@@ -67,7 +68,6 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{

@@ -65,6 +65,8 @@ func TestAccVcdVappDS(t *testing.T) {
 		"FuncName": "TestVappDS",
 		"Tags":     "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(datasourceTestVapp, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -73,7 +75,6 @@ func TestAccVcdVappDS(t *testing.T) {
 		statusText = vAppUnknownStatus
 	}
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

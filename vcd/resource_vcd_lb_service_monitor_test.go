@@ -31,6 +31,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 		"Method":             "POST",
 		"Tags":               "lb lbServiceMonitor",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdLbServiceMonitor_Basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -51,7 +52,6 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
 		Steps: []resource.TestStep{
 			{

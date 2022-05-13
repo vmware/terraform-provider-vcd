@@ -30,6 +30,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		"MetadataKeyUpdated":   "key2",
 		"MetadataValueUpdated": "value2",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNetworkIsolatedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -47,7 +48,6 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
@@ -210,6 +210,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 		"MetadataValue":             "value1",
 		"Tags":                      "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -240,7 +241,6 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -408,6 +408,7 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccVcdNetworkIsolatedV2NsxtInVdc, params)
@@ -426,7 +427,6 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
@@ -516,6 +516,7 @@ func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -548,9 +549,7 @@ func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-
-		PreCheck:     func() { testParamsNotEmpty(t, params) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

@@ -24,6 +24,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtIpSecVpnTunnel1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -63,7 +64,6 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1"),
 			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1-updated"),
@@ -294,6 +294,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtIpSecVpnTunnelProfileStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -333,7 +334,6 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1"),
 			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1-updated"),

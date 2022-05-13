@@ -166,6 +166,8 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 
 		"Tags": "gateway",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccEdgeGatewaySettingsSimple, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -177,7 +179,6 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	// Note: this test can't run in parallel, as it updates the main edge gateway in the vCD
 	// and it could interfere with other tests
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		//CheckDestroy: func(s *terraform.State) error {return nil},
 		Steps: []resource.TestStep{

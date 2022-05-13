@@ -13,10 +13,6 @@ import (
 
 func TestAccVcdVappFirewallRules(t *testing.T) {
 	preTestChecks(t)
-	if testConfig.Networking.EdgeGateway == "" {
-		t.Skip("Variable testConfig.Networking.EdgeGateway must be configured")
-		return
-	}
 
 	var (
 		vmName1         = "TestAccVcdVappFirewallRulesVm1"
@@ -44,6 +40,8 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 		"VmName3":       vmName3,
 		"Tags":          "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccVcdVappFirewallRules_rules, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappFirewallRules_rules_forUpdate, params)
@@ -56,7 +54,6 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_firewall_rules." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

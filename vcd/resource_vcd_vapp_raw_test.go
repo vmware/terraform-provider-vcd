@@ -27,6 +27,8 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		"VmName":      "TestAccVcdVAppRawVm",
 		"Tags":        "vapp",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccCheckVcdVAppRaw_basic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -34,7 +36,6 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppRawDestroy,
 		Steps: []resource.TestStep{

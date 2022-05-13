@@ -28,6 +28,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 		"UploadProgress":   testConfig.Media.UploadProgress,
 		"Tags":             "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogMediaBasic, params)
 	params["FuncName"] = t.Name() + "-Update"
@@ -39,7 +40,6 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogMediaDestroy,
 		Steps: []resource.TestStep{

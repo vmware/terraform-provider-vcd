@@ -30,6 +30,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 		"EnableTransparency": true,
 		"Tags":               "lb lbServerPool",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdLbServerPool_Basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -47,7 +48,6 @@ func TestAccVcdLbServerPool(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLbServerPoolDestroy(params["ServerPoolName"].(string)),
 		Steps: []resource.TestStep{
 			{

@@ -55,6 +55,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		"FlexMemoryOverheadValue":      "false",
 		"MemoryOverheadValueForAssert": "false",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVdcVmSizingPolicies_basic, params)
 	params["FuncName"] = t.Name() + "-Update"
@@ -67,7 +68,6 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION - update: %s", updateText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{

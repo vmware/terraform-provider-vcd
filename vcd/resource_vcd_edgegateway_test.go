@@ -44,6 +44,8 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccEdgeGatewayBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -55,7 +57,6 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
@@ -99,6 +100,8 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccEdgeGatewayBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -110,7 +113,6 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
@@ -184,6 +186,8 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccEdgeGatewayNetworks, params)
 
 	params["FuncName"] = t.Name() + "-step2"
@@ -200,7 +204,6 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
@@ -394,6 +397,8 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccEdgeGatewayRateLimits, params)
 
 	params["EnableRateLimit"] = "false"
@@ -413,7 +418,6 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
@@ -513,6 +517,8 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccEdgeGatewayParallel, params)
 
 	if vcdShortTest {
@@ -526,7 +532,6 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdEdgeGatewayDestroy("parallel-0"),

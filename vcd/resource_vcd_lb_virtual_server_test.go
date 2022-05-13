@@ -26,6 +26,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 		"VirtualServerName": t.Name(),
 		"Tags":              "lb lbVirtualServer",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdLbVirtualServer_step0, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -42,7 +43,6 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLbVirtualServerDestroy(params["VirtualServerName"].(string)),
 		Steps: []resource.TestStep{
 			{ // step 0

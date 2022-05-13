@@ -73,6 +73,8 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 
 		"InternalDiskSize": internalDiskSize,
 	}
+	testParamsNotEmpty(t, params)
+
 	params["FuncName"] = t.Name() + "-IdeCreate"
 	configTextIde := templateFill(sourceTestVmInternalDiskIde, params)
 	params["FuncName"] = t.Name() + "-CreateALl"
@@ -89,7 +91,6 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -392,10 +393,11 @@ func TestAccVcdVmInternalDiskNvme(t *testing.T) {
 		"BusType":  "nvme",
 		"VmName":   t.Name() + "-vm",
 	}
+	testParamsNotEmpty(t, params)
+
 	configTextNvme := templateFill(sourceTestVmInternalDiskOrgVdcAndVMNvme, params)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckVcdStandaloneVmDestroy(params["VmName"].(string), params["Org"].(string), params["Vdc"].(string)),

@@ -45,6 +45,7 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 		"NetworkName": data.network.Name,
 		"Tags":        "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNetworkRoutedV2NsxvDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -55,7 +56,6 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText,

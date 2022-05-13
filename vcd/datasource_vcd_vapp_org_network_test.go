@@ -28,6 +28,8 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 
 		"FuncName": "TestAccVcdVappOrgNetworkDS",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(datasourceTestVappOrgNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -37,7 +39,6 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

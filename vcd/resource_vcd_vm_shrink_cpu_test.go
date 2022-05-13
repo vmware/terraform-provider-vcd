@@ -24,6 +24,7 @@ func TestAccVcdStandaloneVmShrinkCpu(t *testing.T) {
 		"VmName":  standaloneVmName,
 		"Tags":    "vm standaloneVm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVmShrinkCpu, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
@@ -33,7 +34,6 @@ func TestAccVcdStandaloneVmShrinkCpu(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{

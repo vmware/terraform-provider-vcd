@@ -21,6 +21,8 @@ func TestAccVcdVappVmDS(t *testing.T) {
 		"FuncName":    "TestVappVmDS",
 		"Tags":        "vm",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(datasourceTestVappVm, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -31,7 +33,6 @@ func TestAccVcdVappVmDS(t *testing.T) {
 	resourceName := "data.vcd_vapp_vm.vm-ds"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

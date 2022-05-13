@@ -23,6 +23,7 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 		"VappName":    vappName2,
 		"VmName":      vmName,
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVAppVm_capabilities, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
@@ -36,7 +37,6 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{

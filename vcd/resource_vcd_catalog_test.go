@@ -42,6 +42,7 @@ func TestAccVcdCatalog(t *testing.T) {
 		"UploadProgress":         testConfig.Media.UploadProgress,
 		"Tags":                   "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalog, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -61,7 +62,6 @@ func TestAccVcdCatalog(t *testing.T) {
 	cachedId := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
@@ -146,6 +146,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":           "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogWithStorageProfile, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -159,7 +160,6 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 	dataSourceAddress := "data.vcd_storage_profile.sp"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
@@ -255,6 +255,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 		"PreserveIdentityInformationUpdate1": false,
 		"PreserveIdentityInformationUpdate2": false,
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogPublished, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -273,7 +274,6 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	resourceAddress := "vcd_catalog.test-catalog"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
@@ -526,12 +526,12 @@ func TestAccVcdCatalogSharedAccess(t *testing.T) {
 		"SharedCatalogItem": "vapp-template",
 		"Tags":              "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccCheckVcdCatalogShared, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckVcdVAppVmDestroy(t.Name()),

@@ -30,6 +30,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"Tags":               "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbController, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -49,7 +50,6 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 		Steps: []resource.TestStep{
 			{

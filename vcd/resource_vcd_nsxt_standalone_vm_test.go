@@ -60,6 +60,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 		"diskResourceName":   diskResourceName,
 		"Tags":               "vm standaloneVm nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdNsxtStandaloneVm_basic, params)
 	params["FuncName"] = t.Name() + "-step2"
@@ -72,7 +73,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
@@ -164,6 +164,7 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 		"Tags":        "vm standaloneVm",
 		"Media":       testConfig.Media.MediaName,
 	}
+	testParamsNotEmpty(t, params)
 
 	// Create objects for testing field values across update steps
 	nic0Mac := testCachedFieldValue{}
@@ -178,7 +179,6 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{

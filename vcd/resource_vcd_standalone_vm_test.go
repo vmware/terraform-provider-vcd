@@ -42,6 +42,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 		"diskResourceName":   diskResourceName,
 		"Tags":               "vm standaloneVm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdStandaloneVm_basic, params)
 	if vcdShortTest {
@@ -51,7 +52,6 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
@@ -116,6 +116,7 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 		"Tags":        "vm standaloneVm",
 		"Media":       testConfig.Media.MediaName,
 	}
+	testParamsNotEmpty(t, params)
 
 	// Create objects for testing field values across update steps
 	nic0Mac := testCachedFieldValue{}
@@ -130,7 +131,6 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{

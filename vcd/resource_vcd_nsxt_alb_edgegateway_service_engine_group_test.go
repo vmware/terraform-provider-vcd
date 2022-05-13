@@ -32,6 +32,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	params["IsActive"] = "true"
@@ -49,7 +50,6 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
@@ -129,6 +129,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	params["IsActive"] = "true"
@@ -150,7 +151,6 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),

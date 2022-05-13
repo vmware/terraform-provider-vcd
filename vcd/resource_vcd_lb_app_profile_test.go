@@ -26,6 +26,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 		"Type":           "tcp",
 		"Tags":           "lb lbAppProfile",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdLBAppProfile_TCP, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -60,7 +61,6 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
 		Steps: []resource.TestStep{
 			{ // TCP

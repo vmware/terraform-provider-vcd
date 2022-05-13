@@ -24,6 +24,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtIpSetEmpty, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -47,7 +48,6 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set-changed", types.FirewallGroupTypeIpSet),
@@ -127,6 +127,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtIpSetIpRanges, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -150,7 +151,6 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set-changed", types.FirewallGroupTypeIpSet),
@@ -317,6 +317,7 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
 		"TestName":                  t.Name(),
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtIpSetOwnByVdcGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -331,7 +332,6 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 		),
@@ -460,6 +460,7 @@ func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -484,7 +485,6 @@ func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -718,6 +718,7 @@ func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -751,9 +752,7 @@ func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-
-		PreCheck:     func() { testParamsNotEmpty(t, params) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

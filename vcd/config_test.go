@@ -428,7 +428,7 @@ func templateFill(tmpl string, data StringMap) string {
 	nullableItems := []string{"Comment", "DirName"}
 	for _, item := range nullableItems {
 		if _, ok := data[item]; !ok {
-			data[item] = " "
+			data[item] = "n/a"
 		}
 	}
 	if _, ok := data["CallerFileName"]; !ok {

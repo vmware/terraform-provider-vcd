@@ -44,6 +44,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		"Dns2":                dns2,
 		"Tags":                "network extnetwork",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdExternalNetwork_basic, params)
 	if vcdShortTest {
@@ -54,7 +55,6 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 
 	resourceName := "vcd_external_network." + TestAccVcdExternalNetwork
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroy,
 		Steps: []resource.TestStep{

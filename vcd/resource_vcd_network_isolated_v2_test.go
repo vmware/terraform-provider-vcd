@@ -17,6 +17,7 @@ func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccVcdNetworkIsolatedV2Nsxv, params)
@@ -29,7 +30,6 @@ func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{

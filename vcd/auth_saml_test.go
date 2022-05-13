@@ -82,6 +82,7 @@ func TestAccVcdSamlAuth(t *testing.T) {
 		"OrgName": testConfig.VCD.Org,
 		"Tags":    "auth",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdOrg, params)
 
@@ -93,7 +94,6 @@ func TestAccVcdSamlAuth(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

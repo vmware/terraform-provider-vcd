@@ -37,6 +37,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 		"VMName":      netVmName1,
 		"Tags":        "vapp vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomization, params)
 
@@ -52,7 +53,6 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
@@ -113,6 +113,8 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 		"Tags":          "vapp vm",
 		"Customization": "true",
 	}
+	testParamsNotEmpty(t, params)
+
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
@@ -122,7 +124,6 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
@@ -311,8 +312,9 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 		"VMName":        netVmName1,
 		"Tags":          "vapp vm",
 		"Customization": "false",
-		"SkipTest":      "",
+		"SkipTest":      " ",
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
@@ -322,7 +324,6 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
@@ -359,6 +360,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 		"VMName":      netVmName1,
 		"Tags":        "vapp vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettings, params)
 
@@ -375,7 +377,6 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{

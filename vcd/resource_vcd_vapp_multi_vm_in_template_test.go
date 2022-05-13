@@ -51,6 +51,7 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		"Tags":               "vapp vm",
 		"OvaPath":            testConfig.Ova.OvaVappMultiVmsPath,
 	}
+	testParamsNotEmpty(t, params)
 
 	var configText string
 	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
@@ -66,7 +67,6 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName),
 		Steps: []resource.TestStep{

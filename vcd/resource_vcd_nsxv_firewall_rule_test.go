@@ -28,6 +28,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 		"CatalogItem":      testSuiteCatalogOVAItem,
 		"Tags":             "gateway firewall",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdEdgeFirewallRule0, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -66,7 +67,6 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.rule6"),
 		Steps: []resource.TestStep{
 			{ // Step 0 - configuration only with ip_addresses
@@ -892,6 +892,7 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 		"CatalogItem":      testSuiteCatalogOVAItem,
 		"Tags":             "gateway firewall",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdEdgeFirewallRuleIpSets, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -907,7 +908,6 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.ip_sets"),
 		Steps: []resource.TestStep{
 			{
@@ -1067,6 +1067,7 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 		"CatalogItem":      testSuiteCatalogOVAItem,
 		"Tags":             "gateway firewall",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdEdgeFirewallRuleVms, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -1082,7 +1083,6 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.vms"),
 		Steps: []resource.TestStep{
 			{

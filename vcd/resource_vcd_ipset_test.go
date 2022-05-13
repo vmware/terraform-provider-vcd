@@ -24,6 +24,7 @@ func TestAccVcdIpSet(t *testing.T) {
 		"IpSetName": t.Name(),
 		"Tags":      "nsxv",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdIpSet, params)
 
@@ -42,7 +43,6 @@ func TestAccVcdIpSet(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy:      testAccCheckVcdIpSetDestroy("vcd_nsxv_ip_set.test-ipset", params["IpSetName"].(string)),
 		Steps: []resource.TestStep{
 			{

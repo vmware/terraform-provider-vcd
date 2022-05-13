@@ -37,8 +37,8 @@ func TestProvider_impl(t *testing.T) {
 
 // When this function is called, the initialization in config_test.go has already happened.
 // Therefore, we can safely require that testConfig fields used in test params have been filled.
+// This function called moved from resource.Test.PreCheck before templateFill function call as  generates binary
 func testParamsNotEmpty(t *testing.T, params StringMap) {
-
 	for key, value := range params {
 		if value == "" {
 			t.Skipf("%s must be set for acceptance tests", key)

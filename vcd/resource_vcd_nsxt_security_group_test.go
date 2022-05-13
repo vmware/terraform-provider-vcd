@@ -26,6 +26,7 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtSecurityGroupEmpty, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -41,7 +42,6 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group-changed", types.FirewallGroupTypeSecurityGroup),
@@ -129,6 +129,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtSecurityGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -149,7 +150,6 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group-changed", types.FirewallGroupTypeSecurityGroup),
@@ -359,6 +359,7 @@ func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxtSecurityGroupIncorrectEdgeGateway, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -373,7 +374,6 @@ func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 		),
@@ -513,6 +513,7 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
 		"TestName":                  t.Name(),
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtSecurityGroupOwnByVdcGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -527,7 +528,6 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeSecurityGroup),
 		),
@@ -739,6 +739,7 @@ func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -773,7 +774,6 @@ func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 
-		PreCheck:     func() { testParamsNotEmpty(t, params) },
 		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{

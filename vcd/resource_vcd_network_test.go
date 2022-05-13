@@ -558,6 +558,8 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	params["MetadataKey"] = updateDef.metadataKey
 	params["MetadataValue"] = updateDef.metadataValue
 
+	testParamsNotEmpty(t, params)
+
 	updateConfigText := templateFill(fmt.Sprintf("\n# skip-binary-test only for updates\n%s", def.configText), params)
 
 	if vcdShortTest {
@@ -803,7 +805,6 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 
 	// Don't convert this test to parallel, as it will cause IP ranges conflicts
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
 		Steps:             steps,

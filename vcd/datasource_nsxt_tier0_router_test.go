@@ -39,6 +39,7 @@ func testAccVcdDatasourceNsxtTier0Router(t *testing.T, tier0RouterName string) {
 		"NsxtTier0Router": tier0RouterName,
 		"Tags":            "nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdNsxtTier0Router, params)
 
@@ -49,7 +50,6 @@ func testAccVcdDatasourceNsxtTier0Router(t *testing.T, tier0RouterName string) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

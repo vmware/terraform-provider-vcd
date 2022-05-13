@@ -43,6 +43,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		"diskResourceName":   diskResourceName,
 		"Tags":               "vapp vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVAppVm_basic, params)
 	if vcdShortTest {
@@ -52,7 +53,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
@@ -116,6 +116,7 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 		"IP2":                "10.10.102.162",
 		"Tags":               "vapp vm",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVAppVm_clone, params)
 	if vcdShortTest {
@@ -127,7 +128,6 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testParamsNotEmpty(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
