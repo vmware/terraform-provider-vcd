@@ -10,7 +10,6 @@ description: |-
 
 Provides a resource to manage DHCP pools for NSX-T Org VDC Routed network.
 
-
 ## Example Usage 1
 
 ```hcl
