@@ -134,6 +134,9 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 	var templateFields string
 	for fieldIndex := range mandatoryFields {
 
+		// validate that on provider config VDC added
+		testParamsNotEmpty(t, StringMap{"testConfig.VCD.Vdc": testConfig.VCD.Vdc})
+
 		// A special case for DHCP relay where only invalid edge_gateway makes sense
 		if dataSourceName == "vcd_nsxv_dhcp_relay" && mandatoryFields[fieldIndex] == "edge_gateway" {
 			templateFields = templateFields + `edge_gateway = "non-existing"` + "\n"
@@ -148,10 +151,16 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		switch mandatoryFields[fieldIndex] {
 		// Fields, which must be valid to satisfy a data source
 		case "org": // Some data sources require org - fill it from testConfig
+			testParamsNotEmpty(t, StringMap{"testConfig.VCD.Org": testConfig.VCD.Org})
 			templateFields = templateFields + `org = "` + testConfig.VCD.Org + `"` + "\n"
 		case "edge_gateway":
+			testParamsNotEmpty(t, StringMap{"testConfig.Networking.EdgeGateway": testConfig.Networking.EdgeGateway})
 			templateFields = templateFields + `edge_gateway = "` + testConfig.Networking.EdgeGateway + `"` + "\n"
 		case "edge_gateway_id":
+			testParamsNotEmpty(t, StringMap{
+				"testConfig.VCD.Org":                testConfig.VCD.Org,
+				"testConfig.Networking.EdgeGateway": testConfig.Networking.EdgeGateway,
+				"testConfig.Nsxt.Vdc":               testConfig.Nsxt.Vdc})
 			nsxtEdgeGw, err := vcdClient.GetNsxtEdgeGateway(testConfig.VCD.Org, testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway)
 			if err != nil {
 				t.Skipf("Unable to lookup NSX-T Edge Gateway '%s' : %s", testConfig.Nsxt.EdgeGateway, err)
@@ -159,8 +168,10 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `edge_gateway_id = "` + nsxtEdgeGw.EdgeGateway.ID + `"` + "\n"
 		case "catalog":
+			testParamsNotEmpty(t, StringMap{"testConfig.VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
 			templateFields = templateFields + `catalog = "` + testConfig.VCD.Catalog.Name + `"` + "\n"
 		case "vapp_name":
+			testParamsNotEmpty(t, StringMap{"testConfig.VCD.Org": testConfig.VCD.Org, "testConfig.Nsxt.Vdc": testConfig.Nsxt.Vdc})
 			vapp, err := getAvailableVapp()
 			if err != nil {
 				t.Skip("No suitable vApp found for this test")
@@ -168,9 +179,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 		case "nsxt_manager_id":
-			if testConfig.Nsxt.Manager == "" {
-				t.Skip("Missing NSX-T config: No NSX-T manager specified")
-			}
+			testParamsNotEmpty(t, StringMap{"testConfig.Nsxt.Manager": testConfig.Nsxt.Manager})
 			// This test needs a valid nsxt_manager_id
 			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {
@@ -183,9 +192,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `nsxt_manager_id = "` + nsxtManagerUrn + `"` + "\n"
 		case "context_id":
-			if testConfig.Nsxt.Manager == "" {
-				t.Skip("Missing NSX-T config: No NSX-T manager specified")
-			}
+			testParamsNotEmpty(t, StringMap{"testConfig.Nsxt.Manager": testConfig.Nsxt.Manager})
 			// This test needs a valid nsxt_manager_id
 			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {
@@ -221,10 +228,13 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 	// Inject NSX-T VDC for resources that are known to require it
 	switch dataSourceName {
 	case "vcd_nsxt_edgegateway":
+		testParamsNotEmpty(t, StringMap{"testConfig.Nsxt.Vdc": testConfig.Nsxt.Vdc})
 		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
 	case "vcd_nsxt_alb_pool":
+		testParamsNotEmpty(t, StringMap{"testConfig.Nsxt.Vdc": testConfig.Nsxt.Vdc})
 		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
 	case "vcd_nsxt_alb_virtual_service":
+		testParamsNotEmpty(t, StringMap{"testConfig.Nsxt.Vdc": testConfig.Nsxt.Vdc})
 		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
 	case "vcd_nsxt_alb_edgegateway_service_engine_group":
 		templateFields = templateFields + `service_engine_group_id = "does-not-exist"` + "\n"
