@@ -66,6 +66,7 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "false",
 	}
+	testParamsNotEmpty(t, params)
 
 	runVappNetworkTest(t, params)
 	postTestChecks(t)

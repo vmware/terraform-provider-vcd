@@ -57,6 +57,9 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		CatalogName:       testConfig.VCD.Catalog.Name,
 		LdapContainerName: ldapContainerName,
 	}
+	testParamsNotEmpty(t, StringMap{"Networking.ExternalNetwork": testConfig.Networking.ExternalNetwork,
+		"VCD.Catalog.CatalogItem": testConfig.VCD.Catalog.CatalogItem, "VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
+
 	// getLdapSetupTemplate does not use regular templateFill because this part is used for
 	// automated LDAP configuration setup
 	ldapSetupConfig, err := getLdapSetupTemplate(ldapSetup, ldapConfigParams)
