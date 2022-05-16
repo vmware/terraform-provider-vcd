@@ -29,6 +29,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 		"UploadProgress":  testConfig.Ova.UploadProgress,
 		"Tags":            "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogItemDS, params)
 	if vcdShortTest {

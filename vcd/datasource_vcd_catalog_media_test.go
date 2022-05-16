@@ -34,6 +34,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 		"Description":      TestAccVcdDataSourceMediaDescription,
 		"MediaPath":        testConfig.Media.MediaPath,
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogMediaDS, params)
 	if vcdShortTest {
