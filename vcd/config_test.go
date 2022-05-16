@@ -1163,8 +1163,8 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 // importStateIdNsxtEdgeGatewayObject used by all entities that depend on Org + NSX-T VDC + edge gateway (such as FW, NAT, Security Groups)
 func importStateIdNsxtEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path for object %s", objectName)
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || edgeGatewayName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path for object %s, %s,%s,%s", objectName, testConfig.VCD.Org, testConfig.Nsxt.Vdc, edgeGatewayName)
 		}
 		return testConfig.VCD.Org +
 			ImportSeparator +
