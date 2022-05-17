@@ -138,7 +138,7 @@ sudo echo "Command executed as 'root' user" >> /tmp/setup.log
 ```
 
 VM definition might be different, but key here is `guest_properties`. It will supply needed data for
-CloudInit (including the shell script in file `script.sh`)
+CloudInit (including the base64 encoded shell script in file `script.sh` as required by CloudInit)
 
 ```hcl
 resource "vcd_vapp_vm" "guest-vm" {
