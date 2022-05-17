@@ -158,7 +158,7 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 }
 
 // createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
-func createOrUpdateMetadata(d *schema.ResourceData, resource govcd.Metadata, attributeName string) error {
+func createOrUpdateMetadata(d *schema.ResourceData, resource govcd.MetadataCompatible, attributeName string) error {
 	if d.HasChange(attributeName) {
 		oldRaw, newRaw := d.GetChange(attributeName)
 		oldMetadata := oldRaw.(map[string]interface{})
