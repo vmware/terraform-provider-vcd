@@ -316,6 +316,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 			}
 		}
 	}
+	// TODO: Move this code snippet to a function with generics
 	if d.HasChange("catalog_item_metadata") {
 		oldRaw, newRaw := d.GetChange("catalog_item_metadata")
 		oldMetadata := oldRaw.(map[string]interface{})
