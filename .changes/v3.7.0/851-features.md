@@ -1,1 +1,1 @@
-* Add `catalog_item_metadata` attribute to resource and data source `catalog_item` to support metadata on CatalogItem entities [GH-851]
+* `vcd_catalog_item` resource and data source now supports CatalogItem metadata with `catalog_item_metadata` attribute [GH-851]
