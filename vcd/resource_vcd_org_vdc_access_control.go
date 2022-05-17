@@ -13,12 +13,12 @@ import (
 
 func resourceVcdOrgVdcAccessControl() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVdcVdcAccessControlCreateUpdate,
-		ReadContext:   resourceVdcVdcAccessControlRead,
-		UpdateContext: resourceVdcVdcAccessControlCreateUpdate,
-		DeleteContext: resourceVdcVdcAccessControlDelete,
+		CreateContext: resourceVcdVdcAccessControlCreateUpdate,
+		ReadContext:   resourceVcdVdcAccessControlRead,
+		UpdateContext: resourceVcdVdcAccessControlCreateUpdate,
+		DeleteContext: resourceVcdVdcAccessControlDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVdcVdcAccessControlImport,
+			StateContext: resourceVcdVdcAccessControlImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -79,36 +79,30 @@ func resourceVcdOrgVdcAccessControl() *schema.Resource {
 	}
 }
 
-func resourceVdcVdcAccessControlCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcAccessControlCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	var accessControl types.ControlAccessParams
-
 	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
-	everyoneAccessLevel := d.Get("everyone_access_level").(string)
+	everyoneAccessLevel, everyoneAccessLevelSet := d.GetOk("everyone_access_level")
 	sharedList := d.Get("shared_with").(*schema.Set).List()
 
 	// Do some checks before proceeding to contact the API
-	if isSharedWithEveryone && len(sharedList) > 0 {
-		return diag.Errorf("if shared_with_everyone is set to true, shared_with must be an empty set")
+	err := checkParamsVdcAccessControl(isSharedWithEveryone, everyoneAccessLevelSet, sharedList)
+	if err != nil {
+		return diag.Errorf("error when checking schema - %s", err)
 	}
 
-	if isSharedWithEveryone {
-		accessControl.IsSharedToEveryone = true
-		accessControl.EveryoneAccessLevel = takeStringPointer(everyoneAccessLevel)
-	} else {
+	var accessSettings []*types.AccessSetting
+
+	if !isSharedWithEveryone {
 		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
 			return diag.Errorf("error when retrieving AdminOrg - %s", err)
 		}
 
-		AccessSettings, err := sharedSetToAccessControl(adminOrg, sharedList)
+		accessSettings, err = sharedSetToAccessControl(adminOrg, sharedList)
 		if err != nil {
 			return diag.Errorf("error when reading shared_with from schema - %s", err)
-		}
-
-		accessControl.AccessSettings = &types.AccessSettingList{
-			AccessSetting: AccessSettings,
 		}
 	}
 
@@ -117,16 +111,16 @@ func resourceVdcVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 		return diag.Errorf("error when retrieving VDC - %s", err)
 	}
 
-	_, err = vdc.SetControlAccess(&accessControl, true)
+	_, err = vdc.SetControlAccess(isSharedWithEveryone, everyoneAccessLevel.(string), accessSettings, true)
 	if err != nil {
 		return diag.Errorf("error when setting VDC control access parameters - %s", err)
 	}
 
 	d.SetId(vdc.Vdc.ID)
-	return resourceVdcVdcAccessControlRead(ctx, d, meta)
+	return resourceVcdVdcAccessControlRead(ctx, d, meta)
 }
 
-func resourceVdcVdcAccessControlRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcAccessControlRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -168,7 +162,7 @@ func resourceVdcVdcAccessControlRead(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceVdcVdcAccessControlDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcAccessControlDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// When deleting VDC access control, VDC won't be share with anyone, neither everyone not any single user/group
 	vcdClient := meta.(*VCDClient)
 
@@ -177,13 +171,9 @@ func resourceVdcVdcAccessControlDelete(ctx context.Context, d *schema.ResourceDa
 		diag.Errorf("error when retrieving VDC - %s", err)
 	}
 
-	controlAccessParams := &types.ControlAccessParams{
-		IsSharedToEveryone: false,
-	}
-
-	_, err = vdc.SetControlAccess(controlAccessParams, true)
+	_, err = vdc.DeleteControlAccess(true)
 	if err != nil {
-		return diag.Errorf("error when setting VDC control access parameters - %s", err)
+		return diag.Errorf("error when deleting VDC access control - %s", err)
 	}
 
 	d.SetId("")
@@ -191,7 +181,7 @@ func resourceVdcVdcAccessControlDelete(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVdcVdcAccessControlImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVdcAccessControlImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog")
@@ -233,4 +223,20 @@ func resourceVdcVdcAccessControlImport(ctx context.Context, d *schema.ResourceDa
 	d.SetId(vdc.Vdc.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func checkParamsVdcAccessControl(isSharedWithEveryone bool, everyoneAccessLevelSet bool, sharedList []interface{}) error {
+	if isSharedWithEveryone && len(sharedList) > 0 {
+		return fmt.Errorf("if shared_with_everyone is set to true, shared_with must be an empty set")
+	}
+
+	if !isSharedWithEveryone && len(sharedList) == 0 {
+		return fmt.Errorf("if shared_with_everyone is set to false, shared_with must contain at least one user/group")
+	}
+
+	if isSharedWithEveryone && !everyoneAccessLevelSet {
+		return fmt.Errorf("if shared_with_everyone is set to true, everyone_access_level needs to be set")
+	}
+
+	return nil
 }
