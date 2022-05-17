@@ -37,10 +37,11 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 		"NsxtVdc":            testConfig.Nsxt.Vdc,
 		"NsxtEdgeGatewayVcd": "nsxt-edge-test",
 		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
-		"EdgeClusterId":      lookupAvailableEdgeClusterId(t, vcdClient),
 		"Tags":               "gateway nsxt",
 	}
 	testParamsNotEmpty(t, params)
+
+	ifPossibleAddClusterId(t, err, vcdClient, params)
 
 	configText := templateFill(testAccNsxtEdgeGateway, params)
 	if vcdShortTest {
@@ -84,7 +85,8 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip", nsxtExtNet.ExternalNetwork.Subnets.Values[0].IPRanges.Values[0].EndAddress),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "description", "Updated-Description"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "edge_cluster_id", params["EdgeClusterId"].(string)),
+					resource.TestMatchResourceAttr(
+						"vcd_nsxt_edgegateway.nsxt-edge", "edge_cluster_id", params["EdgeClusterForAssert"].(*regexp.Regexp)),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
 						"gateway":       nsxtExtNet.ExternalNetwork.Subnets.Values[0].Gateway,
 						"prefix_length": strconv.Itoa(nsxtExtNet.ExternalNetwork.Subnets.Values[0].PrefixLength),
@@ -105,6 +107,23 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
+}
+
+// in CDS cluster ID isn't accessible: Forbidden: User is not authorized to perform this operation on the application. Please contact the system administrator to get access., error code 401
+func ifPossibleAddClusterId(t *testing.T, err error, vcdClient *VCDClient, params StringMap) {
+	clusterId, err := lookupAvailableEdgeClusterId(t, vcdClient)
+	if err != nil {
+		t.Logf("\nWARNING: cluster id fetch failed, test will continue withouth cluster id. Error: %s", err)
+		params["EdgeClusterForAssert"] = regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
+		params["EdgeClusterId"] = ""
+		params["EdgeClusterKey"] = ""
+		params["equalsChar"] = ""
+	} else {
+		params["EdgeClusterId"] = "\"" + clusterId + "\""
+		params["EdgeClusterKey"] = "edge_cluster_id"
+		params["equalsChar"] = "="
+		params["EdgeClusterForAssert"] = regexp.MustCompile(`^` + clusterId + `$`)
+	}
 }
 
 const testAccNsxtEdgeGatewayDataSources = `
@@ -140,7 +159,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   vdc                     = "{{.NsxtVdc}}"
   name                    = "{{.NsxtEdgeGatewayVcd}}"
   description             = "Updated-Description"
-  edge_cluster_id         = "{{.EdgeClusterId}}"
+  {{.EdgeClusterKey}}         {{.equalsChar}} {{.EdgeClusterId}}
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
   dedicate_external_network = false
@@ -203,12 +222,6 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
-	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
-		testConfig.VCD.NsxtProviderVdc.NetworkPool == "" || testConfig.VCD.ProviderVdc.StorageProfile == "" {
-		t.Skip("Variables Nsxt.Vdc, VCD.NsxtProviderVdc.NetworkPool, VCD.NsxtProviderVdc.Name," +
-			" VCD.ProviderVdc.StorageProfile  must be set")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -219,14 +232,13 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                 "1024",
 		"Limit":                     "1024",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"Dfw":                       "false",
 		"DefaultPolicy":             "false",
 		"TestName":                  t.Name(),
 
 		"NsxtEdgeGatewayVcd": t.Name() + "-edge",
 		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
-		"EdgeClusterId":      lookupAvailableEdgeClusterId(t, vcdClient),
 
 		"Tags": "vdcGroup gateway nsxt",
 	}
@@ -379,7 +391,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 		"Description":               "myDescription",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"Dfw":                       "false",
 		"DefaultPolicy":             "false",
 		"TestName":                  t.Name(),
@@ -721,7 +733,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 }
 `
 
-func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) string {
+func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) (string, error) {
 	// Lookup available Edge Clusters to explicitly specify for edge gateway
 	_, vdc, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 	if err != nil {
@@ -731,11 +743,10 @@ func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) string {
 
 	eClusters, err := vdc.GetAllNsxtEdgeClusters(nil)
 	if len(eClusters) < 1 {
-		t.Errorf("no edge clusters found: %s", err)
-		t.FailNow()
+		return "", fmt.Errorf("no edge clusters found: %s", err)
 	}
 
-	return eClusters[0].NsxtEdgeCluster.ID
+	return eClusters[0].NsxtEdgeCluster.ID, nil
 }
 
 func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
@@ -752,7 +763,7 @@ func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
 		"Description":               "myDescription",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"NsxtVdc":                   testConfig.Nsxt.Vdc,
 
 		"NsxtEdgeGatewayVcd": t.Name() + "-edge",

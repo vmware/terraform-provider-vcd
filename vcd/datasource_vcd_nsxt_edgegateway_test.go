@@ -19,8 +19,6 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -28,7 +26,6 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 		"NsxtEdgeGatewayVcd": "nsxt-edge-test-multi-subnet",
 		"NsxtManager":        testConfig.Nsxt.Manager,
 		"Tier0Router":        testConfig.Nsxt.Tier0router,
-		"EdgeClusterId":      lookupAvailableEdgeClusterId(t, vcdClient),
 		"Tags":               "gateway nsxt",
 	}
 	testParamsNotEmpty(t, params)
