@@ -290,57 +290,12 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := vAppTemplate.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata from catalog item's associated vApp template: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := vAppTemplate.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata to catalog item's associated vApp template: %s", err)
-			}
-		}
+	err = createOrUpdateMetadata(d, &vAppTemplate, "metadata")
+	if err != nil {
+		return err
 	}
-	// TODO: Move this code snippet to a function with generics
-	if d.HasChange("catalog_item_metadata") {
-		oldRaw, newRaw := d.GetChange("catalog_item_metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := catalogItem.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata from catalog item: %s", err)
-			}
-		}
-		for k, v := range newMetadata {
-			err := catalogItem.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata to catalog item: %s", err)
-			}
-		}
-	}
-	return nil
+
+	return createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
 }
 
 // Imports a CatalogItem into Terraform state

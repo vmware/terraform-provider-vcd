@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"strings"
 
@@ -154,4 +155,35 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 	}
 
 	return resultReferences
+}
+
+// createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
+func createOrUpdateMetadata(d *schema.ResourceData, resource govcd.Metadata, attributeName string) error {
+	if d.HasChange(attributeName) {
+		oldRaw, newRaw := d.GetChange(attributeName)
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := resource.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := resource.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
 }

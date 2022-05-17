@@ -239,7 +239,7 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(disk.Disk.Id)
 
-	err = createOrUpdateDiskMetadata(d, disk)
+	err = createOrUpdateMetadata(d, disk, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to independent disk: %s", err)
 	}
@@ -326,7 +326,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 
 	}
 
-	err = createOrUpdateDiskMetadata(d, disk)
+	err = createOrUpdateMetadata(d, disk, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -700,36 +700,4 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error flushing buffer: %s", err))
 	}
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpDiskImport, buf.String())
-}
-
-func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error {
-	log.Printf("[TRACE] adding/updating metadata to Disk")
-
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := disk.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
 }
