@@ -47,8 +47,8 @@ The following arguments are supported:
 * `ovf_url` - (Optional; *v3.6+*) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows seeing upload progress. (See note below)
-* `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign to the associated vApp template
-* `catalog_item_metadata` - (Optional; *v3.7+*) Key value map of metadata to assign to the catalog item
+* `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign to the associated vApp Template
+* `catalog_item_metadata` - (Optional; *v3.7+*) Key value map of metadata to assign to the Catalog Item
 
 ### A note about upload progress
 
