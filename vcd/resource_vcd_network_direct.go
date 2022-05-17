@@ -238,7 +238,7 @@ func resourceVcdNetworkDirectUpdate(c context.Context, d *schema.ResourceData, m
 		return diag.Errorf("[direct network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 
-	err = createOrUpdateNetworkMetadata(d, network)
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("[direct network update] error updating network metadata: %s", err)
 	}
