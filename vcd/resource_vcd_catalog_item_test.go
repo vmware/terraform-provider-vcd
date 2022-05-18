@@ -174,7 +174,7 @@ func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
