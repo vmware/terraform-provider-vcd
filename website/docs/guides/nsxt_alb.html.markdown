@@ -52,7 +52,7 @@ Additionally, there is a data source only to help lookup ALB Importable Clouds h
 Above resources and data sources cover infrastructure setup for providers. The next two resources 
 still *require provider rights*, but help to enable ALB for tenants on particular NSX-T Edge Gateway:
 
-* [vcd_nsxt_alb_settings](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_general_settings)
+* [vcd_nsxt_alb_settings](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_settings)
 * [vcd_nsxt_alb_edgegateway_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_edgegateway_service_engine_group)
 
 
