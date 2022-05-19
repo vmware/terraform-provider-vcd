@@ -192,7 +192,7 @@ func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string
 	return nil
 }
 
-func resourceVcdCatalogItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogItemRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdCatalogItemRead(d, meta, "resource")
 }
 
@@ -213,52 +213,37 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	}
 
 	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
-<<<<<<< HEAD
 	if err != nil {
 		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
 	}
+
 	catalogItemMetadata, err := catalogItem.GetMetadata()
 	if err != nil {
 		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
 	}
-=======
-	if err != nil {
-		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
-	}
-	catalogItemMetadata, err := catalogItem.GetMetadata()
-	if err != nil {
-		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
-	}
->>>>>>> fb53fcc0c6e4d7f9f9b993e4d45462c6370aac7a
 
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
+
 	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
-<<<<<<< HEAD
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
 	}
+
 	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
-	if err != nil {
-=======
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
-	}
-	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
-	if err != nil {
->>>>>>> fb53fcc0c6e4d7f9f9b993e4d45462c6370aac7a
-		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
 	}
 
 	return nil
 }
 
-func resourceVcdCatalogItemDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogItemDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
-func resourceVcdCatalogItemUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogItemUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChange("description") || d.HasChange("name") {
 		catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
 		if err != nil {
@@ -307,61 +292,10 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-<<<<<<< HEAD
 	err = createOrUpdateMetadata(d, &vAppTemplate, "metadata")
 	if err != nil {
 		return err
-=======
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := vAppTemplate.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata from catalog item's associated vApp template: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := vAppTemplate.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata to catalog item's associated vApp template: %s", err)
-			}
-		}
-	}
-	// TODO: Move this code snippet to a function with generics
-	if d.HasChange("catalog_item_metadata") {
-		oldRaw, newRaw := d.GetChange("catalog_item_metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := catalogItem.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata from catalog item: %s", err)
-			}
-		}
-		for k, v := range newMetadata {
-			err := catalogItem.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata to catalog item: %s", err)
-			}
-		}
->>>>>>> fb53fcc0c6e4d7f9f9b993e4d45462c6370aac7a
+
 	}
 
 	return createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
@@ -373,7 +307,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 //
 // Example import path (id): org_name.catalog_name.catalog_item_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogItemImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogItemImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.catalog_item")
