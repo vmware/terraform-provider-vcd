@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"strings"
 
@@ -157,8 +156,16 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 	return resultReferences
 }
 
+// MetadataCompatible allows to consider all structs that implement metadata handling to be the same type
+type MetadataCompatible interface {
+	GetMetadata() (*types.Metadata, error)
+	AddMetadataEntry(typedValue, key, value string) error
+	MergeMetadata(typedValue string, metadata map[string]interface{}) error
+	DeleteMetadataEntry(key string) error
+}
+
 // createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
-func createOrUpdateMetadata(d *schema.ResourceData, resource govcd.MetadataCompatible, attributeName string) error {
+func createOrUpdateMetadata(d *schema.ResourceData, resource MetadataCompatible, attributeName string) error {
 	if d.HasChange(attributeName) {
 		oldRaw, newRaw := d.GetChange(attributeName)
 		oldMetadata := oldRaw.(map[string]interface{})
