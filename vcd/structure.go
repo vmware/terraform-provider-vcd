@@ -157,7 +157,7 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 }
 
 // MetadataCompatible allows to consider all structs that implement metadata handling to be the same type
-type MetadataCompatible interface {
+type metadataCompatible interface {
 	GetMetadata() (*types.Metadata, error)
 	AddMetadataEntry(typedValue, key, value string) error
 	MergeMetadata(typedValue string, metadata map[string]interface{}) error
@@ -165,7 +165,7 @@ type MetadataCompatible interface {
 }
 
 // createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
-func createOrUpdateMetadata(d *schema.ResourceData, resource MetadataCompatible, attributeName string) error {
+func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
 	if d.HasChange(attributeName) {
 		oldRaw, newRaw := d.GetChange(attributeName)
 		oldMetadata := oldRaw.(map[string]interface{})
