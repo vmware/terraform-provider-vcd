@@ -177,10 +177,11 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource govcd.MetadataCompa
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
-
-		err := resource.MergeMetadata(types.MetadataStringValue, newMetadata)
-		if err != nil {
-			return fmt.Errorf("error adding metadata: %s", err)
+		if len(newMetadata) > 0 {
+			err := resource.MergeMetadata(types.MetadataStringValue, newMetadata)
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
 		}
 	}
 	return nil
