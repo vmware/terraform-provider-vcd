@@ -14,7 +14,7 @@ Provides a resource to manage DHCP pools for NSX-T Org VDC Routed network.
 
 **DHCP pool support** for NSX-T Org networks is **limited** by the VCD in the following ways:
 
-* VCD 10.2.0 only allows to remove all DHCP pools at once (terraform destroy/resource removal)
+* VCD 10.2 only allows to remove all DHCP pools at once (terraform destroy/resource removal)
 
 * VCD 10.3+ allows to add and remove DHCP pools one by one
 
