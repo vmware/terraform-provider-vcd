@@ -1,0 +1,1 @@
+* Add missing `None` mode in independent disk `sharing_type` [GH-849]
