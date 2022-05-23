@@ -37,8 +37,8 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Org network will be looked up based on 'org_network_id' field",
 			},
 			"org_network_id": {
 				Type:        schema.TypeString,
@@ -68,29 +68,29 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 func datasourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP pool datasource read] error retrieving VDC: %s", err)
+		return diag.Errorf("[NSX-T DHCP pool datasource read] error retrieving Org: %s", err)
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(orgNetworkId)
+	orgVdcNetwork, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool datasource read] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
 
-	pool, err := vdc.GetOpenApiOrgVdcNetworkDhcp(orgNetwork.OpenApiOrgVdcNetwork.ID)
+	pool, err := orgVdcNetwork.GetOpenApiOrgVdcNetworkDhcp()
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool datasource read] error retrieving DHCP pools for Org network ID '%s': %s",
-			orgNetwork.OpenApiOrgVdcNetwork.ID, err)
+			d.Id(), err)
 	}
 
-	err = setOpenAPIOrgVdcNetworkDhcpData(orgNetwork.OpenApiOrgVdcNetwork.ID, pool.OpenApiOrgVdcNetworkDhcp, d)
+	err = setOpenAPIOrgVdcNetworkDhcpData(orgVdcNetwork.OpenApiOrgVdcNetwork.ID, pool.OpenApiOrgVdcNetworkDhcp, d)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP pool datasource read] error setting DHCP pool: %s", err)
 	}
 
-	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+	d.SetId(orgVdcNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return nil
 }
