@@ -78,7 +78,6 @@ resource "vcd_vdc_group" "test1" {
 // fill function so that binary tests are rendered correctly as well.
 func overrideDefaultVdcForTest(temporaryVdcFieldValue string) func() {
 	originalVdcValue := os.Getenv("VCD_VDC")
-	// testConfigOriginalVdcValue := testConfig.VCD.Vdc
 
 	if vcdTestVerbose {
 		fmt.Printf("# Overriding 'vdc' field in provider configuration to be '%s' instead of '%s'\n", temporaryVdcFieldValue, originalVdcValue)

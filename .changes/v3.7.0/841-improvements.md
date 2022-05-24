@@ -2,6 +2,6 @@
 * Add VDC Group compatibility for `resource/vcd_nsxt_nat_rule` and `datasource/vcd_nsxt_nat_rule` [GH-841]
 * Add VDC Group compatibility for `resource/vcd_nsxt_ipsec_vpn_tunnel` and `datasource/vcd_nsxt_ipsec_vpn_tunnel` [GH-841]
 * Add VDC Group compatibility for `resource/vcd_nsxt_alb_settings` and `datasource/vcd_nsxt_alb_settings` [GH-841]
-* Add VDC Group compatibility for `resource/vcd_nsxt_alb_edgegateway_service_engine_group` and `datasource/vcd_nsxt_alb_edgegateway_service_engine_group` [GH-841]
+* Add VDC Group compatibility for `resource/vcd_nsxt_alb_edgegateway_service_engine_group` and `datasource/vcd_nsxt_alb_edgegateway_service_engine_group` [GH-841, GH-854]
 * Add VDC Group compatibility for `resource/vcd_nsxt_alb_virtual_service` and `datasource/vcd_nsxt_alb_virtual_service` [GH-841]
 * Add VDC Group compatibility for `resource/vcd_nsxt_alb_pool` and `datasource/vcd_nsxt_alb_pool` [GH-841]

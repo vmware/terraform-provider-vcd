@@ -10,6 +10,92 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+// TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField explicitly tests newer configuration method without `vdc` field being set in `provider` section
+func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
+	// This test explicitly tests newer configuration method without `vdc` field being set in
+	// `provider` section
+	restoreDefaultVdcFunc := overrideDefaultVdcForTest("")
+	defer restoreDefaultVdcFunc()
+
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	skipNoNsxtAlbConfiguration(t)
+
+	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
+		testConfig.Certificates.Certificate1PrivateKeyPath == "" || testConfig.Certificates.Certificate1Pass == "" {
+		t.Skip("Variables Certificates.Certificate1Path, Certificates.Certificate2Path, " +
+			"Certificates.Certificate1PrivateKeyPath, Certificates.Certificate1Pass must be set")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"VirtualServiceName":        t.Name(),
+		"ControllerName":            t.Name(),
+		"ControllerUrl":             testConfig.Nsxt.NsxtAlbControllerUrl,
+		"ControllerUsername":        testConfig.Nsxt.NsxtAlbControllerUser,
+		"ControllerPassword":        testConfig.Nsxt.NsxtAlbControllerPassword,
+		"ImportableCloud":           testConfig.Nsxt.NsxtAlbImportableCloud,
+		"ReservationModel":          "DEDICATED",
+		"Org":                       testConfig.VCD.Org,
+		"NsxtVdc":                   testConfig.Nsxt.Vdc,
+		"EdgeGw":                    testConfig.Nsxt.EdgeGateway,
+		"IsActive":                  "true",
+		"AliasPrivate":              t.Name() + "-cert",
+		"Certificate1Path":          testConfig.Certificates.Certificate1Path,
+		"CertPrivateKey1":           testConfig.Certificates.Certificate1PrivateKeyPath,
+		"CertPassPhrase1":           testConfig.Certificates.Certificate1Pass,
+		"NameUpdated":               "TestAccVcdVdcGroupResourceUpdated",
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"Allocated":                 "1024",
+		"Limit":                     "1024",
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Dfw":                       "false",
+		"DefaultPolicy":             "false",
+		"NsxtImportSegment":         testConfig.Nsxt.NsxtImportSegment,
+		"Name":                      t.Name(),
+		"TestName":                  t.Name(),
+		"NsxtExternalNetworkName":   testConfig.Nsxt.ExternalNetwork,
+
+		"Tags": "nsxt alb vdcGroup",
+	}
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdNsxtAlbVdcGroupIntegration2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
+			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
+			testAccCheckVcdAlbVirtualServiceDestroy("vcd_nsxt_alb_virtual_service.test"),
+		),
+
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
 func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
