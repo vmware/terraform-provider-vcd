@@ -34,12 +34,6 @@ func resourceVcdOrgVdcAccessControl() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"vdc_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Instance VDC ID. This parameter must be used if VDC is created from Terraform. Do not use it otherwise.",
-			},
 			"shared_with_everyone": {
 				Type:        schema.TypeBool,
 				Required:    true,
@@ -91,7 +85,6 @@ func resourceVcdVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
 	everyoneAccessLevel, everyoneAccessLevelSet := d.GetOk("everyone_access_level")
 	sharedList := d.Get("shared_with").(*schema.Set).List()
-	vdcId, vdcIdOk := d.GetOk("vdc_id")
 
 	// Do some checks before proceeding to contact the API
 	err := checkParamsVdcAccessControl(isSharedWithEveryone, everyoneAccessLevelSet, sharedList)
@@ -115,17 +108,9 @@ func resourceVcdVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 		}
 	}
 
-	var vdc *govcd.Vdc
-	if vdcIdOk {
-		vdc, err = adminOrg.GetVDCById(vdcId.(string), false)
-		if err != nil {
-			return diag.Errorf("error when retrieving VDC - %s", err)
-		}
-	} else {
-		_, vdc, err = vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return diag.Errorf("error when retrieving VDC - %s", err)
-		}
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return diag.Errorf("error when retrieving VDC - %s", err)
 	}
 
 	_, err = vdc.SetControlAccess(isSharedWithEveryone, everyoneAccessLevel.(string), accessSettings, true)
