@@ -181,9 +181,11 @@ resource "vcd_org_vdc" "{{.NewVdcName}}" {
 
 resource "vcd_org_vdc_access_control" "{{.AccessControlName2}}" {
   org                   = "{{.Org}}"
-  vdc_id                = vcd_org_vdc.{{.NewVdcName}}.id
+  vdc                   = vcd_org_vdc.{{.NewVdcName}}.name
   shared_with_everyone  = true
   everyone_access_level = "ReadOnly"
+
+  depends_on            = [ vcd_org_vdc.{{.NewVdcName}} ]
 }
 `
 
@@ -242,7 +244,7 @@ resource "vcd_org_user" "{{.UserName2}}" {
 
 resource "vcd_org_vdc_access_control" "{{.AccessControlName2}}" {
   org                   = "{{.Org}}"
-  vdc_id                = vcd_org_vdc.{{.NewVdcName}}.id
+  vdc                   = vcd_org_vdc.{{.NewVdcName}}.name
   shared_with_everyone  = false
   shared_with {
     user_id             = vcd_org_user.{{.UserName}}.id
@@ -252,6 +254,8 @@ resource "vcd_org_vdc_access_control" "{{.AccessControlName2}}" {
     user_id             = vcd_org_user.{{.UserName2}}.id
     access_level        = "ReadOnly"
   }
+  
+  depends_on            = [ vcd_org_vdc.{{.NewVdcName}} ]
 }
 `
 
