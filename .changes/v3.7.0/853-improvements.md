@@ -1,2 +1,1 @@
-* `resource/vcd_vm_sizing_policy`: remove (deprecate) unneeded `org` property [GH-853]
-* `datasource/vcd_vm_sizing_policy`: remove (deprecate) unneeded `org` property [GH-853]
+* `metadata` attribute on every compatible resource and data source is now more performant when adding metadata [GH-853]
