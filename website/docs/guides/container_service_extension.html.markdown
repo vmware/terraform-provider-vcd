@@ -16,15 +16,17 @@ CSE brings Kubernetes as a Service to VCD, by creating customized VM templates (
 
 To know more about CSE, you can explore [the official website](https://vmware.github.io/container-service-extension/).
 
+In this guide you can configure VCD to start working with CSE.
+
 ## Requirements
 
-* CSE is supported from VCD 10.3.0 or above
-* Used Terraform provider needs to be v3.7.0 or above
-* All CSE elements use NSX-T backed resources, **no** NSX-V is supported
+* CSE is supported from VCD 10.3.1 or above.
+* Terraform provider needs to be v3.7.0 or above.
+* All CSE elements use NSX-T backed resources, **no** NSX-V is supported.
 
 ## Installation process
 
-To start installing CSE in a VCD appliance, you can use **v3.7.0 or above** of the VCD Provider:
+To start installing CSE in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
 
 ```hcl
 terraform {
@@ -107,7 +109,8 @@ For the Kubernetes clusters to be functional, you need to provide some networkin
 * [SNAT rule](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule)
 
 The [Tier-0 Gateway](/providers/vmware/vcd/latest/docs/resources/external_network_v2) will provide access to the
-outside world. For example, this will allow cluster users to communicate with Kubernetes API server through `kubectl`.
+outside world. For example, this will allow cluster users to communicate with Kubernetes API server through `kubectl` and
+download required dependencies for the cluster to be functional.
 
 Here is an example on how to configure this resource:
 
@@ -168,10 +171,12 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
 ```
 
 This will create a basic Edge Gateway, you can of course add more complex [firewall rules](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
-or other configurations to fit with your organization requirements.
+or other configurations to fit with your organization requirements. Make sure that traffic is allowed, as the cluster creation process
+requires software to be installed in the nodes, otherwise creation will fail.
 
 Create a [Routed Network](/providers/vmware/vcd/latest/docs/resources/network_routed_v2) that will be using the recently
-created Edge Gateway. This network is the one used by all the Kubernetes nodes in the cluster:
+created Edge Gateway. This network is the one used by all the Kubernetes nodes in the cluster, so the used IP pool will determine
+the number of nodes you can have in the cluster.
 
 ```hcl
 resource "vcd_network_routed_v2" "cse_routed" {
@@ -183,8 +188,7 @@ resource "vcd_network_routed_v2" "cse_routed" {
 
   gateway       = "192.168.7.0"
   prefix_length = 24
-
-  # This network will allow us to have 256 Kubernetes nodes
+  
   static_ip_pool {
     start_address = "192.168.7.1"
     end_address   = "192.168.7.100"
@@ -226,7 +230,7 @@ You need the following resources:
 * [ALB Virtual Service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service)
 
 You can have a look at [this guide](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) as it explains every resource
-and provides some examples of how to setup ALB in VCD.
+and provides some examples of how to setup ALB in VCD. You can also have a look at the "[Examples](#examples)" section below.
 
 ## Step 4: Configure catalogs and OVAs
 
@@ -254,7 +258,7 @@ resource "vcd_catalog" "cat-cse" {
 }
 ```
 
-Then we can upload TKGm (Tanzu Kubernetes Grid) OVAs. These can be downloaded from VMware Customer Connect.
+Then you can upload TKGm (Tanzu Kubernetes Grid) OVAs to this catalog. These can be downloaded from VMware Customer Connect.
 To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource:
 
 -> Note that CSE is **not compatible** yet with PhotonOS
@@ -271,23 +275,17 @@ resource "vcd_catalog_item" "tkgm_ova" {
   show_upload_progress = true
 
   catalog_item_metadata = {
-    "cni"                       = "antrea"
-    "cni_version"               = "0.0.0"
-    "container_runtime"         = "containerd"
-    "container_runtime_version" = "v1.4.6+vmware.1"
-    "cse_version"               = "3.1.2"
     "kind"                      = "TKGm"
     "kubernetes"                = "TKGm"
     "kubernetes_version"        = "v1.21.2+vmware.1"
     "name"                      = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
     "os"                        = "ubuntu"
-    "os_version"                = "20.04"
     "revision"                  = "1"
   }
 }
 ```
 
-All the metadata is required for CSE to fetch the OVA file.
+Notice that all the metadata from `catalog_item_metadata` is required for CSE to fetch the OVA file.
 Alternatively, you can upload the OVA file using `cse-cli`, explained in the next step.
 
 ## Step 5: CSE command cli
@@ -373,3 +371,7 @@ resource "vcd_org_user" "cse_user" {
   password    = "ca$hc0w"
 }
 ```
+
+## Examples
+
+There are available examples in the [GitHub repository](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension).
