@@ -59,8 +59,8 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "enabled", strconv.FormatBool(isRouteAdvertisementEnable)),
 					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.#", "2"),
-					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.0", regexp.MustCompile(`^192.168.[1-2].0$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.1", regexp.MustCompile(`^192.168.[1-2].0$`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.0", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.1", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
 				),
 			},
 			// Import!!!!
@@ -82,7 +82,7 @@ data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
 resource "vcd_nsxt_route_advertisement" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = {{.Enabled}}
-  subnets = [{{.Subnet1Cidr}}]
+  subnets = ["{{.Subnet1Cidr}}"]
 }
 `
 
@@ -100,7 +100,7 @@ data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
 resource "vcd_nsxt_route_advertisement" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = {{.Enabled}}
-  subnets = [{{.Subnet1Cidr}}, {{.Subnet2Cidr}}]
+  subnets = ["{{.Subnet1Cidr}}", "{{.Subnet2Cidr}}"]
 }
 `
 
