@@ -29,15 +29,6 @@ In this guide you can configure VCD to start working with CSE.
 To start installing CSE in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
 
 ```hcl
-terraform {
-  required_providers {
-    vcd = {
-      source  = "vmware/vcd"
-      version = ">= 3.7.0"
-    }
-  }
-}
-
 provider "vcd" {
   user                 = "administrator"
   password             = var.vcd_pass
