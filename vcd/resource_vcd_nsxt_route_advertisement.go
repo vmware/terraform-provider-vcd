@@ -105,7 +105,7 @@ func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.Resour
 		return diag.Errorf("error while retrieving route advertisement - %s", err)
 	}
 
-	dSet(d, "enable", routeAdvertisement.Enable)
+	dSet(d, "enabled", routeAdvertisement.Enable)
 
 	subnetSet := convertStringsToTypeSet(routeAdvertisement.Subnets)
 	err = d.Set("subnets", subnetSet)
