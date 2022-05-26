@@ -90,11 +90,6 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, edgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "route advertisement")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	orgName := d.Get("org").(string)
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
 	if err != nil {
