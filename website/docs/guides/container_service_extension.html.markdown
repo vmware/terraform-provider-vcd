@@ -99,7 +99,7 @@ resource "vcd_org_vdc" "cse_vdc" {
 }
 ```
 
-## Step 2: Configure networking
+### Step 2: Configure networking
 
 For the Kubernetes clusters to be functional, you need to provide some networking resources to the target VDC:
 
@@ -216,7 +216,7 @@ resource "vcd_nsxt_nat_rule" "snat" {
 }
 ```
 
-## Step 3: Configure ALB
+### Step 3: Configure ALB
 
 Advanced Load Balancers are required for CSE to be able to handle Kubernetes services and other internal capabilities.
 You need the following resources:
@@ -233,7 +233,7 @@ You can have a look at [this guide](/providers/vmware/vcd/latest/docs/guides/nsx
 and provides some examples of how to setup ALB in VCD. You can also have a look at the "[Examples](#examples)" section below
 where a full ALB setup is provided.
 
-## Step 4: Configure catalogs and OVAs
+### Step 4: Configure catalogs and OVAs
 
 You need to have a [Catalog](/providers/vmware/vcd/latest/docs/resources/catalog) for vApp Templates and upload the corresponding
 TKGm (Tanzu Kubernetes Grid) OVA files to be able to create Kubernetes clusters.
@@ -296,7 +296,7 @@ Notice that all the metadata entries from `catalog_item_metadata` are required f
 
 Alternatively, you can upload the OVA file using `cse-cli`. This command line tool is explained in the next step.
 
-## Step 5: CSE command cli
+### Step 5: CSE command cli
 
 This is the only step that must be done without any Terraform script.
 You need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
@@ -344,7 +344,7 @@ broker:
 When you execute the `cse install` command, CSE will install some new custom entities and rights. You can also refer to the command line
 [documentation](https://vmware.github.io/container-service-extension) to upload OVA files if you skipped the upload with Terraform from previous step.
 
-## Final step: Rights and roles
+### Step 6: Rights and roles
 
 You need to publish a new Rights Bundle to your Organization with the new rights that `cse install` command created in VCD.
 The required new rights are listed in the example below. It creates a new bundle with a mix of the existent Default Rights Bundle rights and
@@ -437,7 +437,7 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
 }
 ```
 
-## Conclusion
+### Conclusion
 
 After applying all the above resources, executing a `cse run -c config.yaml` should fetch all resources and OVAs and allow
 the users to provision Kubernetes clusters in VCD.
