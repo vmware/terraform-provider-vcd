@@ -437,7 +437,10 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
 }
 ```
 
-Now Kubernetes clusters can be provisioned with VCD.
+## Conclusion
+
+After applying all the above resources, executing a `cse run -c config.yaml` should fetch all resources and OVAs and allow
+the users to provision Kubernetes clusters in VCD.
 
 ## Examples
 
