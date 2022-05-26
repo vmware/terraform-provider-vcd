@@ -172,7 +172,7 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
 
 This will create a basic Edge Gateway, you can of course add more complex [firewall rules](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
 or other configurations to fit with your organization requirements. Make sure that traffic is allowed, as the cluster creation process
-requires software to be installed in the nodes, otherwise creation will fail.
+requires software to be installed in the nodes, otherwise cluster creation will fail.
 
 Create a [Routed Network](/providers/vmware/vcd/latest/docs/resources/network_routed_v2) that will be using the recently
 created Edge Gateway. This network is the one used by all the Kubernetes nodes in the cluster, so the used IP pool will determine
@@ -188,14 +188,14 @@ resource "vcd_network_routed_v2" "cse_routed" {
 
   gateway       = "192.168.7.0"
   prefix_length = 24
-  
+
   static_ip_pool {
     start_address = "192.168.7.1"
     end_address   = "192.168.7.100"
   }
 
-  dns1       = "8.8.8.8"
-  dns2       = "8.8.8.4"
+  dns1 = "8.8.8.8"
+  dns2 = "8.8.8.4"
 }
 ```
 
@@ -203,14 +203,14 @@ To be able to reach the Kubernetes nodes within the routed network, you need als
 
 ```hcl
 resource "vcd_nsxt_nat_rule" "snat" {
-  org = vcd_org.cse_org.name
+  org             = vcd_org.cse_org.name
   edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
 
   name        = "SNAT rule"
   rule_type   = "SNAT"
   description = "description"
-  
-  external_address = "88.88.88.89" # A public IP from the external network
+
+  external_address = "88.88.88.89"    # A public IP from the external network
   internal_address = "192.168.7.0/24" # This is the routed network CIDR
   logging          = true
 }
@@ -218,7 +218,7 @@ resource "vcd_nsxt_nat_rule" "snat" {
 
 ## Step 3: Configure ALB
 
-Advanced Load Balancers are required for CSE to be able to handle Kubernetes services and other casuistic.
+Advanced Load Balancers are required for CSE to be able to handle Kubernetes services and other internal capabilities.
 You need the following resources:
 
 * [ALB Controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller)
@@ -230,18 +230,19 @@ You need the following resources:
 * [ALB Virtual Service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service)
 
 You can have a look at [this guide](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) as it explains every resource
-and provides some examples of how to setup ALB in VCD. You can also have a look at the "[Examples](#examples)" section below.
+and provides some examples of how to setup ALB in VCD. You can also have a look at the "[Examples](#examples)" section below
+where a full ALB setup is provided.
 
 ## Step 4: Configure catalogs and OVAs
 
-You need to have a catalog for vApp Templates and some OVA files to be able to create Kubernetes clusters. Here is an
-example of how to create the [Catalog](/providers/vmware/vcd/latest/docs/resources/catalog):
+You need to have a [Catalog](/providers/vmware/vcd/latest/docs/resources/catalog) for vApp Templates and upload the corresponding
+TKGm (Tanzu Kubernetes Grid) OVA files to be able to create Kubernetes clusters.
 
 ```hcl
 data "vcd_storage_profile" "cse_storage_profile" {
-  org  = vcd_org.cse_org.name
-  vdc  = vcd_org_vdc.cse_vdc.name
-  name = "*"
+  org        = vcd_org.cse_org.name
+  vdc        = vcd_org_vdc.cse_vdc.name
+  name       = "*"
   depends_on = [vcd_org.cse_org, vcd_org_vdc.cse_vdc]
 }
 
@@ -258,8 +259,8 @@ resource "vcd_catalog" "cat-cse" {
 }
 ```
 
-Then you can upload TKGm (Tanzu Kubernetes Grid) OVAs to this catalog. These can be downloaded from VMware Customer Connect.
-To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource:
+Then you can upload TKGm OVAs to this catalog. These can be downloaded from VMware Customer Connect.
+To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource.
 
 -> Note that CSE is **not compatible** yet with PhotonOS
 
@@ -275,25 +276,25 @@ resource "vcd_catalog_item" "tkgm_ova" {
   show_upload_progress = true
 
   catalog_item_metadata = {
-    "kind"                      = "TKGm"
-    "kubernetes"                = "TKGm"
-    "kubernetes_version"        = "v1.21.2+vmware.1"
-    "name"                      = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-    "os"                        = "ubuntu"
-    "revision"                  = "1"
+    "kind"               = "TKGm"
+    "kubernetes"         = "TKGm"
+    "kubernetes_version" = "v1.21.2+vmware.1"
+    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+    "os"                 = "ubuntu"
+    "revision"           = "1"
   }
 }
 ```
 
-Notice that all the metadata from `catalog_item_metadata` is required for CSE to fetch the OVA file:
+Notice that all the metadata entries from `catalog_item_metadata` are required for CSE to fetch the OVA file:
 * `kind`: Needs to be set to `TKGm` in all cases, as *Native* is not supported yet.
 * `kubernetes`: Same as above.
-* `kubernetes_version`: When the OVA is downloaded from Customer Support, the version appears as part of the file name.
-* `name`: OVA full file name.
-* `os`: When the OVA is downloaded from Customer Support, the OS appears as part of the file name.
+* `kubernetes_version`: When the OVA is downloaded from VMware Customer Connect, the version appears as part of the file name.
+* `name`: OVA full file name. VMware Customer Connect should provide already the downloaded OVA with a proper canonical name.
+* `os`: When the OVA is downloaded from VMware Customer Connect, the OS appears as part of the file name.
 * `revision`: Needs to be always `1`. This information is internally used by CSE.
 
-Alternatively, you can upload the OVA file using `cse-cli`. This command is explained in the next step.
+Alternatively, you can upload the OVA file using `cse-cli`. This command line tool is explained in the next step.
 
 ## Step 5: CSE command cli
 
@@ -340,13 +341,14 @@ broker:
   vdc: cse_vdc
 ```
 
-When you execute the `cse install` command, CSE will install some new custom entities and rights. Next step is to create and tune right bundles and roles
-to start creating clusters with them.
+When you execute the `cse install` command, CSE will install some new custom entities and rights. You can also refer to the command line
+[documentation](https://vmware.github.io/container-service-extension) to upload OVA files if you skipped the upload with Terraform from previous step.
 
 ## Final step: Rights and roles
 
-First, you need to publish a new Rights Bundle to your Organization. The required rights are listed below.
-In the example below the Default Rights Bundle is used to extend it to a new bundle with the required rights.
+You need to publish a new Rights Bundle to your Organization with the new rights that `cse install` command created in VCD.
+The required new rights are listed in the example below. It creates a new bundle with a mix of the existent Default Rights Bundle rights and
+the new ones.
 
 ```hcl
 data "vcd_rights_bundle" "default-rb" {
@@ -367,8 +369,8 @@ resource "vcd_rights_bundle" "cse-rb" {
 }
 ```
 
-Then you can create a specific role for users that will be responsible of managing clusters. Notice that the next example
-is assigning the new rights provided by the new published bundle:
+Once you have the new bundle created, you can now create a specific role for users that will be responsible for managing clusters.
+Notice that the next example is assigning the new rights provided by the new published bundle:
 
 ```hcl
 data "vcd_role" "vapp_author" {
@@ -398,7 +400,7 @@ resource "vcd_role" "cluster_author" {
 }
 ```
 
-Next step is to publish the bundle that `cse install` command created, named **"cse:nativeCluster Entitlement"**:
+You need also to publish the bundle that `cse install` command created, named **"cse:nativeCluster Entitlement"**:
 
 ```hcl
 data "vcd_rights_bundle" "cse-rights-bundle" {
@@ -406,10 +408,10 @@ data "vcd_rights_bundle" "cse-rights-bundle" {
 }
 
 resource "vcd_rights_bundle" "published-cse-rights-bundle" {
-    name                   = data.vcd_rights_bundle.cse-rights-bundle.name
-    description            = data.vcd_rights_bundle.cse-rights-bundle.description
-    rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
-    publish_to_all_tenants = false
+  name                   = data.vcd_rights_bundle.cse-rights-bundle.name
+  description            = data.vcd_rights_bundle.cse-rights-bundle.description
+  rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
+  publish_to_all_tenants = false
 }
 ```
 
@@ -419,8 +421,8 @@ After applying, you need to execute an import to refresh local state:
 terraform import vcd_rights_bundle.published-cse-rights-bundle "cse:nativeCluster Entitlement"
 ```
 
-Finally, we can publish the new bundle to the tenants. Notice the `publish_to_all_tenants` is now **true**. You can also
-publish to specific tenants:
+Finally, you can publish the new bundle to the tenants. Notice the `publish_to_all_tenants` is now **true**. You can also
+publish to specific tenants instead:
 
 ```hcl
 data "vcd_rights_bundle" "cse-rights-bundle" {
@@ -434,6 +436,8 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   publish_to_all_tenants = true
 }
 ```
+
+Now Kubernetes clusters can be provisioned with VCD.
 
 ## Examples
 
