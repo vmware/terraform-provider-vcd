@@ -285,8 +285,15 @@ resource "vcd_catalog_item" "tkgm_ova" {
 }
 ```
 
-Notice that all the metadata from `catalog_item_metadata` is required for CSE to fetch the OVA file.
-Alternatively, you can upload the OVA file using `cse-cli`, explained in the next step.
+Notice that all the metadata from `catalog_item_metadata` is required for CSE to fetch the OVA file:
+* `kind`: Needs to be set to `TKGm` in all cases, as *Native* is not supported yet.
+* `kubernetes`: Same as above.
+* `kubernetes_version`: When the OVA is downloaded from Customer Support, the version appears as part of the file name.
+* `name`: OVA full file name.
+* `os`: When the OVA is downloaded from Customer Support, the OS appears as part of the file name.
+* `revision`: Needs to be always `1`. This information is internally used by CSE.
+
+Alternatively, you can upload the OVA file using `cse-cli`. This command is explained in the next step.
 
 ## Step 5: CSE command cli
 
@@ -294,38 +301,56 @@ This is the only step that must be done without any Terraform script.
 You need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
 and then provide a config.yaml with the entities that were created by Terraform.
 
-When you execute the `cse install` command, CSE will be almost ready to be used, you only need to publish new right bundles and rights
-to the organization.
+An example file is provided here, with all the information from the examples shown above:
 
-## Step 6: Rights and roles
+```yaml
+mqtt:
+  verify_ssl: false
+ 
+vcd:
+  host: my-vcd-dev.company.com
+  log: true
+  password: "*****"
+  port: 443
+  username: administrator
+  verify: false
+ 
+vcs:
+- name: vcenter-1
+  password: "*****"
+  username: administrator@vsphere.local
+  verify: false
+ 
+service:
+  enforce_authorization: false
+  legacy_mode: false
+  log_wire: false
+  no_vc_communication_mode: false
+  processors: 15
+  telemetry:
+    enable: true
+ 
+broker:
+  catalog: cat-cse
+  ip_allocation_mode: pool
+  network: cse_routed_net
+  org: cse_org
+  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
+  storage_profile: '*'
+  vdc: cse_vdc
+```
+
+When you execute the `cse install` command, CSE will install some new custom entities and rights. Next step is to create and tune right bundles and roles
+to start creating clusters with them.
+
+## Final step: Rights and roles
+
+First, you need to publish a new Rights Bundle to your Organization. The required rights are listed below.
+In the example below the Default Rights Bundle is used to extend it to a new bundle with the required rights.
 
 ```hcl
-# Default Rights bundle upgrade
 data "vcd_rights_bundle" "default-rb" {
   name = "Default Rights Bundle"
-}
-
-data "vcd_rights_bundle" "cse-rights-bundle" {
-  name = "cse:nativeCluster Entitlement"
-}
-
-# vApp Author role
-data "vcd_role" "vapp_author" {
-  org  = vcd_org.cse_org.name
-  name = "vApp Author"
-}
-
-# If the below resources fail, do:
-#
-# terraform import vcd_rights_bundle.published-cse-rights-bundle "cse:nativeCluster Entitlement"
-#
-# Then retry again
-
-resource "vcd_rights_bundle" "published-cse-rights-bundle" {
-  name                   = data.vcd_rights_bundle.cse-rights-bundle.name
-  description            = data.vcd_rights_bundle.cse-rights-bundle.description
-  rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
-  publish_to_all_tenants = true
 }
 
 resource "vcd_rights_bundle" "cse-rb" {
@@ -339,6 +364,16 @@ resource "vcd_rights_bundle" "cse-rb" {
     "cse:nativeCluster: Modify"
   ])
   publish_to_all_tenants = true
+}
+```
+
+Then you can create a specific role for users that will be responsible of managing clusters. Notice that the next example
+is assigning the new rights provided by the new published bundle:
+
+```hcl
+data "vcd_role" "vapp_author" {
+  org  = vcd_org.cse_org.name
+  name = "vApp Author"
 }
 
 resource "vcd_role" "cluster_author" {
@@ -361,14 +396,42 @@ resource "vcd_role" "cluster_author" {
 
   depends_on = [vcd_rights_bundle.cse-rb]
 }
+```
 
-resource "vcd_org_user" "cse_user" {
-  org = vcd_org.cse_org.name
+Next step is to publish the bundle that `cse install` command created, named **"cse:nativeCluster Entitlement"**:
 
-  name        = "cse_user"
-  description = "Cluster author"
-  role        = vcd_role.cluster_author.name
-  password    = "ca$hc0w"
+```hcl
+data "vcd_rights_bundle" "cse-rights-bundle" {
+  name = "cse:nativeCluster Entitlement"
+}
+
+resource "vcd_rights_bundle" "published-cse-rights-bundle" {
+    name                   = data.vcd_rights_bundle.cse-rights-bundle.name
+    description            = data.vcd_rights_bundle.cse-rights-bundle.description
+    rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
+    publish_to_all_tenants = false
+}
+```
+
+After applying, you need to execute an import to refresh local state:
+
+```shell
+terraform import vcd_rights_bundle.published-cse-rights-bundle "cse:nativeCluster Entitlement"
+```
+
+Finally, we can publish the new bundle to the tenants. Notice the `publish_to_all_tenants` is now **true**. You can also
+publish to specific tenants:
+
+```hcl
+data "vcd_rights_bundle" "cse-rights-bundle" {
+  name = "cse:nativeCluster Entitlement"
+}
+
+resource "vcd_rights_bundle" "published-cse-rights-bundle" {
+  name                   = data.vcd_rights_bundle.cse-rights-bundle.name
+  description            = data.vcd_rights_bundle.cse-rights-bundle.description
+  rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
+  publish_to_all_tenants = true
 }
 ```
 
