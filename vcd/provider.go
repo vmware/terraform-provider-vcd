@@ -163,6 +163,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vdc_group":                                 resourceVdcGroup(),                            // 3.5
 	"vcd_nsxt_distributed_firewall":                 resourceVcdNsxtDistributedFirewall(),          // 3.6
 	"vcd_security_tag":                              resourceVcdSecurityTag(),                      // 3.7
+	"vcd_nsxt_route_advertisement":                  resourceVcdNsxtRouteAdvertisement(),           // 3.7
 }
 
 // Provider returns a terraform.ResourceProvider.
