@@ -102,7 +102,7 @@ func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.Resour
 
 	routeAdvertisement, err := nsxtEdge.GetNsxtRouteAdvertisement(true)
 	if err != nil {
-		return diag.Errorf("error while retrieving route advertisement - %s, err")
+		return diag.Errorf("error while retrieving route advertisement - %s", err)
 	}
 
 	dSet(d, "enable", routeAdvertisement.Enable)
