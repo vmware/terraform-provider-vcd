@@ -63,7 +63,13 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.1", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
 				),
 			},
-			// Import!!!!
+			{
+				ResourceName:            "vcd_nsxt_route_advertisement.testing",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, testConfig.Nsxt.EdgeGateway),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
 		},
 	})
 }
@@ -80,6 +86,7 @@ data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
 }
 
 resource "vcd_nsxt_route_advertisement" "testing" {
+  org = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = {{.Enabled}}
   subnets = ["{{.Subnet1Cidr}}"]
@@ -98,6 +105,7 @@ data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
 }
 
 resource "vcd_nsxt_route_advertisement" "testing" {
+  org = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = {{.Enabled}}
   subnets = ["{{.Subnet1Cidr}}", "{{.Subnet2Cidr}}"]
