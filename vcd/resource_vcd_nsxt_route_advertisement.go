@@ -2,9 +2,12 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"log"
+	"strings"
 )
 
 func resourceVcdNsxtRouteAdvertisement() *schema.Resource {
@@ -137,6 +140,29 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 }
 
 func resourceVcdNsxtRouteAdvertisementImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[TRACE] NSX-T Edge Gateway Firewall Rule import initiated")
 
-	return nil, nil
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.nsxt-edge-gw-name")
+	}
+	orgName, vdcOrVdcGroupName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	vcdClient := meta.(*VCDClient)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
+	}
+
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
+	}
+
+	dSet(d, "org", orgName)
+
+	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
+	d.SetId(edge.EdgeGateway.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
