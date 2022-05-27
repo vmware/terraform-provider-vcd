@@ -35,18 +35,18 @@ func resourceVcdNsxtRouteAdvertisement() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge Gateway ID in which route advertisement is located",
+				Description: "NSX-T Edge Gateway ID in which route advertisement is located",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Defined if route advertisement is active",
+				Description: "Define if route advertisement is active",
 			},
 			"subnets": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "The set of subnets that will be advertised to Tier-0 gateway. Leaving it empty means none",
+				Description: "Set of subnets that will be advertised to Tier-0 gateway. Leaving it empty means none",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -137,5 +137,6 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 }
 
 func resourceVcdNsxtRouteAdvertisementImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+
 	return nil, nil
 }
