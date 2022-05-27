@@ -74,7 +74,7 @@ via supplying the full dot separated path for NSX-T Edge Gateway. An example is 
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_route_advertisement.my-route-advertisement my-org.my-org-vdc.my-edge-gw
+terraform import vcd_nsxt_route_advertisement.my-route-advertisement my-org.my-org-vdc-org-vdc-group-name.my-edge-gw
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
