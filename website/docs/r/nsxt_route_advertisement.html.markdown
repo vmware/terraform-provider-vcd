@@ -68,7 +68,7 @@ The following arguments are supported:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T Route Advertisement can be [imported][docs-import] into this resource
+An existing NSX-T route advertisement can be [imported][docs-import] into this resource
 via supplying the full dot separated path for NSX-T Edge Gateway. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
