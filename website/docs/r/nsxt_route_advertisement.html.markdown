@@ -16,7 +16,7 @@ Provides a VMware Cloud Director resource for setting route advertisement in a N
 
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
-  org = "my-org"
+  org  = "my-org"
   name = "my-vdc"
 }
 
@@ -27,8 +27,8 @@ data "vcd_nsxt_edgegateway" "my_edge_gateway" {
 
 resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.my_edge_gateway.id
-  enabled = true
-  subnets = ["192.168.1.0/24"]
+  enabled         = true
+  subnets         = ["192.168.1.0/24"]
 }
 ```
 
@@ -36,7 +36,7 @@ resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
 
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
-  org = "my-org"
+  org  = "my-org"
   name = "my-vdc"
 }
 
@@ -47,8 +47,8 @@ data "vcd_nsxt_edgegateway" "my_edge_gateway" {
 
 resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.my_edge_gateway.id
-  enabled = true
-  subnets = ["192.168.1.0/24", "192.168.2.0/24"]
+  enabled         = true
+  subnets         = ["192.168.1.0/24", "192.168.2.0/24"]
 }
 ```
 
