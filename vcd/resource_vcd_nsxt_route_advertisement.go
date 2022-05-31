@@ -71,7 +71,7 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 		subnets = convertSchemaSetToSliceOfStrings(subnetsFromSchema.(*schema.Set))
 	}
 
-	if enableRouteAdvertisement && len(subnets) == 0 {
+	if !enableRouteAdvertisement && len(subnets) > 0 {
 		return diag.Errorf("if enable is set to false, no subnets must be passed")
 	}
 
