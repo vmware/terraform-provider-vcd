@@ -57,7 +57,7 @@ resource "vcd_org_vdc_access_control" "my_access_control" {
 }
 ```
 
-### Example Usage 3 (Creating a VDC and setting VDC read only access to everybody. Example use of `vdc_id`)
+### Example Usage 3 (Creating a VDC and setting VDC read only access to everybody)
 ```hcl
 resource "vcd_org_vdc" "my_vdc" {
   name = "my-vdc" # Optional
@@ -97,7 +97,7 @@ resource "vcd_org_vdc" "my_vdc" {
 
 resource "vcd_org_vdc_access_control" "my_access_control" {
   org                   = "my-org" # Optional
-  vdc_id                = vcd_org_vdc.my_vdc.id
+  vdc                   = "my-vdc" # Optional
   shared_with_everyone  = true
   everyone_access_level = "ReadOnly"
 }
@@ -109,7 +109,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
-* `vdc_id` - (Optional) ID from the VDC which its access control is going to be changed. This parameter **must** be used only if VDC is created from Terraform. Please ignore it otherwise.
 * `shared_with_everyone` - (Required) Whether the VDC is shared with everyone.
 * `everyone_access_level` - (Optional) Access level when the VDC is shared with everyone (only `ReadOnly` is available). Required when shared_with_everyone is set.
 * `shared_with` - (Optional) one or more blocks defining a subject to which we are sharing.
