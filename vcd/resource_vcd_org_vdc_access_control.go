@@ -40,15 +40,17 @@ func resourceVcdOrgVdcAccessControl() *schema.Resource {
 				Description: "Whether the VDC is shared with everyone",
 			},
 			"everyone_access_level": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly}, true),
-				Description:  "Access level when the VDC is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ValidateFunc:  validation.StringInSlice([]string{types.ControlAccessReadOnly}, true),
+				ConflictsWith: []string{"shared_with"},
+				Description:   "Access level when the VDC is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set",
 			},
 			"shared_with": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				MinItems: 1,
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"everyone_access_level"},
+				MinItems:      1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"user_id": {
@@ -83,13 +85,15 @@ func resourceVcdVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 	vcdClient := meta.(*VCDClient)
 
 	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
-	everyoneAccessLevel, everyoneAccessLevelSet := d.GetOk("everyone_access_level")
+	everyoneAccessLevel, isEveryoneAccessLevelSet := d.GetOk("everyone_access_level")
 	sharedList := d.Get("shared_with").(*schema.Set).List()
 
-	// Do some checks before proceeding to contact the API
-	err := checkParamsVdcAccessControl(isSharedWithEveryone, everyoneAccessLevelSet, sharedList)
-	if err != nil {
-		return diag.Errorf("error when checking schema - %s", err)
+	if !isSharedWithEveryone && isEveryoneAccessLevelSet {
+		return diag.Errorf("if shared_with_everyone is set to false, everyone_access_level must not be set")
+	}
+
+	if isSharedWithEveryone && len(sharedList) > 0 {
+		return diag.Errorf("if shared_with_everyone is set to true, shared_with must not be set")
 	}
 
 	var accessSettings []*types.AccessSetting
@@ -209,20 +213,4 @@ func resourceVcdVdcAccessControlImport(ctx context.Context, d *schema.ResourceDa
 	d.SetId(vdc.Vdc.ID)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func checkParamsVdcAccessControl(isSharedWithEveryone bool, everyoneAccessLevelSet bool, sharedList []interface{}) error {
-	if isSharedWithEveryone && len(sharedList) > 0 {
-		return fmt.Errorf("if shared_with_everyone is set to true, shared_with must be an empty set")
-	}
-
-	if !isSharedWithEveryone && len(sharedList) == 0 {
-		return fmt.Errorf("if shared_with_everyone is set to false, shared_with must contain at least one user/group")
-	}
-
-	if isSharedWithEveryone && !everyoneAccessLevelSet {
-		return fmt.Errorf("if shared_with_everyone is set to true, everyone_access_level needs to be set")
-	}
-
-	return nil
 }
