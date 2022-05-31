@@ -75,10 +75,11 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_alb_edgegateway_service_engine_group.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["EdgeGw"].(string), "first-se"),
+				ResourceName:            "vcd_nsxt_alb_edgegateway_service_engine_group.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, params["EdgeGw"].(string), "first-se"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -186,10 +187,11 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_alb_edgegateway_service_engine_group.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["EdgeGw"].(string), "first-se"),
+				ResourceName:            "vcd_nsxt_alb_edgegateway_service_engine_group.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, params["EdgeGw"].(string), "first-se"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})

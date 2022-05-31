@@ -54,7 +54,8 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `description` - Catalog item description.
-* `metadata` -  Key value map of metadata.
+* `metadata` - Key value map of metadata for the associated vApp template.
+* `catalog_item_metadata` - Key value map of metadata for the catalog item.
 
 ## Filter arguments
 

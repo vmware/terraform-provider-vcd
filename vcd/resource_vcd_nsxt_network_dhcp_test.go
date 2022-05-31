@@ -99,10 +99,11 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_network_dhcp.pools",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, "nsxt-routed-dhcp"),
+				ResourceName:            "vcd_nsxt_network_dhcp.pools",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, "nsxt-routed-dhcp"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})

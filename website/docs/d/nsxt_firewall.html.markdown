@@ -21,7 +21,6 @@ Edge Gateway.
 ```hcl
 data "vcd_nsxt_firewall" "testing" {
   org = "my-org"
-  vdc = "my-nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 }
@@ -33,7 +32,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organizations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` data source
 

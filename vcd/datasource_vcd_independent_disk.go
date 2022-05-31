@@ -84,7 +84,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 			"sharing_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
+				Description: "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`, `None`",
 			},
 			"uuid": {
 				Type:        schema.TypeString,

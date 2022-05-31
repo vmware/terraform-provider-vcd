@@ -43,7 +43,6 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "first" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source.
 * `service_engine_group_id` - (Required) An ID of NSX-T Service Engine Group. Can be looked up using
@@ -70,9 +69,9 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_settings.imported my-org.my-vdc.my-nsxt-edge-gateway-name.service-engine-group-name
+terraform import vcd_nsxt_alb_settings.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway-name.service-engine-group-name
 ```
 
-The above would import the NSX-T Edge Gateway ALB Service Engine Group assignment configuration for Service Engine Group
-Name `service-engine-group-name` on  Edge Gateway named `my-nsxt-edge-gateway-name` in Org `my-org`
-and VDC `my-vdc`.
+The above would import the NSX-T Edge Gateway ALB Service Engine Group assignment configuration for
+Service Engine Group Name `service-engine-group-name` on  Edge Gateway named
+`my-nsxt-edge-gateway-name` in Org `my-org` and VDC or VDC Group `my-org-vdc-org-vdc-group-name`.
