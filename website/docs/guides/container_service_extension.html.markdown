@@ -50,11 +50,11 @@ The VDC needs to be backed by **NSX-T** for CSE to work. Here is an example that
 
 ```hcl
 resource "vcd_org" "cse_org" {
-  name              = "cse_org"
-  full_name         = "cse_org"
-  is_enabled        = "true"
-  delete_force      = "true"
-  delete_recursive  = "true"
+  name             = "cse_org"
+  full_name        = "cse_org"
+  is_enabled       = "true"
+  delete_force     = "true"
+  delete_recursive = "true"
 }
 
 resource "vcd_org_vdc" "cse_vdc" {
