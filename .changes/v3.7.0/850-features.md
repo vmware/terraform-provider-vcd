@@ -1,0 +1,1 @@
+* Add resource `vcd_org_vdc_access_control` to manage VDC access control [GH-850]
