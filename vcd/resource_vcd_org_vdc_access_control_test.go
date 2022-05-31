@@ -39,8 +39,8 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	params["FuncName"] = t.Name() + "step2"
-	configTex2 := templateFill(testAccCheckVcdAccessControlStep2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	configText2 := templateFill(testAccCheckVcdAccessControlStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -59,7 +59,7 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 				),
 			},
 			{
-				Config: configTex2,
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					assertVdcAccessControlIsSharedWithSpecificUser(userName1, testConfig.Nsxt.Vdc),
 					assertVdcAccessControlIsSharedWithSpecificUser(userName2, testConfig.Nsxt.Vdc),
