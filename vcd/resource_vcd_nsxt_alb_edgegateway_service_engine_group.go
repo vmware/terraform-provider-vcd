@@ -218,15 +218,15 @@ func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtA
 
 // validateEdgeGatewayIdParent validates if specified field `edge_gateway_id` exists in defined Org and VDC
 func validateEdgeGatewayIdParent(d *schema.ResourceData, vcdClient *VCDClient) error {
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf("error retrieving Org and VDC")
 	}
 
 	_, err = vcdClient.GetNsxtEdgeGatewayFromResourceById(d, "edge_gateway_id")
 	if err != nil {
-		return fmt.Errorf("unable to locate NSX-T Edge Gateway with ID '%s' in Org '%s' and VDC '%s': %s",
-			d.Get("edge_gateway_id").(string), org.Org.Name, vdc.Vdc.Name, err)
+		return fmt.Errorf("unable to locate NSX-T Edge Gateway with ID '%s' in Org '%s': %s",
+			d.Get("edge_gateway_id").(string), org.Org.Name, err)
 	}
 
 	return nil
