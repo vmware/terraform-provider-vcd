@@ -5,6 +5,7 @@ package vcd
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -61,8 +62,11 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNet",
 		"NetworkName2":                "TestAccVcdVAppNet2",
-		"orgNetwork":                  "",
-		"orgNetworkForUpdate":         "",
+		"OrgNetworkKey":               " ",
+		"equalsChar":                  " ",
+		"quotationChar":               " ",
+		"orgNetwork":                  " ",
+		"orgNetworkForUpdate":         " ",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "false",
 	}
@@ -112,6 +116,9 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNet",
 		"NetworkName2":                "TestAccVcdVAppNet2",
+		"OrgNetworkKey":               "org_network_name",
+		"equalsChar":                  "=",
+		"quotationChar":               "\"",
 		"orgNetwork":                  "TestAccVcdVAppNet",
 		"orgNetworkForUpdate":         "TestAccVcdVAppNet2",
 		"retainIpMacEnabled":          "false",
@@ -173,7 +180,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						"max_lease_time":     params["maxLeaseTime"].(string),
 					}),
 					resource.TestCheckResourceAttr(
-						resourceName, "org_network_name", params["orgNetwork"].(string)),
+						resourceName, "org_network_name", strings.TrimSpace(params["orgNetwork"].(string))),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 				),
@@ -210,7 +217,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						"max_lease_time":     params["maxLeaseTimeForUpdate"].(string),
 					}),
 					resource.TestCheckResourceAttr(
-						resourceName, "org_network_name", params["orgNetworkForUpdate"].(string)),
+						resourceName, "org_network_name", strings.TrimSpace(params["orgNetworkForUpdate"].(string))),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 				),
@@ -351,7 +358,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  org_network_name      = "{{.orgNetwork}}"
+  {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetwork}}{{.quotationChar}}
+
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
@@ -416,7 +424,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabledForUpdate}}"
   }
 
-  org_network_name      = "{{.orgNetworkForUpdate}}"
+  {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
+
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}", "vcd_network_routed.{{.NetworkName2}}"]
