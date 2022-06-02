@@ -91,12 +91,12 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
 	if err != nil {
-		return diag.Errorf("error when retrieving org - %s", err)
+		return diag.Errorf("error when getting Org name - %s", err)
 	}
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(org.Org.Name, d.Id())
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -126,12 +126,12 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
 	if err != nil {
-		return diag.Errorf("error when retrieving org - %s", err)
+		return diag.Errorf("error when getting Org name - %s", err)
 	}
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(org.Org.Name, d.Id())
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
