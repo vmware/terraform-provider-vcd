@@ -267,6 +267,7 @@ func resourceVcdSecurityGroupDelete(ctx context.Context, d *schema.ResourceData,
 		defer vcdClient.unLockParentEdgeGtw(d)
 	}
 
+	// Needed as workaround for CDS until VCD bug(2972969) is fixed
 	time.Sleep(5 * time.Second)
 	securityGroup, err := nsxtEdgeGateway.GetNsxtFirewallGroupById(d.Id())
 	if err != nil {
