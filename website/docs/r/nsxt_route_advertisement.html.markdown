@@ -3,21 +3,21 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_route_advertisement"
 sidebar_current: "docs-vcd-resource-nsxt_route_advertisement"
 description: |-
-Provides a VMware Cloud Director resource for setting route advertisement in a NSX-T Edge Gateway.
+Provides a VMware Cloud Director resource for setting route advertisement in an NSX-T Edge Gateway.
 ---
 
 # vcd\_nsxt\_route\_advertisement
 
-Provides a VMware Cloud Director resource for setting route advertisement in a NSX-T Edge Gateway.
+Provides a VMware Cloud Director resource for setting route advertisement in an NSX-T Edge Gateway.
 
-~> **Note:** This resource requires a NSX-T Edge Gateway. Also, for this resource to work appropriately, the option "Dedicate Tier-0 Gateway" must be enabled. Otherwise, it won't work.
+~> **Note:** This resource requires an NSX-T Edge Gateway. Also, for this resource to work appropriately, the option "Dedicate Tier-0 Gateway" must be enabled. Otherwise, route advertisement creation will fail.
 
 ## Example Usage 1 (Enable route advertisement and publish 192.168.1.0/24)
 
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
-  org  = "my-org"
-  name = "my-vdc"
+  org  = "my-org" #optional
+  name = "my-vdc" #optional
 }
 
 data "vcd_nsxt_edgegateway" "my_edge_gateway" {
@@ -36,8 +36,8 @@ resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
 
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
-  org  = "my-org"
-  name = "my-vdc"
+  org  = "my-org" #optional
+  name = "my-vdc" #optional
 }
 
 data "vcd_nsxt_edgegateway" "my_edge_gateway" {
@@ -57,8 +57,7 @@ resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
-  when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
+  when connected as sysadmin working across different organizations.
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID in which route advertisement is located.
 * `enabled` - (Optional) Define if route advertisement is active. Default `true`.
 * `subnets` - (Optional) Set of subnets that will be advertised to Tier-0 gateway. Leaving it empty means none.
