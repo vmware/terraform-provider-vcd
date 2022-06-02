@@ -637,7 +637,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		"Tags":          "network nsxt",
 		"FirewallMatch": "MATCH_INTERNAL_ADDRESS",
 		"Priority":      "10",
-		"SkipNotice":    "",
+		"SkipNotice":    " ",
 	}
 
 	client := createTemporaryVCDConnection(false)

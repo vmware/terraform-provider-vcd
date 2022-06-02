@@ -49,7 +49,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 		"UserPassword":             "TO_BE_DISCARDED",
 		"FuncName":                 "TestAccVcdVappAccessControl",
 		"Tags":                     "vapp",
-		"SkipNotice":               "",
+		"SkipNotice":               " ",
 	}
 	testParamsNotEmpty(t, params)
 
