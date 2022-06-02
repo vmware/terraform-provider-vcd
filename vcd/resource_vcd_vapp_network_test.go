@@ -62,7 +62,8 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"EdgeGateway":               testConfig.Networking.EdgeGateway,
 		"NetworkName":               "TestAccVcdVAppNet",
 		"NetworkName2":              "TestAccVcdVAppNet2",
-		// adding space to allow pass testParamsNotEmpty which requires that values isn't empty
+		// adding space to allow pass validation in testParamsNotEmpty which skips the test if param value is empty
+		// to avoid running test when test data is missing
 		"OrgNetworkKey":               " ",
 		"equalsChar":                  " ",
 		"quotationChar":               " ",
