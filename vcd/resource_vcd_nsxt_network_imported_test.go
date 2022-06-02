@@ -16,8 +16,6 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
-	//skipNoConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
@@ -153,7 +151,6 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	//skipNoConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
