@@ -22,7 +22,6 @@ type listDef struct {
 
 func TestAccVcdDatasourceResourceList(t *testing.T) {
 	preTestChecks(t)
-	// TODO add checks
 
 	var lists = []listDef{
 		{"resources", "resources", "", "vcd_org"},
