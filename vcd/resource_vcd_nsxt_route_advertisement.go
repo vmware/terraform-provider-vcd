@@ -73,6 +73,11 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
+	err = checkNSXTEdgeGatewayDedicated(edgeGateway)
+	if err != nil {
+		return diag.Errorf("error when configuring route advertisement on NSX-T Edge Gateway - %s", err)
+	}
+
 	_, err = edgeGateway.UpdateNsxtRouteAdvertisement(enableRouteAdvertisement, subnets, true)
 	if err != nil {
 		return diag.Errorf("error when creating/updating route advertisement - %s", err)
@@ -166,4 +171,14 @@ func resourceVcdNsxtRouteAdvertisementImport(ctx context.Context, d *schema.Reso
 	d.SetId(edge.EdgeGateway.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// checkNSXTEdgeGatewayDedicated is a simple helper function that checks if "Using Dedicated Provider Router" option is enabled
+// on NSX-T Edge Gateway so that route advertisement can be configured. If not it returns an error.
+func checkNSXTEdgeGatewayDedicated(nsxtEdgeGw *govcd.NsxtEdgeGateway) error {
+	if !nsxtEdgeGw.EdgeGateway.EdgeGatewayUplinks[0].Dedicated {
+		return fmt.Errorf("NSX-T Edge Gateway is not using a dedicated provider router. Please enable this feature before configuring route advertisement")
+	}
+
+	return nil
 }
