@@ -27,13 +27,6 @@ func resourceVcdNsxtRouteAdvertisement() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
-				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
-			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -65,9 +58,9 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 
 	var subnets []string
 	enableRouteAdvertisement := d.Get("enabled").(bool)
-	subnetsFromSchema, subnetsArgumentSet := d.GetOk("subnets")
+	subnetsFromSchema, ok := d.GetOk("subnets")
 
-	if subnetsArgumentSet {
+	if ok {
 		subnets = convertSchemaSetToSliceOfStrings(subnetsFromSchema.(*schema.Set))
 	}
 
@@ -93,8 +86,12 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	orgName := d.Get("org").(string)
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf("error when retrieving org - %s", err)
+	}
+
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(org.Org.Name, d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -124,8 +121,12 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	orgName := d.Get("org").(string)
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf("error when retrieving org - %s", err)
+	}
+
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(org.Org.Name, d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
@@ -140,7 +141,7 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 }
 
 func resourceVcdNsxtRouteAdvertisementImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	log.Printf("[TRACE] NSX-T Edge Gateway Firewall Rule import initiated")
+	log.Printf("[TRACE] NSX-T Edge Gateway Route Advertisement import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
