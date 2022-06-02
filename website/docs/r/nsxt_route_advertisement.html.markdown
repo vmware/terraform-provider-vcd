@@ -17,7 +17,7 @@ Provides a VMware Cloud Director resource for setting route advertisement in an 
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
   org  = "my-org" #optional
-  name = "my-vdc" #optional
+  name = "my-vdc"
 }
 
 data "vcd_nsxt_edgegateway" "my_edge_gateway" {
@@ -37,7 +37,7 @@ resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
   org  = "my-org" #optional
-  name = "my-vdc" #optional
+  name = "my-vdc"
 }
 
 data "vcd_nsxt_edgegateway" "my_edge_gateway" {
