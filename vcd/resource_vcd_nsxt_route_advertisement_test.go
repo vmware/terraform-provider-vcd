@@ -37,6 +37,10 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 	configText2 := templateFill(testAccNsxtRouteAdvertisementUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccNsxtRouteAdvertisementDisabled, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -64,6 +68,14 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.#", "2"),
 					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.0", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.1", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "enabled", strconv.FormatBool(false)),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.#", "0"),
 				),
 			},
 			{
@@ -112,6 +124,24 @@ resource "vcd_nsxt_route_advertisement" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = {{.Enabled}}
   subnets = ["{{.Subnet1Cidr}}", "{{.Subnet2Cidr}}"]
+}
+`
+
+const testAccNsxtRouteAdvertisementDisabled = `
+data "vcd_org_vdc" "{{.NsxtVdc}}" {
+  org = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
+data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
+  owner_id = data.vcd_org_vdc.{{.NsxtVdc}}.id
+  name     = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_route_advertisement" "testing" {
+  org = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
+  enabled = false
 }
 `
 
