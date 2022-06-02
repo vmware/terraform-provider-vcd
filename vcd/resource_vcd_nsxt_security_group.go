@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -266,6 +267,7 @@ func resourceVcdSecurityGroupDelete(ctx context.Context, d *schema.ResourceData,
 		defer vcdClient.unLockParentEdgeGtw(d)
 	}
 
+	time.Sleep(5 * time.Second)
 	securityGroup, err := nsxtEdgeGateway.GetNsxtFirewallGroupById(d.Id())
 	if err != nil {
 		return diag.Errorf("[nsxt security group resource delete] error getting NSX-T Security Group: %s", err)
