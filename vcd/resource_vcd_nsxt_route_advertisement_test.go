@@ -46,6 +46,12 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 		return
 	}
 
+	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
+	// Advertisement configuration requires it. Restore it right after the test so that other
+	// tests are not impacted.
+	updateEdgeGatewayTier0Dedication(t, true)
+	defer updateEdgeGatewayTier0Dedication(t, false)
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -173,5 +179,23 @@ func testAccCheckNsxtRouteAdvertisement(vdcName, edgeGatewayName string) resourc
 		}
 
 		return nil
+	}
+}
+
+func updateEdgeGatewayTier0Dedication(t *testing.T, dedicatedTier0 bool) {
+	vcdClient := createSystemTemporaryVCDConnection()
+	org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
+	if err != nil {
+		t.Fatalf("error retrieving Org '%s': %s", testConfig.VCD.Org, err)
+	}
+	edge, err := org.GetNsxtEdgeGatewayByName(testConfig.Nsxt.EdgeGateway)
+	if err != nil {
+		t.Fatalf("error retrieving NSX-T Edge Gateway '%s': %s", testConfig.Nsxt.EdgeGateway, err)
+	}
+
+	edge.EdgeGateway.EdgeGatewayUplinks[0].Dedicated = dedicatedTier0
+	_, err = edge.Update(edge.EdgeGateway)
+	if err != nil {
+		t.Fatalf("error updating NSX-T Edge Gateway dedicated Tier 0 gateway usage to '%t': %s", dedicatedTier0, err)
 	}
 }
