@@ -206,7 +206,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	d.SetId(org.AdminOrg.ID)
 
-	err = createOrUpdateAdminOrgMetadata(d, org)
+	err = createOrUpdateMetadata(d, org, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to Org: %s", err)
 	}
@@ -380,7 +380,7 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 		return diag.Errorf("error completing update of Org %s", err)
 	}
 
-	err = createOrUpdateAdminOrgMetadata(d, adminOrg)
+	err = createOrUpdateMetadata(d, adminOrg, "metadata")
 	if err != nil {
 		return diag.Errorf("error updating metadata from Org: %s", err)
 	}
@@ -543,36 +543,4 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 		return "", "", fmt.Errorf(`the value for "full_name" cannot be empty`)
 	}
 	return orgName, fullName, nil
-}
-
-func createOrUpdateAdminOrgMetadata(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
-	log.Printf("[TRACE] adding/updating metadata to Org")
-
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := adminOrg.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := adminOrg.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
 }

@@ -164,6 +164,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vdc_group":                                 resourceVdcGroup(),                            // 3.5
 	"vcd_nsxt_distributed_firewall":                 resourceVcdNsxtDistributedFirewall(),          // 3.6
 	"vcd_security_tag":                              resourceVcdSecurityTag(),                      // 3.7
+	"vcd_org_vdc_access_control":                    resourceVcdOrgVdcAccessControl(),              // 3.7
 	"vcd_nsxt_edgegateway_bgp_configuration":        resourceVcdEdgeBgpConfig(),                    // 3.7
 }
 

@@ -302,7 +302,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(vdc.Vdc.ID)
 	log.Printf("[TRACE] VDC created: %#v", vdc)
 
-	err = createOrUpdateMetadata(d, meta)
+	err = createOrUpdateOrgMetadata(d, meta)
 	if err != nil {
 		return fmt.Errorf("error adding metadata to VDC: %s", err)
 	}
@@ -560,7 +560,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
-	err = createOrUpdateMetadata(d, meta)
+	err = createOrUpdateOrgMetadata(d, meta)
 	if err != nil {
 		return fmt.Errorf("error updating VDC metadata: %s", err)
 	}
@@ -958,7 +958,7 @@ func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, m
 	return nil
 }
 
-func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
+func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] adding/updating metadata to VDC")
 
@@ -974,33 +974,7 @@ func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 	}
 
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			_, err := vdc.DeleteMetadata(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			_, err := vdc.AddMetadata(k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
+	return createOrUpdateMetadata(d, vdc, "metadata")
 }
 
 // helper for transforming the compute capacity section of the resource input into the VdcConfiguration structure
