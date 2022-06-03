@@ -418,33 +418,7 @@ func createOrUpdateAdminCatalogMetadata(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := catalog.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err = catalog.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
+	return createOrUpdateMetadata(d, catalog, "metadata")
 }
 
 func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, catalogName string) error {
