@@ -122,9 +122,9 @@ func TestAccVcdNsxtEdgeBgpConfig(t *testing.T) {
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", "0.65420"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_mode", "DISABLE"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", "65430"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_mode", "HELPER_ONLY"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_timer", "190"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "stale_route_timer", "600"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "ecmp_enabled", "true"),
@@ -202,7 +202,7 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
-  enabled             = true
+  enabled                = true
   local_as_number        = "0.65420"
   graceful_restart_mode  = "DISABLE"
   graceful_restart_timer = 190
