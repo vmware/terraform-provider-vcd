@@ -1,109 +1,97 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_service_engine_group"
-sidebar_current: "docs-vcd-resource-nsxt-alb-service-engine-group"
+page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_bgp_configuration"
+sidebar_current: "docs-vcd-resource-nsxt-edgegateway-bgp-configuration"
 description: |-
-  Provides a resource to manage NSX-T ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
-  defines shared service engine properties, such as size, network access, and failover. Resources in a service engine
-  group can be used for different virtual services, depending on your tenant needs. These resources cannot be shared
-  between different service engine groups.
+  Provides a resource to manage BGP configuration on NSX-T Edge Gateway that has a dedicated Tier-0 
+  Gateway or VRF.
 ---
 
-# vcd\_nsxt\_alb\_service\_engine\_group
+# vcd\_nsxt\_edgegateway\_bgp\_configuration
 
-Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
-
-Provides a resource to manage NSX-T ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
-defines shared service engine properties, such as size, network access, and failover. Resources in a service engine
-group can be used for different virtual services, depending on your tenant needs. These resources cannot be shared
-between different service engine groups.
+Provides a resource to manage BGP configuration on NSX-T Edge Gateway that has a dedicated Tier-0
+Gateway or VRF. BGP makes core routing decisions by using a table of IP networks, or prefixes, which
+designate multiple routes between autonomous systems (AS).
 
 ~> Only `System Administrator` can create this resource.
 
-## Example Usage (Adding NSX-T ALB Service Engine Group)
+~> In an NSX-T Edge Gateway that is connected to an external network backed by a VRF gateway, the
+local AS number and graceful restart settings are **read only**. Your system administrator can edit
+these settings on the parent Tier-0 gateway in NSX-T Data Center. 
+
+## Example Usage (Using BGP configuration for a dedicated Tier-0 gateway backed Edge Gateway)
 
 ```hcl
-# Local variable is used to avoid direct reference and cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
-# Even changing NSX-T ALB Controller name in UI, plan will cause to recreate all resources depending 
-# on `vcd_nsxt_alb_importable_cloud` data source if this indirect reference (via local) variable is not used.
-locals {
-  controller_id = vcd_nsxt_alb_controller.first.id
-}
+resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
+  org = "my-org"
 
-resource "vcd_nsxt_alb_controller" "first" {
-  name         = "aviController1"
-  description  = "first alb controller"
-  url          = "https://controller.myXZ"
-  username     = "admin"
-  password     = "Welcome@1234"
-  license_type = "ENTERPRISE"
-}
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
-data "vcd_nsxt_alb_importable_cloud" "cld" {
-  name          = "importable-cloud-name"
-  controller_id = local.controller_id
-}
-
-resource "vcd_nsxt_alb_cloud" "first" {
-  name        = "nsxt-cloud"
-  description = "first alb cloud"
-
-  controller_id       = vcd_nsxt_alb_controller.first.id
-  importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cld.id
-  network_pool_id     = data.vcd_nsxt_alb_importable_cloud.cld.network_pool_id
-}
-
-resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                                 = "demo-service-engine"
-  description                          = "Service Engine for Terraform documentation"
-  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
-  importable_service_engine_group_name = "Default-Group"
-  reservation_model                    = "SHARED"
-  sync_on_refresh                      = false
+  enabled                = false
+  local_as_number        = "65430"
+  graceful_restart_mode  = "HELPER_ONLY"
+  graceful_restart_timer = 190
+  stale_route_timer      = 600
+  ecmp_enabled           = true
 }
 ```
+
+## Example Usage (Using BGP configuration for a dedicated VRF backed Edge Gateway)
+```hcl
+resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
+  org = "my-org"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.vrf-backed.id
+
+  enabled      = true
+  ecmp_enabled = true
+}
+```
+
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `name` - (Required) A name for NSX-T ALB Service Engine Group
-* `description` - (Optional) An optional description NSX-T ALB Service Engine Group
-* `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
-  source
-* `reservation_model` - (Required) Definition if the Service Engine Group is `DEDICATED` or `SHARED`
-* `importable_service_engine_group_name` - (Required) Name of available Service Engine Group in ALB
-* `sync_on_refresh` (Optional) - A special argument that is not passed to VCD, but alters behaviour of this resource so
-  that it performs a Sync operation on every Terraform refresh. *Note* this may impact refresh performance, but should
-  ensure up-to-date information is read. Default is **false**.
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
+  when connected as sysadmin working across different organisations
+* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
+  `vcd_nsxt_edgegateway` datasource
+* `enabled` - (Required) Defines if BGP service is enabled or not
+* `ecmp_enabled` (Optional) - A flag indicating whether ECMP is enabled or not
+* `local_as_number` - (Optional) BGP autonomous systems (AS) number to advertise to BGP peers. BGP
+  AS number can be specified in either ASPLAIN or ASDOT formats, like ASPLAIN format : '65546',
+  ASDOT format : '1.10'. **Read only** for VRF backed Edge Gateways
+* `graceful_restart_mode` - (Optional) - Describes Graceful Restart configuration Modes for BGP
+  configuration on an Edge Gateway. **Read only** for VRF backed Edge Gateways. Possible options are:
+ * `DISABLE` - Both graceful restart and helper modes are disabled
+ * `HELPER_ONLY` - The ability for a BGP speaker to indicate its ability to preserve forwarding
+   state during BGP restart
+ * `GRACEFUL_AND_HELPER` - The ability of a BGP speaker to advertise its restart to its peers
+* `graceful_restart_timer` (Optional) Maximum time taken (in seconds) for a BGP session to be
+  established after a restart. If the session is not re-established within this timer, the receiving
+  speaker will delete all the stale routes from that peer. **Read only** for VRF backed Edge Gateways.
+* `stale_route_timer` (Optional) - Maximum time (in seconds) before stale routes are removed when
+  BGP restarts. **Read only** for VRF backed Edge Gateways
 
-## Attribute Reference
-
-The following attributes are exported on this resource:
-
-* `max_virtual_services` - Maximum number of virtual services this NSX-T ALB Service Engine Group can run
-* `reserved_virtual_services` - Number of reserved virtual services
-* `deployed_virtual_services` - Number of deployed virtual services
-* `ha_mode` defines High Availability Mode for Service Engine Group. One off:
-  * ELASTIC_N_PLUS_M_BUFFER - Service Engines will scale out to N active nodes with M nodes as buffer.
-  * ELASTIC_ACTIVE_ACTIVE - Active-Active with scale out.
-  * LEGACY_ACTIVE_STANDBY - Traditional single Active-Standby configuration
-* `overallocated` - Boolean value stating if there are more deployed virtual services than allocated ones
+More information about settings can be found in VMware Cloud Director [BGP Configuration
+documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-EB585DDC-9F1C-4971-A4AD-44C239E6E822.html)
 
 ## Importing
 
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T ALB Service Engine Group configuration can be [imported][docs-import] into this resource
-via supplying path for it. An example is
+Existing BGP Configuration can be [imported][docs-import] into this resource
+via supplying the full dot separated path for your Edge Gateway name. An example is
 below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_service_engine_group.imported my-service-engine-group-name
+terraform import vcd_nsxt_edgegateway_bgp_configuration.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway
 ```
 
-The above would import the `my-service-engine-group-name` NSX-T ALB controller settings that are defined at provider
-level.
+The above would import BGP configuration defined on NSX-T Edge Gateway `my-nsxt-edge-gateway` which
+is configured in organization named `my-org` and VDC or VDC Group named
+`my-org-vdc-org-vdc-group-name`.

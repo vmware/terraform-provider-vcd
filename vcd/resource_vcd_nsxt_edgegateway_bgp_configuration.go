@@ -44,29 +44,33 @@ func resourceVcdEdgeBgpConfig() *schema.Resource {
 			},
 			"local_as_number": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Autonomous system number",
+			},
+			"ecmp_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Defines if ECMP (Equal-cost multi-path routing) is enabled",
 			},
 			"graceful_restart_mode": {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				Description:  "Graceful restart configuration on Edge Gateway. One of 'DISABLE', 'HELPER_ONLY', 'GRACEFUL_AND_HELPER'",
 				ValidateFunc: validation.StringInSlice([]string{"DISABLE", "HELPER_ONLY", "GRACEFUL_AND_HELPER"}, false),
 			},
 			"graceful_restart_timer": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Computed:    true,
 				Description: "Maximum time taken (in seconds) for a BGP session to be established after a restart",
 			},
 			"stale_route_timer": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Computed:    true,
 				Description: "Maximum time (in seconds) before stale routes are removed when BGP restarts",
-			},
-			"ecmp_enabled": {
-				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "Defines if ECMP (Equal-cost multi-path routing) is enabled",
 			},
 		},
 	}
@@ -173,16 +177,30 @@ func resourceVcdEdgeBgpConfigImport(ctx context.Context, d *schema.ResourceData,
 
 func getEdgeBgpConfigType(d *schema.ResourceData) *types.EdgeBgpConfig {
 	bgpConfig := &types.EdgeBgpConfig{
-		Enabled:       d.Get("enabled").(bool),
-		LocalASNumber: d.Get("local_as_number").(string),
-		GracefulRestart: types.EdgeBgpGracefulRestartConfig{
-			Mode:            d.Get("graceful_restart_mode").(string),
-			RestartTimer:    d.Get("graceful_restart_timer").(int),
-			StaleRouteTimer: d.Get("stale_route_timer").(int),
-		},
-		Ecmp: d.Get("ecmp_enabled").(bool),
+		Enabled: d.Get("enabled").(bool),
+		Ecmp:    d.Get("ecmp_enabled").(bool),
 		// Version is required, but it is automatically handled by Go Cloud Director SDK in function
 		// UpdateBgpConfiguration
+	}
+
+	// bgpConfig.GracefulRestart can only be specified when Edge Gateway is backed by Tier-0
+	// gateway, not a VRF. For that reason types.EdgeBgpGracefulRestartConfig must only be sent if
+	// the user configured it.
+	graceFullRestartMode, graceFullRestartModeExists := d.GetOk("graceful_restart_mode")
+	graceFullRestartTimer, graceFullRestartTimerExists := d.GetOk("graceful_restart_timer")
+	staleRouteTimer, staleRouteTimerExists := d.GetOk("stale_route_timer")
+
+	if graceFullRestartModeExists || graceFullRestartTimerExists || staleRouteTimerExists {
+		bgpConfig.GracefulRestart = &types.EdgeBgpGracefulRestartConfig{
+			Mode:            graceFullRestartMode.(string),
+			RestartTimer:    graceFullRestartTimer.(int),
+			StaleRouteTimer: staleRouteTimer.(int),
+		}
+	}
+
+	localAsNumber, localAsNumberExists := d.GetOk("local_as_number")
+	if localAsNumberExists {
+		bgpConfig.LocalASNumber = localAsNumber.(string)
 	}
 
 	return bgpConfig
@@ -190,9 +208,9 @@ func getEdgeBgpConfigType(d *schema.ResourceData) *types.EdgeBgpConfig {
 
 func setEdgeBgpConfigData(d *schema.ResourceData, bgpConfig *types.EdgeBgpConfig) {
 	dSet(d, "enabled", bgpConfig.Enabled)
+	dSet(d, "ecmp_enabled", bgpConfig.Ecmp)
 	dSet(d, "local_as_number", bgpConfig.LocalASNumber)
 	dSet(d, "graceful_restart_mode", bgpConfig.GracefulRestart.Mode)
 	dSet(d, "graceful_restart_timer", bgpConfig.GracefulRestart.RestartTimer)
 	dSet(d, "stale_route_timer", bgpConfig.GracefulRestart.StaleRouteTimer)
-	dSet(d, "ecmp_enabled", bgpConfig.Ecmp)
 }
