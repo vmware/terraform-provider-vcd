@@ -1359,7 +1359,7 @@ func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc)
 func skipNoConfiguration(t *testing.T, paramsMap StringMap) {
 	for key, value := range paramsMap {
 		if value == "" {
-			t.Skipf("Missing test config: No %s specified", key)
+			t.Skipf("[%s] Missing test config: No %s specified", t.Name(), key)
 		}
 	}
 }

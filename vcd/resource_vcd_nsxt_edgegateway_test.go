@@ -109,11 +109,14 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 	postTestChecks(t)
 }
 
-// in CDS cluster ID isn't accessible: Forbidden: User is not authorized to perform this operation on the application. Please contact the system administrator to get access., error code 401
+// When test run in CDS then cluster ID isn't accessible.
+// You will get error: Forbidden: User is not authorized to perform this operation on the application. Please contact the system administrator to get access., error code 401
+// This function adds correct params if cluster ID found or not.
 func ifPossibleAddClusterId(t *testing.T, err error, vcdClient *VCDClient, params StringMap) {
 	clusterId, err := lookupAvailableEdgeClusterId(t, vcdClient)
 	if err != nil {
 		t.Logf("\nWARNING: cluster id fetch failed, test will continue withouth cluster id. Error: %s", err)
+		// adding regular expr param to map to use in Assertion
 		params["EdgeClusterForAssert"] = regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
 		params["EdgeClusterId"] = ""
 		params["EdgeClusterKey"] = ""
@@ -122,6 +125,7 @@ func ifPossibleAddClusterId(t *testing.T, err error, vcdClient *VCDClient, param
 		params["EdgeClusterId"] = "\"" + clusterId + "\""
 		params["EdgeClusterKey"] = "edge_cluster_id"
 		params["equalsChar"] = "="
+		// adding regular expr param to map to use in Assertion
 		params["EdgeClusterForAssert"] = regexp.MustCompile(`^` + clusterId + `$`)
 	}
 }

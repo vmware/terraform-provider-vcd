@@ -42,7 +42,7 @@ func TestProvider_impl(t *testing.T) {
 func testParamsNotEmpty(t *testing.T, params StringMap) {
 	for key, value := range params {
 		if value == "" {
-			t.Skipf("%s must be set for acceptance tests", key)
+			t.Skipf("[%s] %s must be set for acceptance tests", t.Name(), key)
 		}
 	}
 }
