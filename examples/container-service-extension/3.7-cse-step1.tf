@@ -59,7 +59,7 @@ resource "vcd_org_vdc" "cse_vdc" {
   delete_recursive         = true
 }
 
-# Now we create a Tier 0 Gateway connected to the outside world network. This will be used to download software
+# Here we create a Tier 0 Gateway connected to the outside world network. This will be used to download software
 # for the Kubernetes nodes and access the cluster.
 
 data "vcd_nsxt_manager" "main" {
@@ -115,7 +115,7 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
   depends_on = [vcd_org_vdc.cse_vdc]
 }
 
-# Routed network for the Kubernetes cluster
+# Routed network for the Kubernetes cluster.
 
 resource "vcd_network_routed_v2" "cse_routed" {
   org         = vcd_org.cse_org.name
@@ -136,7 +136,7 @@ resource "vcd_network_routed_v2" "cse_routed" {
   dns2 = "8.8.8.4"
 }
 
-# NAT rule to map traffic to internal network IPs
+# NAT rule to map traffic to internal network IPs.
 
 resource "vcd_nsxt_nat_rule" "snat" {
   org             = vcd_org.cse_org.name
@@ -166,7 +166,7 @@ resource "vcd_nsxt_firewall" "firewall" {
   }
 }
 
-# Catalog to upload the TKGm OVAs
+# Catalog to upload the TKGm OVAs.
 
 data "vcd_storage_profile" "cse_sp" {
   org  = vcd_org.cse_org.name

@@ -19,7 +19,7 @@ resource "vcd_rights_bundle" "cse-rb" {
     "cse:nativeCluster: Full Access",
     "cse:nativeCluster: Modify"
   ])
-  publish_to_all_tenants = true
+  publish_to_all_tenants = true # Here we publish to all tenants for simplicity, but you can select the tenant in which CSE is used
 }
 
 # Here we fetch the rights bundle that `cse install` creates. It is not published by default, so first we
@@ -36,7 +36,7 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   publish_to_all_tenants = false
 }
 
-# Create a new role for CSE, with the new rights to create clusters and manage them
+# Create a new role for CSE, with the new rights to create clusters and manage them.
 
 data "vcd_role" "vapp_author" {
   org  = vcd_org.cse_org.name
@@ -64,7 +64,7 @@ resource "vcd_role" "cluster_author" {
   depends_on = [vcd_rights_bundle.cse-rb]
 }
 
-# Create a user with that role
+# Create a user with that role.
 
 resource "vcd_org_user" "cse_user" {
   org = vcd_org.cse_org.name
