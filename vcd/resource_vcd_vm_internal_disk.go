@@ -143,7 +143,11 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 		overrideVmDefault = false
 	}
 
-	iops := int64(d.Get("iops").(int))
+	iops, err := getIopsValue(d, vcdClient, storageProfilePrt)
+	if err != nil {
+		return err
+	}
+
 	// value is required but not treated.
 	isThinProvisioned := true
 
@@ -177,6 +181,25 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	return resourceVmInternalDiskRead(d, meta)
+}
+
+func getIopsValue(d *schema.ResourceData, vcdClient *VCDClient, storageProfilePrt *types.Reference) (int64, error) {
+	storageProfileDetails, err := vcdClient.GetStorageProfileByHref(storageProfilePrt.HREF)
+	if err != nil {
+		return -1, fmt.Errorf("[internal disk update] error retrieving storage profile details %s : %s", storageProfilePrt.Name, err)
+	}
+
+	var iops int64
+	// assign default IOPS value from storage profile if it is configured
+	if storageProfileDetails.IopsSettings.DiskIopsDefault != 0 {
+		iops = storageProfileDetails.IopsSettings.DiskIopsDefault
+	}
+
+	// override value if user provided in config
+	if iopsValue, ok := d.GetOk("iops"); ok {
+		iops = int64(iopsValue.(int))
+	}
+	return iops, nil
 }
 
 func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM, vmStatusBefore string) error {
@@ -298,8 +321,6 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	log.Printf("[TRACE] Internal Disk with id %s found", d.Id())
-	iops := int64(d.Get("iops").(int))
-	diskSettingsToUpdate.Iops = &iops
 	diskSettingsToUpdate.SizeMb = int64(d.Get("size_in_mb").(int))
 	// Note can't change adapter type, bus number, unit number as vSphere changes diskId
 
@@ -321,6 +342,12 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	diskSettingsToUpdate.StorageProfile = storageProfilePrt
 	diskSettingsToUpdate.OverrideVmDefault = overrideVmDefault
+
+	iops, err := getIopsValue(d, vcdClient, storageProfilePrt)
+	if err != nil {
+		return err
+	}
+	diskSettingsToUpdate.Iops = &iops
 
 	_, err = vm.UpdateInternalDisks(vm.VM.VmSpecSection)
 	if err != nil {
