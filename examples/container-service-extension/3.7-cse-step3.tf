@@ -14,5 +14,5 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   name                   = data.vcd_rights_bundle.cse-rights-bundle.name
   description            = data.vcd_rights_bundle.cse-rights-bundle.description
   rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
-  publish_to_all_tenants = true
+  publish_to_all_tenants = true # Here we publish to all tenants for simplicity, but you can select specific tenants
 }
