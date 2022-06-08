@@ -1,9 +1,10 @@
 # --------------------------------------------------------------------------------------------------------
-# WARNING: This is done after running `cse install` command.
+# WARNING: This is done after applying `3.7-cse-step2`.
 # --------------------------------------------------------------------------------------------------------
 
-# Here we publish the rights bundle that `cse install` creates to the desired tenants. For that, first we
-# create the resource in Terraform, to have its state created. Next, we'll import the state from VCD.
+# Here we finish what we started on `3.7-cse-step2`. Notice the publish_to_all_tenants is now true.
+# Please make sure you execute `terraform import` before applying this HCL:
+#     terraform import vcd_rights_bundle.published-cse-rights-bundle "cse:nativeCluster Entitlement"
 
 data "vcd_rights_bundle" "cse-rights-bundle" {
   name = "cse:nativeCluster Entitlement"
@@ -13,8 +14,5 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   name                   = data.vcd_rights_bundle.cse-rights-bundle.name
   description            = data.vcd_rights_bundle.cse-rights-bundle.description
   rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
-  publish_to_all_tenants = false
+  publish_to_all_tenants = true
 }
-
-# After being created, you need to execute:
-#     terraform import vcd_rights_bundle.published-cse-rights-bundle "cse:nativeCluster Entitlement"

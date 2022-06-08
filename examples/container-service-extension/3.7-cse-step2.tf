@@ -22,7 +22,21 @@ resource "vcd_rights_bundle" "cse-rb" {
   publish_to_all_tenants = true
 }
 
-# Now we create a new role for CSE, with the new rights to create clusters and manage them.
+# Here we fetch the rights bundle that `cse install` creates. It is not published by default, so first we
+# create the resource in Terraform. In step 3 we'll import the state from VCD and publish it to the tenants.
+
+data "vcd_rights_bundle" "cse-rights-bundle" {
+  name = "cse:nativeCluster Entitlement"
+}
+
+resource "vcd_rights_bundle" "published-cse-rights-bundle" {
+  name                   = data.vcd_rights_bundle.cse-rights-bundle.name
+  description            = data.vcd_rights_bundle.cse-rights-bundle.description
+  rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
+  publish_to_all_tenants = false
+}
+
+# Create a new role for CSE, with the new rights to create clusters and manage them
 
 data "vcd_role" "vapp_author" {
   org  = vcd_org.cse_org.name
@@ -50,7 +64,7 @@ resource "vcd_role" "cluster_author" {
   depends_on = [vcd_rights_bundle.cse-rb]
 }
 
-# Now we create a user with that role.
+# Create a user with that role
 
 resource "vcd_org_user" "cse_user" {
   org = vcd_org.cse_org.name

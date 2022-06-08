@@ -1,4 +1,5 @@
-# Create an Organization and a VDC. VDC must be backed by NSX-T.
+# If you have already an Organization, you can remove the `vcd_org` resource from this HCL file and simply
+# configure it in the provider settings.
 
 resource "vcd_org" "cse_org" {
   name              = "cse_org"
@@ -21,6 +22,9 @@ resource "vcd_org" "cse_org" {
     delete_on_storage_lease_expiration = false
   }
 }
+
+# If you have already a VDC, you can remove the `vcd_org_vdc` resource from this HCL file and simply
+# configure it in the provider settings. The VDC must be backed by NSX-T.
 
 resource "vcd_org_vdc" "cse_vdc" {
   name = "cse_vdc"
@@ -55,7 +59,8 @@ resource "vcd_org_vdc" "cse_vdc" {
   delete_recursive         = true
 }
 
-# Now we create a Tier 0 Gateway connected to the outside world network.
+# Now we create a Tier 0 Gateway connected to the outside world network. This will be used to download software
+# for the Kubernetes nodes and access the cluster.
 
 data "vcd_nsxt_manager" "main" {
   name = "my-nsx-manager"
@@ -86,7 +91,7 @@ resource "vcd_external_network_v2" "cse_external_network_nsxt" {
   }
 }
 
-# Create an edge gateway that will be used by the cluster as the main router.
+# Create an Edge Gateway that will be used by the cluster as the main router.
 
 resource "vcd_nsxt_edgegateway" "cse_egw" {
   org      = vcd_org.cse_org.name
@@ -110,7 +115,7 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
   depends_on = [vcd_org_vdc.cse_vdc]
 }
 
-# Routed network for the Kubernetes cluster.
+# Routed network for the Kubernetes cluster
 
 resource "vcd_network_routed_v2" "cse_routed" {
   org         = vcd_org.cse_org.name
@@ -196,16 +201,16 @@ resource "vcd_catalog_item" "tkgm_ova" {
   show_upload_progress = true
 
   catalog_item_metadata = {
-    "kind"               = "TKGm"
-    "kubernetes"         = "TKGm"
-    "kubernetes_version" = "v1.21.2+vmware.1"
-    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-    "os"                 = "ubuntu"
-    "revision"           = "1"
+    "kind"               = "TKGm" # This value is always the same
+    "kubernetes"         = "TKGm" # This value is always the same
+    "kubernetes_version" = "v1.21.2+vmware.1" # The version comes in the OVA name downloaded from Customer Connect
+    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322" # The name as it was in the OVA downloaded from Customer Connect
+    "os"                 = "ubuntu" # The OS comes in the OVA name downloaded from Customer Connect
+    "revision"           = "1" # This value is always the same
   }
 }
 
-# AVI configuration for Kubernetes services
+# AVI configuration for Kubernetes services, this allows the cluster to create Kubernetes services of type Load Balancer.
 
 data "vcd_nsxt_alb_controller" "cse_alb_controller" {
   name = "aviController1"
