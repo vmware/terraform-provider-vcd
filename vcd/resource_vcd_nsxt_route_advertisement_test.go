@@ -22,12 +22,16 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
-		"Enabled":     strconv.FormatBool(isRouteAdvertisementEnable),
-		"Subnet1Cidr": subnet1,
-		"Subnet2Cidr": subnet2,
+		"Name":              t.Name(),
+		"Org":               testConfig.VCD.Org,
+		"NsxtVdc":           testConfig.Nsxt.Vdc,
+		"NsxtVdcGroup":      testConfig.Nsxt.VdcGroup,
+		"EdgeGw":            testConfig.Nsxt.EdgeGateway,
+		"EdgeGwVdcGroup":    testConfig.Nsxt.VdcGroupEdgeGateway,
+		"Enabled":           strconv.FormatBool(isRouteAdvertisementEnable),
+		"Subnet1Cidr":       subnet1,
+		"Subnet2Cidr":       subnet2,
+		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
 	}
 
 	configText1 := templateFill(testAccNsxtRouteAdvertisementCreation, params)
@@ -40,6 +44,10 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step3"
 	configText3 := templateFill(testAccNsxtRouteAdvertisementDisabled, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccNsxtRouteAdvertisementCreationVDCGroup, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -57,6 +65,15 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtRouteAdvertisement(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
+			{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "enabled", strconv.FormatBool(isRouteAdvertisementEnable)),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.0", subnet1),
+				),
+			},
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -148,6 +165,145 @@ resource "vcd_nsxt_route_advertisement" "testing" {
   org = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = false
+}
+`
+
+const testAccNsxtRouteAdvertisementCreationVDCGroup = `
+data "vcd_vdc_group" "{{.NsxtVdcGroup}}" {
+  org = "{{.Org}}"
+  name = "{{.NsxtVdcGroup}}"
+}
+
+data "vcd_nsxt_edgegateway" "{{.EdgeGwVdcGroup}}" {
+  owner_id = data.vcd_vdc_group.{{.NsxtVdcGroup}}.id
+  name     = "{{.EdgeGwVdcGroup}}"
+}
+
+resource "vcd_nsxt_route_advertisement" "testing" {
+  org = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.id
+  enabled = {{.Enabled}}
+  subnets = ["{{.Subnet1Cidr}}"]
+}
+
+resource "vcd_nsxt_firewall" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.id
+
+  rule {
+    action      = "ALLOW"
+    name        = "allow all IPv4 traffic"
+    direction   = "IN_OUT"
+    ip_protocol = "IPV4"
+  }
+}
+
+resource "vcd_nsxt_nat_rule" "snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.id
+
+  name        = "SNAT rule"
+  rule_type   = "SNAT"
+  description = "description"
+
+  # Using primary_ip from edge gateway
+  external_address         = tolist(data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.subnet)[0].primary_ip
+  internal_address         = "11.11.11.0/24"
+  snat_destination_address = "8.8.8.8"
+  logging                  = true
+}
+
+resource "vcd_nsxt_nat_rule" "no-snat" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.id
+
+  name        = "test-no-snat-rule"
+  rule_type   = "NO_SNAT"
+  description = "description"
+
+  internal_address = "11.11.11.0/24"
+}
+
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.id
+
+  name        = "First"
+  description = "testing tunnel"
+
+  pre_shared_key = "my-presharaed-key"
+  # Primary IP address of Edge Gateway pulled from data source
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address
+  remote_ip_address = "1.2.3.4"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+}
+
+resource "vcd_network_routed_v2" "nsxt-backed" {
+  org             = "{{.Org}}"
+  name            = "{{.Name}}-routed"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGwVdcGroup}}.id
+
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org = "{{.Org}}"
+
+  org_network_id = vcd_network_routed_v2.nsxt-backed.id
+
+  pool {
+    start_address = "1.1.1.100"
+    end_address   = "1.1.1.110"
+  }
+
+  pool {
+    start_address = "1.1.1.111"
+    end_address   = "1.1.1.112"
+  }
+}
+
+resource "vcd_network_isolated_v2" "nsxt-backed" {
+  org      = "{{.Org}}"
+  owner_id = data.vcd_vdc_group.{{.NsxtVdcGroup}}.id
+
+  name = "{{.Name}}-isolated"
+
+  gateway       = "2.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "2.1.1.10"
+    end_address   = "2.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_network_imported" "nsxt-backed" {
+  org      = "{{.Org}}"
+  owner_id = data.vcd_vdc_group.{{.NsxtVdcGroup}}.id
+
+  name = "{{.Name}}-imported"
+
+  nsxt_logical_switch_name = "{{.NsxtImportSegment}}"
+
+  gateway       = "4.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "4.1.1.10"
+    end_address   = "4.1.1.20"
+  }
 }
 `
 
