@@ -806,7 +806,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 		}
 
-		err = addRemoveMetaData(d, vm)
+		err = createOrUpdateMetadata(d, vm, "metadata")
 		if err != nil {
 			return err
 		}
@@ -1043,7 +1043,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		}
 	}
 
-	err = addRemoveMetaData(d, vm)
+	err = createOrUpdateMetadata(d, vm, "metadata")
 	if err != nil {
 		return err
 	}
@@ -1093,44 +1093,6 @@ func addRemoveGuestProperties(d *schema.ResourceData, vm *govcd.VM) error {
 		_, err = vm.SetProductSectionList(vmProperties)
 		if err != nil {
 			return fmt.Errorf("error setting guest properties: %s", err)
-		}
-	}
-	return nil
-}
-
-func addRemoveMetaData(d *schema.ResourceData, vm *govcd.VM) error {
-	// VM does not have to be in POWERED_OFF state for metadata operations
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			task, err := vm.DeleteMetadata(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-		for k, v := range newMetadata {
-			task, err := vm.AddMetadata(k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
 		}
 	}
 	return nil
@@ -2718,7 +2680,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		}
 	}
 
-	err = addRemoveMetaData(d, newVm)
+	err = createOrUpdateMetadata(d, newVm, "metadata")
 	if err != nil {
 		return nil, err
 	}
