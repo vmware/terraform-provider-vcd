@@ -82,7 +82,7 @@ resource "vcd_external_network_v2" "cse_external_network_nsxt" {
 
   ip_scope {
     gateway       = "10.0.0.1"
-    prefix_length = "16"
+    prefix_length = "24"
 
     static_ip_pool {
       start_address = "10.0.0.2"
@@ -248,19 +248,19 @@ resource "vcd_nsxt_alb_settings" "cse_alb_settings" {
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
   org                     = vcd_org.cse_org.name
-  edge_gateway_id         = vcd_nsxt_edgegateway.cse_egw.id
+  edge_gateway_id         = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.cse_alb_seg.id
 }
 
 resource "vcd_nsxt_alb_pool" "cse_alb_pool" {
   org             = vcd_org.cse_org.name
-  edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
+  edge_gateway_id = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
   name            = "cse-avi-pool"
 }
 
 resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
   org             = vcd_org.cse_org.name
-  edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
+  edge_gateway_id = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
   name            = "cse-virtual-service"
 
   pool_id                  = vcd_nsxt_alb_pool.cse_alb_pool.id
