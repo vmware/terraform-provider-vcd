@@ -196,7 +196,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
 
   name                 = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
   description          = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  ova_path             = "/Users/bob/CSE/TKGm/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.iso"
+  ova_path             = "/Users/bob/CSE/TKGm/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
   upload_piece_size    = 100
   show_upload_progress = true
 
