@@ -2,7 +2,9 @@ package vcd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"text/tabwriter"
@@ -15,12 +17,12 @@ import (
 
 func resourceVmInternalDisk() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVmInternalDiskCreate,
-		Read:   resourceVmInternalDiskRead,
-		Update: resourceVmInternalDiskUpdate,
-		Delete: resourceVmInternalDiskDelete,
+		CreateContext: resourceVmInternalDiskCreate,
+		ReadContext:   resourceVmInternalDiskRead,
+		UpdateContext: resourceVmInternalDiskUpdate,
+		DeleteContext: resourceVmInternalDiskDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVmInternalDiskImport,
+			StateContext: resourceVcdVmInternalDiskImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -117,7 +119,7 @@ var internalDiskBusTypesFromValues = map[string]string{
 }
 
 // resourceVmInternalDiskCreate creates an internal disk for VM
-func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVmInternalDiskCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockParentVm(d)
@@ -125,7 +127,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 
 	vm, vdc, err := getVm(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	var storageProfilePrt *types.Reference
@@ -134,7 +136,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 	if storageProfileName, ok := d.GetOk("storage_profile"); ok {
 		storageProfile, err := vdc.FindStorageProfileReference(storageProfileName.(string))
 		if err != nil {
-			return fmt.Errorf("[internal disk creation] error retrieving storage profile %s : %s", storageProfileName, err)
+			return diag.Errorf("[internal disk creation] error retrieving storage profile %s : %s", storageProfileName, err)
 		}
 		storageProfilePrt = &storageProfile
 		overrideVmDefault = true
@@ -145,7 +147,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 
 	iops, err := getIopsValue(d, vcdClient, storageProfilePrt)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	// value is required but not treated.
@@ -165,22 +167,22 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 
 	vmStatusBefore, err := powerOffIfNeeded(d, vm)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	diskId, err := vm.AddInternalDisk(diskSetting)
 	if err != nil {
-		return fmt.Errorf("error updating VM disks: %s", err)
+		return diag.Errorf("error updating VM disks: %s", err)
 	}
 
 	d.SetId(diskId)
 
 	err = powerOnIfNeeded(d, vm, vmStatusBefore)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resourceVmInternalDiskRead(d, meta)
+	return resourceVmInternalDiskRead(ctx, d, meta)
 }
 
 func getIopsValue(d *schema.ResourceData, vcdClient *VCDClient, storageProfilePrt *types.Reference) (int64, error) {
@@ -246,7 +248,7 @@ func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) (string, error) {
 }
 
 // resourceVmInternalDiskDelete deletes disk from VM
-func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
+func resourceVmInternalDiskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	vcdClient.lockParentVm(d)
@@ -254,22 +256,22 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 
 	vm, _, err := getVm(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vmStatusBefore, err := powerOffIfNeeded(d, vm)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	err = vm.DeleteInternalDisk(d.Id())
 	if err != nil {
-		return fmt.Errorf("[resourceVmInternalDiskDelete] failed to delete internal disk: %s", err)
+		return diag.Errorf("[resourceVmInternalDiskDelete] failed to delete internal disk: %s", err)
 	}
 
 	err = powerOnIfNeeded(d, vm, vmStatusBefore)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[TRACE] VM internal disk %s deleted", d.Id())
@@ -294,7 +296,7 @@ func getVm(vcdClient *VCDClient, d *schema.ResourceData) (*govcd.VM, *govcd.Vdc,
 }
 
 // Update the resource
-func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVmInternalDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Update Internal Disk with ID: %s started.", d.Id())
 	vcdClient := meta.(*VCDClient)
 
@@ -307,18 +309,18 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 	vm, vdc, err := getVm(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	// has refresh inside
 	vmStatusBefore, err := powerOffIfNeeded(d, vm)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	diskSettingsToUpdate, err := vm.GetInternalDiskById(d.Id(), false)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[TRACE] Internal Disk with id %s found", d.Id())
 	diskSettingsToUpdate.SizeMb = int64(d.Get("size_in_mb").(int))
@@ -331,7 +333,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	if storageProfileName != "" {
 		storageProfile, err := vdc.FindStorageProfileReference(storageProfileName)
 		if err != nil {
-			return fmt.Errorf("[Error] error retrieving storage profile %s : %s", storageProfileName, err)
+			return diag.Errorf("[Error] error retrieving storage profile %s : %s", storageProfileName, err)
 		}
 		storageProfilePrt = &storageProfile
 		overrideVmDefault = true
@@ -345,31 +347,31 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	iops, err := getIopsValue(d, vcdClient, storageProfilePrt)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	diskSettingsToUpdate.Iops = &iops
 
 	_, err = vm.UpdateInternalDisks(vm.VM.VmSpecSection)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	err = powerOnIfNeeded(d, vm, vmStatusBefore)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[TRACE] Inernal Disk %s updated", d.Id())
-	return resourceVmInternalDiskRead(d, meta)
+	return resourceVmInternalDiskRead(ctx, d, meta)
 }
 
 // Retrieves internal disk from VM and updates terraform state
-func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
+func resourceVmInternalDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	vm, _, err := getVm(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	diskSettings, err := vm.GetInternalDiskById(d.Id(), true)
@@ -379,7 +381,7 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dSet(d, "bus_type", internalDiskBusTypesFromValues[strings.ToLower(diskSettings.AdapterType)])
@@ -415,7 +417,7 @@ var errHelpInternalDiskImport = fmt.Errorf(`resource id must be specified in one
 // Example resource name (_resource_name_): vcd_vm_internal_disk.my-disk
 // Example import path (_the_id_string_): org-name.vdc-name.vapp-name.vm-name.my-internal-disk-id
 // Example list path (_the_id_string_): list@org-name.vdc-name.vapp-name.vm-name
-func resourceVcdVmInternalDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVmInternalDiskImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, vappName, vmName, diskId string
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
