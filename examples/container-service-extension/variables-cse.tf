@@ -111,6 +111,3 @@ variable "avi-importable-cloud" {
   description = "AVI importable cloud"
   type        = string
 }
-
-
-
