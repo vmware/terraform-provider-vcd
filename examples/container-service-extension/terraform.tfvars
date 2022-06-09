@@ -42,5 +42,5 @@ avi-controller-name  = "aviController1"
 avi-importable-cloud = "NSXT https://my-importable-cloud.company.com"
 
 # OVA name should be something like "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890"
-tkgm-ova-name   = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+tkgm-ova-name   = "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890"
 tkgm-ova-folder = "/Users/username/Downloads"
