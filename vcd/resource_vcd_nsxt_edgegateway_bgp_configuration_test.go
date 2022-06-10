@@ -94,7 +94,7 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
-		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
+		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -352,7 +352,7 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
-		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
+		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -388,7 +388,7 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway_bgp_configuration.testing",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, testConfig.Nsxt.EdgeGateway),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
 			},
 			{
 				Config: configText5,
@@ -449,6 +449,7 @@ resource "vcd_nsxt_edgegateway" "vrf-backed" {
 
   external_network_id = vcd_external_network_v2.vrf-backed.id
 
+
   subnet {
     gateway       = "14.14.14.1"
     prefix_length = "24"
@@ -505,16 +506,16 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
 }
 `
 
-func testAccCheckNsxtBgpConfigurationDisabled(vdcName, edgeGatewayName string) resource.TestCheckFunc {
+func testAccCheckNsxtBgpConfigurationDisabled(edgeGatewayName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, vdcName)
+		org, err := conn.GetOrg(testConfig.VCD.Org)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, testConfig.VCD.Org, err)
 		}
 
-		edge, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+		edge, err := org.GetNsxtEdgeGatewayByName(edgeGatewayName)
 		if err != nil {
 			return fmt.Errorf(errorUnableToFindEdgeGateway, edgeGatewayName)
 		}
@@ -531,3 +532,111 @@ func testAccCheckNsxtBgpConfigurationDisabled(vdcName, edgeGatewayName string) r
 		return nil
 	}
 }
+
+func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+	skipNoNsxtConfiguration(t)
+
+	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
+	// Advertisement configuration requires it. Restore it right after the test so that other
+	// tests are not impacted.
+	updateEdgeGatewayTier0Dedication(t, true)
+	defer updateEdgeGatewayTier0Dedication(t, false)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"NsxtVdcGroup":         testConfig.Nsxt.VdcGroup,
+		"NsxtEdgeGwInVdcGroup": testConfig.Nsxt.VdcGroupEdgeGateway,
+		"Tags":                 "network nsxt",
+	}
+
+	// First step of test is going to alter some settings but not enable BGP because changing some of the fields
+	configText1 := templateFill(testAccVcdNsxtBgpVdcGroupConfig1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccVcdNsxtBgpVdcGroupConfig2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.VdcGroupEdgeGateway),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", "65420"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_mode", "GRACEFUL_AND_HELPER"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_timer", "190"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "stale_route_timer", "500"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "ecmp_enabled", "false"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", "65420"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_mode", "GRACEFUL_AND_HELPER"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_timer", "190"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "stale_route_timer", "500"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "ecmp_enabled", "true"),
+				),
+			},
+		},
+	})
+}
+
+const testAccVcdNsxtBgpConfigVdcGroupPrereqs = `
+data "vcd_vdc_group" "g1" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdcGroup}}"
+}
+
+data "vcd_nsxt_edgegateway" "testing" {
+  org      = "{{.Org}}"
+  owner_id = data.vcd_vdc_group.g1.id
+
+  name = "{{.NsxtEdgeGwInVdcGroup}}"
+}
+`
+
+const testAccVcdNsxtBgpVdcGroupConfig1 = testAccVcdNsxtBgpConfigVdcGroupPrereqs + `
+resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  enabled                = false
+  local_as_number        = "65420"
+  graceful_restart_mode  = "GRACEFUL_AND_HELPER"
+  graceful_restart_timer = 190
+  stale_route_timer      = 500
+  ecmp_enabled           = false
+}
+`
+
+const testAccVcdNsxtBgpVdcGroupConfig2 = testAccVcdNsxtBgpConfigVdcGroupPrereqs + `
+resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  enabled                = true
+  local_as_number        = "65420"
+  graceful_restart_mode  = "GRACEFUL_AND_HELPER"
+  graceful_restart_timer = 190
+  stale_route_timer      = 500
+  ecmp_enabled           = true
+}
+`

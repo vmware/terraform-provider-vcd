@@ -130,13 +130,15 @@ type TestConfig struct {
 		} `json:"peer"`
 	} `json:"networking"`
 	Nsxt struct {
-		Manager           string `json:"manager"`
-		Tier0router       string `json:"tier0router"`
-		Tier0routerVrf    string `json:"tier0routervrf"`
-		Vdc               string `json:"vdc"`
-		ExternalNetwork   string `json:"externalNetwork"`
-		EdgeGateway       string `json:"edgeGateway"`
-		NsxtImportSegment string `json:"nsxtImportSegment"`
+		Manager             string `json:"manager"`
+		Tier0router         string `json:"tier0router"`
+		Tier0routerVrf      string `json:"tier0routervrf"`
+		Vdc                 string `json:"vdc"`
+		ExternalNetwork     string `json:"externalNetwork"`
+		EdgeGateway         string `json:"edgeGateway"`
+		VdcGroup            string `json:"vdcGroup"`
+		VdcGroupEdgeGateway string `json:"vdcGroupEdgeGateway"`
+		NsxtImportSegment   string `json:"nsxtImportSegment"`
 
 		NsxtAlbControllerUrl      string `json:"nsxtAlbControllerUrl"`
 		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
