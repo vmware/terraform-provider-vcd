@@ -1,6 +1,10 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE installation example HCL:
 #
+# * This HCL depends on 'vcd' and 'cse' CLI. Install and configure these following the instructions on
+#   http://vmware.github.io/vcd-cli/install.html
+#   https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse
+#
 # * This HCL should be run as System administrator, as it involves creating provider elements such as Organizations,
 #   VDCs or Tier 0 Gateways.
 #
@@ -345,10 +349,10 @@ resource "null_resource" "cse-install-script" {
   # If it fails the first time, failure will be ignored, but next resources will fail anyway.
   provisioner "local-exec" {
     when    = create
-    command = format("printf '%s' > config.yaml && chmod 0600 config.yaml && cse install -s -c config.yaml || true", data.template_file.config-yaml.rendered)
+    command = format("printf '%s' > config.yaml && ./cse-install.sh", data.template_file.config-yaml.rendered)
   }
 
-  depends_on = [data.template_file.config-yaml]
+  depends_on = [ data.template_file.config-yaml ]
 }
 
 # Here we create a new rights bundle for CSE, with the rights assigned already to the Default Rights Bundle (hence the
@@ -370,7 +374,7 @@ resource "vcd_rights_bundle" "cse-rb" {
   ])
   publish_to_all_tenants = true # Here we publish to all tenants for simplicity, but you can select the tenant in which CSE is used
 
-  depends_on             = [null_resource.cse-install-script]
+  depends_on = [null_resource.cse-install-script]
 }
 
 # Here we fetch the rights bundle that `cse install` creates. As we can't update/destroy it, we simply clone
@@ -388,7 +392,6 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights
   publish_to_all_tenants = true
 
-  depends_on = [null_resource.cse-install-script]
 }
 
 # Create a new role for CSE, with the new rights to create clusters and manage them.

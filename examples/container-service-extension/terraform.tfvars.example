@@ -1,4 +1,9 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+
+# ------------------------------------------------
 # Provider config
+# ------------------------------------------------
+
 admin-user       = "******************************************"
 admin-password   = "******************************************"
 admin-org        = "System"
@@ -7,14 +12,20 @@ vcenter-name     = "vcenter1"
 vcenter-username = "******************************************"
 vcenter-password = "******************************************"
 
-# CSE config
-org-name = "cse_org"
-storage-profile = "*"
-vdc-name       = "cse_vdc"
-vdc-allocation = "AllocationVApp"
-vdc-provider   = "providerVdcNsxt1"
-vdc-netpool    = "NSX-T Overlay 1"
+# ------------------------------------------------
+# CSE installation config
+# ------------------------------------------------
 
+# Org and VDC can be created or fetched. See 3.7-cse-install.tf for details
+org-name = "cse_org"
+vdc-name = "cse_vdc"
+
+storage-profile = "*" # Select a valid name for Storage Profile in System admin UI
+vdc-allocation = "AllocationVApp" # https://registry.terraform.io/providers/vmware/vcd/latest/docs/resources/org_vdc#allocation_model
+vdc-provider   = "nsxTPvdc1" # Select a valid name for Provider VCD in System admin UI
+vdc-netpool    = "NSX-T Overlay 1" # Select a valid name for Network Pool in System admin UI
+
+# Tier 0 configuration for creation
 tier0-manager        = "nsxManager1"
 tier0-router         = "VCD T0"
 tier0-gateway-ip     = "10.12.123.123"
@@ -25,6 +36,7 @@ tier0-gateway-ip-ranges = [
   ["10.12.234.235", "10.12.234.237"]
 ]
 
+# Edge gateway configuration for creation
 edge-gateway-ip     = "10.12.123.123"
 edge-gateway-prefix = "19"
 edge-gateway-ip-ranges = [
@@ -33,11 +45,13 @@ edge-gateway-ip-ranges = [
   ["10.12.234.235", "10.12.234.237"]
 ]
 
+# Routed network configuration for creation
 routed-gateway  = "192.168.7.1"
 routed-prefix   = "24"
 routed-ip-range = ["192.168.7.2", "192.168.7.100"]
 routed-dns      = ["8.8.8.8", "8.8.8.4"]
 
+# These elements will be fetched from VCD
 avi-controller-name  = "aviController1"
 avi-importable-cloud = "NSXT https://my-importable-cloud.company.com"
 
