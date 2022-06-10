@@ -8,7 +8,7 @@
 # * This HCL should be run as System administrator, as it involves creating provider elements such as Organizations,
 #   VDCs or Tier 0 Gateways.
 #
-# * Please customize the values present in this file to your needs. Also check `variables-cse.tf` and `variables-provider.tf`
+# * Please customize the values present in this file to your needs. Also check `terraform.tfvars.example`
 #   for customisation.
 # ------------------------------------------------------------------------------------------------------------
 
