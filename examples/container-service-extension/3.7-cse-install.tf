@@ -312,26 +312,8 @@ resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
 }
 
 # CSE installation process. With this resource we fetch the `config.yaml.template` file present next to this example HCL, and
-# fill the template variables with the ones generated here, such as VDC, Org, Catalog, etc.
-
-data "template_file" "config-yaml" {
-  template = file("${path.module}/config.yaml.template")
-  vars = {
-    vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
-    vcd_username     = var.admin-user
-    vcd_password     = var.admin-password
-    vcenter          = var.vcenter-name
-    vcenter_username = var.vcenter-username
-    vcenter_password = var.vcenter-password
-    catalog          = vcd_catalog.cat-cse.name
-    network          = vcd_network_routed_v2.cse_routed.name
-    org              = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.
-    vdc              = vcd_org_vdc.cse_vdc.name # Change this reference if you used a data source to fetch an already existent VDC.
-    storage_profile  = data.vcd_storage_profile.cse_sp.name
-  }
-}
-
-# CSE installation process. With this resource we invoke the CSE install command with the given template
+# fill the template variables with the ones generated here, such as VDC, Org, Catalog, etc; then we invoke the CSE install command
+# with the given template.
 
 resource "null_resource" "cse-install-script" {
   triggers = {
@@ -339,7 +321,19 @@ resource "null_resource" "cse-install-script" {
   }
 
   provisioner "local-exec" {
-    command = format("printf '%s' > config.yaml && ./cse-install.sh", data.template_file.config-yaml.rendered)
+    command = format("printf '%s' > config.yaml && ./cse-install.sh", templatefile("${path.module}/config.yaml.template", {
+      vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
+      vcd_username     = var.admin-user
+      vcd_password     = var.admin-password
+      vcenter          = var.vcenter-name
+      vcenter_username = var.vcenter-username
+      vcenter_password = var.vcenter-password
+      catalog          = vcd_catalog.cat-cse.name
+      network          = vcd_network_routed_v2.cse_routed.name
+      org              = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.
+      vdc              = vcd_org_vdc.cse_vdc.name # Change this reference if you used a data source to fetch an already existent VDC.
+      storage_profile  = data.vcd_storage_profile.cse_sp.name
+    }))
   }
 
   depends_on = [vcd_org.cse_org, vcd_catalog.cat-cse, vcd_org_vdc.cse_vdc, vcd_network_routed_v2.cse_routed, data.vcd_storage_profile.cse_sp]

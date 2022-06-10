@@ -303,8 +303,7 @@ Alternatively, you can upload the OVA file using `cse-cli`. This command line to
 This is the only step that can be done without any Terraform script, but you can also use the
 [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
 [null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1) as shown in the "[Examples](#examples)"
-section below where it's combined with the
-[`template_file` data source](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file).
+section below.
 
 In any case, you need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
 and then provide a YAML configuration file with the entities that were created by Terraform.
