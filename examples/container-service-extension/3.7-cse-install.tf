@@ -232,9 +232,9 @@ resource "vcd_catalog_item" "tkgm_ova" {
   org     = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   catalog = vcd_catalog.cat-cse.name
 
-  name                 = var.tkgm-ova-name
-  description          = var.tkgm-ova-name
-  ova_path             = format("%s/%s.ova", var.tkgm-ova-folder, var.tkgm-ova-name)
+  name                 = replace(var.tkgm-ova-name, ".ova", "")
+  description          = replace(var.tkgm-ova-name, ".ova", "")
+  ova_path             = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
   upload_piece_size    = 100
   show_upload_progress = true
 
@@ -303,7 +303,7 @@ resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
 
   pool_id                  = vcd_nsxt_alb_pool.cse_alb_pool.id
   service_engine_group_id  = vcd_nsxt_alb_edgegateway_service_engine_group.assignment.service_engine_group_id
-  virtual_ip_address       = "192.168.8.88"
+  virtual_ip_address       = var.avi-virtual-service-ip
   application_profile_type = "HTTP"
   service_port {
     start_port = 80
