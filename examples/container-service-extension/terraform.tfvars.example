@@ -45,6 +45,8 @@ edge-gateway-ip-ranges = [
   ["10.12.234.235", "10.12.234.237"]
 ]
 
+snat-external-ip = "10.12.234.227" # Needs to be one IP from the available in the pool
+
 # Routed network configuration for creation
 routed-gateway  = "192.168.7.1"
 routed-prefix   = "24"

@@ -66,6 +66,11 @@ variable "edge-gateway-ip-ranges" {
   type        = list(list(string))
 }
 
+variable "snat-external-ip" {
+  description = "External IP to map to an internal one through a SNAT mapping"
+  type        = string
+}
+
 variable "routed-gateway" {
   description = "The routed network gateway IP"
   type        = string

@@ -185,7 +185,7 @@ resource "vcd_nsxt_nat_rule" "snat" {
   rule_type   = "SNAT"
   description = "description"
 
-  external_address = var.edge-gateway-ip-ranges[1][0] # We pick first free IP from the available range
+  external_address = var.snat-external-ip
   internal_address = format("%s.%s.%s.0/%s", split(".", var.routed-gateway)[0], split(".", var.routed-gateway)[1], split(".", var.routed-gateway)[2], var.routed-prefix)
   logging          = true
 }
@@ -336,23 +336,14 @@ data "template_file" "config-yaml" {
 
 resource "null_resource" "cse-install-script" {
   triggers = {
-    cluster_instance_ids = join(",",
-      [vcd_org.cse_org.id,
-        vcd_catalog.cat-cse.id,
-        vcd_org_vdc.cse_vdc.id,
-        vcd_network_routed_v2.cse_routed.id,
-    data.vcd_storage_profile.cse_sp.id]) # Just re-trigger if the CSE config items are different
+    always_run = timestamp()
   }
 
-  # Execute cse install command. The config file needs to have 0600 permissions. It ignores failures
-  # to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
-  # If it fails the first time, failure will be ignored, but next resources will fail anyway.
   provisioner "local-exec" {
-    when    = create
     command = format("printf '%s' > config.yaml && ./cse-install.sh", data.template_file.config-yaml.rendered)
   }
 
-  depends_on = [ data.template_file.config-yaml ]
+  depends_on = [vcd_org.cse_org, vcd_catalog.cat-cse, vcd_org_vdc.cse_vdc, vcd_network_routed_v2.cse_routed, data.vcd_storage_profile.cse_sp]
 }
 
 # Here we create a new rights bundle for CSE, with the rights assigned already to the Default Rights Bundle (hence the

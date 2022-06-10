@@ -4,5 +4,7 @@
 ! which cse > /dev/null && echo "ERROR: No 'cse' command found, please install CSE cli" && exit 1
 [ ! -f ./config.yaml ] && echo "ERROR: config.yaml does not exist" && exit 1
 
+# Execute cse install command. The config file needs to have 0600 permissions. It ignores failures
+# to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
 chmod 0600 config.yaml
-cse install -s -c config.yaml || true # Ignore failures, for Terraform update/destroy not to fail
+cse install -s -c config.yaml || true
