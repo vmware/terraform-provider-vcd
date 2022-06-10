@@ -116,3 +116,8 @@ variable "avi-importable-cloud" {
   description = "AVI importable cloud"
   type        = string
 }
+
+variable "avi-virtual-service-ip" {
+  description = "IP for the virtual service on AVI load balancer"
+  type        = string
+}

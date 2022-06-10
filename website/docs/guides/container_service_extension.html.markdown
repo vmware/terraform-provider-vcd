@@ -22,11 +22,12 @@ In order to complete the steps described in this guide, please be aware:
 
 * CSE is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.7.0 or above.
-* All CSE elements use NSX-T backed resources, **no** NSX-V is supported.
-* Some steps require the usage of `cse` extension for `vcd-cli`. Make sure you have them installed. Also, `cse` server needs
-to be run when the steps are completed.
+* All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
+* Some steps require the usage of `cse` extension for `vcd cli`. Make sure you have them installed.
 
 ## Installation process
+
+-> You can find examples of a CSE installation in the [Examples](#examples) section below.
 
 To start installing CSE in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
 
@@ -227,7 +228,7 @@ You need the following resources:
 * [ALB Cloud](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud)
 * [ALB Service Engine Group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group)
 * [ALB Settings](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_settings)
-* [ALB Edge Gateway SEG](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_edgegateway_service_engine_group)
+* [ALB Edge Gateway Service Engine Group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_edgegateway_service_engine_group)
 * [ALB Pool](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_pool)
 * [ALB Virtual Service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service)
 
@@ -308,7 +309,8 @@ section below.
 In any case, you need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
 and then provide a YAML configuration file with the entities that were created by Terraform.
 
-An example file is provided here, with all the information from the snippets shown in previous steps:
+You can check the documentation for this configuration file [here](https://vmware.github.io/container-service-extension/cse3_1/CSE_CONFIG.html).
+An example file is provided below, with all the information from the snippets shown in previous steps:
 
 ```yaml
 mqtt:
@@ -347,8 +349,15 @@ broker:
   vdc: cse_vdc
 ```
 
-When you execute the `cse install` command, CSE will install some new custom entities and rights. You can also refer to the command line
-[documentation](https://vmware.github.io/container-service-extension) to upload OVA files if you skipped the upload with Terraform from previous step.
+When you execute the following command:
+
+```shell
+cse install -c config.yaml
+```
+
+CSE will use the configuration file from above to install some new custom entities and rights among other required settings.
+You can also refer to the command line [documentation](https://vmware.github.io/container-service-extension) to upload OVA files
+if you skipped the upload with Terraform from previous step.
 
 ### Step 6: Rights and roles
 

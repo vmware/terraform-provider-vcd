@@ -45,7 +45,8 @@ edge-gateway-ip-ranges = [
   ["10.12.234.235", "10.12.234.237"]
 ]
 
-snat-external-ip = "10.12.234.227" # Needs to be one IP from the available in the pool
+snat-external-ip       = "10.12.234.227" # Needs to be one IP from the available in the pool
+avi-virtual-service-ip = "192.168.8.88"
 
 # Routed network configuration for creation
 routed-gateway  = "192.168.7.1"
@@ -57,6 +58,6 @@ routed-dns      = ["8.8.8.8", "8.8.8.4"]
 avi-controller-name  = "aviController1"
 avi-importable-cloud = "NSXT https://my-importable-cloud.company.com"
 
-# OVA name should be something like "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890"
-tkgm-ova-name   = "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890"
+# OVA name should be something like "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890.ova"
+tkgm-ova-name   = "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890.ova"
 tkgm-ova-folder = "/Users/username/Downloads"
