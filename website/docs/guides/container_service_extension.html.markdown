@@ -3,26 +3,28 @@ layout: "vcd"
 page_title: "VMware Cloud Director: Container Service Extension"
 sidebar_current: "docs-vcd-guides-cse"
 description: |-
-Provides guidance on Container Service Extension for VCD.
+Provides guidance on configuring VCD to be able to install Container Service Extension.
 ---
 
 # Container Service Extension
 
 ## About
 
-Container Service Extension (CSE) is a VCD extension that helps tenants create and work with Kubernetes clusters.
-
-CSE brings Kubernetes as a Service to VCD, by creating customized VM templates (Kubernetes templates) and enabling tenant users to deploy fully functional Kubernetes clusters as self-contained vApps.
+This guide describes the required steps to configure VCD to start working with the Container Service Extension (CSE), that
+will allow tenant users to deploy Kubernetes clusters on VCD. For that purpose, after completing the steps described below you
+will need also to **publish the Container UI Plugin** to the desired tenants and **run the CSE server** in your infrastructure.
 
 To know more about CSE, you can explore [the official website](https://vmware.github.io/container-service-extension/).
 
-In this guide you can configure VCD to start working with CSE.
+## Pre-requisites
 
-## Requirements
+In order to complete the steps described in this guide, please be aware:
 
-* CSE is supported from VCD 10.3.1 or above.
+* CSE is supported from VCD 10.3.1 or above, make sure your VCD appliance matches this criteria.
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, **no** NSX-V is supported.
+* Some steps require the usage of `cse` extension for `vcd-cli`. Make sure you have them installed. Also, `cse` server needs
+to be run when the steps are completed.
 
 ## Installation process
 
@@ -40,18 +42,21 @@ provider "vcd" {
 }
 ```
 
+As you will be creating several administrator-scoped resources like Orgs, VDCs, Tier 0 Gateways, etc; make sure you log in
+as `System administrator`.
+
 ### Step 1: Initialization
 
 This step assumes that you want to install CSE in a brand new [Organization](/providers/vmware/vcd/latest/docs/resources/org)
 with no [VDCs](/providers/vmware/vcd/latest/docs/resources/org_vdc), or that is a fresh installation of VCD.
-Otherwise, please skip this step and configure `org` and `vdc` attributes in the provider configuration above.
+Otherwise, please skip this step and configure `org` and `vdc` attributes in the provider configuration above or with a data source.
 
 The VDC needs to be backed by **NSX-T** for CSE to work. Here is an example that creates both the Organization and the VDC:
 
 ```hcl
 resource "vcd_org" "cse_org" {
   name             = "cse_org"
-  full_name        = "cse_org"
+  full_name        = "Organization to deploy Kubernetes clusters with CSE"
   is_enabled       = "true"
   delete_force     = "true"
   delete_recursive = "true"
@@ -64,6 +69,7 @@ resource "vcd_org_vdc" "cse_vdc" {
   allocation_model  = "AllocationVApp"
   network_pool_name = "NSX-T Overlay"
   provider_vdc_name = "nsxTPvdc1"
+  network_quota     = 50
 
   compute_capacity {
     cpu {
@@ -161,8 +167,8 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
 }
 ```
 
-This will create a basic Edge Gateway, you can of course add more complex [firewall rules](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
-or other configurations to fit with your organization requirements. Make sure that traffic is allowed, as the cluster creation process
+The above resource creates a basic Edge Gateway, but you can of course add more configurations like [firewall rules](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
+to fit with your organization requirements. Make sure that traffic is allowed, as the cluster creation process
 requires software to be installed in the nodes, otherwise cluster creation will fail.
 
 Create a [Routed Network](/providers/vmware/vcd/latest/docs/resources/network_routed_v2) that will be using the recently
@@ -250,7 +256,7 @@ resource "vcd_catalog" "cat-cse" {
 }
 ```
 
-Then you can upload TKGm OVAs to this catalog. These can be downloaded from VMware Customer Connect.
+Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
 To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource.
 
 -> Note that CSE is **not compatible** yet with PhotonOS
@@ -289,11 +295,14 @@ Alternatively, you can upload the OVA file using `cse-cli`. This command line to
 
 ### Step 5: CSE command cli
 
-This is the only step that must be done without any Terraform script.
-You need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
+This is the only step can be done without any Terraform script or using the
+[`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
+[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1).
+
+In any case, you need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
 and then provide a config.yaml with the entities that were created by Terraform.
 
-An example file is provided here, with all the information from the examples shown above:
+An example file is provided here, with all the information from the snippets shown in previous steps:
 
 ```yaml
 mqtt:
@@ -334,6 +343,9 @@ broker:
 
 When you execute the `cse install` command, CSE will install some new custom entities and rights. You can also refer to the command line
 [documentation](https://vmware.github.io/container-service-extension) to upload OVA files if you skipped the upload with Terraform from previous step.
+
+To see a working example with the mentioned `null_resource`, have a look at the "[Examples](#examples)" section below
+where it's combined with the [`template_file` data source](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file).
 
 ### Step 6: Rights and roles
 
@@ -391,46 +403,26 @@ resource "vcd_role" "cluster_author" {
 }
 ```
 
-You need also to publish the bundle that `cse install` command created, named **"cse:nativeCluster Entitlement"**:
+You need also to publish the bundle that `cse install` command created, named **"cse:nativeCluster Entitlement"**. For that you can do the same
+as above, create a clone. This is also recommended so doing `terraform destroy` will let the original rights bundle intact. 
 
 ```hcl
-data "vcd_rights_bundle" "cse-rights-bundle" {
+data "vcd_rights_bundle" "cse-native-cluster-entl" {
   name = "cse:nativeCluster Entitlement"
 }
 
 resource "vcd_rights_bundle" "published-cse-rights-bundle" {
-  name                   = data.vcd_rights_bundle.cse-rights-bundle.name
-  description            = data.vcd_rights_bundle.cse-rights-bundle.description
-  rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
-  publish_to_all_tenants = false
-}
-```
-
-After applying, you need to execute an import to refresh local state:
-
-```shell
-terraform import vcd_rights_bundle.published-cse-rights-bundle "cse:nativeCluster Entitlement"
-```
-
-Finally, you can publish the new bundle to the tenants. Notice the `publish_to_all_tenants` is now **true**. You can also
-publish to specific tenants instead:
-
-```hcl
-data "vcd_rights_bundle" "cse-rights-bundle" {
-  name = "cse:nativeCluster Entitlement"
-}
-
-resource "vcd_rights_bundle" "published-cse-rights-bundle" {
-  name                   = data.vcd_rights_bundle.cse-rights-bundle.name
-  description            = data.vcd_rights_bundle.cse-rights-bundle.description
-  rights                 = data.vcd_rights_bundle.cse-rights-bundle.rights
+  name                   = "cse:nativeCluster Entitlement Published"
+  description            = data.vcd_rights_bundle.cse-native-cluster-entl.description
+  rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights
   publish_to_all_tenants = true
 }
 ```
 
-### Conclusion
+### Final step
 
-After applying all the above resources, executing a `cse run -c config.yaml` should fetch all resources and OVAs and allow
+After applying all the above resources, make sure you publish the **Container UI Plugin** to the desired tenants
+and **run the CSE server** in your infrastructure, by executing a `cse run -c config.yaml`. This should fetch all resources and OVAs and allow
 the users to provision Kubernetes clusters in VCD.
 
 ## Examples

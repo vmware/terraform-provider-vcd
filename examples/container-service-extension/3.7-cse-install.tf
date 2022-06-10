@@ -224,7 +224,6 @@ resource "vcd_catalog" "cat-cse" {
 
   delete_force     = "true"
   delete_recursive = "true"
-  depends_on       = [vcd_org_vdc.cse_vdc]
 }
 
 # TKGm OVA upload. The `catalog_item_metadata` is required for CSE to detect the OVAs.
@@ -382,7 +381,6 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   description            = data.vcd_rights_bundle.cse-native-cluster-entl.description
   rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights
   publish_to_all_tenants = true
-
 }
 
 # Create a new role for CSE, with the new rights to create clusters and manage them.
