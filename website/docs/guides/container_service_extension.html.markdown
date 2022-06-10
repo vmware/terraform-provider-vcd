@@ -10,8 +10,8 @@ Provides guidance on configuring VCD to be able to install Container Service Ext
 
 ## About
 
-This guide describes the required steps to configure VCD to start working with the Container Service Extension (CSE), that
-will allow tenant users to deploy Kubernetes clusters on VCD. For that purpose, after completing the steps described below you
+This guide describes the required steps to configure VCD to install the Container Service Extension (CSE), that
+will allow tenant users to deploy Kubernetes clusters on VCD using the UI. For that purpose, after completing the steps described below you
 will need also to **publish the Container UI Plugin** to the desired tenants and **run the CSE server** in your infrastructure.
 
 To know more about CSE, you can explore [the official website](https://vmware.github.io/container-service-extension/).
@@ -20,7 +20,7 @@ To know more about CSE, you can explore [the official website](https://vmware.gi
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE is supported from VCD 10.3.1 or above, make sure your VCD appliance matches this criteria.
+* CSE is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, **no** NSX-V is supported.
 * Some steps require the usage of `cse` extension for `vcd-cli`. Make sure you have them installed. Also, `cse` server needs
@@ -42,16 +42,19 @@ provider "vcd" {
 }
 ```
 
-As you will be creating several administrator-scoped resources like Orgs, VDCs, Tier 0 Gateways, etc; make sure you log in
-as `System administrator`.
+As you will be creating several administrator-scoped resources like Orgs, VDCs, Tier 0 Gateways, etc; make sure you provide 
+`System administrator` credentials.
 
 ### Step 1: Initialization
 
 This step assumes that you want to install CSE in a brand new [Organization](/providers/vmware/vcd/latest/docs/resources/org)
 with no [VDCs](/providers/vmware/vcd/latest/docs/resources/org_vdc), or that is a fresh installation of VCD.
-Otherwise, please skip this step and configure `org` and `vdc` attributes in the provider configuration above or with a data source.
+Otherwise, please skip this step and configure `org` and `vdc` attributes in the provider configuration above or use an
+available data source to fetch them.
 
-The VDC needs to be backed by **NSX-T** for CSE to work. Here is an example that creates both the Organization and the VDC:
+-> The target VDC needs to be backed by **NSX-T** for CSE to work.
+
+Here is an example that creates both the Organization and the VDC:
 
 ```hcl
 resource "vcd_org" "cse_org" {
@@ -107,7 +110,7 @@ For the Kubernetes clusters to be functional, you need to provide some networkin
 
 The [Tier-0 Gateway](/providers/vmware/vcd/latest/docs/resources/external_network_v2) will provide access to the
 outside world. For example, this will allow cluster users to communicate with Kubernetes API server through `kubectl` and
-download required dependencies for the cluster to be functional.
+download required dependencies for the cluster to be created correctly.
 
 Here is an example on how to configure this resource:
 
@@ -167,7 +170,8 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
 }
 ```
 
-The above resource creates a basic Edge Gateway, but you can of course add more configurations like [firewall rules](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
+The above resource creates a basic Edge Gateway, but you can of course add more configurations like
+[firewall rules](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall)
 to fit with your organization requirements. Make sure that traffic is allowed, as the cluster creation process
 requires software to be installed in the nodes, otherwise cluster creation will fail.
 
@@ -196,7 +200,8 @@ resource "vcd_network_routed_v2" "cse_routed" {
 }
 ```
 
-To be able to reach the Kubernetes nodes within the routed network, you need also a [SNAT rule](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule):
+To be able to reach the Kubernetes nodes within the routed network, you need also a
+[SNAT rule](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule):
 
 ```hcl
 resource "vcd_nsxt_nat_rule" "snat" {
@@ -227,7 +232,7 @@ You need the following resources:
 * [ALB Virtual Service](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_virtual_service)
 
 You can have a look at [this guide](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) as it explains every resource
-and provides some examples of how to setup ALB in VCD. You can also have a look at the "[Examples](#examples)" section below
+and provides some examples of how to set up ALB in VCD. You can also have a look at the "[Examples](#examples)" section below
 where a full ALB setup is provided.
 
 ### Step 4: Configure catalogs and OVAs
@@ -295,12 +300,14 @@ Alternatively, you can upload the OVA file using `cse-cli`. This command line to
 
 ### Step 5: CSE command cli
 
-This is the only step can be done without any Terraform script or using the
+This is the only step that can be done without any Terraform script, but you can also use the
 [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
-[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1).
+[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1) as shown in the "[Examples](#examples)"
+section below where it's combined with the
+[`template_file` data source](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file).
 
 In any case, you need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
-and then provide a config.yaml with the entities that were created by Terraform.
+and then provide a YAML configuration file with the entities that were created by Terraform.
 
 An example file is provided here, with all the information from the snippets shown in previous steps:
 
@@ -343,9 +350,6 @@ broker:
 
 When you execute the `cse install` command, CSE will install some new custom entities and rights. You can also refer to the command line
 [documentation](https://vmware.github.io/container-service-extension) to upload OVA files if you skipped the upload with Terraform from previous step.
-
-To see a working example with the mentioned `null_resource`, have a look at the "[Examples](#examples)" section below
-where it's combined with the [`template_file` data source](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file).
 
 ### Step 6: Rights and roles
 
