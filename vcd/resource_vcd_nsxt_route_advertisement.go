@@ -61,7 +61,7 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -147,7 +147,7 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[route advertisement delete] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
