@@ -24,6 +24,8 @@ In order to complete the steps described in this guide, please be aware:
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
 * Some steps require the usage of `cse` extension for `vcd cli`. Make sure you have them installed and working.
+  Go [here](http://vmware.github.io/vcd-cli/install.html) for vcd cli installation,
+  and [here](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse) to install cse.
 
 ## Installation process
 
