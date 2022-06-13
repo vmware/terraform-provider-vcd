@@ -23,7 +23,7 @@ In order to complete the steps described in this guide, please be aware:
 * CSE is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
-* Some steps require the usage of `cse` extension for `vcd cli`. Make sure you have them installed.
+* Some steps require the usage of `cse` extension for `vcd cli`. Make sure you have them installed and working.
 
 ## Installation process
 
@@ -440,7 +440,9 @@ You will see a list of plugins, you need to publish **Container UI Plugin** to t
 Finally, **run the CSE server** in your infrastructure, by executing `cse run -c config.yaml`. Take into account that server
 will start running indefinitely, so plan to execute this command in a dedicated place.
 
-The `cse run` command should fetch all resources and OVAs and allow the users to provision Kubernetes clusters in VCD web UI.
+The `cse run` command should fetch all resources and OVAs and allow the tenant users to provision Kubernetes clusters in VCD web UI.
+If they have the required rights from the role created in previous step, they should now be able to see the "Kubernetes Container Clusters"
+option in the "More" option in the top bar.
 
 ## Examples
 
