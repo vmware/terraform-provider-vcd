@@ -95,6 +95,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vdc_group":                                 datasourceVdcGroup(),                            // 3.5
 	"vcd_nsxt_distributed_firewall":                 datasourceVcdNsxtDistributedFirewall(),          // 3.6
 	"vcd_nsxt_network_context_profile":              datasourceVcdNsxtNetworkContextProfile(),        // 3.6
+	"vcd_nsxt_route_advertisement":                  datasourceVcdNsxtRouteAdvertisement(),           // 3.7
 
 }
 
