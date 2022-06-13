@@ -433,8 +433,11 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
 
 ### Final step
 
-After applying all the above resources, make sure you publish the **Container UI Plugin** to the desired tenants
-and **run the CSE server** in your infrastructure, by executing `cse run -c config.yaml`. Take into account that server
+After applying all the above resources successfully, make sure you publish the **Container UI Plugin** to the desired tenants.
+To do this, login in VCD as System administrator, click on "More" in the top bar, then "Customize Portal".
+You will see a list of plugins, you need to publish **Container UI Plugin** to the target tenant.
+
+Finally, **run the CSE server** in your infrastructure, by executing `cse run -c config.yaml`. Take into account that server
 will start running indefinitely, so plan to execute this command in a dedicated place.
 
 The `cse run` command should fetch all resources and OVAs and allow the users to provision Kubernetes clusters in VCD web UI.
