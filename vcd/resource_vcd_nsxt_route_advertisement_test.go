@@ -174,9 +174,9 @@ func TestAccVcdNsxtRouteAdvertisementVdcGroup(t *testing.T) {
 		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
 	}
 
-	params["FuncName"] = t.Name() + "-step4"
-	configText4 := templateFill(testAccNsxtRouteAdvertisementCreationVDCGroup, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+	params["FuncName"] = t.Name()
+	configText := templateFill(testAccNsxtRouteAdvertisementCreationVDCGroup, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for test: %s", configText)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -189,7 +189,7 @@ func TestAccVcdNsxtRouteAdvertisementVdcGroup(t *testing.T) {
 		CheckDestroy:      testAccCheckNsxtRouteAdvertisementVdcGroup(testConfig.VCD.Org, testConfig.Nsxt.VdcGroup, testConfig.Nsxt.VdcGroupEdgeGateway),
 		Steps: []resource.TestStep{
 			{
-				Config: configText4,
+				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "enabled", strconv.FormatBool(isRouteAdvertisementEnable)),
