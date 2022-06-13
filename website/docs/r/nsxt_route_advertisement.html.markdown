@@ -12,27 +12,7 @@ Provides a VMware Cloud Director resource for setting route advertisement in an 
 
 ~> **Note:** This resource requires an NSX-T Edge Gateway. Also, for this resource to work appropriately, the option "Dedicate Tier-0 Gateway" must be enabled. Otherwise, route advertisement creation will fail.
 
-## Example Usage 1 (Enable route advertisement and publish 192.168.1.0/24)
-
-```hcl
-data "vcd_org_vdc" "my_vdc" {
-  org  = "my-org" #optional
-  name = "my-vdc"
-}
-
-data "vcd_nsxt_edgegateway" "my_edge_gateway" {
-  owner_id = data.vcd_org_vdc.my_vdc.id
-  name     = "my-nsxt-edge-gateway"
-}
-
-resource "vcd_nsxt_route_advertisement" "my_route_advertisement" {
-  edge_gateway_id = data.vcd_nsxt_edgegateway.my_edge_gateway.id
-  enabled         = true
-  subnets         = ["192.168.1.0/24"]
-}
-```
-
-## Example Usage 2 (Enable route advertisement and publish 192.168.1.0/24 and 192.168.2.0/24)
+## Example Usage (Enable route advertisement and publish 192.168.1.0/24 and 192.168.2.0/24)
 
 ```hcl
 data "vcd_org_vdc" "my_vdc" {
