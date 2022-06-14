@@ -42,8 +42,12 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	params["FuncName"] = t.Name() + "-step3"
-	configText3 := templateFill(testAccNsxtRouteAdvertisementDisabled, params)
+	configText3 := templateFill(testAccNsxtRouteAdvertisementDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccNsxtRouteAdvertisementDisabled, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -84,11 +88,21 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "enabled", strconv.FormatBool(isRouteAdvertisementEnable)),
+					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.#", "2"),
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.0", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.1", regexp.MustCompile(`^192.168.[1-2].0/24$`)),
+					resourceFieldsEqual("data.vcd_nsxt_route_advertisement.route_advertisement", "vcd_nsxt_route_advertisement.testing", nil),
+				),
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_route_advertisement.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "enabled", strconv.FormatBool(false)),
 					resource.TestCheckResourceAttr("vcd_nsxt_route_advertisement.testing", "subnets.#", "0"),
 				),
 			},
-
 			{
 				ResourceName:            "vcd_nsxt_route_advertisement.testing",
 				ImportState:             true,
@@ -135,6 +149,13 @@ resource "vcd_nsxt_route_advertisement" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled = {{.Enabled}}
   subnets = ["{{.Subnet1Cidr}}", "{{.Subnet2Cidr}}"]
+}
+`
+
+const testAccNsxtRouteAdvertisementDS = testAccNsxtRouteAdvertisementUpdate + `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
+data "vcd_nsxt_route_advertisement" "route_advertisement" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
 }
 `
 
