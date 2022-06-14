@@ -512,7 +512,7 @@ func testAccCheckNsxtBgpConfigurationDisabled(edgeGatewayName string) resource.T
 
 		org, err := conn.GetOrg(testConfig.VCD.Org)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		edge, err := org.GetNsxtEdgeGatewayByName(edgeGatewayName)
