@@ -94,7 +94,7 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 		return diag.Errorf("error when configuring route advertisement on NSX-T Edge Gateway - %s", err)
 	}
 
-	_, err = edgeGateway.UpdateNsxtRouteAdvertisement(enableRouteAdvertisement, subnets, true)
+	_, err = edgeGateway.UpdateNsxtRouteAdvertisementWithContext(enableRouteAdvertisement, subnets)
 	if err != nil {
 		return diag.Errorf("error when creating/updating route advertisement - %s", err)
 	}
@@ -121,7 +121,7 @@ func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.Resour
 		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
 
-	routeAdvertisement, err := nsxtEdge.GetNsxtRouteAdvertisement(true)
+	routeAdvertisement, err := nsxtEdge.GetNsxtRouteAdvertisementWithContext()
 	if err != nil {
 		return diag.Errorf("error while retrieving route advertisement - %s", err)
 	}
@@ -168,7 +168,7 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
 
-	err = nsxtEdge.DeleteNsxtRouteAdvertisement(true)
+	err = nsxtEdge.DeleteNsxtRouteAdvertisementWithContext()
 	if err != nil {
 		return diag.Errorf("error while deleting route advertisement - %s", err)
 	}

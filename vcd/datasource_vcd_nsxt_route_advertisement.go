@@ -54,7 +54,7 @@ func datasourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.Reso
 		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
 
-	routeAdvertisement, err := nsxtEdge.GetNsxtRouteAdvertisement(true)
+	routeAdvertisement, err := nsxtEdge.GetNsxtRouteAdvertisementWithContext()
 	if err != nil {
 		return diag.Errorf("error while retrieving route advertisement - %s", err)
 	}
