@@ -41,7 +41,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	ifPossibleAddClusterId(t, err, vcdClient, params)
+	ifPossibleAddClusterId(t, vcdClient, params)
 
 	configText := templateFill(testAccNsxtEdgeGateway, params)
 	if vcdShortTest {
@@ -112,7 +112,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 // When test run in CDS then cluster ID isn't accessible.
 // You will get error: Forbidden: User is not authorized to perform this operation on the application. Please contact the system administrator to get access., error code 401
 // This function adds correct params if cluster ID found or not.
-func ifPossibleAddClusterId(t *testing.T, err error, vcdClient *VCDClient, params StringMap) {
+func ifPossibleAddClusterId(t *testing.T, vcdClient *VCDClient, params StringMap) {
 	clusterId, err := lookupAvailableEdgeClusterId(t, vcdClient)
 	if err != nil {
 		t.Logf("\nWARNING: cluster id fetch failed, test will continue withouth cluster id. Error: %s", err)

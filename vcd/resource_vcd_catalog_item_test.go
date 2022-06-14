@@ -164,7 +164,6 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 }
 
 func preRunChecks(t *testing.T, params StringMap) {
-	testParamsNotEmpty(t, params)
 	checkOvaPath(t)
 }
 

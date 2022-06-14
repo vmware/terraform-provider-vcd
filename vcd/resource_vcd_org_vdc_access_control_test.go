@@ -33,6 +33,7 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 		"PasswordFile":       orgUserPasswordFile,
 		"RoleName":           govcd.OrgUserRoleOrganizationAdministrator,
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	configText := templateFill(testAccCheckVcdAccessControlStep1, params)
@@ -48,7 +49,6 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVDCControlAccessDestroy(),
 		Steps: []resource.TestStep{
