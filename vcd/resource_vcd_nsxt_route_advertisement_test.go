@@ -317,7 +317,7 @@ func testAccCheckNsxtRouteAdvertisement(vdcName, edgeGatewayName string) resourc
 			return fmt.Errorf(errorUnableToFindEdgeGateway, edgeGatewayName)
 		}
 
-		routeAdvertisement, err := edge.GetNsxtRouteAdvertisement(true)
+		routeAdvertisement, err := edge.GetNsxtRouteAdvertisement()
 		if err != nil {
 			return fmt.Errorf("error trying to retrieve route advertisement - %s", err)
 		}
@@ -371,7 +371,7 @@ func testAccCheckNsxtRouteAdvertisementVdcGroup(org, vdcGroupName, edgeGatewayNa
 			return fmt.Errorf(errorUnableToFindEdgeGateway, edgeGatewayName)
 		}
 
-		routeAdvertisement, err := edge.GetNsxtRouteAdvertisement(true)
+		routeAdvertisement, err := edge.GetNsxtRouteAdvertisement()
 		if err != nil {
 			return fmt.Errorf("error trying to retrieve route advertisement - %s", err)
 		}
