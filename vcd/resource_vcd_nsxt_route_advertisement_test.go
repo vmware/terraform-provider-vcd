@@ -34,6 +34,11 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
 	}
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	configText1 := templateFill(testAccNsxtRouteAdvertisementCreation, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
@@ -48,11 +53,6 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step4"
 	configText4 := templateFill(testAccNsxtRouteAdvertisementDisabled, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
 	// Advertisement configuration requires it. Restore it right after the test so that other
