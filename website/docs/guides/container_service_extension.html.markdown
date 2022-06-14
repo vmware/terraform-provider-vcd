@@ -29,7 +29,7 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Installation process
 
-~> You can find examples of a CSE installation in the [Examples](#examples) section below.
+-> You can find examples of a CSE installation in the [Examples](#examples) section below.
 
 To start installing CSE in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
 
@@ -55,7 +55,7 @@ with no [VDCs](/providers/vmware/vcd/latest/docs/resources/org_vdc), or that is 
 Otherwise, please skip this step and configure `org` and `vdc` attributes in the provider configuration above or use an
 available data source to fetch them.
 
-~> **Note:** The target VDC needs to be backed by **NSX-T** for CSE to work.
+~> The target VDC needs to be backed by **NSX-T** for CSE to work.
 
 Here is an example that creates both the Organization and the VDC:
 
@@ -267,7 +267,7 @@ resource "vcd_catalog" "cat-cse" {
 Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
 To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource.
 
-~> **Note:** CSE is **not compatible** yet with PhotonOS
+~> CSE is **not compatible** yet with PhotonOS
 
 ```hcl
 resource "vcd_catalog_item" "tkgm_ova" {
@@ -301,7 +301,7 @@ Notice that all the metadata entries from `catalog_item_metadata` are required f
 
 Alternatively, you can upload the OVA file using `cse-cli`. This command line tool is explained in the next step.
 
-### Step 5: CSE command cli
+### Step 5: CSE cli
 
 This is the only step that can be done without any Terraform script, but you can also use the
 [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
