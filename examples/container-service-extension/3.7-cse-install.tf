@@ -239,12 +239,12 @@ resource "vcd_catalog_item" "tkgm_ova" {
   show_upload_progress = true
 
   catalog_item_metadata = {
-    "kind"               = "TKGm"                           # This value is always the same
-    "kubernetes"         = "TKGm"                           # This value is always the same
-    "kubernetes_version" = split("-", var.tkgm-ova-name)[2] # The version comes in the OVA name downloaded from Customer Connect
-    "name"               = var.tkgm-ova-name                # The name as it was in the OVA downloaded from Customer Connect
-    "os"                 = split("-", var.tkgm-ova-name)[0] # The OS comes in the OVA name downloaded from Customer Connect
-    "revision"           = "1"                              # This value is always the same
+    "kind"               = "TKGm"                                 # This value is always the same
+    "kubernetes"         = "TKGm"                                 # This value is always the same
+    "kubernetes_version" = split("-", var.tkgm-ova-name)[3]       # The version comes in the OVA name downloaded from Customer Connect
+    "name"               = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
+    "os"                 = split("-", var.tkgm-ova-name)[0]       # The OS comes in the OVA name downloaded from Customer Connect
+    "revision"           = "1"                                    # This value is always the same
   }
 }
 
