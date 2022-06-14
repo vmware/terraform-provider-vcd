@@ -39,8 +39,9 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -238,10 +239,9 @@ func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.Resource
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -281,10 +281,9 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -344,10 +343,9 @@ func resourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.ResourceDa
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -393,10 +391,9 @@ func resourceVcdNsxtIpSecVpnTunnelDelete(ctx context.Context, d *schema.Resource
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -423,23 +420,19 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge_gateway_name.ipsec_tunnel_name")
 	}
-	orgName, vdcName, edgeGatewayName, ipSecVpnTunnelIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeGatewayName, ipSecVpnTunnelIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetAdminOrg(orgName)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-	}
-	vdc, err := org.GetVDCByName(vdcName, false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+		return nil, err
 	}
 
-	if !vdc.IsNsxt() {
+	if !vdcOrVdcGroup.IsNsxt() {
 		return nil, errors.New("vcd_nsxt_ipsec_vpn_tunnel is only supported by NSX-T VDCs")
 	}
 
-	edgeGateway, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
 	}
@@ -466,7 +459,6 @@ func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.Resource
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(ipSecVpnTunnel.NsxtIpSecVpn.ID)
 

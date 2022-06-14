@@ -48,7 +48,7 @@ The following arguments are supported:
 * `bus_type` - (Optional) Disk bus type. Values can be: `IDE`, `SCSI`, `SATA`, (*v3.6+*) `NVME`. **Note** When the disk type is IDE then VM is required to be powered off
 * `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI`, `ahci` for `SATA` and (*v3.6+*) `nvmecontroller` for `NVME`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
-* `sharing_type` - (Optional, *v3.6+* and VCD 10.2+) This is the sharing type. Values can be: `DiskSharing`,`ControllerSharing`"
+* `sharing_type` - (Optional, *v3.6+* and VCD 10.2+) This is the sharing type. Values can be: `DiskSharing`,`ControllerSharing`, or `None`
 * `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this independent disk.
 
 

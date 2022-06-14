@@ -22,8 +22,9 @@ func datasourceVcdAlbPool() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -224,16 +225,12 @@ func datasourceVcdAlbPool() *schema.Resource {
 func datasourceVcdAlbPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("error getting Org and VDC: %s", err)
+		return diag.Errorf("error getting Org: %s", err)
 	}
 
-	if vdc.IsNsxv() {
-		return diag.Errorf("ALB Pools are only supported on NSX-T. Please use 'vcd_lb_server_pool' for NSX-V load balancers")
-	}
-
-	nsxtEdge, err := vdc.GetNsxtEdgeGatewayById(d.Get("edge_gateway_id").(string))
+	nsxtEdge, err := org.GetNsxtEdgeGatewayById(d.Get("edge_gateway_id").(string))
 	if err != nil {
 		return diag.Errorf("could not retrieve NSX-T nsxtEdge gateway with ID '%s': %s", d.Id(), err)
 	}

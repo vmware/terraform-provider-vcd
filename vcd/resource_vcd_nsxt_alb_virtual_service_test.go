@@ -252,10 +252,11 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_alb_virtual_service.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+				ResourceName:            "vcd_nsxt_alb_virtual_service.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			{
 				Config: configText11, // Datasource check
@@ -580,10 +581,11 @@ func TestAccVcdNsxtAlbVirtualServiceOrgUser(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_alb_virtual_service.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+				ResourceName:            "vcd_nsxt_alb_virtual_service.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			{
 				Config: configText4, // Test data source

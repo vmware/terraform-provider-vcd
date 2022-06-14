@@ -118,10 +118,11 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 			},
 			// Try to import by Name
 			{
-				ResourceName:      "vcd_nsxt_nat_rule.dnat",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-dnat-rule-updated"),
+				ResourceName:            "vcd_nsxt_nat_rule.dnat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-dnat-rule-updated"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			// Try to import by rule UUID
 			{
@@ -129,8 +130,9 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 				ImportState:  true,
 				// Not using pre-built complete ID because ID is not known in advance. This field allows to specify
 				// prefix only and the ID itself is automatically suffixed by Terraform test framework
-				ImportStateIdPrefix: testConfig.VCD.Org + ImportSeparator + testConfig.Nsxt.Vdc + ImportSeparator + testConfig.Nsxt.EdgeGateway + ImportSeparator,
-				ImportStateVerify:   true,
+				ImportStateIdPrefix:     testConfig.VCD.Org + ImportSeparator + testConfig.Nsxt.Vdc + ImportSeparator + testConfig.Nsxt.EdgeGateway + ImportSeparator,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -270,10 +272,11 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_nat_rule.no-dnat",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-no-dnat-rule"),
+				ResourceName:            "vcd_nsxt_nat_rule.no-dnat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-no-dnat-rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -386,10 +389,11 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_nat_rule.snat",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-snat-rule-updated"),
+				ResourceName:            "vcd_nsxt_nat_rule.snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-snat-rule-updated"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -471,10 +475,11 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_nat_rule.no-snat",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-no-snat-rule"),
+				ResourceName:            "vcd_nsxt_nat_rule.no-snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-no-snat-rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -583,11 +588,12 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_nat_rule.dnat-match",
-				ExpectError:       expectImportError,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-dnat-rule-match-and-priority"),
+				ResourceName:            "vcd_nsxt_nat_rule.dnat-match",
+				ExpectError:             expectImportError,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-dnat-rule-match-and-priority"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})
@@ -707,11 +713,12 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_nat_rule.reflexive",
-				ExpectError:       expectImportError,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-reflexive-rule-match-and-priority"),
+				ResourceName:            "vcd_nsxt_nat_rule.reflexive",
+				ExpectError:             expectImportError,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-reflexive-rule-match-and-priority"),
+				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
 	})

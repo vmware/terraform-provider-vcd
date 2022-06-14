@@ -258,22 +258,11 @@ func resourceVcdNetworkIsolatedV2Import(_ context.Context, d *schema.ResourceDat
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[isolated network v2 import] resource name must be specified as org-name.vdc-name.network-name")
 	}
-	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
+	orgName, vdcOrVdcGroupName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 	vcdClient := meta.(*VCDClient)
-
-	// define an interface type to match VDC and VDC Groups
-	var vdcOrVdcGroup vdcOrVdcGroupHandler
-	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-	if govcd.ContainsNotFound(err) {
-		adminOrg, err := vcdClient.GetAdminOrg(orgName)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
-		}
-
-		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
-		if err != nil {
-			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
-		}
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
 	}
 
 	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
@@ -287,7 +276,7 @@ func resourceVcdNetworkIsolatedV2Import(_ context.Context, d *schema.ResourceDat
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
+	dSet(d, "vdc", vdcOrVdcGroupName)
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -373,31 +362,5 @@ func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd
 		return nil
 	}
 
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := network.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := network.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
+	return createOrUpdateMetadata(d, network, "metadata")
 }

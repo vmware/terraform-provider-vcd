@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdCatalogItem() *schema.Resource {
@@ -79,9 +78,12 @@ func resourceVcdCatalogItem() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Optional:    true,
+				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
+			},
+			"catalog_item_metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
 				Description: "Key and value pairs for catalog item metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
 			},
 		},
 	}
@@ -190,7 +192,7 @@ func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string
 	return nil
 }
 
-func resourceVcdCatalogItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogItemRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdCatalogItemRead(d, meta, "resource")
 }
 
@@ -210,26 +212,38 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 		return diag.Errorf("Unable to find Vapp template: %s", err)
 	}
 
-	metadata, err := vAppTemplate.GetMetadata()
+	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
 	if err != nil {
-		return diag.Errorf("Unable to find meta data: %s", err)
+		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
 	}
+
+	catalogItemMetadata, err := catalogItem.GetMetadata()
+	if err != nil {
+		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
+	}
+
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+
+	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
 	if err != nil {
-		return diag.Errorf("Unable to set meta data: %s", err)
+		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
+	}
+
+	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
 	}
 
 	return nil
 }
 
-func resourceVcdCatalogItemDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogItemDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
-func resourceVcdCatalogItemUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogItemUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChange("description") || d.HasChange("name") {
 		catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
 		if err != nil {
@@ -278,33 +292,13 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := vAppTemplate.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := vAppTemplate.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
+	err = createOrUpdateMetadata(d, &vAppTemplate, "metadata")
+	if err != nil {
+		return err
+
 	}
-	return nil
+
+	return createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
 }
 
 // Imports a CatalogItem into Terraform state
@@ -313,7 +307,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 //
 // Example import path (id): org_name.catalog_name.catalog_item_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogItemImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogItemImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.catalog_item")

@@ -40,7 +40,6 @@ data "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
 
 resource "vcd_nsxt_alb_pool" "test" {
   org = "my-org"
-  vdc = "nsxt-test-vdc"
 
   name            = "test-pool"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -48,7 +47,6 @@ resource "vcd_nsxt_alb_pool" "test" {
 
 resource "vcd_nsxt_alb_virtual_service" "test" {
   org = "my-org"
-  vdc = "nsxt-test-vdc"
 
   name            = "new-virtual-service"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -94,7 +92,6 @@ data "vcd_library_certificate" "org-cert-1" {
 
 resource "vcd_nsxt_alb_pool" "test" {
   org = "my-org"
-  vdc = "nsxt-test-vdc"
 
   name            = "test-pool"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -102,7 +99,6 @@ resource "vcd_nsxt_alb_pool" "test" {
 
 resource "vcd_nsxt_alb_virtual_service" "test" {
   org = "my-org"
-  vdc = "nsxt-test-vdc"
 
   name            = "new-virtual-service"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -139,7 +135,6 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `name` - (Required) A name for NSX-T ALB Virtual Service
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
@@ -175,8 +170,9 @@ via supplying path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_virtual_service.imported my-org.my-vdc.my-edge-gateway.my-virtual-service-name
+terraform import vcd_nsxt_alb_virtual_service.imported my-org.my-org-vdc-org-vdc-group-name.my-edge-gateway.my-virtual-service-name
 ```
 
-The above would import the `my-virtual-service-name` NSX-T ALB Virtual Service that is defined in NSX-T Edge Gateway
-`my-edge-gateway` inside Org `my-org` and VDC `my-vdc`.
+The above would import the `my-virtual-service-name` NSX-T ALB Virtual Service that is defined in
+NSX-T Edge Gateway `my-edge-gateway` inside Org `my-org` and VDC or VDC Group
+`my-org-vdc-org-vdc-group-name`.

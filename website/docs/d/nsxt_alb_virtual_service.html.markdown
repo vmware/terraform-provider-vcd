@@ -28,7 +28,6 @@ data "vcd_nsxt_edgegateway" "existing" {
 
 data "vcd_nsxt_alb_virtual_service" "test" {
   org = "dainius"
-  vdc = "nsxt-vdc-dainius"
 
   edge_gateway_id = vcd_nsxt_edgegateway.existing.id
   name            = "virutal-service-name"
@@ -40,7 +39,6 @@ data "vcd_nsxt_alb_virtual_service" "test" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `name` - (Required) The name of ALB Virtual Service

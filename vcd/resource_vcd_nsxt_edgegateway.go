@@ -262,26 +262,12 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.nsxt-edge-gw-name or org-name.vdc-group-name.nsxt-edge-gw-name")
 	}
-	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
+	orgName, vdcOrVdcGroupName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-
-	// define an interface type to match VDC and VDC Groups
-	var vdcOrVdcGroup vdcOrVdcGroupVerifier
-	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-
-	// VDC was not found - attempt to find a VDC Group
-	if govcd.ContainsNotFound(err) {
-		adminOrg, err := vcdClient.GetAdminOrg(orgName)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
-		}
-
-		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
-		if err != nil {
-			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
-		}
-
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
 	}
 
 	if !vdcOrVdcGroup.IsNsxt() {

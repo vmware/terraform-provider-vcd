@@ -3,7 +3,6 @@ package vcd
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"text/tabwriter"
@@ -38,8 +37,9 @@ func resourceVcdNsxtNatRule() *schema.Resource {
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
+				Deprecated:  "Edge Gateway will be looked up based on 'edge_gateway_id' field",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
@@ -124,10 +124,9 @@ func resourceVcdNsxtNatRuleCreate(ctx context.Context, d *schema.ResourceData, m
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -153,10 +152,9 @@ func resourceVcdNsxtNatRuleUpdate(ctx context.Context, d *schema.ResourceData, m
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -185,10 +183,9 @@ func resourceVcdNsxtNatRuleRead(ctx context.Context, d *schema.ResourceData, met
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -215,10 +212,9 @@ func resourceVcdNsxtNatRuleDelete(ctx context.Context, d *schema.ResourceData, m
 	defer vcdClient.unLockParentEdgeGtw(d)
 
 	orgName := d.Get("org").(string)
-	vdcName := d.Get("vdc").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
@@ -241,25 +237,17 @@ func resourceVcdNsxtNatRuleDelete(ctx context.Context, d *schema.ResourceData, m
 func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge_gateway_name.nat_rule_name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.nat_rule_name")
 	}
-	orgName, vdcName, edgeGatewayName, natRuleIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeGatewayName, natRuleIdentifier := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetAdminOrg(orgName)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find Org %s: %s", orgName, err)
-	}
-	vdc, err := org.GetVDCByName(vdcName, false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+		return nil, err
 	}
 
-	if !vdc.IsNsxt() {
-		return nil, errors.New("vcd_nsxt_nat_rule is only supported by NSX-T VDCs")
-	}
-
-	edgeGateway, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
 	}
@@ -285,7 +273,6 @@ func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
 	dSet(d, "edge_gateway_id", edgeGateway.EdgeGateway.ID)
 	d.SetId(natRule.NsxtNatRule.ID)
 

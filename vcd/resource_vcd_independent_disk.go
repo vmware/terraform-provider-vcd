@@ -86,8 +86,8 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Computed:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DiskSharing", "ControllerSharing"}, false),
-				Description:  "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`",
+				ValidateFunc: validation.StringInSlice([]string{"DiskSharing", "ControllerSharing", "None"}, false),
+				Description:  "This is the sharing type. This attribute can only have values defined one of: `DiskSharing`,`ControllerSharing`, `None`",
 			},
 			"uuid": {
 				Type:        schema.TypeString,
@@ -239,7 +239,7 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(disk.Disk.Id)
 
-	err = createOrUpdateDiskMetadata(d, disk)
+	err = createOrUpdateMetadata(d, disk, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to independent disk: %s", err)
 	}
@@ -260,6 +260,13 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error fetching independent disk: %s", err)
 	}
 
+	if d.HasChanges("sharing_type") {
+		oldValue, newValue := d.GetChange("sharing_type")
+		if !strings.EqualFold(newValue.(string), oldValue.(string)) {
+			// See docs at https://developer.vmware.com/apis/1232/vmware-cloud-director/doc/doc///types/DiskType.html
+			return diag.Errorf("[independent disk update] sharing_type is immutable. It can only be set during disk creation")
+		}
+	}
 	if d.HasChanges("size_in_mb", "storage_profile", "description") {
 		storageProfileValue := d.Get("storage_profile").(string)
 		var storageProfileRef *types.Reference
@@ -326,7 +333,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 
 	}
 
-	err = createOrUpdateDiskMetadata(d, disk)
+	err = createOrUpdateMetadata(d, disk, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -700,36 +707,4 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 		logForScreen("vcd_independent_disk", fmt.Sprintf("error flushing buffer: %s", err))
 	}
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpDiskImport, buf.String())
-}
-
-func createOrUpdateDiskMetadata(d *schema.ResourceData, disk *govcd.Disk) error {
-	log.Printf("[TRACE] adding/updating metadata to Disk")
-
-	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetadata := newRaw.(map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
-		for k := range oldMetadata {
-			if _, ok := newMetadata[k]; !ok {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := disk.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
-			}
-		}
-		// Add new metadata
-		for k, v := range newMetadata {
-			err := disk.AddMetadataEntry(types.MetadataStringValue, k, v.(string))
-			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
-			}
-		}
-	}
-	return nil
 }

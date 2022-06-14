@@ -282,22 +282,11 @@ func resourceVcdNetworkRoutedV2Import(_ context.Context, d *schema.ResourceData,
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[routed network import v2] resource name must be specified as org-name.vdc-name.network-name or org-name.vdc-group-name.network-name")
 	}
-	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
+	orgName, vdcOrVdcGroupName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 	vcdClient := meta.(*VCDClient)
-
-	// define an interface type to match VDC and VDC Groups
-	var vdcOrVdcGroup vdcOrVdcGroupHandler
-	_, vdcOrVdcGroup, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
-	if govcd.ContainsNotFound(err) {
-		adminOrg, err := vcdClient.GetAdminOrg(orgName)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving Admin Org for '%s': %s", orgName, err)
-		}
-
-		vdcOrVdcGroup, err = adminOrg.GetVdcGroupByName(vdcName)
-		if err != nil {
-			return nil, fmt.Errorf("error finding VDC or VDC Group by name '%s': %s", vdcName, err)
-		}
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
 	}
 
 	orgNetwork, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(networkName)
@@ -311,7 +300,7 @@ func resourceVcdNetworkRoutedV2Import(_ context.Context, d *schema.ResourceData,
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "vdc", vdcName)
+	dSet(d, "vdc", vdcOrVdcGroupName)
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil

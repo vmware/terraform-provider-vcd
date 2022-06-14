@@ -39,7 +39,12 @@ func datasourceVcdCatalogItem() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Key and value pairs for catalog item metadata",
+				Description: "Key and value pairs from the metadata of the vApp template associated to this catalog item",
+			},
+			"catalog_item_metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Key and value pairs of the catalog item metadata",
 			},
 			"filter": {
 				Type:        schema.TypeList,
