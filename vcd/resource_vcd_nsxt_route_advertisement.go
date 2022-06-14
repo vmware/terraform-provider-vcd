@@ -37,12 +37,12 @@ func resourceVcdNsxtRouteAdvertisement() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Define if route advertisement is active",
+				Description: "Defines if route advertisement is active",
 			},
 			"subnets": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Set of subnets that will be advertised to Tier-0 gateway. Leaving it empty means none",
+				Description: "Set of subnets that will be advertised to Tier-0 gateway. Empty means none",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -131,7 +131,7 @@ func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.Resour
 	subnetSet := convertStringsToTypeSet(routeAdvertisement.Subnets)
 	err = d.Set("subnets", subnetSet)
 	if err != nil {
-		return diag.Errorf("error while setting subnets argument")
+		return diag.Errorf("error while setting subnets argument: %s", err)
 	}
 
 	return nil
