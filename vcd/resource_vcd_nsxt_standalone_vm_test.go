@@ -27,7 +27,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	vcdClient := createTemporaryVCDConnection(false)
 	if !vcdClient.Client.IsSysAdmin {
@@ -35,11 +34,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	}
 
 	skipTestForVcdExactVersion(t, "10.2.2.17855680", "removal of standalone VM with NICs fails")
-
-	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
-		return
-	}
 
 	// making sure the VM name is unique
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
@@ -66,6 +60,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 		"diskResourceName":   diskResourceName,
 		"Tags":               "vm standaloneVm nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdNsxtStandaloneVm_basic, params)
 	params["FuncName"] = t.Name() + "-step2"
@@ -78,7 +73,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
@@ -170,6 +164,7 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 		"Tags":        "vm standaloneVm",
 		"Media":       testConfig.Media.MediaName,
 	}
+	testParamsNotEmpty(t, params)
 
 	// Create objects for testing field values across update steps
 	nic0Mac := testCachedFieldValue{}
@@ -184,7 +179,6 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{

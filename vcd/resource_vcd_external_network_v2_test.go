@@ -44,7 +44,6 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10+)")
@@ -67,6 +66,7 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 		"Netmask":             "24",
 		"Tags":                "network extnetwork nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccCheckVcdExternalNetworkV2Nsxt, params)
@@ -82,7 +82,6 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
@@ -284,6 +283,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 		"Dns2":                "192.168.0.196",
 		"Tags":                "network extnetwork nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdExternalNetworkV2Nsxv, params)
 	params["FuncName"] = t.Name() + "step1"
@@ -294,7 +294,6 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 
 	resourceName := "vcd_external_network_v2.ext-net-nsxv"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
@@ -475,7 +474,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.0") {
 		t.Skip(t.Name() + " this test check requires API version <36.0 (VCD 10.3+)")
@@ -498,6 +496,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
 		"Netmask":             "24",
 		"Tags":                "network extnetwork nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name()
 	skipBinaryConfig := `# skip-binary-test: expected to fail` + testAccCheckVcdExternalNetworkV2NsxtSegment
@@ -510,7 +509,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -531,7 +529,6 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
 		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
@@ -554,6 +551,7 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 		"Netmask":             "24",
 		"Tags":                "network extnetwork nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtSegment, params)
@@ -569,7 +567,6 @@ func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
@@ -725,7 +722,6 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10.1+)")
@@ -749,6 +745,7 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		"Netmask":             "24",
 		"Tags":                "network extnetwork nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtConfigError, params)
@@ -759,7 +756,6 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		return
 	}
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -848,7 +844,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
 		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
@@ -872,6 +867,7 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 		"Netmask":             "24",
 		"Tags":                "network extnetwork nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtSegmentIntegration, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -885,7 +881,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{

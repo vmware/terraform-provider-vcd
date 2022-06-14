@@ -22,6 +22,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"Tags":        "gateway",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxvDhcpRelay, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -35,13 +36,12 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 		return
 	}
 
-	if !edgeGatewayIsAdvanced() {
+	if !edgeGatewayIsAdvanced(t) {
 		t.Skip(t.Name() + "requires advanced edge gateway to work")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdDhcpRelaySettingsEmpty(),
 		Steps: []resource.TestStep{
 			{

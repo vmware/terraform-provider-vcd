@@ -20,8 +20,6 @@ func TestAccVcdDistributedFirewall(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -38,6 +36,7 @@ func TestAccVcdDistributedFirewall(t *testing.T) {
 
 		"Tags": "vdcGroup gateway nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -66,8 +65,6 @@ func TestAccVcdDistributedFirewall(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-
 		Steps: []resource.TestStep{
 			{
 				// Setup prerequisites
@@ -404,8 +401,6 @@ func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 		t.Skipf("This test tests VCD 10.2.2+ (API V35.2+) features. Skipping.")
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -422,6 +417,7 @@ func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 
 		"Tags": "vdcGroup gateway nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -438,8 +434,6 @@ func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-
 		Steps: []resource.TestStep{
 			{
 				// Setup prerequisites
@@ -491,8 +485,6 @@ func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -510,6 +502,7 @@ func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 
 		"Tags": "vdcGroup gateway nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -525,8 +518,6 @@ func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-
 		Steps: []resource.TestStep{
 			{
 				// Setup prerequisites

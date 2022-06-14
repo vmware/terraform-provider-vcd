@@ -18,8 +18,6 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
@@ -27,13 +25,13 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 		"Scope":       "SYSTEM",
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -61,8 +59,6 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
@@ -70,13 +66,13 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 		"Scope":       "PROVIDER",
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Config:      configText1,
@@ -96,8 +92,6 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
@@ -105,13 +99,13 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 		"Scope":       "TENANT",
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Config:      configText1,
@@ -149,8 +143,6 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
 		"NsxtVdc":             testConfig.Nsxt.Vdc,
@@ -166,6 +158,7 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 
 		"Tags": "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileMultiOrgPreCreate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -176,7 +169,6 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

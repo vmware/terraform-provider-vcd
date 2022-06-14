@@ -10,8 +10,6 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	skipNoNsxtConfiguration(t)
-
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
@@ -34,13 +32,13 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 		"CpuGuaranteed":    "1",
 		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
-		"equalsChar":                         "",
-		"FlexElasticKey":                     "",
-		"FlexElasticValue":                   "",
-		"FlexElasticValueUpdate":             "",
-		"FlexMemoryOverheadKey":              "",
-		"FlexMemoryOverheadValue":            "",
-		"FlexMemoryOverheadValueUpdate":      "",
+		"equalsChar":                         " ",
+		"FlexElasticKey":                     " ",
+		"FlexElasticValue":                   " ",
+		"FlexElasticValueUpdate":             " ",
+		"FlexMemoryOverheadKey":              " ",
+		"FlexMemoryOverheadValue":            " ",
+		"FlexMemoryOverheadValueUpdate":      " ",
 		"MemoryOverheadValueForAssert":       "true",
 		"MemoryOverheadUpdateValueForAssert": "true",
 		"ElasticityValueForAssert":           "false",

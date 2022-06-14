@@ -57,6 +57,9 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		CatalogName:       testConfig.VCD.Catalog.Name,
 		LdapContainerName: ldapContainerName,
 	}
+	testParamsNotEmpty(t, StringMap{"Networking.ExternalNetwork": testConfig.Networking.ExternalNetwork,
+		"VCD.Catalog.CatalogItem": testConfig.VCD.Catalog.CatalogItem, "VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
+
 	// getLdapSetupTemplate does not use regular templateFill because this part is used for
 	// automated LDAP configuration setup
 	ldapSetupConfig, err := getLdapSetupTemplate(ldapSetup, ldapConfigParams)
@@ -76,6 +79,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		"FuncName":     t.Name() + "-Step1",
 		"Description":  "Description1",
 	}
+	testParamsNotEmpty(t, params)
 
 	groupConfigText := templateFill(testAccOrgGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", groupConfigText)
@@ -120,7 +124,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdGroupDestroy("admin_staff"),
 			testAccCheckVcdGroupDestroy("ship_crew"),

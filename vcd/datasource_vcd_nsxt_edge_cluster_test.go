@@ -12,7 +12,7 @@ import (
 
 func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
+	skipNoConfiguration(t, StringMap{"Nsxt.Vdc": testConfig.Nsxt.Vdc, "VCD.Org": testConfig.VCD.Org})
 
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -46,6 +46,7 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 		"ExistingEdgeCluster": edgeClusters[0].NsxtEdgeCluster.Name,
 		"Tags":                "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(nsxtEdgeClusterDatasource, params)
 
@@ -53,7 +54,6 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 
 	datasourceName := "data.vcd_nsxt_edge_cluster.ec"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

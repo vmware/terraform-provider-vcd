@@ -17,7 +17,6 @@ import (
 // attaching member networks
 func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -27,6 +26,7 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtSecurityGroupEmpty, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -42,7 +42,6 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group-changed", types.FirewallGroupTypeSecurityGroup),
@@ -121,7 +120,6 @@ resource "vcd_nsxt_security_group" "group1" {
 // the same prerequisite resources.
 func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -131,6 +129,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtSecurityGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -151,7 +150,6 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group-changed", types.FirewallGroupTypeSecurityGroup),
@@ -346,7 +344,6 @@ data "vcd_nsxt_security_group" "group1" {
 // * Isolated Org Vdc network added as a member
 func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// This test is meant to fail
 	if vcdShortTest {
@@ -362,6 +359,7 @@ func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxtSecurityGroupIncorrectEdgeGateway, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -376,7 +374,6 @@ func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-security-group", types.FirewallGroupTypeSecurityGroup),
 		),
@@ -497,7 +494,6 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skipf("this test requires Sysadmin user to create VDC Group")
 	}
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -517,6 +513,7 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
 		"TestName":                  t.Name(),
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtSecurityGroupOwnByVdcGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -531,7 +528,6 @@ func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeSecurityGroup),
 		),
@@ -724,7 +720,6 @@ resource "vcd_nsxt_security_group" "group1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
@@ -744,6 +739,7 @@ func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -778,7 +774,6 @@ func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 
-		PreCheck:     func() { testAccPreCheck(t) },
 		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{

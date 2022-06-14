@@ -15,8 +15,6 @@ import (
 
 func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
@@ -25,6 +23,7 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtNatDnat, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -56,7 +55,6 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtNatRuleDestroy("test-dnat-rule"),
 			testAccCheckNsxtNatRuleDestroy("test-dnat-rule-updated"),
@@ -238,8 +236,6 @@ resource "vcd_nsxt_nat_rule" "dnat" {
 
 func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
@@ -248,6 +244,7 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtNatNoDnat, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -259,7 +256,6 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-no-dnat-rule"),
 		Steps: []resource.TestStep{
 			{
@@ -306,7 +302,6 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 
 func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -316,6 +311,7 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtNatSnat, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -341,7 +337,6 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtNatRuleDestroy("test-snat-rule"),
 			testAccCheckNsxtNatRuleDestroy("test-snat-rule-updated"),
@@ -446,7 +441,6 @@ const testAccNsxtNatSnat2DS = testAccNsxtNatSnat2 + natRuleDataSourceDefinition
 
 func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -456,6 +450,7 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtNatNoSnat, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -467,7 +462,6 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-no-snat-rule"),
 		Steps: []resource.TestStep{
 			{
@@ -513,7 +507,6 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
 // This test checks both cases - for versions 10.2.2 it expects it working, while for versions < 10.2.2 it expects an error
 func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -543,6 +536,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 		"FirewallMatch": "MATCH_INTERNAL_ADDRESS",
 		"Priority":      "10",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtNatFirewallMatchPriority, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -561,7 +555,6 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
 		Steps: []resource.TestStep{
 			{
@@ -633,7 +626,6 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	// expectError must stay nil for versions > 10.3.0, because we expect it to work. For lower versions - it must have
 	// match the runtime validation error
@@ -651,7 +643,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		"Tags":          "network nsxt",
 		"FirewallMatch": "MATCH_INTERNAL_ADDRESS",
 		"Priority":      "10",
-		"SkipNotice":    "",
+		"SkipNotice":    " ",
 	}
 
 	client := createTemporaryVCDConnection(false)
@@ -661,6 +653,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
 		params["SkipNotice"] = "# skip-binary-test: rule_type 'REFLEXIVE' can only be used for VCD 10.3+"
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtNatRuleReflexive, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -684,7 +677,6 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
 		Steps: []resource.TestStep{
 			{

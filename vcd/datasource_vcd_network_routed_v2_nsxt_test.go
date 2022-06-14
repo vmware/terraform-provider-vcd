@@ -16,8 +16,6 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                  testConfig.VCD.Org,
@@ -30,6 +28,7 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 		"MetadataKeyUpdated":   "key2",
 		"MetadataValueUpdated": "value2",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-DS"
 	configText := templateFill(TestAccVcdNetworkRoutedV2NsxtStep1, params)
@@ -49,7 +48,6 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-test-initial"),
 		Steps: []resource.TestStep{
 			{

@@ -64,6 +64,8 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 		"Tags": "nsxt alb vdcGroup",
 	}
 
+	testParamsNotEmpty(t, params)
+
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdNsxtAlbVdcGroupIntegration2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -75,7 +77,6 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
@@ -143,6 +144,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdNsxtAlbVdcGroupIntegration1, params)
@@ -165,7 +167,6 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
