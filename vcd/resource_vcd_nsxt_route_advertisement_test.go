@@ -14,7 +14,6 @@ import (
 
 func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	isRouteAdvertisementEnable := true
 	subnet1 := "192.168.1.0/24"
@@ -33,6 +32,8 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 		"Subnet2Cidr":       subnet2,
 		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
 	}
+
+	testParamsNotEmpty(t, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -62,7 +63,6 @@ func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtRouteAdvertisement(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
 			{
@@ -179,7 +179,6 @@ resource "vcd_nsxt_route_advertisement" "testing" {
 
 func TestAccVcdNsxtRouteAdvertisementVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	isRouteAdvertisementEnable := true
 	subnet1 := "192.168.1.0/24"
@@ -195,6 +194,8 @@ func TestAccVcdNsxtRouteAdvertisementVdcGroup(t *testing.T) {
 		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
 	}
 
+	testParamsNotEmpty(t, params)
+
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccNsxtRouteAdvertisementCreationVDCGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for test: %s", configText)
@@ -206,7 +207,6 @@ func TestAccVcdNsxtRouteAdvertisementVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtRouteAdvertisementVdcGroup(testConfig.VCD.Org, testConfig.Nsxt.VdcGroup, testConfig.Nsxt.VdcGroupEdgeGateway),
 		Steps: []resource.TestStep{
 			{
