@@ -10,7 +10,8 @@ Provides a VMware Cloud Director resource for setting route advertisement in an 
 
 Provides a VMware Cloud Director resource for setting route advertisement in an NSX-T Edge Gateway.
 
-~> **Note:** This resource requires an NSX-T Edge Gateway. Also, for this resource to work appropriately, the option "Dedicate Tier-0 Gateway" must be enabled. Otherwise, route advertisement creation will fail.
+~> **Note:** This resource requires an NSX-T Edge Gateway. Also, for this resource to work appropriately, the option "Dedicate Tier-0 Gateway" must be enabled. Otherwise, route advertisement creation will fail.  
+Take into account that if the NSX-T Edge Gateway is created from Terraform using `vcd_nsxt_edgegateway` resource, the option `dedicate_external_network` must be enabled **on Edge Gateway** so that it is a "Dedicated Tier-0 Gateway".
 
 ## Example Usage (Enable route advertisement and publish 192.168.1.0/24 and 192.168.2.0/24)
 
