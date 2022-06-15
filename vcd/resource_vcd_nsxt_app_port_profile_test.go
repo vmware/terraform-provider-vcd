@@ -14,13 +14,12 @@ import (
 func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 	preTestChecks(t)
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
 		"NsxtVdc": testConfig.Nsxt.Vdc,
 		"Tags":    "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileTenantStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -43,7 +42,6 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
@@ -129,7 +127,6 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 
 func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -146,6 +143,7 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 		"NsxtManager": testConfig.Nsxt.Manager,
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileProviderStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -164,7 +162,6 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
@@ -390,7 +387,6 @@ resource "vcd_nsxt_app_port_profile" "custom" {
 
 func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -407,12 +403,12 @@ func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 		"NsxtManager": testConfig.Nsxt.Manager,
 		"Tags":        "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileProviderContextStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof-updated", "PROVIDER"),
@@ -468,19 +464,17 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdc(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
 		"NsxtVdc": testConfig.Nsxt.Vdc,
 		"Tags":    "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileTenantContextStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
@@ -536,8 +530,6 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 		t.Skip("this test must pre-create VDC Group and cannot run in Org user mode")
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
 		"NsxtVdc":                   testConfig.Nsxt.Vdc,
@@ -555,6 +547,7 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 
 		"Tags": "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -566,7 +559,6 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),
@@ -633,8 +625,6 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 		t.Skip("this test must pre-create VDC Group and cannot run in Org user mode")
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
 		"NsxtVdc":                   testConfig.Nsxt.Vdc,
@@ -652,6 +642,7 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 
 		"Tags": "nsxt network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccVcdNsxtAppPortProfileConfigurationMigrationStep1, params)
@@ -667,7 +658,6 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "PROVIDER"),
 			testAccCheckOpenApiNsxtAppPortDestroy("custom_app_prof", "TENANT"),

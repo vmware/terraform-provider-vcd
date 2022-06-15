@@ -34,6 +34,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 		"Description":      TestAccVcdDataSourceMediaDescription,
 		"MediaPath":        testConfig.Media.MediaPath,
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogMediaDS, params)
 	if vcdShortTest {
@@ -44,7 +45,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t) },
+		PreCheck:          func() { preRunChecks(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{

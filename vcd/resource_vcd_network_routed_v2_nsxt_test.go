@@ -14,7 +14,6 @@ import (
 // TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
 func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -28,6 +27,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 		"MetadataKeyUpdated":   "key2",
 		"MetadataValueUpdated": "value2",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(TestAccVcdNetworkRoutedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -49,7 +49,6 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
@@ -222,7 +221,6 @@ resource "vcd_network_routed_v2" "net1" {
 // `vdc` field
 func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -232,6 +230,7 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNetworkRoutedV2NsxtOwnerVdcStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -249,7 +248,6 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
@@ -341,7 +339,6 @@ data "vcd_network_routed_v2" "net1" {
 // together and reflects it
 func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
 		return
@@ -358,7 +355,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 		"DefaultPolicy":             "false",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
@@ -366,6 +363,7 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 		"MetadataValue":             "value1",
 		"Tags":                      "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -392,7 +390,6 @@ func TestAccVcdNetworkRoutedV2NsxtMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -690,7 +687,6 @@ resource "vcd_network_routed_v2" "net1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
@@ -710,6 +706,7 @@ func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -743,9 +740,7 @@ func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

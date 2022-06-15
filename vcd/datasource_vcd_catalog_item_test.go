@@ -29,6 +29,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 		"UploadProgress":  testConfig.Ova.UploadProgress,
 		"Tags":            "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdCatalogItemDS, params)
 	if vcdShortTest {
@@ -41,7 +42,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem
 	resourceCatalogItem := "vcd_catalog_item." + TestCatalogItemDS
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t) },
+		PreCheck:          func() { preRunChecks(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
 		Steps: []resource.TestStep{

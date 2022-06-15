@@ -721,11 +721,11 @@ func getEdgeGatewayDetails(d *schema.ResourceData, meta interface{}) (orgName st
 func lbServerPoolList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 	lbServerPoolList, err := edgeGateway.GetLbServerPools()
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway LB server pools '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway LB server pools '%s': %s ", d.Get("parent").(string), err)
 	}
 	var items []resourceRef
 	for _, service := range lbServerPoolList {
@@ -742,7 +742,7 @@ func lbServerPoolList(d *schema.ResourceData, meta interface{}) (list []string, 
 func lbServiceMonitorList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 
 	var items []resourceRef
@@ -764,7 +764,7 @@ func lbVirtualServerList(d *schema.ResourceData, meta interface{}) (list []strin
 
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 	var items []resourceRef
 	lbVirtualServerList, err := edgeGateway.GetLbVirtualServers()
@@ -784,7 +784,7 @@ func lbVirtualServerList(d *schema.ResourceData, meta interface{}) (list []strin
 func nsxvFirewallList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 
 	var items []resourceRef
@@ -805,7 +805,7 @@ func nsxvFirewallList(d *schema.ResourceData, meta interface{}) (list []string, 
 func lbAppRuleList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 
 	var items []resourceRef
@@ -826,7 +826,7 @@ func lbAppRuleList(d *schema.ResourceData, meta interface{}) (list []string, err
 func lbAppProfileList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 
 	var items []resourceRef
@@ -876,7 +876,7 @@ func ipsetList(d *schema.ResourceData, meta interface{}) (list []string, err err
 func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", edgeGateway.EdgeGateway.Name, err)
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
 	}
 
 	var items []resourceRef

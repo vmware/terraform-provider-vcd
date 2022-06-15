@@ -5,6 +5,7 @@ package vcd
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -30,42 +31,48 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": vappNetworkResourceName,
 		// we can't change network name as this results in ID (HREF) change
-		"vappNetworkName":             vappNetworkResourceName,
-		"description":                 "network description",
-		"descriptionForUpdate":        "update",
-		"gateway":                     gateway,
-		"netmask":                     netmask,
-		"dns1":                        dns1,
-		"dns1ForUpdate":               "8.8.8.7",
-		"dns2":                        dns2,
-		"dns2ForUpdate":               "1.1.1.2",
-		"dnsSuffix":                   dnsSuffix,
-		"dnsSuffixForUpdate":          "updated",
-		"guestVlanAllowed":            guestVlanAllowed,
-		"guestVlanAllowedForUpdate":   "false",
-		"startAddress":                "192.168.1.10",
-		"startAddressForUpdate":       "192.168.1.11",
-		"endAddress":                  "192.168.1.20",
-		"endAddressForUpdate":         "192.168.1.21",
-		"vappName":                    vappNameForNetworkTest,
-		"maxLeaseTime":                "7200",
-		"maxLeaseTimeForUpdate":       "7300",
-		"defaultLeaseTime":            "3600",
-		"defaultLeaseTimeForUpdate":   "3500",
-		"dhcpStartAddress":            "192.168.1.21",
-		"dhcpStartAddressForUpdate":   "192.168.1.22",
-		"dhcpEndAddress":              "192.168.1.22",
-		"dhcpEndAddressForUpdate":     "192.168.1.23",
-		"dhcpEnabled":                 "true",
-		"dhcpEnabledForUpdate":        "false",
-		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
-		"NetworkName":                 "TestAccVcdVAppNet",
-		"NetworkName2":                "TestAccVcdVAppNet2",
-		"orgNetwork":                  "",
-		"orgNetworkForUpdate":         "",
+		"vappNetworkName":           vappNetworkResourceName,
+		"description":               "network description",
+		"descriptionForUpdate":      "update",
+		"gateway":                   gateway,
+		"netmask":                   netmask,
+		"dns1":                      dns1,
+		"dns1ForUpdate":             "8.8.8.7",
+		"dns2":                      dns2,
+		"dns2ForUpdate":             "1.1.1.2",
+		"dnsSuffix":                 dnsSuffix,
+		"dnsSuffixForUpdate":        "updated",
+		"guestVlanAllowed":          guestVlanAllowed,
+		"guestVlanAllowedForUpdate": "false",
+		"startAddress":              "192.168.1.10",
+		"startAddressForUpdate":     "192.168.1.11",
+		"endAddress":                "192.168.1.20",
+		"endAddressForUpdate":       "192.168.1.21",
+		"vappName":                  vappNameForNetworkTest,
+		"maxLeaseTime":              "7200",
+		"maxLeaseTimeForUpdate":     "7300",
+		"defaultLeaseTime":          "3600",
+		"defaultLeaseTimeForUpdate": "3500",
+		"dhcpStartAddress":          "192.168.1.21",
+		"dhcpStartAddressForUpdate": "192.168.1.22",
+		"dhcpEndAddress":            "192.168.1.22",
+		"dhcpEndAddressForUpdate":   "192.168.1.23",
+		"dhcpEnabled":               "true",
+		"dhcpEnabledForUpdate":      "false",
+		"EdgeGateway":               testConfig.Networking.EdgeGateway,
+		"NetworkName":               "TestAccVcdVAppNet",
+		"NetworkName2":              "TestAccVcdVAppNet2",
+		// adding space to allow pass validation in testParamsNotEmpty which skips the test if param value is empty
+		// to avoid running test when test data is missing
+		"OrgNetworkKey":               " ",
+		"equalsChar":                  " ",
+		"quotationChar":               " ",
+		"orgNetwork":                  " ",
+		"orgNetworkForUpdate":         " ",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "false",
 	}
+	testParamsNotEmpty(t, params)
 
 	runVappNetworkTest(t, params)
 	postTestChecks(t)
@@ -111,12 +118,16 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNet",
 		"NetworkName2":                "TestAccVcdVAppNet2",
+		"OrgNetworkKey":               "org_network_name",
+		"equalsChar":                  "=",
+		"quotationChar":               "\"",
 		"orgNetwork":                  "TestAccVcdVAppNet",
 		"orgNetworkForUpdate":         "TestAccVcdVAppNet2",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "true",
 		"FuncName":                    "TestAccVcdVappNetwork_Nat",
 	}
+	testParamsNotEmpty(t, params)
 
 	runVappNetworkTest(t, params)
 	postTestChecks(t)
@@ -136,7 +147,6 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 
 	resourceName := "vcd_vapp_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{
@@ -172,7 +182,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						"max_lease_time":     params["maxLeaseTime"].(string),
 					}),
 					resource.TestCheckResourceAttr(
-						resourceName, "org_network_name", params["orgNetwork"].(string)),
+						resourceName, "org_network_name", strings.TrimSpace(params["orgNetwork"].(string))),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 				),
@@ -209,7 +219,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						"max_lease_time":     params["maxLeaseTimeForUpdate"].(string),
 					}),
 					resource.TestCheckResourceAttr(
-						resourceName, "org_network_name", params["orgNetworkForUpdate"].(string)),
+						resourceName, "org_network_name", strings.TrimSpace(params["orgNetworkForUpdate"].(string))),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 				),
@@ -350,7 +360,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  org_network_name      = "{{.orgNetwork}}"
+  {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetwork}}{{.quotationChar}}
+
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
@@ -415,7 +426,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabledForUpdate}}"
   }
 
-  org_network_name      = "{{.orgNetworkForUpdate}}"
+  {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
+
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}", "vcd_network_routed.{{.NetworkName2}}"]

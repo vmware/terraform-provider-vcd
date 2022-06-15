@@ -31,6 +31,7 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		"SecurityTag2": tag2,
 		"FuncName":     t.Name(),
 	}
+	testParamsNotEmpty(t, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -49,7 +50,6 @@ func TestAccVcdSecurityTag(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckSecurityTagDestroy(tag1),
 		Steps: []resource.TestStep{

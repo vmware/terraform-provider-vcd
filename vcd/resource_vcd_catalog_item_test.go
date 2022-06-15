@@ -72,7 +72,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 
 	resourceCatalogItem := "vcd_catalog_item." + TestAccVcdCatalogItem
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t) },
+		PreCheck:          func() { preRunChecks(t, params) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
@@ -163,8 +163,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	postTestChecks(t)
 }
 
-func preRunChecks(t *testing.T) {
-	testAccPreCheck(t)
+func preRunChecks(t *testing.T, params StringMap) {
 	checkOvaPath(t)
 }
 
@@ -194,7 +193,7 @@ func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}

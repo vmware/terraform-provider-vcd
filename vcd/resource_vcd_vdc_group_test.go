@@ -122,6 +122,7 @@ func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
 		"DefaultPolicyUpdated5":     "true",
 		"Tags":                      "vdc vdcGroup",
 	}
+	testParamsNotEmpty(t, params)
 
 	// run as Org user
 	runVdcGroupTest(t, params)
@@ -235,8 +236,6 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
-
 		Steps: []resource.TestStep{
 			// initialize new VDC, this done separately as otherwise randomly fail due choose wrong connection
 			{

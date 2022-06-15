@@ -19,9 +19,6 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-	vcdClient := createTemporaryVCDConnection(false)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -29,9 +26,10 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 		"NsxtEdgeGatewayVcd": "nsxt-edge-test-multi-subnet",
 		"NsxtManager":        testConfig.Nsxt.Manager,
 		"Tier0Router":        testConfig.Nsxt.Tier0router,
-		"EdgeClusterId":      lookupAvailableEdgeClusterId(t, vcdClient),
 		"Tags":               "gateway nsxt",
 	}
+	testParamsNotEmpty(t, params)
+
 	configText := templateFill(testAccNsxtEdgeGatewayMultipleSubnets, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -48,7 +46,6 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
 		Steps: []resource.TestStep{
@@ -269,12 +266,12 @@ func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 		"NsxvEdgeGatewayName": testConfig.Networking.EdgeGateway,
 		"Tags":                "gateway nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
