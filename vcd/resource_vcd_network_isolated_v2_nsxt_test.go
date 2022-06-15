@@ -19,8 +19,6 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                  testConfig.VCD.Org,
@@ -32,6 +30,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		"MetadataKeyUpdated":   "key2",
 		"MetadataValueUpdated": "value2",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNetworkIsolatedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -49,7 +48,6 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1
@@ -188,7 +186,6 @@ resource "vcd_network_isolated_v2" "net1" {
 // * Step 7 - checks out that import of network being in different VDC still works
 func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
 		return
@@ -213,6 +210,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 		"MetadataValue":             "value1",
 		"Tags":                      "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -243,7 +241,6 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -393,7 +390,6 @@ resource "vcd_network_isolated_v2" "net1" {
 
 func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -412,6 +408,7 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccVcdNetworkIsolatedV2NsxtInVdc, params)
@@ -430,7 +427,6 @@ func TestAccVcdNetworkIsolatedV2NsxtOwnerVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
@@ -507,7 +503,6 @@ data "vcd_network_isolated_v2" "net1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -521,6 +516,7 @@ func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -553,9 +549,7 @@ func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

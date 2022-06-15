@@ -15,7 +15,6 @@ import (
 // addresses
 func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -25,6 +24,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtIpSetEmpty, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -48,7 +48,6 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set-changed", types.FirewallGroupTypeIpSet),
@@ -119,7 +118,6 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 // TestAccVcdNsxtIpSet starts with creating an IP Set with IP addresses defined and later on removes them all
 func TestAccVcdNsxtIpSet(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -129,6 +127,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtIpSetIpRanges, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -152,7 +151,6 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set-changed", types.FirewallGroupTypeIpSet),
@@ -300,7 +298,6 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skipf("this test requires Sysadmin user to create prerequisites")
 	}
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -320,6 +317,7 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
 		"TestName":                  t.Name(),
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccNsxtIpSetOwnByVdcGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -334,7 +332,6 @@ func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-ip-set", types.FirewallGroupTypeIpSet),
 		),
@@ -440,7 +437,6 @@ resource "vcd_nsxt_ip_set" "set1" {
 // together and reflects it
 func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
 		return
@@ -464,6 +460,7 @@ func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 		"TestName":                  t.Name(),
 		"NsxtEdgeGatewayVcd":        t.Name() + "-edge",
 	}
+	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "-newVdc"
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
@@ -488,7 +485,6 @@ func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{ // step 1 - setup prerequisites
@@ -703,7 +699,6 @@ resource "vcd_nsxt_ip_set" "set1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
@@ -723,6 +718,7 @@ func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 
 		"Tags": "network",
 	}
+	testParamsNotEmpty(t, params)
 
 	// This test explicitly tests that `vdc` field inherited from provider works correctly therefore
 	// it must override default `vdc` field value at provider level to be NSX-T VDC and restore it
@@ -756,9 +752,7 @@ func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,

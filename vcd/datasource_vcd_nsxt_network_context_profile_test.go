@@ -16,20 +16,19 @@ func TestAccVcdNsxtNetworkContextProfileInVdc(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
 		"NsxtVdc": testConfig.Nsxt.Vdc,
 		"Tags":    "nsxt network vdcGroup",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxtNetworkContextProfileDS, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -65,7 +64,6 @@ func TestAccVcdNsxtNetworkContextProfileInNsxtManager(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
@@ -73,6 +71,7 @@ func TestAccVcdNsxtNetworkContextProfileInNsxtManager(t *testing.T) {
 		"Scope":           "SYSTEM",
 		"Tags":            "nsxt network vdcGroup",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtNetworkContextProfileNsxtManagerDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION - step 1: %s", configText1)
@@ -88,7 +87,6 @@ func TestAccVcdNsxtNetworkContextProfileInNsxtManager(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION - step 3: %s", configText3)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

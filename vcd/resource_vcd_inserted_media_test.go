@@ -39,6 +39,7 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 		"EjectForce":       true,
 		"Tags":             "catalog",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdInsertEjectBasic, params)
 	if vcdShortTest {
@@ -48,7 +49,6 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccResourcesDestroyed,
 		Steps: []resource.TestStep{

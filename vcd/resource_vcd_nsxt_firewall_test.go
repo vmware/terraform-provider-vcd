@@ -19,7 +19,6 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	client := createTemporaryVCDConnection(false)
 
@@ -35,6 +34,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 		"Logging": strconv.FormatBool(client.Client.IsSysAdmin),
 		"Tags":    "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtFirewall, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
@@ -63,7 +63,6 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtFirewallRulesDestroy(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
 			{

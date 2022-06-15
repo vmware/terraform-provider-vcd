@@ -18,13 +18,12 @@ func TestAccVcdDatasourceNsxtManager(t *testing.T) {
 		return
 	}
 
-	skipNoNsxtConfiguration(t)
-
 	var params = StringMap{
 		"FuncName":    t.Name(),
 		"NsxtManager": testConfig.Nsxt.Manager,
 		"Tags":        "nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdNsxtManager, params)
 
@@ -35,7 +34,6 @@ func TestAccVcdDatasourceNsxtManager(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

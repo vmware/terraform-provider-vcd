@@ -12,7 +12,6 @@ import (
 
 func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 	preTestChecks(t)
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -22,6 +21,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccRoutedNetDhcpStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
@@ -53,7 +53,6 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
 		Steps: []resource.TestStep{
 			{
