@@ -326,17 +326,11 @@ vcd:
   username: administrator
   verify: false
  
-vcs:
-- name: vcenter-1
-  password: "*****"
-  username: administrator@vsphere.local
-  verify: false
- 
 service:
   enforce_authorization: false
   legacy_mode: false
   log_wire: false
-  no_vc_communication_mode: false
+  no_vc_communication_mode: true
   processors: 15
   telemetry:
     enable: true

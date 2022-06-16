@@ -8,9 +8,6 @@ admin-user       = "******************************************"
 admin-password   = "******************************************"
 admin-org        = "System"
 vcd-url          = "https://myvcd.company.com/api"
-vcenter-name     = "vcenter1"
-vcenter-username = "******************************************"
-vcenter-password = "******************************************"
 
 # ------------------------------------------------
 # CSE installation config

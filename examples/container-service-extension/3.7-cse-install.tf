@@ -325,9 +325,6 @@ resource "null_resource" "cse-install-script" {
       vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
       vcd_username     = var.admin-user
       vcd_password     = var.admin-password
-      vcenter          = var.vcenter-name
-      vcenter_username = var.vcenter-username
-      vcenter_password = var.vcenter-password
       catalog          = vcd_catalog.cat-cse.name
       network          = vcd_network_routed_v2.cse_routed.name
       org              = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.

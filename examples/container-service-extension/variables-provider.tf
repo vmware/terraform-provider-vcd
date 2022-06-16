@@ -23,19 +23,3 @@ variable "vcd-url" {
   description = "The target VCD url, like 'https://my-vcd.company.com/api'"
   type        = string
 }
-
-variable "vcenter-name" {
-  description = "The name of the vCenter used in VCD, for CSE installation process"
-  type        = string
-}
-
-variable "vcenter-username" {
-  description = "The name of the vCenter username, for CSE installation process"
-  type        = string
-}
-
-variable "vcenter-password" {
-  description = "The name of the vCenter username, for CSE installation process"
-  sensitive   = true
-  type        = string
-}

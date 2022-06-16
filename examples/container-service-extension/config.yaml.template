@@ -9,17 +9,11 @@ vcd:
   username: "${vcd_username}"
   verify: false
 
-vcs:
-  - name: "${vcenter}"
-    password: "${vcenter_password}"
-    username: "${vcenter_username}"
-    verify: false
-
 service:
   enforce_authorization: false
   legacy_mode: false
   log_wire: false
-  no_vc_communication_mode: false
+  no_vc_communication_mode: true
   processors: 15
   telemetry:
     enable: true
