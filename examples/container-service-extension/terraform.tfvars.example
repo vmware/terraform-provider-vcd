@@ -34,8 +34,8 @@ tier0-gateway-ip-ranges = [
 ]
 
 # Edge gateway configuration for creation
-edge-gateway-ip     = "10.12.123.123"
-edge-gateway-prefix = "19"
+edge-gateway-ip     = "10.12.123.123" # Network subnet gateway ip, NOT primary IP
+edge-gateway-prefix = "19" # Prefix length
 edge-gateway-ip-ranges = [
   ["10.12.234.226", "10.12.234.228"],
   ["10.12.234.230", "10.12.234.232"],
