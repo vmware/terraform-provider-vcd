@@ -38,7 +38,6 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
 	// Advertisement configuration requires it. Restore it right after the test so that other
@@ -53,6 +52,7 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 		"NsxtEdgeGw": testConfig.Nsxt.EdgeGateway,
 		"Tags":       "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	// First step of test is going to alter some settings but not enable BGP because changing some of the fields
 	configText1 := templateFill(testAccVcdNsxtBgpConfig1, params)
@@ -93,7 +93,6 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
 			{
@@ -315,7 +314,6 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
-	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -327,6 +325,7 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 
 		"Tags": "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	// First step of test is going to alter some settings but not enable BGP because changing some of the fields
 	configText1 := templateFill(testAccVcdNsxtEdgeBgpConfigVrfStep1, params)
@@ -351,7 +350,6 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(t.Name()),
 		Steps: []resource.TestStep{
 			{
@@ -539,13 +537,6 @@ func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
-	skipNoNsxtConfiguration(t)
-
-	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
-	// Advertisement configuration requires it. Restore it right after the test so that other
-	// tests are not impacted.
-	updateEdgeGatewayTier0Dedication(t, true)
-	defer updateEdgeGatewayTier0Dedication(t, false)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -555,6 +546,7 @@ func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
 		"NsxtEdgeGwInVdcGroup": testConfig.Nsxt.VdcGroupEdgeGateway,
 		"Tags":                 "network nsxt",
 	}
+	testParamsNotEmpty(t, params)
 
 	// First step of test is going to alter some settings but not enable BGP because changing some of the fields
 	configText1 := templateFill(testAccVcdNsxtBgpVdcGroupConfig1, params)
@@ -566,7 +558,6 @@ func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.VdcGroupEdgeGateway),
 		Steps: []resource.TestStep{
 			{
