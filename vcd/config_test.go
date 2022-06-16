@@ -99,9 +99,10 @@ type TestConfig struct {
 			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {
-			Name           string `json:"name"`
-			StorageProfile string `json:"storageProfile"`
-			NetworkPool    string `json:"networkPool"`
+			Name            string `json:"name"`
+			StorageProfile  string `json:"storageProfile"`
+			StorageProfile2 string `json:"storageProfile2"`
+			NetworkPool     string `json:"networkPool"`
 		} `json:"nsxtProviderVdc"`
 		Catalog struct {
 			Name                    string `json:"name,omitempty"`

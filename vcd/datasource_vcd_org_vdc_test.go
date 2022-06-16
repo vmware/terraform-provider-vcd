@@ -14,7 +14,6 @@ var vdcName = "TestAccVcdVdcDatasource"
 
 func TestAccVcdVdcDatasource(t *testing.T) {
 	preTestChecks(t)
-	validateConfiguration(t)
 
 	var params = StringMap{
 		"ExistingVdcName": testConfig.VCD.Vdc,

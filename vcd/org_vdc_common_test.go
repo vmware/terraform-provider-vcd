@@ -25,11 +25,15 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	}
 	testParamsNotEmpty(t, params)
 
-	secondStorageProfile := params["ProviderVdcStorageProfile2"].(string)
 	configText := templateFill(testAccCheckVcdVdc_basic, params)
 	params["SecondStorageProfile"] = ""
 
 	// If a second storage profile is defined in the configuration, we add its parameters in the update
+	secondStorageProfileMapValue, exist := params["ProviderVdcStorageProfile2"]
+	secondStorageProfile := ""
+	if exist {
+		secondStorageProfile = secondStorageProfileMapValue.(string)
+	}
 	if secondStorageProfile != "" {
 		unfilledTemplate := template.Must(template.New("").Parse(additionalStorageProfile))
 		buf := &bytes.Buffer{}

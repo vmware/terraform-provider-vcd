@@ -25,8 +25,6 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires VCD 10.0+")
 	}
 
-	validateConfiguration(t)
-
 	allocationModel := "Flex"
 
 	var params = StringMap{
