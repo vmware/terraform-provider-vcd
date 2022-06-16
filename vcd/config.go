@@ -573,6 +573,25 @@ func (cli *VCDClient) GetNsxtEdgeGatewayFromResourceById(d *schema.ResourceData,
 	return egw, nil
 }
 
+// GetOrgNameFromResource returns the Org name if set at resource level. If not, tries to get it from provider level.
+// It errors if none is provided.
+func (cli *VCDClient) GetOrgNameFromResource(d *schema.ResourceData) (string, error) {
+	orgName := d.Get("org").(string)
+	return cli.GetOrgName(orgName)
+}
+
+// GetOrgName returns the parameter orgName if provided. If not tried to get it from provider.
+func (cli *VCDClient) GetOrgName(orgName string) (string, error) {
+	if orgName == "" {
+		orgName = cli.Org
+	}
+	if orgName == "" {
+		return "", fmt.Errorf("empty Org name provided")
+	}
+
+	return orgName, nil
+}
+
 func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken string) error {
 	var err error
 	if apiToken != "" {
