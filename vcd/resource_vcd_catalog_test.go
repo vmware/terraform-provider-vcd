@@ -239,6 +239,7 @@ resource "vcd_catalog" "test-catalog" {
 // published to external Org
 func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	preTestChecks(t)
+
 	var params = StringMap{
 		"Org":                                testConfig.VCD.Org,
 		"Vdc":                                testConfig.VCD.Vdc,
@@ -257,6 +258,34 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// TODO - This code snippet is to avoid having the org catalog publishing settings set to disable.
+	// There are some bugs in VCD that disable those options. This code snippet will be removed
+	// as soon as those bugs are solved.
+	vcdClient := createSystemTemporaryVCDConnection()
+	adminOrg, err := vcdClient.GetAdminOrg(testConfig.VCD.Org)
+	if err != nil {
+		t.Errorf("couldn't retrieve the adminOrg for setting workaround for VCD bug - %s", err)
+	}
+
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs = true
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally = true
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe = true
+	task, err := adminOrg.Update()
+	if err != nil {
+		t.Errorf("couldn't update the adminOrg settings for workaround for VCD bug - %s", err)
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		t.Errorf("the task that performs the VCD bug workaround didn't finish successfully - %s", err)
+	}
+	// End of the workaround
+
 	configText := templateFill(testAccCheckVcdCatalogPublished, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	params["FuncName"] = t.Name() + "step1"
@@ -265,11 +294,6 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 	params["FuncName"] = t.Name() + "step2"
 	configTextUpd2 := templateFill(testAccCheckVcdCatalogPublishedUpdate2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpd2)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	resourceAddress := "vcd_catalog.test-catalog"
 
