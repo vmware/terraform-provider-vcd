@@ -96,7 +96,7 @@ resource "vcd_org_vdc" "cse_vdc" {
 
   enabled                  = true
   enable_thin_provisioning = true
-  enable_fast_provisioning = true
+  enable_fast_provisioning = false
   delete_force             = true
   delete_recursive         = true
 }
