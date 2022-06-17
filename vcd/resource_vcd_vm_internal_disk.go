@@ -259,7 +259,7 @@ func getVm(vcdClient *VCDClient, d *schema.ResourceData) (*govcd.VM, *govcd.Vdc,
 	if err != nil {
 		return nil, nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), true)
 	if err != nil {
 		return nil, nil, fmt.Errorf("[getVm] failed to get vApp: %s", err)
 	}
