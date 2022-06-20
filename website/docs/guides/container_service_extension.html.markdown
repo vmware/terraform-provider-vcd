@@ -20,7 +20,7 @@ To know more about CSE, you can explore [the official website](https://vmware.gi
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
+* CSE 3.1.x is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
 * Some steps require the usage of `cse` extension for `vcd cli`. Make sure you have them installed and working.
@@ -265,7 +265,8 @@ resource "vcd_catalog" "cat-cse" {
 ```
 
 Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
-To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource.
+To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource with
+`catalog_item_metadata`.
 
 ~> CSE is **not compatible** yet with PhotonOS
 
