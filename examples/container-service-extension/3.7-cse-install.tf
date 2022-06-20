@@ -321,6 +321,7 @@ resource "null_resource" "cse-install-script" {
   }
 
   provisioner "local-exec" {
+    on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
     command = format("printf '%s' > config.yaml && ./cse-install.sh", templatefile("${path.module}/config.yaml.template", {
       vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
       vcd_username     = var.admin-user
