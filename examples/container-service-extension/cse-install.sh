@@ -5,5 +5,5 @@
 [ ! -f ./config.yaml ] && echo "ERROR: config.yaml does not exist" && exit 1
 
 # Execute cse install command. The config file needs to have 0600 permissions.
-chmod 0600 config.yaml
+chmod 0400 config.yaml
 cse install -s -c config.yaml

@@ -333,8 +333,6 @@ resource "null_resource" "cse-install-script" {
       storage_profile  = data.vcd_storage_profile.cse_sp.name
     }))
   }
-
-  depends_on = [vcd_org.cse_org, vcd_catalog.cat-cse, vcd_org_vdc.cse_vdc, vcd_network_routed_v2.cse_routed, data.vcd_storage_profile.cse_sp]
 }
 
 # Here we create a new rights bundle for CSE, with the rights assigned already to the Default Rights Bundle (hence the

@@ -300,16 +300,18 @@ Notice that all the metadata entries from `catalog_item_metadata` are required f
 * `os`: When the OVA is downloaded from VMware Customer Connect, the OS appears as part of the file name.
 * `revision`: Needs to be always `1`. This information is internally used by CSE.
 
-Alternatively, you can upload the OVA file using `cse-cli`. This command line tool is explained in the next step.
+Alternatively, you can upload the OVA file using `cse` cli. This command line tool is explained in the next step.
 
 ### Step 5: CSE cli
 
-This is the only step that can be done without any Terraform script, but you can also use the
+This step can be done manually, by executing the `cse` cli in a given shell, or can be automated within the Terraform HCL.
+
+-> To see an example of how `cse` cli is automated using Terraform
 [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
-[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1) as shown in the "[Examples](#examples)"
+[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1), take a look in the "[Examples](#examples)"
 section below.
 
-In any case, you need to [install CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
+In any case, you need to have installed the [CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
 and then provide a YAML configuration file with the entities that were created by Terraform.
 
 You can check the documentation for this configuration file [here](https://vmware.github.io/container-service-extension/cse3_1/CSE_CONFIG.html).
@@ -346,7 +348,7 @@ broker:
   vdc: cse_vdc
 ```
 
-When you execute the following command:
+If you choose to execute it manually in a shell, launch the following command:
 
 ```shell
 cse install -c config.yaml
@@ -355,6 +357,52 @@ cse install -c config.yaml
 CSE will use the configuration file from above to install some new custom entities and rights among other required settings.
 You can also refer to the command line [documentation](https://vmware.github.io/container-service-extension) to upload OVA files
 if you skipped the upload with Terraform from previous step.
+
+If you choose to execute it using Terraform HCL, as in the "[Examples](#examples)" section below, you need to use the `null_resource` with a
+`local-exec` provisioner and have a template for the `config.yaml`. In the snippet below it is called `config.yaml.template` and the
+required values have placeholders:
+
+```yaml
+# ... (omitted content for brevity)
+broker:
+  catalog: "${catalog}"
+  ip_allocation_mode: pool
+  network: "${network}"
+  org: "${org}"
+  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
+  storage_profile: "${storage_profile}"
+  vdc: "${vdc}"
+```
+
+```hcl
+resource "null_resource" "cse-install-script" {
+  triggers = {
+    always_run = timestamp() # Force to always trigger
+  }
+
+  provisioner "local-exec" {
+    on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
+    command = format("printf '%s' > config.yaml && chmod 0400 config.yaml && cse install -c config.yaml", templatefile("${path.module}/config.yaml.template", {
+      vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
+      vcd_username     = var.admin-user
+      vcd_password     = var.admin-password
+      catalog          = vcd_catalog.cat-cse.name
+      network          = vcd_network_routed_v2.cse_routed.name
+      org              = vcd_org.cse_org.name    
+      vdc              = vcd_org_vdc.cse_vdc.name
+      storage_profile  = data.vcd_storage_profile.cse_sp.name
+    }))
+  }
+}
+```
+
+When using the HCL option, take into account the following important aspects:
+* The generated `config.yaml` needs to **not** to have read permissions for group and others (`chmod 0400`).
+* `cse install` can be run just once (in subsequent runs it should be `cse upgrade`), so a way to allowing Terraform to
+  apply and destroy multiple times is to add `on_failure = continue` to the local-exec provisioner.
+* As a consequence, if `config.yaml` is misconfigured or the `cse` command is not present, `on_failure = continue` will make
+  Terraform continue on any failure. In this case, you'll see a failure in next steps, as `cse` installs several rights in VCD
+  that are needed.
 
 ### Step 6: Rights and roles
 
