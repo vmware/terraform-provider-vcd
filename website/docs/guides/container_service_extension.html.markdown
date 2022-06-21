@@ -359,8 +359,8 @@ You can also refer to the command line [documentation](https://vmware.github.io/
 if you skipped the upload with Terraform from previous step.
 
 If you choose to execute it using Terraform HCL, as in the "[Examples](#examples)" section below, you need to use the `null_resource` with a
-`local-exec` provisioner and have a template for the `config.yaml`. In the snippet below it is called `config.yaml.template` and the
-required values have placeholders:
+`local-exec` provisioner and transform the file `config.yaml` into a template (in the snippet below, `config.yaml.template`) with all
+required values as placeholders:
 
 ```yaml
 # ... (omitted content for brevity)
