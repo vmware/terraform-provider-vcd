@@ -23,7 +23,7 @@ func datasourceVcdEdgeBgpConfig() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which NAT Rule is located",
+				Description: "Edge gateway name in which BGP Configuration is located",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
@@ -67,7 +67,7 @@ func datasourceVcdEdgeBgpConfigRead(ctx context.Context, d *schema.ResourceData,
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("error retrieving NSX-T Edge Gateway BGP Configuration: %s", err)
+		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
 
 	bgpConfig, err := nsxtEdge.GetBgpConfiguration()

@@ -10,8 +10,8 @@ description: |-
 # vcd\_nsxt\_edgegateway\_bgp\_configuration
 
 Provides a data source to read BGP configuration on NSX-T Edge Gateway that has a dedicated Tier-0
-  Gateway or VRF. BGP makes core routing decisions by using a table of IP networks, or prefixes,
-which designate multiple routes between autonomous systems (AS).
+Gateway or VRF. BGP makes core routing decisions by using a table of IP networks, or prefixes, which
+designate multiple routes between autonomous systems (AS).
 
 ## Example Usage
 

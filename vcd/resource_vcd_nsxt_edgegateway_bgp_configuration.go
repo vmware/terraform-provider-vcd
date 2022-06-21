@@ -78,8 +78,24 @@ func resourceVcdEdgeBgpConfig() *schema.Resource {
 
 func resourceVcdEdgeBgpConfigCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
+
+	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	if err != nil {
+		return diag.Errorf("[bgp configuration create/update] error finding parent Edge Gateway: %s", err)
+	}
+
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		vcdClient.lockById(parentEdgeGatewayOwnerId)
+		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
+	} else {
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+	}
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
@@ -128,8 +144,24 @@ func resourceVcdEdgeBgpConfigRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceVcdEdgeBgpConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
+
+	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	if err != nil {
+		return diag.Errorf("[route advertisement delete] error finding parent Edge Gateway: %s", err)
+	}
+
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		vcdClient.lockById(parentEdgeGatewayOwnerId)
+		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
+	} else {
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+	}
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
