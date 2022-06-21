@@ -23,13 +23,13 @@ In order to complete the steps described in this guide, please be aware:
 * CSE 3.1.x is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
-* Some steps require the usage of `cse` extension for `vcd cli`. Make sure you have them installed and working.
-  Go [here](http://vmware.github.io/vcd-cli/install.html) for vcd cli installation,
-  and [here](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse) to install cse.
+* Some steps require the usage of `cse` extension for `vcd` CLI. Make sure you have them installed and working.
+  Go [here](http://vmware.github.io/vcd-cli/install.html) for `vcd` CLI installation,
+  and [here](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse) to install `cse`.
 
 ## Installation process
 
--> You can find examples of a CSE installation in the [Examples](#examples) section below.
+-> You can find examples of a fully automated CSE installation in the [Examples](#examples) section below.
 
 To start installing CSE in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
 
@@ -46,7 +46,7 @@ provider "vcd" {
 ```
 
 As you will be creating several administrator-scoped resources like Orgs, VDCs, Tier 0 Gateways, etc; make sure you provide 
-`System administrator` credentials.
+**System administrator** credentials.
 
 ### Step 1: Initialization
 
@@ -112,7 +112,7 @@ For the Kubernetes clusters to be functional, you need to provide some networkin
 * [SNAT rule](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule)
 
 The [Tier-0 Gateway](/providers/vmware/vcd/latest/docs/resources/external_network_v2) will provide access to the
-outside world. For example, this will allow cluster users to communicate with Kubernetes API server through `kubectl` and
+outside world. For example, this will allow cluster users to communicate with Kubernetes API server with **kubectl** and
 download required dependencies for the cluster to be created correctly.
 
 Here is an example on how to configure this resource:
@@ -236,7 +236,7 @@ You need the following resources:
 
 You can have a look at [this guide](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) as it explains every resource
 and provides some examples of how to set up ALB in VCD. You can also have a look at the "[Examples](#examples)" section below
-where a full ALB setup is provided.
+where the full ALB setup is provided.
 
 ### Step 4: Configure catalogs and OVAs
 
@@ -300,11 +300,11 @@ Notice that all the metadata entries from `catalog_item_metadata` are required f
 * `os`: When the OVA is downloaded from VMware Customer Connect, the OS appears as part of the file name.
 * `revision`: Needs to be always `1`. This information is internally used by CSE.
 
-Alternatively, you can upload the OVA file using `cse` cli. This command line tool is explained in the next step.
+Alternatively, you can upload the OVA file using `cse` CLI. This command line tool is explained in the next step.
 
 ### Step 5: CSE cli
 
-This step can be done manually, by executing the `cse` cli in a given shell, or can be automated within the Terraform HCL.
+This step can be done manually, by executing the `cse` CLI in a given shell, or can be automated within the Terraform HCL.
 
 -> To see an example of how `cse` cli is automated using Terraform
 [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
@@ -383,14 +383,14 @@ resource "null_resource" "cse-install-script" {
   provisioner "local-exec" {
     on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
     command = format("printf '%s' > config.yaml && chmod 0400 config.yaml && cse install -c config.yaml", templatefile("${path.module}/config.yaml.template", {
-      vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
-      vcd_username     = var.admin-user
-      vcd_password     = var.admin-password
-      catalog          = vcd_catalog.cat-cse.name
-      network          = vcd_network_routed_v2.cse_routed.name
-      org              = vcd_org.cse_org.name    
-      vdc              = vcd_org_vdc.cse_vdc.name
-      storage_profile  = data.vcd_storage_profile.cse_sp.name
+      vcd_url         = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
+      vcd_username    = var.admin-user
+      vcd_password    = var.admin-password
+      catalog         = vcd_catalog.cat-cse.name
+      network         = vcd_network_routed_v2.cse_routed.name
+      org             = vcd_org.cse_org.name
+      vdc             = vcd_org_vdc.cse_vdc.name
+      storage_profile = data.vcd_storage_profile.cse_sp.name
     }))
   }
 }
@@ -398,9 +398,9 @@ resource "null_resource" "cse-install-script" {
 
 When using the HCL option, take into account the following important aspects:
 * The generated `config.yaml` needs to **not** to have read permissions for group and others (`chmod 0400`).
-* `cse install` can be run just once (in subsequent runs it should be `cse upgrade`), so a way to allowing Terraform to
+* `cse install` must run just once (in subsequent runs it should be `cse upgrade`), so a way to allowing Terraform to
   apply and destroy multiple times is to add `on_failure = continue` to the local-exec provisioner.
-* As a consequence, if `config.yaml` is misconfigured or the `cse` command is not present, `on_failure = continue` will make
+* As a consequence, if `config.yaml` is wrong or the `cse` command is not present, `on_failure = continue` will make
   Terraform continue on any failure. In this case, you'll see a failure in next steps, as `cse` installs several rights in VCD
   that are needed.
 

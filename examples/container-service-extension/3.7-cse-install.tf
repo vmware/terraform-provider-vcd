@@ -323,14 +323,14 @@ resource "null_resource" "cse-install-script" {
   provisioner "local-exec" {
     on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
     command = format("printf '%s' > config.yaml && ./cse-install.sh", templatefile("${path.module}/config.yaml.template", {
-      vcd_url          = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
-      vcd_username     = var.admin-user
-      vcd_password     = var.admin-password
-      catalog          = vcd_catalog.cat-cse.name
-      network          = vcd_network_routed_v2.cse_routed.name
-      org              = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.
-      vdc              = vcd_org_vdc.cse_vdc.name # Change this reference if you used a data source to fetch an already existent VDC.
-      storage_profile  = data.vcd_storage_profile.cse_sp.name
+      vcd_url         = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
+      vcd_username    = var.admin-user
+      vcd_password    = var.admin-password
+      catalog         = vcd_catalog.cat-cse.name
+      network         = vcd_network_routed_v2.cse_routed.name
+      org             = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.
+      vdc             = vcd_org_vdc.cse_vdc.name # Change this reference if you used a data source to fetch an already existent VDC.
+      storage_profile = data.vcd_storage_profile.cse_sp.name
     }))
   }
 }
