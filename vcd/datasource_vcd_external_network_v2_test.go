@@ -28,7 +28,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"ExistingExternalNetwork": testConfig.Networking.ExternalNetwork,
+		"ExistingExternalNetwork": testConfig.Nsxt.ExternalNetwork,
 		"Tags":                    "network extnetwork",
 	}
 	testParamsNotEmpty(t, params)
@@ -37,7 +37,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	datasourceName := "data.vcd_external_network_v2.ext-net-nsxv"
+	datasourceName := "data.vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
@@ -45,16 +45,11 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr(datasourceName, "id", regexp.MustCompile(`^urn:vcloud:network:.*`)),
-					resource.TestCheckResourceAttrSet(datasourceName, "vsphere_network.0.portgroup_id"),
-					resource.TestCheckResourceAttrSet(datasourceName, "vsphere_network.0.vcenter_id"),
-					resource.TestCheckResourceAttr(datasourceName, "nsxt_network.#", "0"),
-					resource.TestCheckResourceAttr(datasourceName, "vsphere_network.#", "1"),
-					// Cannot be too explicit because this test depends on existing external network and it may have
-					// wide configuration.
+					resource.TestCheckResourceAttrSet(datasourceName, "nsxt_network.0.nsxt_manager_id"),
+					resource.TestCheckResourceAttrSet(datasourceName, "nsxt_network.0.nsxt_tier0_router_id"),
+					resource.TestCheckResourceAttr(datasourceName, "nsxt_network.#", "1"),
 					resourceFieldIntNotEqual(datasourceName, "ip_scope.#", 0),
-					resource.TestCheckResourceAttrSet(datasourceName, "vsphere_network.0.portgroup_id"),
-					resource.TestMatchResourceAttr(datasourceName, "vsphere_network.0.vcenter_id", regexp.MustCompile(`^urn:vcloud:vimserver:.*`)),
-					resource.TestCheckResourceAttr(datasourceName, "nsxt_network.#", "0"),
+					resource.TestMatchResourceAttr(datasourceName, "nsxt_network.0.nsxt_manager_id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:.*`)),
 				),
 			},
 		},
@@ -63,7 +58,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 }
 
 const externalNetworkV2Datasource = `
-data "vcd_external_network_v2" "ext-net-nsxv" {
+data "vcd_external_network_v2" "ext-net-nsxt" {
 	name = "{{.ExistingExternalNetwork}}"
 }
 `
