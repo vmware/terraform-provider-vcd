@@ -5,11 +5,13 @@ package vcd
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"strings"
-	"testing"
 )
 
 func TestAccVcdOrgVdcAccessControl(t *testing.T) {
@@ -18,7 +20,6 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
-	orgUserPasswordFile := "org_user_pwd.txt"
 	userName1 := strings.ToLower(t.Name())
 	userName2 := strings.ToLower(t.Name()) + "2"
 	accessControlName := "test-access-control"
@@ -30,7 +31,7 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 		"AccessControlName2": accessControlName + "2",
 		"UserName":           userName1,
 		"UserName2":          userName2,
-		"PasswordFile":       orgUserPasswordFile,
+		"Password":           "mei2Heehiu>Smei2Heehiu>S",
 		"RoleName":           govcd.OrgUserRoleOrganizationAdministrator,
 	}
 	testParamsNotEmpty(t, params)
@@ -88,14 +89,14 @@ const testAccCheckVcdAccessControlStep2 = `
 resource "vcd_org_user" "{{.UserName}}" {
   org            = "{{.Org}}"
   name           = "{{.UserName}}"
-  password_file  = "{{.PasswordFile}}"
+  password       = "{{.Password}}"
   role           = "{{.RoleName}}"
   take_ownership = true
 }
 resource "vcd_org_user" "{{.UserName2}}" {
   org            = "{{.Org}}"
   name           = "{{.UserName2}}"
-  password_file  = "{{.PasswordFile}}"
+  password       = "{{.Password}}"
   role           = "{{.RoleName}}"
   take_ownership = true
 }
@@ -118,7 +119,7 @@ func testAccCheckVDCControlAccessDestroy() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
 			return fmt.Errorf("error retrieving Org %s - %s", testConfig.VCD.Org, err)
 		}
@@ -129,7 +130,8 @@ func testAccCheckVDCControlAccessDestroy() resource.TestCheckFunc {
 		}
 
 		if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
-			return fmt.Errorf("expected to have VDC sharing settings set to none and got something else")
+			spew.Dump(controlAccessParams)
+			return fmt.Errorf("expected to have VDC sharing settings set to none and got something else: %v", controlAccessParams)
 		}
 		return nil
 	}
