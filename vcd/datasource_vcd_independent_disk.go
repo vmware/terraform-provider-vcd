@@ -113,7 +113,7 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, d.Get("vdc").(string)+"_"+vcdClient.Vdc)
 	}
 
 	idValue := d.Get("id").(string)

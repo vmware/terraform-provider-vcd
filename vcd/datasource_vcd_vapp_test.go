@@ -26,7 +26,7 @@ func getAvailableVapp() (*govcd.VApp, error) {
 	if err != nil {
 		return nil, fmt.Errorf("org not found : %s", err)
 	}
-	vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
+	vdc, err := org.GetVDCByName(testConfig.Nsxt.Vdc, false)
 	if err != nil {
 		return nil, fmt.Errorf("vdc not found : %s", err)
 	}

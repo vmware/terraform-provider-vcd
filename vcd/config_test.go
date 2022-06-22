@@ -599,7 +599,7 @@ func getConfigStruct(config string) TestConfig {
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
 	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)
-	_ = os.Setenv("VCD_VDC", configStruct.VCD.Vdc)
+	_ = os.Setenv("VCD_VDC", configStruct.Nsxt.Vdc)
 	if configStruct.Provider.UseVcdConnectionCache {
 		enableConnectionCache = true
 	}
