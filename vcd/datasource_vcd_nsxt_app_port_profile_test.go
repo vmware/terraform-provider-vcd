@@ -153,7 +153,7 @@ func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 		"VdcName":             t.Name(),
 		"MetadataKey":         "k",
 		"MetadataValue":       "v",
-		"StorageProfile":      testConfig.VCD.ProviderVdc.StorageProfile,
+		"StorageProfile":      testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"NsxtProviderVdcName": testConfig.VCD.NsxtProviderVdc.Name,
 
 		"Tags": "nsxt network",

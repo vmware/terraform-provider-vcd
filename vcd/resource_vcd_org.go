@@ -10,12 +10,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
+	"time"
 )
 
 // Organization resource definition
@@ -198,6 +198,8 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.Errorf("[org creation] error running Org (%s) creation task: %s", orgName, err)
 	}
 
+	// Task shows complete, but org is not found, need to wait in CDS
+	time.Sleep(2 * time.Second)
 	org, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
 		return diag.Errorf("[org creation] error retrieving Org %s after creation: %s", orgName, err)
