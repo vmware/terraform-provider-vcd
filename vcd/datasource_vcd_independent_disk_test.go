@@ -26,7 +26,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 	diskName := "TestAccVcdDataSourceIndependentDisk"
 
 	var params = StringMap{
-		"Vdc":                  testConfig.VCD.Vdc,
+		"Vdc":                  testConfig.Nsxt.Vdc,
 		"name":                 diskName,
 		"description":          diskName + "description",
 		"size":                 "52",
