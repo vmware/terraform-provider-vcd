@@ -22,12 +22,12 @@ func TestAccVcdStorageProfileDS(t *testing.T) {
 	}
 
 	// Lookup
-	storageProfileId := findStorageProfileIdInVdc(t, testConfig.VCD.ProviderVdc.StorageProfile)
+	storageProfileId := findStorageProfileIdInVdc(t, testConfig.VCD.NsxtProviderVdc.StorageProfile)
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
-		"Vdc":                testConfig.VCD.Vdc,
-		"StorageProfileName": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Vdc":                testConfig.Nsxt.Vdc,
+		"StorageProfileName": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"Tags":               "catalog",
 	}
 
@@ -101,7 +101,7 @@ func checkStorageProfileOriginatesInParentVdc(resource, storageProfileName, orgN
 		}
 
 		return fmt.Errorf("could not validate storage profile '%s' with ID '%s' belongs to VDC '%s",
-			storageProfileName, resourceId, testConfig.VCD.Vdc)
+			storageProfileName, resourceId, testConfig.Nsxt.Vdc)
 	}
 }
 
@@ -125,13 +125,13 @@ func findStorageProfileIdInVdc(t *testing.T, storageProfileName string) string {
 	var foundVdc *govcd.Vdc
 	for _, vdc := range childVdcs {
 		// We are looking in correct VDC
-		if vdc.Vdc.Name == testConfig.VCD.Vdc {
+		if vdc.Vdc.Name == testConfig.Nsxt.Vdc {
 			foundVdc = vdc
 
 		}
 	}
 	if foundVdc == nil {
-		t.Errorf("unable to find VDC '%s'", testConfig.VCD.Vdc)
+		t.Errorf("unable to find VDC '%s'", testConfig.Nsxt.Vdc)
 		t.FailNow()
 	}
 
