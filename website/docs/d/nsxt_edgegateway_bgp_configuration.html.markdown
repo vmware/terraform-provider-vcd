@@ -17,19 +17,19 @@ designate multiple routes between autonomous systems (AS).
 
 ```hcl
 data "vcd_org_vdc" "nsxt-vdc" {
-  org  = "my-org"
+  org  = "my-org" # Optional
   name = "my-vdc"
 }
 
 data "vcd_nsxt_edgegateway" "existing" {
-  org      = "my-org"
+  org      = "my-org" # Optional
   owner_id = data.vcd_org_vdc.nsxt-vdc.id
 
   name = "main"
 }
 
 data "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
-  org = "my-org"
+  org = "my-org" # Optional
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 }

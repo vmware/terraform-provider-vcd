@@ -23,7 +23,7 @@ these settings on the parent Tier-0 gateway in NSX-T Data Center.
 
 ```hcl
 resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
-  org = "my-org"
+  org = "my-org" # Optional
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
@@ -89,9 +89,9 @@ below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_edgegateway_bgp_configuration.imported my-org.my-org-vdc-org-vdc-group-name.my-nsxt-edge-gateway
+terraform import terraform import vcd_nsxt_edgegateway_bgp_configuration.imported my-org.vdc-or-vdc-group-name.my-nsxt-edge-gateway
 ```
 
 The above would import BGP configuration defined on NSX-T Edge Gateway `my-nsxt-edge-gateway` which
 is configured in organization named `my-org` and VDC or VDC Group named
-`my-org-vdc-org-vdc-group-name`.
+`vdc-or-vdc-group-name`.
