@@ -15,16 +15,17 @@ import (
 // TestAccVcdVappOrgNetworkDS tests a vApp org network data source if a vApp is found in the VDC
 func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	preTestChecks(t)
-	var retainIpMacEnabled = true
+	//var retainIpMacEnabled = true
+	var orgNetName = t.Name()
 
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"Vdc":                testConfig.VCD.Vdc,
-		"vappName":           "TestAccVcdVappOrgNetworkDS",
-		"orgNetwork":         "TestAccVcdVappOrgNetworkDSOrgNetwork",
-		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"retainIpMacEnabled": retainIpMacEnabled,
-		"isFenced":           "true",
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.Nsxt.Vdc,
+		"vappName":    "TestAccVcdVappOrgNetworkDS",
+		"orgNetwork":  orgNetName,
+		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
+		// "retainIpMacEnabled": retainIpMacEnabled, // only supported by NSX-V
+		// "isFenced":           "false", // only supported by NSX-V
 
 		"FuncName": "TestAccVcdVappOrgNetworkDS",
 	}
@@ -44,7 +45,7 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled),
+					testCheckVappOrgNetworkNonStringOutputs(orgNetName),
 				),
 			},
 		},
@@ -52,12 +53,12 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-func testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled bool) resource.TestCheckFunc {
+func testCheckVappOrgNetworkNonStringOutputs(orgNetName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["retain_ip_mac_enabled"].Value != fmt.Sprintf("%v", retainIpMacEnabled) {
-			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
+		if outputs["org_network_name"].Value != fmt.Sprintf("%v", orgNetName) {
+			return fmt.Errorf("org_network_name value didn't match")
 		}
 
 		return nil
@@ -71,12 +72,19 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.Vdc}}"
 }
 
-resource "vcd_network_routed" "{{.orgNetwork}}" {
-  name         = "{{.orgNetwork}}"
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  name = "{{.EdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "{{.orgNetwork}}" {
   org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.102.1"
+  name         = "{{.orgNetwork}}"
+  
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  gateway       = "10.10.102.1"
+  prefix_length = 24
 
   static_ip_pool {
     start_address = "10.10.102.2"
@@ -84,15 +92,13 @@ resource "vcd_network_routed" "{{.orgNetwork}}" {
   }
 }
 
+
+
 resource "vcd_vapp_org_network" "createVappOrgNetwork" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = vcd_vapp.{{.vappName}}.name
-  org_network_name   = vcd_network_routed.{{.orgNetwork}}.name
-  
-  is_fenced = "{{.isFenced}}"
-
-  retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+  org_network_name   = vcd_network_routed_v2.{{.orgNetwork}}.name
 }
 
 data "vcd_vapp_org_network" "network-ds" {
@@ -101,7 +107,7 @@ data "vcd_vapp_org_network" "network-ds" {
   depends_on 	   = [vcd_vapp_org_network.createVappOrgNetwork]
 }
 
-output "retain_ip_mac_enabled" {
-  value = data.vcd_vapp_org_network.network-ds.retain_ip_mac_enabled
+output "org_network_name" {
+  value = data.vcd_vapp_org_network.network-ds.org_network_name
 }  
 `
