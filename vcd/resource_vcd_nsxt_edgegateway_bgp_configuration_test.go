@@ -78,6 +78,7 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
 			{
+				// Setting time values with BGP being disabled
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -90,6 +91,7 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 				),
 			},
 			{
+				// Enabling BGP configuration, using decimal format for ASN ('local_as_number' field)
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -102,12 +104,14 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 				),
 			},
 			{
+				// Performing data source test
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_edgegateway_bgp_configuration.testing", "data.vcd_nsxt_edgegateway_bgp_configuration.testing", nil),
 				),
 			},
 			{
+				// Disabling BGP and changing `graceful_restart_mode` with some other fields
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -119,8 +123,8 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "ecmp_enabled", "true"),
 				),
 			},
-
 			{
+				// Enabling BGP again with different configuration
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -133,18 +137,21 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 				),
 			},
 			{
+				// Testing data source
 				Config: configText6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("vcd_nsxt_edgegateway_bgp_configuration.testing", "data.vcd_nsxt_edgegateway_bgp_configuration.testing", nil),
 				),
 			},
 			{
+				// Testing Import functionality
 				ResourceName:      "vcd_nsxt_edgegateway_bgp_configuration.testing",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, testConfig.Nsxt.EdgeGateway),
 			},
 			{
+				// Changing some timer values
 				Config: configText8,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -163,6 +170,7 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", "65420"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_mode", "GRACEFUL_AND_HELPER"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "ecmp_enabled", "false"),
 				),
 			},
 		},
@@ -286,10 +294,14 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
   enabled                = false
   local_as_number        = "65420"
   graceful_restart_mode  = "GRACEFUL_AND_HELPER"
+  ecmp_enabled           = false
 }
 `
 
-// TestAccVcdNsxtEdgeBgpConfigTier0 tests out NSX-T Edge Gateway BGP Configuration using VRF
+// TestAccVcdNsxtEdgeBgpConfigTier0 tests out NSX-T Edge Gateway BGP Configuration using VRF In VRF
+// mode only `enabled` and `ecmp_enabled` fields can be changed - everything else is inherited. This
+// test shuffles the values of the `enabled` and `ecmp_enabled` fields and verifies that the other
+// fields are filled in with some values.
 func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
@@ -309,7 +321,6 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	// First step of test is going to alter some settings but not enable BGP because changing some of the fields
 	configText1 := templateFill(testAccVcdNsxtEdgeBgpConfigVrfStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
@@ -347,6 +358,7 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 				),
 			},
 			{
+				//
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
@@ -376,7 +388,6 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "ecmp_enabled", "false"),
-					// resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", "65000"),
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "local_as_number", regexp.MustCompile(`\d+`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_mode", regexp.MustCompile(`\S+`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "graceful_restart_timer", regexp.MustCompile(`\d+`)),
@@ -513,6 +524,8 @@ func testAccCheckNsxtBgpConfigurationDisabled(edgeGatewayName string) resource.T
 	}
 }
 
+// TestAccVcdNsxtEdgeBgpConfigVdcGroup tests that BGP configuration works well when Edge Gateway is
+// part of VDC Group
 func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {

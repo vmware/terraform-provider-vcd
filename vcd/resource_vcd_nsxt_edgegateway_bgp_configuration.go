@@ -129,7 +129,7 @@ func resourceVcdEdgeBgpConfigRead(ctx context.Context, d *schema.ResourceData, m
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("error retrieving NSX-T Edge Gateway BGP Configuration: %s", err)
+		return diag.Errorf("error retrieving NSX-T Edge Gateway: %s", err)
 	}
 
 	bgpConfig, err := nsxtEdge.GetBgpConfiguration()
