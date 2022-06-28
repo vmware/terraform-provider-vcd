@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE installation example HCL:
+# CSE 3.1.x installation example HCL:
 #
 # * This HCL depends on 'vcd' and 'cse' CLI. Install and configure these following the instructions on
 #   http://vmware.github.io/vcd-cli/install.html

@@ -1,26 +1,26 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Container Service Extension"
+page_title: "VMware Cloud Director: Container Service Extension v3.1.x"
 sidebar_current: "docs-vcd-guides-cse"
 description: |-
-Provides guidance on configuring VCD to be able to install Container Service Extension.
+Provides guidance on configuring VCD to be able to install Container Service Extension v3.1.x.
 ---
 
-# Container Service Extension
+# Container Service Extension v3.1.x
 
 ## About
 
-This guide describes the required steps to configure VCD to install the Container Service Extension (CSE), that
+This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v3.1.x, that
 will allow tenant users to deploy Kubernetes clusters on VCD using the UI. For that purpose, after completing the steps described below you
 will need also to **publish the Container UI Plugin** to the desired tenants and **run the CSE server** in your infrastructure.
 
-To know more about CSE, you can explore [the official website](https://vmware.github.io/container-service-extension/).
+To know more about CSE v3.1.x, you can explore [the official website](https://vmware.github.io/container-service-extension/).
 
 ## Pre-requisites
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE 3.1.x is supported from VCD 10.3.1 or above, make sure your VCD appliance matches the criteria.
+* CSE v3.1.x is supported from VCD v10.3.1 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.7.0 or above.
 * All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
 * Some steps require the usage of `cse` extension for `vcd` CLI. Make sure you have them installed and working.
@@ -31,7 +31,7 @@ In order to complete the steps described in this guide, please be aware:
 
 -> You can find examples of a fully automated CSE installation in the [Examples](#examples) section below.
 
-To start installing CSE in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
+To start installing CSE v3.1.x in a VCD appliance, you must use **v3.7.0 or above** of the VCD Terraform Provider:
 
 ```hcl
 provider "vcd" {
