@@ -1,0 +1,28 @@
+mqtt:
+  verify_ssl: false
+
+vcd:
+  host: "${vcd_url}"
+  log: true
+  password: "${vcd_password}"
+  port: 443
+  username: "${vcd_username}"
+  verify: false
+
+service:
+  enforce_authorization: false
+  legacy_mode: false
+  log_wire: false
+  no_vc_communication_mode: true
+  processors: 15
+  telemetry:
+    enable: true
+
+broker:
+  catalog: "${catalog}"
+  ip_allocation_mode: pool
+  network: "${network}"
+  org: "${org}"
+  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
+  storage_profile: "${storage_profile}"
+  vdc: "${vdc}"
