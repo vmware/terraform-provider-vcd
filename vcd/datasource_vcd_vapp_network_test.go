@@ -12,6 +12,7 @@ import (
 )
 
 // TestAccVcdVappNetworkDS tests a vApp network data source if a vApp is found in the VDC
+// Supports only NSX-V
 func TestAccVcdVappNetworkDS(t *testing.T) {
 	preTestChecks(t)
 	networkName := "TestAccVcdVappNetworkDS"
