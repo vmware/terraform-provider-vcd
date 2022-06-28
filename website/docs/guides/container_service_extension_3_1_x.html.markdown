@@ -491,4 +491,4 @@ option in the "More" option in the top bar.
 
 ## Examples
 
-There are available examples in the [GitHub repository](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension).
+There are available examples in the [GitHub repository](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-3.1.x).
