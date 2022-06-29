@@ -55,6 +55,6 @@ routed-dns      = ["8.8.8.8", "8.8.8.4"]
 avi-controller-name  = "aviController1"
 avi-importable-cloud = "NSXT https://my-importable-cloud.company.com"
 
-# OVA name should be something like "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890.ova"
+# TKGm OVA name should be something like "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890.ova"
 tkgm-ova-name   = "ubuntu-2022-kube-v1.22.0+vmware.1-tkg.1-1234567891234567890.ova"
 tkgm-ova-folder = "/Users/username/Downloads"

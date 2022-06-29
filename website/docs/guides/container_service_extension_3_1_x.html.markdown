@@ -11,7 +11,7 @@ Provides guidance on configuring VCD to be able to install Container Service Ext
 ## About
 
 This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v3.1.x, that
-will allow tenant users to deploy Kubernetes clusters on VCD using the UI. For that purpose, after completing the steps described below you
+will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using the UI. For that purpose, after completing the steps described below you
 will need also to **publish the Container UI Plugin** to the desired tenants and **run the CSE server** in your infrastructure.
 
 To know more about CSE v3.1.x, you can explore [the official website](https://vmware.github.io/container-service-extension/).
@@ -268,7 +268,7 @@ Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VM
 To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource with
 `catalog_item_metadata`.
 
-~> CSE is **not compatible** yet with PhotonOS
+~> Only TKGm OVAs are supported. CSE is **not compatible** yet with PhotonOS
 
 ```hcl
 resource "vcd_catalog_item" "tkgm_ova" {

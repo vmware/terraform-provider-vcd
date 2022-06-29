@@ -5,6 +5,10 @@
 #   http://vmware.github.io/vcd-cli/install.html
 #   https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse
 #
+# * This example allows to create TKGm clusters using VCD UI once applied. Read the guide present in
+#   https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_3_1_x for more
+#   information.
+#
 # * This HCL should be run as System administrator, as it involves creating provider elements such as Organizations,
 #   VDCs or Tier 0 Gateways.
 #
