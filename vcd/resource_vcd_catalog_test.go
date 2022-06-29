@@ -30,7 +30,7 @@ func TestAccVcdCatalog(t *testing.T) {
 		"Org":                    testConfig.VCD.Org,
 		"CatalogName":            TestAccVcdCatalogName,
 		"Description":            TestAccVcdCatalogDescription,
-		"StorageProfile":         testConfig.VCD.ProviderVdc.StorageProfile,
+		"StorageProfile":         testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"CatalogItemName":        "TestCatalogItem",
 		"CatalogItemNameFromUrl": "Test",
 		"DescriptionFromUrl":     "Test",
@@ -140,10 +140,10 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
-		"Vdc":            testConfig.VCD.Vdc,
+		"Vdc":            testConfig.Nsxt.Vdc,
 		"CatalogName":    TestAccVcdCatalogName,
 		"Description":    TestAccVcdCatalogDescription,
-		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"Tags":           "catalog",
 	}
 	testParamsNotEmpty(t, params)
@@ -242,7 +242,7 @@ func TestAccVcdCatalogPublishedToExternalOrg(t *testing.T) {
 
 	var params = StringMap{
 		"Org":                                testConfig.VCD.Org,
-		"Vdc":                                testConfig.VCD.Vdc,
+		"Vdc":                                testConfig.Nsxt.Vdc,
 		"CatalogName":                        TestAccVcdCatalogName,
 		"Description":                        TestAccVcdCatalogDescription,
 		"Tags":                               "catalog",
@@ -544,7 +544,7 @@ func TestAccVcdCatalogSharedAccess(t *testing.T) {
 
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
-		"Vdc":               testConfig.VCD.Vdc,
+		"Vdc":               testConfig.Nsxt.Vdc,
 		"TestName":          t.Name(),
 		"SharedCatalog":     t.Name(),
 		"SharedCatalogItem": "vapp-template",
@@ -634,9 +634,9 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 	}
 	fmt.Printf("# Created new Org '%s'\n", newAdminOrg.AdminOrg.Name)
 
-	existingVdc, err := existingOrg.GetAdminVDCByName(testConfig.VCD.Vdc, false)
+	existingVdc, err := existingOrg.GetAdminVDCByName(testConfig.Nsxt.Vdc, false)
 	if err != nil {
-		return govcd.AdminCatalog{}, nil, existingOrg, newAdminOrg, fmt.Errorf("error retrieving existing VDC '%s': %s", testConfig.VCD.Vdc, err)
+		return govcd.AdminCatalog{}, nil, existingOrg, newAdminOrg, fmt.Errorf("error retrieving existing VDC '%s': %s", testConfig.Nsxt.Vdc, err)
 
 	}
 	vdcConfiguration := &types.VdcConfiguration{
@@ -772,7 +772,7 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 func getVdcProviderVdcStorageProfileHref(client *VCDClient) string {
 	results, _ := client.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "providerVdcStorageProfile",
-		"filter": fmt.Sprintf("name==%s", testConfig.VCD.ProviderVdc.StorageProfile2),
+		"filter": fmt.Sprintf("name==%s", testConfig.VCD.NsxtProviderVdc.StorageProfile),
 	})
 	providerVdcStorageProfileHref := results.Results.ProviderVdcStorageProfileRecord[0].HREF
 	return providerVdcStorageProfileHref
