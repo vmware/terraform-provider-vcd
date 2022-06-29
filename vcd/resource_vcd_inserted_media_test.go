@@ -23,8 +23,8 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
-		"Vdc":              testConfig.VCD.Vdc,
-		"EdgeGateway":      testConfig.Networking.EdgeGateway,
+		"Vdc":              testConfig.Nsxt.Vdc,
+		"EdgeGateway":      testConfig.Nsxt.EdgeGateway,
 		"Catalog":          testSuiteCatalogName,
 		"CatalogItem":      testSuiteCatalogOVAItem,
 		"VappName":         vappNameForInsert,
@@ -77,9 +77,9 @@ func testAccCheckMediaInserted(itemName string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		vapp, err := vdc.GetVAppByName(vappNameForInsert, false)
@@ -115,9 +115,9 @@ func testAccCheckMediaEjected(itemName string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		vapp, err := vdc.GetVAppByName(vappNameForInsert, false)
@@ -148,9 +148,9 @@ func testAccResourcesDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		_, err = vdc.GetVAppByName(vappNameForInsert, false)
