@@ -39,7 +39,7 @@ func getAvailableVapp() (*govcd.VApp, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no vApp found in VDC %s", testConfig.VCD.Vdc)
+	return nil, fmt.Errorf("no vApp found in VDC %s", testConfig.Nsxt.Vdc)
 }
 
 // TestAccVcdVappDS tests a vApp data source if a vApp is found in the VDC
@@ -60,7 +60,7 @@ func TestAccVcdVappDS(t *testing.T) {
 
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
-		"VDC":      testConfig.VCD.Vdc,
+		"VDC":      testConfig.Nsxt.Vdc,
 		"VappName": vapp.VApp.Name,
 		"FuncName": "TestVappDS",
 		"Tags":     "vapp",
