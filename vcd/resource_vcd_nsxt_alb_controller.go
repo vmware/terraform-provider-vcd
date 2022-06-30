@@ -55,7 +55,7 @@ func resourceVcdAlbController() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"BASIC", "ENTERPRISE"}, false),
-				Description:  "NSX-T ALB License type. One of 'BASIC', 'ENTERPRISE'",
+				Description:  "NSX-T ALB License type. One of 'BASIC', 'ENTERPRISE'. Must not be used from VCD 10.4.0 onwards",
 			},
 			"version": {
 				Type:        schema.TypeString,

@@ -29,6 +29,11 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "alb nsxt",
 	}
+	vcdClient := createTemporaryVCDConnection(true)
+	// From API v37.0 onwards, license_type is no longer used
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		params["LicenseType"] = "license_type = \"ENTERPRISE\""
+	}
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbImportableCloud, params)
@@ -68,7 +73,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 `
 const testAccVcdNsxtAlbImportableCloud = testAccVcdNsxtAlbImportableCloudPrereqs + `

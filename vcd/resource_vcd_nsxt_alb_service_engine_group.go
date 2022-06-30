@@ -87,6 +87,13 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 				Default:     false,
 				Description: "Boolean value that shows if sync should be performed on every refresh",
 			},
+			"supported_feature_set": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Required: 	 false,
+				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
+				Description: "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
+			},
 		},
 	}
 }
@@ -230,6 +237,10 @@ func getNsxtAlbServiceEngineGroupType(d *schema.ResourceData, impServiceEngineGr
 			},
 		},
 		ReservationType: d.Get("reservation_model").(string),
+	}
+
+	if supportedFeatureSet, ok := d.GetOk("supported_feature_set"); ok {
+		albControllerType.SupportedFeatureSet = takeStringPointer(supportedFeatureSet.(string))
 	}
 
 	return albControllerType
