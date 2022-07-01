@@ -32,6 +32,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "nsxt alb",
 	}
+	isVersionLessThan37 := changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbServiceEngineStep1, params)
@@ -76,6 +77,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "ha_mode"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "overallocated", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "false"),
+					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_service_engine_group.first", false, isVersionLessThan37),
 				),
 			},
 			{
@@ -83,10 +85,14 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     "first-se",
-				// Because the Importable Service Engine Group API does not list objects once they are consumed
-				// by Service Engine Group - it is impossible to lookup name when having only ID. Therefore, on import
-				// this field remains empty.
-				ImportStateVerifyIgnore: []string{"importable_service_engine_group_name"},
+				// Ignoring the following attributes:
+				// * importable_service_engine_group_name:
+				//   Because the Importable Service Engine Group API does not list objects once they are consumed
+				//   by Service Engine Group - it is impossible to lookup name when having only ID. Therefore, on import
+				//   this field remains empty.
+				// * supported_feature_set:
+				//   Versions below 37.0 do not have this attribute
+				ImportStateVerifyIgnore: []string{"importable_service_engine_group_name" , "supported_feature_set"},
 			},
 			{
 				Config: configText2,
@@ -103,6 +109,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "ha_mode"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "overallocated", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "false"),
+					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_service_engine_group.first", false, isVersionLessThan37),
 				),
 			},
 			{

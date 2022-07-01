@@ -36,7 +36,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-step2"
-	changeLicenseTypeIfVcdVersionIsHigherThan37(params, true) // Change to LicenseType Basic
+	changeSupportedFeatureSetIfVersionIsLessThan37(params, true) // Change to LicenseType Basic
 	configText2 := templateFill(testAccVcdNsxtAlbControllerStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 

@@ -32,7 +32,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "nsxt alb",
 	}
-	changeLicenseTypeIfVcdVersionIsHigherThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbCloud, params)

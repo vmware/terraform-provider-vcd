@@ -35,6 +35,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	isApiLessThanVersion37 := changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -44,6 +45,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step2"
 	params["IsActive"] = "false"
+	changeSupportedFeatureSetIfVersionIsLessThan37(params, true)
 	configText2 := templateFill(testAccVcdNsxtAlbGeneralSettings, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
@@ -75,6 +77,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "192.168.255.1/25"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_settings.test", false, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -83,6 +86,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "false"),
+					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_settings.test", true, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -90,7 +94,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"}, // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 			// This step will "recreate" the resource because service_network_specification requires a rebuild
 			{
@@ -106,7 +110,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"},  // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 		},
 	})

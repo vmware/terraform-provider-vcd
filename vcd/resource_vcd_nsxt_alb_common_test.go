@@ -64,7 +64,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-	changeLicenseTypeIfVcdVersionIsHigherThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -145,7 +145,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-	changeLicenseTypeIfVcdVersionIsHigherThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -471,8 +471,9 @@ data "vcd_nsxt_alb_pool" "test" {
 }
 `
 
-// Since v37.0, license_type is no longer used
-func changeLicenseTypeIfVcdVersionIsHigherThan37(params StringMap, isBasicOrStandard bool) {
+// Since v37.0, license_type is no longer used. This function changes Supported Feature Set for License Type if version is lower,
+// then returns whether it made the change or not (the version is lower or not).
+func changeSupportedFeatureSetIfVersionIsLessThan37(params StringMap, isBasicOrStandard bool) bool {
 	// We choose between premium features or standard ones for SupportedFeatureSet, or their equivalent in the LicenseType
 	licenseType := "ENTERPRISE"
 	supportedFeatureSet := "PREMIUM"
@@ -490,5 +491,22 @@ func changeLicenseTypeIfVcdVersionIsHigherThan37(params StringMap, isBasicOrStan
 	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
 		params["LicenseType"] = fmt.Sprintf("license_type = \"%s\"", licenseType)
 		params["SupportedFeatureSet"] = " "
+		return true
 	}
+	return false
+}
+
+func checkLicenseTypeOrSupportedFeatureSet(resourceName string, isBasicOrStandard, isVersionLessThan37 bool) resource.TestCheckFunc {
+	licenseType := "ENTERPRISE"
+	supportedFeatureSet := "PREMIUM"
+	if isBasicOrStandard {
+		licenseType = "BASIC"
+		supportedFeatureSet = "STANDARD"
+	}
+
+	if isVersionLessThan37 {
+		return resource.TestCheckResourceAttr(resourceName, "license_type", licenseType)
+	}
+	return resource.TestCheckResourceAttr(resourceName, "supported_feature_set", supportedFeatureSet)
+
 }

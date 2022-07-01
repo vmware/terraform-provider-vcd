@@ -257,4 +257,7 @@ func setNsxtAlbServiceEngineGroupData(d *schema.ResourceData, albController *typ
 	dSet(d, "deployed_virtual_services", albController.NumDeployedVirtualServices)
 	dSet(d, "ha_mode", albController.HaMode)
 	dSet(d, "overallocated", albController.OverAllocated)
+	if albController.SupportedFeatureSet != nil {
+		dSet(d, "supported_feature_set", *albController.SupportedFeatureSet)
+	}
 }
