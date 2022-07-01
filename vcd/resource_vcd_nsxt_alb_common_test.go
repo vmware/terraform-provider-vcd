@@ -472,17 +472,20 @@ data "vcd_nsxt_alb_pool" "test" {
 `
 
 // Since v37.0, license_type is no longer used
-func changeLicenseTypeIfVcdVersionIsHigherThan37(params StringMap, isStandard bool) {
+func changeLicenseTypeIfVcdVersionIsHigherThan37(params StringMap, isBasicOrStandard bool) {
+	// We choose between premium features or standard ones for SupportedFeatureSet, or their equivalent in the LicenseType
 	licenseType := "ENTERPRISE"
 	supportedFeatureSet := "PREMIUM"
-	if isStandard {
+	if isBasicOrStandard {
 		licenseType = "BASIC"
 		supportedFeatureSet = "STANDARD"
 	}
 
+	// Assume we're on newer versions of API, >= 37.0
 	params["LicenseType"] = " "
 	params["SupportedFeatureSet"] = fmt.Sprintf("supported_feature_set = \"%s\"", supportedFeatureSet)
 
+	// If not, transform the fields
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
 		params["LicenseType"] = fmt.Sprintf("license_type = \"%s\"", licenseType)

@@ -131,6 +131,7 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
