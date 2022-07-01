@@ -32,6 +32,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "nsxt alb",
 	}
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbCloud, params)
@@ -107,7 +108,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cld" {

@@ -63,7 +63,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -144,6 +144,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -283,7 +284,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -300,6 +301,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "DEDICATED"
+  {{.SupportedFeatureSet}}
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
@@ -368,6 +370,8 @@ resource "vcd_nsxt_alb_settings" "test" {
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
   is_active       = true
 
+  {{.SupportedFeatureSet}}
+
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
 }
@@ -387,7 +391,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -404,6 +408,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "DEDICATED"
+  {{.SupportedFeatureSet}}
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {

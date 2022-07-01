@@ -29,12 +29,7 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "alb nsxt",
 	}
-	vcdClient := createTemporaryVCDConnection(true)
-	// From API v37.0 onwards, license_type is no longer used
-	params["LicenseType"] = ""
-	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
-		params["LicenseType"] = "license_type = \"ENTERPRISE\""
-	}
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbImportableCloud, params)
@@ -65,6 +60,18 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
+}
+
+// Since v37.0, license_type is no longer used
+func changeLicenseTypeIfVcdVersionIsHigherThan37(params StringMap) {
+	params["LicenseType"] = " "
+	params["SupportedFeatureSet"] = "supported_feature_set = \"PREMIUM\""
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		params["LicenseType"] = "license_type = \"ENTERPRISE\""
+		params["SupportedFeatureSet"] = " "
+	}
 }
 
 const testAccVcdNsxtAlbImportableCloudPrereqs = `
