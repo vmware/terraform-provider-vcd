@@ -4,6 +4,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -63,7 +64,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-	changeLicenseTypeIfVcdVersionIsHigherThan37(params)
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -144,7 +145,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-	changeLicenseTypeIfVcdVersionIsHigherThan37(params)
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -264,6 +265,7 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
   is_active       = true
+  {{.SupportedFeatureSet}}
 
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
@@ -369,7 +371,6 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
   is_active       = true
-
   {{.SupportedFeatureSet}}
 
   # This dependency is required to make sure that provider part of operations is done
@@ -469,3 +470,22 @@ data "vcd_nsxt_alb_pool" "test" {
   name            = vcd_nsxt_alb_pool.test.name
 }
 `
+
+// Since v37.0, license_type is no longer used
+func changeLicenseTypeIfVcdVersionIsHigherThan37(params StringMap, isStandard bool) {
+	licenseType := "ENTERPRISE"
+	supportedFeatureSet := "PREMIUM"
+	if isStandard {
+		licenseType = "BASIC"
+		supportedFeatureSet = "STANDARD"
+	}
+
+	params["LicenseType"] = " "
+	params["SupportedFeatureSet"] = fmt.Sprintf("supported_feature_set = \"%s\"", supportedFeatureSet)
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		params["LicenseType"] = fmt.Sprintf("license_type = \"%s\"", licenseType)
+		params["SupportedFeatureSet"] = " "
+	}
+}

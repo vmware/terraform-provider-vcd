@@ -36,6 +36,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-step2"
+	changeLicenseTypeIfVcdVersionIsHigherThan37(params, true) // Change to LicenseType Basic
 	configText2 := templateFill(testAccVcdNsxtAlbControllerStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
@@ -102,7 +103,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 `
 
@@ -112,7 +113,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "BASIC"
+  {{.LicenseType}}
 }
 `
 
@@ -123,7 +124,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "BASIC"
+  {{.LicenseType}}
 }
 
 data "vcd_nsxt_alb_controller" "first" {

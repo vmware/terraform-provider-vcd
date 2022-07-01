@@ -164,7 +164,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -183,6 +183,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "DEDICATED"
+  {{.SupportedFeatureSet}}
 }
 `
 
@@ -193,6 +194,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "SHARED"
+  {{.SupportedFeatureSet}}
 }
 `
 
@@ -204,6 +206,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "SHARED"
+  {{.SupportedFeatureSet}}
 }
 
 data "vcd_nsxt_alb_service_engine_group" "first" {
@@ -218,6 +221,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "SHARED"
+  {{.SupportedFeatureSet}}
   
   # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
   # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
@@ -234,6 +238,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "SHARED"
+  {{.SupportedFeatureSet}}
   
   # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
   # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
