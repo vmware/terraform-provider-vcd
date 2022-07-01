@@ -90,7 +90,7 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 			"supported_feature_set": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Required:     false,
+				Required:     false, // It should be required but for compatibility reasons it is not
 				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
 				Description:  "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
 			},

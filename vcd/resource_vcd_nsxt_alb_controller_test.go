@@ -30,6 +30,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"Tags":               "nsxt alb",
 	}
+	isVersionLessThan37 := changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbController, params)
@@ -61,7 +62,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", "first alb controller"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "license_type", "ENTERPRISE"),
+					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_controller.first", false, isVersionLessThan37),
 				),
 			},
 			{
@@ -72,7 +73,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "license_type", "BASIC"),
+					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_controller.first", true, isVersionLessThan37),
 				),
 			},
 			{
