@@ -31,6 +31,7 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 	}
 	vcdClient := createTemporaryVCDConnection(true)
 	// From API v37.0 onwards, license_type is no longer used
+	params["LicenseType"] = ""
 	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
 		params["LicenseType"] = "license_type = \"ENTERPRISE\""
 	}
