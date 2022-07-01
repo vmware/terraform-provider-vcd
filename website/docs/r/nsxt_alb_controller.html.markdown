@@ -44,8 +44,9 @@ The following arguments are supported:
 * `url` - (Required) The URL of ALB Controller
 * `username` - (Required) The username for ALB Controller
 * `password` - (Required) The password for ALB Controller. Password will not be refreshed.
-* `license_type` - (Required) License type of ALB Controller (`ENTERPRISE` or `BASIC`)
+* `license_type` - (Optional) License type of ALB Controller (`ENTERPRISE` or `BASIC`)
 
+~> The attribute `license_type` must not be used in VCD 10.4+, it is replaced by [nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group) `supported_feature_set`.
 
 ## Attribute Reference
 

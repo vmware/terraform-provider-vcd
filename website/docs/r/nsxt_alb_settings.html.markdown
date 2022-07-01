@@ -49,6 +49,9 @@ The following arguments are supported:
 * `service_network_specification` - (Optional) Gateway CIDR format which will be used by Load Balancer service. All the
   load balancer service engines associated with the Service Engine Group will be attached to this network. The subnet
   prefix length must be 25. If nothing is set, the **default is 192.168.255.125/25**. This field cannot be updated
+* `supported_feature_set` - (Optional; *v3.7+*) Feature set of this Edge Gateway if ALB is enabled (`STANDARD` or `PREMIUM`)
+
+~> The attribute `supported_feature_set` must not be used in VCD versions lower than 10.4, it replaces by [nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller) `license_type`.
 
 ## Importing
 
