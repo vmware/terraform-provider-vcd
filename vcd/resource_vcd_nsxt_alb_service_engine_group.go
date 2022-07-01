@@ -88,11 +88,11 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 				Description: "Boolean value that shows if sync should be performed on every refresh",
 			},
 			"supported_feature_set": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Required: 	 false,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Required:     false,
 				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
-				Description: "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
+				Description:  "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
 			},
 		},
 	}

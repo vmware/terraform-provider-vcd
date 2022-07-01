@@ -92,7 +92,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 				//   this field remains empty.
 				// * supported_feature_set:
 				//   Versions below 37.0 do not have this attribute
-				ImportStateVerifyIgnore: []string{"importable_service_engine_group_name" , "supported_feature_set"},
+				ImportStateVerifyIgnore: []string{"importable_service_engine_group_name", "supported_feature_set"},
 			},
 			{
 				Config: configText2,

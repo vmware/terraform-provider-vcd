@@ -62,8 +62,6 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-
-
 const testAccVcdNsxtAlbImportableCloudPrereqs = `
 resource "vcd_nsxt_alb_controller" "first" {
   name         = "{{.ControllerName}}"

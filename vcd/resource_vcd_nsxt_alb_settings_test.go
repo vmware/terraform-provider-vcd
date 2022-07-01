@@ -110,7 +110,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"},  // Ignore supported_feature_set as versions <37.0 don't have it
+				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"}, // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 		},
 	})
