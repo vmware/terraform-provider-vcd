@@ -33,22 +33,18 @@ func datasourceVcdDynamicSecurityGroup() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "dynamic security group description",
+				Description: "Dynamic Security Group description",
 			},
 			"criteria": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Up to three criteria to be used to define the dynamic security group",
+				Description: "Criteria to be used to define the Dynamic Security Group",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"rule": {
 							Type:        schema.TypeSet,
 							Description: "Up to 4 rules can be used to define single criteria",
-							// Up to 4 rules can be used to define single criteria as per documentation, but API
-							// error is human readable and this might change in future so not enforcing max of 4
-							// rules
-							// MaxItems:    4,
-							Optional: true,
+							Computed:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"type": {
@@ -88,7 +84,7 @@ func datasourceVcdDynamicSecurityGroupRead(ctx context.Context, d *schema.Resour
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[nsxt dynamic security group read] error retrieving Org: %s", err)
+		return diag.Errorf("[nsxt dynamic security group data source read] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(vdcGroupId)
@@ -98,23 +94,23 @@ func datasourceVcdDynamicSecurityGroupRead(ctx context.Context, d *schema.Resour
 
 	securityGroup, err := vdcGroup.GetNsxtFirewallGroupByName(d.Get("name").(string), types.FirewallGroupTypeVmCriteria)
 	if err != nil {
-		return diag.Errorf("[nsxt dynamic security group read] error getting NSX-T dynamic security group: %s", err)
+		return diag.Errorf("[nsxt dynamic security group data source read] error getting NSX-T dynamic security group: %s", err)
 	}
 
 	err = setNsxtDynamicSecurityGroupData(d, securityGroup.NsxtFirewallGroup)
 	if err != nil {
-		return diag.Errorf("[nsxt security group read] error setting NSX-T Security Group: %s", err)
+		return diag.Errorf("[nsxt security group data source read] error setting NSX-T Security Group: %s", err)
 	}
 
 	// A separate GET call is required to get all associated VMs
 	associatedVms, err := securityGroup.GetAssociatedVms()
 	if err != nil {
-		return diag.Errorf("[nsxt dynamic security group read] error getting associated VMs for Security Group '%s': %s", securityGroup.NsxtFirewallGroup.Name, err)
+		return diag.Errorf("[nsxt dynamic security group data source read] error getting associated VMs for Security Group '%s': %s", securityGroup.NsxtFirewallGroup.Name, err)
 	}
 
 	err = setNsxtSecurityGroupAssociatedVmsData(d, associatedVms)
 	if err != nil {
-		return diag.Errorf("[nsxt dynamic security group read] error getting associated VMs for Security Group '%s': %s", securityGroup.NsxtFirewallGroup.Name, err)
+		return diag.Errorf("[nsxt dynamic security group data source read] error getting associated VMs for Security Group '%s': %s", securityGroup.NsxtFirewallGroup.Name, err)
 	}
 
 	d.SetId(securityGroup.NsxtFirewallGroup.ID)

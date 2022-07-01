@@ -177,10 +177,6 @@ Each member VM contains following attributes:
 * `vapp_id` - Parent vApp ID for member VM (empty for standalone VMs)
 * `vapp_name` - Parent vApp Name for member VM (empty for standalone VMs)
 
-~> There may be cases where Org Networks and Security Groups are already created, but
-not all VMs are already created and not shown in this structure. Additional `depends_on` can ensure
-that Dynamic Security Group is created only after all networks and VMs are there.
-
 ## Importing
 
 ~> The current implementation of Terraform import can only import resources into the state.

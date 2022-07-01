@@ -47,7 +47,7 @@ func resourceVcdDynamicSecurityGroup() *schema.Resource {
 			},
 			"criteria": {
 				Type:        schema.TypeSet,
-				Description: "Up to 3 criteria to be used to define the dynamic security group",
+				Description: "Up to 3 criteria to be used to define the Dynamic Security Group",
 				// Up to 3 criteria can be defined as per current documentation, but API errors are
 				// human readable so not hard-enforcing it as these limits may change in future VCD
 				// versions
