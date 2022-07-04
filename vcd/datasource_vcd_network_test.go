@@ -225,6 +225,7 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 	postTestChecks(t)
 }
 
+// NSX-V based test
 func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 	preTestChecks(t)
 	// This test requires access to the vCD before filling templates

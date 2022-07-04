@@ -66,20 +66,32 @@ func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 		gateway:               "192.168.2.1",
 		startStaticIpAddress1: "192.168.2.2",
 		endStaticIpAddress1:   "192.168.2.50",
+		startStaticIpAddress2: " ",
+		endStaticIpAddress2:   " ",
+		interfaceName:         " ",
+		startDhcpIpAddress:    " ",
+		endDhcpIpAddress:      " ",
 		configText:            testAccCheckVcdNetworkIsolatedStatic1,
 		resourceName:          "vcd_network_isolated",
 		metadataKey:           "key1",
 		metadataValue:         "value1",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	var updateDef = networkDef{
 		name:                  isolatedStaticNetwork1 + "-update",
 		gateway:               "192.168.2.1",
 		startStaticIpAddress1: "192.168.2.5",
 		endStaticIpAddress1:   "192.168.2.45",
+		startStaticIpAddress2: " ",
+		endStaticIpAddress2:   " ",
+		interfaceName:         " ",
+		startDhcpIpAddress:    " ",
+		endDhcpIpAddress:      " ",
 		configText:            testAccCheckVcdNetworkIsolatedStatic1,
 		resourceName:          "vcd_network_isolated",
 		metadataKey:           "key3",
 		metadataValue:         "value3",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 
 	runTest(def, updateDef, t)
@@ -95,8 +107,12 @@ func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
 		endStaticIpAddress1:   "192.168.2.50",
 		startStaticIpAddress2: "192.168.2.52",
 		endStaticIpAddress2:   "192.168.2.100",
+		interfaceName:         " ",
+		startDhcpIpAddress:    " ",
+		endDhcpIpAddress:      " ",
 		configText:            testAccCheckVcdNetworkIsolatedStatic2,
 		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	var updateDef = networkDef{
 		name:                  isolatedStaticNetwork2 + "-update",
@@ -105,8 +121,12 @@ func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
 		endStaticIpAddress1:   "192.168.2.45",
 		startStaticIpAddress2: "192.168.2.53",
 		endStaticIpAddress2:   "192.168.2.99",
+		interfaceName:         " ",
+		startDhcpIpAddress:    " ",
+		endDhcpIpAddress:      " ",
 		configText:            testAccCheckVcdNetworkIsolatedStatic2,
 		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	runTest(def, updateDef, t)
 	postTestChecks(t)
@@ -115,24 +135,34 @@ func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
 func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
 	preTestChecks(t)
 	var def = networkDef{
-		name:               isolatedDhcpNetwork,
-		gateway:            "192.168.2.1",
-		startDhcpIpAddress: "192.168.2.51",
-		endDhcpIpAddress:   "192.168.2.100",
-		defaultLeaseTime:   4000,
-		maxLeaseTime:       86400,
-		configText:         testAccCheckVcdNetworkIsolatedDhcp,
-		resourceName:       "vcd_network_isolated",
+		name:                  isolatedDhcpNetwork,
+		gateway:               "192.168.2.1",
+		startDhcpIpAddress:    "192.168.2.51",
+		endDhcpIpAddress:      "192.168.2.100",
+		startStaticIpAddress1: " ",
+		endStaticIpAddress1:   " ",
+		startStaticIpAddress2: " ",
+		endStaticIpAddress2:   " ",
+		interfaceName:         " ",
+		defaultLeaseTime:      4000,
+		maxLeaseTime:          86400,
+		configText:            testAccCheckVcdNetworkIsolatedDhcp,
+		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	var updateDef = networkDef{
-		name:               isolatedDhcpNetwork + "-update",
-		gateway:            "192.168.2.1",
-		startDhcpIpAddress: "192.168.2.53",
-		endDhcpIpAddress:   "192.168.2.99",
-		defaultLeaseTime:   8000,
-		maxLeaseTime:       604800,
-		configText:         testAccCheckVcdNetworkIsolatedDhcp,
-		resourceName:       "vcd_network_isolated",
+		name:                  isolatedDhcpNetwork + "-update",
+		gateway:               "192.168.2.1",
+		startDhcpIpAddress:    "192.168.2.53",
+		endDhcpIpAddress:      "192.168.2.99",
+		startStaticIpAddress2: " ",
+		endStaticIpAddress2:   " ",
+		interfaceName:         " ",
+		defaultLeaseTime:      8000,
+		maxLeaseTime:          604800,
+		configText:            testAccCheckVcdNetworkIsolatedDhcp,
+		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	runTest(def, updateDef, t)
 	postTestChecks(t)
@@ -147,8 +177,12 @@ func TestAccVcdNetworkIsolatedMixed1(t *testing.T) {
 		endStaticIpAddress1:   "192.168.2.50",
 		startDhcpIpAddress:    "192.168.2.51",
 		endDhcpIpAddress:      "192.168.2.100",
+		startStaticIpAddress2: " ",
+		endStaticIpAddress2:   " ",
+		interfaceName:         " ",
 		configText:            testAccCheckVcdNetworkIsolatedMixed1,
 		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	var updateDef = networkDef{
 		name:                  isolatedMixedNetwork1 + "-update",
@@ -157,8 +191,12 @@ func TestAccVcdNetworkIsolatedMixed1(t *testing.T) {
 		endStaticIpAddress1:   "192.168.2.45",
 		startDhcpIpAddress:    "192.168.2.53",
 		endDhcpIpAddress:      "192.168.2.99",
+		startStaticIpAddress2: " ",
+		endStaticIpAddress2:   " ",
+		interfaceName:         " ",
 		configText:            testAccCheckVcdNetworkIsolatedMixed1,
 		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 
 	runTest(def, updateDef, t)
@@ -175,8 +213,10 @@ func TestAccVcdNetworkIsolatedMixed2(t *testing.T) {
 		endStaticIpAddress2:   "192.168.2.100",
 		startDhcpIpAddress:    "192.168.2.151",
 		endDhcpIpAddress:      "192.168.2.200",
+		interfaceName:         " ",
 		configText:            testAccCheckVcdNetworkIsolatedMixed2,
 		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	var updateDef = networkDef{
 		name:                  isolatedMixedNetwork2 + "-update",
@@ -187,8 +227,10 @@ func TestAccVcdNetworkIsolatedMixed2(t *testing.T) {
 		endStaticIpAddress2:   "192.168.2.99",
 		startDhcpIpAddress:    "192.168.2.153",
 		endDhcpIpAddress:      "192.168.2.198",
+		interfaceName:         " ",
 		configText:            testAccCheckVcdNetworkIsolatedMixed2,
 		resourceName:          "vcd_network_isolated",
+		externalNetwork:       testConfig.Networking.ExternalNetwork,
 	}
 	runTest(def, updateDef, t)
 	postTestChecks(t)
@@ -532,6 +574,9 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		"MetadataKey2":          "key2",
 		"MetadataValue2":        "value2",
 	}
+
+	testParamsNotEmpty(t, params)
+
 	var network govcd.OrgVDCNetwork
 	configText := templateFill(def.configText, params)
 
@@ -951,21 +996,21 @@ func checkNetWorkIpGroups(resourceDef string, def networkDef) resource.TestCheck
 
 		var checks []resource.TestCheckFunc
 
-		if def.startStaticIpAddress1 != "" {
+		if def.startStaticIpAddress1 != "" && def.startStaticIpAddress1 != " " {
 			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
 				"start_address": def.startStaticIpAddress1,
 				"end_address":   def.endStaticIpAddress1,
 			})
 			checks = append(checks, f)
 		}
-		if def.startStaticIpAddress2 != "" {
+		if def.startStaticIpAddress2 != "" && def.startStaticIpAddress2 != " " {
 			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
 				"start_address": def.startStaticIpAddress2,
 				"end_address":   def.endStaticIpAddress2,
 			})
 			checks = append(checks, f)
 		}
-		if def.startDhcpIpAddress != "" {
+		if def.startDhcpIpAddress != "" && def.startDhcpIpAddress != " " {
 
 			// For routed network tests - when `max_lease_time` > `default_lease_time` ->  `default_lease_time` == `max_lease_time`
 			defaultLeaseTimeValue := def.defaultLeaseTime
