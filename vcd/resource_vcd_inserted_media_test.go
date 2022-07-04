@@ -245,7 +245,7 @@ func TestAccVcdMediaLockTest(t *testing.T) {
 		"CatalogItem":      testConfig.VCD.Catalog.CatalogItem,
 		"VappName":         t.Name(),
 		"VmName":           t.Name(),
-		"CatalogMediaName": testConfig.Media.MediaName,
+		"CatalogMediaName": t.Name(),
 		"Description":      t.Name() + "_description",
 		"MediaPath":        testConfig.Media.MediaPath,
 		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
