@@ -598,7 +598,7 @@ func TestAccVcdNsxtEdgeGatewayVdcUpdateFails(t *testing.T) {
 		"Name":                      "TestAccVcdVdcGroupResource",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 
 		"Tags": "vdcGroup gateway nsxt",
 	}
