@@ -51,6 +51,9 @@ func getAvailableNetworks() error {
 	if err != nil {
 		return fmt.Errorf("org not found : %s", err)
 	}
+	if testConfig.VCD.Vdc == "" {
+		return fmt.Errorf("[getAvailableNetworks] no VCD.Vdc found in configuration")
+	}
 	vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
 	if err != nil {
 		return fmt.Errorf("vdc not found : %s", err)
@@ -98,6 +101,7 @@ func getAvailableNetworks() error {
 	return nil
 }
 
+// NSX-V based test
 func TestAccVcdNetworkDirectDS(t *testing.T) {
 	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
@@ -109,7 +113,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 
 	err := getAvailableNetworks()
 	if err != nil {
-		t.Skip("error getting available networks")
+		t.Skipf("error getting available networks: %s", err)
 		return
 	}
 	if len(availableNetworks) == 0 {
@@ -165,6 +169,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 	postTestChecks(t)
 }
 
+// NSX-V based test
 func TestAccVcdNetworkRoutedDS(t *testing.T) {
 	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
