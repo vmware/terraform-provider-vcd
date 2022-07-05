@@ -47,7 +47,7 @@ func resourceVcdDynamicSecurityGroup() *schema.Resource {
 			},
 			"criteria": {
 				Type:        schema.TypeSet,
-				Description: "Up to 3 criteria to be used to define the Dynamic Security Group",
+				Description: "Up to 3 criteria to be used to define the Dynamic Security Group (VCD 10.2, 10.3)",
 				// Up to 3 criteria can be defined as per current documentation, but API errors are
 				// human readable so not hard-enforcing it as these limits may change in future VCD
 				// versions
@@ -69,7 +69,7 @@ var criteria = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"rule": {
 			Type:        schema.TypeSet,
-			Description: "Up to 4 rules can be used to define single criteria",
+			Description: "Up to 4 rules can be used to define single criteria (VCD 10.2, 10.3)",
 			// Up to 4 rules can be used to define single criteria as per documentation, but API
 			// error is human readable and this might change in future so not enforcing max of 4
 			// rules
@@ -318,12 +318,10 @@ func setNsxtDynamicSecurityGroupData(d *schema.ResourceData, fw *types.NsxtFirew
 
 				criteriaRuleSlice[ruleIndex] = criteriaRuleMap
 			}
-
 			ruleSet := schema.NewSet(schema.HashResource(criteriaRule), criteriaRuleSlice)
 			criteriaMap["rule"] = ruleSet
 
 			criteriaSlice[criteriaIndex] = criteriaMap
-
 		}
 
 		criteriaSet := schema.NewSet(schema.HashResource(criteria), criteriaSlice)

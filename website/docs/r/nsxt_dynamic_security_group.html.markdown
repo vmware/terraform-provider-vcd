@@ -3,21 +3,21 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_dynamic_security_group"
 sidebar_current: "docs-vcd-resource-nsxt-dynamic-security-group"
 description: |-
-  Provides a resource to manage NSX-T Dynamic Security Groups. Dynamic Security Groups group virtual
-  machines based on specific criteria (VM Names or Security tags) to which distributed firewall rules
-  applies.
+  Provides a resource to manage NSX-T Dynamic Security Groups. Dynamic Security Groups group Virtual
+  Machines based on specific criteria (VM Names or Security tags) to which Distributed Firewall Rules
+  apply.
 ---
 
 # vcd\_nsxt\_dynamic\_security\_group
 
 Supported in provider *v3.7+* and VCD 10.3+ with NSX-T backed VDC Groups.
 
-Provides a resource to manage NSX-T Dynamic Security Groups. Dynamic Security Groups group virtual
-machines based on specific criteria (VM Names or Security tags) to which distributed firewall rules
-applies.
+Provides a resource to manage NSX-T Dynamic Security Groups. Dynamic Security Groups group Virtual
+Machines based on specific criteria (VM Names or Security tags) to which Distributed Firewall Rules
+apply.
 
 -> Dynamic Security Groups can be used in both - Edge Gateway Firewall Rules (`vcd_nsxt_firewall`)
-and Distributed firewall rules (`vcd_nsxt_distributed_firewall`), however **it only works when Edge
+and Distributed Firewall Rules (`vcd_nsxt_distributed_firewall`), however **it only works when Edge
 Gateway belongs to a VDC Group**.
 
 ## Example Usage 1 (Dynamic Security Group with 3 criteria and 4 rules in each criteria)

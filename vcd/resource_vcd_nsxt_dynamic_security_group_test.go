@@ -599,7 +599,6 @@ resource "vcd_security_tag" "tag2" {
   vm_ids = [vcd_vm.emptyVM.id, vcd_vapp_vm.emptyVM.id]
 }
 
-
 # This group should match single tag and contain 1 VM
 resource "vcd_nsxt_dynamic_security_group" "group1" {
   org          = "{{.Org}}"

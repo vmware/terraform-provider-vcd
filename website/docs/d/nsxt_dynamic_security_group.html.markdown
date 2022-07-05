@@ -3,18 +3,18 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_dynamic_security_group"
 sidebar_current: "docs-vcd-data-source-nsxt-dynamic-security-group"
 description: |-
-  Provides a data source to read NSX-T Dynamic Security Groups. Dynamic Security Groups group virtual
-  machines based on specific criteria (VM Names or Security tags) to which distributed firewall rules
-  applies.
+  Provides a data source to read NSX-T Dynamic Security Groups. Dynamic Security Groups group Virtual
+  Machines based on specific criteria (VM Names or Security tags) to which Distributed Firewall Rules
+  apply.
 ---
 
 # vcd\_nsxt\_dynamic\_security\_group
 
 Supported in provider *v3.7+* and VCD 10.3+ with NSX-T backed VDC Groups.
 
-Provides a data source to read NSX-T Dynamic Security Groups. Dynamic Security Groups group virtual
-machines based on specific criteria (VM Names or Security tags) to which distributed firewall rules
-applies.
+Provides a data source to read NSX-T Dynamic Security Groups. Dynamic Security Groups group Virtual
+Machines based on specific criteria (VM Names or Security tags) to which Distributed Firewall Rules
+apply.
 
 ## Example Usage 1 (Existing Dynamic Security Group lookup)
 
