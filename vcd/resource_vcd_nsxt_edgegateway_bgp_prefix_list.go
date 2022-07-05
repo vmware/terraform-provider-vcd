@@ -282,7 +282,6 @@ func getEdgeBgpIpPrefixListType(d *schema.ResourceData) *types.EdgeBgpIpPrefixLi
 	ipPrefixSlice := make([]types.EdgeBgpConfigPrefixListPrefixes, len(ipPrefixSet.List()))
 	for prefixIndex, prefix := range ipPrefixSet.List() {
 		ipPrefixMap := prefix.(map[string]interface{})
-
 		ipPrefixSlice[prefixIndex] = types.EdgeBgpConfigPrefixListPrefixes{
 			Network:            ipPrefixMap["network"].(string),
 			Action:             ipPrefixMap["action"].(string),
@@ -290,7 +289,6 @@ func getEdgeBgpIpPrefixListType(d *schema.ResourceData) *types.EdgeBgpIpPrefixLi
 			LessThanEqualTo:    ipPrefixMap["less_than_or_equal_to"].(int),
 		}
 	}
-
 	bgpConfig.Prefixes = ipPrefixSlice
 
 	return bgpConfig
@@ -302,9 +300,7 @@ func setEdgeBgpIpPrefixListData(d *schema.ResourceData, bgpConfig *types.EdgeBgp
 
 	if len(bgpConfig.Prefixes) > 0 {
 		ipPrefixSlice := make([]interface{}, len(bgpConfig.Prefixes))
-
 		for prefixIndex, prefix := range bgpConfig.Prefixes {
-
 			ipPrefixMap := make(map[string]interface{})
 			ipPrefixMap["network"] = prefix.Network
 			ipPrefixMap["action"] = prefix.Action
