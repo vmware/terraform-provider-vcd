@@ -27,7 +27,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VMName1":     netVmName1,
@@ -39,12 +39,12 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 
 		"VdcName":                   testAccVcdVdc,
 		"AllocationModel":           "Flex",
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                 "10240",
 		"Reserved":                  "0",
 		"Limit":                     "10240",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
@@ -59,10 +59,6 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 		"MemoryOverheadValueForAssert": "false",
 	}
 	testParamsNotEmpty(t, params)
-
-	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
-		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
-	}
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
