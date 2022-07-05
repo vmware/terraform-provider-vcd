@@ -26,11 +26,6 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}
 
-	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
-		return
-	}
-
 	var vapp govcd.VApp
 
 	var params = StringMap{

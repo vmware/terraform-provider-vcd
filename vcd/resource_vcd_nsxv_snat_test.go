@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+// NSX-V based test
 func TestAccVcdEdgeSnat(t *testing.T) {
 	preTestChecks(t)
 
