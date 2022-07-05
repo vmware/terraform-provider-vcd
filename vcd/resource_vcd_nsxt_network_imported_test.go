@@ -422,7 +422,7 @@ func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 		"DefaultPolicy":             "false",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"NsxtImportSegment":         testConfig.Nsxt.NsxtImportSegment,
