@@ -24,11 +24,11 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 	var diskName = fmt.Sprintf("%s-disk", t.Name())
 
 	orgName := testConfig.VCD.Org
-	vdcName := testConfig.Nsxt.Vdc
+	vdcName := testConfig.VCD.Vdc
 	var params = StringMap{
 		"Org":                orgName,
 		"Vdc":                vdcName,
-		"EdgeGateway":        testConfig.Nsxt.EdgeGateway,
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
 		"NetworkName":        "TestAccVcdVAppVmNet",
 		"Catalog":            testSuiteCatalogName,
 		"CatalogItem":        testSuiteCatalogOVAItem,
@@ -85,7 +85,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 				ResourceName:      "vcd_vm." + standaloneVmName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, standaloneVmName),
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, standaloneVmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
 					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
@@ -175,13 +175,9 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 }
 
 const testAccCheckVcdStandaloneVm_basic = `
-data "vcd_org_vdc" "vdc1" {
-  name = "{{.Vdc}}"
-}
-
-data "vcd_nsxt_edgegateway" "existing" {
+data "vcd_edgegateway" "existing" {
   org  = "{{.Org}}"
-  owner_id = data.vcd_org_vdc.vdc1.id
+  vdc  = "{{.Vdc}}"
   name = "{{.EdgeGateway}}"
 }
 
@@ -189,7 +185,7 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
   name            = "{{.NetworkName}}"
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_edgegateway.existing.id
   gateway         = "10.10.102.1"
   prefix_length   = 24
 
