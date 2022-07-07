@@ -11,16 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// NSX-V based test
 func TestAccVcdVappNatRules(t *testing.T) {
 	preTestChecks(t)
-	if testConfig.Networking.EdgeGateway == "" {
-		t.Skip("Variable testConfig.Networking.EdgeGateway must be configured")
-		return
-	}
-	if testConfig.Networking.ExternalIp == "" {
-		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
-		return
-	}
 
 	var (
 		vmName1         = "TestAccVcdVappNatRulesVm1"
@@ -329,6 +322,9 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 const testAccVcdVappNatRules_rules = testAccVcdVappNatRules_vappAndVm + `
 # For NAT rules to work, firewall has to be enabled.
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
+  org        = "{{.Org}}"
+  vdc        = "{{.Vdc}}"
+
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
   default_action = "drop"
@@ -388,6 +384,9 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
 const testAccVcdVappNatRules_rules_forUpdate = testAccVcdVappNatRules_vappAndVm + `
 # For NAT rules to work, firewall has to be enabled.
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
+  org        = "{{.Org}}"
+  vdc        = "{{.Vdc}}"
+
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
   default_action = "drop"
