@@ -1282,8 +1282,8 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 			return "", fmt.Errorf("no ID is set for %s resource", resource)
 		}
 
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
+		importId := testConfig.VCD.Org + "." + testConfig.Nsxt.Vdc + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil
