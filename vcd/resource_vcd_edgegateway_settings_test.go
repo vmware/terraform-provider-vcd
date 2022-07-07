@@ -364,6 +364,9 @@ const testAccEdgeGatewaySettingsSimple = `
 # skip-binary-test: would update existing Edge Gateway
 
 data "vcd_edgegateway" "egw" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
   name = "{{.EdgeGateway}}"
 }
 
