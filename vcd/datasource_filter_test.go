@@ -55,6 +55,7 @@ var ancestors = map[string]string{
 	"vcd_network_routed":   orgAndVdc,
 	"vcd_network_direct":   orgAndVdc,
 	"vcd_network_isolated": orgAndVdc,
+	"vcd_edgegateway":      orgAndVdc,
 }
 
 // Data needed to create test vApp templates
@@ -354,6 +355,11 @@ func runSearchTest(entityType, label string, t *testing.T) {
 		"FuncName": "search_" + label,
 		"Tags":     "search",
 	}
+
+	if entityType == types.QtEdgeGateway {
+		params["VDC"] = testConfig.VCD.Vdc
+	}
+
 	testParamsNotEmpty(t, params)
 
 	template, expectedResults, err := generateTemplates(filters)
