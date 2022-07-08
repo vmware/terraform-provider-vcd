@@ -26,8 +26,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Vdc":             testConfig.VCD.Vdc,
-		"EdgeGateway":     testConfig.Networking.EdgeGateway,
+		"Vdc":             testConfig.Nsxt.Vdc,
 		"NetworkName":     "TestAccVcdVAppNet",
 		"NetworkName2":    "TestAccVcdVAppNet2",
 		"NetworkName3":    "TestAccVcdVAppNet3",
@@ -100,7 +99,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				ResourceName:      "vcd_vapp." + vappName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, vappName),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, vappName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"power_on"},
 			},
@@ -122,7 +121,7 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
@@ -146,7 +145,7 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
