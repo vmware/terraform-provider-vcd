@@ -31,14 +31,14 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		"VdcName":                   TestAccVcdVdc,
 		"OrgName":                   testConfig.VCD.Org,
 		"AllocationModel":           allocationModel,
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                 "1024",
 		"Reserved":                  "0",
 		"Limit":                     "1024",
 		"LimitIncreased":            "1124",
 		"AllocatedIncreased":        "1124",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
@@ -80,9 +80,9 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.NsxtProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
+						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.NsxtProviderVdc.Name),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -96,7 +96,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.NsxtProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -141,9 +141,9 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.NsxtProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
+						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.NsxtProviderVdc.Name),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -157,7 +157,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.NsxtProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
