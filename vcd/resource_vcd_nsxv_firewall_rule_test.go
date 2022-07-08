@@ -1010,11 +1010,17 @@ resource "vcd_nsxv_firewall_rule" "ip_sets" {
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+
 	name = "acceptance test IPset 1"
 	ip_addresses = ["222.222.222.1/24"]
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+
 	name = "acceptance test IPset 2"
 	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
 }
@@ -1042,11 +1048,17 @@ resource "vcd_nsxv_firewall_rule" "ip_sets" {
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+
 	name = "acceptance test IPset 1"
 	ip_addresses = ["222.222.222.1/24"]
 }
 
 resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+
 	name = "acceptance test IPset 2"
 	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
 }
@@ -1175,6 +1187,9 @@ resource "vcd_network_routed" "net" {
 	}
 }
 resource "vcd_vapp" "fw-test" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+
   name = "fw-test"
 }
 
