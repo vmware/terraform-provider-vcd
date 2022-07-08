@@ -12,6 +12,14 @@ import (
 )
 
 func testAccCheckVcdVAppVmExists(vappName, vmName, node string, vapp *govcd.VApp, vm *govcd.VM) resource.TestCheckFunc {
+	return checkVappVmExist(testConfig.VCD.Vdc, vappName, vmName, node, vapp, vm)
+}
+
+func testAccCheckVcdNsxtVAppVmExists(vappName, vmName, node string, vapp *govcd.VApp, vm *govcd.VM) resource.TestCheckFunc {
+	return checkVappVmExist(testConfig.Nsxt.Vdc, vappName, vmName, node, vapp, vm)
+}
+
+func checkVappVmExist(vdcName string, vappName string, vmName string, node string, vapp *govcd.VApp, vm *govcd.VM) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[node]
 		if !ok {
@@ -23,9 +31,9 @@ func testAccCheckVcdVAppVmExists(vappName, vmName, node string, vapp *govcd.VApp
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, vdcName)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, testConfig.VCD.Org, err)
 		}
 
 		newVapp, err := vdc.GetVAppByName(vappName, false)
@@ -48,6 +56,14 @@ func testAccCheckVcdVAppVmExists(vappName, vmName, node string, vapp *govcd.VApp
 }
 
 func testAccCheckVcdVAppVmDestroy(vappName string) resource.TestCheckFunc {
+	return checkVappVmDestroy(testConfig.VCD.Vdc, vappName)
+}
+
+func testAccCheckVcdNsxtVAppVmDestroy(vappName string) resource.TestCheckFunc {
+	return checkVappVmDestroy(testConfig.Nsxt.Vdc, vappName)
+}
+
+func checkVappVmDestroy(vdcName string, vappName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
 
@@ -55,9 +71,9 @@ func testAccCheckVcdVAppVmDestroy(vappName string) resource.TestCheckFunc {
 			if rs.Type != "vcd_vapp" {
 				continue
 			}
-			_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+			_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, vdcName)
 			if err != nil {
-				return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+				return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, testConfig.VCD.Org, err)
 			}
 
 			_, err = vdc.GetVAppByName(vappName, false)
