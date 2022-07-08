@@ -58,7 +58,7 @@ func datasourceVcdEdgeBgpNeighbor() *schema.Resource {
 			"allow_as_in": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "A flag indicating whether BGP neighbors can receive routes with same AS (default 'false')",
+				Description: "A flag indicating whether BGP neighbors can receive routes with same Autonomous System (AS)",
 			},
 			"bfd_enabled": {
 				Type:        schema.TypeBool,

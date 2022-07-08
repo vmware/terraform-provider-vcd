@@ -27,7 +27,7 @@ data "vcd_nsxt_edgegateway_bgp_neighbor" "first" {
   vdc = "nsxt-vdc"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-  
+
   ip_address = "192.168.102.45"
 }
 ```

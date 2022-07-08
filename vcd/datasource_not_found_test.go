@@ -158,15 +158,15 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `edge_gateway = "` + testConfig.Networking.EdgeGateway + `"` + "\n"
 		case "edge_gateway_id":
 			testParamsNotEmpty(t, StringMap{
-				"VCD.Org":                testConfig.VCD.Org,
-				"Networking.EdgeGateway": testConfig.Networking.EdgeGateway,
-				"Nsxt.Vdc":               testConfig.Nsxt.Vdc})
-			nsxtEdgeGw, err := vcdClient.GetNsxtEdgeGateway(testConfig.VCD.Org, testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway)
+				"VCD.Org":                             testConfig.VCD.Org,
+				"testConfig.Nsxt.VdcGroupEdgeGateway": testConfig.Nsxt.VdcGroupEdgeGateway,
+				"Nsxt.VdcGroup":                       testConfig.Nsxt.VdcGroup})
+
+			nsxtEdge, err := getNsxtEdgeGatewayInVdcGroup(vcdClient, testConfig.VCD.Org, testConfig.Nsxt.VdcGroup, testConfig.Nsxt.VdcGroupEdgeGateway)
 			if err != nil {
-				t.Skipf("Unable to lookup NSX-T Edge Gateway '%s' : %s", testConfig.Nsxt.EdgeGateway, err)
-				return ""
+				t.Errorf("error retrieving NSX-T Edge Gateway '%s' in VDC Group '%s': %s", testConfig.Nsxt.VdcGroupEdgeGateway, testConfig.Nsxt.VdcGroup, err)
 			}
-			templateFields = templateFields + `edge_gateway_id = "` + nsxtEdgeGw.EdgeGateway.ID + `"` + "\n"
+			templateFields = templateFields + `edge_gateway_id = "` + nsxtEdge.EdgeGateway.ID + `"` + "\n"
 		case "catalog":
 			testParamsNotEmpty(t, StringMap{"VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
 			templateFields = templateFields + `catalog = "` + testConfig.VCD.Catalog.Name + `"` + "\n"
@@ -222,6 +222,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `scope = "PROVIDER"` + "\n"
 		case "controller_id":
 			templateFields = templateFields + `controller_id = "urn:vcloud:loadBalancerController:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
+		case "ip_address":
+			templateFields = templateFields + `ip_address = "71.58.12.36"` + "\n"
 		}
 	}
 
@@ -241,4 +243,22 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 	}
 
 	return templateFields
+}
+
+func getNsxtEdgeGatewayInVdcGroup(cli *VCDClient, orgName, vdcName, edgeGwName string) (eg *govcd.NsxtEdgeGateway, err error) {
+	if edgeGwName == "" {
+		return nil, fmt.Errorf("empty NSX-T Edge Gateway name provided")
+	}
+
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(cli, orgName, vdcName)
+	if err != nil {
+		return nil, err
+	}
+
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGwName)
+	if err != nil {
+		return nil, err
+	}
+
+	return edge, nil
 }

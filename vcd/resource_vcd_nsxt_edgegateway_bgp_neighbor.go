@@ -75,7 +75,7 @@ func resourceVcdEdgeBgpNeighbor() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "A flag indicating whether BGP neighbors can receive routes with same AS (default 'false')",
+				Description: "A flag indicating whether BGP neighbors can receive routes with same Autonomous System (AS) (default 'false')",
 			},
 			"bfd_enabled": {
 				Type:        schema.TypeBool,
@@ -121,7 +121,7 @@ func resourceVcdEdgeBgpNeighbor() *schema.Resource {
 func resourceVcdEdgeBgpNeighborCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// Handling locks for BGP configuration is conditional. There are two scenarios:
 	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
 	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
 	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
@@ -161,7 +161,7 @@ func resourceVcdEdgeBgpNeighborCreate(ctx context.Context, d *schema.ResourceDat
 func resourceVcdEdgeBgpNeighborUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// Handling locks for BGP configuration is conditional. There are two scenarios:
 	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
 	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
 	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
@@ -234,7 +234,7 @@ func resourceVcdEdgeBgpNeighborRead(ctx context.Context, d *schema.ResourceData,
 func resourceVcdEdgeBgpNeighborDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// Handling locks for BGP configuration is conditional. There are two scenarios:
 	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
 	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
 	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked

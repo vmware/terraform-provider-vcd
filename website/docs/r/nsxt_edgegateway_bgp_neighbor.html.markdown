@@ -12,7 +12,6 @@ Supported in provider *v3.7+* and VCD 10.2+ with NSX-T
 
 Provides a resource to manage NSX-T Edge Gateway BGP Neighbors and their configuration.
 
-
 ## Example Usage (BGP Neighbor configuration with route filtering with referenced BGP IP Prefix List)
 
 ```hcl
@@ -31,9 +30,9 @@ resource "vcd_nsxt_edgegateway_bgp_neighbor" "neighbor-one" {
   bfd_enabled           = true
   bfd_interval          = 800
   bfd_dead_multiple     = 5
-  
-  route_filtering       = "IPV4"
-  in_filter_ip_prefix_list_id = data.vcd_nsxt_edgegateway_bgp_ip_prefix_list.in-1.id
+
+  route_filtering              = "IPV4"
+  in_filter_ip_prefix_list_id  = data.vcd_nsxt_edgegateway_bgp_ip_prefix_list.in-1.id
   out_filter_ip_prefix_list_id = data.vcd_nsxt_edgegateway_bgp_ip_prefix_list.out-1.id
 }
 ```
@@ -46,7 +45,6 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` datasource
-
 * `ip_address` - (Required) BGP Neighbor IP Address (IPv4 or IPv6)
 * `remote_as_number` - (Required) BGP Neighbor Remote Autonomous System (AS) Number
 * `password` - (Optional) BGP Neighbor Password
@@ -63,7 +61,6 @@ The following arguments are supported:
 * `route_filtering` - (Optional) Route filtering by IP Address family. One of `DISABLED`, `IPV4`, `IPV6`
 * `in_filter_ip_prefix_list_id` - (Optional) The ID of the IP Prefix List to be used for filtering incoming BGP routes
 * `out_filter_ip_prefix_list_id` - (Optional) The ID of the IP Prefix List to be used for filtering outgoing BGP routes
-
 
 ## Importing
 
