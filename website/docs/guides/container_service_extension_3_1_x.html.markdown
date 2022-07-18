@@ -270,6 +270,8 @@ To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resourc
 
 ~> Only TKGm OVAs are supported. CSE is **not compatible** yet with PhotonOS
 
+In the example below, the downloaded OVA corresponds to TKGm 1.4.0 and uses Kubernetes 1.21.2. 
+
 ```hcl
 resource "vcd_catalog_item" "tkgm_ova" {
   org     = vcd_org.cse_org.name
