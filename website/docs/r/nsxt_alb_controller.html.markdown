@@ -46,7 +46,7 @@ The following arguments are supported:
 * `password` - (Required) The password for ALB Controller. Password will not be refreshed.
 * `license_type` - (Optional) License type of ALB Controller (`ENTERPRISE` or `BASIC`)
 
-~> The attribute `license_type` must not be used in VCD 10.4+, it is replaced by [nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group) `supported_feature_set`.
+~> The attribute `license_type` must not be used in VCD 10.4+, it is replaced by [nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group) and [nsxt_alb_settings](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_settings) attribute `supported_feature_set`.
 
 ## Attribute Reference
 

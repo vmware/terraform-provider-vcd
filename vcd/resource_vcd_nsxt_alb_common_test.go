@@ -496,7 +496,7 @@ func changeSupportedFeatureSetIfVersionIsLessThan37(params StringMap, isBasicOrS
 	return false
 }
 
-// If VCD API version is less than 37, checks that the resource contains license_type attribute of the given type.
+// If VCD API version is less than v37.0, checks that the resource contains license_type attribute of the given type.
 // Otherwise it checks supported_feature_set value.
 func checkLicenseTypeOrSupportedFeatureSet(resourceName string, isBasicOrStandard, isVersionLessThan37 bool) resource.TestCheckFunc {
 	licenseType := "ENTERPRISE"
