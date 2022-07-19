@@ -230,7 +230,7 @@ resource "vcd_catalog" "cat-cse" {
   delete_recursive = "true"
 }
 
-# Create a role at provider level to be used to manage CSE
+# Create a role at provider level to be used to manage CSE (optional, but recommended)
 
 resource "vcd_role" "cse-service-role" {
   name        = "CSE Service Role"
