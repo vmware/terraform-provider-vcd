@@ -408,7 +408,117 @@ When using the HCL option, take into account the following important aspects:
 
 ### Step 6: Rights and roles
 
-You need to publish a new Rights Bundle to your Organization with the new rights that `cse install` command created in VCD.
+It is **recommended** using a user with CSE Service Role for CSE server management.
+The role comes with all the VCD rights that CSE needs to function:
+
+```hcl
+resource "vcd_role" "cse-service-role" {
+  name        = "CSE Service Role"
+  description = "CSE Service Role has all the rights necessary for CSE to operate"
+
+  rights = [
+    "Access Control List: View",
+    "Access Control List: Manage",
+    "AMQP Settings: View",
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: Create / Delete a Catalog",
+    "Catalog: Edit Properties",
+    "Catalog: Publish",
+    "Catalog: Sharing",
+    "Catalog: View ACL",
+    "Catalog: View Private and Shared Catalogs",
+    "Catalog: View Published Catalogs",
+    "Content Library System Settings: View",
+    "Custom entity: Create custom entity definitions",
+    "Custom entity: Delete custom entity definitions",
+    "Custom entity: Edit custom entity definitions",
+    "Custom entity: View custom entity definitions",
+    "Extension Services: View",
+    "Extensions: View",
+    "External Service: Manage",
+    "External Service: View",
+    "General: View Error Details",
+    "Group / User: View",
+    "Host: View",
+    "Kerberos Settings: View",
+    "Organization Network: View",
+    "Organization vDC Compute Policy: Admin View",
+    "Organization vDC Compute Policy: Manage",
+    "Organization vDC Compute Policy: View",
+    "Organization vDC Kubernetes Policy: Edit",
+    "Organization vDC Network: Edit Properties",
+    "Organization vDC Network: View Properties",
+    "Organization vDC: Extended Edit",
+    "Organization vDC: Extended View",
+    "Organization vDC: View",
+    "Organization: Perform Administrator Queries",
+    "Organization: View",
+    "Provider Network: View",
+    "Provider vDC Compute Policy: Manage",
+    "Provider vDC Compute Policy: View",
+    "Provider vDC: View",
+    "Right: Manage",
+    "Right: View",
+    "Rights Bundle: View",
+    "Rights Bundle: Edit",
+    "Role: Create, Edit, Delete, or Copy",
+    "Service Configuration: Manage",
+    "Service Configuration: View",
+    "System Settings: View",
+    "Task: Resume, Abort, or Fail",
+    "Task: Update",
+    "Task: View Tasks",
+    "Token: Manage",
+    "UI Plugins: Define, Upload, Modify, Delete, Associate or Disassociate",
+    "UI Plugins: View",
+    "vApp Template / Media: Copy",
+    "vApp Template / Media: Create / Upload",
+    "vApp Template / Media: Edit",
+    "vApp Template / Media: View",
+    "vApp Template: Checkout",
+    "vApp Template: Import",
+    "vApp: Allow All Extra Config",
+    "vApp: Allow Ethernet Coalescing Extra Config",
+    "vApp: Allow Latency Extra Config",
+    "vApp: Allow Matching Extra Config",
+    "vApp: Allow NUMA Node Affinity Extra Config",
+    "vApp: Create / Reconfigure",
+    "vApp: Delete",
+    "vApp: Edit Properties",
+    "vApp: Edit VM CPU and Memory reservation settings in all VDC types",
+    "vApp: Edit VM CPU",
+    "vApp: Edit VM Compute Policy",
+    "vApp: Edit VM Hard Disk",
+    "vApp: Edit VM Memory",
+    "vApp: Edit VM Network",
+    "vApp: Edit VM Properties",
+    "vApp: Manage VM Password Settings",
+    "vApp: Power Operations",
+    "vApp: Shadow VM View",
+    "vApp: Upload",
+    "vApp: Use Console",
+    "vApp: VM Boot Options",
+    "vApp: VM Check Compliance",
+    "vApp: VM Migrate, Force Undeploy, Relocate, Consolidate",
+    "vApp: View VM and VM's Disks Encryption Status",
+    "vApp: View VM metrics",
+    "vCenter: View",
+    "vSphere Server: View",
+    "vmware:tkgcluster: Administrator Full access",
+    "vmware:tkgcluster: Administrator View",
+    "vmware:tkgcluster: Full Access",
+    "vmware:tkgcluster: Modify",
+    "vmware:tkgcluster: View"
+  ]
+}
+```
+
+Once created, you can create a [User](/providers/vmware/vcd/latest/docs/resources/org_user) and use it instead of
+System administrator in the Terraform provider configuration for the subsequent operations and the management of all
+the CSE infrastructure.
+
+Also, you need to publish a new [Rights Bundle](/providers/vmware/vcd/latest/docs/resources/rights_bundle) to your
+Organization with the new rights that `cse install` command created in VCD.
 The required new rights are listed in the example below. It creates a new bundle with a mix of the existent Default Rights Bundle rights and
 the new ones.
 
