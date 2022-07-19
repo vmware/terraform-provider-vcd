@@ -317,14 +317,53 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 }
 `
 
-const TestAccVcdVAppVm_SizingPolicy = `
+// TestAccVcdVAppVm_SizingPolicy checks that the VApp VM is created correctly when a sizing policy with limits
+// is used in a Flex VDC and it didn't specify any CPU or Memory.
+func TestAccVcdVAppVm_SizingPolicy(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.VCD.Vdc,
+		"Name":               "TestAccVcdVAppVm_SizingPolicy",
+		"VappName":           vappName2,
+		"Catalog":            testSuiteCatalogName,
+		"CatalogItem":        testSuiteCatalogOVAItem,
+		"ProviderVdc":		  testConfig.VCD.ProviderVdc.Name,
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdVAppVm_SizingPolicy, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_vm.test-vm.name", "name", "TestAccVcdVAppVm_SizingPolicy"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVAppVm_SizingPolicy = `
 resource "vcd_vm_sizing_policy" "test-sizing-policy" {
-  name        = "TestAccVcdVAppVm_SizingPolicy"
-  description = "TestAccVcdVAppVm_SizingPolicy"
+  name        = "{{.Name}}"
+  description = "{{.Name}}"
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "2400"
+    limit_in_mhz          = "1400"
     count                 = "1"
     speed_in_mhz          = "1000"
     cores_per_socket      = "1"
@@ -340,14 +379,14 @@ resource "vcd_vm_sizing_policy" "test-sizing-policy" {
 }
 
 resource "vcd_org_vdc" "test-vdc" {
-  name        = "TestAccVcdVAppVm_SizingPolicy"
-  org = "datacloud"
-  description = "TestAccVcdVAppVm_SizingPolicy"
+  name        = "{{.Name}}"
+  org         = "{{.Org}}"
+  description = "{{.Name}}"
   default_vm_sizing_policy_id = vcd_vm_sizing_policy.test-sizing-policy.id
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.test-sizing-policy.id]
   
   allocation_model = "Flex"
-  provider_vdc_name = "nsxTPvdc1"
+  provider_vdc_name = "{{.ProviderVdc}}"
   compute_capacity {
     cpu {
       allocated = 2048
@@ -373,19 +412,19 @@ resource "vcd_org_vdc" "test-vdc" {
 
 
 resource "vcd_vapp" "test-vapp" {
-  name = "TestAccVcdVAppVm_SizingPolicy"
-  org  = "datacloud"
+  name = "{{.VappName}}"
+  org  = "{{.Org}}"
   vdc  = vcd_org_vdc.test-vdc.name
 }
 
 resource "vcd_vapp_vm" "test-vm" {
-  org           = "datacloud"
+  org           = "{{.Org}}"
   vdc           = vcd_org_vdc.test-vdc.name
   vapp_name     = vcd_vapp.test-vapp.name
   name          = vcd_vapp.test-vapp.name
   computer_name = "foo"
-  catalog_name  = "cat-datacloud"
-  template_name = "photon-hw11"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
   sizing_policy_id = vcd_vm_sizing_policy.test-sizing-policy.id
 }
 `
