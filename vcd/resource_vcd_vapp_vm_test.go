@@ -316,3 +316,76 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   }
 }
 `
+
+const TestAccVcdVAppVm_SizingPolicy = `
+resource "vcd_vm_sizing_policy" "test-sizing-policy" {
+  name        = "TestAccVcdVAppVm_SizingPolicy"
+  description = "TestAccVcdVAppVm_SizingPolicy"
+
+  cpu {
+    shares                = "886"
+    limit_in_mhz          = "2400"
+    count                 = "1"
+    speed_in_mhz          = "1000"
+    cores_per_socket      = "1"
+    reservation_guarantee = "0.55"
+  }
+
+  memory {
+    shares                = "885"
+    size_in_mb            = "1024"
+    limit_in_mb           = "1024"
+    reservation_guarantee = "0.3"
+  }
+}
+
+resource "vcd_org_vdc" "test-vdc" {
+  name        = "TestAccVcdVAppVm_SizingPolicy"
+  org = "datacloud"
+  description = "TestAccVcdVAppVm_SizingPolicy"
+  default_vm_sizing_policy_id = vcd_vm_sizing_policy.test-sizing-policy.id
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.test-sizing-policy.id]
+  
+  allocation_model = "Flex"
+  provider_vdc_name = "nsxTPvdc1"
+  compute_capacity {
+    cpu {
+      allocated = 2048
+    }
+
+    memory {
+      allocated = 2048
+    }
+  }
+  storage_profile {
+    name    = "*"
+    limit   = 20240
+    default = true
+  }
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
+  delete_force             = true
+  delete_recursive         = true
+  elasticity = true
+  include_vm_memory_overhead = false
+}
+
+
+resource "vcd_vapp" "test-vapp" {
+  name = "TestAccVcdVAppVm_SizingPolicy"
+  org  = "datacloud"
+  vdc  = vcd_org_vdc.test-vdc.name
+}
+
+resource "vcd_vapp_vm" "test-vm" {
+  org           = "datacloud"
+  vdc           = vcd_org_vdc.test-vdc.name
+  vapp_name     = vcd_vapp.test-vapp.name
+  name          = vcd_vapp.test-vapp.name
+  computer_name = "foo"
+  catalog_name  = "cat-datacloud"
+  template_name = "photon-hw11"
+  sizing_policy_id = vcd_vm_sizing_policy.test-sizing-policy.id
+}
+`
