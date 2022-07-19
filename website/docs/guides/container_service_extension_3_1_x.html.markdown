@@ -516,6 +516,7 @@ resource "vcd_role" "cse-service-role" {
 Once created, you can create a [User](/providers/vmware/vcd/latest/docs/resources/org_user) and use it instead of
 System administrator in the Terraform provider configuration for the subsequent operations and the management of all
 the CSE infrastructure. This will provide more security and traceability to the CSE management operations, which is recommended.
+In this guide we continue to use System Administrator for the sake of brevity and simplicity.
 
 Next, you need to publish a new [Rights Bundle](/providers/vmware/vcd/latest/docs/resources/rights_bundle) to your
 Organization with the new rights that `cse install` command created in VCD.
