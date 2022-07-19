@@ -1,0 +1,1 @@
+* Fix bug that causes a VApp's VM with a limited sizing policy to fail on creation when no CPU is specified [GH-883]

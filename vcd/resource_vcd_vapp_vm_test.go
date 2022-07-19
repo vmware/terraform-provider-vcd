@@ -323,13 +323,13 @@ func TestAccVcdVAppVm_SizingPolicy(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"Vdc":                testConfig.VCD.Vdc,
-		"Name":               "TestAccVcdVAppVm_SizingPolicy",
-		"VappName":           vappName2,
-		"Catalog":            testSuiteCatalogName,
-		"CatalogItem":        testSuiteCatalogOVAItem,
-		"ProviderVdc":		  testConfig.VCD.ProviderVdc.Name,
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"Name":        "TestAccVcdVAppVm_SizingPolicy",
+		"VappName":    vappName2,
+		"Catalog":     testSuiteCatalogName,
+		"CatalogItem": testSuiteCatalogOVAItem,
+		"ProviderVdc": testConfig.VCD.ProviderVdc.Name,
 	}
 	testParamsNotEmpty(t, params)
 
