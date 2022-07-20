@@ -4,10 +4,13 @@
 # Provider config
 # ------------------------------------------------
 
-admin-user       = "******************************************"
-admin-password   = "******************************************"
+admin-user       = "administrator"
+admin-password   = "*************"
 admin-org        = "System"
 vcd-url          = "https://myvcd.company.com/api"
+
+service-account-user     = "cse_service_account"
+service-account-password = "*******************"
 
 # ------------------------------------------------
 # CSE installation config
