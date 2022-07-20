@@ -1239,7 +1239,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 		if memoryNeedsColdChange || executionType == "create" {
 			memory, isMemorySet := d.GetOk("memory")
-			isMemoryComingFromSizingPolicy := !isMemorySet && computePolicy != nil && computePolicy.Memory != nil
+			isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
+
 			if !isMemoryComingFromSizingPolicy {
 				err = vm.ChangeMemory(int64(memory.(int)))
 				if err != nil {
@@ -1258,7 +1259,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if cpusNeedsColdChange || (executionType == "create") {
 			cpus, isCpusSet := d.GetOk("cpus")
 			cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
-			isCpuComingFromSizingPolicy := computePolicy != nil && (computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet)
+			isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
 			if !isCpuComingFromSizingPolicy {
 				err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
 				if err != nil {
