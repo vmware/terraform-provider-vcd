@@ -817,7 +817,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-		err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType)
+		err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType, sizingPolicy)
 		if err != nil {
 			errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 			if errAttachedDisk != nil {
@@ -1009,7 +1009,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 		return err
 	}
 
-	return resourceVcdVAppVmUpdateExecute(d, meta, "update", vmType)
+	return resourceVcdVAppVmUpdateExecute(d, meta, "update", vmType, nil)
 }
 
 func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) error {
@@ -1143,7 +1143,7 @@ func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, descr
 	return nil
 }
 
-func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm) error {
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm, computePolicy *types.VdcComputePolicy) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
 
 	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
@@ -1238,9 +1238,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		if memoryNeedsColdChange || executionType == "create" {
-			err = vm.ChangeMemory(int64(d.Get("memory").(int)))
-			if err != nil {
-				return err
+			memory, isMemorySet := d.GetOk("memory")
+			isMemoryComingFromSizingPolicy := !isMemorySet && computePolicy != nil && computePolicy.Memory != nil
+			if !isMemoryComingFromSizingPolicy {
+				err = vm.ChangeMemory(int64(memory.(int)))
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -1251,10 +1255,15 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 
-		if cpusNeedsColdChange || executionType == "create" {
-			err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
-			if err != nil {
-				return err
+		if cpusNeedsColdChange || (executionType == "create") {
+			cpus, isCpusSet := d.GetOk("cpus")
+			cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
+			isCpuComingFromSizingPolicy := computePolicy != nil && (computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet)
+			if !isCpuComingFromSizingPolicy {
+				err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
+				if err != nil {
+					return err
+				}
 			}
 		}
 

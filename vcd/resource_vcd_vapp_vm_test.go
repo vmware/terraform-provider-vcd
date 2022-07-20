@@ -4,6 +4,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -323,13 +324,16 @@ func TestAccVcdVAppVm_SizingPolicy(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"Name":        "TestAccVcdVAppVm_SizingPolicy",
-		"VappName":    vappName2,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"ProviderVdc": testConfig.VCD.ProviderVdc.Name,
+		"Org":                  testConfig.VCD.Org,
+		"Vdc":                  testConfig.VCD.Vdc,
+		"Name":                 "TestAccVcdVAppVm_SizingPolicy",
+		"SizingPolicyCpus":     "2",
+		"SizingPolicyCpuCores": "1",
+		"SizingPolicyMemory":   "512",
+		"VappName":             vappName2,
+		"Catalog":              testSuiteCatalogName,
+		"CatalogItem":          testSuiteCatalogOVAItem,
+		"ProviderVdc":          testConfig.VCD.ProviderVdc.Name,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -348,7 +352,15 @@ func TestAccVcdVAppVm_SizingPolicy(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm.test-vm.name", "name", "TestAccVcdVAppVm_SizingPolicy"),
+						"vcd_vapp_vm.test-vm", "name", "TestAccVcdVAppVm_SizingPolicy"),
+					resource.TestMatchResourceAttr(
+						"vcd_vapp_vm.test-vm", "sizing_policy_id", regexp.MustCompile("urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_vm.test-vm", "cpus", params["SizingPolicyCpus"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_vm.test-vm", "cpu_cores", params["SizingPolicyCpuCores"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_vm.test-vm", "memory", params["SizingPolicyMemory"].(string)),
 				),
 			},
 		},
@@ -364,15 +376,15 @@ resource "vcd_vm_sizing_policy" "test-sizing-policy" {
   cpu {
     shares                = "886"
     limit_in_mhz          = "1400"
-    count                 = "1"
+    count                 = "{{.SizingPolicyCpus}}"
     speed_in_mhz          = "1000"
-    cores_per_socket      = "1"
+    cores_per_socket      = "{{.SizingPolicyCpuCores}}"
     reservation_guarantee = "0.55"
   }
 
   memory {
     shares                = "885"
-    size_in_mb            = "1024"
+    size_in_mb            = "{{.SizingPolicyMemory}}"
     limit_in_mb           = "1024"
     reservation_guarantee = "0.3"
   }
@@ -421,7 +433,7 @@ resource "vcd_vapp_vm" "test-vm" {
   org           = "{{.Org}}"
   vdc           = vcd_org_vdc.test-vdc.name
   vapp_name     = vcd_vapp.test-vapp.name
-  name          = vcd_vapp.test-vapp.name
+  name          = "{{.Name}}"
   computer_name = "foo"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
