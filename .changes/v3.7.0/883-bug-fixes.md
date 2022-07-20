@@ -1,1 +1,2 @@
-* Fix bug that causes a VApp's VM with a limited sizing policy to fail on creation when no CPU is specified [GH-883]
+* Fix a bug that causes `vcd_vapp_vm` with `sizing_policy_id` attribute set with a sizing policy with limits to fail on 
+creation when no `cpu` is specified [GH-883]

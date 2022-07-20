@@ -375,7 +375,7 @@ resource "vcd_vm_sizing_policy" "test-sizing-policy" {
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "1400"
+    limit_in_mhz          = "3000"
     count                 = "{{.SizingPolicyCpus}}"
     speed_in_mhz          = "1000"
     cores_per_socket      = "{{.SizingPolicyCpuCores}}"
