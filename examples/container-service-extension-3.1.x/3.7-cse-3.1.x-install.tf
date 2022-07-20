@@ -230,7 +230,7 @@ resource "vcd_catalog" "cat-cse" {
   delete_recursive = "true"
 }
 
-# Create a role at provider level to be used to manage CSE (recommended).
+# Create a service role at provider level to be used to manage CSE (recommended).
 # You can create a `vcd_org_user` that uses this role and configure the Terraform provider to use it instead of System Administrator (recommended).
 # Here we continue to use System Administrator for simplicity and to configure CSE in one run.
 
