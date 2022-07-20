@@ -318,8 +318,8 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 }
 `
 
-// TestAccVcdVAppVm_SizingPolicy checks that the VApp VM is created correctly when a sizing policy with limits
-// is used in a Flex VDC and it didn't specify any CPU or Memory.
+// TestAccVcdVAppVm_SizingPolicy checks that the VM inside a VApp that doesn't specify values for CPU or Memory is
+// created correctly when a Sizing Policy with limits is specified in the HCL instead.
 func TestAccVcdVAppVm_SizingPolicy(t *testing.T) {
 	preTestChecks(t)
 
@@ -327,7 +327,7 @@ func TestAccVcdVAppVm_SizingPolicy(t *testing.T) {
 		"Org":                  testConfig.VCD.Org,
 		"Vdc":                  testConfig.VCD.Vdc,
 		"Name":                 "TestAccVcdVAppVm_SizingPolicy",
-		"SizingPolicyCpus":     "2",
+		"SizingPolicyCpus":     "1",
 		"SizingPolicyCpuCores": "1",
 		"SizingPolicyMemory":   "512",
 		"VappName":             vappName2,
@@ -375,7 +375,7 @@ resource "vcd_vm_sizing_policy" "test-sizing-policy" {
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "3000"
+    limit_in_mhz          = "1000"
     count                 = "{{.SizingPolicyCpus}}"
     speed_in_mhz          = "1000"
     cores_per_socket      = "{{.SizingPolicyCpuCores}}"
@@ -437,6 +437,8 @@ resource "vcd_vapp_vm" "test-vm" {
   computer_name = "foo"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
+
+  # Here we specify a Sizing Policy with limits instead of cpus, cpu_cores and memory
   sizing_policy_id = vcd_vm_sizing_policy.test-sizing-policy.id
 }
 `
