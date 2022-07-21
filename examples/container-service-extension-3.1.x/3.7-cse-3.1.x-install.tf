@@ -26,7 +26,8 @@ terraform {
   }
 }
 
-# We'll use the System Administrator only to create the service role and the service user to manage CSE.
+# We'll use the System Administrator only to create the service role, the service user to manage CSE and the minimum
+# objects required (Organization, VDC, ALB, etc). The remaining items will be created by this service user.
 
 provider "vcd" {
   alias                = "administrator"
@@ -175,7 +176,7 @@ provider "vcd" {
 # If you remove this resource, you need to adapt all `org = vcd_org.cse_org.name` occurrences to your needs.
 
 resource "vcd_org" "cse_org" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   name             = var.org-name
   full_name        = var.org-name
@@ -194,7 +195,7 @@ resource "vcd_org" "cse_org" {
 # If you remove this resource, you need to change `owner_id`/`vdc` in the affected resources.
 
 resource "vcd_org_vdc" "cse_vdc" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   name = var.vdc-name
   org  = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
@@ -232,20 +233,20 @@ resource "vcd_org_vdc" "cse_vdc" {
 # for the Kubernetes nodes and access the cluster.
 
 data "vcd_nsxt_manager" "main" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this data source
 
   name = var.tier0-manager
 }
 
 data "vcd_nsxt_tier0_router" "router" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this data source
 
   name            = var.tier0-router
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
 }
 
 resource "vcd_external_network_v2" "cse_external_network_nsxt" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   name        = "nsxt-extnet-cse"
   description = "NSX-T backed network for k8s clusters"
@@ -273,7 +274,7 @@ resource "vcd_external_network_v2" "cse_external_network_nsxt" {
 # Create an Edge Gateway that will be used by the cluster as the main router.
 
 resource "vcd_nsxt_edgegateway" "cse_egw" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   org      = vcd_org.cse_org.name   # Change this reference if you used a data source to fetch an already existent Org.
   owner_id = vcd_org_vdc.cse_vdc.id # Change this reference if you used a data source to fetch an already existent VDC.
@@ -362,7 +363,7 @@ data "vcd_storage_profile" "cse_sp" {
 }
 
 resource "vcd_catalog" "cat-cse" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   org         = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   name        = "cat-cse"
@@ -399,20 +400,20 @@ resource "vcd_catalog_item" "tkgm_ova" {
 # AVI configuration for Kubernetes services, this allows the cluster to create Kubernetes services of type Load Balancer.
 
 data "vcd_nsxt_alb_controller" "cse_alb_controller" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this data source
 
   name = var.avi-controller-name
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cse_importable_cloud" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this data source
 
   name          = var.avi-importable-cloud
   controller_id = data.vcd_nsxt_alb_controller.cse_alb_controller.id
 }
 
 resource "vcd_nsxt_alb_cloud" "cse_alb_cloud" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   name        = "cse_alb_cloud"
   description = "cse alb cloud"
@@ -423,7 +424,7 @@ resource "vcd_nsxt_alb_cloud" "cse_alb_cloud" {
 }
 
 resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   name                                 = "cse_alb_seg"
   alb_cloud_id                         = vcd_nsxt_alb_cloud.cse_alb_cloud.id
@@ -432,7 +433,7 @@ resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
 }
 
 resource "vcd_nsxt_alb_settings" "cse_alb_settings" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
@@ -443,7 +444,7 @@ resource "vcd_nsxt_alb_settings" "cse_alb_settings" {
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   org                     = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id         = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
@@ -451,7 +452,7 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
 }
 
 resource "vcd_nsxt_alb_pool" "cse_alb_pool" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
@@ -459,7 +460,7 @@ resource "vcd_nsxt_alb_pool" "cse_alb_pool" {
 }
 
 resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
-  provider = vcd.administrator
+  provider = vcd.administrator # Using System Administrator grants for this resource
 
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
@@ -503,8 +504,9 @@ resource "null_resource" "cse-install-script" {
 # data source) plus new ones coming from `cse install` command.
 
 data "vcd_rights_bundle" "default-rb" {
+  provider = vcd.administrator # Using System Administrator grants for this data source
+
   name = "Default Rights Bundle"
-  depends_on = [vcd_org_user.cse-service-account]
 }
 
 resource "vcd_rights_bundle" "cse-rb" {
