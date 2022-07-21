@@ -345,9 +345,8 @@ resource "vcd_role" "cse-service-role" {
 }
 ```
 
-Once created, you can create a [User](/providers/vmware/vcd/latest/docs/resources/org_user) and use it instead of
-System Administrator in the Terraform provider configuration for the subsequent operations and the management of all
-the CSE infrastructure:
+Once created, you can create a [User](/providers/vmware/vcd/latest/docs/resources/org_user) and use it, as this will provide
+more security and traceability to the CSE management operations, which is recommended:
 
 ```hcl
 resource "vcd_org_user" "cse-service-account" {
@@ -356,8 +355,6 @@ resource "vcd_org_user" "cse-service-account" {
   role     = vcd_role.cse-service-role.name
 }
 ```
-
-This will provide more security and traceability to the CSE management operations, which is recommended.
 
 To use this user in the subsequent operations, you can configure a new provider with an
 [alias](https://www.terraform.io/language/providers/configuration#alias-multiple-provider-configurations):
