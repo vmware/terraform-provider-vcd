@@ -41,9 +41,9 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"AllocationModel":           "Flex",
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "15240",
+		"Allocated":                 "16000",
 		"Reserved":                  "0",
-		"Limit":                     "15240",
+		"Limit":                     "16000",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
@@ -111,8 +111,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName1, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_cpu", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory", "1024"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName2, "vcd_vapp_vm."+netVmName2, &vm),
@@ -126,8 +126,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName2, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_full", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName3, "vcd_vapp_vm."+netVmName3, &vm),
@@ -135,8 +135,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName3, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_cpu", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName4, "vcd_vapp_vm."+netVmName4, &vm),
@@ -144,8 +144,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName4, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_full", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName5, "vcd_vapp_vm."+netVmName5, &vm),
@@ -153,8 +153,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName5, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_full", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName6, "vcd_vapp_vm."+netVmName6, &vm),
@@ -171,9 +171,9 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName7, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_cpu", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "cpu_cores", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "memory", "256"),
 				),
 			},
 			// Step 1 - update
@@ -191,8 +191,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName1, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_full", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName2, "vcd_vapp_vm."+netVmName2, &vm),
@@ -206,8 +206,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName2, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_cpu", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName3, "vcd_vapp_vm."+netVmName3, &vm),
@@ -215,8 +215,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName3, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_cpu", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "3072"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName8, "vcd_vapp_vm."+netVmName8, &vm),
@@ -306,9 +306,9 @@ resource "vcd_vm_sizing_policy" "size_cpu" {
   cpu {
     shares                = "886"
     limit_in_mhz          = "2400"
-    count                 = "3"
+    count                 = "1"
     speed_in_mhz          = "1500"
-    cores_per_socket      = "3"
+    cores_per_socket      = "1"
     reservation_guarantee = "0.45"
   }
 
@@ -333,9 +333,9 @@ resource "vcd_vm_sizing_policy" "size_full" {
   cpu {
     shares                = "886"
     limit_in_mhz          = "2400"
-    count                 = "3"
+    count                 = "1"
     speed_in_mhz          = "1500"
-    cores_per_socket      = "3"
+    cores_per_socket      = "1"
     reservation_guarantee = "0.45"
   }
 
@@ -370,7 +370,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   storage_profile {
     name     = "{{.ProviderVdcStorageProfile}}"
     enabled  = true
-    limit    = 90240
+    limit    = 147456
     default  = true
   }
 
