@@ -304,6 +304,8 @@ resource "vcd_nsxt_edgegateway" "cse_egw" {
 # Routed network for the Kubernetes cluster.
 
 resource "vcd_network_routed_v2" "cse_routed" {
+  provider = vcd.administrator # Using System Administrator grants for this resource
+
   org         = vcd_org.cse_org.name
   name        = "cse_routed_net"
   description = "My routed Org VDC network backed by NSX-T"
@@ -325,6 +327,8 @@ resource "vcd_network_routed_v2" "cse_routed" {
 # NAT rule to map traffic to internal network IPs.
 
 resource "vcd_nsxt_nat_rule" "snat" {
+  provider = vcd.administrator # Using System Administrator grants for this resource
+
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
 
@@ -341,6 +345,8 @@ resource "vcd_nsxt_nat_rule" "snat" {
 # rule to your organization security requirements, as this is just an example.
 
 resource "vcd_nsxt_firewall" "firewall" {
+  provider = vcd.administrator # Using System Administrator grants for this resource
+
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
 
@@ -384,7 +390,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
   name                 = replace(var.tkgm-ova-name, ".ova", "")
   description          = replace(var.tkgm-ova-name, ".ova", "")
   ova_path             = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
-  upload_piece_size    = 100
+  upload_piece_size    = 10
   show_upload_progress = true
 
   catalog_item_metadata = {
@@ -489,8 +495,8 @@ resource "null_resource" "cse-install-script" {
     on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
     command = format("printf '%s' > config.yaml && ./cse-install.sh", templatefile("${path.module}/config.yaml.template", {
       vcd_url         = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
-      vcd_username    = var.admin-user
-      vcd_password    = var.admin-password
+      vcd_username    = vcd_org_user.cse-service-account.name
+      vcd_password    = vcd_org_user.cse-service-account.password
       catalog         = vcd_catalog.cat-cse.name
       network         = vcd_network_routed_v2.cse_routed.name
       org             = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.
@@ -519,7 +525,8 @@ resource "vcd_rights_bundle" "cse-rb" {
     "cse:nativeCluster: Full Access",
     "cse:nativeCluster: Modify"
   ])
-  publish_to_all_tenants = true # Here we publish to all tenants for simplicity, but you can select the tenant in which CSE is used
+  publish_to_all_tenants = false
+  tenants                = [vcd_org.cse_org.name]
 
   depends_on = [null_resource.cse-install-script]
 }
@@ -537,7 +544,8 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   name                   = "cse:nativeCluster Entitlement Published"
   description            = data.vcd_rights_bundle.cse-native-cluster-entl.description
   rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights
-  publish_to_all_tenants = true
+  publish_to_all_tenants = false
+  tenants                = [vcd_org.cse_org.name]
 }
 
 # Create a new role for CSE, with the new rights to create clusters and manage them.

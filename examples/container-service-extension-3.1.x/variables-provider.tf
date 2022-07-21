@@ -1,7 +1,7 @@
 # These variables are for configuring the VCD provider
 
 variable "admin-user" {
-  description = "The System administrator user that will create the CSE service account role and user"
+  description = "The System administrator user that will create basic infrastructure and the CSE service account"
   default     = "administrator"
   type        = string
 }
@@ -20,13 +20,13 @@ variable "admin-org" {
 }
 
 variable "service-account-user" {
-  description = "The CSE service account user name that will install CSE. It will be created."
+  description = "The CSE service account user name that will install CSE. It should be a new user."
   default     = "cse_service_account"
   type        = string
 }
 
 variable "service-account-password" {
-  description = "The CSE service account password to put to the CSE service account."
+  description = "The CSE service account password to put to the new CSE service account."
   default     = "cse_service_account"
   sensitive   = true
   type        = string
