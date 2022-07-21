@@ -238,175 +238,7 @@ You can have a look at [this guide](/providers/vmware/vcd/latest/docs/guides/nsx
 and provides some examples of how to set up ALB in VCD. You can also have a look at the "[Examples](#examples)" section below
 where the full ALB setup is provided.
 
-### Step 4: Configure catalogs and OVAs
-
-You need to have a [Catalog](/providers/vmware/vcd/latest/docs/resources/catalog) for vApp Templates and upload the corresponding
-TKGm (Tanzu Kubernetes Grid) OVA files to be able to create Kubernetes clusters.
-
-```hcl
-data "vcd_storage_profile" "cse_storage_profile" {
-  org        = vcd_org.cse_org.name
-  vdc        = vcd_org_vdc.cse_vdc.name
-  name       = "*"
-  depends_on = [vcd_org.cse_org, vcd_org_vdc.cse_vdc]
-}
-
-resource "vcd_catalog" "cat-cse" {
-  org         = vcd_org.cse_org.name
-  name        = "cat-cse"
-  description = "CSE catalog"
-
-  storage_profile_id = data.vcd_storage_profile.cse_storage_profile.id
-
-  delete_force     = "true"
-  delete_recursive = "true"
-  depends_on       = [vcd_org_vdc.cse_vdc]
-}
-```
-
-Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
-To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource with
-`catalog_item_metadata`.
-
-~> Only TKGm OVAs are supported. CSE is **not compatible** yet with PhotonOS
-
-In the example below, the downloaded OVA corresponds to **TKGm v1.4.0** and uses Kubernetes v1.21.2. 
-
-```hcl
-resource "vcd_catalog_item" "tkgm_ova" {
-  org     = vcd_org.cse_org.name
-  catalog = vcd_catalog.cat-cse.name
-
-  name                 = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  description          = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  ova_path             = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
-  upload_piece_size    = 100
-  show_upload_progress = true
-
-  catalog_item_metadata = {
-    "kind"               = "TKGm"
-    "kubernetes"         = "TKGm"
-    "kubernetes_version" = "v1.21.2+vmware.1"
-    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-    "os"                 = "ubuntu"
-    "revision"           = "1"
-  }
-}
-```
-
-Notice that all the metadata entries from `catalog_item_metadata` are required for CSE to fetch the OVA file:
-* `kind`: Needs to be set to `TKGm` in all cases, as *Native* is not supported yet.
-* `kubernetes`: Same as above.
-* `kubernetes_version`: When the OVA is downloaded from VMware Customer Connect, the version appears as part of the file name.
-* `name`: OVA full file name. VMware Customer Connect should provide already the downloaded OVA with a proper canonical name.
-* `os`: When the OVA is downloaded from VMware Customer Connect, the OS appears as part of the file name.
-* `revision`: Needs to be always `1`. This information is internally used by CSE.
-
-Alternatively, you can upload the OVA file using `cse` CLI. This command line tool is explained in the next step.
-
-### Step 5: CSE cli
-
-This step can be done manually, by executing the `cse` CLI in a given shell, or can be automated within the Terraform HCL.
-
--> To see an example of how `cse` cli is automated using Terraform
-[`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
-[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1), take a look in the "[Examples](#examples)"
-section below.
-
-In any case, you need to have installed the [CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
-and then provide a YAML configuration file with the entities that were created by Terraform.
-
-You can check the documentation for this configuration file [here](https://vmware.github.io/container-service-extension/cse3_1/CSE_CONFIG.html).
-An example file is provided below, with all the information from the snippets shown in previous steps:
-
-```yaml
-mqtt:
-  verify_ssl: false
- 
-vcd:
-  host: my-vcd-dev.company.com
-  log: true
-  password: "*****"
-  port: 443
-  username: administrator
-  verify: false
- 
-service:
-  enforce_authorization: false
-  legacy_mode: false
-  log_wire: false
-  no_vc_communication_mode: true
-  processors: 15
-  telemetry:
-    enable: true
- 
-broker:
-  catalog: cat-cse
-  ip_allocation_mode: pool
-  network: cse_routed_net
-  org: cse_org
-  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
-  storage_profile: '*'
-  vdc: cse_vdc
-```
-
-If you choose to execute it manually in a shell, launch the following command:
-
-```shell
-cse install -c config.yaml
-```
-
-CSE will use the configuration file from above to install some new custom entities and rights among other required settings.
-You can also refer to the command line [documentation](https://vmware.github.io/container-service-extension) to upload OVA files
-if you skipped the upload with Terraform from previous step.
-
-If you choose to execute it using Terraform HCL, as in the "[Examples](#examples)" section below, you need to use the `null_resource` with a
-`local-exec` provisioner and transform the file `config.yaml` into a template (in the snippet below, `config.yaml.template`) with all
-required values as placeholders:
-
-```yaml
-# ... (omitted content for brevity)
-broker:
-  catalog: "${catalog}"
-  ip_allocation_mode: pool
-  network: "${network}"
-  org: "${org}"
-  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
-  storage_profile: "${storage_profile}"
-  vdc: "${vdc}"
-```
-
-```hcl
-resource "null_resource" "cse-install-script" {
-  triggers = {
-    always_run = timestamp() # Force to always trigger
-  }
-
-  provisioner "local-exec" {
-    on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
-    command = format("printf '%s' > config.yaml && chmod 0400 config.yaml && cse install -c config.yaml", templatefile("${path.module}/config.yaml.template", {
-      vcd_url         = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
-      vcd_username    = var.admin-user
-      vcd_password    = var.admin-password
-      catalog         = vcd_catalog.cat-cse.name
-      network         = vcd_network_routed_v2.cse_routed.name
-      org             = vcd_org.cse_org.name
-      vdc             = vcd_org_vdc.cse_vdc.name
-      storage_profile = data.vcd_storage_profile.cse_sp.name
-    }))
-  }
-}
-```
-
-When using the HCL option, take into account the following important aspects:
-* The generated `config.yaml` needs to **not** to have read permissions for group and others (`chmod 0400`).
-* `cse install` must run just once (in subsequent runs it should be `cse upgrade`), so a way to allowing Terraform to
-  apply and destroy multiple times is to add `on_failure = continue` to the local-exec provisioner.
-* As a consequence, if `config.yaml` is wrong or the `cse` command is not present, `on_failure = continue` will make
-  Terraform continue on any failure. In this case, you'll see a failure in next steps, as `cse` installs several rights in VCD
-  that are needed.
-
-### Step 6: Rights and roles
+### Step 4: Create a Service Account
 
 It is **recommended** using a user with CSE Service Role for CSE server management.
 The role comes with all the VCD rights that CSE needs to function:
@@ -515,10 +347,203 @@ resource "vcd_role" "cse-service-role" {
 
 Once created, you can create a [User](/providers/vmware/vcd/latest/docs/resources/org_user) and use it instead of
 System Administrator in the Terraform provider configuration for the subsequent operations and the management of all
-the CSE infrastructure. This will provide more security and traceability to the CSE management operations, which is recommended.
-In this guide we continue to use System Administrator for the sake of brevity and simplicity.
+the CSE infrastructure:
 
-Next, you need to publish a new [Rights Bundle](/providers/vmware/vcd/latest/docs/resources/rights_bundle) to your
+```hcl
+resource "vcd_org_user" "cse-service-account" {
+  name     = var.service-account-user
+  password = var.service-account-password
+  role     = vcd_role.cse-service-role.name
+}
+```
+
+This will provide more security and traceability to the CSE management operations, which is recommended.
+
+To use this user in the subsequent operations, you can configure a new provider with an
+[alias](https://www.terraform.io/language/providers/configuration#alias-multiple-provider-configurations):
+
+```hcl
+provider "vcd" {
+  alias                = "cse-service-account"
+  user                 = vcd_org_user.cse-service-account.name
+  password             = vcd_org_user.cse-service-account.password
+  # ...
+}
+```
+
+### Step 5: Configure catalogs and OVAs
+
+You need to have a [Catalog](/providers/vmware/vcd/latest/docs/resources/catalog) for vApp Templates and upload the corresponding
+TKGm (Tanzu Kubernetes Grid) OVA files to be able to create Kubernetes clusters.
+
+```hcl
+data "vcd_storage_profile" "cse_storage_profile" {
+  org        = vcd_org.cse_org.name
+  vdc        = vcd_org_vdc.cse_vdc.name
+  name       = "*"
+  depends_on = [vcd_org.cse_org, vcd_org_vdc.cse_vdc]
+}
+
+resource "vcd_catalog" "cat-cse" {
+  org         = vcd_org.cse_org.name
+  name        = "cat-cse"
+  description = "CSE catalog"
+
+  storage_profile_id = data.vcd_storage_profile.cse_storage_profile.id
+
+  delete_force     = "true"
+  delete_recursive = "true"
+  depends_on       = [vcd_org_vdc.cse_vdc]
+}
+```
+
+Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
+To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource with
+`catalog_item_metadata`.
+
+~> Only TKGm OVAs are supported. CSE is **not compatible** yet with PhotonOS
+
+In the example below, the downloaded OVA corresponds to **TKGm v1.4.0** and uses Kubernetes v1.21.2. 
+
+```hcl
+resource "vcd_catalog_item" "tkgm_ova" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+  
+  org     = vcd_org.cse_org.name
+  catalog = vcd_catalog.cat-cse.name
+
+  name                 = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+  description          = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+  ova_path             = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
+  upload_piece_size    = 100
+  show_upload_progress = true
+
+  catalog_item_metadata = {
+    "kind"               = "TKGm"
+    "kubernetes"         = "TKGm"
+    "kubernetes_version" = "v1.21.2+vmware.1"
+    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+    "os"                 = "ubuntu"
+    "revision"           = "1"
+  }
+}
+```
+
+Notice that all the metadata entries from `catalog_item_metadata` are required for CSE to fetch the OVA file:
+* `kind`: Needs to be set to `TKGm` in all cases, as *Native* is not supported yet.
+* `kubernetes`: Same as above.
+* `kubernetes_version`: When the OVA is downloaded from VMware Customer Connect, the version appears as part of the file name.
+* `name`: OVA full file name. VMware Customer Connect should provide already the downloaded OVA with a proper canonical name.
+* `os`: When the OVA is downloaded from VMware Customer Connect, the OS appears as part of the file name.
+* `revision`: Needs to be always `1`. This information is internally used by CSE.
+
+Alternatively, you can upload the OVA file using `cse` CLI. This command line tool is explained in the next step.
+
+### Step 6: CSE cli
+
+This step can be done manually, by executing the `cse` CLI in a given shell, or can be automated within the Terraform HCL.
+
+-> To see an example of how `cse` cli is automated using Terraform
+[`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) from the
+[null provider](https://registry.terraform.io/providers/hashicorp/null/3.1.1), take a look in the "[Examples](#examples)"
+section below.
+
+In any case, you need to have installed the [CSE command line interface](https://vmware.github.io/container-service-extension/cse3_0/INSTALLATION.html#getting_cse)
+and then provide a YAML configuration file with the entities that were created by Terraform.
+
+You can check the documentation for this configuration file [here](https://vmware.github.io/container-service-extension/cse3_1/CSE_CONFIG.html).
+An example file is provided below, with all the information from the snippets shown in previous steps:
+
+```yaml
+mqtt:
+  verify_ssl: false
+ 
+vcd:
+  host: my-vcd-dev.company.com
+  log: true
+  password: "*****"
+  port: 443
+  username: cse-service-account
+  verify: false
+ 
+service:
+  enforce_authorization: false
+  legacy_mode: false
+  log_wire: false
+  no_vc_communication_mode: true
+  processors: 15
+  telemetry:
+    enable: true
+ 
+broker:
+  catalog: cat-cse
+  ip_allocation_mode: pool
+  network: cse_routed_net
+  org: cse_org
+  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
+  storage_profile: '*'
+  vdc: cse_vdc
+```
+
+If you choose to execute it manually in a shell, launch the following command:
+
+```shell
+cse install -c config.yaml
+```
+
+CSE will use the configuration file from above to install some new custom entities and rights among other required settings.
+You can also refer to the command line [documentation](https://vmware.github.io/container-service-extension) to upload OVA files
+if you skipped the upload with Terraform from previous step.
+
+If you choose to execute it using Terraform HCL, as in the "[Examples](#examples)" section below, you need to use the `null_resource` with a
+`local-exec` provisioner and transform the file `config.yaml` into a template (in the snippet below, `config.yaml.template`) with all
+required values as placeholders:
+
+```yaml
+# ... (omitted content for brevity)
+broker:
+  catalog: "${catalog}"
+  ip_allocation_mode: pool
+  network: "${network}"
+  org: "${org}"
+  remote_template_cookbook_url: https://raw.githubusercontent.com/vmware/container-service-extension-templates/master/template_v2.yaml
+  storage_profile: "${storage_profile}"
+  vdc: "${vdc}"
+```
+
+```hcl
+resource "null_resource" "cse-install-script" {
+  triggers = {
+    always_run = timestamp() # Force to always trigger
+  }
+
+  provisioner "local-exec" {
+    on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
+    command = format("printf '%s' > config.yaml && chmod 0400 config.yaml && cse install -c config.yaml", templatefile("${path.module}/config.yaml.template", {
+      vcd_url         = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
+      vcd_username    = vcd_org_user.cse-service-account.name # Using CSE Service Account
+      vcd_password    = vcd_org_user.cse-service-account.password
+      catalog         = vcd_catalog.cat-cse.name
+      network         = vcd_network_routed_v2.cse_routed.name
+      org             = vcd_org.cse_org.name
+      vdc             = vcd_org_vdc.cse_vdc.name
+      storage_profile = data.vcd_storage_profile.cse_sp.name
+    }))
+  }
+}
+```
+
+When using the HCL option, take into account the following important aspects:
+* The generated `config.yaml` needs to **not** to have read permissions for group and others (`chmod 0400`).
+* `cse install` must run just once (in subsequent runs it should be `cse upgrade`), so a way to allowing Terraform to
+  apply and destroy multiple times is to add `on_failure = continue` to the local-exec provisioner.
+* As a consequence, if `config.yaml` is wrong or the `cse` command is not present, `on_failure = continue` will make
+  Terraform continue on any failure. In this case, you'll see a failure in next steps, as `cse` installs several rights in VCD
+  that are needed.
+
+### Step 7: Rights and roles
+
+You need to publish a new [Rights Bundle](/providers/vmware/vcd/latest/docs/resources/rights_bundle) to your
 Organization with the new rights that `cse install` command created in VCD.
 The required new rights are listed in the example below. It creates a new bundle with a mix of the existent Default Rights Bundle rights and
 the new ones.
@@ -529,6 +554,8 @@ data "vcd_rights_bundle" "default-rb" {
 }
 
 resource "vcd_rights_bundle" "cse-rb" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+  
   name        = "CSE Rights Bundle"
   description = "Rights bundle to manage CSE"
   rights = setunion(data.vcd_rights_bundle.default-rb.rights, [
@@ -538,7 +565,8 @@ resource "vcd_rights_bundle" "cse-rb" {
     "cse:nativeCluster: Full Access",
     "cse:nativeCluster: Modify"
   ])
-  publish_to_all_tenants = true
+  publish_to_all_tenants = false
+  tenants                = [vcd_org.cse_org.name]
 }
 ```
 
@@ -547,11 +575,15 @@ Notice that the next example is assigning the new rights provided by the new pub
 
 ```hcl
 data "vcd_role" "vapp_author" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this data source
+  
   org  = vcd_org.cse_org.name
   name = "vApp Author"
 }
 
 resource "vcd_role" "cluster_author" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+  
   org         = vcd_org.cse_org.name
   name        = "Cluster Author"
   description = "Can read and create clusters"
@@ -578,14 +610,19 @@ as above, create a clone. This is also recommended so doing `terraform destroy` 
 
 ```hcl
 data "vcd_rights_bundle" "cse-native-cluster-entl" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this data source
+  
   name = "cse:nativeCluster Entitlement"
 }
 
 resource "vcd_rights_bundle" "published-cse-rights-bundle" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+  
   name                   = "cse:nativeCluster Entitlement Published"
   description            = data.vcd_rights_bundle.cse-native-cluster-entl.description
   rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights
-  publish_to_all_tenants = true
+  publish_to_all_tenants = false
+  tenants                = [vcd_org.cse_org.name]
 }
 ```
 
