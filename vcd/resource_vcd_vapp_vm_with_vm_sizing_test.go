@@ -220,7 +220,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "3072"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName8, "vcd_vapp_vm."+netVmName8, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName8, "name", netVmName5),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName8, "name", netVmName8),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName8, "sizing_policy_id",
 						"vcd_vm_sizing_policy.minSize", "id"),
