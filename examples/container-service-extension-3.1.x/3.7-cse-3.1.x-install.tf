@@ -228,11 +228,13 @@ resource "vcd_org_vdc" "cse_vdc" {
 
 data "vcd_nsxt_manager" "main" {
   name = var.tier0-manager
+  depends_on = [vcd_role.cse-service-role]
 }
 
 data "vcd_nsxt_tier0_router" "router" {
   name            = var.tier0-router
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
+  depends_on = [vcd_role.cse-service-role]
 }
 
 resource "vcd_external_network_v2" "cse_external_network_nsxt" {
@@ -385,6 +387,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
 
 data "vcd_nsxt_alb_controller" "cse_alb_controller" {
   name = var.avi-controller-name
+  depends_on = [vcd_role.cse-service-role]
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cse_importable_cloud" {
@@ -473,6 +476,7 @@ resource "null_resource" "cse-install-script" {
 
 data "vcd_rights_bundle" "default-rb" {
   name = "Default Rights Bundle"
+  depends_on = [vcd_role.cse-service-role]
 }
 
 resource "vcd_rights_bundle" "cse-rb" {
