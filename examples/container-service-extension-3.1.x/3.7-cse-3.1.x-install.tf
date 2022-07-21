@@ -9,8 +9,9 @@
 #   https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_3_1_x for more
 #   information.
 #
-# * This HCL should be run as System administrator, as it involves creating provider elements such as Organizations,
-#   VDCs or Tier 0 Gateways.
+# * Some resources and data sources from this HCL are run as System administrator, as it involves creating provider
+#   elements such as Organizations, VDCs or Tier 0 Gateways. CSE items are created by the CSE service account defined
+#   below.
 #
 # * Please customize the values present in this file to your needs. Also check `terraform.tfvars.example`
 #   for customisation.
@@ -38,7 +39,7 @@ provider "vcd" {
   allow_unverified_ssl = true
 }
 
-# Create a service role at provider level to be used to manage CSE.
+# Create a service role at provider level with the minimum rights required to install and manage CSE items.
 
 resource "vcd_role" "cse-service-role" {
   provider = vcd.administrator
@@ -142,7 +143,7 @@ resource "vcd_role" "cse-service-role" {
   ]
 }
 
-# We create a new user to manage CSE installation. We use it for all the subsequent operations.
+# We create a new user to manage CSE installation. We use it for the operations related to CSE installation and management.
 
 resource "vcd_org_user" "cse-service-account" {
   provider = vcd.administrator
@@ -152,7 +153,7 @@ resource "vcd_org_user" "cse-service-account" {
   role     = vcd_role.cse-service-role.name
 }
 
-# Use the created CSE service account to perform all subsequent operations.
+# Use the created CSE service account to perform all CSE related operations.
 
 provider "vcd" {
   user                 = vcd_org_user.cse-service-account.name
@@ -174,6 +175,8 @@ provider "vcd" {
 # If you remove this resource, you need to adapt all `org = vcd_org.cse_org.name` occurrences to your needs.
 
 resource "vcd_org" "cse_org" {
+  provider = vcd.administrator
+
   name             = var.org-name
   full_name        = var.org-name
   is_enabled       = "true"
@@ -191,6 +194,8 @@ resource "vcd_org" "cse_org" {
 # If you remove this resource, you need to change `owner_id`/`vdc` in the affected resources.
 
 resource "vcd_org_vdc" "cse_vdc" {
+  provider = vcd.administrator
+
   name = var.vdc-name
   org  = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
 
@@ -227,17 +232,21 @@ resource "vcd_org_vdc" "cse_vdc" {
 # for the Kubernetes nodes and access the cluster.
 
 data "vcd_nsxt_manager" "main" {
+  provider = vcd.administrator
+
   name = var.tier0-manager
-  depends_on = [vcd_role.cse-service-role]
 }
 
 data "vcd_nsxt_tier0_router" "router" {
+  provider = vcd.administrator
+
   name            = var.tier0-router
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
-  depends_on = [vcd_role.cse-service-role]
 }
 
 resource "vcd_external_network_v2" "cse_external_network_nsxt" {
+  provider = vcd.administrator
+
   name        = "nsxt-extnet-cse"
   description = "NSX-T backed network for k8s clusters"
 
@@ -264,6 +273,8 @@ resource "vcd_external_network_v2" "cse_external_network_nsxt" {
 # Create an Edge Gateway that will be used by the cluster as the main router.
 
 resource "vcd_nsxt_edgegateway" "cse_egw" {
+  provider = vcd.administrator
+
   org      = vcd_org.cse_org.name   # Change this reference if you used a data source to fetch an already existent Org.
   owner_id = vcd_org_vdc.cse_vdc.id # Change this reference if you used a data source to fetch an already existent VDC.
 
@@ -351,6 +362,8 @@ data "vcd_storage_profile" "cse_sp" {
 }
 
 resource "vcd_catalog" "cat-cse" {
+  provider = vcd.administrator
+
   org         = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   name        = "cat-cse"
   description = "CSE catalog to store TKGm OVA files"
@@ -386,16 +399,21 @@ resource "vcd_catalog_item" "tkgm_ova" {
 # AVI configuration for Kubernetes services, this allows the cluster to create Kubernetes services of type Load Balancer.
 
 data "vcd_nsxt_alb_controller" "cse_alb_controller" {
+  provider = vcd.administrator
+
   name = var.avi-controller-name
-  depends_on = [vcd_role.cse-service-role]
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cse_importable_cloud" {
+  provider = vcd.administrator
+
   name          = var.avi-importable-cloud
   controller_id = data.vcd_nsxt_alb_controller.cse_alb_controller.id
 }
 
 resource "vcd_nsxt_alb_cloud" "cse_alb_cloud" {
+  provider = vcd.administrator
+
   name        = "cse_alb_cloud"
   description = "cse alb cloud"
 
@@ -405,6 +423,8 @@ resource "vcd_nsxt_alb_cloud" "cse_alb_cloud" {
 }
 
 resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
+  provider = vcd.administrator
+
   name                                 = "cse_alb_seg"
   alb_cloud_id                         = vcd_nsxt_alb_cloud.cse_alb_cloud.id
   importable_service_engine_group_name = "Default-Group"
@@ -412,6 +432,8 @@ resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
 }
 
 resource "vcd_nsxt_alb_settings" "cse_alb_settings" {
+  provider = vcd.administrator
+
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_edgegateway.cse_egw.id
   is_active       = true
@@ -421,18 +443,24 @@ resource "vcd_nsxt_alb_settings" "cse_alb_settings" {
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
+  provider = vcd.administrator
+
   org                     = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id         = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.cse_alb_seg.id
 }
 
 resource "vcd_nsxt_alb_pool" "cse_alb_pool" {
+  provider = vcd.administrator
+
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
   name            = "cse-avi-pool"
 }
 
 resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
+  provider = vcd.administrator
+
   org             = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   edge_gateway_id = vcd_nsxt_alb_settings.cse_alb_settings.edge_gateway_id
   name            = "cse-virtual-service"
@@ -476,7 +504,7 @@ resource "null_resource" "cse-install-script" {
 
 data "vcd_rights_bundle" "default-rb" {
   name = "Default Rights Bundle"
-  depends_on = [vcd_role.cse-service-role]
+  depends_on = [vcd_org_user.cse-service-account]
 }
 
 resource "vcd_rights_bundle" "cse-rb" {
