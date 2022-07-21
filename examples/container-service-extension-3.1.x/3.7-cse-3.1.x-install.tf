@@ -41,7 +41,7 @@ provider "vcd" {
 # Create a service role at provider level to be used to manage CSE.
 
 resource "vcd_role" "cse-service-role" {
-  provider    = "vcd.administrator"
+  provider = vcd.administrator
 
   name        = "CSE Service Role"
   description = "CSE Service Role has all the rights necessary for CSE to operate"
@@ -145,11 +145,11 @@ resource "vcd_role" "cse-service-role" {
 # We create a new user to manage CSE installation. We use it for all the subsequent operations.
 
 resource "vcd_org_user" "cse-service-account" {
-  provider = "vcd.administrator"
+  provider = vcd.administrator
 
-  name = var.service-account-user
+  name     = var.service-account-user
   password = var.service-account-password
-  role = vcd_role.cse-service-role.name
+  role     = vcd_role.cse-service-role.name
 }
 
 # Use the created CSE service account to perform all subsequent operations.
