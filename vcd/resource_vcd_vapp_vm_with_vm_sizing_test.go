@@ -579,7 +579,7 @@ resource "vcd_vapp_vm" "{{.VMName}}8" {
   vdc = vcd_org_vdc.{{.VdcName}}.name
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}5"
+  name          = "{{.VMName}}8"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   power_on      = "false"
