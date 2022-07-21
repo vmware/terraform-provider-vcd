@@ -361,9 +361,9 @@ To use this user in the subsequent operations, you can configure a new provider 
 
 ```hcl
 provider "vcd" {
-  alias                = "cse-service-account"
-  user                 = vcd_org_user.cse-service-account.name
-  password             = vcd_org_user.cse-service-account.password
+  alias    = "cse-service-account"
+  user     = vcd_org_user.cse-service-account.name
+  password = vcd_org_user.cse-service-account.password
   # ...
 }
 ```
@@ -405,7 +405,7 @@ In the example below, the downloaded OVA corresponds to **TKGm v1.4.0** and uses
 ```hcl
 resource "vcd_catalog_item" "tkgm_ova" {
   provider = vcd.cse-service-account # Using CSE Service Account for this resource
-  
+
   org     = vcd_org.cse_org.name
   catalog = vcd_catalog.cat-cse.name
 
@@ -552,7 +552,7 @@ data "vcd_rights_bundle" "default-rb" {
 
 resource "vcd_rights_bundle" "cse-rb" {
   provider = vcd.cse-service-account # Using CSE Service Account for this resource
-  
+
   name        = "CSE Rights Bundle"
   description = "Rights bundle to manage CSE"
   rights = setunion(data.vcd_rights_bundle.default-rb.rights, [
@@ -573,14 +573,14 @@ Notice that the next example is assigning the new rights provided by the new pub
 ```hcl
 data "vcd_role" "vapp_author" {
   provider = vcd.cse-service-account # Using CSE Service Account for this data source
-  
+
   org  = vcd_org.cse_org.name
   name = "vApp Author"
 }
 
 resource "vcd_role" "cluster_author" {
   provider = vcd.cse-service-account # Using CSE Service Account for this resource
-  
+
   org         = vcd_org.cse_org.name
   name        = "Cluster Author"
   description = "Can read and create clusters"
@@ -608,13 +608,15 @@ as above, create a clone. This is also recommended so doing `terraform destroy` 
 ```hcl
 data "vcd_rights_bundle" "cse-native-cluster-entl" {
   provider = vcd.cse-service-account # Using CSE Service Account for this data source
-  
+
   name = "cse:nativeCluster Entitlement"
+
+  depends_on = [null_resource.cse-install-script]
 }
 
 resource "vcd_rights_bundle" "published-cse-rights-bundle" {
   provider = vcd.cse-service-account # Using CSE Service Account for this resource
-  
+
   name                   = "cse:nativeCluster Entitlement Published"
   description            = data.vcd_rights_bundle.cse-native-cluster-entl.description
   rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights

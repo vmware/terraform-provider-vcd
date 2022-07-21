@@ -372,7 +372,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
   name                 = replace(var.tkgm-ova-name, ".ova", "")
   description          = replace(var.tkgm-ova-name, ".ova", "")
   ova_path             = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
-  upload_piece_size    = 10
+  upload_piece_size    = 100
   show_upload_progress = true
 
   catalog_item_metadata = {
