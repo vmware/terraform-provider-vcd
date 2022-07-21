@@ -468,6 +468,7 @@ resource "vcd_vapp_vm" "{{.VMName}}4" {
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
  }
 
+# This VM picks the CPU + CPU Cores + Memory from the Sizing Policy
 resource "vcd_vapp_vm" "{{.VMName}}5" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
@@ -481,6 +482,7 @@ resource "vcd_vapp_vm" "{{.VMName}}5" {
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
  }
 
+# This VM picks only the Memory from the Sizing Policy
 resource "vcd_vapp_vm" "{{.VMName}}6" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
@@ -496,6 +498,7 @@ resource "vcd_vapp_vm" "{{.VMName}}6" {
   cpu_cores      = 1
 }
 
+# This VM picks only the CPU + CPU cores from the Sizing Policy
 resource "vcd_vapp_vm" "{{.VMName}}7" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
