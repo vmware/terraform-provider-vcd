@@ -16,13 +16,16 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 	preTestChecks(t)
 	var (
 		vm            govcd.VM
-		netVappName   string = t.Name()
-		netVmName1    string = t.Name() + "VM"
-		netVmName2    string = t.Name() + "VM2"
-		netVmName3    string = t.Name() + "VM3"
-		netVmName4    string = t.Name() + "VM4"
-		netVmName5    string = t.Name() + "VM5"
-		testAccVcdVdc string = "test_VmSizing"
+		netVappName   = t.Name()
+		netVmName1    = t.Name() + "VM"
+		netVmName2    = t.Name() + "VM2"
+		netVmName3    = t.Name() + "VM3"
+		netVmName4    = t.Name() + "VM4"
+		netVmName5    = t.Name() + "VM5"
+		netVmName6    = t.Name() + "VM6"
+		netVmName7    = t.Name() + "VM7"
+		netVmName8    = t.Name() + "VM8"
+		testAccVcdVdc = "test_VmSizing"
 	)
 
 	var params = StringMap{
@@ -38,9 +41,9 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"AllocationModel":           "Flex",
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "10240",
+		"Allocated":                 "15240",
 		"Reserved":                  "0",
-		"Limit":                     "10240",
+		"Limit":                     "15240",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
@@ -144,6 +147,33 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "memory", "2048"),
+
+					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName5, "vcd_vapp_vm."+netVmName5, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "name", netVmName5),
+
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName5, "sizing_policy_id",
+						"vcd_vm_sizing_policy.size_full", "id"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpus", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "memory", "2048"),
+
+					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName6, "vcd_vapp_vm."+netVmName6, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName6, "name", netVmName6),
+
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName6, "sizing_policy_id",
+						"vcd_vm_sizing_policy.size_memory", "id"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName6, "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName6, "cpu_cores", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName6, "memory", "2048"),
+
+					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName7, "vcd_vapp_vm."+netVmName7, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "name", netVmName7),
+
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName7, "sizing_policy_id",
+						"vcd_vm_sizing_policy.size_cpu", "id"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "cpus", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "cpu_cores", "3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName7, "memory", "2048"),
 				),
 			},
 			// Step 1 - update
@@ -189,14 +219,14 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "3072"),
 
-					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName5, "vcd_vapp_vm."+netVmName5, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "name", netVmName5),
+					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName8, "vcd_vapp_vm."+netVmName8, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName8, "name", netVmName5),
 
-					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName5, "sizing_policy_id",
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName8, "sizing_policy_id",
 						"vcd_vm_sizing_policy.minSize", "id"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpus", "4"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "cpu_cores", "2"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "memory", "1536"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName8, "cpus", "4"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName8, "cpu_cores", "2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName8, "memory", "1536"),
 				),
 			},
 		},
@@ -284,6 +314,18 @@ resource "vcd_vm_sizing_policy" "size_cpu" {
 
 }
 
+resource "vcd_vm_sizing_policy" "size_memory" {
+  name        = "size_memory"
+  description = "size_memory"
+
+  memory {
+    shares                = "1580"
+    size_in_mb            = "2048"
+    limit_in_mb           = "4800"
+    reservation_guarantee = "0.5"
+  }
+}
+
 resource "vcd_vm_sizing_policy" "size_full" {
   name        = "min-size3"
   description = "smallest size2"
@@ -345,7 +387,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
   default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_full.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id,vcd_vm_sizing_policy.size_full.id]
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id,vcd_vm_sizing_policy.size_memory.id,vcd_vm_sizing_policy.size_full.id]
 }
 
 resource "vcd_vapp" "{{.VAppName}}" {
@@ -425,6 +467,48 @@ resource "vcd_vapp_vm" "{{.VMName}}4" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_full.id
  }
+
+resource "vcd_vapp_vm" "{{.VMName}}5" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.{{.VdcName}}.name
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  name          = "{{.VMName}}5"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  power_on      = "true"
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_full.id
+ }
+
+resource "vcd_vapp_vm" "{{.VMName}}6" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.{{.VdcName}}.name
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  name          = "{{.VMName}}6"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  power_on      = "true"
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_memory.id
+  cpus           = 1
+  cpu_cores      = 1
+}
+
+resource "vcd_vapp_vm" "{{.VMName}}7" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.{{.VdcName}}.name
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  name          = "{{.VMName}}7"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  power_on      = "true"
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
+  memory = 256
+}
 `
 
 const testAccCheckVcdVAppEmptyVmWithSizingUpdate = "# skip-binary-test: only for updates " +
@@ -487,7 +571,7 @@ resource "vcd_vapp_vm" "{{.VMName}}3" {
   memory           = 3072
 }
 
-resource "vcd_vapp_vm" "{{.VMName}}5" {
+resource "vcd_vapp_vm" "{{.VMName}}8" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
 
