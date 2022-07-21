@@ -178,6 +178,9 @@ func setNsxtAlbControllerData(d *schema.ResourceData, albController *types.NsxtA
 	dSet(d, "description", albController.Description)
 	dSet(d, "url", albController.Url)
 	dSet(d, "username", albController.Username)
-	dSet(d, "license_type", albController.LicenseType)
+	// Avoids polluting state for API versions >= v37.0
+	if albController.LicenseType != "" {
+		dSet(d, "license_type", albController.LicenseType)
+	}
 	dSet(d, "version", albController.Version)
 }

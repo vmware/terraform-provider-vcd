@@ -496,33 +496,30 @@ func changeSupportedFeatureSetIfVersionIsLessThan37(params StringMap, isBasicOrS
 	return false
 }
 
-// If VCD API version is less than v37.0, checks that the resource contains license_type attribute of the given type.
-// Otherwise it checks supported_feature_set value.
-func checkLicenseTypeOrSupportedFeatureSet(resourceName string, isBasicOrStandard, isVersionLessThan37 bool) resource.TestCheckFunc {
-	licenseType := "ENTERPRISE"
+// If VCD API version is less than v37.0, checks supported_feature_set is not set.
+// Otherwise, checks that the resource contains supported_feature_set value set in the resource.
+func checkSupportedFeatureSet(resourceName string, isStandard, isVersionLessThan37 bool) resource.TestCheckFunc {
 	supportedFeatureSet := "PREMIUM"
-	if isBasicOrStandard {
-		licenseType = "BASIC"
+	if isStandard {
 		supportedFeatureSet = "STANDARD"
 	}
 
 	if isVersionLessThan37 {
-		return resource.TestCheckResourceAttr(resourceName, "license_type", licenseType)
+		return resource.TestCheckNoResourceAttr(resourceName, "supported_feature_set")
 	}
 	return resource.TestCheckResourceAttr(resourceName, "supported_feature_set", supportedFeatureSet)
 }
 
-// If VCD API version is less than 37, checks that the resource contains license_type attribute of the given type.
-// Otherwise it checks nothing (it returns a dummy check).
-func checkLicenseTypeOrNothing(resourceName string, isBasicOrStandard, isVersionLessThan37 bool) resource.TestCheckFunc {
+// If VCD API version is less than v37.0, checks that the resource contains license_type value set in the resource.
+// Otherwise, it checks nothing.
+func checkLicenseType(resourceName string, isBasic, isVersionLessThan37 bool) resource.TestCheckFunc {
 	licenseType := "ENTERPRISE"
-	if isBasicOrStandard {
+	if isBasic {
 		licenseType = "BASIC"
 	}
 
 	if isVersionLessThan37 {
 		return resource.TestCheckResourceAttr(resourceName, "license_type", licenseType)
 	}
-	// Dummy return
-	return resource.TestCheckNoResourceAttr(resourceName, "supported_feature_set")
+	return resource.TestCheckNoResourceAttr(resourceName, "license_type")
 }

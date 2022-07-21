@@ -62,7 +62,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", "first alb controller"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
-					checkLicenseTypeOrNothing("vcd_nsxt_alb_controller.first", false, isVersionLessThan37),
+					checkLicenseType("vcd_nsxt_alb_controller.first", false, isVersionLessThan37),
 				),
 			},
 			{
@@ -73,7 +73,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
-					checkLicenseTypeOrNothing("vcd_nsxt_alb_controller.first", true, isVersionLessThan37),
+					checkLicenseType("vcd_nsxt_alb_controller.first", true, isVersionLessThan37),
 				),
 			},
 			{

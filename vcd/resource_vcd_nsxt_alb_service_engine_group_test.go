@@ -77,7 +77,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "ha_mode"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "overallocated", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "false"),
-					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_service_engine_group.first", false, isVersionLessThan37),
+					checkSupportedFeatureSet("vcd_nsxt_alb_service_engine_group.first", false, isVersionLessThan37),
 				),
 			},
 			{
@@ -109,7 +109,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "ha_mode"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "overallocated", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "sync_on_refresh", "false"),
-					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_service_engine_group.first", false, isVersionLessThan37),
+					checkSupportedFeatureSet("vcd_nsxt_alb_service_engine_group.first", false, isVersionLessThan37),
 				),
 			},
 			{

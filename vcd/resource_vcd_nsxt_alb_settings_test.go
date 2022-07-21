@@ -77,7 +77,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "192.168.255.1/25"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
-					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_settings.test", false, isApiLessThanVersion37),
+					checkSupportedFeatureSet("vcd_nsxt_alb_settings.test", false, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -86,7 +86,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "false"),
-					checkLicenseTypeOrSupportedFeatureSet("vcd_nsxt_alb_settings.test", true, isApiLessThanVersion37),
+					checkSupportedFeatureSet("vcd_nsxt_alb_settings.test", true, isApiLessThanVersion37),
 				),
 			},
 			{
