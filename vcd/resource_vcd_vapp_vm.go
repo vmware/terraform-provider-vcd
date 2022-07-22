@@ -1241,7 +1241,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			memory, isMemorySet := d.GetOk("memory")
 			isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
 			if isMemoryComingFromSizingPolicy && isMemorySet {
-				return fmt.Errorf("sizing policy is specifying a memory of %d that can't be overriden by `memory` attribute", *computePolicy.Memory)
+				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
 			}
 
 			if !isMemoryComingFromSizingPolicy {
@@ -1264,10 +1264,10 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
 			isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
 			if isCpuComingFromSizingPolicy && isCpusSet {
-				return fmt.Errorf("sizing policy is specifying CPU count of %d that can't be overriden by `cpus` attribute", *computePolicy.CPUCount)
+				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
 			}
 			if isCpuComingFromSizingPolicy && isCpuCoresSet {
-				return fmt.Errorf("sizing policy is specifying %d CPU cores that can't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket)
+				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
 			}
 
 			if !isCpuComingFromSizingPolicy {
