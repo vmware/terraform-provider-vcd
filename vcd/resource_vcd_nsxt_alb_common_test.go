@@ -505,7 +505,7 @@ func checkSupportedFeatureSet(resourceName string, isStandard, isVersionLessThan
 	}
 
 	if isVersionLessThan37 {
-		return resource.TestCheckNoResourceAttr(resourceName, "supported_feature_set")
+		return resource.TestCheckResourceAttr(resourceName, "supported_feature_set", "")
 	}
 	return resource.TestCheckResourceAttr(resourceName, "supported_feature_set", supportedFeatureSet)
 }
@@ -521,5 +521,5 @@ func checkLicenseType(resourceName string, isBasic, isVersionLessThan37 bool) re
 	if isVersionLessThan37 {
 		return resource.TestCheckResourceAttr(resourceName, "license_type", licenseType)
 	}
-	return resource.TestCheckNoResourceAttr(resourceName, "license_type")
+	return resource.TestCheckResourceAttr(resourceName, "license_type", "")
 }
