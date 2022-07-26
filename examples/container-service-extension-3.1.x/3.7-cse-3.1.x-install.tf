@@ -531,8 +531,6 @@ resource "vcd_rights_bundle" "published-cse-rights-bundle" {
 # Create a new role for CSE, with the new rights to create clusters and manage them.
 
 data "vcd_role" "vapp_author" {
-  provider = vcd.cse-service-account # Using CSE Service Account for this data source
-
   org  = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   name = "vApp Author"
 }
