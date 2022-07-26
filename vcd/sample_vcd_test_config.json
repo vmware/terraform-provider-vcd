@@ -49,7 +49,9 @@
       "//": "VM name in default OVA is secondVM",
       "vmName1InMultiVmItem": "secondVM",
       "//": "VM name in default OVA is thirdVM",
-      "vmName2InMultiVmItem": "thirdVM"
+      "vmName2InMultiVmItem": "thirdVM",
+      "//": "'nsxtBackedCatalogName' is configured to use NSX-T VDC backed storage profile",
+      "nsxtBackedCatalogName": "catalog-in-nsxt-vdc-storage"
     },
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
@@ -136,7 +138,9 @@
     "uploadPieceSize": 5,
     "uploadProgress": true,
     "//": "Already uploaded media name",
-    "mediaName" : "linuxOS"
+    "mediaName" : "linuxOS",
+    "//": "'mediaName' media is stored in NSX-V VDC backed storage profile while 'nsxtBackedMediaName' is stored in NSX-T VDC Backed storage profile",
+    "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog"
   },
   "misc": {
     "//": "ldapContainer can be used to pull default LDAP testing container 'rroemhild/test-openldap' from a local",
