@@ -358,7 +358,6 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 				),
 			},
 			{
-				//
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
