@@ -95,6 +95,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vdc_group":                                 datasourceVdcGroup(),                            // 3.5
 	"vcd_nsxt_distributed_firewall":                 datasourceVcdNsxtDistributedFirewall(),          // 3.6
 	"vcd_nsxt_network_context_profile":              datasourceVcdNsxtNetworkContextProfile(),        // 3.6
+	"vcd_nsxt_edgegateway_bgp_configuration":        datasourceVcdEdgeBgpConfig(),                    // 3.7
 	"vcd_nsxt_route_advertisement":                  datasourceVcdNsxtRouteAdvertisement(),           // 3.7
 
 }
@@ -166,6 +167,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_security_tag":                              resourceVcdSecurityTag(),                      // 3.7
 	"vcd_nsxt_route_advertisement":                  resourceVcdNsxtRouteAdvertisement(),           // 3.7
 	"vcd_org_vdc_access_control":                    resourceVcdOrgVdcAccessControl(),              // 3.7
+	"vcd_nsxt_edgegateway_bgp_configuration":        resourceVcdEdgeBgpConfig(),                    // 3.7
 }
 
 // Provider returns a terraform.ResourceProvider.
