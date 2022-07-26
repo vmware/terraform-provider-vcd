@@ -238,21 +238,22 @@ resource "vcd_inserted_media" "{{.InsertMediaName}}" {
 func TestAccVcdMediaLockTest(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":              testConfig.VCD.Org,
-		"Vdc":              testConfig.Nsxt.Vdc,
-		"EdgeGateway":      testConfig.Nsxt.EdgeGateway,
-		"Catalog":          testConfig.VCD.Catalog.Name,
-		"CatalogItem":      testConfig.VCD.Catalog.CatalogItem,
-		"VappName":         t.Name(),
-		"VmName":           t.Name(),
-		"CatalogMediaName": testConfig.Media.MediaName,
-		"Description":      t.Name() + "_description",
-		"MediaPath":        testConfig.Media.MediaPath,
-		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"UploadProgress":   testConfig.Media.UploadProgress,
-		"NetworkName":      t.Name(),
-		"EjectForce":       true,
-		"Tags":             "catalog",
+		"Org":                        testConfig.VCD.Org,
+		"Vdc":                        testConfig.Nsxt.Vdc,
+		"EdgeGateway":                testConfig.Nsxt.EdgeGateway,
+		"Catalog":                    testConfig.VCD.Catalog.Name,
+		"CatalogItem":                testConfig.VCD.Catalog.CatalogItem,
+		"VappName":                   t.Name(),
+		"VmName":                     t.Name(),
+		"NsxtBackedCataloName":       testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"NsxtBackedCatalogMediaName": testConfig.Media.NsxtBackedMediaName,
+		"Description":                t.Name() + "_description",
+		"MediaPath":                  testConfig.Media.MediaPath,
+		"UploadPieceSize":            testConfig.Media.UploadPieceSize,
+		"UploadProgress":             testConfig.Media.UploadProgress,
+		"NetworkName":                t.Name(),
+		"EjectForce":                 true,
+		"Tags":                       "catalog",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -270,8 +271,8 @@ func TestAccVcdMediaLockTest(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMediaInserted("vcd_inserted_media."+params["CatalogMediaName"].(string), params),
-					testAccCheckMediaEjected("vcd_inserted_media."+params["CatalogMediaName"].(string), params),
+					testAccCheckMediaInserted("vcd_inserted_media.test", params),
+					testAccCheckMediaEjected("vcd_inserted_media.test", params),
 				),
 			},
 		},
@@ -323,11 +324,11 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 }
 
-resource "vcd_inserted_media" "{{.CatalogMediaName}}" {
+resource "vcd_inserted_media" "test" {
   org     = "{{.Org}}"
   vdc     = "{{.Vdc}}"
-  catalog = "{{.Catalog}}"
-  name    = "{{.CatalogMediaName}}"
+  catalog = "{{.NsxtBackedCataloName}}"
+  name    = "{{.NsxtBackedCatalogMediaName}}"
 
   vapp_name  = vcd_vapp.{{.VappName}}.name
   vm_name    = vcd_vapp_vm.{{.VmName}}.name

@@ -109,6 +109,7 @@ type TestConfig struct {
 			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
 			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
 			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
+			NsxtBackedCatalogName   string `json:"nsxtBackedCatalogName,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -160,10 +161,11 @@ type TestConfig struct {
 		OvaVappMultiVmsPath string `json:"ovaVappMultiVmsPath,omitempty"`
 	} `json:"ova"`
 	Media struct {
-		MediaPath       string `json:"mediaPath,omitempty"`
-		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
-		UploadProgress  bool   `json:"uploadProgress,omitempty"`
-		MediaName       string `json:"mediaName,omitempty"`
+		MediaPath           string `json:"mediaPath,omitempty"`
+		UploadPieceSize     int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress      bool   `json:"uploadProgress,omitempty"`
+		MediaName           string `json:"mediaName,omitempty"`
+		NsxtBackedMediaName string `json:"nsxtBackedMediaName,omitempty"`
 	} `json:"media"`
 	Misc struct {
 		LdapContainer string `json:"ldapContainer,omitempty"`
