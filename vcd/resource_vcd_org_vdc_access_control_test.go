@@ -31,7 +31,7 @@ func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 		"AccessControlName2": accessControlName + "2",
 		"UserName":           userName1,
 		"UserName2":          userName2,
-		"Password":           "mei2Heehiu>Smei2Heehiu>S",
+		"Password":           "CHANGE-ME",
 		"RoleName":           govcd.OrgUserRoleOrganizationAdministrator,
 	}
 	testParamsNotEmpty(t, params)

@@ -550,6 +550,11 @@ func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
 	configText2 := templateFill(testAccVcdNsxtBgpVdcGroupConfig2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.VdcGroupEdgeGateway),
