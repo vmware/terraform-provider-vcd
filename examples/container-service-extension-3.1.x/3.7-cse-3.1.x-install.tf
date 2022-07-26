@@ -488,7 +488,17 @@ resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
 
 resource "null_resource" "cse-install-script" {
   triggers = {
-    always_run = timestamp()
+    # Trigger the installation only if one of the configuration values change.
+    config_has_changed = join(",", [
+      vcd_org_user.cse-service-account.name,
+      vcd_org_user.cse-service-account.password,
+      vcd_catalog.cat-cse.name,
+      vcd_network_routed_v2.cse_routed.name,
+      vcd_network_routed_v2.cse_routed.name,
+      vcd_org.cse_org.name,
+      vcd_org_vdc.cse_vdc.name,
+      data.vcd_storage_profile.cse_sp.name
+    ])
   }
 
   provisioner "local-exec" {
