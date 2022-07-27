@@ -236,13 +236,9 @@ func getNsxtAlbServiceEngineGroupType(d *schema.ResourceData, impServiceEngineGr
 				ID: d.Get("alb_cloud_id").(string),
 			},
 		},
-		ReservationType: d.Get("reservation_model").(string),
+		ReservationType:     d.Get("reservation_model").(string),
+		SupportedFeatureSet: d.Get("supported_feature_set").(string),
 	}
-
-	if supportedFeatureSet, ok := d.GetOk("supported_feature_set"); ok {
-		albControllerType.SupportedFeatureSet = supportedFeatureSet.(string)
-	}
-
 	return albControllerType
 }
 

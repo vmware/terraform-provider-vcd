@@ -98,7 +98,10 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 				ID: createdAlbCloud.NsxtAlbCloud.ID,
 			},
 		},
-		SupportedFeatureSet: "PREMIUM",
+	}
+	// SupportedFeatureSet is available from VCD 10.4 onwards
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
+		albSeGroup.SupportedFeatureSet = "PREMIUM"
 	}
 
 	createdSeGroup, err := vcdClient.CreateNsxtAlbServiceEngineGroup(albSeGroup)
@@ -130,6 +133,10 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	// Update ALB General Settings
 	albSettingsConfig := &types.NsxtAlbConfig{
 		Enabled: true,
+	}
+	// SupportedFeatureSet is available from VCD 10.4 onwards
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
+		albSettingsConfig.SupportedFeatureSet = "PREMIUM"
 	}
 
 	_, err = nsxtEdge.UpdateAlbSettings(albSettingsConfig)

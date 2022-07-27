@@ -62,6 +62,7 @@ func resourceVcdAlbSettings() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Required:     false, // It should be required but for compatibility reasons it is not
+				Computed:     true,
 				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
 				Description:  "Feature set for ALB in this Edge Gateway. One of 'STANDARD', 'PREMIUM'.",
 			},
@@ -182,10 +183,7 @@ func getNsxtAlbConfigurationType(d *schema.ResourceData) *types.NsxtAlbConfig {
 	albConfig := &types.NsxtAlbConfig{
 		Enabled:                  d.Get("is_active").(bool),
 		ServiceNetworkDefinition: d.Get("service_network_specification").(string),
-	}
-
-	if supportedFeatureSet, ok := d.GetOk("supported_feature_set"); ok {
-		albConfig.SupportedFeatureSet = supportedFeatureSet.(string)
+		SupportedFeatureSet:      d.Get("supported_feature_set").(string),
 	}
 
 	return albConfig
