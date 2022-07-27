@@ -125,7 +125,12 @@ resource "vcd_role" "cse-service-role" {
     "vmware:tkgcluster: Administrator View",
     "vmware:tkgcluster: Full Access",
     "vmware:tkgcluster: Modify",
-    "vmware:tkgcluster: View"
+    "vmware:tkgcluster: View",
+    "cse:nativeCluster: Administrator Full access",
+    "cse:nativeCluster: Administrator View",
+    "cse:nativeCluster: Full Access",
+    "cse:nativeCluster: Modify",
+    "cse:nativeCluster: View"
   ]
 }
 
