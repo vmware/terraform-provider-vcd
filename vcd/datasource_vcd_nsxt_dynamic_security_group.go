@@ -99,7 +99,7 @@ func datasourceVcdDynamicSecurityGroupRead(ctx context.Context, d *schema.Resour
 
 	err = setNsxtDynamicSecurityGroupData(d, securityGroup.NsxtFirewallGroup)
 	if err != nil {
-		return diag.Errorf("[nsxt security group data source read] error setting NSX-T Security Group: %s", err)
+		return diag.Errorf("[nsxt dynamic security group data source read] error setting NSX-T Dynamic Security Group: %s", err)
 	}
 
 	// A separate GET call is required to get all associated VMs
