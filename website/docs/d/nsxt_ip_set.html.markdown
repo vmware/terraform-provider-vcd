@@ -39,7 +39,7 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level. **Deprecated**
 in favor of `edge_gateway_id` field.
-* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
+* `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
 * `name` - (Required)  - Unique name of existing IP Set.
 
 ## Attribute Reference
