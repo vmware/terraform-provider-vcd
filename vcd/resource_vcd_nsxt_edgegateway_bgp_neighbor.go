@@ -3,10 +3,11 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -151,7 +152,7 @@ func resourceVcdEdgeBgpNeighborCreate(ctx context.Context, d *schema.ResourceDat
 
 	createdbgpNeighbor, err := nsxtEdge.CreateBgpNeighbor(bgpNeighbor)
 	if err != nil {
-		return diag.Errorf("[bgp neighbor create] error updating NSX-T Edge Gateway BGP IP Prefix List: %s", err)
+		return diag.Errorf("[bgp neighbor create] error updating NSX-T Edge Gateway BGP Neighbor configuration: %s", err)
 	}
 
 	d.SetId(createdbgpNeighbor.EdgeBgpNeighbor.ID)
@@ -189,7 +190,7 @@ func resourceVcdEdgeBgpNeighborUpdate(ctx context.Context, d *schema.ResourceDat
 
 	bgpNeighbor, err := nsxtEdge.GetBgpNeighborById(d.Id())
 	if err != nil {
-		return diag.Errorf("[bgp neighbor update] error retrieving NSX-T Edge Gateway BGP IP Prefix Lis: %s", err)
+		return diag.Errorf("[bgp neighbor update] error retrieving NSX-T Edge Gateway BGP Neighbor configuration: %s", err)
 	}
 
 	bgpNeighbor.EdgeBgpNeighbor = getEdgeBgpNeighborType(d)
@@ -197,7 +198,7 @@ func resourceVcdEdgeBgpNeighborUpdate(ctx context.Context, d *schema.ResourceDat
 
 	_, err = bgpNeighbor.Update(bgpNeighbor.EdgeBgpNeighbor)
 	if err != nil {
-		return diag.Errorf("[bgp neighbor update] error updating NSX-T Edge Gateway BGP IP Prefix List: %s", err)
+		return diag.Errorf("[bgp neighbor update] error updating NSX-T Edge Gateway BGP Neighbor configuration: %s", err)
 	}
 
 	return resourceVcdEdgeBgpNeighborRead(ctx, d, meta)
@@ -215,12 +216,12 @@ func resourceVcdEdgeBgpNeighborRead(ctx context.Context, d *schema.ResourceData,
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("[bgp neighbor read] error retrieving NSX-T Edge Gateway BGP IP Prefix List: %s", err)
+		return diag.Errorf("[bgp neighbor read] error retrieving NSX-T Edge Gateway BGP Neighbor configuration: %s", err)
 	}
 
 	bgpNeighbor, err := nsxtEdge.GetBgpNeighborById(d.Id())
 	if err != nil {
-		return diag.Errorf("[bgp neighbor read] error retrieving NSX-T Edge Gateway BGP IP Prefix List: %s", err)
+		return diag.Errorf("[bgp neighbor read] error retrieving NSX-T Edge Gateway BGP Neighbor configuration: %s", err)
 	}
 
 	err = setEdgeBgpNeighborData(d, bgpNeighbor.EdgeBgpNeighbor)

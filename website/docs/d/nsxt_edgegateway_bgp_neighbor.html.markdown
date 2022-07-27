@@ -37,7 +37,7 @@ data "vcd_nsxt_edgegateway_bgp_neighbor" "first" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
+* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `ip_address` - (Required) An IP Address (IPv4 or IPv6) of existing BGP Neighbor in specified Edge Gateway
 

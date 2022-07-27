@@ -177,7 +177,6 @@ resource "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
   allow_as_in           = true
   bfd_enabled           = true
   route_filtering       = "DISABLED"
-  
 }
 `
 
@@ -220,7 +219,6 @@ data "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
   ip_address = vcd_nsxt_edgegateway_bgp_neighbor.testing.ip_address
-  
 
   depends_on = [vcd_nsxt_edgegateway_bgp_neighbor.testing]
 }
@@ -257,7 +255,6 @@ data "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
   ip_address = vcd_nsxt_edgegateway_bgp_neighbor.testing.ip_address
-  
 
   depends_on = [vcd_nsxt_edgegateway_bgp_neighbor.testing]
 }
