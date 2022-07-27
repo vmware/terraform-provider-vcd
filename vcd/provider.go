@@ -98,8 +98,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_configuration":        datasourceVcdEdgeBgpConfig(),                    // 3.7
 	"vcd_nsxt_route_advertisement":                  datasourceVcdNsxtRouteAdvertisement(),           // 3.7
 	"vcd_nsxt_edgegateway_bgp_ip_prefix_list":       datasourceVcdEdgeBgpIpPrefixList(),              // 3.7
-
-	"vcd_nsxt_dynamic_security_group": datasourceVcdDynamicSecurityGroup(), // 3.7
+	"vcd_nsxt_dynamic_security_group":               datasourceVcdDynamicSecurityGroup(),             // 3.7
 }
 
 var globalResourceMap = map[string]*schema.Resource{
