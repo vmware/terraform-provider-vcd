@@ -55,7 +55,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations
-* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
+* `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` datasource
 * `enabled` - (Required) Defines if BGP service is enabled or not
 * `ecmp_enabled` (Optional) - A flag indicating whether ECMP is enabled or not
