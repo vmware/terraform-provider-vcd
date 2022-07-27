@@ -53,7 +53,7 @@ data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `edge_gateway_id` - (Optional) An ID of NSX-T Edge Gateway. Can be lookup up using
+* `edge_gateway_id` - (Optional) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `service_engine_group_id` - (Required) An ID of NSX-T Service Engine Group. Can be looked up using
   [vcd_nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/data-sources/nsxt_alb_service_engine_group) data
