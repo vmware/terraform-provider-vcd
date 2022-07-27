@@ -98,6 +98,7 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 				ID: createdAlbCloud.NsxtAlbCloud.ID,
 			},
 		},
+		SupportedFeatureSet: "PREMIUM",
 	}
 
 	createdSeGroup, err := vcdClient.CreateNsxtAlbServiceEngineGroup(albSeGroup)
