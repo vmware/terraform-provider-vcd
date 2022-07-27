@@ -55,7 +55,7 @@ The following arguments are supported:
   in favor of `edge_gateway_id` field.
 * `name` - (Required) A unique name for IP Set
 * `description` - (Optional) An optional description of the IP Set
-* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
+* `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` data source.
 * `ip_addresses` (Optional) A set of IP addresses, subnets or ranges (IPv4 or IPv6)
 

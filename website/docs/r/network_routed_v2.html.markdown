@@ -111,7 +111,7 @@ The following arguments are supported:
 * `description` - (Optional) An optional description of the network
 * `interface_type` - (Optional) An interface for the network. One of `internal` (default), `subinterface`, 
   `distributed` (requires the edge gateway to support distributed networks). NSX-T supports only `internal`
-* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-V or NSX-T)
+* `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-V or NSX-T)
 * `gateway` (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
 * `dns1` - (Optional) First DNS server to use.
