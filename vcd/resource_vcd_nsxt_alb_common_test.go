@@ -64,7 +64,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -145,7 +145,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -473,7 +473,7 @@ data "vcd_nsxt_alb_pool" "test" {
 
 // Since v37.0, license_type is no longer used. This function changes Supported Feature Set for License Type if version is lower,
 // then returns whether it made the change or not (the version is lower or not).
-func changeSupportedFeatureSetIfVersionIsLessThan37(params StringMap, isBasicOrStandard bool) bool {
+func changeSupportedFeatureSetIfVersionIsLessThan37(licenseTypeParamKey, supportedFeatureSetParamKey string, params StringMap, isBasicOrStandard bool) bool {
 	// We choose between premium features or standard ones for SupportedFeatureSet, or their equivalent in the LicenseType
 	licenseType := "ENTERPRISE"
 	supportedFeatureSet := "PREMIUM"
@@ -483,14 +483,14 @@ func changeSupportedFeatureSetIfVersionIsLessThan37(params StringMap, isBasicOrS
 	}
 
 	// Assume we're on newer versions of API, >= 37.0
-	params["LicenseType"] = " "
-	params["SupportedFeatureSet"] = fmt.Sprintf("supported_feature_set = \"%s\"", supportedFeatureSet)
+	params[licenseTypeParamKey] = " "
+	params[supportedFeatureSetParamKey] = fmt.Sprintf("supported_feature_set = \"%s\"", supportedFeatureSet)
 
 	// If not, transform the fields
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
-		params["LicenseType"] = fmt.Sprintf("license_type = \"%s\"", licenseType)
-		params["SupportedFeatureSet"] = " "
+		params[licenseTypeParamKey] = fmt.Sprintf("license_type = \"%s\"", licenseType)
+		params[supportedFeatureSetParamKey] = " "
 		return true
 	}
 	return false

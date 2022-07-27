@@ -24,6 +24,7 @@ The following Cloud Director versions are supported by this provider:
 
 * 10.2
 * 10.3
+* 10.4
 
 ## Example Usage
 

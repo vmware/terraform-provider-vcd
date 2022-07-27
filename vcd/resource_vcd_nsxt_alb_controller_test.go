@@ -30,14 +30,14 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"Tags":               "nsxt alb",
 	}
-	isVersionLessThan37 := changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
+	isVersionLessThan37 := changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbController, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-step2"
-	changeSupportedFeatureSetIfVersionIsLessThan37(params, true) // Change to LicenseType Basic
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, true) // Change to LicenseType Basic
 	configText2 := templateFill(testAccVcdNsxtAlbControllerStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 

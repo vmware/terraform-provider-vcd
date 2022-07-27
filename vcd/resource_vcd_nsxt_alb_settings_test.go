@@ -35,7 +35,10 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
-	isApiLessThanVersion37 := changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
+	// Set supported_feature_set for ALB Settings
+	isApiLessThanVersion37 := changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSetSettings", params, false)
+	// Set supported_feature_set for ALB Service Engine Group
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -45,11 +48,12 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step2"
 	params["IsActive"] = "false"
-	changeSupportedFeatureSetIfVersionIsLessThan37(params, true)
+	params["SupportedFeatureSetSettings"] = " "
 	configText2 := templateFill(testAccVcdNsxtAlbGeneralSettings, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	params["FuncName"] = t.Name() + "step3"
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSetSettings", params, true)
 	configText3 := templateFill(testAccVcdNsxtAlbGeneralSettingsCustomService, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
@@ -86,7 +90,6 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "false"),
-					checkSupportedFeatureSet("vcd_nsxt_alb_settings.test", true, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -103,6 +106,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "82.10.10.1/25"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					checkSupportedFeatureSet("vcd_nsxt_alb_settings.test", true, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -171,7 +175,7 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = {{.IsActive}}
-  {{.SupportedFeatureSet}}
+  {{.SupportedFeatureSetSettings}}
 
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
@@ -193,7 +197,7 @@ resource "vcd_nsxt_alb_settings" "test" {
   edge_gateway_id               = data.vcd_nsxt_edgegateway.existing.id
   is_active                     = true
   service_network_specification = "82.10.10.1/25"
-  {{.SupportedFeatureSet}}
+  {{.SupportedFeatureSetSettings}}
   
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]

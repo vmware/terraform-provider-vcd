@@ -50,7 +50,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
 		"Tags":               "nsxt alb",
 	}
-	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -766,7 +766,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
 		"Tags":               "nsxt alb",
 	}
-	changeSupportedFeatureSetIfVersionIsLessThan37(params, false)
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
