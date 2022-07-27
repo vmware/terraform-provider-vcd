@@ -5,11 +5,12 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"strconv"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
@@ -331,24 +332,6 @@ func testAccCheckNsxtRouteAdvertisement(vdcName, edgeGatewayName string) resourc
 		}
 
 		return nil
-	}
-}
-
-func updateEdgeGatewayTier0Dedication(t *testing.T, dedicatedTier0 bool) {
-	vcdClient := createSystemTemporaryVCDConnection()
-	org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
-	if err != nil {
-		t.Fatalf("error retrieving Org '%s': %s", testConfig.VCD.Org, err)
-	}
-	edge, err := org.GetNsxtEdgeGatewayByName(testConfig.Nsxt.EdgeGateway)
-	if err != nil {
-		t.Fatalf("error retrieving NSX-T Edge Gateway '%s': %s", testConfig.Nsxt.EdgeGateway, err)
-	}
-
-	edge.EdgeGateway.EdgeGatewayUplinks[0].Dedicated = dedicatedTier0
-	_, err = edge.Update(edge.EdgeGateway)
-	if err != nil {
-		t.Fatalf("error updating NSX-T Edge Gateway dedicated Tier 0 gateway usage to '%t': %s", dedicatedTier0, err)
 	}
 }
 
