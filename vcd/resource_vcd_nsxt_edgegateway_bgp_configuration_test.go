@@ -21,6 +21,13 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 		return
 	}
 
+	// Binary tests cannot be run for this test because it requires dedicated Tier-0 gateway which
+	// is enabled using custom SDK functions
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
 	// Advertisement configuration requires it. Restore it right after the test so that other
 	// tests are not impacted.
@@ -67,11 +74,6 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step9"
 	configText9 := templateFill(testAccVcdNsxtBgpConfig9, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 9: %s", configText9)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -630,3 +632,183 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
   ecmp_enabled           = true
 }
 `
+
+// TestAccVcdNsxtEdgeBgpConfigIntegrationVdc tests integration of all 3 BGP configuration resources
+// when an Edge Gateway is a member of single VDC:
+// * vcd_nsxt_edgegateway_bgp_configuration
+// * vcd_nsxt_edgegateway_bgp_neighbor
+// * vcd_nsxt_edgegateway_bgp_ip_prefix_list
+//
+// Each of these resources are tested in their own respective test, but this test aims to test that
+// there are no oustanding issues when all 3 resources are used together - this is what a normal user
+// would do to achieve complete BGP configuration.
+func TestAccVcdNsxtEdgeBgpConfigIntegrationVdc(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	// Binary tests cannot be run for this test because it requires dedicated Tier-0 gateway which
+	// is enabled using custom SDK functions
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// Ensure Edge Gateway has a dedicated Tier 0 gateway (External network) as BGP and Route
+	// Advertisement configuration requires it. Restore it right after the test so that other
+	// tests are not impacted.
+	updateEdgeGatewayTier0Dedication(t, true)
+	defer updateEdgeGatewayTier0Dedication(t, false)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":        testConfig.VCD.Org,
+		"NsxtVdc":    testConfig.Nsxt.Vdc,
+		"NsxtEdgeGw": testConfig.Nsxt.EdgeGateway,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtEdgeBgpConfigIntegration+testAccVcdNsxtBgpConfigPrereqs, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.EdgeGateway),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_neighbor.testing", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtEdgeBgpConfigIntegration = `
+resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+  
+  enabled         = true
+  local_as_number = "65420"
+}
+
+resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing1" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  name        = "{{.TestName}}-1"
+
+  ip_prefix {
+	network                  = "30.10.10.0/24"
+	action                   = "DENY"
+	greater_than_or_equal_to = "25"
+	less_than_or_equal_to    = "27"
+  }
+
+  ip_prefix {
+	network                  = "40.0.0.0/8"
+	action                   = "PERMIT"
+	greater_than_or_equal_to = "16"
+	less_than_or_equal_to    = "24"
+  }
+}
+
+resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing2" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  name        = "{{.TestName}}-2"
+
+  ip_prefix {
+	network = "10.10.10.0/24"
+	action  = "PERMIT"
+  }
+
+  ip_prefix {
+	network = "20.10.10.0/24"
+	action  = "DENY"
+  }
+
+  ip_prefix {
+	network = "2001:db8::/48"
+	action  = "DENY"
+  }
+}
+
+resource "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  ip_address       = "1.1.1.1"
+  remote_as_number = "62513"
+
+  keep_alive_timer      = 78
+  hold_down_timer       = 400
+  graceful_restart_mode = "GRACEFUL_AND_HELPER"
+  allow_as_in           = false
+  bfd_enabled           = false
+  bfd_interval          = 800
+  bfd_dead_multiple     = 5
+  route_filtering       = "IPV4"
+
+  in_filter_ip_prefix_list_id  = vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing1.id
+  out_filter_ip_prefix_list_id = vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing2.id
+}
+`
+
+func TestAccVcdNsxtEdgeBgpConfigIntegrationVdcGroup(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdcGroup":         testConfig.Nsxt.VdcGroup,
+		"NsxtEdgeGwInVdcGroup": testConfig.Nsxt.VdcGroupEdgeGateway,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtEdgeBgpConfigIntegration+testAccVcdNsxtBgpConfigVdcGroupPrereqs, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckNsxtBgpConfigurationDisabled(testConfig.Nsxt.VdcGroupEdgeGateway),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_edgegateway_bgp_configuration.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_neighbor.testing", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}

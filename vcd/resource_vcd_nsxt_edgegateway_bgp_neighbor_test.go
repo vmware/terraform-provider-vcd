@@ -131,9 +131,10 @@ func TestAccVcdNsxtEdgeBgpNeighbor(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_neighbor.testing", "bfd_dead_multiple", "5"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_bgp_neighbor.testing", "route_filtering", "IPV4"),
 
-					// TODO - integrate tests when BGP IP Prefix List PRs are merged
-					//resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_neighbor.testing", "in_filter_ip_prefix_list_id"),
-					//resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_neighbor.testing", "out_filter_ip_prefix_list_id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_neighbor.testing", "in_filter_ip_prefix_list_id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_bgp_neighbor.testing", "out_filter_ip_prefix_list_id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway_bgp_neighbor.testing", "in_filter_ip_prefix_list_id", "vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing1", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway_bgp_neighbor.testing", "out_filter_ip_prefix_list_id", "vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing2", "id"),
 				),
 			},
 			{
@@ -224,7 +225,7 @@ data "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
 }
 `
 
-const testAccVcdNsxtBgpNeighborVdcGroupConfig6 = testAccVcdNsxtBgpNeighborConfigVdcGroupPrereqs + `
+const testAccVcdNsxtBgpNeighborVdcGroupConfig6 = testAccVcdNsxtBgpNeighborConfigVdcGroupPrereqs + testAccVcdNsxtBgpNeighborVdcGroupConfigIpPrefixList1 + testAccVcdNsxtBgpNeighborVdcGroupConfigIpPrefixList2 + `
 resource "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
   org = "{{.Org}}"
 
@@ -241,10 +242,9 @@ resource "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
   bfd_interval          = 800
   bfd_dead_multiple     = 5
   route_filtering       = "IPV4"
-  
-  # TODO - integrate tests when BGP IP Prefix List PRs are merged
-  # in_filter_ip_prefix_list_id = "3a2021ed-eaf8-4ae6-a651-fb7870b2807e"
-  # out_filter_ip_prefix_list_id = "84019fbc-e895-4247-be0e-a3e39ee4da81"
+
+  in_filter_ip_prefix_list_id  = vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing1.id
+  out_filter_ip_prefix_list_id = vcd_nsxt_edgegateway_bgp_ip_prefix_list.testing2.id
 }
 `
 
@@ -257,5 +257,54 @@ data "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
   ip_address = vcd_nsxt_edgegateway_bgp_neighbor.testing.ip_address
 
   depends_on = [vcd_nsxt_edgegateway_bgp_neighbor.testing]
+}
+`
+
+const testAccVcdNsxtBgpNeighborVdcGroupConfigIpPrefixList1 = `
+resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing1" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  name        = "{{.TestName}}-1"
+
+  ip_prefix {
+	network                  = "30.10.10.0/24"
+	action                   = "DENY"
+	greater_than_or_equal_to = "25"
+	less_than_or_equal_to    = "27"
+  }
+
+  ip_prefix {
+	network                  = "40.0.0.0/8"
+	action                   = "PERMIT"
+	greater_than_or_equal_to = "16"
+	less_than_or_equal_to    = "24"
+  }
+}
+`
+
+const testAccVcdNsxtBgpNeighborVdcGroupConfigIpPrefixList2 = `
+resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing2" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  name        = "{{.TestName}}-2"
+
+  ip_prefix {
+	network = "10.10.10.0/24"
+	action  = "PERMIT"
+  }
+
+  ip_prefix {
+	network = "20.10.10.0/24"
+	action  = "DENY"
+  }
+
+  ip_prefix {
+	network = "2001:db8::/48"
+	action  = "DENY"
+  }
 }
 `
