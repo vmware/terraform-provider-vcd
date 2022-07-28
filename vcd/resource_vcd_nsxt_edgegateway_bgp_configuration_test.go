@@ -770,6 +770,15 @@ resource "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
 }
 `
 
+// TestAccVcdNsxtEdgeBgpConfigIntegrationVdc tests integration of all 3 BGP configuration resources
+// when an Edge Gateway is a member of a VDC Group:
+// * vcd_nsxt_edgegateway_bgp_configuration
+// * vcd_nsxt_edgegateway_bgp_neighbor
+// * vcd_nsxt_edgegateway_bgp_ip_prefix_list
+//
+// Each of these resources are tested in their own respective test, but this test aims to test that
+// there are no oustanding issues when all 3 resources are used together - this is what a normal user
+// would do to achieve complete BGP configuration.
 func TestAccVcdNsxtEdgeBgpConfigIntegrationVdcGroup(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
