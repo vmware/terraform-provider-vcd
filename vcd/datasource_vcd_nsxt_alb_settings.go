@@ -42,6 +42,11 @@ func datasourceVcdAlbSettings() *schema.Resource {
 				Computed:    true,
 				Description: "Optional custom network CIDR definition for ALB Service Engine placement (VCD default is 192.168.255.1/25)",
 			},
+			"supported_feature_set": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Feature set for ALB in this Edge Gateway. One of 'STANDARD', 'PREMIUM'.",
+			},
 		},
 	}
 }

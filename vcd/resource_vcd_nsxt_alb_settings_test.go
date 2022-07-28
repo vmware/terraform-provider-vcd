@@ -35,6 +35,10 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	// Set supported_feature_set for ALB Settings
+	isApiLessThanVersion37 := changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSetSettings", params, false)
+	// Set supported_feature_set for ALB Service Engine Group
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -44,10 +48,12 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step2"
 	params["IsActive"] = "false"
+	params["SupportedFeatureSetSettings"] = " "
 	configText2 := templateFill(testAccVcdNsxtAlbGeneralSettings, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	params["FuncName"] = t.Name() + "step3"
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSetSettings", params, true)
 	configText3 := templateFill(testAccVcdNsxtAlbGeneralSettingsCustomService, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
@@ -75,6 +81,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "192.168.255.1/25"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					checkSupportedFeatureSet("vcd_nsxt_alb_settings.test", false, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -90,7 +97,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"}, // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 			// This step will "recreate" the resource because service_network_specification requires a rebuild
 			{
@@ -99,6 +106,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "82.10.10.1/25"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					checkSupportedFeatureSet("vcd_nsxt_alb_settings.test", true, isApiLessThanVersion37),
 				),
 			},
 			{
@@ -106,7 +114,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"}, // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 		},
 	})
@@ -132,7 +140,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -149,6 +157,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "{{.ReservationModel}}"
+  {{.SupportedFeatureSet}}
 }
 `
 
@@ -166,6 +175,7 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = {{.IsActive}}
+  {{.SupportedFeatureSetSettings}}
 
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
@@ -187,6 +197,7 @@ resource "vcd_nsxt_alb_settings" "test" {
   edge_gateway_id               = data.vcd_nsxt_edgegateway.existing.id
   is_active                     = true
   service_network_specification = "82.10.10.1/25"
+  {{.SupportedFeatureSetSettings}}
   
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]

@@ -42,13 +42,16 @@ resource "vcd_nsxt_alb_settings" "org1" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
+* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `is_active` - (Required) Boolean value `true` or `false` if ALB is enabled. **Note** Delete operation of this resource
   will set it to `false`
 * `service_network_specification` - (Optional) Gateway CIDR format which will be used by Load Balancer service. All the
   load balancer service engines associated with the Service Engine Group will be attached to this network. The subnet
   prefix length must be 25. If nothing is set, the **default is 192.168.255.125/25**. This field cannot be updated
+* `supported_feature_set` - (Optional; *v3.7+*) Feature set of this Edge Gateway if ALB is enabled (`STANDARD` or `PREMIUM`)
+
+~> The attribute `supported_feature_set` must not be used in VCD versions lower than 10.4. Starting with 10.4, it replaces `license_type` field in [nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller).
 
 ## Importing
 

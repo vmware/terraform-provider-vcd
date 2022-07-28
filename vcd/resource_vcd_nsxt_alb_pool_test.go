@@ -50,6 +50,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
 		"Tags":               "nsxt alb",
 	}
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -660,6 +661,7 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   is_active       = {{.IsActive}}
+  {{.SupportedFeatureSet}}
 
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
@@ -683,7 +685,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -700,6 +702,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "{{.ReservationModel}}"
+  {{.SupportedFeatureSet}}
 }
 `
 
@@ -763,6 +766,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 		"CertPassPhrase1":    testConfig.Certificates.Certificate1Pass,
 		"Tags":               "nsxt alb",
 	}
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -805,7 +809,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_pool.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerPool:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "description", ""),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"), // As we're using STANDARD feature set
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "up_member_count", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "enabled_member_count", "0"),
@@ -879,7 +883,7 @@ func TestAccVcdNsxtAlbPoolOrgUser(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_pool.test", "health_monitor.*", map[string]string{
 						"type": "TCP",
 					}),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "FEWEST_SERVERS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "algorithm", "LEAST_CONNECTIONS"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "default_port", "8443"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "graceful_timeout_period", "2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "member_count", "8"),
@@ -945,7 +949,7 @@ resource "vcd_nsxt_alb_pool" "test" {
   name            = "{{.PoolName}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  algorithm                  = "FEWEST_SERVERS"
+  algorithm                  = "LEAST_CONNECTIONS" # As we're using STANDARD feature set
   default_port               = "8443"
   graceful_timeout_period    = "2"
   passive_monitoring_enabled = false

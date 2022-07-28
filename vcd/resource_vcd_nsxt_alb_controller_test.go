@@ -30,12 +30,14 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"Tags":               "nsxt alb",
 	}
+	isVersionLessThan37 := changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbController, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-step2"
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, true) // Change to LicenseType Basic
 	configText2 := templateFill(testAccVcdNsxtAlbControllerStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
@@ -60,7 +62,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", "first alb controller"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "license_type", "ENTERPRISE"),
+					checkLicenseType("vcd_nsxt_alb_controller.first", false, isVersionLessThan37),
 				),
 			},
 			{
@@ -71,7 +73,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "license_type", "BASIC"),
+					checkLicenseType("vcd_nsxt_alb_controller.first", true, isVersionLessThan37),
 				),
 			},
 			{
@@ -102,7 +104,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 `
 
@@ -112,7 +114,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "BASIC"
+  {{.LicenseType}}
 }
 `
 
@@ -123,7 +125,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "BASIC"
+  {{.LicenseType}}
 }
 
 data "vcd_nsxt_alb_controller" "first" {

@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"strings"
 
@@ -56,6 +57,14 @@ func resourceVcdAlbSettings() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Optional custom network CIDR definition for ALB Service Engine placement (VCD default is 192.168.255.1/25)",
+			},
+			"supported_feature_set": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Required:     false, // It should be required but for VCD < 10.4 compatibility it is not
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
+				Description:  "Feature set for ALB in this Edge Gateway. One of 'STANDARD', 'PREMIUM'.",
 			},
 		},
 	}
@@ -171,13 +180,17 @@ func resourceVcdAlbSettingsImport(ctx context.Context, d *schema.ResourceData, m
 }
 
 func getNsxtAlbConfigurationType(d *schema.ResourceData) *types.NsxtAlbConfig {
-	return &types.NsxtAlbConfig{
+	albConfig := &types.NsxtAlbConfig{
 		Enabled:                  d.Get("is_active").(bool),
 		ServiceNetworkDefinition: d.Get("service_network_specification").(string),
+		SupportedFeatureSet:      d.Get("supported_feature_set").(string),
 	}
+
+	return albConfig
 }
 
 func setNsxtAlbConfigurationData(config *types.NsxtAlbConfig, d *schema.ResourceData) {
 	dSet(d, "is_active", config.Enabled)
 	dSet(d, "service_network_specification", config.ServiceNetworkDefinition)
+	dSet(d, "supported_feature_set", config.SupportedFeatureSet)
 }

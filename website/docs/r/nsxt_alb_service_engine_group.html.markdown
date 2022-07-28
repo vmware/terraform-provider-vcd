@@ -76,6 +76,9 @@ The following arguments are supported:
 * `sync_on_refresh` (Optional) - A special argument that is not passed to VCD, but alters behaviour of this resource so
   that it performs a Sync operation on every Terraform refresh. *Note* this may impact refresh performance, but should
   ensure up-to-date information is read. Default is **false**.
+* `supported_feature_set` - (Optional; *v3.7+*) Feature set of this ALB Service Engine Group (`STANDARD` or `PREMIUM`)
+
+~> The attribute `supported_feature_set` must not be used in VCD versions lower than 10.4. Starting with 10.4, it replaces `license_type` field in [nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller).
 
 ## Attribute Reference
 

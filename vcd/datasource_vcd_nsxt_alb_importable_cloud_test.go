@@ -29,6 +29,7 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
 		"Tags":               "alb nsxt",
 	}
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdNsxtAlbImportableCloud, params)
@@ -68,7 +69,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 `
 const testAccVcdNsxtAlbImportableCloud = testAccVcdNsxtAlbImportableCloudPrereqs + `
