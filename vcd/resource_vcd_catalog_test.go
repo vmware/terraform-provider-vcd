@@ -663,7 +663,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 			Limit:   1024,
 			Default: true,
 			ProviderVdcStorageProfile: &types.Reference{
-				HREF: getVdcProviderVdcStorageProfileHref(client),
+				HREF: getVdcProviderVdcStorageProfileHref(client, existingVdc.AdminVdc.ProviderVdcReference.HREF),
 			},
 		},
 		},
@@ -722,7 +722,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 
 	err = uploadTask.WaitTaskCompletion()
 	if err != nil {
-		return catalog, vdc, existingOrg, newAdminOrg, fmt.Errorf("error uploading template: %s", err)
+		return catalog, vdc, existingOrg, newAdminOrg, fmt.Errorf("error in uploading template task: %s", err)
 	}
 	fmt.Printf("# Uploaded vApp template '%s' to shared new Catalog '%s' in new Org '%s' with existing Org '%s'\n",
 		"vapp-template", catalog.AdminCatalog.Name, newAdminOrg.AdminOrg.Name, existingOrg.AdminOrg.Name)
@@ -769,10 +769,11 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 	}
 }
 
-func getVdcProviderVdcStorageProfileHref(client *VCDClient) string {
+func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {
+	// Filtering by name and in correct pVdc to avoid picking NSX-V VDC storage profile
 	results, _ := client.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "providerVdcStorageProfile",
-		"filter": fmt.Sprintf("name==%s", testConfig.VCD.NsxtProviderVdc.StorageProfile),
+		"filter": fmt.Sprintf("name==%s;providerVdc==%s", testConfig.VCD.NsxtProviderVdc.StorageProfile, pvdcReference),
 	})
 	providerVdcStorageProfileHref := results.Results.ProviderVdcStorageProfileRecord[0].HREF
 	return providerVdcStorageProfileHref
