@@ -64,7 +64,6 @@ func datasourceVcdAlbServiceEngineGroup() *schema.Resource {
 			},
 			"supported_feature_set": {
 				Type:        schema.TypeString,
-				Optional:    true,
 				Computed:    true,
 				Description: "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
 			},

@@ -44,7 +44,6 @@ func datasourceVcdAlbSettings() *schema.Resource {
 			},
 			"supported_feature_set": {
 				Type:        schema.TypeString,
-				Optional:    true,
 				Computed:    true,
 				Description: "Feature set for ALB in this Edge Gateway. One of 'STANDARD', 'PREMIUM'.",
 			},
