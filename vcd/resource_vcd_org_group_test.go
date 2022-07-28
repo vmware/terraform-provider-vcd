@@ -40,6 +40,11 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		return
 	}
 
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 35.2") {
+		t.Skip("Cannot setup direct network on VCD 10.2.0")
+	}
+
 	ldapContainerName := "rroemhild/test-openldap"
 	// Override LDAP container name if it is specified in config
 	if testConfig.Misc.LdapContainer != "" {
