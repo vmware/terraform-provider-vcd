@@ -47,6 +47,11 @@ func TestAccVcdNsxtEdgeBgpIpPrefixListVdcGroup(t *testing.T) {
 	configText4DS := templateFill(testAccVcdNsxtBgpIpPrefixVdcGroupConfig4DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4DS)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{

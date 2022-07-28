@@ -56,6 +56,11 @@ func TestAccVcdNsxtEdgeBgpNeighbor(t *testing.T) {
 	configText7DS := templateFill(testAccVcdNsxtBgpNeighborVdcGroupConfig7DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText7DS)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
