@@ -266,7 +266,7 @@ resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing1" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
-  name        = "{{.TestName}}-1"
+  name = "{{.TestName}}-1"
 
   ip_prefix {
 	network                  = "30.10.10.0/24"
@@ -290,7 +290,7 @@ resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing2" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
-  name        = "{{.TestName}}-2"
+  name = "{{.TestName}}-2"
 
   ip_prefix {
 	network = "10.10.10.0/24"
