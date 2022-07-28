@@ -32,6 +32,10 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	// Set supported_feature_set for ALB Service Engine Group
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
+	// Set supported_feature_set for ALB Settings
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSetSettings", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -130,6 +134,11 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 		"EdgeGw":             testConfig.Nsxt.EdgeGateway,
 		"Tags":               "nsxt alb",
 	}
+	// Set supported_feature_set for ALB Service Engine Group
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
+	// Set supported_feature_set for ALB Settings
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSetSettings", params, false)
+
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
