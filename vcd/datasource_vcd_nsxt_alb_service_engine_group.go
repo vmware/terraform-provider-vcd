@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -62,6 +61,11 @@ func datasourceVcdAlbServiceEngineGroup() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Boolean value that shows if virtual services are overallocated",
+			},
+			"supported_feature_set": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
 			},
 		},
 	}

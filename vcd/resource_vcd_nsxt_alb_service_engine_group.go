@@ -87,6 +87,14 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 				Default:     false,
 				Description: "Boolean value that shows if sync should be performed on every refresh",
 			},
+			"supported_feature_set": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Required:     false, // It should be required but for VCD < 10.4 compatibility it is not
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
+				Description:  "Feature set for this ALB Service Engine Group. One of 'STANDARD', 'PREMIUM'.",
+			},
 		},
 	}
 }
@@ -229,9 +237,9 @@ func getNsxtAlbServiceEngineGroupType(d *schema.ResourceData, impServiceEngineGr
 				ID: d.Get("alb_cloud_id").(string),
 			},
 		},
-		ReservationType: d.Get("reservation_model").(string),
+		ReservationType:     d.Get("reservation_model").(string),
+		SupportedFeatureSet: d.Get("supported_feature_set").(string),
 	}
-
 	return albControllerType
 }
 
@@ -246,4 +254,5 @@ func setNsxtAlbServiceEngineGroupData(d *schema.ResourceData, albController *typ
 	dSet(d, "deployed_virtual_services", albController.NumDeployedVirtualServices)
 	dSet(d, "ha_mode", albController.HaMode)
 	dSet(d, "overallocated", albController.OverAllocated)
+	dSet(d, "supported_feature_set", albController.SupportedFeatureSet)
 }

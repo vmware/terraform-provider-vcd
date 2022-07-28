@@ -4,6 +4,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -63,7 +64,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
-
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -144,6 +145,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 
 		"Tags": "nsxt alb vdcGroup",
 	}
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
@@ -263,6 +265,7 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
   is_active       = true
+  {{.SupportedFeatureSet}}
 
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
@@ -283,7 +286,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -300,6 +303,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "DEDICATED"
+  {{.SupportedFeatureSet}}
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
@@ -367,6 +371,7 @@ resource "vcd_nsxt_alb_settings" "test" {
 
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
   is_active       = true
+  {{.SupportedFeatureSet}}
 
   # This dependency is required to make sure that provider part of operations is done
   depends_on = [vcd_nsxt_alb_service_engine_group.first]
@@ -387,7 +392,7 @@ resource "vcd_nsxt_alb_controller" "first" {
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
-  license_type = "ENTERPRISE"
+  {{.LicenseType}}
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
@@ -404,6 +409,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "DEDICATED"
+  {{.SupportedFeatureSet}}
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
@@ -464,3 +470,56 @@ data "vcd_nsxt_alb_pool" "test" {
   name            = vcd_nsxt_alb_pool.test.name
 }
 `
+
+// Since v37.0, license_type is no longer used. This function changes Supported Feature Set for License Type if version is lower,
+// then returns whether it made the change or not (the version is lower or not).
+func changeSupportedFeatureSetIfVersionIsLessThan37(licenseTypeParamKey, supportedFeatureSetParamKey string, params StringMap, isBasicOrStandard bool) bool {
+	// We choose between premium features or standard ones for SupportedFeatureSet, or their equivalent in the LicenseType
+	licenseType := "ENTERPRISE"
+	supportedFeatureSet := "PREMIUM"
+	if isBasicOrStandard {
+		licenseType = "BASIC"
+		supportedFeatureSet = "STANDARD"
+	}
+
+	// Assume we're on newer versions of API, >= 37.0
+	params[licenseTypeParamKey] = " "
+	params[supportedFeatureSetParamKey] = fmt.Sprintf("supported_feature_set = \"%s\"", supportedFeatureSet)
+
+	// If not, transform the fields
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		params[licenseTypeParamKey] = fmt.Sprintf("license_type = \"%s\"", licenseType)
+		params[supportedFeatureSetParamKey] = " "
+		return true
+	}
+	return false
+}
+
+// If VCD API version is less than v37.0, checks supported_feature_set is not set.
+// Otherwise, checks that the resource contains supported_feature_set value set in the resource.
+func checkSupportedFeatureSet(resourceName string, isStandard, isVersionLessThan37 bool) resource.TestCheckFunc {
+	supportedFeatureSet := "PREMIUM"
+	if isStandard {
+		supportedFeatureSet = "STANDARD"
+	}
+
+	if isVersionLessThan37 {
+		return resource.TestCheckResourceAttr(resourceName, "supported_feature_set", "")
+	}
+	return resource.TestCheckResourceAttr(resourceName, "supported_feature_set", supportedFeatureSet)
+}
+
+// If VCD API version is less than v37.0, checks that the resource contains license_type value set in the resource.
+// Otherwise, it checks nothing.
+func checkLicenseType(resourceName string, isBasic, isVersionLessThan37 bool) resource.TestCheckFunc {
+	licenseType := "ENTERPRISE"
+	if isBasic {
+		licenseType = "BASIC"
+	}
+
+	if isVersionLessThan37 {
+		return resource.TestCheckResourceAttr(resourceName, "license_type", licenseType)
+	}
+	return resource.TestCheckResourceAttr(resourceName, "license_type", "")
+}
