@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -11,10 +13,10 @@ import (
 
 func resourceVcdInsertedMedia() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdMediaInsert,
-		Delete: resourceVcdMediaEject,
-		Read:   resourceVcdVmInsertedMediaRead,
-		Update: resourceVcdMediaEjectUpdate,
+		CreateContext: resourceVcdMediaInsert,
+		DeleteContext: resourceVcdMediaEject,
+		ReadContext:   resourceVcdVmInsertedMediaRead,
+		UpdateContext: resourceVcdMediaEjectUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"vdc": {
@@ -65,34 +67,34 @@ func resourceVcdInsertedMedia() *schema.Resource {
 	}
 }
 
-func resourceVcdMediaInsert(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdMediaInsert(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] VM media insert initiated")
 
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentVapp(d)
-	defer vcdClient.unLockParentVapp(d)
+	vcdClient.lockParentVm(d)
+	defer vcdClient.unLockParentVm(d)
 
 	vm, org, err := getVM(d, meta)
 	if err != nil || org == nil {
-		return fmt.Errorf("error: %#v", err)
+		return diag.Errorf("error: %#v", err)
 	}
 
 	task, err := vm.HandleInsertMedia(org, d.Get("catalog").(string), d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		return diag.Errorf("error: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		return diag.Errorf("error: %#v", err)
 	}
 
 	d.SetId(d.Get("vapp_name").(string) + "_" + d.Get("vm_name").(string) + "_" + d.Get("name").(string))
-	return resourceVcdVmInsertedMediaRead(d, meta)
+	return resourceVcdVmInsertedMediaRead(ctx, d, meta)
 }
 
-func resourceVcdVmInsertedMediaRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVmInsertedMediaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] VM insert media read initiated")
 
 	vm, _, err := getVM(d, meta)
@@ -118,26 +120,26 @@ func resourceVcdVmInsertedMediaRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func resourceVcdMediaEject(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdMediaEject(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentVapp(d)
-	defer vcdClient.unLockParentVapp(d)
+	vcdClient.lockParentVm(d)
+	defer vcdClient.unLockParentVm(d)
 
 	vm, org, err := getVM(d, meta)
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		return diag.Errorf("error: %#v", err)
 	}
 
 	task, err := vm.HandleEjectMedia(org, d.Get("catalog").(string), d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		return diag.Errorf("error: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion(d.Get("eject_force").(bool))
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		return diag.Errorf("error: %#v", err)
 	}
 
 	return nil
@@ -167,7 +169,7 @@ func getVM(d *schema.ResourceData, meta interface{}) (*govcd.VM, *govcd.Org, err
 }
 
 //update function for "eject_force"
-func resourceVcdMediaEjectUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceVcdMediaEjectUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	dSet(d, "eject_force", d.Get("eject_force"))
 	return nil
 }
