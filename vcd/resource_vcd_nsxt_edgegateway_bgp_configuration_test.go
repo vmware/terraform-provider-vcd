@@ -701,6 +701,7 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
   
   enabled         = true
   local_as_number = "65420"
+  ecmp_enabled    = true
 }
 
 resource "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing1" {
