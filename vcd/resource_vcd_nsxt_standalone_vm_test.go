@@ -156,11 +156,10 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 		"Org":         orgName,
 		"Vdc":         vdcName,
 		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
+		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"VMName":      standaloneVmName,
 		"Tags":        "vm standaloneVm",
-		"Media":       testConfig.Media.MediaName,
+		"Media":       testConfig.Media.NsxtBackedMediaName,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -517,7 +516,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	adapter_type       = "PCNet32"
+	  adapter_type       = "PCNet32"
   }
 
   network {
