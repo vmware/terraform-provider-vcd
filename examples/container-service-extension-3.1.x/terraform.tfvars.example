@@ -4,10 +4,14 @@
 # Provider config
 # ------------------------------------------------
 
-admin-user       = "******************************************"
-admin-password   = "******************************************"
-admin-org        = "System"
-vcd-url          = "https://myvcd.company.com/api"
+admin-user     = "administrator"
+admin-password = "*************"
+admin-org      = "System"
+vcd-url        = "https://myvcd.company.com/api"
+
+# Service account to be created to manage CSE installation
+service-account-user     = "cse_service_account"
+service-account-password = "set-me-up"
 
 # ------------------------------------------------
 # CSE installation config
@@ -17,10 +21,10 @@ vcd-url          = "https://myvcd.company.com/api"
 org-name = "cse_org"
 vdc-name = "cse_vdc"
 
-storage-profile = "*" # Select a valid name for Storage Profile in System admin UI
-vdc-allocation = "AllocationVApp" # https://registry.terraform.io/providers/vmware/vcd/latest/docs/resources/org_vdc#allocation_model
-vdc-provider   = "nsxTPvdc1" # Select a valid name for Provider VCD in System admin UI
-vdc-netpool    = "NSX-T Overlay 1" # Select a valid name for Network Pool in System admin UI
+storage-profile = "*"               # Select a valid name for Storage Profile in System admin UI
+vdc-allocation  = "AllocationVApp"  # https://registry.terraform.io/providers/vmware/vcd/latest/docs/resources/org_vdc#allocation_model
+vdc-provider    = "nsxTPvdc1"       # Select a valid name for Provider VCD in System admin UI
+vdc-netpool     = "NSX-T Overlay 1" # Select a valid name for Network Pool in System admin UI
 
 # Tier 0 configuration for creation
 tier0-manager        = "nsxManager1"
@@ -35,7 +39,7 @@ tier0-gateway-ip-ranges = [
 
 # Edge gateway configuration for creation
 edge-gateway-ip     = "10.12.123.123" # Network subnet gateway ip, NOT primary IP
-edge-gateway-prefix = "19" # Prefix length
+edge-gateway-prefix = "19"            # Prefix length
 edge-gateway-ip-ranges = [
   ["10.12.234.226", "10.12.234.228"],
   ["10.12.234.230", "10.12.234.232"],

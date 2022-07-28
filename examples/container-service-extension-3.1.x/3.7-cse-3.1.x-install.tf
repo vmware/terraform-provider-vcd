@@ -9,8 +9,9 @@
 #   https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_3_1_x for more
 #   information.
 #
-# * This HCL should be run as System administrator, as it involves creating provider elements such as Organizations,
-#   VDCs or Tier 0 Gateways.
+# * Some resources and data sources from this HCL are run as System administrator, as it involves creating provider
+#   elements such as Organizations, VDCs or Tier 0 Gateways. CSE items are created by the CSE service account defined
+#   below.
 #
 # * Please customize the values present in this file to your needs. Also check `terraform.tfvars.example`
 #   for customisation.
@@ -25,13 +26,148 @@ terraform {
   }
 }
 
+# Create a service role at provider level with the minimum rights required to install and manage CSE items.
+# This role will be used by the CSE Service Account defined below.
+
+resource "vcd_role" "cse-service-role" {
+  name        = "CSE Service Role"
+  description = "CSE Service Role has all the rights necessary for CSE to operate"
+
+  rights = [
+    "Access Control List: View",
+    "Access Control List: Manage",
+    "AMQP Settings: View",
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: Create / Delete a Catalog",
+    "Catalog: Edit Properties",
+    "Catalog: Publish",
+    "Catalog: Sharing",
+    "Catalog: View ACL",
+    "Catalog: View Private and Shared Catalogs",
+    "Catalog: View Published Catalogs",
+    "Content Library System Settings: View",
+    "Custom entity: Create custom entity definitions",
+    "Custom entity: Delete custom entity definitions",
+    "Custom entity: Edit custom entity definitions",
+    "Custom entity: View custom entity definitions",
+    "Extension Services: View",
+    "Extensions: View",
+    "External Service: Manage",
+    "External Service: View",
+    "General: View Error Details",
+    "Group / User: View",
+    "Host: View",
+    "Kerberos Settings: View",
+    "Organization Network: View",
+    "Organization vDC Compute Policy: Admin View",
+    "Organization vDC Compute Policy: Manage",
+    "Organization vDC Compute Policy: View",
+    "Organization vDC Kubernetes Policy: Edit",
+    "Organization vDC Network: Edit Properties",
+    "Organization vDC Network: View Properties",
+    "Organization vDC: Extended Edit",
+    "Organization vDC: Extended View",
+    "Organization vDC: View",
+    "Organization: Perform Administrator Queries",
+    "Organization: View",
+    "Provider Network: View",
+    "Provider vDC Compute Policy: Manage",
+    "Provider vDC Compute Policy: View",
+    "Provider vDC: View",
+    "Right: Manage",
+    "Right: View",
+    "Rights Bundle: View",
+    "Rights Bundle: Edit",
+    "Role: Create, Edit, Delete, or Copy",
+    "Service Configuration: Manage",
+    "Service Configuration: View",
+    "System Settings: View",
+    "Task: Resume, Abort, or Fail",
+    "Task: Update",
+    "Task: View Tasks",
+    "Token: Manage",
+    "UI Plugins: Define, Upload, Modify, Delete, Associate or Disassociate",
+    "UI Plugins: View",
+    "vApp Template / Media: Copy",
+    "vApp Template / Media: Create / Upload",
+    "vApp Template / Media: Edit",
+    "vApp Template / Media: View",
+    "vApp Template: Checkout",
+    "vApp Template: Import",
+    "vApp: Allow All Extra Config",
+    "vApp: Allow Ethernet Coalescing Extra Config",
+    "vApp: Allow Latency Extra Config",
+    "vApp: Allow Matching Extra Config",
+    "vApp: Allow NUMA Node Affinity Extra Config",
+    "vApp: Create / Reconfigure",
+    "vApp: Delete",
+    "vApp: Edit Properties",
+    "vApp: Edit VM CPU and Memory reservation settings in all VDC types",
+    "vApp: Edit VM CPU",
+    "vApp: Edit VM Compute Policy",
+    "vApp: Edit VM Hard Disk",
+    "vApp: Edit VM Memory",
+    "vApp: Edit VM Network",
+    "vApp: Edit VM Properties",
+    "vApp: Manage VM Password Settings",
+    "vApp: Power Operations",
+    "vApp: Shadow VM View",
+    "vApp: Upload",
+    "vApp: Use Console",
+    "vApp: VM Boot Options",
+    "vApp: VM Check Compliance",
+    "vApp: VM Migrate, Force Undeploy, Relocate, Consolidate",
+    "vApp: View VM and VM's Disks Encryption Status",
+    "vApp: View VM metrics",
+    "vCenter: View",
+    "vSphere Server: View",
+    "vmware:tkgcluster: Administrator Full access",
+    "vmware:tkgcluster: Administrator View",
+    "vmware:tkgcluster: Full Access",
+    "vmware:tkgcluster: Modify",
+    "vmware:tkgcluster: View",
+    "cse:nativeCluster: Administrator Full access",
+    "cse:nativeCluster: Administrator View",
+    "cse:nativeCluster: Full Access",
+    "cse:nativeCluster: Modify",
+    "cse:nativeCluster: View"
+  ]
+}
+
+# Create the CSE Service Account to manage CSE installation. We use it for the operations related to CSE installation and management.
+
+resource "vcd_org_user" "cse-service-account" {
+  name     = var.service-account-user
+  password = var.service-account-password
+  role     = vcd_role.cse-service-role.name
+}
+
+# This provider definition uses the created CSE Service Account to perform all CSE related operations with the alias
+# "cse-service-account" (more info about aliases: https://www.terraform.io/language/providers/configuration#alias-multiple-provider-configurations)
+# This allows to both use the System Administrator for operations that require full access, and the service account for
+# CSE.
+
+provider "vcd" {
+  alias                = "cse-service-account"
+  user                 = vcd_org_user.cse-service-account.name
+  password             = vcd_org_user.cse-service-account.password
+  auth_type            = "integrated"
+  url                  = var.vcd-url
+  org                  = var.admin-org
+  logging_file         = "cse-install.log"
+  allow_unverified_ssl = true
+}
+
+# The default provider configuration uses the System Administrator to create the service role, the CSE Service Account
+# and the minimum objects required (Organization, VDC, ALB, etc).
+
 provider "vcd" {
   user                 = var.admin-user
   password             = var.admin-password
   auth_type            = "integrated"
   url                  = var.vcd-url
   org                  = var.admin-org
-  logging_file         = "cse-install.log"
+  logging_file         = "cse-install-administrator.log"
   allow_unverified_ssl = true
 }
 
@@ -233,6 +369,8 @@ resource "vcd_catalog" "cat-cse" {
 # TKGm OVA upload. The `catalog_item_metadata` is required for CSE to detect the OVAs.
 
 resource "vcd_catalog_item" "tkgm_ova" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+
   org     = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   catalog = vcd_catalog.cat-cse.name
 
@@ -321,15 +459,25 @@ resource "vcd_nsxt_alb_virtual_service" "cse-virtual-service" {
 
 resource "null_resource" "cse-install-script" {
   triggers = {
-    always_run = timestamp()
+    # Trigger the installation only if one of the configuration values change.
+    config_has_changed = join(",", [
+      vcd_org_user.cse-service-account.name,
+      vcd_org_user.cse-service-account.password,
+      vcd_catalog.cat-cse.name,
+      vcd_network_routed_v2.cse_routed.name,
+      vcd_network_routed_v2.cse_routed.name,
+      vcd_org.cse_org.name,
+      vcd_org_vdc.cse_vdc.name,
+      data.vcd_storage_profile.cse_sp.name
+    ])
   }
 
   provisioner "local-exec" {
     on_failure = continue # Ignores failures to allow re-creating the whole HCL after a destroy, as cse doesn't have an uninstall option.
     command = format("printf '%s' > config.yaml && ./cse-install.sh", templatefile("${path.module}/config.yaml.template", {
       vcd_url         = replace(replace(var.vcd-url, "/api", ""), "/http.*\\/\\//", "")
-      vcd_username    = var.admin-user
-      vcd_password    = var.admin-password
+      vcd_username    = vcd_org_user.cse-service-account.name # Using CSE Service Account
+      vcd_password    = vcd_org_user.cse-service-account.password
       catalog         = vcd_catalog.cat-cse.name
       network         = vcd_network_routed_v2.cse_routed.name
       org             = vcd_org.cse_org.name     # Change this reference if you used a data source to fetch an already existent Org.
@@ -347,6 +495,8 @@ data "vcd_rights_bundle" "default-rb" {
 }
 
 resource "vcd_rights_bundle" "cse-rb" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+
   name        = "CSE Rights Bundle"
   description = "Rights bundle to manage CSE"
   rights = setunion(data.vcd_rights_bundle.default-rb.rights, [
@@ -356,7 +506,8 @@ resource "vcd_rights_bundle" "cse-rb" {
     "cse:nativeCluster: Full Access",
     "cse:nativeCluster: Modify"
   ])
-  publish_to_all_tenants = true # Here we publish to all tenants for simplicity, but you can select the tenant in which CSE is used
+  publish_to_all_tenants = false
+  tenants                = [vcd_org.cse_org.name]
 
   depends_on = [null_resource.cse-install-script]
 }
@@ -365,16 +516,21 @@ resource "vcd_rights_bundle" "cse-rb" {
 # into a new and published bundle.
 
 data "vcd_rights_bundle" "cse-native-cluster-entl" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this data source
+
   name = "cse:nativeCluster Entitlement"
 
   depends_on = [null_resource.cse-install-script]
 }
 
 resource "vcd_rights_bundle" "published-cse-rights-bundle" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+
   name                   = "cse:nativeCluster Entitlement Published"
   description            = data.vcd_rights_bundle.cse-native-cluster-entl.description
   rights                 = data.vcd_rights_bundle.cse-native-cluster-entl.rights
-  publish_to_all_tenants = true
+  publish_to_all_tenants = false
+  tenants                = [vcd_org.cse_org.name]
 }
 
 # Create a new role for CSE, with the new rights to create clusters and manage them.
@@ -385,6 +541,8 @@ data "vcd_role" "vapp_author" {
 }
 
 resource "vcd_role" "cluster_author" {
+  provider = vcd.cse-service-account # Using CSE Service Account for this resource
+
   org         = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   name        = "Cluster Author"
   description = "Can read and create clusters"
