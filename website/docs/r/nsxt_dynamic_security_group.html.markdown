@@ -168,7 +168,7 @@ Each member Rule contains following attributes:
 * `member_vms` A set of member VMs (if exist). see [Member VMs](#member-vms) below for details.
 
 ~> VCD does not immediately populate `member_vms` values therefore it is not guaranteed that all
-values are after a Terraform operation.
+values are available after a Terraform operation.
 
 <a id="member-vms"></a>
 ## Member VMs
