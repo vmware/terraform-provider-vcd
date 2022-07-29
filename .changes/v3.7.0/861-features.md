@@ -1,4 +1,4 @@
 * **New Resource:** `vcd_nsxt_edgegateway_bgp_configuration` for NSX-T Edge Gateway BGP
-  Configuration [GH-798]
+  Configuration [GH-798, GH-887]
 * **New Data Source:** `vcd_nsxt_edgegateway_bgp_configuration` for reading NSX-T Edge Gateway BGP
-  Configuration [GH-798]
+  Configuration [GH-798, GH-887]
