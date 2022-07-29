@@ -22,22 +22,24 @@ var TestAccVcdVAppVmNetForInsert = "TestAccVcdVAppVmNetForInsert"
 func TestAccVcdMediaInsertBasic(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":              testConfig.VCD.Org,
-		"Vdc":              testConfig.Nsxt.Vdc,
-		"EdgeGateway":      testConfig.Nsxt.EdgeGateway,
-		"Catalog":          testSuiteCatalogName,
-		"CatalogItem":      testSuiteCatalogOVAItem,
-		"VappName":         vappNameForInsert,
-		"VmName":           vmNameForInsert,
-		"CatalogMediaName": TestAccVcdCatalogMediaForInsert,
-		"Description":      TestAccVcdCatalogMediaDescriptionForInsert,
-		"MediaPath":        testConfig.Media.MediaPath,
-		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"UploadProgress":   testConfig.Media.UploadProgress,
-		"InsertMediaName":  TestAccVcdMediaInsert,
-		"NetworkName":      TestAccVcdVAppVmNetForInsert,
-		"EjectForce":       true,
-		"Tags":             "catalog",
+		"Org":                        testConfig.VCD.Org,
+		"Vdc":                        testConfig.Nsxt.Vdc,
+		"EdgeGateway":                testConfig.Nsxt.EdgeGateway,
+		"Catalog":                    testSuiteCatalogName,
+		"CatalogItem":                testSuiteCatalogOVAItem,
+		"VappName":                   vappNameForInsert,
+		"VmName":                     vmNameForInsert,
+		"NsxtBackedCataloName":       testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"NsxtBackedCatalogMediaName": testConfig.Media.NsxtBackedMediaName,
+		"CatalogMediaName":           TestAccVcdCatalogMediaForInsert,
+		"Description":                TestAccVcdCatalogMediaDescriptionForInsert,
+		"MediaPath":                  testConfig.Media.MediaPath,
+		"UploadPieceSize":            testConfig.Media.UploadPieceSize,
+		"UploadProgress":             testConfig.Media.UploadProgress,
+		"InsertMediaName":            TestAccVcdMediaInsert,
+		"NetworkName":                TestAccVcdVAppVmNetForInsert,
+		"EjectForce":                 true,
+		"Tags":                       "catalog",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -77,9 +79,9 @@ func testAccCheckMediaInserted(itemName string, params StringMap) resource.TestC
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(params["Org"].(string), params["Vdc"].(string))
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, params["Vdc"].(string), params["Org"], err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		vapp, err := vdc.GetVAppByName(params["VappName"].(string), false)
@@ -115,9 +117,9 @@ func testAccCheckMediaEjected(itemName string, params StringMap) resource.TestCh
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(params["Org"].(string), params["Vdc"].(string))
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, params["Vdc"].(string), params["Org"], err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		vapp, err := vdc.GetVAppByName(params["VappName"].(string), false)
@@ -148,9 +150,9 @@ func testAccResourcesDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		_, err = vdc.GetVAppByName(vappNameForInsert, false)
@@ -212,9 +214,9 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
   org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+  catalog = "{{.NsxtBackedCataloName}}"
+  name    = "{{.CatalogMediaName}}"
 
-  name                 = "{{.CatalogMediaName}}"
   description          = "{{.Description}}"
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
@@ -224,7 +226,7 @@ resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
 resource "vcd_inserted_media" "{{.InsertMediaName}}" {
   org     = "{{.Org}}"
   vdc     = "{{.Vdc}}"
-  catalog = "{{.Catalog}}"
+  catalog = "{{.NsxtBackedCataloName}}"
   name    = "{{.CatalogMediaName}}"
 
   vapp_name  = vcd_vapp.{{.VappName}}.name

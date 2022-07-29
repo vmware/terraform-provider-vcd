@@ -16,6 +16,7 @@ func init() {
 	testingTags["standaloneVm"] = "resource_vcd_vapp_vm_test.go"
 }
 
+// NSX-V based test
 func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 	preTestChecks(t)
 	// making sure the VM name is unique
@@ -95,6 +96,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 	postTestChecks(t)
 }
 
+// NSX-V based test
 func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	preTestChecks(t)
 	// making sure the VM name is unique

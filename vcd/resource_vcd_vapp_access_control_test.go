@@ -16,17 +16,11 @@ import (
 func TestAccVcdVappAccessControl(t *testing.T) {
 	preTestChecks(t)
 
-	if testConfig.VCD.Org == "" {
-		t.Skip("[TestAccVcdVappAccessControl] no Org found in configuration")
-	}
-	if testConfig.VCD.Vdc == "" {
-		t.Skip("[TestAccVcdVappAccessControl] no VDC found in configuration")
-	}
 	skipTestForApiToken(t)
 
 	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,
-		"Vdc":                      testConfig.VCD.Vdc,
+		"Vdc":                      testConfig.Nsxt.Vdc,
 		"SharedToEveryone":         "true",
 		"EveryoneAccessLevel":      fmt.Sprintf(`everyone_access_level = "%s"`, types.ControlAccessReadWrite),
 		"AccessControlIdentifier0": "AC-Vapp0",
@@ -73,16 +67,16 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 	resourceAC3 := "vcd_vapp_access_control.AC-Vapp3"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.VCD.Vdc, []string{"Vapp-AC-0", "Vapp-AC-1", "Vapp-AC-2", "Vapp-AC-3"}),
+		CheckDestroy:      testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.Nsxt.Vdc, []string{"Vapp-AC-0", "Vapp-AC-1", "Vapp-AC-2", "Vapp-AC-3"}),
 		Steps: []resource.TestStep{
 			// Test creation
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.VCD.Vdc),
-					testAccCheckVcdVappAccessControlExists(resourceAC1, testConfig.VCD.Org, testConfig.VCD.Vdc),
-					testAccCheckVcdVappAccessControlExists(resourceAC2, testConfig.VCD.Org, testConfig.VCD.Vdc),
-					testAccCheckVcdVappAccessControlExists(resourceAC3, testConfig.VCD.Org, testConfig.VCD.Vdc),
+					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+					testAccCheckVcdVappAccessControlExists(resourceAC1, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+					testAccCheckVcdVappAccessControlExists(resourceAC2, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+					testAccCheckVcdVappAccessControlExists(resourceAC3, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 					resource.TestCheckResourceAttr(resourceAC0, "shared_with_everyone", "true"),
 					resource.TestCheckResourceAttr(resourceAC0, "everyone_access_level", "Change"),
 					resource.TestCheckResourceAttr(resourceAC0, "shared_with.#", "0"),
@@ -124,7 +118,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.VCD.Vdc),
+					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 					resource.TestCheckResourceAttr(resourceAC0, "shared_with_everyone", "false"),
 					resource.TestCheckResourceAttr(resourceAC1, "shared_with.#", "1"),
 					testAccFindValuesInSet(resourceAC1, "shared_with", map[string]string{
@@ -149,7 +143,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 				ResourceName:      "vcd_vapp_access_control.AC-Vapp1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "Vapp-AC-1"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, "Vapp-AC-1"),
 			},
 			// Tests import by ID
 			{

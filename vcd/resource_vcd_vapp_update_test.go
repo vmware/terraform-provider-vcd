@@ -21,7 +21,7 @@ func TestAccVcdVAppUpdate(t *testing.T) {
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Vdc":             testConfig.VCD.Vdc,
+		"Vdc":             testConfig.Nsxt.Vdc,
 		"VappDef":         vappName,
 		"VappName":        vappName,
 		"VappDescription": vappDescription,

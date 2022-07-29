@@ -25,27 +25,27 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		t.Skip("TestAccVcdIndependentDiskBasic requires system admin privileges")
 	}
 
-	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" || testConfig.VCD.NsxtProviderVdc.StorageProfile2 == "" {
 		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
 	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,
-		"Vdc":                      testConfig.VCD.Vdc,
+		"Vdc":                      testConfig.Nsxt.Vdc,
 		"name":                     name,
 		"description":              "independent disk description",
 		"secondName":               name + "second",
 		"size":                     "5000",
 		"busType":                  "SCSI",
 		"busSubType":               "lsilogicsas",
-		"storageProfileName":       testConfig.VCD.ProviderVdc.StorageProfile,
+		"storageProfileName":       testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"ResourceName":             resourceName,
 		"secondResourceName":       resourceNameSecond,
 		"thirdResourceName":        resourceNameThird,
 		"Tags":                     "disk",
 		"descriptionUpdate":        "independent disk description updated",
 		"sizeUpdate":               "6000",
-		"storageProfileNameUpdate": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"storageProfileNameUpdate": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 		"busTypeNvme":              "NVME",
 		"busSubTypeNvme":           "nvmecontroller",
 		"VmName":                   t.Name(),
@@ -296,7 +296,7 @@ func testAccCheckDiskCreated(itemName string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
@@ -318,7 +318,7 @@ func testDiskResourcesDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
@@ -343,8 +343,8 @@ func importStateIdByDisk(resource string) resource.ImportStateIdFunc {
 			return "", fmt.Errorf("no ID is set for %s resource", resource)
 		}
 
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
+		importId := testConfig.VCD.Org + "." + testConfig.Nsxt.Vdc + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil

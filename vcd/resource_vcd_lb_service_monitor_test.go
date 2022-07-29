@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// NSX-V based test
 func TestAccVcdLbServiceMonitor(t *testing.T) {
 	preTestChecks(t)
 

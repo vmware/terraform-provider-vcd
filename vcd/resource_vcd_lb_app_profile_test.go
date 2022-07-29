@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// NSX-V based test
 func TestAccVcdLBAppProfile(t *testing.T) {
 	preTestChecks(t)
 	// String map to fill the template

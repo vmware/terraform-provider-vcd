@@ -99,9 +99,10 @@ type TestConfig struct {
 			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {
-			Name           string `json:"name"`
-			StorageProfile string `json:"storageProfile"`
-			NetworkPool    string `json:"networkPool"`
+			Name            string `json:"name"`
+			StorageProfile  string `json:"storageProfile"`
+			StorageProfile2 string `json:"storageProfile2"`
+			NetworkPool     string `json:"networkPool"`
 		} `json:"nsxtProviderVdc"`
 		Catalog struct {
 			Name                    string `json:"name,omitempty"`
@@ -602,7 +603,7 @@ func getConfigStruct(config string) TestConfig {
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
 	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)
-	_ = os.Setenv("VCD_VDC", configStruct.VCD.Vdc)
+	_ = os.Setenv("VCD_VDC", configStruct.Nsxt.Vdc)
 	if configStruct.Provider.UseVcdConnectionCache {
 		enableConnectionCache = true
 	}
@@ -1285,8 +1286,8 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 			return "", fmt.Errorf("no ID is set for %s resource", resource)
 		}
 
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
+		importId := testConfig.VCD.Org + "." + testConfig.Nsxt.Vdc + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil

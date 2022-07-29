@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// NSX-V based test
 func TestAccVcdLBAppRule(t *testing.T) {
 	preTestChecks(t)
 	// The Script parameter must be sent as multiline string separated by newline (\n) characters.

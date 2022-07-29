@@ -168,11 +168,15 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 }
 
 resource "vcd_nsxv_ip_set" "myset1" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
   name         = "test-set1"
   ip_addresses = ["192.168.1.1"]
 }
 
 resource "vcd_nsxv_ip_set" "myset2" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
   name         = "test-set2"
   ip_addresses = ["192.168.1.1"]
 }
@@ -192,11 +196,15 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 }
 
 resource "vcd_nsxv_ip_set" "myset1" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
   name         = "test-set1"
   ip_addresses = ["192.168.1.1"]
 }
 
 resource "vcd_nsxv_ip_set" "myset2" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
   name         = "test-set2"
   ip_addresses = ["192.168.1.1"]
 }

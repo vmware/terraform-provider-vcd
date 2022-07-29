@@ -5,10 +5,11 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdSecurityTag(t *testing.T) {
@@ -25,8 +26,8 @@ func TestAccVcdSecurityTag(t *testing.T) {
 		"VmName":       firstVMName,
 		"VmName2":      secondVMName,
 		"ComputerName": t.Name() + "-vm",
-		"Catalog":      testConfig.VCD.Catalog.Name,
-		"Media":        testConfig.Media.MediaName,
+		"Catalog":      testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"Media":        testConfig.Media.NsxtBackedMediaName,
 		"SecurityTag1": tag1,
 		"SecurityTag2": tag2,
 		"FuncName":     t.Name(),

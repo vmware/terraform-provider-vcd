@@ -20,8 +20,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"Vdc":         testConfig.Nsxt.Vdc,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VappName":    t.Name(),

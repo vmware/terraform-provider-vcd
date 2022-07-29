@@ -14,13 +14,12 @@ var vdcName = "TestAccVcdVdcDatasource"
 
 func TestAccVcdVdcDatasource(t *testing.T) {
 	preTestChecks(t)
-	validateConfiguration(t)
 
 	var params = StringMap{
-		"ExistingVdcName": testConfig.VCD.Vdc,
+		"ExistingVdcName": testConfig.Nsxt.Vdc,
 		"VdcName":         vdcName,
 		"OrgName":         testConfig.VCD.Org,
-		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
+		"StorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"FuncName":        vdcName,
 	}
 	testParamsNotEmpty(t, params)
@@ -37,9 +36,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 	if err != nil {
 		t.Skipf("unable to get Org: %s, err: %s", testConfig.VCD.Org, err)
 	}
-	vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
+	vdc, err := org.GetVDCByName(testConfig.Nsxt.Vdc, false)
 	if err != nil {
-		t.Skipf("unable to get VDC: %s, err: %s", testConfig.VCD.Vdc, err)
+		t.Skipf("unable to get VDC: %s, err: %s", testConfig.Nsxt.Vdc, err)
 	}
 
 	var configText string
@@ -99,7 +98,7 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.default", "true"),
 					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.limit", "0"),
-					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.name", testConfig.VCD.NsxtProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+vdcName, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttrPair(
@@ -133,7 +132,7 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data."+datasourceVdc, "name", testConfig.VCD.Vdc),
+					resource.TestCheckResourceAttr("data."+datasourceVdc, "name", testConfig.Nsxt.Vdc),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "allocation_model", regexp.MustCompile(`^\S+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "enabled", regexp.MustCompile(`^\S+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "storage_profile.0.enabled", regexp.MustCompile(`^\S+$`)),

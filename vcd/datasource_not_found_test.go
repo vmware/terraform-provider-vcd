@@ -57,7 +57,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
 			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_nsxt_edge_cluster") &&
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "" || !usingSysAdmin()):
-			t.Skip(`No NSX-T configuration detected or not running as System user`)
+			t.Skip(`Nsxt.Manager, Nsxt.Tier0route is missing in configuration or not running as System user`)
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
 			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
 			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group" ||
@@ -135,7 +135,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 	for fieldIndex := range mandatoryFields {
 
 		// validate that on provider config VDC added
-		testParamsNotEmpty(t, StringMap{"VCD.Vdc": testConfig.VCD.Vdc})
+		testParamsNotEmpty(t, StringMap{"VCD.Vdc": testConfig.Nsxt.Vdc})
 
 		// A special case for DHCP relay where only invalid edge_gateway makes sense
 		if dataSourceName == "vcd_nsxv_dhcp_relay" && mandatoryFields[fieldIndex] == "edge_gateway" {
@@ -235,14 +235,14 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		}
 	}
 
-	// Inject NSX-T VDC for resources that are known to require it
+	// Inject NSX-V VDC for resources that are known to require it
 	switch dataSourceName {
-	case "vcd_nsxt_edgegateway":
-		testParamsNotEmpty(t, StringMap{"Nsxt.Vdc": testConfig.Nsxt.Vdc})
-		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
-	case "vcd_nsxt_alb_pool":
-		testParamsNotEmpty(t, StringMap{"Nsxt.Vdc": testConfig.Nsxt.Vdc})
-		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
+	case "vcd_edgegateway":
+		testParamsNotEmpty(t, StringMap{"VCD.Vdc": testConfig.VCD.Vdc})
+		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.VCD.Vdc)
+	case "vcd_nsxv_ip_set":
+		testParamsNotEmpty(t, StringMap{"VCD.Vdc": testConfig.VCD.Vdc})
+		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.VCD.Vdc)
 	case "vcd_nsxt_alb_virtual_service":
 		testParamsNotEmpty(t, StringMap{"Nsxt.Vdc": testConfig.Nsxt.Vdc})
 		templateFields += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)

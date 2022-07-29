@@ -34,16 +34,10 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if testConfig.VCD.Org == "" {
-		t.Skip("[TestAccVcdVmAffinityRule] no Org found in configuration")
-	}
-	if testConfig.VCD.Vdc == "" {
-		t.Skip("[TestAccVcdVmAffinityRule] no VDC found in configuration")
-	}
 
 	client := createTemporaryVCDConnection(false)
 
-	_, vdc, err := client.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+	_, vdc, err := client.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 	if err != nil {
 		t.Errorf("error retrieving org and VDC: %s", err)
 	}
@@ -220,7 +214,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	}
 	var params = StringMap{
 		"Org":                    testConfig.VCD.Org,
-		"Vdc":                    testConfig.VCD.Vdc,
+		"Vdc":                    testConfig.Nsxt.Vdc,
 		"AffinityRuleIdentifier": data.name,
 		"AffinityRuleName":       data.name,
 		"Polarity":               data.polarity,
@@ -253,13 +247,13 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	datasourceByName := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_id"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
+		CheckDestroy:      testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 		Steps: []resource.TestStep{
 			// Test creation
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.VCD.Vdc, &rule),
+					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.Nsxt.Vdc, &rule),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", data.name),
 					resource.TestCheckResourceAttr(
@@ -280,7 +274,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.VCD.Vdc, &rule),
+					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.Nsxt.Vdc, &rule),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", data.name+"-update"),
 					resource.TestCheckResourceAttr(
@@ -299,7 +293,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, data.name+"-update"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, data.name+"-update"),
 			},
 			// Tests import by ID
 			{

@@ -53,16 +53,14 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckVcdCatalogItemUpdate, params)
 
-	var fromUrlConfigText string
-	var fromUrlConfigTextUpdate string
-
-	// Conditionally skipping `templateFill` for 10.2.0 to avoid creating failing binary tests
-	if !skipOnVcd1020 {
-		params["FuncName"] = t.Name() + "-FromUrl"
-		fromUrlConfigText = templateFill(testAccCheckVcdCatalogItemFromUrl, params)
-		params["FuncName"] = t.Name() + "-FromUrlUpdate"
-		fromUrlConfigTextUpdate = templateFill(testAccCheckVcdCatalogItemFromUrlUpdated, params)
+	if skipOnVcd1020 {
+		params["SkipTest"] = "# skip-binary-test: 10.2.0 binary tests fail"
 	}
+	params["FuncName"] = t.Name() + "-FromUrl"
+	fromUrlConfigText := templateFill(testAccCheckVcdCatalogItemFromUrl, params)
+
+	params["FuncName"] = t.Name() + "-FromUrlUpdate"
+	fromUrlConfigTextUpdate := templateFill(testAccCheckVcdCatalogItemFromUrlUpdated, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

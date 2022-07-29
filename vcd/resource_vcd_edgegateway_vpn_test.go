@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// NSX-V based test
 func TestAccVcdVpn_Basic(t *testing.T) {
 	preTestChecks(t)
 	var vpnName string = "TestAccVcdVpnVpn"

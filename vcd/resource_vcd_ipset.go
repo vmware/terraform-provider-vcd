@@ -196,7 +196,7 @@ func resourceVcdIpSetImport(d *schema.ResourceData, meta interface{}) ([]*schema
 
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}

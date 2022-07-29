@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// NSX-V based test
 func TestAccVcdEdgeGatewaySettingsFull(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
@@ -97,6 +98,7 @@ func getEdgeGatewayInfo() (*govcd.EdgeGateway, error) {
 	return egw, nil
 }
 
+// NSX-V based test
 func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	preTestChecks(t)
 
@@ -362,6 +364,9 @@ const testAccEdgeGatewaySettingsSimple = `
 # skip-binary-test: would update existing Edge Gateway
 
 data "vcd_edgegateway" "egw" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
   name = "{{.EdgeGateway}}"
 }
 

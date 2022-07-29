@@ -21,6 +21,7 @@ var (
 	ipV4Regex = regexp.MustCompile(`^(?:\d+\.){3}\d+$`)
 )
 
+// NSX-V based test
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	preTestChecks(t)
 	var (
@@ -78,6 +79,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	postTestChecks(t)
 }
 
+// NSX-V based test
 func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	preTestChecks(t)
 	var (
@@ -164,6 +166,7 @@ func testAccCheckVcdEdgeGatewayDestroy(edgeName string) resource.TestCheckFunc {
 	}
 }
 
+// NSX-V based test
 func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	preTestChecks(t)
 	var (
@@ -362,6 +365,7 @@ func isPortGroupDistributed(portGroupName string) (bool, error) {
 // network interface limits. It escapes quickly when the ExternalNetworkPortGroup of external
 // network is of type "NETWORK" (standard switch portgroup) and only proceeds when it is of type
 // "DV_PORTGROUP" (Backed by distributed switch). Only "DV_PORTGROUP" support rate limiting.
+// NSX-V based test
 func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 	preTestChecks(t)
 	isPgDistributed, err := isPortGroupDistributed(testConfig.Networking.ExternalNetworkPortGroup)
@@ -495,6 +499,7 @@ resource "vcd_edgegateway" "egw" {
 // network as it was reported that edge gateways step on each other while trying to attach to the
 // same external network. If this test ever fails then it means locks have to be used on external
 // networks.
+// NSX-V based test
 func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 	preTestChecks(t)
 	var (

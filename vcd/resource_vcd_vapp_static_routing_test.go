@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// NSX-V based test
 func TestAccVcdVappStaticRouting(t *testing.T) {
 	preTestChecks(t)
 	if testConfig.Networking.EdgeGateway == "" {
@@ -81,7 +82,7 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),
 				ImportStateVerifyIgnore: []string{"network_id", "org", "vdc"},
 			},
-			{ // Step 3 - update
+			{ // Step 3 - updatevcd_vapp_static_routing
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappStaticRoutesExists(resourceName, 2),

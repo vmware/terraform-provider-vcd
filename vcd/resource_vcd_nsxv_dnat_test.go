@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
+// NSX-V based test
 func TestAccVcdEdgeDnat(t *testing.T) {
 	preTestChecks(t)
 

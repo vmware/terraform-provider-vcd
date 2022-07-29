@@ -21,6 +21,9 @@ func init() {
 // TestAccVcdNsxtStandaloneVmTemplate tests NSX-T Routed network DHCP pools, static pools and manual IP assignment
 // Note. This test triggers a bug in 10.2.2.17855680 and fails. Because of this reason it is skipped on exactly this
 // version.
+// Note. Usage of vcd_nsxt_network_imported network in VM, using CDS triggers:
+// "The operation failed because no suitable resource was found. Out of 0 candidate hubs: NO_FEASIBLE_PLACEMENT_SOLUTION"
+// which observed in UI also
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	preTestChecks(t)
 	if noTestCredentials() {
@@ -140,11 +143,6 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 	preTestChecks(t)
 
-	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSXT VDC or edge gateway not defined")
-		return
-	}
-
 	// making sure the VM name is unique
 	standaloneVmName := fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
@@ -158,11 +156,10 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 		"Org":         orgName,
 		"Vdc":         vdcName,
 		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
+		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"VMName":      standaloneVmName,
 		"Tags":        "vm standaloneVm",
-		"Media":       testConfig.Media.MediaName,
+		"Media":       testConfig.Media.NsxtBackedMediaName,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -225,14 +222,12 @@ const testAccCheckVcdNsxtStandaloneVm_basic = `
 # skip-binary-test: removing NSX-T Org networks right after standalone VM fails in 10.3
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
   name = "{{.EdgeGateway}}"
 }
 
 resource "vcd_network_routed_v2" "{{.NetworkName}}" {
   name            = "{{.NetworkName}}"
   org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   gateway         = "10.10.102.1"
   prefix_length   = 24
@@ -248,7 +243,6 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
 resource "vcd_network_isolated_v2" "net-test" {
   name            = "{{.NetworkName}}-isolated"
   org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
   
   gateway         = "110.10.102.1"
   prefix_length   = 26
@@ -261,7 +255,6 @@ resource "vcd_network_isolated_v2" "net-test" {
 
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
   org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
   
   org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
 
@@ -279,7 +272,6 @@ resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
 resource "vcd_nsxt_network_imported" "imported-test" {
   name            = "{{.NetworkName}}-imported"
   org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
   gateway         = "12.12.2.1"
   prefix_length   = 24
 
@@ -317,6 +309,8 @@ resource "vcd_vm" "{{.VmName}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
+
+  storage_profile = "{{.storageProfileName}}"
 
   metadata = {
     vm_metadata = "VM Metadata."
@@ -522,7 +516,7 @@ resource "vcd_vm" "{{.VMName}}" {
     name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-	adapter_type       = "PCNet32"
+	  adapter_type       = "PCNet32"
   }
 
   network {

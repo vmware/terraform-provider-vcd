@@ -18,8 +18,8 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"Vdc":         testConfig.Nsxt.Vdc,
+		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		"NetworkName": "TestAccVcdVAppRawNet",
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
@@ -64,9 +64,9 @@ func testAccCheckVcdVAppRawExists(n string, vapp *govcd.VApp) resource.TestCheck
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		newVapp, err := vdc.GetVAppByNameOrId(rs.Primary.ID, false)
@@ -87,9 +87,9 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.Nsxt.Vdc, testConfig.VCD.Org, err)
 		}
 
 		_, err = vdc.GetVAppByNameOrId(rs.Primary.ID, false)
@@ -105,12 +105,19 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVAppRaw_basic = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  name = "{{.EdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.102.1"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  gateway         = "10.10.102.1"
+  prefix_length   = 24
 
   static_ip_pool {
     start_address = "10.10.102.2"
@@ -122,14 +129,14 @@ resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.VappName}}"
-  depends_on   = ["vcd_network_routed.{{.NetworkName}}"]
+  depends_on   = ["vcd_network_routed_v2.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = vcd_vapp.{{.VappName}}.name
-  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
+  org_network_name   = vcd_network_routed_v2.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {

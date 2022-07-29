@@ -18,6 +18,7 @@ import (
 type filterCollection struct {
 	client        *govcd.VCDClient
 	org           *govcd.AdminOrg
+	nsxtVdc       *govcd.Vdc
 	vdc           *govcd.Vdc
 	catalog       *govcd.Catalog
 	vAppTemplates []govcd.FilterMatch
@@ -54,6 +55,7 @@ var ancestors = map[string]string{
 	"vcd_network_routed":   orgAndVdc,
 	"vcd_network_direct":   orgAndVdc,
 	"vcd_network_isolated": orgAndVdc,
+	"vcd_edgegateway":      orgAndVdc,
 }
 
 // Data needed to create test vApp templates
@@ -67,14 +69,15 @@ var vAppTemplateRequestData = []govcd.VappTemplateData{
 }
 
 // getFiltersForAvailableEntities collects data from existing resources and creates filters for each of them
-func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]govcd.FilterMatch, error) {
+func getFiltersForAvailableEntities(entityType string, dataGeneration bool) ([]govcd.FilterMatch, error) {
 
 	var (
 		err       error
 		vcdClient *govcd.VCDClient
 		org       *govcd.AdminOrg
-		vdc       *govcd.Vdc
+		nsxtVdc   *govcd.Vdc
 		catalog   *govcd.Catalog
+		vdc       *govcd.Vdc
 	)
 
 	if filtersByType.client != nil {
@@ -108,12 +111,20 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		}
 		filtersByType.catalog = catalog
 	}
+	if filtersByType.nsxtVdc != nil {
+		nsxtVdc = filtersByType.nsxtVdc
+	} else {
+		nsxtVdc, err = org.GetVDCByName(testConfig.Nsxt.Vdc, false)
+		if err != nil {
+			return nil, fmt.Errorf("nsxtVdc not found : %s", err)
+		}
+	}
 	if filtersByType.vdc != nil {
 		vdc = filtersByType.vdc
 	} else {
 		vdc, err = org.GetVDCByName(testConfig.VCD.Vdc, false)
-		if err != nil {
-			return nil, fmt.Errorf("vdc not found : %s", err)
+		if err != nil && entityType == types.QtEdgeGateway {
+			return nil, fmt.Errorf("VDC not found : %s", err)
 		}
 	}
 
@@ -124,7 +135,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		}
 	}
 	var results []govcd.FilterMatch
-	switch entityTYpe {
+	switch entityType {
 	case types.QtAdminVappTemplate, types.QtVappTemplate:
 		if filtersByType.vAppTemplates != nil {
 			return filtersByType.vAppTemplates, nil
@@ -150,9 +161,9 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		if filtersByType.mediaItems != nil {
 			return filtersByType.mediaItems, nil
 		}
-		mediaFilters, err := govcd.HelperMakeFiltersFromMedia(vdc, catalog.Catalog.Name)
+		mediaFilters, err := govcd.HelperMakeFiltersFromMedia(nsxtVdc, catalog.Catalog.Name)
 		if err != nil {
-			return nil, fmt.Errorf("error collecting media items for VDC %s: %s", vdc.Vdc.Name, err)
+			return nil, fmt.Errorf("error collecting media items for VDC %s: %s", nsxtVdc.Vdc.Name, err)
 		}
 		filtersByType.mediaItems = mediaFilters
 		results = mediaFilters
@@ -171,9 +182,9 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		if filtersByType.networks != nil {
 			return filtersByType.networks, nil
 		}
-		networkFilters, err := govcd.HelperMakeFiltersFromNetworks(vdc)
+		networkFilters, err := govcd.HelperMakeFiltersFromNetworks(nsxtVdc)
 		if err != nil {
-			return nil, fmt.Errorf("error collecting networks for VDC %s: %s", vdc.Vdc.Name, err)
+			return nil, fmt.Errorf("error collecting networks for VDC %s: %s", nsxtVdc.Vdc.Name, err)
 		}
 		filtersByType.networks = networkFilters
 		results = networkFilters
@@ -339,11 +350,16 @@ func runSearchTest(entityType, label string, t *testing.T) {
 
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
-		"VDC":      testConfig.VCD.Vdc,
+		"VDC":      testConfig.Nsxt.Vdc,
 		"Catalog":  testConfig.VCD.Catalog.Name,
 		"FuncName": "search_" + label,
 		"Tags":     "search",
 	}
+
+	if entityType == types.QtEdgeGateway {
+		params["VDC"] = testConfig.VCD.Vdc
+	}
+
 	testParamsNotEmpty(t, params)
 
 	template, expectedResults, err := generateTemplates(filters)

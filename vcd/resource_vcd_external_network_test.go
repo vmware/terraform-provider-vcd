@@ -15,6 +15,7 @@ import (
 var TestAccVcdExternalNetwork = "TestAccVcdExternalNetworkBasic"
 var externalNetwork govcd.ExternalNetwork
 
+// NSX-V based test
 func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	preTestChecks(t)
 

@@ -100,9 +100,9 @@ func takeInt64Pointer(x int64) *int64 {
 // Returns an empty string if no UUID was found
 func extractUuid(input string) string {
 	reGetID := regexp.MustCompile(`([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})`)
-	matchListId := reGetID.FindAllStringSubmatch(input, -1)
-	if len(matchListId) > 0 && len(matchListId[0]) > 0 {
-		return matchListId[0][1]
+	matchListIds := reGetID.FindAllStringSubmatch(input, -1)
+	if len(matchListIds) > 0 && len(matchListIds[0]) > 0 {
+		return matchListIds[len(matchListIds)-1][len(matchListIds[0])-1]
 	}
 	return ""
 }

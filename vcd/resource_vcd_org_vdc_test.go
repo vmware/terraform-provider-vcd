@@ -16,7 +16,6 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	validateConfiguration(t)
 
 	allocationModel := "ReservationPool"
 
@@ -24,15 +23,15 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"VdcName":                    TestAccVcdVdc,
 		"OrgName":                    testConfig.VCD.Org,
 		"AllocationModel":            "ReservationPool",
-		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdc":                testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                  "1024",
 		"Reserved":                   "1024",
 		"Limit":                      "1024",
 		"LimitIncreased":             "1100",
 		"AllocatedIncreased":         "1100",
-		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
-		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 		"Tags":                       "vdc",
 		"FuncName":                   t.Name(),
 		// cause vDC ignores empty values and use default
@@ -62,7 +61,6 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	validateConfiguration(t)
 
 	allocationModel := "AllocationPool"
 
@@ -70,15 +68,15 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"VdcName":                    TestAccVcdVdc,
 		"OrgName":                    testConfig.VCD.Org,
 		"AllocationModel":            "AllocationPool",
-		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdc":                testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                  "2048",
 		"Reserved":                   "1024",
 		"Limit":                      "2048",
 		"LimitIncreased":             "2148",
 		"AllocatedIncreased":         "2148",
-		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
-		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 		"Tags":                       "vdc",
 		"FuncName":                   t.Name(),
 		"MemoryGuaranteed":           "0.3",
@@ -107,7 +105,6 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	validateConfiguration(t)
 
 	allocationModel := "AllocationVApp"
 
@@ -115,15 +112,15 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"VdcName":                    TestAccVcdVdc,
 		"OrgName":                    testConfig.VCD.Org,
 		"AllocationModel":            allocationModel,
-		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdc":                testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                  "0",
 		"Reserved":                   "0",
 		"Limit":                      "2048",
 		"LimitIncreased":             "2148",
 		"AllocatedIncreased":         "0",
-		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
-		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 		"Tags":                       "vdc",
 		"FuncName":                   t.Name(),
 		"MemoryGuaranteed":           "0.5",
@@ -153,23 +150,21 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
 
-	validateConfiguration(t)
-
 	allocationModel := "Flex"
 
 	var params = StringMap{
 		"VdcName":                    TestAccVcdVdc,
 		"OrgName":                    testConfig.VCD.Org,
 		"AllocationModel":            allocationModel,
-		"ProviderVdc":                testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":                testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdc":                testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"Allocated":                  "1024",
 		"Reserved":                   "0",
 		"Limit":                      "1024",
 		"LimitIncreased":             "1124",
 		"AllocatedIncreased":         "1124",
-		"ProviderVdcStorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
-		"ProviderVdcStorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
+		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 		"Tags":                       "vdc",
 		"FuncName":                   t.Name(),
 		"MemoryGuaranteed":           "0.5",
@@ -190,19 +185,4 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 	}
 	runOrgVdcTest(t, params, allocationModel)
 	postTestChecks(t)
-}
-
-func validateConfiguration(t *testing.T) {
-	if testConfig.VCD.ProviderVdc.Name == "" {
-		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
-	}
-
-	if testConfig.VCD.ProviderVdc.NetworkPool == "" {
-		t.Skip("Variable providerVdc.NetworkPool must be set to run VDC tests")
-	}
-
-	if testConfig.VCD.ProviderVdc.StorageProfile == "" {
-		t.Skip("Variable providerVdc.StorageProfile must be set to run VDC tests")
-	}
-
 }

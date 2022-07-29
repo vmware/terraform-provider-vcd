@@ -26,11 +26,6 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}
 
-	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
-		return
-	}
-
 	var vapp govcd.VApp
 
 	var params = StringMap{
@@ -44,7 +39,8 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		"VappName":      "TestAccVcdNsxtVAppRawVapp",
 		"VmName1":       "TestAccVcdNsxtVAppRawVm1",
 		"VmName2":       "TestAccVcdNsxtVAppRawVm2",
-		"Media":         testConfig.Media.MediaName,
+		"NsxtCatalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"Media":         testConfig.Media.NsxtBackedMediaName,
 		"Tags":          "vapp vm nsxt",
 	}
 	testParamsNotEmpty(t, params)
@@ -293,7 +289,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
-  catalog_name                   = "{{.Catalog}}"
+  catalog_name                   = "{{.NsxtCatalog}}"
   boot_image                     = "{{.Media}}"
   expose_hardware_virtualization = true
   computer_name                  = "compName"

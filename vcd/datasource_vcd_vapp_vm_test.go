@@ -15,7 +15,7 @@ func TestAccVcdVappVmDS(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"VDC":         testConfig.VCD.Vdc,
+		"VDC":         testConfig.Nsxt.Vdc,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"FuncName":    "TestVappVmDS",
