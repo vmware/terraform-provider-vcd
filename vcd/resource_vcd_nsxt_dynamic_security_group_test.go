@@ -469,7 +469,7 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms(t *testing.T) {
 			{
 				// VM membership is not immediately updated sometimes therewore we apply the same step to check that VM counts are updated
 				Config:    configText2DS,
-				PreConfig: func() { time.Sleep(time.Second * 5) }, // Sleeping additional 5 seconds to be sure Member VMs are populated
+				PreConfig: func() { time.Sleep(time.Second * 10) }, // Sleeping additional 10 seconds to be sure Member VMs are populated
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_dynamic_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_dynamic_security_group.group2", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
