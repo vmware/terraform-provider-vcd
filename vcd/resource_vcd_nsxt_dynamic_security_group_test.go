@@ -6,6 +6,7 @@ package vcd
 import (
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -467,7 +468,8 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms(t *testing.T) {
 			},
 			{
 				// VM membership is not immediately updated sometimes therewore we apply the same step to check that VM counts are updated
-				Config: configText2DS,
+				Config:    configText2DS,
+				PreConfig: func() { time.Sleep(time.Second * 5) }, // Sleeping additional 5 seconds to be sure Member VMs are populated
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_dynamic_security_group.group1", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_dynamic_security_group.group2", "id", regexp.MustCompile(`^urn:vcloud:firewallGroup:.*$`)),
