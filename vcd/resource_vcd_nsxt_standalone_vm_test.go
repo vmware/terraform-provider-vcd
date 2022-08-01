@@ -146,8 +146,8 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 	// making sure the VM name is unique
 	standaloneVmName := fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
-	if testConfig.Media.MediaName == "" {
-		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
+	if testConfig.Media.NsxtBackedMediaName == "" {
+		fmt.Println("Warning: `NsxtBackedMediaName` is not configured: boot image won't be tested.")
 	}
 
 	orgName := testConfig.VCD.Org
