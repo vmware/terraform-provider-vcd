@@ -1757,10 +1757,10 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 				"storage_profile": internalDisk.StorageProfile.Name,
 			}
 
+			// There have been real cases where these values were `nil` and caused panic of plugin.
 			if internalDisk.Iops != nil {
 				newValue["iops"] = int(*internalDisk.Iops)
 			}
-
 			if internalDisk.ThinProvisioned != nil {
 				newValue["thin_provisioned"] = *internalDisk.ThinProvisioned
 			}
