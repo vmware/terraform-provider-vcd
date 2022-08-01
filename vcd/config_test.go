@@ -403,7 +403,7 @@ func templateFill(tmpl string, data StringMap) string {
 		data["PrOrg"] = testConfig.VCD.Org
 		vdcName, found := data["PrVdc"]
 		if !found || vdcName == "" {
-			data["PrVdc"] = testConfig.Nsxt.Vdc
+			data["PrVdc"] = testConfig.VCD.Vdc
 		}
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
