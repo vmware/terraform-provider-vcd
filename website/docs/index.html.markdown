@@ -26,6 +26,8 @@ The following Cloud Director versions are supported by this provider:
 * 10.3
 * 10.4
 
+Also Cloud Director Service (CDS) is supported.
+
 ## Example Usage
 
 ### Connecting as Org Admin
