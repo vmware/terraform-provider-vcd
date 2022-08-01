@@ -199,7 +199,7 @@ function binary_test {
         exit $?
     fi
     timestamp=$(date +%Y-%m-%d-%H-%M)
-    ./test-binary.sh names '*.tf' 2>&1 | tee test-binary-${timestamp}.txt
+    ./test-binary.sh 2>&1 | tee test-binary-${timestamp}.txt
 }
 
 function exists_in_path {
