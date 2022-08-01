@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -122,8 +123,8 @@ var internalDiskBusTypesFromValues = map[string]string{
 func resourceVmInternalDiskCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentVm(d)
-	defer vcdClient.unLockParentVm(d)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	vm, vdc, err := getVm(vcdClient, d)
 	if err != nil {
@@ -251,8 +252,8 @@ func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) (string, error) {
 func resourceVmInternalDiskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
-	vcdClient.lockParentVm(d)
-	defer vcdClient.unLockParentVm(d)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	vm, _, err := getVm(vcdClient, d)
 	if err != nil {
@@ -300,8 +301,8 @@ func resourceVmInternalDiskUpdate(ctx context.Context, d *schema.ResourceData, m
 	log.Printf("[TRACE] Update Internal Disk with ID: %s started.", d.Id())
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentVm(d)
-	defer vcdClient.unLockParentVm(d)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	// ignore only allow_vm_reboot change, allows to avoid empty update
 	if d.HasChange("allow_vm_reboot") && !d.HasChange("iops") && !d.HasChange("size_in_mb") && !d.HasChange("storage_profile") {
