@@ -1,6 +1,73 @@
 ## 3.7.0 (TBC)
 
-Changes in progress for v3.7.0 are available at [.changes/v3.7.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.7.0) until the release.
+## FEATURES
+* **New Resource:** `vcd_security_tag` that allows creating security tags ([#845](https://github.com/vmware/terraform-provider-vcd/pull/845))
+* **New Resource:** `vcd_org_vdc_access_control` to manage VDC access control ([#850](https://github.com/vmware/terraform-provider-vcd/pull/850))
+* **New Resource:** `vcd_nsxt_route_advertisement` that allows NSX-T Edge Gateway to advertise subnets to Tier-0 Gateway ([#858](https://github.com/vmware/terraform-provider-vcd/pull/858), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* **New Data Source:** `vcd_nsxt_route_advertisement` that reads the NSX-T Edge Gateway routes that are being advertised ([#858](https://github.com/vmware/terraform-provider-vcd/pull/858), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* **New Resource:** `vcd_nsxt_edgegateway_bgp_configuration` for NSX-T Edge Gateway BGP
+  Configuration ([#798](https://github.com/vmware/terraform-provider-vcd/pull/798), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887))
+* **New Data Source:** `vcd_nsxt_edgegateway_bgp_configuration` for reading NSX-T Edge Gateway BGP
+  Configuration ([#798](https://github.com/vmware/terraform-provider-vcd/pull/798), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887))
+* **New Resource:** `vcd_nsxt_dynamic_security_group` to manage dynamic security groups ([#877](https://github.com/vmware/terraform-provider-vcd/pull/877))
+* **New Data Source:** `vcd_nsxt_dynamic_security_group` to lookup existing dynamic security groups
+  ([#877](https://github.com/vmware/terraform-provider-vcd/pull/877))
+* **New Resource:** `vcd_nsxt_edgegateway_bgp_ip_prefix_list` allows users to configure NSX-T Edge Gateway BGP IP Prefix Lists ([#879](https://github.com/vmware/terraform-provider-vcd/pull/879), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* **New Data Source:** `vcd_nsxt_edgegateway_bgp_ip_prefix_list` allows users to read NSX-T Edge Gateway BGP IP Prefix Lists ([#879](https://github.com/vmware/terraform-provider-vcd/pull/879), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* **New Resource:** `vcd_nsxt_edgegateway_bgp_neighbor` allows users to configure NSX-T Edge Gateway BGP Neighbors ([#879](https://github.com/vmware/terraform-provider-vcd/pull/879), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* **New Data Source:** `vcd_nsxt_edgegateway_bgp_neighbor` allows users to read NSX-T Edge Gateway BGP Neighbors ([#879](https://github.com/vmware/terraform-provider-vcd/pull/879), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+
+## IMPROVEMENTS
+* `vcd_nsxt_network_dhcp` resource and datasource now supports `dns_servers` ([#830](https://github.com/vmware/terraform-provider-vcd/pull/830))
+* Add VDC Group compatibility for `resource/vcd_nsxt_firewall` and `datasource/vcd_nsxt_firewall` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* Add VDC Group compatibility for `resource/vcd_nsxt_nat_rule` and `datasource/vcd_nsxt_nat_rule` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* Add VDC Group compatibility for `resource/vcd_nsxt_ipsec_vpn_tunnel` and `datasource/vcd_nsxt_ipsec_vpn_tunnel` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* Add VDC Group compatibility for `resource/vcd_nsxt_alb_settings` and `datasource/vcd_nsxt_alb_settings` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841))
+* Add VDC Group compatibility for `resource/vcd_nsxt_alb_edgegateway_service_engine_group` and `datasource/vcd_nsxt_alb_edgegateway_service_engine_group` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841), [#854](https://github.com/vmware/terraform-provider-vcd/pull/854))
+* Add VDC Group compatibility for `resource/vcd_nsxt_alb_virtual_service` and `datasource/vcd_nsxt_alb_virtual_service` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841))
+* Add VDC Group compatibility for `resource/vcd_nsxt_alb_pool` and `datasource/vcd_nsxt_alb_pool` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841))
+* `resource/vcd_vm_sizing_policy`: remove (deprecate) unneeded `org` property ([#843](https://github.com/vmware/terraform-provider-vcd/pull/843))
+* `datasource/vcd_vm_sizing_policy`: remove (deprecate) unneeded `org` property ([#843](https://github.com/vmware/terraform-provider-vcd/pull/843))
+* Upgrade Terraform SDK dependency to v2.14.0 [#844]
+* Add changes to allow running tests on CDS and make NSX-V configuration optional ([#848](https://github.com/vmware/terraform-provider-vcd/pull/848))
+* `vcd_catalog_item` resource and data source now supports metadata for the CatalogItem entity with `catalog_item_metadata` attribute ([#851](https://github.com/vmware/terraform-provider-vcd/pull/851))
+* `metadata` attribute on every compatible resource and data source is now more performant when adding and updating metadata ([#853](https://github.com/vmware/terraform-provider-vcd/pull/853))
+* Make `license_type` attribute on **vcd_nsxt_alb_controller** optional as it is not used from VCD v10.4 onwards ([#878](https://github.com/vmware/terraform-provider-vcd/pull/878))
+* Add `supported_feature_set` to **vcd_nsxt_alb_service_engine_group** resource and data source to be compatible with VCD v10.4, which replaces the **vcd_nsxt_alb_controller** `license_type` ([#878](https://github.com/vmware/terraform-provider-vcd/pull/878))
+* Add `supported_feature_set` to **vcd_nsxt_alb_settings** resource and data source to be compatible with VCD v10.4, which replaces the **vcd_nsxt_alb_controller** `license_type` ([#878](https://github.com/vmware/terraform-provider-vcd/pull/878))
+
+## BUG FIXES
+* Fix typo in documentation for `resource/vcd_vapp_vm` to fix broken attribute rendering ([#828](https://github.com/vmware/terraform-provider-vcd/pull/828))
+* Skip binary and upgrade tests for NVMe in VCD < 10.2.2 ([#838](https://github.com/vmware/terraform-provider-vcd/pull/838))
+* Network lookup could return incorrect ID for `vcd_vapp_network` and `vcd_vapp_org_network` ([#838](https://github.com/vmware/terraform-provider-vcd/pull/838))
+* Set missing `org` and `vdc` fields during import of `vcd_independent_disk` ([#838](https://github.com/vmware/terraform-provider-vcd/pull/838))
+* Add missing `None` mode in independent disk `sharing_type` ([#849](https://github.com/vmware/terraform-provider-vcd/pull/849))
+* `vcd_vm_internal_disk` now uses default IOPS value from storage profile when custom IOPS value isn't provided ([#863](https://github.com/vmware/terraform-provider-vcd/pull/863))
+* Fix `vcd_inserted_media` locking mechanism to avoid race condition with `vcd_vm_internal_disk` ([#870](https://github.com/vmware/terraform-provider-vcd/pull/870), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
+* Fix a bug that causes `vcd_vapp_vm` to fail on creation if attribute `sizing_policy_id` is set and corresponds to a
+Sizing Policy with CPU or memory defined, `template_name` is used and `power_on` is `true` ([#883](https://github.com/vmware/terraform-provider-vcd/pull/883))
+
+## DEPRECATIONS
+* Deprecate `vdc` field in NSX-T Edge Gateway child entities. This field is no longer precise as
+  with introduction of VDC Group support an Edge Gateway can be bound either to a VDC, either to a
+  VDC Group. Parent VDC or VDC Group is now inherited from `edge_gateway_id` field. Impacted
+  resources and data sources are: `vcd_nsxt_firewall`, `vcd_nsxt_nat_rule`,
+  `vcd_nsxt_ipsec_vpn_tunnel`, `,vcd_nsxt_alb_settings`,
+  `vcd_nsxt_alb_edgegateway_service_engine_group`, `vcd_nsxt_alb_virtual_service`,
+  `vcd_nsxt_alb_pool` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841))
+* `resource/vcd_nsxt_network_dhcp` and `datasource/vcd_nsxt_network_dhcp` deprecate `vdc` field to
+  make consumption more friendly with VDC Groups ([#846](https://github.com/vmware/terraform-provider-vcd/pull/846))
+
+## NOTES
+* Apply `gofmt -s -w .` to cleanup code ([#833](https://github.com/vmware/terraform-provider-vcd/pull/833))
+* Adjust `role` data source and resource documentation for `rights` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
+* Adjust `rights_bundle` data source and resource documentation for `rights` and `tenants` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
+* Add an example about using CloudInit to Guest Customization guides page ([#852](https://github.com/vmware/terraform-provider-vcd/pull/852))
+* Add a guide and examples to configure and install Container Service Extension 3.1.x using Terraform ([#856](https://github.com/vmware/terraform-provider-vcd/pull/856))
+* Testing infrastructure: make NSX-T VDC primary for tests instead of NSX-V one (required for CDS
+  certification) ([#886](https://github.com/vmware/terraform-provider-vcd/pull/886))
+* Add Cloud Director Service (CDS) as supported ([#890](https://github.com/vmware/terraform-provider-vcd/pull/890))
+
 
 ## 3.6.0 (April 14, 2022)
 

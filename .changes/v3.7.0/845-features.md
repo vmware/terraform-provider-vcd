@@ -1,1 +1,1 @@
-* Add new resource `vcd_security_tag` that allows creating security tags [GH-845]
+* **New Resource:** `vcd_security_tag` that allows creating security tags [GH-845]
