@@ -1,6 +1,7 @@
 ## 3.7.0 (August 2, 2022)
 
 ## FEATURES
+* Add a guide and examples to configure and install **Container Service Extension (CSE)** 3.1.x using Terraform ([#856](https://github.com/vmware/terraform-provider-vcd/pull/856), [#882](https://github.com/vmware/terraform-provider-vcd/pull/882), [#876](https://github.com/vmware/terraform-provider-vcd/pull/876))
 * **New Resource:** `vcd_security_tag` that allows creating security tags ([#845](https://github.com/vmware/terraform-provider-vcd/pull/845))
 * **New Resource:** `vcd_org_vdc_access_control` to manage VDC access control ([#850](https://github.com/vmware/terraform-provider-vcd/pull/850))
 * **New Resource:** `vcd_nsxt_route_advertisement` that allows NSX-T Edge Gateway to advertise subnets to Tier-0 Gateway ([#858](https://github.com/vmware/terraform-provider-vcd/pull/858), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
@@ -63,7 +64,6 @@ Sizing Policy with CPU or memory defined, `template_name` is used and `power_on`
 * Adjust `role` data source and resource documentation for `rights` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
 * Adjust `rights_bundle` data source and resource documentation for `rights` and `tenants` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
 * Add an example about using CloudInit to Guest Customization guides page ([#852](https://github.com/vmware/terraform-provider-vcd/pull/852))
-* Add a guide and examples to configure and install Container Service Extension 3.1.x using Terraform ([#856](https://github.com/vmware/terraform-provider-vcd/pull/856))
 * Testing infrastructure: make NSX-T VDC primary for tests instead of NSX-V one (required for CDS
   certification) ([#886](https://github.com/vmware/terraform-provider-vcd/pull/886))
 * Add Cloud Director Service (CDS) as supported ([#890](https://github.com/vmware/terraform-provider-vcd/pull/890))
