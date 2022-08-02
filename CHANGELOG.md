@@ -1,7 +1,7 @@
 ## 3.7.0 (August 2, 2022)
 
 ## FEATURES
-* Add a guide and examples to configure and install Container Service Extension (CSE) 3.1.x using Terraform ([#856](https://github.com/vmware/terraform-provider-vcd/pull/856), [#882](https://github.com/vmware/terraform-provider-vcd/pull/882), [#876](https://github.com/vmware/terraform-provider-vcd/pull/876))
+* Add a guide and examples to configure and install **Container Service Extension (CSE)** 3.1.x using Terraform ([#856](https://github.com/vmware/terraform-provider-vcd/pull/856), [#882](https://github.com/vmware/terraform-provider-vcd/pull/882), [#876](https://github.com/vmware/terraform-provider-vcd/pull/876))
 * **New Resource:** `vcd_security_tag` that allows creating security tags ([#845](https://github.com/vmware/terraform-provider-vcd/pull/845))
 * **New Resource:** `vcd_org_vdc_access_control` to manage VDC access control ([#850](https://github.com/vmware/terraform-provider-vcd/pull/850))
 * **New Resource:** `vcd_nsxt_route_advertisement` that allows NSX-T Edge Gateway to advertise subnets to Tier-0 Gateway ([#858](https://github.com/vmware/terraform-provider-vcd/pull/858), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
