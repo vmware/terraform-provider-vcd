@@ -1,4 +1,4 @@
-## 3.7.0 (TBC)
+## 3.7.0 (August 2, 2022)
 
 ## FEATURES
 * **New Resource:** `vcd_security_tag` that allows creating security tags ([#845](https://github.com/vmware/terraform-provider-vcd/pull/845))
