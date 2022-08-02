@@ -1,1 +1,1 @@
-* `vcd_catalog_item` resource and data source now supports metadata for the CatalogItem entity with `catalog_item_metadata` attribute [GH-851]
+* `resource/vcd_catalog_item` and `datasource/vcd_catalog_item` now support metadata for the CatalogItem entity with `catalog_item_metadata` attribute [GH-851]

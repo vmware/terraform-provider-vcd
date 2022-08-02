@@ -1,1 +1,1 @@
-* Upgrade Terraform SDK dependency to v2.14.0 [#844]
+* Upgrade Terraform SDK dependency to v2.17.0 [#844, #853]
