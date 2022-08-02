@@ -128,7 +128,7 @@ func resourceVcdNsxtNatRuleCreate(ctx context.Context, d *schema.ResourceData, m
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -172,7 +172,7 @@ func resourceVcdNsxtNatRuleUpdate(ctx context.Context, d *schema.ResourceData, m
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -248,7 +248,7 @@ func resourceVcdNsxtNatRuleDelete(ctx context.Context, d *schema.ResourceData, m
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {

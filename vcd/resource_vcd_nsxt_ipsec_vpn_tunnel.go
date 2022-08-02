@@ -243,7 +243,7 @@ func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.Resource
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -301,7 +301,7 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -427,7 +427,7 @@ func resourceVcdNsxtIpSecVpnTunnelDelete(ctx context.Context, d *schema.Resource
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {

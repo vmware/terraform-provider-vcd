@@ -136,7 +136,7 @@ func resourceVcdNsxtFirewallCreateUpdate(ctx context.Context, d *schema.Resource
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t firewall create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -210,7 +210,7 @@ func resourceVcdNsxtFirewallDelete(ctx context.Context, d *schema.ResourceData, 
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[routed advertisement create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t firewall create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
