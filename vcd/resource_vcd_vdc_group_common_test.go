@@ -13,7 +13,11 @@ import (
 // TestAccVcdNsxVdcGroupCompleteMigration test aims to check integration of resource migration from
 // old configuration to new configured.
 // * Step 1 - creates prerequisites - two VDCs and a VDC Group
-// * Step 2 - creates
+// * Step 2 - creates resources in a VDC (member of VDC Group)
+// * Step 3 - uses newer format configuration (owner_id or edge_gateway_id fields) and migrates
+// * Step 4 - Data Source checks
+// * Step 5 - More Data Source checks
+//
 // All the checks carried out in steps are related to vdc/owner related fields
 // TODO Remove this test when 4.0 is released
 func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
@@ -590,3 +594,138 @@ data "vcd_nsxt_network_dhcp" "pools" {
   org_network_id = vcd_network_routed_v2.nsxt-backed.id
 }
 `
+
+// TestAccVcdNsxVdcGroupResources is almost the same test as TestAccVcdNsxVdcGroupCompleteMigration,
+// but it creates resources directly in VDC Group instead while TestAccVcdNsxVdcGroupCompleteMigration
+// creates resources in VDC and tests out their migration.
+func TestAccVcdNsxVdcGroupResources(t *testing.T) {
+	preTestChecks(t)
+
+	// This test requires access to the vCD before filling templates
+	// Thus it won't run in the short test
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createTemporaryVCDConnection(false)
+
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
+	}
+
+	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
+		testConfig.VCD.NsxtProviderVdc.NetworkPool == "" || testConfig.VCD.ProviderVdc.StorageProfile == "" {
+		t.Skip("Variables Nsxt.Vdc, VCD.NsxtProviderVdc.NetworkPool, VCD.NsxtProviderVdc.Name," +
+			" VCD.ProviderVdc.StorageProfile  must be set")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"VDC":                       testConfig.Nsxt.Vdc,
+		"NameUpdated":               "TestAccVcdVdcGroupResourceUpdated",
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"Allocated":                 "1024",
+		"Limit":                     "1024",
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Dfw":                       "false",
+		"DefaultPolicy":             "false",
+		"NsxtImportSegment":         testConfig.Nsxt.NsxtImportSegment,
+		"Name":                      t.Name(),
+		"TestName":                  t.Name(),
+		"NsxtExternalNetworkName":   testConfig.Nsxt.ExternalNetwork,
+
+		"Tags": "vdc nsxt vdcGroup",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "-newVdc"
+	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep4DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccVcdNsxVdcGroupCompleteMigrationStep5DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	parentVdcGroupName := t.Name()
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configTextPre,
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "owner_id", "vcd_vdc_group.test1", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_edgegateway.nsxt-edge", "vdc", "vcd_vdc_group.test1", "name"),
+					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
+					resource.TestCheckResourceAttrPair("vcd_network_isolated_v2.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "owner_id", "vcd_vdc_group.test1", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_network_imported.nsxt-backed", "vdc", "vcd_vdc_group.test1", "name"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_network_dhcp.pools", "id", "vcd_network_routed_v2.nsxt-backed", "id"),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_firewall.testing", "vcd_nsxt_firewall.testing", nil),
+					resourceFieldsEqual("data.vcd_nsxt_nat_rule.snat", "vcd_nsxt_nat_rule.snat", nil),
+					resourceFieldsEqual("data.vcd_nsxt_nat_rule.no-snat", "vcd_nsxt_nat_rule.no-snat", nil),
+					resourceFieldsEqual("data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "vcd_nsxt_ipsec_vpn_tunnel.tunnel1", []string{"status", "ike_service_status", "ike_fail_reason"}),
+				),
+			},
+			{
+				ResourceName:            "vcd_nsxt_firewall.testing",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, parentVdcGroupName, t.Name()),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_nat_rule.snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "SNAT rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_nat_rule.no-snat",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "test-no-snat-rule"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				ResourceName:            "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "First"),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_nsxt_network_dhcp.pools", "data.vcd_nsxt_network_dhcp.pools", []string{"vdc"}),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}

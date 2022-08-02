@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -181,11 +182,15 @@ func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 			{
 				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerCloud:`)),
 				),
 			},
 			{
-				Config: configText2,
+				// Sleeping extra 5 seconds because sometimes one gets `CLOUD_STATE_IN_PROGRESS`
+				// error when immediatelly configuring user space configuration just after adding
+				// `System` configuration in for ALB (which is done in Step 1 above)
+				PreConfig: func() { time.Sleep(time.Second * 5) },
+				Config:    configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
 				),
@@ -259,19 +264,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 
-resource "vcd_nsxt_alb_settings" "test" {
-  org = "{{.Org}}"
-  vdc = vcd_org_vdc.newVdc.0.name
-
-  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
-  is_active       = true
-  {{.SupportedFeatureSet}}
-
-  # This dependency is required to make sure that provider part of operations is done
-  depends_on = [vcd_nsxt_alb_service_engine_group.first]
-}
-
-
 locals {
   controller_id = vcd_nsxt_alb_controller.first.id
 }
@@ -304,40 +296,6 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "DEDICATED"
   {{.SupportedFeatureSet}}
-}
-
-resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
-  org = "{{.Org}}"
-  vdc = vcd_org_vdc.newVdc.0.name
-
-  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
-  service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
-}
-
-resource "vcd_nsxt_alb_pool" "test" {
-  org = "{{.Org}}"
-  vdc = vcd_org_vdc.newVdc.0.name
-
-  name            = "{{.Name}}-pool"
-  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
-}
-
-resource "vcd_nsxt_alb_virtual_service" "test" {
-  org = "{{.Org}}"
-  vdc = vcd_org_vdc.newVdc.0.name
-
-  name            = "{{.Name}}-vs"
-  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
-
-  pool_id                  = vcd_nsxt_alb_pool.test.id
-  service_engine_group_id  = vcd_nsxt_alb_edgegateway_service_engine_group.assignment.service_engine_group_id
-  virtual_ip_address       = tolist(vcd_nsxt_edgegateway.nsxt-edge.subnet)[0].primary_ip
-  application_profile_type = "HTTP"
-  service_port {
-    start_port = 80
-    end_port   = 81
-    type       = "TCP_PROXY"
-  }
 }
 `
 
@@ -417,6 +375,8 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
 
   edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+
+  depends_on = [vcd_nsxt_alb_settings.test]
 }
 
 resource "vcd_nsxt_alb_pool" "test" {
@@ -441,6 +401,8 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
     end_port   = 81
     type       = "TCP_PROXY"
   }
+
+  depends_on = [vcd_nsxt_alb_settings.test]
 }
 `
 

@@ -3,8 +3,9 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -72,22 +73,22 @@ func resourceVcdMediaInsert(ctx context.Context, d *schema.ResourceData, meta in
 
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentVm(d)
-	defer vcdClient.unLockParentVm(d)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	vm, org, err := getVM(d, meta)
 	if err != nil || org == nil {
-		return diag.Errorf("error: %#v", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	task, err := vm.HandleInsertMedia(org, d.Get("catalog").(string), d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error: %#v", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return diag.Errorf("error: %#v", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	d.SetId(d.Get("vapp_name").(string) + "_" + d.Get("vm_name").(string) + "_" + d.Get("name").(string))
@@ -124,22 +125,22 @@ func resourceVcdMediaEject(ctx context.Context, d *schema.ResourceData, meta int
 
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.lockParentVm(d)
-	defer vcdClient.unLockParentVm(d)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	vm, org, err := getVM(d, meta)
 	if err != nil {
-		return diag.Errorf("error: %#v", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	task, err := vm.HandleEjectMedia(org, d.Get("catalog").(string), d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error: %#v", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	err = task.WaitTaskCompletion(d.Get("eject_force").(bool))
 	if err != nil {
-		return diag.Errorf("error: %#v", err)
+		return diag.Errorf("error: %s", err)
 	}
 
 	return nil

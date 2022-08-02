@@ -1749,15 +1749,22 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 		// VirtualHardwareSection has undocumented relationships between elements and very hard to use without issues for internal disks.
 		if internalDisk.Disk == nil {
 			newValue := map[string]interface{}{
-				"disk_id":          internalDisk.DiskId,
-				"bus_type":         internalDiskBusTypesFromValues[internalDisk.AdapterType],
-				"size_in_mb":       int(internalDisk.SizeMb),
-				"bus_number":       internalDisk.BusNumber,
-				"unit_number":      internalDisk.UnitNumber,
-				"iops":             int(*internalDisk.Iops),
-				"thin_provisioned": *internalDisk.ThinProvisioned,
-				"storage_profile":  internalDisk.StorageProfile.Name,
+				"disk_id":         internalDisk.DiskId,
+				"bus_type":        internalDiskBusTypesFromValues[internalDisk.AdapterType],
+				"size_in_mb":      int(internalDisk.SizeMb),
+				"bus_number":      internalDisk.BusNumber,
+				"unit_number":     internalDisk.UnitNumber,
+				"storage_profile": internalDisk.StorageProfile.Name,
 			}
+
+			// There have been real cases where these values were `nil` and caused panic of plugin.
+			if internalDisk.Iops != nil {
+				newValue["iops"] = int(*internalDisk.Iops)
+			}
+			if internalDisk.ThinProvisioned != nil {
+				newValue["thin_provisioned"] = *internalDisk.ThinProvisioned
+			}
+
 			internalDiskList = append(internalDiskList, newValue)
 		}
 	}

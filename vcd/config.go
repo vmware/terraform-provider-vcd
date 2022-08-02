@@ -217,6 +217,7 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 
 // lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
 // Parent means the resource belongs to the VM being locked
+//lint:ignore U1000 For future use
 func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
@@ -230,6 +231,7 @@ func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
 	vcdMutexKV.kvLock(key)
 }
 
+//lint:ignore U1000 For future use
 func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
