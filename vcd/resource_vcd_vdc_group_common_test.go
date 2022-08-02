@@ -17,7 +17,7 @@ import (
 // * Step 3 - uses newer format configuration (owner_id or edge_gateway_id fields) and migrates
 // * Step 4 - Data Source checks
 // * Step 5 - More Data Source checks
-// everything to VDC Groups
+//
 // All the checks carried out in steps are related to vdc/owner related fields
 // TODO Remove this test when 4.0 is released
 func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
