@@ -8,7 +8,7 @@ import (
 
 func datasourceVcdStandaloneVm() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:        datasourceVcdStandaloneVmRead,
+		ReadContext: datasourceVcdStandaloneVmRead,
 		Schema:      vcdVmDS(standaloneVmType),
 		Description: "Standalone VM",
 	}

@@ -284,9 +284,9 @@ func Provider() *schema.Provider {
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
 		},
-		ResourcesMap:   globalResourceMap,
-		DataSourcesMap: globalDataSourceMap,
-		ConfigureContextFunc:  providerConfigure,
+		ResourcesMap:         globalResourceMap,
+		DataSourcesMap:       globalDataSourceMap,
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
