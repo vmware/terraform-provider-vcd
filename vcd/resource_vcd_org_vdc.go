@@ -2,8 +2,10 @@ package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -253,7 +255,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 }
 
 // Creates a new VDC from a resource definition
-func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVdcCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	orgVdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC creation initiated: %s", orgVdcName)
 
@@ -261,34 +263,34 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err := isSizingPolicyAllowed(d, vcdClient)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires System administrator privileges")
+		return diag.Errorf("functionality requires System administrator privileges")
 	}
 
 	// check that elasticity and include_vm_memory_overhead are used only for Flex
 	_, elasticityConfigured := d.GetOkExists("elasticity")
 	_, vmMemoryOverheadConfigured := d.GetOkExists("include_vm_memory_overhead")
 	if d.Get("allocation_model").(string) != "Flex" && (elasticityConfigured || vmMemoryOverheadConfigured) {
-		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model (vCD 9.7+)")
+		return diag.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model (vCD 9.7+)")
 	}
 
 	// VDC creation is accessible only in administrator API part
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	orgVdc, err := adminOrg.GetVDCByName(orgVdcName, false)
 	if orgVdc != nil || err == nil {
-		return fmt.Errorf("org VDC with such name already exists: %s", orgVdcName)
+		return diag.Errorf("org VDC with such name already exists: %s", orgVdcName)
 	}
 
 	params, err := getVcdVdcInput(d, vcdClient)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[DEBUG] Creating VDC: %#v", params)
@@ -296,7 +298,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	vdc, err := adminOrg.CreateOrgVdc(params)
 	if err != nil {
 		log.Printf("[DEBUG] Error creating VDC: %s", err)
-		return fmt.Errorf("error creating VDC: %s", err)
+		return diag.Errorf("error creating VDC: %s", err)
 	}
 
 	d.SetId(vdc.Vdc.ID)
@@ -304,15 +306,15 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = createOrUpdateOrgMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error adding metadata to VDC: %s", err)
+		return diag.Errorf("error adding metadata to VDC: %s", err)
 	}
 
 	err = addAssignedVmSizingPolicies(vcdClient, d, meta)
 	if err != nil {
-		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
+		return diag.Errorf("error assigning VM sizing policies to VDC: %s", err)
 	}
 
-	return resourceVcdVdcRead(d, meta)
+	return resourceVcdVdcRead(nil, d, meta)
 }
 
 func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
@@ -327,7 +329,7 @@ func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
 }
 
 // Fetches information about an existing VDC for a data definition
-func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
@@ -335,16 +337,20 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
-		return fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
+		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	err = setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
@@ -521,7 +527,7 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 }
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
-func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVdcUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC update initiated: %s", vdcName)
 
@@ -529,12 +535,12 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	err := isSizingPolicyAllowed(d, vcdClient)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	if d.HasChange("name") {
@@ -545,40 +551,40 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
-		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
+		return diag.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, adminVdc)
 	if err != nil {
 		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
-		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
+		return diag.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = changedAdminVdc.Update()
 	if err != nil {
 		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
-		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
+		return diag.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	err = createOrUpdateOrgMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error updating VDC metadata: %s", err)
+		return diag.Errorf("error updating VDC metadata: %s", err)
 	}
 
 	err = updateAssignedVmSizingPolicies(vcdClient, d, meta)
 	if err != nil {
-		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
+		return diag.Errorf("error assigning VM sizing policies to VDC: %s", err)
 	}
 
 	if d.HasChange("storage_profile") {
 		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
 		err = updateStorageProfiles(vdcStorageProfilesConfigurations, vcdClient, adminVdc, d.Get("provider_vdc_name").(string))
 		if err != nil {
-			return fmt.Errorf("[VDC update] error updating storage profiles: %s", err)
+			return diag.Errorf("[VDC update] error updating storage profiles: %s", err)
 		}
 	}
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
-	return resourceVcdVdcRead(d, meta)
+	return resourceVcdVdcRead(nil, d, meta)
 }
 
 func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc, storageProfile *types.Reference, storageConfiguration map[string]interface{}) error {
@@ -746,19 +752,19 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc *govcd.A
 }
 
 // Deletes a VDC, optionally removing all objects in it as well
-func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVdcDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC delete started: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires System administrator privileges")
+		return diag.Errorf("functionality requires System administrator privileges")
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	vdc, err := adminOrg.GetVDCByName(vdcName, false)
@@ -771,12 +777,12 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
 		log.Printf("[DEBUG] Error removing VDC %s, err: %s", vdcName, err)
-		return fmt.Errorf("error removing VDC %s, err: %s", vdcName, err)
+		return diag.Errorf("error removing VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = adminOrg.GetVDCByName(vdcName, true)
 	if err == nil {
-		return fmt.Errorf("vdc %s still found after deletion", vdcName)
+		return diag.Errorf("vdc %s still found after deletion", vdcName)
 	}
 	log.Printf("[TRACE] VDC delete completed: %s", vdcName)
 	return nil
@@ -1272,7 +1278,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 // Example resource name (_resource_name_): vcd_org_vdc.my_existing_vdc
 // Example import path (_the_id_string_): org.my_existing_vdc
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgVdcImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.my_existing_vdc")

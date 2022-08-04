@@ -177,7 +177,7 @@ func resourceVappNetworkNatRulesUpdate(ctx context.Context, d *schema.ResourceDa
 	return resourceVappNetworkNatRulesRead(ctx, d, meta)
 }
 
-func resourceVAppNetworkNatRulesDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVAppNetworkNatRulesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -203,7 +203,7 @@ func resourceVAppNetworkNatRulesDelete(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVappNetworkNatRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVappNetworkNatRulesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -326,6 +326,6 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 // Example resource name (_resource_name_): vcd_vapp_nat_rules.my_existing_nat_rules
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappNetworkNatRulesImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappNetworkNatRulesImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	return vappNetworkRuleImport(d, meta, "vcd_vapp_nat_rules")
 }

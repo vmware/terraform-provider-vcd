@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"io/ioutil"
 	"strings"
 
@@ -247,7 +249,7 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 
 // Fills a ResourceData container with data retrieved from an OrgUser and an AdminOrg
 // Used after retrieving the user (read, import), to fill the Terraform container appropriately
-func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
+func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser) error {
 	d.SetId(orgUser.User.ID)
 	dSet(d, "name", orgUser.User.Name)
 	dSet(d, "provider_type", orgUser.User.ProviderType)
@@ -279,59 +281,67 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 }
 
 // Creates an OrgUser from data provided in the resource
-func resourceVcdOrgUserCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgUserCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	userData, adminOrg, err := resourceToUserData(d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if userData.Password == "" && !userData.IsExternal {
-		return fmt.Errorf(`no password provided with either "password" or "password_file" properties`)
+		return diag.Errorf(`no password provided with either "password" or "password_file" properties`)
 	}
 	_, err = adminOrg.CreateUserSimple(*userData)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	return resourceVcdOrgUserRead(d, meta)
+	return resourceVcdOrgUserRead(nil, d, meta)
 }
 
 // Deletes an OrgUser
-func resourceVcdOrgUserDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgUserDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	takeOwnership := d.Get("take_ownership").(bool)
 	orgUser, _, err := resourceToOrgUser(d, meta)
 	if err != nil {
-		return fmt.Errorf("[user delete] %s", err)
+		return diag.Errorf("[user delete] %s", err)
 	}
-	return orgUser.Delete(takeOwnership)
+	err = orgUser.Delete(takeOwnership)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // Reads the OrgUser from vCD and fills the resource container appropriately
-func resourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
-
-	orgUser, adminOrg, err := resourceToOrgUser(d, meta)
-	if err != nil {
-		return fmt.Errorf("[user read] error filling data %s", err)
-	}
-	return setOrgUserData(d, orgUser, adminOrg)
-}
-
-// Updates an OrgUser with the data passed through the resource
-func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgUserRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	orgUser, _, err := resourceToOrgUser(d, meta)
 	if err != nil {
-		return err
+		return diag.Errorf("[user read] error filling data %s", err)
+	}
+	err = setOrgUserData(d, orgUser)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
+}
+
+// Updates an OrgUser with the data passed through the resource
+func resourceVcdOrgUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	orgUser, _, err := resourceToOrgUser(d, meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	userData, _, err := resourceToUserData(d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	err = orgUser.UpdateSimple(*userData)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	return resourceVcdOrgUserRead(d, meta)
+	return resourceVcdOrgUserRead(ctx, d, meta)
 }
 
 // Imports an OrgUser into Terraform state
@@ -340,7 +350,7 @@ func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
 //
 // Example import path (id): my-org.my-user-admin
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgUserImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.org_user")
@@ -359,7 +369,7 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	}
 
 	dSet(d, "org", orgName)
-	err = setOrgUserData(d, user, adminOrg)
+	err = setOrgUserData(d, user)
 	if err != nil {
 		return nil, err
 	}

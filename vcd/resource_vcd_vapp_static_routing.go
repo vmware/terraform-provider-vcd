@@ -78,7 +78,7 @@ func resourceVcdVappNetworkStaticRouting() *schema.Resource {
 }
 
 func resourceVappNetworkStaticRoutingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVappNetworkStaticRoutingUpdate(c, d, meta)
+	return resourceVappNetworkStaticRoutingUpdate(ctx, d, meta)
 }
 
 func resourceVappNetworkStaticRoutingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -110,7 +110,7 @@ func resourceVappNetworkStaticRoutingUpdate(ctx context.Context, d *schema.Resou
 
 	d.SetId(vappNetwork.ID)
 
-	return resourceVappNetworkStaticRoutingRead(c, d, meta)
+	return resourceVappNetworkStaticRoutingRead(ctx, d, meta)
 }
 
 func resourceVAppNetworkStaticRoutingDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
