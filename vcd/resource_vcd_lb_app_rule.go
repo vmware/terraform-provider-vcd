@@ -10,12 +10,12 @@ import (
 
 func resourceVcdLBAppRule() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdLBAppRuleCreate,
-		ReadContext:   resourceVcdLBAppRuleRead,
-		UpdateContext: resourceVcdLBAppRuleUpdate,
-		DeleteContext: resourceVcdLBAppRuleDelete,
+		Create: resourceVcdLBAppRuleCreate,
+		Read:   resourceVcdLBAppRuleRead,
+		Update: resourceVcdLBAppRuleUpdate,
+		Delete: resourceVcdLBAppRuleDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdLBAppRuleImport,
+			State: resourceVcdLBAppRuleImport,
 		},
 
 		Schema: map[string]*schema.Schema{
