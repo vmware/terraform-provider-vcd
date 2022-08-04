@@ -14,12 +14,12 @@ import (
 //lint:file-ignore SA1019 ignore deprecated functions
 func resourceVcdVmAffinityRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVmAffinityRuleCreate,
-		Read:   resourceVcdVmAffinityRuleRead,
-		Update: resourceVcdVmAffinityRuleUpdate,
-		Delete: resourceVcdVmAffinityRuleDelete,
+		CreateContext: resourceVcdVmAffinityRuleCreate,
+		ReadContext:   resourceVcdVmAffinityRuleRead,
+		UpdateContext: resourceVcdVmAffinityRuleUpdate,
+		DeleteContext: resourceVcdVmAffinityRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVmAffinityRuleImport,
+			StateContext: resourceVcdVmAffinityRuleImport,
 		},
 
 		Schema: map[string]*schema.Schema{

@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
@@ -9,12 +10,12 @@ import (
 
 func resourceVcdVappNetworkStaticRouting() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVappNetworkStaticRoutingCreate,
-		Delete: resourceVAppNetworkStaticRoutingDelete,
-		Read:   resourceVappNetworkStaticRoutingRead,
-		Update: resourceVappNetworkStaticRoutingUpdate,
+		CreateContext: resourceVappNetworkStaticRoutingCreate,
+		DeleteContext: resourceVAppNetworkStaticRoutingDelete,
+		ReadContext:   resourceVappNetworkStaticRoutingRead,
+		UpdateContext: resourceVappNetworkStaticRoutingUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappNetworkStaticRoutingImport,
+			StateContext: vappNetworkStaticRoutingImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -76,22 +77,22 @@ func resourceVcdVappNetworkStaticRouting() *schema.Resource {
 	}
 }
 
-func resourceVappNetworkStaticRoutingCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourceVappNetworkStaticRoutingUpdate(d, meta)
+func resourceVappNetworkStaticRoutingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVappNetworkStaticRoutingUpdate(c, d, meta)
 }
 
-func resourceVappNetworkStaticRoutingUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVappNetworkStaticRoutingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
@@ -99,31 +100,31 @@ func resourceVappNetworkStaticRoutingUpdate(d *schema.ResourceData, meta interfa
 	networkId := d.Get("network_id").(string)
 	staticRouting, err := expandVappNetworkStaticRouting(d)
 	if err != nil {
-		return fmt.Errorf("error expanding static routes: %s", err)
+		return diag.Errorf("error expanding static routes: %s", err)
 	}
 	vappNetwork, err := vapp.UpdateNetworkStaticRouting(networkId, staticRouting, d.Get("enabled").(bool))
 	if err != nil {
 		log.Printf("[INFO] Error setting static routing: %s", err)
-		return fmt.Errorf("error setting static routing: %s", err)
+		return diag.Errorf("error setting static routing: %s", err)
 	}
 
 	d.SetId(vappNetwork.ID)
 
-	return resourceVappNetworkStaticRoutingRead(d, meta)
+	return resourceVappNetworkStaticRoutingRead(c, d, meta)
 }
 
-func resourceVAppNetworkStaticRoutingDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVAppNetworkStaticRoutingDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
@@ -132,29 +133,29 @@ func resourceVAppNetworkStaticRoutingDelete(d *schema.ResourceData, meta interfa
 	err = vapp.RemoveAllNetworkStaticRoutes(d.Get("network_id").(string))
 	if err != nil {
 		log.Printf("[INFO] Error deleting static routes: %s", err)
-		return fmt.Errorf("error deleting static routes: %s", err)
+		return diag.Errorf("error deleting static routes: %s", err)
 	}
 
 	return nil
 }
 
-func resourceVappNetworkStaticRoutingRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVappNetworkStaticRoutingRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp network. %s", err)
+		return diag.Errorf("error finding vApp network. %s", err)
 	}
 
 	var rules []map[string]interface{}
@@ -174,7 +175,7 @@ func resourceVappNetworkStaticRoutingRead(d *schema.ResourceData, meta interface
 	dSet(d, "enabled", vappNetwork.Configuration.Features.StaticRoutingService.IsEnabled)
 	err = d.Set("rule", rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	return nil
 }
@@ -207,6 +208,6 @@ func expandVappNetworkStaticRouting(d *schema.ResourceData) ([]*types.StaticRout
 // Example resource name (_resource_name_): vcd_vapp_static_routing.my_existing_static_routing_rules
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappNetworkStaticRoutingImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappNetworkStaticRoutingImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	return vappNetworkRuleImport(d, meta, "vcd_vapp_static_routing")
 }

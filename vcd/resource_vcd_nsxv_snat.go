@@ -13,12 +13,12 @@ import (
 
 func resourceVcdNsxvSnat() *schema.Resource {
 	return &schema.Resource{
-		Create: natRuleCreate("snat", setSnatRuleData, getSnatRule),
-		Read:   natRuleRead("id", "snat", setSnatRuleData),
-		Update: natRuleUpdate("snat", setSnatRuleData, getSnatRule),
-		Delete: natRuleDelete("snat"),
+		CreateContext: natRuleCreate("snat", setSnatRuleData, getSnatRule),
+		ReadContext:   natRuleRead("id", "snat", setSnatRuleData),
+		UpdateContext: natRuleUpdate("snat", setSnatRuleData, getSnatRule),
+		DeleteContext: natRuleDelete("snat"),
 		Importer: &schema.ResourceImporter{
-			State: natRuleImport("snat"),
+			StateContext: natRuleImport("snat"),
 		},
 
 		Schema: map[string]*schema.Schema{

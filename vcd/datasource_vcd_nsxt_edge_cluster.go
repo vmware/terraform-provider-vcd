@@ -8,7 +8,7 @@ import (
 
 func datasourceVcdNsxtEdgeCluster() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceNsxtEdgeCluster,
+		ReadContext: datasourceNsxtEdgeCluster,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,

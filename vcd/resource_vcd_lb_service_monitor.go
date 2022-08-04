@@ -10,12 +10,12 @@ import (
 
 func resourceVcdLbServiceMonitor() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdLbServiceMonitorCreate,
-		Read:   resourceVcdLbServiceMonitorRead,
-		Update: resourceVcdLbServiceMonitorUpdate,
-		Delete: resourceVcdLbServiceMonitorDelete,
+		CreateContext: resourceVcdLbServiceMonitorCreate,
+		ReadContext:   resourceVcdLbServiceMonitorRead,
+		UpdateContext: resourceVcdLbServiceMonitorUpdate,
+		DeleteContext: resourceVcdLbServiceMonitorDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdLbServiceMonitorImport,
+			StateContext: resourceVcdLbServiceMonitorImport,
 		},
 
 		Schema: map[string]*schema.Schema{

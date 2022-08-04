@@ -14,12 +14,12 @@ import (
 
 func resourceVcdVappNetwork() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVappNetworkCreate,
-		Read:   resourceVappNetworkRead,
-		Update: resourceVappNetworkUpdate,
-		Delete: resourceVappNetworkDelete,
+		CreateContext: resourceVappNetworkCreate,
+		ReadContext:   resourceVappNetworkRead,
+		UpdateContext: resourceVappNetworkUpdate,
+		DeleteContext: resourceVappNetworkDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVappNetworkImport,
+			StateContext: resourceVcdVappNetworkImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {

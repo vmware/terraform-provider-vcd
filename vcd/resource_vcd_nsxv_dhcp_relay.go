@@ -27,12 +27,12 @@ var relayAgentResource = &schema.Resource{
 
 func resourceVcdNsxvDhcpRelay() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNsxvDhcpRelayCreate,
-		Read:   resourceVcdNsxvDhcpRelayRead,
-		Update: resourceVcdNsxvDhcpRelayUpdate,
-		Delete: resourceVcdNsxvDhcpRelayDelete,
+		CreateContext: resourceVcdNsxvDhcpRelayCreate,
+		ReadContext:   resourceVcdNsxvDhcpRelayRead,
+		UpdateContext: resourceVcdNsxvDhcpRelayUpdate,
+		DeleteContext: resourceVcdNsxvDhcpRelayDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNsxvDhcpRelayImport,
+			StateContext: resourceVcdNsxvDhcpRelayImport,
 		},
 
 		Schema: map[string]*schema.Schema{

@@ -1,14 +1,15 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdLBAppProfile() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdLBAppProfileRead,
+		ReadContext: datasourceVcdLBAppProfileRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -96,19 +97,23 @@ func datasourceVcdLBAppProfile() *schema.Resource {
 	}
 }
 
-func datasourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdLBAppProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		return diag.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	readLBAppProfile, err := edgeGateway.GetLbAppProfileByName(d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("unable to find load balancer application profile with Name %s: %s",
+		return diag.Errorf("unable to find load balancer application profile with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBAppProfile.ID)
-	return setLBAppProfileData(d, readLBAppProfile)
+	err = setLBAppProfileData(d, readLBAppProfile)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

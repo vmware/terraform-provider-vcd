@@ -10,12 +10,12 @@ import (
 
 func resourceVcdLBAppProfile() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdLBAppProfileCreate,
-		Read:   resourceVcdLBAppProfileRead,
-		Update: resourceVcdLBAppProfileUpdate,
-		Delete: resourceVcdLBAppProfileDelete,
+		CreateContext: resourceVcdLBAppProfileCreate,
+		ReadContext:   resourceVcdLBAppProfileRead,
+		UpdateContext: resourceVcdLBAppProfileUpdate,
+		DeleteContext: resourceVcdLBAppProfileDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdLBAppProfileImport,
+			StateContext: resourceVcdLBAppProfileImport,
 		},
 
 		Schema: map[string]*schema.Schema{

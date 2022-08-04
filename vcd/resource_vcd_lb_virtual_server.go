@@ -11,12 +11,12 @@ import (
 
 func resourceVcdLBVirtualServer() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdLBVirtualServerCreate,
-		Read:   resourceVcdLBVirtualServerRead,
-		Update: resourceVcdLBVirtualServerUpdate,
-		Delete: resourceVcdLBVirtualServerDelete,
+		CreateContext: resourceVcdLBVirtualServerCreate,
+		ReadContext:   resourceVcdLBVirtualServerRead,
+		UpdateContext: resourceVcdLBVirtualServerUpdate,
+		DeleteContext: resourceVcdLBVirtualServerDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdLBVirtualServerImport,
+			StateContext: resourceVcdLBVirtualServerImport,
 		},
 
 		Schema: map[string]*schema.Schema{

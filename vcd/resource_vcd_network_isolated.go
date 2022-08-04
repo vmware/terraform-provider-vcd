@@ -164,7 +164,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 	}
 }
 
-func resourceVcdNetworkIsolatedCreate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -263,7 +263,7 @@ func resourceVcdNetworkIsolatedCreate(c context.Context, d *schema.ResourceData,
 	return resourceVcdNetworkIsolatedRead(c, d, meta)
 }
 
-func resourceVcdNetworkIsolatedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdNetworkIsolatedRead(c, d, meta, "resource")
 }
 
@@ -421,7 +421,7 @@ func resourceVcdNetworkIsolatedImport(_ context.Context, d *schema.ResourceData,
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceVcdNetworkIsolatedUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
 		vcdClient          = meta.(*VCDClient)
 		networkName        = d.Get("name").(string)

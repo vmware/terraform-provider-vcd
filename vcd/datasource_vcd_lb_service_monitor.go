@@ -8,7 +8,7 @@ import (
 
 func datasourceVcdLbServiceMonitor() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdLbServiceMonitorRead,
+		ReadContext: datasourceVcdLbServiceMonitorRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,

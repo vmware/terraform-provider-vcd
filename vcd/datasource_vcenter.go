@@ -12,7 +12,7 @@ import (
 
 func datasourceVcdVcenter() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcenterRead,
+		ReadContext: datasourceVcenterRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,

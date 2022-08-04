@@ -11,12 +11,12 @@ import (
 
 func resourceVcdOrgUser() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdOrgUserCreate,
-		Read:   resourceVcdOrgUserRead,
-		Delete: resourceVcdOrgUserDelete,
-		Update: resourceVcdOrgUserUpdate,
+		CreateContext: resourceVcdOrgUserCreate,
+		ReadContext:   resourceVcdOrgUserRead,
+		DeleteContext: resourceVcdOrgUserDelete,
+		UpdateContext: resourceVcdOrgUserUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdOrgUserImport,
+			StateContext: resourceVcdOrgUserImport,
 		},
 
 		Schema: map[string]*schema.Schema{

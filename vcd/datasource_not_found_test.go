@@ -29,12 +29,12 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 	// Run a sub-test for each of data source defined in provider
 	for _, dataSource := range Provider().DataSources() {
-		t.Run(dataSource.Name, testSpecificDataSourceNotFound(t, dataSource.Name, vcdClient))
+		t.Run(dataSource.Name, testSpecificDataSourceNotFound(dataSource.Name, vcdClient))
 	}
 	postTestChecks(t)
 }
 
-func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
+func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
 
 		// Skip sub-test if conditions are not met

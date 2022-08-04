@@ -244,7 +244,7 @@ func resourceVcdExternalNetworkV2Read(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
-	err = setExternalNetworkV2Data(d, extNet.ExternalNetwork, vcdClient)
+	err = setExternalNetworkV2Data(d, extNet.ExternalNetwork)
 	if err != nil {
 		return diag.Errorf("%s", err)
 	}
@@ -458,7 +458,7 @@ func processIpRanges(staticIpPool *schema.Set) []types.ExternalNetworkV2IPRange 
 	return subnetRng
 }
 
-func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2, vcdClient *VCDClient) error {
+func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2) error {
 	dSet(d, "name", net.Name)
 	dSet(d, "description", net.Description)
 

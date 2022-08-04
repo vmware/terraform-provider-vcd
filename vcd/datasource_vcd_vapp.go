@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 func datasourceVcdVApp() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdVAppRead,
+		ReadContext: datasourceVcdVAppRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {

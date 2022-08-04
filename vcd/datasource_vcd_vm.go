@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 func datasourceVcdStandaloneVm() *schema.Resource {
 	return &schema.Resource{
-		Read:        datasourceVcdStandaloneVmRead,
+		ReadContext:        datasourceVcdStandaloneVmRead,
 		Schema:      vcdVmDS(standaloneVmType),
 		Description: "Standalone VM",
 	}

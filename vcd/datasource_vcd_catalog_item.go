@@ -66,6 +66,6 @@ func datasourceVcdCatalogItem() *schema.Resource {
 	}
 }
 
-func dataSourceVcdCatalogItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVcdCatalogItemRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdCatalogItemRead(d, meta, "datasource")
 }

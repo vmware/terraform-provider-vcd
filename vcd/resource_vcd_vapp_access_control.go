@@ -13,12 +13,12 @@ import (
 
 func resourceVcdAccessControlVapp() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceAccessControlVappCreate,
-		Read:   resourceAccessControlVappRead,
-		Update: resourceAccessControlVappUpdate,
-		Delete: resourceAccessControlVappDelete,
+		CreateContext: resourceAccessControlVappCreate,
+		ReadContext:   resourceAccessControlVappRead,
+		UpdateContext: resourceAccessControlVappUpdate,
+		DeleteContext: resourceAccessControlVappDelete,
 		Importer: &schema.ResourceImporter{
-			State: accessControlVappImport,
+			StateContext: accessControlVappImport,
 		},
 
 		Schema: map[string]*schema.Schema{

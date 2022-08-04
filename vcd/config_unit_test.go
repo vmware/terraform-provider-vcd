@@ -32,7 +32,7 @@ func Test_isScalar(t *testing.T) {
 		},
 		{
 			name: "scalar-int",
-			args: args{int(1)},
+			args: args{1},
 			want: true,
 		},
 		{

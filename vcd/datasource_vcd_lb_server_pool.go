@@ -8,7 +8,7 @@ import (
 
 func datasourceVcdLbServerPool() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdLbServerPoolRead,
+		ReadContext: datasourceVcdLbServerPoolRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,

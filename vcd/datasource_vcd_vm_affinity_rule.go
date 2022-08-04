@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdVmAffinityRule() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdVmAffinityRuleRead,
+		ReadContext: datasourceVcdVmAffinityRuleRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,

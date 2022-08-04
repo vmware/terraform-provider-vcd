@@ -117,7 +117,7 @@ func datasourceVcdCatalog() *schema.Resource {
 	}
 }
 
-func datasourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
 		vcdClient = meta.(*VCDClient)
 		catalog   *govcd.AdminCatalog

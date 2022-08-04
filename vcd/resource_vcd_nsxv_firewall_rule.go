@@ -18,12 +18,12 @@ import (
 
 func resourceVcdNsxvFirewallRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNsxvFirewallRuleCreate,
-		Read:   resourceVcdNsxvFirewallRuleRead,
-		Update: resourceVcdNsxvFirewallRuleUpdate,
-		Delete: resourceVcdNsxvFirewallRuleDelete,
+		CreateContext: resourceVcdNsxvFirewallRuleCreate,
+		ReadContext:   resourceVcdNsxvFirewallRuleRead,
+		UpdateContext: resourceVcdNsxvFirewallRuleUpdate,
+		DeleteContext: resourceVcdNsxvFirewallRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNsxvFirewallRuleImport,
+			StateContext: resourceVcdNsxvFirewallRuleImport,
 		},
 
 		Schema: map[string]*schema.Schema{

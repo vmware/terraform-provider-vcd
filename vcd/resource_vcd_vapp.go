@@ -14,12 +14,12 @@ const vAppUnknownStatus = "-unknown-status-"
 
 func resourceVcdVApp() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVAppCreate,
-		Update: resourceVcdVAppUpdate,
-		Read:   resourceVcdVAppRead,
-		Delete: resourceVcdVAppDelete,
+		CreateContext: resourceVcdVAppCreate,
+		UpdateContext: resourceVcdVAppUpdate,
+		ReadContext:   resourceVcdVAppRead,
+		DeleteContext: resourceVcdVAppDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVappImport,
+			StateContext: resourceVcdVappImport,
 		},
 
 		Schema: map[string]*schema.Schema{

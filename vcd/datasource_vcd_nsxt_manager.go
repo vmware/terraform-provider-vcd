@@ -9,7 +9,7 @@ import (
 
 func datasourceVcdNsxtManager() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceNsxtManagerRead,
+		ReadContext: datasourceNsxtManagerRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,

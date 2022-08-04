@@ -36,7 +36,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 	}
 
 	return &schema.Resource{
-		Read: datasourceVcdOrgVdcRead,
+		ReadContext: datasourceVcdOrgVdcRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {

@@ -10,12 +10,12 @@ import (
 
 func resourceVcdLBServerPool() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdLBServerPoolCreate,
-		Read:   resourceVcdLBServerPoolRead,
-		Update: resourceVcdLBServerPoolUpdate,
-		Delete: resourceVcdLBServerPoolDelete,
+		CreateContext: resourceVcdLBServerPoolCreate,
+		ReadContext:   resourceVcdLBServerPoolRead,
+		UpdateContext: resourceVcdLBServerPoolUpdate,
+		DeleteContext: resourceVcdLBServerPoolDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdLBServerPoolImport,
+			StateContext: resourceVcdLBServerPoolImport,
 		},
 
 		Schema: map[string]*schema.Schema{

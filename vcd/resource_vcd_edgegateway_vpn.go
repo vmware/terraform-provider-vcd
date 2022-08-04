@@ -51,9 +51,9 @@ var edgeVpnPeerSubnetResource = &schema.Resource{
 
 func resourceVcdEdgeGatewayVpn() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdEdgeGatewayVpnCreate,
-		Read:   resourceVcdEdgeGatewayVpnRead,
-		Delete: resourceVcdEdgeGatewayVpnDelete,
+		CreateContext: resourceVcdEdgeGatewayVpnCreate,
+		ReadContext:   resourceVcdEdgeGatewayVpnRead,
+		DeleteContext: resourceVcdEdgeGatewayVpnDelete,
 
 		Schema: map[string]*schema.Schema{
 

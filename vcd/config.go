@@ -56,7 +56,7 @@ type VCDClient struct {
 	InsecureFlag    bool
 }
 
-// Type used to simplify reading resource definitions
+// StringMap type is used to simplify reading resource definitions
 type StringMap map[string]interface{}
 
 const (
@@ -105,19 +105,19 @@ func (c *cacheStorage) reset() {
 
 var (
 	// Enables the caching of authenticated connections
-	enableConnectionCache bool = os.Getenv("VCD_CACHE") != ""
+	enableConnectionCache = os.Getenv("VCD_CACHE") != ""
 
 	// Cached VDC authenticated connection
 	cachedVCDClients = &cacheStorage{conMap: make(map[string]cachedConnection)}
 
 	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
-	maxConnectionValidity time.Duration = 20 * time.Minute
+	maxConnectionValidity = 20 * time.Minute
 
-	enableDebug bool = os.Getenv("GOVCD_DEBUG") != ""
-	enableTrace bool = os.Getenv("GOVCD_TRACE") != ""
+	enableDebug = os.Getenv("GOVCD_DEBUG") != ""
+	enableTrace = os.Getenv("GOVCD_TRACE") != ""
 
-	// Separation string used for import operations
-	// Can be changed usin either "import_separator" property in Provider
+	// ImportSeparator is the separation string used for import operations
+	// Can be changed using either "import_separator" property in Provider
 	// or environment variable "VCD_IMPORT_SEPARATOR"
 	ImportSeparator = "."
 )
@@ -461,20 +461,20 @@ func (cli *VCDClient) GetOrg(orgName string) (org *govcd.Org, err error) {
 	return org, err
 }
 
-// Same as GetOrg, but using data from the resource, if available.
+// GetOrgFromResource is the same as GetOrg, but using data from the resource, if available.
 func (cli *VCDClient) GetOrgFromResource(d *schema.ResourceData) (org *govcd.Org, err error) {
 	orgName := d.Get("org").(string)
 	return cli.GetOrg(orgName)
 }
 
-// Same as GetOrgAndVdc, but using data from the resource, if available.
+// GetOrgAndVdcFromResource is the same as GetOrgAndVdc, but using data from the resource, if available.
 func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org *govcd.Org, vdc *govcd.Vdc, err error) {
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	return cli.GetOrgAndVdc(orgName, vdcName)
 }
 
-// Same as GetOrgAndVdc, but using data from the resource, if available.
+// GetAdminOrgFromResource is the same as GetOrgAndVdc, but using data from the resource, if available.
 func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org *govcd.AdminOrg, err error) {
 	orgName := d.Get("org").(string)
 	return cli.GetAdminOrg(orgName)
@@ -543,7 +543,7 @@ func (cli *VCDClient) GetNsxtEdgeGatewayById(orgName, edgeGwId string) (eg *govc
 	return eg, nil
 }
 
-// Same as GetEdgeGateway, but using data from the resource, if available
+// GetEdgeGatewayFromResource is the same as GetEdgeGateway, but using data from the resource, if available
 // edgeGatewayFieldName is the name used in the resource. It is usually "edge_gateway"
 // for all resources that *use* an edge gateway, and when the resource is vcd_edgegateway, it is "name"
 func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGatewayFieldName string) (eg *govcd.EdgeGateway, err error) {
@@ -560,7 +560,7 @@ func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGat
 	return egw, nil
 }
 
-// GetNsxtEdgeGatewayFromResource helps to retrieve NSX-T Edge Gateway when Org org VDC are not
+// GetNsxtEdgeGatewayFromResourceById helps to retrieve NSX-T Edge Gateway when Org org VDC are not
 // needed. It performs a query By ID.
 func (cli *VCDClient) GetNsxtEdgeGatewayFromResourceById(d *schema.ResourceData, edgeGatewayFieldName string) (eg *govcd.NsxtEdgeGateway, err error) {
 	orgName := d.Get("org").(string)

@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdVappOrgNetwork() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVappOrgNetworkRead,
+		ReadContext: datasourceVappOrgNetworkRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,

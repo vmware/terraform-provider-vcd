@@ -47,12 +47,12 @@ func resourceVcdOrgVdc() *schema.Resource {
 	}
 
 	return &schema.Resource{
-		Create: resourceVcdVdcCreate,
-		Delete: resourceVcdVdcDelete,
-		Read:   resourceVcdVdcRead,
-		Update: resourceVcdVdcUpdate,
+		CreateContext: resourceVcdVdcCreate,
+		DeleteContext: resourceVcdVdcDelete,
+		ReadContext:   resourceVcdVdcRead,
+		UpdateContext: resourceVcdVdcUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdOrgVdcImport,
+			StateContext: resourceVcdOrgVdcImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
