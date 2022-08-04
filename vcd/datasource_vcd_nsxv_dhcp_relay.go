@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdNsxvDhcpRelay() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: resourceVcdNsxvDhcpRelayRead,
+		Read: resourceVcdNsxvDhcpRelayRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
