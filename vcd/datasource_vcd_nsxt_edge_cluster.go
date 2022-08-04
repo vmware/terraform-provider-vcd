@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -50,18 +51,18 @@ func datasourceVcdNsxtEdgeCluster() *schema.Resource {
 	}
 }
 
-func datasourceNsxtEdgeCluster(d *schema.ResourceData, meta interface{}) error {
+func datasourceNsxtEdgeCluster(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	nsxtEdgeClusterName := d.Get("name").(string)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	nsxtEdgeCluster, err := vdc.GetNsxtEdgeClusterByName(nsxtEdgeClusterName)
 	if err != nil {
-		return fmt.Errorf("could not find NSX-T Edge Cluster by name '%s': %s", nsxtEdgeClusterName, err)
+		return diag.Errorf("could not find NSX-T Edge Cluster by name '%s': %s", nsxtEdgeClusterName, err)
 	}
 
 	dSet(d, "description", nsxtEdgeCluster.NsxtEdgeCluster.Description)

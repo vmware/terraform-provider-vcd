@@ -1,6 +1,10 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 func datasourceVcdStandaloneVm() *schema.Resource {
 	return &schema.Resource{
@@ -10,6 +14,6 @@ func datasourceVcdStandaloneVm() *schema.Resource {
 	}
 }
 
-func datasourceVcdStandaloneVmRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdStandaloneVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmRead(d, meta, "datasource", standaloneVmType)
 }

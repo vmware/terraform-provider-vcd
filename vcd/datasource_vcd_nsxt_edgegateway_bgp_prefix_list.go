@@ -66,7 +66,7 @@ func datasourceVcdEdgeBgpIpPrefixList() *schema.Resource {
 	}
 }
 
-func datasourceVcdEdgeBgpIpPrefixListRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdEdgeBgpIpPrefixListRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)

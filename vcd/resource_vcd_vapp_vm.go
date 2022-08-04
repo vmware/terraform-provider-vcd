@@ -1518,7 +1518,7 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 	return nil
 }
 
-func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, vmType typeOfVm) error {
+func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, vmType typeOfVm) diag.Diagnostics {
 	log.Printf("[DEBUG] [VM read] started with origin %s", origin)
 	vcdClient := meta.(*VCDClient)
 

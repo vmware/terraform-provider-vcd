@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -117,19 +118,23 @@ func datasourceVcdLbServerPool() *schema.Resource {
 	}
 }
 
-func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdLbServerPoolRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		return diag.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	readLBPool, err := edgeGateway.GetLbServerPoolByName(d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("unable to find load balancer server pool with Name %s: %s",
+		return diag.Errorf("unable to find load balancer server pool with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBPool.ID)
-	return setLBPoolData(d, readLBPool)
+	err = setLBPoolData(d, readLBPool)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

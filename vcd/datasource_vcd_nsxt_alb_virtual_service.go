@@ -104,7 +104,7 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbVirtualServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbVirtualServiceRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)

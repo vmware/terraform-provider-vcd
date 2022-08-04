@@ -48,7 +48,7 @@ func datasourceVcdAlbImportableCloud() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbImportableCloudRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbImportableCloudRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {

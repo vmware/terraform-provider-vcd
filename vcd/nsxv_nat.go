@@ -2,7 +2,9 @@ package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,49 +21,49 @@ type natRuleTypeGetter func(d *schema.ResourceData, edgeGateway govcd.EdgeGatewa
 type natRuleDataSetter func(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error
 
 // natRuleCreate returns a schema.CreateFunc for both SNAT and DNAT rules
-func natRuleCreate(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.CreateFunc {
-	return func(d *schema.ResourceData, meta interface{}) error {
+func natRuleCreate(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
 		defer vcdClient.unLockParentEdgeGtw(d)
 
 		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 		if err != nil {
-			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+			return diag.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		natRule, err := getNatRule(d, *edgeGateway)
 		if err != nil {
-			return fmt.Errorf("unable to make structure for API call: %s", err)
+			return diag.Errorf("unable to make structure for API call: %s", err)
 		}
 
 		natRule.Action = natType
 
 		createdNatRule, err := edgeGateway.CreateNsxvNatRule(natRule)
 		if err != nil {
-			return fmt.Errorf("error creating new NAT rule: %s", err)
+			return diag.Errorf("error creating new NAT rule: %s", err)
 		}
 
 		d.SetId(createdNatRule.ID)
-		return natRuleRead("id", natType, setData)(d, meta)
+		return natRuleRead("id", natType, setData)(ctx, d, meta)
 	}
 }
 
 // natRuleUpdate returns a schema.UpdateFunc for both SNAT and DNAT rules
-func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.UpdateFunc {
-	return func(d *schema.ResourceData, meta interface{}) error {
+func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
 		defer vcdClient.unLockParentEdgeGtw(d)
 
 		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 		if err != nil {
-			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+			return diag.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		updateNatRule, err := getNatRule(d, *edgeGateway)
 		if err != nil {
-			return fmt.Errorf("unable to make structure for API call: %s", err)
+			return diag.Errorf("unable to make structure for API call: %s", err)
 		}
 		updateNatRule.ID = d.Id()
 
@@ -69,15 +71,15 @@ func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRule
 
 		updatedNatRule, err := edgeGateway.UpdateNsxvNatRule(updateNatRule)
 		if err != nil {
-			return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
+			return diag.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
 		}
 
 		err = setData(d, updatedNatRule, *edgeGateway)
 		if err != nil {
-			return fmt.Errorf("error setting data: %s", err)
+			return diag.Errorf("error setting data: %s", err)
 		}
 
-		return natRuleRead("id", natType, setData)(d, meta)
+		return natRuleRead("id", natType, setData)(ctx, d, meta)
 	}
 }
 
@@ -85,13 +87,13 @@ func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRule
 // ifField: specifies field name which holds NAT rule ID for lookup. In data sources it is rule_id
 // while in resources it is simply ID
 // natType: 'snat' or 'dnat'
-func natRuleRead(idField, natType string, setData natRuleDataSetter) schema.ReadFunc {
-	return func(d *schema.ResourceData, meta interface{}) error {
+func natRuleRead(idField, natType string, setData natRuleDataSetter) schema.ReadContextFunc {
+	return func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		vcdClient := meta.(*VCDClient)
 
 		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 		if err != nil {
-			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+			return diag.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		// if default ID field 'id' is used, then rely on Terraform's d.Id(). Otherwise use the
@@ -106,34 +108,38 @@ func natRuleRead(idField, natType string, setData natRuleDataSetter) schema.Read
 		readNatRule, err := edgeGateway.GetNsxvNatRuleById(idValue)
 		if err != nil {
 			d.SetId("")
-			return fmt.Errorf("unable to find NAT (%s) rule with ID '%s': %s", natType, idValue, err)
+			return diag.Errorf("unable to find NAT (%s) rule with ID '%s': %s", natType, idValue, err)
 		}
 
 		if strings.ToLower(readNatRule.Action) != natType {
-			return fmt.Errorf("NAT rule with id (%s) is of type %s, but expected type %s",
+			return diag.Errorf("NAT rule with id (%s) is of type %s, but expected type %s",
 				readNatRule.ID, readNatRule.Action, natType)
 		}
 
 		d.SetId(readNatRule.ID)
-		return setData(d, readNatRule, *edgeGateway)
+		err = setData(d, readNatRule, *edgeGateway)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
 	}
 }
 
 // natRuleDelete returns a schema.DeleteFunc for both SNAT and DNAT rules
-func natRuleDelete(natType string) schema.DeleteFunc {
-	return func(d *schema.ResourceData, meta interface{}) error {
+func natRuleDelete(natType string) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
 		defer vcdClient.unLockParentEdgeGtw(d)
 
 		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 		if err != nil {
-			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+			return diag.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		err = edgeGateway.DeleteNsxvNatRuleById(d.Id())
 		if err != nil {
-			return fmt.Errorf("error deleting NAT rule of type %s: %s", natType, err)
+			return diag.Errorf("error deleting NAT rule of type %s: %s", natType, err)
 		}
 
 		d.SetId("")
@@ -142,8 +148,8 @@ func natRuleDelete(natType string) schema.DeleteFunc {
 }
 
 // natRuleImporter returns a schema.StateFunc for both SNAT and DNAT rules
-func natRuleImport(natType string) schema.StateFunc {
-	return func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func natRuleImport(natType string) schema.StateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 		resourceURI := strings.Split(d.Id(), ImportSeparator)
 		if len(resourceURI) != 4 {
 			return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw.rule-id")

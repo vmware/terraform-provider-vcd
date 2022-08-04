@@ -102,7 +102,7 @@ func datasourceVcdNsxtFirewall() *schema.Resource {
 	}
 }
 
-func datasourceNsxtFirewallRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceNsxtFirewallRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)

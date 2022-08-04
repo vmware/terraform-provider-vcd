@@ -59,7 +59,7 @@ func datasourceVcdEdgeBgpConfig() *schema.Resource {
 	}
 }
 
-func datasourceVcdEdgeBgpConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdEdgeBgpConfigRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)

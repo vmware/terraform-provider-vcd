@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -205,21 +206,25 @@ func datasourceVcdOrgVdc() *schema.Resource {
 	}
 }
 
-func datasourceVcdOrgVdcRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		return diag.Errorf("unable to find VDC %s", err)
 	}
 
 	d.SetId(adminVdc.AdminVdc.ID)
 
-	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	err = setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

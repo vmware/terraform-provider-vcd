@@ -94,7 +94,7 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NsxtEdgeGatewayVcd"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NsxtEdgeGatewayVcd"].(string)),
 			},
 			{
 				Config: configText1,

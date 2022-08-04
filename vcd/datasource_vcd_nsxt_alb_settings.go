@@ -51,6 +51,6 @@ func datasourceVcdAlbSettings() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbSettingsRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return vcdAlbSettingsRead(meta, d, "datasource")
 }

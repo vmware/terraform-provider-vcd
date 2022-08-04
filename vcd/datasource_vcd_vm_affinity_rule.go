@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -61,6 +63,6 @@ func datasourceVcdVmAffinityRule() *schema.Resource {
 }
 
 // datasourceVcdVmAffinityRuleRead reads a data source VM affinity rule
-func datasourceVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdVmAffinityRuleRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmAffinityRuleRead(d, meta, "datasource")
 }

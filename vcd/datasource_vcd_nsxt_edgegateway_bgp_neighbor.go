@@ -94,7 +94,7 @@ func datasourceVcdEdgeBgpNeighbor() *schema.Resource {
 	}
 }
 
-func datasourceVcdEdgeBgpNeighborRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdEdgeBgpNeighborRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)

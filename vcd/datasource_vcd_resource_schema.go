@@ -91,7 +91,7 @@ func datasourceVcdResourceSchema() *schema.Resource {
 	}
 }
 
-func datasourceVcdResourceSchemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdResourceSchemaRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 
 	resourceType := d.Get("resource_type").(string)
 

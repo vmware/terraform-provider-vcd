@@ -59,7 +59,7 @@ func datasourceVcdRight() *schema.Resource {
 	}
 }
 
-func datasourceRightRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceRightRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	rightName := d.Get("name").(string)

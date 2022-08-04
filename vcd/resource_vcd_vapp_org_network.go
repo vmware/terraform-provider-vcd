@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -62,20 +64,20 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 	}
 }
 
-func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVappOrgNetworkCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappName := d.Get("vapp_name").(string)
 	vapp, err := vdc.GetVAppByName(vappName, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %s and err: %s", vappName, err)
+		return diag.Errorf("error finding vApp: %s and err: %s", vappName, err)
 	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
@@ -84,12 +86,12 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 
 	orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(d.Get("org_network_name").(string), true)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vAppNetworkConfig, err := vapp.AddOrgNetwork(vappNetworkSettings, orgNetwork.OrgVDCNetwork, d.Get("is_fenced").(bool))
 	if err != nil {
-		return fmt.Errorf("error creating vApp org network. %#v", err)
+		return diag.Errorf("error creating vApp org network. %#v", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
@@ -100,39 +102,39 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if vAppNetwork == (types.VAppNetworkConfiguration{}) {
-		return fmt.Errorf("didn't find vApp network: %s", d.Get("name").(string))
+		return diag.Errorf("didn't find vApp network: %s", d.Get("name").(string))
 	}
 
 	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset'
 	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF, false)
 	if err != nil {
-		return fmt.Errorf("unable to get network ID from HREF: %s", err)
+		return diag.Errorf("unable to get network ID from HREF: %s", err)
 	}
 	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
-	return resourceVappOrgNetworkRead(d, meta)
+	return resourceVappOrgNetworkRead(nil, d, meta)
 }
 
-func resourceVappOrgNetworkRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVappOrgNetworkRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVappOrgNetworkRead(d, meta, "resource")
 }
 
-func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding Vapp: %s", err)
+		return diag.Errorf("error finding Vapp: %s", err)
 	}
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return fmt.Errorf("error getting vApp networks: %s", err)
+		return diag.Errorf("error getting vApp networks: %s", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
@@ -141,7 +143,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 		if networkConfig.Link != nil {
 			networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
 			if err != nil {
-				return fmt.Errorf("unable to get network ID from HREF: %s", err)
+				return diag.Errorf("unable to get network ID from HREF: %s", err)
 			}
 			// name check needed for datasource to find network as don't have ID
 			if extractUuid(d.Id()) == extractUuid(networkId) || networkConfig.NetworkName == d.Get("org_network_name").(string) {
@@ -157,7 +159,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VAPP org network read] %s : %s", govcd.ErrorEntityNotFound, d.Get("org_network_name").(string))
+		return diag.Errorf("[VAPP org network read] %s : %s", govcd.ErrorEntityNotFound, d.Get("org_network_name").(string))
 	}
 
 	// needs to set for datasource
@@ -175,20 +177,20 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 	return nil
 }
 
-func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVappOrgNetworkUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappName := d.Get("vapp_name").(string)
 	vapp, err := vdc.GetVAppByName(vappName, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %s and err:  %s", vappName, err)
+		return diag.Errorf("error finding vApp: %s and err:  %s", vappName, err)
 	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
@@ -198,30 +200,30 @@ func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	_, err = vapp.UpdateOrgNetwork(vappNetworkSettings, d.Get("is_fenced").(bool))
 	if err != nil {
-		return fmt.Errorf("error creating vApp network. %#v", err)
+		return diag.Errorf("error creating vApp network. %#v", err)
 	}
 
-	return resourceVappOrgNetworkRead(d, meta)
+	return resourceVappOrgNetworkRead(nil, d, meta)
 }
 
-func resourceVappOrgNetworkDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVappOrgNetworkDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %#v", err)
+		return diag.Errorf("error finding vApp: %#v", err)
 	}
 
 	_, err = vapp.RemoveNetwork(d.Id())
 	if err != nil {
-		return fmt.Errorf("error removing vApp network: %s", err)
+		return diag.Errorf("error removing vApp network: %s", err)
 	}
 
 	d.SetId("")
@@ -241,7 +243,7 @@ func resourceVappOrgNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 //
 // Example resource name (_resource_name_): vcd_vapp_org_network.org_network_name
 // Example import path (_the_id_string_): org-name.vdc-name.vapp-name.org-network-name
-func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVappOrgNetworkImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("[vApp org network import] resource name must be specified as org-name.vdc-name.vapp-name.org-network-name")

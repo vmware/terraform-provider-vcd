@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -215,7 +216,7 @@ func resourceVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}) err
 }
 
 // genericVcdVmAffinityRuleRead retrieve an affinity rule using the resource or data source data
-func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] VM affinity rule Read")
 
 	name := d.Get("name").(string)

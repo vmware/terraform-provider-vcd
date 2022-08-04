@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -43,6 +45,6 @@ func datasourceVcdVappOrgNetwork() *schema.Resource {
 	}
 }
 
-func datasourceVappOrgNetworkRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVappOrgNetworkRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVappOrgNetworkRead(d, meta, "datasource")
 }
