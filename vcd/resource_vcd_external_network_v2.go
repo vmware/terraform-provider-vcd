@@ -231,7 +231,7 @@ func resourceVcdExternalNetworkV2Update(ctx context.Context, d *schema.ResourceD
 	return resourceVcdExternalNetworkV2Read(ctx, d, meta)
 }
 
-func resourceVcdExternalNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdExternalNetworkV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 read initiated")
 
@@ -252,7 +252,7 @@ func resourceVcdExternalNetworkV2Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdExternalNetworkV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdExternalNetworkV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 creation initiated")
 
@@ -276,7 +276,7 @@ func resourceVcdExternalNetworkV2Delete(ctx context.Context, d *schema.ResourceD
 //
 // Example import path (id): externalNetworkName
 // Example import command:   terraform import vcd_external_network_v2.externalNetworkResourceName externalNetworkName
-func resourceVcdExternalNetworkV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdExternalNetworkV2Import(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	extNetRes, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, d.Id())
@@ -286,7 +286,7 @@ func resourceVcdExternalNetworkV2Import(ctx context.Context, d *schema.ResourceD
 
 	d.SetId(extNetRes.ExternalNetwork.ID)
 
-	err = setExternalNetworkV2Data(d, extNetRes.ExternalNetwork, vcdClient)
+	err = setExternalNetworkV2Data(d, extNetRes.ExternalNetwork)
 	if err != nil {
 		return nil, err
 	}

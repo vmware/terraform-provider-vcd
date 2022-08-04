@@ -95,7 +95,7 @@ func resourceVcdMediaInsert(ctx context.Context, d *schema.ResourceData, meta in
 	return resourceVcdVmInsertedMediaRead(ctx, d, meta)
 }
 
-func resourceVcdVmInsertedMediaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVmInsertedMediaRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] VM insert media read initiated")
 
 	vm, _, err := getVM(d, meta)
@@ -121,7 +121,7 @@ func resourceVcdVmInsertedMediaRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVcdMediaEject(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdMediaEject(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	vcdClient := meta.(*VCDClient)
 
@@ -170,7 +170,7 @@ func getVM(d *schema.ResourceData, meta interface{}) (*govcd.VM, *govcd.Org, err
 }
 
 //update function for "eject_force"
-func resourceVcdMediaEjectUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVcdMediaEjectUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	dSet(d, "eject_force", d.Get("eject_force"))
 	return nil
 }

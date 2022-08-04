@@ -113,7 +113,7 @@ func resourceGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta in
 	return genericGlobalRoleRead(ctx, d, meta, "resource", "read")
 }
 
-func genericGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericGlobalRoleRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	var globalRole *govcd.GlobalRole
@@ -265,7 +265,7 @@ func resourceGlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	return genericGlobalRoleRead(ctx, d, meta, "resource", "update")
 }
 
-func resourceGlobalRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRoleDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	globalRoleName := d.Get("name").(string)
@@ -307,7 +307,7 @@ func getTenants(client *VCDClient, label string, d *schema.ResourceData) ([]type
 	return inputTenants, nil
 }
 
-func resourceVcdGlobalRoleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdGlobalRoleImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 1 {
 		return nil, fmt.Errorf("resource name must be specified as globalrole-name")

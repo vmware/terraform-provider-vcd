@@ -15,11 +15,11 @@ import (
 
 func resourceVcdExternalNetwork() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdExternalNetworkCreate,
-		DeleteContext: resourceVcdExternalNetworkDelete,
-		ReadContext:   resourceVcdExternalNetworkRead,
+		Create: resourceVcdExternalNetworkCreate,
+		Delete: resourceVcdExternalNetworkDelete,
+		Read:   resourceVcdExternalNetworkRead,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdExternalNetworkImport,
+			State: resourceVcdExternalNetworkImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
