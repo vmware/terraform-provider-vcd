@@ -43,7 +43,7 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
-func resourceVcdVAppVmCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := genericResourceVmCreate(d, meta, vappVmType)
 	if err != nil {
 		return diag.FromErr(err)
@@ -51,15 +51,15 @@ func resourceVcdVAppVmCreate(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVcdVAppVmRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericVcdVmRead(d, meta, "resource", vappVmType)
+func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericVcdVmRead(d, meta, "resource")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func resourceVcdVAppVmUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVAppVmUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := genericResourceVcdVmUpdate(d, meta, vappVmType)
 	if err != nil {
 		return diag.FromErr(err)
@@ -672,7 +672,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 		networkConnectionSection := types.NetworkConnectionSection{}
 		if len(d.Get("network").([]interface{})) > 0 {
-			networkConnectionSection, err = networksToConfig(d, vdc, vapp, vcdClient)
+			networkConnectionSection, err = networksToConfig(d, vapp)
 			if err != nil {
 				return fmt.Errorf("unable to process network configuration: %s", err)
 			}
@@ -819,7 +819,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 		err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType, sizingPolicy)
 		if err != nil {
-			errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
+			errAttachedDisk := updateStateOfAttachedDisks(d, *vm)
 			if errAttachedDisk != nil {
 				dSet(d, "disk", nil)
 				return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
@@ -847,7 +847,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return fmt.Errorf("[VM creation] error applying advanced compute settings for standalone VM %s : %s", vmName, err)
 		}
 
-		return genericVcdVmRead(d, meta, "create", vmType)
+		return genericVcdVmRead(d, meta, "create")
 	}
 
 	log.Printf("[DEBUG] [VM create] finished")
@@ -1001,7 +1001,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	// update so that its value can be written into statefile and be accessible in read function
 	if onlyHasChange("network_dhcp_wait_seconds", vmSchemaFunc(vmType), d) {
 		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
-		return genericVcdVmRead(d, meta, "update", vmType)
+		return genericVcdVmRead(d, meta, "update")
 	}
 
 	err := resourceVmHotUpdate(d, meta, vmType)
@@ -1033,7 +1033,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 
 	// * Primary NIC cannot be removed on a powered on VM
 	if d.HasChange("network") && !isPrimaryNicRemoved(d) {
-		networkConnectionSection, err := networksToConfig(d, vdc, vapp, vcdClient)
+		networkConnectionSection, err := networksToConfig(d, vapp)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
 		}
@@ -1146,7 +1146,7 @@ func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, descr
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm, computePolicy *types.VdcComputePolicy) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
 
-	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
+	_, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return err
 	}
@@ -1228,7 +1228,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if d.HasChange("disk") {
 			err = attachDetachDisks(d, *vm, vdc)
 			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
+				errAttachedDisk := updateStateOfAttachedDisks(d, *vm)
 				if errAttachedDisk != nil {
 					dSet(d, "disk", nil)
 					return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
@@ -1279,7 +1279,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		if networksNeedsColdChange {
-			networkConnectionSection, err := networksToConfig(d, vdc, vapp, vcdClient)
+			networkConnectionSection, err := networksToConfig(d, vapp)
 			if err != nil {
 				return fmt.Errorf("unable to setup network configuration for update: %s", err)
 			}
@@ -1401,7 +1401,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 	}
 	log.Printf("[DEBUG] [VM update] finished")
-	return genericVcdVmRead(d, meta, "update", vmType)
+	return genericVcdVmRead(d, meta, "update")
 }
 
 func getVmFromResource(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
@@ -1671,7 +1671,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) e
 		return fmt.Errorf("[VM read] error reading internal disks : %s", err)
 	}
 
-	err = updateStateOfAttachedDisks(d, *vm, vdc)
+	err = updateStateOfAttachedDisks(d, *vm)
 	if err != nil {
 		dSet(d, "disk", nil)
 		return fmt.Errorf("[VM read] error reading attached disks : %s", err)
@@ -1696,7 +1696,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) e
 	return nil
 }
 
-func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
+func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM) error {
 
 	existingDisks := getVmIndependentDisks(vm)
 	transformed := schema.NewSet(resourceVcdVmIndependentDiskHash, []interface{}{})
@@ -1854,7 +1854,7 @@ func getMatchedDisk(internalDiskProvidedConfig map[string]interface{}, diskSetti
 	return nil
 }
 
-func resourceVcdVAppVmDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVAppVmDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] [VM delete] started")
 
 	vcdClient := meta.(*VCDClient)
@@ -1961,7 +1961,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 
 // networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
-func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp *govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkConnectionSection, error) {
 	networks := d.Get("network").([]interface{})
 
 	isStandaloneVm := vapp == nil || (vapp != nil && vapp.VApp.IsAutoNature)
@@ -2280,7 +2280,7 @@ func setGuestProperties(d *schema.ResourceData, properties *types.ProductSection
 // The VM identifier can be either the VM name or its ID
 // If we are dealing with standalone VMs, the name can retrieve duplicates. When that happens, the import fails
 // and a list of VM information (ID, guest OS, network, IP) is returned
-func resourceVcdVappVmImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVappVmImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	vcdClient := meta.(*VCDClient)
 
@@ -2675,7 +2675,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 	d.SetId(newVm.VM.ID)
 
 	// Due the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup network configuration with update. Fixed only 10.1 version.
-	networkConnectionSection, err := networksToConfig(d, vdc, vapp, vcdClient)
+	networkConnectionSection, err := networksToConfig(d, vapp)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM: %s", err)
 	}
