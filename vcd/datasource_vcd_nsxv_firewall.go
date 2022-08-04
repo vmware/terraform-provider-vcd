@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdNsxvFirewallRule() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: resourceVcdNsxvFirewallRuleRead,
+		Read: resourceVcdNsxvFirewallRuleRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
