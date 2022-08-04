@@ -182,7 +182,7 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	return resourceVcdMediaRead(ctx, d, meta)
 }
 
-func resourceVcdMediaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdMediaRead(d, meta, "resource")
 }
 
@@ -267,7 +267,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	return nil
 }
 
-func resourceVcdMediaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdMediaDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
@@ -318,7 +318,7 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 //
 // Example resource name (_resource_name_): vcd_catalog_media.my-media
 // Example import path (_the_id_string_): org.catalog.my-media-name
-func resourceVcdCatalogMediaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogMediaImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.my-media-name")

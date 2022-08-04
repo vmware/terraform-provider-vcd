@@ -136,7 +136,7 @@ func getCertificateConfigurationType(d *schema.ResourceData) *types.CertificateL
 	}
 }
 
-func resourceVcdLibraryCertificateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdLibraryCertificateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -169,7 +169,7 @@ func setCertificateConfigurationData(config *types.CertificateLibraryItem, d *sc
 	dSet(d, "certificate", config.Certificate)
 }
 
-func resourceVcdAlbLibraryCertificateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbLibraryCertificateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -190,7 +190,7 @@ func resourceVcdAlbLibraryCertificateDelete(ctx context.Context, d *schema.Resou
 	return diag.FromErr(certificateToDelete.Delete())
 }
 
-func resourceLibraryCertificateImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceLibraryCertificateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.certificate-name")

@@ -13,12 +13,12 @@ import (
 
 func resourceVcdEdgeGatewaySettings() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdEdgeGatewaySettingsCreate,
-		ReadContext:   resourceVcdEdgeGatewaySettingsRead,
-		UpdateContext: resourceVcdEdgeGatewaySettingsUpdate,
-		DeleteContext: resourceVcdEdgeGatewaySettingsDelete,
+		Create: resourceVcdEdgeGatewaySettingsCreate,
+		Read:   resourceVcdEdgeGatewaySettingsRead,
+		Update: resourceVcdEdgeGatewaySettingsUpdate,
+		Delete: resourceVcdEdgeGatewaySettingsDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdEdgeGatewaySettingsImport,
+			State: resourceVcdEdgeGatewaySettingsImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
