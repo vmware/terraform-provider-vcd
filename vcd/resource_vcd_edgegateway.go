@@ -107,12 +107,12 @@ var externalNetworkResource = &schema.Resource{
 func resourceVcdEdgeGateway() *schema.Resource {
 
 	return &schema.Resource{
-		CreateContext: resourceVcdEdgeGatewayCreate,
-		ReadContext:   resourceVcdEdgeGatewayRead,
-		UpdateContext: resourceVcdEdgeGatewayUpdate,
-		DeleteContext: resourceVcdEdgeGatewayDelete,
+		Create: resourceVcdEdgeGatewayCreate,
+		Read:   resourceVcdEdgeGatewayRead,
+		Update: resourceVcdEdgeGatewayUpdate,
+		Delete: resourceVcdEdgeGatewayDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdEdgeGatewayImport,
+			State: resourceVcdEdgeGatewayImport,
 		},
 
 		Schema: map[string]*schema.Schema{
