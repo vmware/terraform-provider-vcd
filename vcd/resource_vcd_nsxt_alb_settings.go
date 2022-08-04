@@ -97,7 +97,7 @@ func resourceVcdAlbSettingsCreateUpdate(ctx context.Context, d *schema.ResourceD
 	return resourceVcdAlbSettingsRead(ctx, d, meta)
 }
 
-func resourceVcdAlbSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbSettingsRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return vcdAlbSettingsRead(meta, d, "resource")
 }
 
@@ -131,7 +131,7 @@ func vcdAlbSettingsRead(meta interface{}, d *schema.ResourceData, resourceType s
 	return nil
 }
 
-func resourceVcdAlbSettingsDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbSettingsDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -147,7 +147,7 @@ func resourceVcdAlbSettingsDelete(ctx context.Context, d *schema.ResourceData, m
 	return diag.FromErr(nsxtEdge.DisableAlb())
 }
 
-func resourceVcdAlbSettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbSettingsImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T ALB General Settings import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

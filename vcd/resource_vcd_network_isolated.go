@@ -260,11 +260,11 @@ func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error adding metadata to isolated network: %s", err)
 	}
 
-	return resourceVcdNetworkIsolatedRead(c, d, meta)
+	return resourceVcdNetworkIsolatedRead(ctx, d, meta)
 }
 
 func resourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkIsolatedRead(c, d, meta, "resource")
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource")
 }
 
 func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
@@ -496,5 +496,5 @@ func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// The update returns already a network. No need to retrieve it twice
-	return genericVcdNetworkIsolatedRead(c, d, network, "resource-update")
+	return genericVcdNetworkIsolatedRead(ctx, d, network, "resource-update")
 }

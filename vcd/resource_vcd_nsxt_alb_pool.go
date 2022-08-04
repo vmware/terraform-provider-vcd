@@ -304,7 +304,7 @@ func resourceVcdAlbPoolUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	return resourceVcdAlbPoolRead(ctx, d, meta)
 }
 
-func resourceVcdAlbPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbPoolRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	albPool, err := vcdClient.GetAlbPoolById(d.Id())
@@ -324,7 +324,7 @@ func resourceVcdAlbPoolRead(ctx context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func resourceVcdAlbPoolDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbPoolDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -342,7 +342,7 @@ func resourceVcdAlbPoolDelete(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVcdAlbPoolImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbPoolImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T ALB Pool import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

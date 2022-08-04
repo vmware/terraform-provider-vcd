@@ -371,7 +371,7 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 	return resourceVcdNsxtIpSecVpnTunnelRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtIpSecVpnTunnelRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -417,7 +417,7 @@ func resourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVcdNsxtIpSecVpnTunnelDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtIpSecVpnTunnelDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks is conditional. There are two scenarios:
@@ -461,7 +461,7 @@ func resourceVcdNsxtIpSecVpnTunnelDelete(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceVcdNsxtIpSecVpnTunnelImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtIpSecVpnTunnelImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T IPsec VPN Tunnel Import started")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

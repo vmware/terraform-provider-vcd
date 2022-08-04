@@ -162,7 +162,7 @@ func resourceVcdDynamicSecurityGroupUpdate(ctx context.Context, d *schema.Resour
 	return resourceVcdDynamicSecurityGroupRead(ctx, d, meta)
 }
 
-func resourceVcdDynamicSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdDynamicSecurityGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vdcGroupId := d.Get("vdc_group_id").(string)
 
@@ -204,7 +204,7 @@ func resourceVcdDynamicSecurityGroupRead(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceVcdDynamicSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdDynamicSecurityGroupDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vdcGroupId := d.Get("vdc_group_id").(string)
 

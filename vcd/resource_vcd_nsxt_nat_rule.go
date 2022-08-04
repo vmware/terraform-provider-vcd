@@ -211,7 +211,7 @@ func resourceVcdNsxtNatRuleUpdate(ctx context.Context, d *schema.ResourceData, m
 	return resourceVcdNsxtNatRuleRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtNatRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtNatRuleRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -238,7 +238,7 @@ func resourceVcdNsxtNatRuleRead(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceVcdNsxtNatRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtNatRuleDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks is conditional. There are two scenarios:
@@ -282,7 +282,7 @@ func resourceVcdNsxtNatRuleDelete(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtNatRuleImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.nat_rule_name")

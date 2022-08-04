@@ -104,7 +104,7 @@ func resourceVcdNsxtRouteAdvertisementCreateUpdate(ctx context.Context, d *schem
 	return resourceVcdNsxtRouteAdvertisementRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtRouteAdvertisementRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName, err := vcdClient.GetOrgNameFromResource(d)
@@ -137,7 +137,7 @@ func resourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtRouteAdvertisementDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks on a route advertisement is conditional. There are two scenarios:
@@ -177,7 +177,7 @@ func resourceVcdNsxtRouteAdvertisementDelete(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourceVcdNsxtRouteAdvertisementImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtRouteAdvertisementImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway Route Advertisement import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

@@ -295,11 +295,11 @@ func resourceVcdNetworkRoutedCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error adding metadata to routed network: %s", err)
 	}
 
-	return resourceVcdNetworkRoutedRead(c, d, meta)
+	return resourceVcdNetworkRoutedRead(ctx, d, meta)
 }
 
 func resourceVcdNetworkRoutedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkRoutedRead(c, d, meta, "resource")
+	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource")
 }
 
 func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
@@ -466,10 +466,10 @@ func resourceVcdNetworkDeleteLocked(ctx context.Context, d *schema.ResourceData,
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	return resourceVcdNetworkDelete(c, d, meta)
+	return resourceVcdNetworkDelete(ctx, d, meta)
 }
 
-func resourceVcdNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -678,5 +678,5 @@ func resourceVcdNetworkRoutedUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[routed network update] error updating network metadata: %s", err)
 	}
 
-	return resourceVcdNetworkRoutedRead(c, d, meta)
+	return resourceVcdNetworkRoutedRead(ctx, d, meta)
 }
