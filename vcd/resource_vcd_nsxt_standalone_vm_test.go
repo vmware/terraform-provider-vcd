@@ -118,7 +118,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 				ResourceName:      "vcd_vm." + standaloneVmName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, standaloneVmName),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(standaloneVmName),
 				// These fields can't be retrieved from user data
 				// "network.1.ip" is a DHCP value. It may happen so that during "read" IP is still not reported, but
 				// it is reported during import

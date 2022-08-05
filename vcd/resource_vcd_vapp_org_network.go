@@ -64,7 +64,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 	}
 }
 
-func resourceVappOrgNetworkCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVappOrgNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
@@ -112,7 +112,7 @@ func resourceVappOrgNetworkCreate(_ context.Context, d *schema.ResourceData, met
 	}
 	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
-	return resourceVappOrgNetworkRead(nil, d, meta)
+	return resourceVappOrgNetworkRead(ctx, d, meta)
 }
 
 func resourceVappOrgNetworkRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -177,7 +177,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 	return nil
 }
 
-func resourceVappOrgNetworkUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVappOrgNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
@@ -203,7 +203,7 @@ func resourceVappOrgNetworkUpdate(_ context.Context, d *schema.ResourceData, met
 		return diag.Errorf("error creating vApp network. %#v", err)
 	}
 
-	return resourceVappOrgNetworkRead(nil, d, meta)
+	return resourceVappOrgNetworkRead(ctx, d, meta)
 }
 
 func resourceVappOrgNetworkDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

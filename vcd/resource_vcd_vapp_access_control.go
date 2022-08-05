@@ -96,7 +96,7 @@ func resourceAccessControlVappCreate(ctx context.Context, d *schema.ResourceData
 	return resourceAccessControlVappUpdate(ctx, d, meta)
 }
 
-func resourceAccessControlVappUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAccessControlVappUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	vcdClient := meta.(*VCDClient)
 
@@ -157,7 +157,7 @@ func resourceAccessControlVappUpdate(_ context.Context, d *schema.ResourceData, 
 		return diag.Errorf("[resourceAccessControlVappUpdate] error setting access control for vApp %s: %s", vapp.VApp.Name, err)
 	}
 
-	return resourceAccessControlVappRead(nil, d, meta)
+	return resourceAccessControlVappRead(ctx, d, meta)
 }
 
 func resourceAccessControlVappRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

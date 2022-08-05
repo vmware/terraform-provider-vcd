@@ -65,7 +65,7 @@ func resourceVcdIpSet() *schema.Resource {
 }
 
 // resourceVcdIpSetCreate creates an IP set based on schema data
-func resourceVcdIpSetCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIpSetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Creating IP set with name %s", d.Get("name"))
 	vcdClient := meta.(*VCDClient)
 
@@ -86,11 +86,11 @@ func resourceVcdIpSetCreate(_ context.Context, d *schema.ResourceData, meta inte
 
 	log.Printf("[DEBUG] IP set with name %s created. Id: %s", createdIpSet.Name, createdIpSet.ID)
 	d.SetId(createdIpSet.ID)
-	return resourceVcdIpSetRead(nil, d, meta)
+	return resourceVcdIpSetRead(ctx, d, meta)
 }
 
 // resourceVcdIpSetUpdate updates an IP set based on schema data
-func resourceVcdIpSetUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIpSetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Updating IP set with ID %s", d.Id())
 
 	vcdClient := meta.(*VCDClient)
@@ -112,7 +112,7 @@ func resourceVcdIpSetUpdate(_ context.Context, d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG] Updated IP set with ID %s", d.Id())
-	return resourceVcdIpSetRead(nil, d, meta)
+	return resourceVcdIpSetRead(ctx, d, meta)
 }
 
 func datasourceVcdIpSetRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

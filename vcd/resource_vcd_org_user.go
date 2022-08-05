@@ -281,7 +281,7 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser) error {
 }
 
 // Creates an OrgUser from data provided in the resource
-func resourceVcdOrgUserCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOrgUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	userData, adminOrg, err := resourceToUserData(d, meta)
 	if err != nil {
@@ -294,7 +294,7 @@ func resourceVcdOrgUserCreate(_ context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceVcdOrgUserRead(nil, d, meta)
+	return resourceVcdOrgUserRead(ctx, d, meta)
 }
 
 // Deletes an OrgUser

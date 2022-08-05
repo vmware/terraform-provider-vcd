@@ -256,7 +256,7 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 }
 
 // resourceVcdVmAffinityRuleUpdate updates a VM affinity rule, including changing its name
-func resourceVcdVmAffinityRuleUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVmAffinityRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] VM affinity rule Update")
 	vmAffinityRuleDef, err := resourceToAffinityRule(d, meta)
 	if err != nil {
@@ -281,7 +281,7 @@ func resourceVcdVmAffinityRuleUpdate(_ context.Context, d *schema.ResourceData, 
 		return diag.Errorf("[VM affinity rule update] error running the update: %s", err)
 	}
 
-	return resourceVcdVmAffinityRuleRead(nil, d, meta)
+	return resourceVcdVmAffinityRuleRead(ctx, d, meta)
 }
 
 // resourceVcdVmAffinityRuleDelete removes a VM affinity rule

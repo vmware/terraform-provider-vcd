@@ -80,7 +80,7 @@ func TestAccVcdIpSet(t *testing.T) {
 				ResourceName:      "vcd_nsxv_ip_set.test-ipset",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "TestAccVcdIpSet-changed"),
+				ImportStateIdFunc: importStateIdOrgVdcObject("TestAccVcdIpSet-changed"),
 			},
 			{
 				Config: configText2,

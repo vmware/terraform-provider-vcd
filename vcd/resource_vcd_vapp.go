@@ -109,7 +109,7 @@ func resourceVcdVApp() *schema.Resource {
 	}
 }
 
-func resourceVcdVAppCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVAppCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -149,7 +149,7 @@ func resourceVcdVAppCreate(_ context.Context, d *schema.ResourceData, meta inter
 
 	d.SetId(vapp.VApp.ID)
 
-	return resourceVcdVAppUpdate(nil, d, meta)
+	return resourceVcdVAppUpdate(ctx, d, meta)
 }
 
 func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -230,7 +230,7 @@ func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	return resourceVcdVAppRead(nil, d, meta)
+	return resourceVcdVAppRead(ctx, d, meta)
 }
 
 func resourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -311,7 +311,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	return nil
 }
 
-func resourceVcdVAppDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVAppDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockVapp(d)

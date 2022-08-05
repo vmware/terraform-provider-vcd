@@ -166,7 +166,7 @@ func resourceVcdVappFirewallRulesCreate(ctx context.Context, d *schema.ResourceD
 	return resourceVcdVappFirewallRulesUpdate(ctx, d, meta)
 }
 
-func resourceVcdVappFirewallRulesUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVappFirewallRulesUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vapp, err := getVapp(vcdClient, d)
 	if err != nil {
@@ -191,7 +191,7 @@ func resourceVcdVappFirewallRulesUpdate(_ context.Context, d *schema.ResourceDat
 
 	d.SetId(vappNetwork.ID)
 
-	return resourceVappFirewallRulesRead(nil, d, meta)
+	return resourceVappFirewallRulesRead(ctx, d, meta)
 }
 
 func getVapp(vcdClient *VCDClient, d *schema.ResourceData) (*govcd.VApp, error) {

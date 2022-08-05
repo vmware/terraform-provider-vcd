@@ -108,7 +108,7 @@ func TestAccVcdLibraryCertificateResource(t *testing.T) {
 				ResourceName:      resourceAddressOrgCert,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(testConfig, params["AliasUpdate"].(string)),
+				ImportStateIdFunc: importStateIdOrgObject(params["AliasUpdate"].(string)),
 			},
 		},
 	})

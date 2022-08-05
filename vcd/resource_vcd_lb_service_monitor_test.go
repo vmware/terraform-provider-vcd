@@ -92,7 +92,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 				ResourceName:      "vcd_lb_service_monitor.lb-service-monitor",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServiceMonitorName"].(string)),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig.Networking.EdgeGateway, params["ServiceMonitorName"].(string)),
 			},
 		},
 	})

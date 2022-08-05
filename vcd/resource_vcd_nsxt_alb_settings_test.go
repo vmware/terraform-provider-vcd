@@ -96,7 +96,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ResourceName:            "vcd_nsxt_alb_settings.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["EdgeGw"].(string)),
 				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"}, // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 			// This step will "recreate" the resource because service_network_specification requires a rebuild
@@ -113,7 +113,7 @@ func TestAccVcdNsxtAlbSettings(t *testing.T) {
 				ResourceName:            "vcd_nsxt_alb_settings.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["EdgeGw"].(string)),
 				ImportStateVerifyIgnore: []string{"vdc", "supported_feature_set"}, // Ignore supported_feature_set as versions <37.0 don't have it
 			},
 		},

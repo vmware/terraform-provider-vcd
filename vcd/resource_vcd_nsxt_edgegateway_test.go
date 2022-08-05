@@ -102,7 +102,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NsxtEdgeGatewayVcd"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NsxtEdgeGatewayVcd"].(string)),
 			},
 		},
 	})
@@ -300,7 +300,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, "TestAccVcdVdcGroupResource", params["NsxtEdgeGatewayVcd"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject("TestAccVcdVdcGroupResource", params["NsxtEdgeGatewayVcd"].(string)),
 			},
 		},
 	})
@@ -818,7 +818,7 @@ func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NsxtEdgeGatewayVcd"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NsxtEdgeGatewayVcd"].(string)),
 			},
 		},
 	})

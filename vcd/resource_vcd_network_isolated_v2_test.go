@@ -53,7 +53,7 @@ func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgVdcObject(t.Name()),
 			},
 		},
 	})

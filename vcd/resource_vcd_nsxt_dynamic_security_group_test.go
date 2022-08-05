@@ -86,7 +86,7 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupEmpty(t *testing.T) {
 				ResourceName:      "vcd_nsxt_dynamic_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, testConfig.Nsxt.VdcGroup, "test-dynamic-security-group-changed"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig.Nsxt.VdcGroup, "test-dynamic-security-group-changed"),
 			},
 			{
 				Config: configText2,
@@ -282,7 +282,7 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupMaximumCriteria(t *testing.T) {
 				ResourceName:      "vcd_nsxt_dynamic_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, testConfig.Nsxt.VdcGroup, "test-dynamic-security-group-changed"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig.Nsxt.VdcGroup, "test-dynamic-security-group-changed"),
 			},
 		},
 	})

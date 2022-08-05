@@ -255,7 +255,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 }
 
 // Creates a new VDC from a resource definition
-func resourceVcdVdcCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	orgVdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC creation initiated: %s", orgVdcName)
 
@@ -314,7 +314,7 @@ func resourceVcdVdcCreate(_ context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("error assigning VM sizing policies to VDC: %s", err)
 	}
 
-	return resourceVcdVdcRead(nil, d, meta)
+	return resourceVcdVdcRead(ctx, d, meta)
 }
 
 func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
@@ -527,7 +527,7 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 }
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
-func resourceVcdVdcUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC update initiated: %s", vdcName)
 
@@ -584,7 +584,7 @@ func resourceVcdVdcUpdate(_ context.Context, d *schema.ResourceData, meta interf
 		}
 	}
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
-	return resourceVcdVdcRead(nil, d, meta)
+	return resourceVcdVdcRead(ctx, d, meta)
 }
 
 func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc, storageProfile *types.Reference, storageConfiguration map[string]interface{}) error {
