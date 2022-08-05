@@ -1,9 +1,7 @@
 package vcd
 
 import (
-	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 
@@ -14,12 +12,12 @@ import (
 
 func resourceVcdIpSet() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdIpSetCreate,
-		ReadContext:   resourceVcdIpSetRead,
-		UpdateContext: resourceVcdIpSetUpdate,
-		DeleteContext: resourceVcdIpSetDelete,
+		Create: resourceVcdIpSetCreate,
+		Read:   resourceVcdIpSetRead,
+		Update: resourceVcdIpSetUpdate,
+		Delete: resourceVcdIpSetDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdIpSetImport,
+			State: resourceVcdIpSetImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -65,74 +63,74 @@ func resourceVcdIpSet() *schema.Resource {
 }
 
 // resourceVcdIpSetCreate creates an IP set based on schema data
-func resourceVcdIpSetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIpSetCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Creating IP set with name %s", d.Get("name"))
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	ipSet, err := getIpSet(d)
+	ipSet, err := getIpSet(d, vdc)
 	if err != nil {
-		return diag.Errorf("unable to make IP set query: %s", err)
+		return fmt.Errorf("unable to make IP set query: %s", err)
 	}
 
 	createdIpSet, err := vdc.CreateNsxvIpSet(ipSet)
 	if err != nil {
-		return diag.Errorf("error creating new IP set: %s", err)
+		return fmt.Errorf("error creating new IP set: %s", err)
 	}
 
 	log.Printf("[DEBUG] IP set with name %s created. Id: %s", createdIpSet.Name, createdIpSet.ID)
 	d.SetId(createdIpSet.ID)
-	return resourceVcdIpSetRead(ctx, d, meta)
+	return resourceVcdIpSetRead(d, meta)
 }
 
 // resourceVcdIpSetUpdate updates an IP set based on schema data
-func resourceVcdIpSetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIpSetUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Updating IP set with ID %s", d.Id())
 
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	ipSet, err := getIpSet(d)
+	ipSet, err := getIpSet(d, vdc)
 	if err != nil {
-		return diag.Errorf("unable to make IP set query: %s", err)
+		return fmt.Errorf("unable to make IP set query: %s", err)
 	}
 	ipSet.ID = d.Id() // ID is needed to update IP set
 
 	_, err = vdc.UpdateNsxvIpSet(ipSet)
 	if err != nil {
-		return diag.Errorf("error updating IP set with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("error updating IP set with ID %s: %s", d.Id(), err)
 	}
 
 	log.Printf("[DEBUG] Updated IP set with ID %s", d.Id())
-	return resourceVcdIpSetRead(ctx, d, meta)
+	return resourceVcdIpSetRead(d, meta)
 }
 
-func datasourceVcdIpSetRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdIpSetRead(d *schema.ResourceData, meta interface{}) error {
 	return genericVcdIpSetRead(d, meta, "datasource")
 }
 
-func resourceVcdIpSetRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIpSetRead(d *schema.ResourceData, meta interface{}) error {
 	return genericVcdIpSetRead(d, meta, "resource")
 }
 
 // genericVcdIpSetRead reads all data and persists it on statefile.
 // When "origin" == "datasource" it will search for IP set by name and use d.SetId
 // When "origin" != "datasource" it will search for IP set by ID and do not perform d.SetId
-func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	log.Printf("[DEBUG] Reading IP set with ID %s", d.Id())
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	var ipSet *types.EdgeIpSet
@@ -151,12 +149,12 @@ func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 
 	if err != nil {
-		return diag.Errorf("unable to find IP set with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find IP set with ID %s: %s", d.Id(), err)
 	}
 
-	err = setIpSetData(d, ipSet, origin)
+	err = setIpSetData(d, ipSet, vdc, origin)
 	if err != nil {
-		return diag.Errorf("unable to store data in statefile: %s", err)
+		return fmt.Errorf("unable to store data in statefile: %s", err)
 	}
 
 	if origin == "datasource" {
@@ -168,18 +166,18 @@ func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string
 }
 
 // resourceVcdIpSetDelete delete IP set based on its ID
-func resourceVcdIpSetDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIpSetDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Deleting IP set with ID %s", d.Id())
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	err = vdc.DeleteNsxvIpSetById(d.Id())
 	if err != nil {
-		return diag.Errorf("error deleting IP set with id %s: %s", d.Id(), err)
+		return fmt.Errorf("error deleting IP set with id %s: %s", d.Id(), err)
 	}
 
 	log.Printf("[DEBUG] Deleted IP set with ID %s", d.Id())
@@ -188,7 +186,7 @@ func resourceVcdIpSetDelete(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 // resourceVcdIpSetImport
-func resourceVcdIpSetImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdIpSetImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
@@ -217,7 +215,7 @@ func resourceVcdIpSetImport(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 // getIpSet convert terraform schema definition and creates a *types.EdgeIpSet
-func getIpSet(d *schema.ResourceData) (*types.EdgeIpSet, error) {
+func getIpSet(d *schema.ResourceData, vdc *govcd.Vdc) (*types.EdgeIpSet, error) {
 
 	ipSet := &types.EdgeIpSet{
 		Name:               d.Get("name").(string),
@@ -232,7 +230,7 @@ func getIpSet(d *schema.ResourceData) (*types.EdgeIpSet, error) {
 }
 
 // setIpSetData sets data into statefile using a provided IP set type
-func setIpSetData(d *schema.ResourceData, ipSet *types.EdgeIpSet, origin string) error {
+func setIpSetData(d *schema.ResourceData, ipSet *types.EdgeIpSet, vdc *govcd.Vdc, origin string) error {
 
 	if origin == "resource" {
 		dSet(d, "name", ipSet.Name)
