@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdIpSet() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdIpSetRead,
+		Read: datasourceVcdIpSetRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
