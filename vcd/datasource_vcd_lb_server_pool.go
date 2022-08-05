@@ -1,15 +1,14 @@
 package vcd
 
 import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdLbServerPool() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdLbServerPoolRead,
+		Read: datasourceVcdLbServerPoolRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -118,23 +117,19 @@ func datasourceVcdLbServerPool() *schema.Resource {
 	}
 }
 
-func datasourceVcdLbServerPoolRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		return diag.Errorf(errorUnableToFindEdgeGateway, err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	readLBPool, err := edgeGateway.GetLbServerPoolByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("unable to find load balancer server pool with Name %s: %s",
+		return fmt.Errorf("unable to find load balancer server pool with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBPool.ID)
-	err = setLBPoolData(d, readLBPool)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return setLBPoolData(d, readLBPool)
 }

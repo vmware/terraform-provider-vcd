@@ -1,15 +1,14 @@
 package vcd
 
 import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdLbServiceMonitor() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdLbServiceMonitorRead,
+		Read: datasourceVcdLbServiceMonitorRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -86,22 +85,18 @@ func datasourceVcdLbServiceMonitor() *schema.Resource {
 	}
 }
 
-func datasourceVcdLbServiceMonitorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		return diag.Errorf(errorUnableToFindEdgeGateway, err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	readLBMonitor, err := edgeGateway.GetLbServiceMonitorByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("unable to find load balancer service monitor with Name %s: %s", d.Get("name").(string), err)
+		return fmt.Errorf("unable to find load balancer service monitor with Name %s: %s", d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBMonitor.ID)
-	err = setLBMonitorData(d, readLBMonitor)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return setLBMonitorData(d, readLBMonitor)
 }

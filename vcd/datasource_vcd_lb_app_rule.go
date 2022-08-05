@@ -1,15 +1,14 @@
 package vcd
 
 import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdLBAppRule() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdLBAppRuleRead,
+		Read: datasourceVcdLBAppRuleRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -45,23 +44,19 @@ func datasourceVcdLBAppRule() *schema.Resource {
 	}
 }
 
-func datasourceVcdLBAppRuleRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		return diag.Errorf(errorUnableToFindEdgeGateway, err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	readLBAppRule, err := edgeGateway.GetLbAppRuleByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("unable to find load balancer application rule with Name %s: %s",
+		return fmt.Errorf("unable to find load balancer application rule with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBAppRule.ID)
-	err = setLBAppRuleData(d, readLBAppRule)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return setLBAppRuleData(d, readLBAppRule)
 }

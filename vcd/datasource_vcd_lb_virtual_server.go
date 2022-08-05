@@ -1,15 +1,14 @@
 package vcd
 
 import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdLbVirtualServer() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdLbVirtualServerRead,
+		Read: datasourceVcdLbVirtualServerRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -98,23 +97,19 @@ func datasourceVcdLbVirtualServer() *schema.Resource {
 	}
 }
 
-func datasourceVcdLbVirtualServerRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdLbVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		return diag.Errorf(errorUnableToFindEdgeGateway, err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	readLBVirtualServer, err := edgeGateway.GetLbVirtualServerByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("unable to find load balancer virtual server with Name %s: %s",
+		return fmt.Errorf("unable to find load balancer virtual server with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBVirtualServer.ID)
-	err = setlBVirtualServerData(d, readLBVirtualServer)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return setlBVirtualServerData(d, readLBVirtualServer)
 }
