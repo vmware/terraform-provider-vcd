@@ -290,7 +290,7 @@ func Provider() *schema.Provider {
 	}
 }
 
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
 
 	if err := validateProviderSchema(d); err != nil {
@@ -360,7 +360,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	} else {
 		ImportSeparator = d.Get("import_separator").(string)
 	}
-	return config.Client()
+	vcdClient, err := config.Client()
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+	return vcdClient, nil
 }
 
 // vcdSchemaFilter is a function which allows to filters and export type 'map[string]*schema.Resource' which may hold

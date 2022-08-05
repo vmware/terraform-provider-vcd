@@ -3,7 +3,6 @@ package vcd
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -616,7 +615,7 @@ func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, a
 	return err
 }
 
-func (c *Config) Client() (*VCDClient, diag.Diagnostics) {
+func (c *Config) Client() (*VCDClient, error) {
 	rawData := c.User + "#" +
 		c.Password + "#" +
 		c.Token + "#" +
@@ -648,7 +647,7 @@ func (c *Config) Client() (*VCDClient, diag.Diagnostics) {
 
 	authUrl, err := url.ParseRequestURI(c.Href)
 	if err != nil {
-		return nil, diag.Errorf("something went wrong while retrieving URL: %s", err)
+		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
 	userAgent := buildUserAgent(BuildVersion, c.SysOrg)
@@ -667,7 +666,7 @@ func (c *Config) Client() (*VCDClient, diag.Diagnostics) {
 
 	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken)
 	if err != nil {
-		return nil, diag.Errorf("something went wrong during authentication: %s", err)
+		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}
 	cachedVCDClients.Lock()
 	cachedVCDClients.conMap[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
