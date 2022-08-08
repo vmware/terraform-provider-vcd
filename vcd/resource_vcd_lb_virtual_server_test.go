@@ -83,7 +83,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 				ResourceName:      "vcd_lb_virtual_server.http",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, t.Name()),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig.Networking.EdgeGateway, t.Name()),
 			},
 			{ // step 2
 				Config: configText2,

@@ -1,10 +1,14 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 func datasourceVcdVApp() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdVAppRead,
+		ReadContext: datasourceVcdVAppRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -76,6 +80,6 @@ func datasourceVcdVApp() *schema.Resource {
 	}
 }
 
-func datasourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdVAppRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVAppRead(d, meta, "datasource")
 }

@@ -248,7 +248,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 						ResourceName:      resourceName,
 						ImportState:       true,
 						ImportStateVerify: true,
-						ImportStateIdFunc: importStateIdOrgObject(testConfig, ud.name),
+						ImportStateIdFunc: importStateIdOrgObject(ud.name),
 						// These fields can't be retrieved from user data
 						ImportStateVerifyIgnore: []string{"take_ownership", "password", "password_file"},
 					},

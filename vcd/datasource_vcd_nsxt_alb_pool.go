@@ -222,7 +222,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbPoolRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)

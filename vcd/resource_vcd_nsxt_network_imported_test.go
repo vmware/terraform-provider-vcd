@@ -94,7 +94,7 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 				// It is impossible to read 'nsxt_logical_switch_name' for already consumed NSX-T segment (API returns
 				// only unused segments) therefore this field cannot be set during read operations.
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name", "vdc"},
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, "updated-nsxt-imported-test-initial"),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject("updated-nsxt-imported-test-initial"),
 			},
 		},
 	})
@@ -231,7 +231,7 @@ func TestAccVcdNsxtNetworkImportedOwnerIsVdc(t *testing.T) {
 				// It is impossible to read 'nsxt_logical_switch_name' for already consumed NSX-T segment (API returns
 				// only unused segments) therefore this field cannot be set during read operations.
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name", "vdc"},
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, testConfig.Nsxt.Vdc, t.Name()+"-updated"),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig.Nsxt.Vdc, t.Name()+"-updated"),
 			},
 		},
 	})
@@ -368,7 +368,7 @@ func TestAccVcdNsxtNetworkImportedInVdcGroup(t *testing.T) {
 				// It is impossible to read 'nsxt_logical_switch_name' for already consumed NSX-T segment (API returns
 				// only unused segments) therefore this field cannot be set during read operations.
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name", "vdc"},
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(t.Name(), t.Name()),
 			},
 		},
 	})
@@ -497,7 +497,7 @@ func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 				// It is impossible to read 'nsxt_logical_switch_name' for already consumed NSX-T segment (API returns
 				// only unused segments) therefore this field cannot be set during read operations.
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name", "vdc"},
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(t.Name(), t.Name()),
 			},
 			{
 				Config: configText6,
@@ -516,7 +516,7 @@ func TestAccVcdNetworkImportedNsxtMigration(t *testing.T) {
 				// segment (API returns only unused segments) therefore this field cannot be set
 				// during read operations.
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name", "vdc"},
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name()+"-1", t.Name()),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(t.Name()+"-1", t.Name()),
 			},
 		},
 	})
@@ -676,7 +676,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_network_imported.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
 				// field nsxt_logical_switch_name cannot be read during import because VCD does not
 				// provider API for reading it after being consumed
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name"},
@@ -704,7 +704,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_network_imported.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
 				// field nsxt_logical_switch_name cannot be read during import because VCD does not
 				// provide API for reading it after being consumed
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name"},

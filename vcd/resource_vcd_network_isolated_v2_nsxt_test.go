@@ -94,7 +94,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(t.Name()),
 			},
 			{ // step 4
 				Config: configText3,
@@ -281,7 +281,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"metadata"}, // Network is in a VDC Group, so it can't import metadata
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), t.Name()),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(t.Name(), t.Name()),
 			},
 			{
 				Config: configText6,
@@ -297,7 +297,7 @@ func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name()+"-1", t.Name()),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(t.Name()+"-1", t.Name()),
 			},
 		},
 	})
@@ -564,7 +564,7 @@ func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
 			},
 			{
 				Config: configText3,
@@ -590,7 +590,7 @@ func TestAccVcdNetworkIsolatedV2InheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_network_isolated_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
 			},
 			{
 				Config: configText6,

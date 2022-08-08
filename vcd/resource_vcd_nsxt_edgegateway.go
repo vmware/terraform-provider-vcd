@@ -207,7 +207,7 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T Edge Gateway read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -233,7 +233,7 @@ func resourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVcdNsxtEdgeGatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtEdgeGatewayDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] edge gateway deletion initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -255,7 +255,7 @@ func resourceVcdNsxtEdgeGatewayDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtEdgeGatewayImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

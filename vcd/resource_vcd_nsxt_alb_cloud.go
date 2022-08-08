@@ -16,7 +16,7 @@ func resourceVcdAlbCloud() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdAlbCloudCreate,
 		ReadContext:   resourceVcdAlbCloudRead,
-		// Update of NSX-T ALB Cloud configuration is not supported in VCD <= 10.3
+		// Update of NSX-T ALB Cloud configuration is not supported in VCD <= 10.4
 		// UpdateContext: resourceVcdAlbCloudUpdate,
 		DeleteContext: resourceVcdAlbCloudDelete,
 		Importer: &schema.ResourceImporter{
@@ -90,7 +90,7 @@ func resourceVcdAlbCloudCreate(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVcdAlbCloudRead(ctx, d, meta)
 }
 
-func resourceVcdAlbCloudRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbCloudRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -111,7 +111,7 @@ func resourceVcdAlbCloudRead(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVcdAlbCloudDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbCloudDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -131,7 +131,7 @@ func resourceVcdAlbCloudDelete(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func resourceVcdAlbCloudImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbCloudImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {

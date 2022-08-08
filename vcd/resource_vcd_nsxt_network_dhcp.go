@@ -117,7 +117,7 @@ func resourceVcdOpenApiDhcpUpdate(ctx context.Context, d *schema.ResourceData, m
 	return resourceVcdOpenApiDhcpCreate(ctx, d, meta)
 }
 
-func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOpenApiDhcpRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -153,7 +153,7 @@ func resourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceVcdOpenApiDhcpDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOpenApiDhcpDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -174,7 +174,7 @@ func resourceVcdOpenApiDhcpDelete(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceVcdOpenApiDhcpImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOpenApiDhcpImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-org-vdc-group-name.org_network_name")

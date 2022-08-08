@@ -71,7 +71,7 @@ func resourceVcdOpenApiSecurityTagCreateUpdate(ctx context.Context, d *schema.Re
 	return resourceVcdOpenApiSecurityTagRead(ctx, d, meta)
 }
 
-func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOpenApiSecurityTagRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -103,7 +103,7 @@ func resourceVcdOpenApiSecurityTagRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOpenApiSecurityTagDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -126,7 +126,7 @@ func resourceVcdOpenApiSecurityTagDelete(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceVcdOpenApiSecurityTagImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOpenApiSecurityTagImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog")

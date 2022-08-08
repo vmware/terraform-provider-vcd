@@ -2,7 +2,9 @@ package vcd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"text/tabwriter"
@@ -15,12 +17,12 @@ import (
 
 func resourceVcdVappFirewallRules() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVappFirewallRulesCreate,
-		Delete: resourceVappFirewallRulesDelete,
-		Read:   resourceVappFirewallRulesRead,
-		Update: resourceVcdVappFirewallRulesUpdate,
+		CreateContext: resourceVcdVappFirewallRulesCreate,
+		DeleteContext: resourceVappFirewallRulesDelete,
+		ReadContext:   resourceVappFirewallRulesRead,
+		UpdateContext: resourceVcdVappFirewallRulesUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappFirewallRulesImport,
+			StateContext: vappFirewallRulesImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -160,15 +162,15 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 		},
 	}
 }
-func resourceVcdVappFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourceVcdVappFirewallRulesUpdate(d, meta)
+func resourceVcdVappFirewallRulesCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdVappFirewallRulesUpdate(ctx, d, meta)
 }
 
-func resourceVcdVappFirewallRulesUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVappFirewallRulesUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	vapp, err := getVapp(vcdClient, d, meta)
+	vapp, err := getVapp(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
@@ -177,22 +179,22 @@ func resourceVcdVappFirewallRulesUpdate(d *schema.ResourceData, meta interface{}
 	networkId := d.Get("network_id").(string)
 	firewallRules, err := expandVappFirewallRules(d, vapp)
 	if err != nil {
-		return fmt.Errorf("error expanding firewall rules: %s", err)
+		return diag.Errorf("error expanding firewall rules: %s", err)
 	}
 
 	vappNetwork, err := vapp.UpdateNetworkFirewallRules(networkId, firewallRules, d.Get("enabled").(bool),
 		d.Get("default_action").(string), d.Get("log_default_action").(bool))
 	if err != nil {
 		log.Printf("[INFO] Error setting firewall rules: %s", err)
-		return fmt.Errorf("error setting firewall rules: %s", err)
+		return diag.Errorf("error setting firewall rules: %s", err)
 	}
 
 	d.SetId(vappNetwork.ID)
 
-	return resourceVappFirewallRulesRead(d, meta)
+	return resourceVappFirewallRulesRead(ctx, d, meta)
 }
 
-func getVapp(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) (*govcd.VApp, error) {
+func getVapp(vcdClient *VCDClient, d *schema.ResourceData) (*govcd.VApp, error) {
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
@@ -207,11 +209,11 @@ func getVapp(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) (*g
 	return vapp, nil
 }
 
-func resourceVappFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVappFirewallRulesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	vapp, err := getVapp(vcdClient, d, meta)
+	vapp, err := getVapp(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
@@ -220,22 +222,22 @@ func resourceVappFirewallRulesDelete(d *schema.ResourceData, meta interface{}) e
 	err = vapp.RemoveAllNetworkFirewallRules(d.Get("network_id").(string))
 	if err != nil {
 		log.Printf("[INFO] Error removing firewall rules: %s", err)
-		return fmt.Errorf("error removing firewall rules: %s", err)
+		return diag.Errorf("error removing firewall rules: %s", err)
 	}
 
 	return nil
 }
 
-func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVappFirewallRulesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	vapp, err := getVapp(vcdClient, d, meta)
+	vapp, err := getVapp(vcdClient, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp network. %s", err)
+		return diag.Errorf("error finding vApp network. %s", err)
 	}
 
 	var rules []map[string]interface{}
@@ -264,7 +266,7 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 	}
 	err = d.Set("rule", rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	dSet(d, "enabled", vappNetwork.Configuration.Features.FirewallService.IsEnabled)
 	dSet(d, "default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
@@ -369,7 +371,7 @@ var errHelpVappNetworkRulesImport = fmt.Errorf(`resource id must be specified in
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Example list path (_the_id_string_): list@org-name.vdc-name.vapp-name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappFirewallRulesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappFirewallRulesImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	return vappNetworkRuleImport(d, meta, "vcd_vapp_firewall_rules")
 }
 func vappNetworkRuleImport(d *schema.ResourceData, meta interface{}, resourceType string) ([]*schema.ResourceData, error) {

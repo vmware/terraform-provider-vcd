@@ -20,12 +20,12 @@ var (
 	// Collection of defined tags in the current test run
 	testingTags = make(map[string]string)
 	// This library major version
-	currentProviderVersion string = getMajorVersion()
+	currentProviderVersion = getMajorVersion()
 )
 
 func tagsHelp(t *testing.T) {
 
-	var helpText string = `
+	var helpText = `
 # -----------------------------------------------------
 # Tags are required to run the tests
 # -----------------------------------------------------
@@ -130,7 +130,7 @@ func getMajorVersionFromFile(fileName string) string {
 	// The version is expected to be in the format v#.#.#
 	// We only need the first two numbers
 	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
-	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
+	versionList := reVersion.FindAllStringSubmatch(versionText, -1)
 	if len(versionList) == 0 {
 		panic(fmt.Sprintf("empty or non-formatted version found in file %s", fileName))
 	}

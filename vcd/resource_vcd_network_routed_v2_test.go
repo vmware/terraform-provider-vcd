@@ -59,7 +59,7 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgVdcObject(t.Name()),
 			},
 		},
 	})
@@ -117,7 +117,7 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgVdcObject(t.Name()),
 			},
 		},
 	})

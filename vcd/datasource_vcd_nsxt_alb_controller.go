@@ -46,7 +46,7 @@ func datasourceVcdAlbController() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbControllerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbControllerRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {

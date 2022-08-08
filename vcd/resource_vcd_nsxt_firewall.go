@@ -172,7 +172,7 @@ func resourceVcdNsxtFirewallCreateUpdate(ctx context.Context, d *schema.Resource
 	return resourceVcdNsxtFirewallRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtFirewallRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtFirewallRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -200,7 +200,7 @@ func resourceVcdNsxtFirewallRead(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceVcdNsxtFirewallDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtFirewallDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks is conditional. There are two scenarios:
@@ -245,7 +245,7 @@ func resourceVcdNsxtFirewallDelete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceVcdNsxtFirewallImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtFirewallImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway Firewall Rule import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

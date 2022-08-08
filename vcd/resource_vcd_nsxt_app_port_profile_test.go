@@ -116,7 +116,7 @@ func TestAccVcdNsxtAppPortProfileTenant(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This will generate import name of org_name.vdc_name.app_profile_name
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, "custom_app_prof-updated"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject("custom_app_prof-updated"),
 				// Not setting VDC anymore as it is deprecated
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},
@@ -241,7 +241,7 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This will generate import name of org_name.vdc_name.app_profile_name
-				ImportStateIdFunc: importStateIdNsxtManagerObject(testConfig, "custom_app_prof-updated"),
+				ImportStateIdFunc: importStateIdNsxtManagerObject("custom_app_prof-updated"),
 				// This test uses legacy configuration format supplying 'nsxt_manager_id', but new
 				// configuration format uses 'context_id' field and imports sets it. Therefore there
 				// is difference in these values
@@ -435,7 +435,7 @@ func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This will generate import name of org_name.vdc_name.app_profile_name
-				ImportStateIdFunc: importStateIdNsxtManagerObject(testConfig, "custom_app_prof-context"),
+				ImportStateIdFunc: importStateIdNsxtManagerObject("custom_app_prof-context"),
 			},
 		},
 	})
@@ -586,7 +586,7 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This will generate import name of org_name.vdc_group_name.app_profile_name
-				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(testConfig, t.Name(), "custom_app_prof"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcGroupObject(t.Name(), "custom_app_prof"),
 				// context_id cannot be read once it is set, while VDC is deprecated and `import`is not supposed to set it
 				ImportStateVerifyIgnore: []string{"context_id"},
 			},

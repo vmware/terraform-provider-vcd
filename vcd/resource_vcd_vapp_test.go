@@ -99,7 +99,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				ResourceName:      "vcd_vapp." + vappName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, vappName),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(vappName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"power_on"},
 			},

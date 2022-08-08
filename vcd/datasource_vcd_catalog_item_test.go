@@ -70,7 +70,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestCatalogItemDS),
+				ImportStateIdFunc: importStateIdOrgCatalogObject(TestCatalogItemDS),
 				// These fields can't be retrieved from catalog item data
 				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size", "show_upload_progress"},
 			},

@@ -71,7 +71,7 @@ func TestAccVcdNsxtSecurityGroupEmpty(t *testing.T) {
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-security-group-changed"),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-security-group-changed"),
 			},
 		},
 	})
@@ -206,7 +206,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-security-group-changed"),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-security-group-changed"),
 			},
 		},
 	})
@@ -795,7 +795,7 @@ func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["NsxtEdgeGatewayVcd"].(string), params["SecurityGroupName"].(string)),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(params["NsxtEdgeGatewayVcd"].(string), params["SecurityGroupName"].(string)),
 			},
 			{
 				Config: configText3,
@@ -834,7 +834,7 @@ func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["NsxtEdgeGatewayVcd"].(string), params["SecurityGroupName"].(string)),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(params["NsxtEdgeGatewayVcd"].(string), params["SecurityGroupName"].(string)),
 				// field vdc during import isn't set
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},

@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"net/url"
 
@@ -12,7 +13,7 @@ import (
 
 func datasourceVcdVcenter() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcenterRead,
+		ReadContext: datasourceVcenterRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -49,30 +50,30 @@ func datasourceVcdVcenter() *schema.Resource {
 	}
 }
 
-func datasourceVcenterRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcenterRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vCenterName := d.Get("name").(string)
 
 	vcs, err := govcd.QueryVirtualCenters(vcdClient.VCDClient, "name=="+vCenterName)
 	if err != nil {
-		return fmt.Errorf("error occured while querying vCenters: %s", err)
+		return diag.Errorf("error occured while querying vCenters: %s", err)
 	}
 
 	if len(vcs) == 0 {
-		return fmt.Errorf("%s: could not identify single vCenter. Got %d with name '%s'",
+		return diag.Errorf("%s: could not identify single vCenter. Got %d with name '%s'",
 			govcd.ErrorEntityNotFound, len(vcs), vCenterName)
 	}
 
 	if len(vcs) > 1 {
-		return fmt.Errorf("could not identify single vCenter. Got %d with name '%s'",
+		return diag.Errorf("could not identify single vCenter. Got %d with name '%s'",
 			len(vcs), vCenterName)
 	}
 
 	uuid := extractUuid(vcs[0].HREF)
 	urn, err := govcd.BuildUrnWithUuid("urn:vcloud:vimserver:", uuid)
 	if err != nil {
-		return fmt.Errorf("could not build URN for ID '%s': %s", uuid, err)
+		return diag.Errorf("could not build URN for ID '%s': %s", uuid, err)
 	}
 
 	d.SetId(urn)

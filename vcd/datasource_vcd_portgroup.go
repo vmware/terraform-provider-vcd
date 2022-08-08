@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -11,7 +12,7 @@ import (
 
 func datasourceVcdPortgroup() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourcePortgroupRead,
+		ReadContext: datasourcePortgroupRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -28,7 +29,7 @@ func datasourceVcdPortgroup() *schema.Resource {
 	}
 }
 
-func datasourcePortgroupRead(d *schema.ResourceData, meta interface{}) error {
+func datasourcePortgroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	portGroupType := d.Get("type").(string)
@@ -45,20 +46,20 @@ func datasourcePortgroupRead(d *schema.ResourceData, meta interface{}) error {
 	case types.ExternalNetworkBackingDvPortgroup:
 		pgs, err = govcd.QueryDistributedPortGroup(vcdClient.VCDClient, portGroupName)
 	default:
-		return fmt.Errorf("unrecognized portgroup_type: %s", portGroupType)
+		return diag.Errorf("unrecognized portgroup_type: %s", portGroupType)
 	}
 
 	if err != nil {
-		return fmt.Errorf("error querying for portgroups '%s' of type '%s': %s", portGroupName, portGroupType, err)
+		return diag.Errorf("error querying for portgroups '%s' of type '%s': %s", portGroupName, portGroupType, err)
 	}
 
 	if len(pgs) == 0 {
-		return fmt.Errorf("%s: expected to get exactly one portgroup with name '%s' of type '%s', got %d",
+		return diag.Errorf("%s: expected to get exactly one portgroup with name '%s' of type '%s', got %d",
 			govcd.ErrorEntityNotFound, portGroupName, portGroupType, len(pgs))
 	}
 
 	if len(pgs) > 1 {
-		return fmt.Errorf("expected to get exactly one portgroup with name '%s' of type '%s', got %d",
+		return diag.Errorf("expected to get exactly one portgroup with name '%s' of type '%s', got %d",
 			portGroupName, portGroupType, len(pgs))
 	}
 

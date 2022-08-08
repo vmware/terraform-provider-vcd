@@ -907,7 +907,7 @@ func getResourcesList() ([]string, error) {
 	return list, nil
 }
 
-func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	requested := d.Get("resource_type")
 	var err error
@@ -935,7 +935,7 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 	case "vcd_vm", "standalone_vm":
 		list, err = vmList(d, meta, standaloneVmType)
 	case "vcd_all_vm", "vm", "vms":
-		list, err = vmList(d, meta, typeOfVm("all"))
+		list, err = vmList(d, meta, "all")
 	case "vcd_org_user", "org_user", "user", "users":
 		list, err = orgUserList(d, meta)
 	case "vcd_edgegateway", "edge_gateway", "edge", "edgegateway":

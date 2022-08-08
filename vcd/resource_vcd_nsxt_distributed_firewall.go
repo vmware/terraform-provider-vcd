@@ -179,7 +179,7 @@ func resourceVcdNsxtDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 	return resourceVcdNsxtDistributedFirewallRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtDistributedFirewallRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtDistributedFirewallRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -210,7 +210,7 @@ func resourceVcdNsxtDistributedFirewallRead(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceVcdNsxtDistributedFirewallDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtDistributedFirewallDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVdcGroup(d)
 	defer vcdClient.unlockParentVdcGroup(d)
@@ -233,7 +233,7 @@ func resourceVcdNsxtDistributedFirewallDelete(ctx context.Context, d *schema.Res
 	return nil
 }
 
-func resourceVcdNsxtDistributedFirewallImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtDistributedFirewallImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Distributed Firewall import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

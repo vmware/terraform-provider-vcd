@@ -65,7 +65,7 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 	}
 }
 
-func datasourceVcdOpenApiDhcpRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdOpenApiDhcpRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)

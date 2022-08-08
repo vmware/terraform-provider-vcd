@@ -86,7 +86,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 				ResourceName:      "vcd_vm." + standaloneVmName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, standaloneVmName),
+				ImportStateIdFunc: importStateIdOrgVdcObject(standaloneVmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
 					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},

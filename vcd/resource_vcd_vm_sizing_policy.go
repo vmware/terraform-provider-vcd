@@ -146,7 +146,7 @@ func resourceVmSizingPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("functionality requires System administrator privileges")
 	}
-	params, err := getVmZingingPolicyInput(d, vcdClient)
+	params, err := getVmSizingPolicyInput(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -223,7 +223,7 @@ func genericVcdVmSizingPolicyRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 // setVmSizingPolicy sets object state from *govcd.VdcComputePolicy
-func setVmSizingPolicy(ctx context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
+func setVmSizingPolicy(_ context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
 
 	dSet(d, "name", policy.Name)
 	dSet(d, "description", policy.Description)
@@ -328,7 +328,7 @@ func resourceVmSizingPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 }
 
 // Deletes a VM sizing policy
-func resourceVmSizingPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVmSizingPolicyDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy delete started: %s", policyName)
 
@@ -377,7 +377,7 @@ func getUpdatedVmSizingPolicyInput(d *schema.ResourceData, policy *govcd.VdcComp
 
 // helper for transforming the resource input into the VdcComputePolicy structure
 // any cast operations or default values should be done here so that the create method is simple
-func getVmZingingPolicyInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcComputePolicy, error) {
+func getVmSizingPolicyInput(d *schema.ResourceData) (*types.VdcComputePolicy, error) {
 
 	params := &types.VdcComputePolicy{
 		Name:        d.Get("name").(string),
@@ -512,7 +512,7 @@ var errHelpVmSizingPolicyImport = fmt.Errorf(`resource id must be specified in o
 // Example import path (_the_id_string_): my_existing_vm_sizing_policy_id
 // Example list path (_the_id_string_): list@
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVmSizingPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVmSizingPolicyImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
 	log.Printf("[DEBUG] importing VM sizing policy resource with provided id %s", d.Id())

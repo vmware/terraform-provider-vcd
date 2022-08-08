@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"os"
 	"strings"
 
@@ -13,12 +15,12 @@ import (
 
 func resourceVcdAccessControlVapp() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceAccessControlVappCreate,
-		Read:   resourceAccessControlVappRead,
-		Update: resourceAccessControlVappUpdate,
-		Delete: resourceAccessControlVappDelete,
+		CreateContext: resourceAccessControlVappCreate,
+		ReadContext:   resourceAccessControlVappRead,
+		UpdateContext: resourceAccessControlVappUpdate,
+		DeleteContext: resourceAccessControlVappDelete,
 		Importer: &schema.ResourceImporter{
-			State: accessControlVappImport,
+			StateContext: accessControlVappImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -90,11 +92,11 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 // By default it is ON (= run as tenant). We can turn it off by setting the environment variable VCD_ORIGINAL_CONTEXT.
 var tenantContext = os.Getenv("VCD_ORIGINAL_CONTEXT") == ""
 
-func resourceAccessControlVappCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourceAccessControlVappUpdate(d, meta)
+func resourceAccessControlVappCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceAccessControlVappUpdate(ctx, d, meta)
 }
 
-func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceAccessControlVappUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	vcdClient := meta.(*VCDClient)
 
@@ -107,32 +109,32 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 	// Early checks, so that we can fail as soon as possible
 	if isSharedWithEveryone {
 		if everyoneAccessLevel == "" {
-			return fmt.Errorf("[resourceAccessControlVappUpdate] 'shared_with_everyone' was set, but 'everyone_access_level' was not")
+			return diag.Errorf("[resourceAccessControlVappUpdate] 'shared_with_everyone' was set, but 'everyone_access_level' was not")
 		}
 		accessControl.IsSharedToEveryone = true
 		accessControl.EveryoneAccessLevel = &everyoneAccessLevel
 		if len(sharedList) > 0 {
-			return fmt.Errorf("[resourceAccessControlVappUpdate] when 'shared_with_everyone' is true, 'shared_with' must not be filled")
+			return diag.Errorf("[resourceAccessControlVappUpdate] when 'shared_with_everyone' is true, 'shared_with' must not be filled")
 		}
 	} else {
 		if everyoneAccessLevel != "" {
-			return fmt.Errorf("[resourceAccessControlVappUpdate] if 'shared_with_everyone' is false, we can't set 'everyone_access_level'")
+			return diag.Errorf("[resourceAccessControlVappUpdate] if 'shared_with_everyone' is false, we can't set 'everyone_access_level'")
 		}
 	}
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgById(org.Org.ID)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
-		return fmt.Errorf("[resourceAccessControlVappUpdate] error finding vApp %s. %s", vappId, err)
+		return diag.Errorf("[resourceAccessControlVappUpdate] error finding vApp %s. %s", vappId, err)
 	}
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
@@ -140,7 +142,7 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 	if !isSharedWithEveryone {
 		accessControlList, err := sharedSetToAccessControl(adminOrg, sharedList)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if len(accessControlList) > 0 {
 			accessControl.AccessSettings = &types.AccessSettingList{
@@ -152,39 +154,39 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 	err = vapp.SetAccessControl(&accessControl, tenantContext)
 
 	if err != nil {
-		return fmt.Errorf("[resourceAccessControlVappUpdate] error setting access control for vApp %s: %s", vapp.VApp.Name, err)
+		return diag.Errorf("[resourceAccessControlVappUpdate] error setting access control for vApp %s: %s", vapp.VApp.Name, err)
 	}
 
-	return resourceAccessControlVappRead(d, meta)
+	return resourceAccessControlVappRead(ctx, d, meta)
 }
 
-func resourceAccessControlVappRead(d *schema.ResourceData, meta interface{}) error {
+func resourceAccessControlVappRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
-		return fmt.Errorf("[resourceAccessControlVappRead] error retrieving vApp %s. %s", vappId, err)
+		return diag.Errorf("[resourceAccessControlVappRead] error retrieving vApp %s. %s", vappId, err)
 	}
 
 	accessControl, err := vapp.GetAccessControl(tenantContext)
 	if err != nil {
-		return fmt.Errorf("[resourceAccessControlVappRead] error retrieving access control for vApp %s : %s", vapp.VApp.Name, err)
+		return diag.Errorf("[resourceAccessControlVappRead] error retrieving access control for vApp %s : %s", vapp.VApp.Name, err)
 	}
 
 	if accessControl.AccessSettings != nil {
 		sharedList, err := accessControlListToSharedSet(accessControl.AccessSettings.AccessSetting)
 		if err != nil {
-			return fmt.Errorf("[resourceAccessControlVappRead] error converting access control list %s", err)
+			return diag.Errorf("[resourceAccessControlVappRead] error converting access control list %s", err)
 		}
 		err = d.Set("shared_with", sharedList)
 		if err != nil {
-			return fmt.Errorf("[resourceAccessControlVappRead] error setting access control list %s", err)
+			return diag.Errorf("[resourceAccessControlVappRead] error setting access control list %s", err)
 		}
 	}
 	dSet(d, "vapp_id", vapp.VApp.ID)
@@ -197,27 +199,27 @@ func resourceAccessControlVappRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func resourceAccessControlVappDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceAccessControlVappDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return diag.Errorf("error finding vApp. %s", err)
 	}
 	err = vapp.RemoveAccessControl(tenantContext)
 	if err != nil {
-		return fmt.Errorf("error removing access control for vApp %s: %s", vapp.VApp.Name, err)
+		return diag.Errorf("error removing access control for vApp %s: %s", vapp.VApp.Name, err)
 	}
 	d.SetId("")
 	return nil
 }
 
-func accessControlVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func accessControlVappImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[vApp access control import] resource identifier must be specified as org.vdc.my-vapp")
@@ -254,7 +256,7 @@ func accessControlVappImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	}
 
 	if listRequested {
-		var vappList []*types.ResourceReference = vdc.GetVappList()
+		var vappList = vdc.GetVappList()
 		return nil, fmt.Errorf("[vApp access control import] list of all vApps:\n%s", formatVappList(vappList))
 	}
 

@@ -249,7 +249,7 @@ func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) (string, error) {
 }
 
 // resourceVmInternalDiskDelete deletes disk from VM
-func resourceVmInternalDiskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVmInternalDiskDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	vcdClient.lockParentVapp(d)
@@ -367,7 +367,7 @@ func resourceVmInternalDiskUpdate(ctx context.Context, d *schema.ResourceData, m
 }
 
 // Retrieves internal disk from VM and updates terraform state
-func resourceVmInternalDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVmInternalDiskRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	vm, _, err := getVm(vcdClient, d)

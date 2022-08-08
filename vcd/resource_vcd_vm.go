@@ -21,7 +21,7 @@ func resourceVcdStandaloneVm() *schema.Resource {
 	}
 }
 
-func resourceVcdStandaloneVmCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdStandaloneVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := genericResourceVmCreate(d, meta, standaloneVmType)
 	if err != nil {
 		return diag.FromErr(err)
@@ -29,7 +29,7 @@ func resourceVcdStandaloneVmCreate(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceVcdStandaloneVmUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdStandaloneVmUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := genericResourceVcdVmUpdate(d, meta, standaloneVmType)
 	if err != nil {
 		return diag.FromErr(err)
@@ -37,8 +37,8 @@ func resourceVcdStandaloneVmUpdate(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceVcdVStandaloneVmRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericVcdVmRead(d, meta, "resource", standaloneVmType)
+func resourceVcdVStandaloneVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := genericVcdVmRead(d, meta, "resource")
 	if err != nil {
 		return diag.FromErr(err)
 	}

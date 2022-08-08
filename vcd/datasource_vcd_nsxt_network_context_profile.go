@@ -35,7 +35,7 @@ func datasourceVcdNsxtNetworkContextProfile() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxtNetworkContextProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtNetworkContextProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	name := d.Get("name").(string)
 	scope := d.Get("scope").(string)

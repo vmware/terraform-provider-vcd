@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"regexp"
 	"strings"
@@ -14,12 +16,12 @@ const vAppUnknownStatus = "-unknown-status-"
 
 func resourceVcdVApp() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVAppCreate,
-		Update: resourceVcdVAppUpdate,
-		Read:   resourceVcdVAppRead,
-		Delete: resourceVcdVAppDelete,
+		CreateContext: resourceVcdVAppCreate,
+		UpdateContext: resourceVcdVAppUpdate,
+		ReadContext:   resourceVcdVAppRead,
+		DeleteContext: resourceVcdVAppDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVappImport,
+			StateContext: resourceVcdVappImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -107,11 +109,11 @@ func resourceVcdVApp() *schema.Resource {
 	}
 }
 
-func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("error retrieving Org and VDC: %s", err)
+		return diag.Errorf("error retrieving Org and VDC: %s", err)
 	}
 
 	vappName := d.Get("name").(string)
@@ -121,7 +123,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 	vapp, err := vdc.CreateRawVApp(vappName, vappDescription)
 	if err != nil {
-		return fmt.Errorf("error creating vApp %s: %s", vappName, err)
+		return diag.Errorf("error creating vApp %s: %s", vappName, err)
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
@@ -130,38 +132,38 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		// for operation just after provisioning therefore we wait for it to exit UNRESOLVED state
 		err = vapp.BlockWhileStatus("UNRESOLVED", vcdClient.MaxRetryTimeout)
 		if err != nil {
-			return fmt.Errorf("timed out waiting for vApp to exit UNRESOLVED state: %s", err)
+			return diag.Errorf("timed out waiting for vApp to exit UNRESOLVED state: %s", err)
 		}
 
 		guestProperties, err := getGuestProperties(d)
 		if err != nil {
-			return fmt.Errorf("unable to convert guest properties to data structure")
+			return diag.Errorf("unable to convert guest properties to data structure")
 		}
 
 		log.Printf("[TRACE] Setting vApp guest properties")
 		_, err = vapp.SetProductSectionList(guestProperties)
 		if err != nil {
-			return fmt.Errorf("error setting guest properties: %s", err)
+			return diag.Errorf("error setting guest properties: %s", err)
 		}
 	}
 
 	d.SetId(vapp.VApp.ID)
 
-	return resourceVcdVAppUpdate(d, meta)
+	return resourceVcdVAppUpdate(ctx, d, meta)
 }
 
-func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
 
 	if err != nil {
-		return fmt.Errorf("error finding VApp: %s", err)
+		return diag.Errorf("error finding VApp: %s", err)
 	}
 
 	var runtimeLease = vapp.VApp.LeaseSettingsSection.DeploymentLeaseInSeconds
@@ -177,10 +179,10 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		// No lease block: we read the lease defaults from the Org
 		adminOrg, err := vcdClient.GetAdminOrgById(org.Org.ID)
 		if err != nil {
-			return fmt.Errorf("error retrieving admin Org from parent Org in vApp %s: %s", vapp.VApp.Name, err)
+			return diag.Errorf("error retrieving admin Org from parent Org in vApp %s: %s", vapp.VApp.Name, err)
 		}
 		if adminOrg.AdminOrg.OrgSettings == nil || adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings == nil {
-			return fmt.Errorf("error retrieving Org lease settings")
+			return diag.Errorf("error retrieving Org lease settings")
 		}
 		runtimeLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeploymentLeaseSeconds
 		storageLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.StorageLeaseSeconds
@@ -190,57 +192,57 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		storageLease != vapp.VApp.LeaseSettingsSection.StorageLeaseInSeconds {
 		err = vapp.RenewLease(runtimeLease, storageLease)
 		if err != nil {
-			return fmt.Errorf("error updating VApp lease terms: %s", err)
+			return diag.Errorf("error updating VApp lease terms: %s", err)
 		}
 	}
 	if d.HasChange("description") {
 		err = vapp.UpdateNameDescription(d.Get("name").(string), d.Get("description").(string))
 		if err != nil {
-			return fmt.Errorf("error updating VApp: %s", err)
+			return diag.Errorf("error updating VApp: %s", err)
 		}
 	}
 	if d.HasChange("guest_properties") {
 		vappProperties, err := getGuestProperties(d)
 		if err != nil {
-			return fmt.Errorf("unable to convert guest properties to data structure")
+			return diag.Errorf("unable to convert guest properties to data structure")
 		}
 
 		log.Printf("[TRACE] Updating vApp guest properties")
 		_, err = vapp.SetProductSectionList(vappProperties)
 		if err != nil {
-			return fmt.Errorf("error setting guest properties: %s", err)
+			return diag.Errorf("error setting guest properties: %s", err)
 		}
 	}
 
 	err = createOrUpdateMetadata(d, vapp, "metadata")
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if d.HasChange("power_on") && d.Get("power_on").(bool) {
 		task, err := vapp.PowerOn()
 		if err != nil {
-			return fmt.Errorf("error Powering Up: %#v", err)
+			return diag.Errorf("error Powering Up: %#v", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error completing tasks: %#v", err)
+			return diag.Errorf("error completing tasks: %#v", err)
 		}
 	}
 
-	return resourceVcdVAppRead(d, meta)
+	return resourceVcdVAppRead(ctx, d, meta)
 }
 
-func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVAppRead(d, meta, "resource")
 }
 
-func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 	identifier := d.Id()
 
@@ -248,7 +250,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 		identifier = d.Get("name").(string)
 	}
 	if identifier == "" {
-		return fmt.Errorf("[vapp read] no identifier provided")
+		return diag.Errorf("[vapp read] no identifier provided")
 	}
 	vapp, err := vdc.GetVAppByNameOrId(identifier, false)
 	if err != nil {
@@ -257,23 +259,23 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[vapp read] error retrieving vApp %s: %s", identifier, err)
+		return diag.Errorf("[vapp read] error retrieving vApp %s: %s", identifier, err)
 	}
 
 	// update guest properties
 	guestProperties, err := vapp.GetProductSectionList()
 	if err != nil {
-		return fmt.Errorf("unable to read guest properties: %s", err)
+		return diag.Errorf("unable to read guest properties: %s", err)
 	}
 
 	err = setGuestProperties(d, guestProperties)
 	if err != nil {
-		return fmt.Errorf("unable to set guest properties in state: %s", err)
+		return diag.Errorf("unable to set guest properties in state: %s", err)
 	}
 
 	leaseInfo, err := vapp.GetLease()
 	if err != nil {
-		return fmt.Errorf("unable to get lease information: %s", err)
+		return diag.Errorf("unable to get lease information: %s", err)
 	}
 	leaseData := []map[string]interface{}{
 		{
@@ -283,7 +285,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	}
 	err = d.Set("lease", leaseData)
 	if err != nil {
-		return fmt.Errorf("unable to set lease information in state: %s", err)
+		return diag.Errorf("unable to set lease information in state: %s", err)
 	}
 
 	statusText, err := vapp.GetStatus()
@@ -296,12 +298,12 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "description", vapp.VApp.Description)
 	metadata, err := vapp.GetMetadata()
 	if err != nil {
-		return fmt.Errorf("[vapp read] error retrieving metadata: %s", err)
+		return diag.Errorf("[vapp read] error retrieving metadata: %s", err)
 	}
 	metadataStruct := getMetadataStruct(metadata.MetadataEntry)
 	err = d.Set("metadata", metadataStruct)
 	if err != nil {
-		return fmt.Errorf("[vapp read] error setting metadata: %s", err)
+		return diag.Errorf("[vapp read] error setting metadata: %s", err)
 	}
 
 	d.SetId(vapp.VApp.ID)
@@ -309,7 +311,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	return nil
 }
 
-func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockVapp(d)
@@ -317,37 +319,37 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("error finding vapp: %s", err)
+		return diag.Errorf("error finding vapp: %s", err)
 	}
 
 	// to avoid network destroy issues - detach networks from vApp
 	task, err := vapp.RemoveAllNetworks()
 	if err != nil {
-		return fmt.Errorf("error with networking change: %#v", err)
+		return diag.Errorf("error with networking change: %#v", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error changing network: %#v", err)
+		return diag.Errorf("error changing network: %#v", err)
 	}
 
 	err = tryUndeploy(*vapp)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	task, err = vapp.Delete()
 	if err != nil {
-		return fmt.Errorf("error deleting: %#v", err)
+		return diag.Errorf("error deleting: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error with deleting vApp task: %#v", err)
+		return diag.Errorf("error with deleting vApp task: %#v", err)
 	}
 
 	return nil
@@ -386,7 +388,7 @@ func tryUndeploy(vapp govcd.VApp) error {
 //
 // Example resource name (_resource_name_): vcd_vapp.vapp_name
 // Example import path (_the_id_string_): org-name.vdc-name.vapp-name
-func resourceVcdVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVappImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[vapp import] resource name must be specified as org-name.vdc-name.vapp-name")

@@ -205,7 +205,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtIpSecVpnTunnelRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)

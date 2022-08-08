@@ -179,7 +179,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 				ResourceName:            "vcd_nsxt_firewall.testing",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, testConfig.Nsxt.EdgeGateway),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig.Nsxt.EdgeGateway),
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},

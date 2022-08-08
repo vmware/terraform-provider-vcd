@@ -297,7 +297,7 @@ func getVdcGroupConfigurationType(d *schema.ResourceData) vdcGroupConfig {
 	}
 }
 
-func resourceVcdVdcGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -395,7 +395,7 @@ func setVdcGroupConfigurationData(config *types.VdcGroup, d *schema.ResourceData
 	return nil
 }
 
-func resourceVcdVdcGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcGroupDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -422,7 +422,7 @@ func resourceVcdVdcGroupDelete(ctx context.Context, d *schema.ResourceData, meta
 	return diag.FromErr(vdcGroupToDelete.Delete())
 }
 
-func resourceVdcGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVdcGroupImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-group-name")

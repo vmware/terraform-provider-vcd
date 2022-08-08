@@ -164,7 +164,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 	}
 }
 
-func resourceVcdNetworkIsolatedCreate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -260,11 +260,11 @@ func resourceVcdNetworkIsolatedCreate(c context.Context, d *schema.ResourceData,
 		return diag.Errorf("error adding metadata to isolated network: %s", err)
 	}
 
-	return resourceVcdNetworkIsolatedRead(c, d, meta)
+	return resourceVcdNetworkIsolatedRead(ctx, d, meta)
 }
 
-func resourceVcdNetworkIsolatedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkIsolatedRead(c, d, meta, "resource")
+func resourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource")
 }
 
 func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
@@ -421,7 +421,7 @@ func resourceVcdNetworkIsolatedImport(_ context.Context, d *schema.ResourceData,
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceVcdNetworkIsolatedUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
 		vcdClient          = meta.(*VCDClient)
 		networkName        = d.Get("name").(string)
@@ -496,5 +496,5 @@ func resourceVcdNetworkIsolatedUpdate(c context.Context, d *schema.ResourceData,
 	}
 
 	// The update returns already a network. No need to retrieve it twice
-	return genericVcdNetworkIsolatedRead(c, d, network, "resource-update")
+	return genericVcdNetworkIsolatedRead(ctx, d, network, "resource-update")
 }

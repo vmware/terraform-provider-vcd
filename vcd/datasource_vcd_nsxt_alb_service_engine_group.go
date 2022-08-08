@@ -71,7 +71,7 @@ func datasourceVcdAlbServiceEngineGroup() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbServiceEngineGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbServiceEngineGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("this resource is only supported for Providers")

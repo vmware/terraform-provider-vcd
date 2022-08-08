@@ -193,7 +193,7 @@ func TestAccVcdNsxtIpSecVpnTunnel(t *testing.T) {
 				ResourceName:            "vcd_nsxt_ipsec_vpn_tunnel.tunnel1",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-tunnel-1"),
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-tunnel-1"),
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			// Try to import by UUID

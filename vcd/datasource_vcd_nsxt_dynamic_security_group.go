@@ -78,7 +78,7 @@ func datasourceVcdDynamicSecurityGroup() *schema.Resource {
 	}
 }
 
-func datasourceVcdDynamicSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdDynamicSecurityGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vdcGroupId := d.Get("vdc_group_id").(string)
 

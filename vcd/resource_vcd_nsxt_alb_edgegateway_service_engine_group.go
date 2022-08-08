@@ -119,7 +119,7 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupUpdate(ctx context.Context, d *s
 	return resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx, d, meta)
 }
 
-func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
@@ -131,7 +131,7 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *sch
 	return nil
 }
 
-func resourceVcdAlbEdgeGatewayServiceEngineGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	err := validateEdgeGatewayIdParent(d, vcdClient)
 	if err != nil {
@@ -152,7 +152,7 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupDelete(ctx context.Context, d *s
 	return nil
 }
 
-func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T ALB Service Engine Group assignment import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

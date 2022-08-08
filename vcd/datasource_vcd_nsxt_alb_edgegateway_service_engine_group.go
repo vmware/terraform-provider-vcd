@@ -76,7 +76,7 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdAlbEdgeGatewayServiceEngineGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
