@@ -1,1 +1,1 @@
-* All resources and data sources use the new CRUD with context function signatures [GH-895]
+* All resources and data sources use the new SDK signatures with Context and Diagnostics [GH-895]
