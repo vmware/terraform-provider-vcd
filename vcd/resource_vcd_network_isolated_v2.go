@@ -127,7 +127,7 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	err = createOrUpdateOpenApiNetworkMetadata(vcdClient, d, orgNetwork)
 	if err != nil {
 		return diag.Errorf("[isolated network v2 create] error adding metadata to Isolated network: %s", err)
 	}
@@ -178,7 +178,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network v2 update] error updating Isolated network: %s", err)
 	}
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	err = createOrUpdateOpenApiNetworkMetadata(vcdClient, d, orgNetwork)
 	if err != nil {
 		return diag.Errorf("[isolated network v2 update] error updating Isolated network metadata: %s", err)
 	}
@@ -346,21 +346,26 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	return orgVdcNetworkConfig, nil
 }
 
-func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
+func createOrUpdateOpenApiNetworkMetadata(client *VCDClient, d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
 	log.Printf("[TRACE] adding/updating metadata to Network V2")
 
-	// Metadata is retrieved with OpenAPI when the network is in a VDC Group
-	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+	if client.Client.APIVCDMaxVersionIs(">= 37.0") {
 		return createOrUpdateOpenApiMetadata(d, network, "metadata")
+	}
+
+	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		logForScreen("", "[SCREEN] Can't add metadata to VDC Group network as VCD version is not compatible with this feature")
+		return nil
 	}
 
 	return createOrUpdateMetadata(d, network, "metadata")
 }
 
 // getMetadataForNetwork This auxiliary function abstracts the metadata handling for networking, which can be done
-// with OpenAPI if the network is in a VDC Group and VCD version is >= v37.0 or with XML otherwise.
+// with OpenAPI if VCD version is >= v37.0 or with XML otherwise.
 func getMetadataForNetwork(client *VCDClient, d *schema.ResourceData, orgNetwork *govcd.OpenApiOrgVdcNetwork) error {
-	if client.Client.APIVCDMaxVersionIs(">= 37.0") && govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+
+	if client.Client.APIVCDMaxVersionIs(">= 37.0") {
 		metadata, err := orgNetwork.GetOpenApiMetadata()
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find Org VDC network v2 metadata using OpenAPI: %s", err)
@@ -370,16 +375,23 @@ func getMetadataForNetwork(client *VCDClient, d *schema.ResourceData, orgNetwork
 		if err != nil {
 			return fmt.Errorf("unable to set Org VDC network metadata using OpenAPI %s", err)
 		}
-	} else {
-		metadata, err := orgNetwork.GetMetadata()
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find Org VDC network v2 metadata: %s", err)
-			return fmt.Errorf("unable to find Org VDC network metadata: %s", err)
-		}
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
-			return fmt.Errorf("unable to set Org VDC network metadata: %s", err)
-		}
+		return nil
+	}
+
+	// VDC network which belongs to a VDC Group doesn't support metadata in XML API
+	if govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		logForScreen("", "[SCREEN] Can't get metadata from VDC Group network as VCD version is not compatible with this feature")
+		return nil
+	}
+
+	metadata, err := orgNetwork.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find Org VDC network v2 metadata: %s", err)
+		return fmt.Errorf("unable to find Org VDC network metadata: %s", err)
+	}
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return fmt.Errorf("unable to set Org VDC network metadata: %s", err)
 	}
 
 	return nil

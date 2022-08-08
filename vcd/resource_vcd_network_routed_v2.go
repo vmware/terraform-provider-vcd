@@ -141,7 +141,7 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	err = createOrUpdateOpenApiNetworkMetadata(vcdClient, d, orgNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network create v2] error adding metadata to Routed network: %s", err)
 	}
@@ -193,7 +193,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network update v2] error updating Routed network: %s", err)
 	}
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	err = createOrUpdateOpenApiNetworkMetadata(vcdClient, d, orgNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network v2 update] error updating Routed network metadata: %s", err)
 	}
