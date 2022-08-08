@@ -346,6 +346,10 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	return orgVdcNetworkConfig, nil
 }
 
+// createOrUpdateOpenApiNetworkMetadata creates the metadata for the given network using OpenAPI if VCD version is at least v37.0.
+// In this case (>= v37.0, OpenAPI) it doesn't matter if the network belongs to a VDC or a VDC Group.
+// Otherwise, it uses XML metadata API to create it, except if the network belongs to a VDC group, which does nothing as there is no support
+// in XML API for that.
 func createOrUpdateOpenApiNetworkMetadata(client *VCDClient, d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
 	log.Printf("[TRACE] adding/updating metadata to Network V2")
 
@@ -361,8 +365,10 @@ func createOrUpdateOpenApiNetworkMetadata(client *VCDClient, d *schema.ResourceD
 	return createOrUpdateMetadata(d, network, "metadata")
 }
 
-// getMetadataForNetwork This auxiliary function abstracts the metadata handling for networking, which can be done
-// with OpenAPI if VCD version is >= v37.0 or with XML otherwise.
+// getMetadataForNetwork gets the metadata from the given network using OpenAPI if VCD version is at least v37.0.
+// In this case (>= v37.0, OpenAPI) it doesn't matter if the network belongs to a VDC or a VDC Group.
+// Otherwise, it uses XML metadata API to get it, except if the network belongs to a VDC group, which retrieves nothing as there is no support
+// in XML API for that.
 func getMetadataForNetwork(client *VCDClient, d *schema.ResourceData, orgNetwork *govcd.OpenApiOrgVdcNetwork) error {
 
 	if client.Client.APIVCDMaxVersionIs(">= 37.0") {
