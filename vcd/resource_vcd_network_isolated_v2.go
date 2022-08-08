@@ -211,17 +211,9 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	// Metadata is not supported when the network is in a VDC Group
-	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		metadata, err := orgNetwork.GetMetadata()
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
-			return diag.Errorf("[isolated network v2 read] unable to find Isolated network metadata %s", err)
-		}
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
-			return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)
-		}
+	err = getMetadataForNetwork(vcdClient, d, orgNetwork)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
@@ -357,10 +349,38 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
 	log.Printf("[TRACE] adding/updating metadata to Network V2")
 
-	// Metadata is not supported when the network is in a VDC Group
+	// Metadata is retrieved with OpenAPI when the network is in a VDC Group
 	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		return nil
+		return createOrUpdateOpenApiMetadata(d, network, "metadata")
 	}
 
 	return createOrUpdateMetadata(d, network, "metadata")
+}
+
+// getMetadataForNetwork This auxiliary function abstracts the metadata handling for networking, which can be done
+// with OpenAPI if the network is in a VDC Group and VCD version is >= v37.0 or with XML otherwise.
+func getMetadataForNetwork(client *VCDClient, d *schema.ResourceData, orgNetwork *govcd.OpenApiOrgVdcNetwork) error {
+	if client.Client.APIVCDMaxVersionIs(">= 37.0") && govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
+		metadata, err := orgNetwork.GetOpenApiMetadata()
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find Org VDC network v2 metadata using OpenAPI: %s", err)
+			return fmt.Errorf("unable to find Org VDC network metadata using OpenAPI: %s", err)
+		}
+		err = d.Set("metadata", getOpenApiMetadataStruct(metadata))
+		if err != nil {
+			return fmt.Errorf("unable to set Org VDC network metadata using OpenAPI %s", err)
+		}
+	} else {
+		metadata, err := orgNetwork.GetMetadata()
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find Org VDC network v2 metadata: %s", err)
+			return fmt.Errorf("unable to find Org VDC network metadata: %s", err)
+		}
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return fmt.Errorf("unable to set Org VDC network metadata: %s", err)
+		}
+	}
+
+	return nil
 }

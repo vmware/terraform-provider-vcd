@@ -511,15 +511,6 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *[]map[string]int
 	return &root
 }
 
-// Converts to terraform understandable structure
-func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
-	metadataMap := make(StringMap, len(metadata))
-	for _, metadataEntry := range metadata {
-		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
-	}
-	return metadataMap
-}
-
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	vdcName := d.Get("name").(string)

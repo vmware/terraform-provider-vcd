@@ -231,3 +231,21 @@ func createOrUpdateOpenApiMetadata(d *schema.ResourceData, resource openApiMetad
 	}
 	return nil
 }
+
+// getMetadataStruct converts XML metadata to Terraform understandable structure
+func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
+	metadataMap := make(StringMap, len(metadata))
+	for _, metadataEntry := range metadata {
+		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
+	}
+	return metadataMap
+}
+
+// getOpenApiMetadataStruct converts OpenAPI metadata to Terraform understandable structure
+func getOpenApiMetadataStruct(metadata []*types.OpenApiMetadata) StringMap {
+	metadataMap := make(StringMap, len(metadata))
+	for _, metadataEntry := range metadata {
+		metadataMap[metadataEntry.KeyValue.Key] = metadataEntry.KeyValue.Value
+	}
+	return metadataMap
+}
