@@ -156,7 +156,7 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 	return resultReferences
 }
 
-// MetadataCompatible allows to consider all structs that implement metadata handling to be the same type
+// metadataCompatible allows to consider all structs that implement XML metadata handling to be the same type
 type metadataCompatible interface {
 	GetMetadata() (*types.Metadata, error)
 	AddMetadataEntry(typedValue, key, value string) error
@@ -164,7 +164,14 @@ type metadataCompatible interface {
 	DeleteMetadataEntry(key string) error
 }
 
-// createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
+// openApiMetadataCompatible allows to consider all structs that implement OpenAPI metadata handling to be the same type
+type openApiMetadataCompatible interface {
+	GetOpenApiMetadata() ([]*types.OpenApiMetadata, error)
+	AddOpenApiMetadataEntry(typedValue, key, value string) error
+	DeleteOpenApiMetadataEntry(key string) error
+}
+
+// createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
 	if d.HasChange(attributeName) {
 		oldRaw, newRaw := d.GetChange(attributeName)
@@ -186,6 +193,37 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible,
 		}
 		if len(newMetadata) > 0 {
 			err := resource.MergeMetadata(types.MetadataStringValue, newMetadata)
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+	return nil
+}
+
+// createOrUpdateOpenApiMetadata creates or updates OpenAPI metadata entries for the given resource and attribute name
+func createOrUpdateOpenApiMetadata(d *schema.ResourceData, resource openApiMetadataCompatible, attributeName string) error {
+	if d.HasChange(attributeName) {
+		oldRaw, newRaw := d.GetChange(attributeName)
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := resource.DeleteOpenApiMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			err := resource.AddOpenApiMetadataEntry(types.MetadataStringValue, k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}
