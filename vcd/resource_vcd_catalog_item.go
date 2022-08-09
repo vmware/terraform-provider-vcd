@@ -15,6 +15,7 @@ import (
 
 func resourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
+		DeprecationMessage: "Use vcd_catalog_vapp_template instead",
 		CreateContext: resourceVcdCatalogItemCreate,
 		DeleteContext: resourceVcdCatalogItemDelete,
 		ReadContext:   resourceVcdCatalogItemRead,
