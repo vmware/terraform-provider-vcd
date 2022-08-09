@@ -109,7 +109,7 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	var diagError diag.Diagnostics
 	itemName := d.Get("name").(string)
 	if d.Get("ova_path").(string) != "" {
-		diagError = uploadFile(d, catalog, itemName)
+		diagError = uploadFile(d, catalog, itemName, "vcd_catalog_item")
 	} else if d.Get("ovf_url").(string) != "" {
 		diagError = uploadFromUrl(d, catalog, itemName)
 	} else {
@@ -135,12 +135,12 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	return resourceVcdCatalogItemRead(ctx, d, meta)
 }
 
-func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
+func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName, resourceName string) diag.Diagnostics {
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
-		log.Printf("[DEBUG] Error uploading new catalog item: %s", err)
-		return diag.Errorf("error uploading new catalog item: %s", err)
+		log.Printf("[DEBUG] Error uploading file: %s", err)
+		return diag.Errorf("error uploading file: %s", err)
 	}
 
 	if d.Get("show_upload_progress").(bool) {
@@ -148,7 +148,7 @@ func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string)
 			if err := getError(task); err != nil {
 				return diag.FromErr(err)
 			}
-			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%%\n"))
+			logForScreen(resourceName, fmt.Sprintf("%s.%s: Upload progress %s%%\n", resourceName, itemName, task.GetUploadProgress()))
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -162,8 +162,8 @@ func uploadFile(d *schema.ResourceData, catalog *govcd.Catalog, itemName string)
 func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
 	task, err := catalog.UploadOvfByLink(d.Get("ovf_url").(string), itemName, d.Get("description").(string))
 	if err != nil {
-		log.Printf("[DEBUG] Error uploading new catalog item from URL: %s", err)
-		return diag.Errorf("error uploading new catalog item from URL: %s", err)
+		log.Printf("[DEBUG] Error uploading OVF from URL: %s", err)
+		return diag.Errorf("error uploading OVF from URL: %s", err)
 	}
 
 	return finishHandlingTask(d, task, itemName)
