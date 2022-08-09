@@ -49,8 +49,66 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) diag.Diagno
 
 // Finds catalog item which can be vApp template OVA or media ISO file
 // TODO: This function should be updated in the context of Issue #502
+// Deprecated: Use findVappTemplate instead
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
+
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog.")
+		return nil, fmt.Errorf("unable to find catalog: %s", err)
+	}
+
+	identifier := d.Id()
+
+	// Check if identifier is still in deprecated style `catalogName:mediaName`
+	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
+	if identifier == "" || strings.Count(identifier, ":") <= 1 {
+		identifier = d.Get("name").(string)
+	}
+
+	var catalogItem *govcd.CatalogItem
+	if origin == "datasource" {
+		if !nameOrFilterIsSet(d) {
+			return nil, fmt.Errorf(noNameOrFilterError, "vcd_catalog_item")
+		}
+		filter, hasFilter := d.GetOk("filter")
+		if hasFilter {
+
+			catalogItem, err = getCatalogItemByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			if err != nil {
+				return nil, err
+			}
+
+			d.SetId(catalogItem.CatalogItem.ID)
+			return catalogItem, nil
+		}
+	}
+	// No filter: we continue with single item  GET
+
+	catalogItem, err = catalog.GetCatalogItemByNameOrId(identifier, false)
+	if govcd.IsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] Unable to find catalog item %s. Removing from tfstate", identifier)
+		d.SetId("")
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to find catalog item %s: %s", identifier, err)
+	}
+
+	d.SetId(catalogItem.CatalogItem.ID)
+	log.Printf("[TRACE] Catalog item read completed: %#v", catalogItem.CatalogItem)
+	return catalogItem, nil
+}
+
+func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.VAppTemplate, error) {
+	log.Printf("[TRACE] vApp template search initiated")
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {

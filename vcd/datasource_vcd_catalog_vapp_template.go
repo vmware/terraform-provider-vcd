@@ -6,10 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdCatalogItem() *schema.Resource {
+func datasourceVcdCatalogVappTemplate() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "Use vcd_catalog_vapp_template instead",
-		ReadContext:        dataSourceVcdCatalogItemRead,
+		ReadContext: dataSourceVcdCatalogVappTemplateRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -25,7 +24,7 @@ func datasourceVcdCatalogItem() *schema.Resource {
 			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "Name of the item. It is optional when a filter is provided",
+				Description:  "Name of the vApp Template. It is optional when a filter is provided",
 				ExactlyOneOf: []string{"name", "filter"},
 			},
 			"description": {
@@ -40,19 +39,14 @@ func datasourceVcdCatalogItem() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Key and value pairs from the metadata of the vApp template associated to this catalog item",
-			},
-			"catalog_item_metadata": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Key and value pairs of the catalog item metadata",
+				Description: "Key and value pairs from the metadata of the vApp Template",
 			},
 			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				MinItems:    1,
 				Optional:    true,
-				Description: "Criteria for retrieving a catalog item by various attributes",
+				Description: "Criteria for retrieving a vApp Template by various attributes",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name_regex": elementNameRegex,
@@ -67,6 +61,6 @@ func datasourceVcdCatalogItem() *schema.Resource {
 	}
 }
 
-func dataSourceVcdCatalogItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdCatalogItemRead(d, meta, "datasource")
+func dataSourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "datasource")
 }

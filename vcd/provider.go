@@ -100,6 +100,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_neighbor":             datasourceVcdEdgeBgpNeighbor(),                  // 3.7
 	"vcd_nsxt_edgegateway_bgp_ip_prefix_list":       datasourceVcdEdgeBgpIpPrefixList(),              // 3.7
 	"vcd_nsxt_dynamic_security_group":               datasourceVcdDynamicSecurityGroup(),             // 3.7
+	"vcd_catalog_vapp_template":                     datasourceVcdCatalogVappTemplate(),              // 3.8
 }
 
 var globalResourceMap = map[string]*schema.Resource{

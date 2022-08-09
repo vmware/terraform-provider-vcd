@@ -16,10 +16,10 @@ import (
 func resourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
 		DeprecationMessage: "Use vcd_catalog_vapp_template instead",
-		CreateContext: resourceVcdCatalogItemCreate,
-		DeleteContext: resourceVcdCatalogItemDelete,
-		ReadContext:   resourceVcdCatalogItemRead,
-		UpdateContext: resourceVcdCatalogItemUpdate,
+		CreateContext:      resourceVcdCatalogItemCreate,
+		DeleteContext:      resourceVcdCatalogItemDelete,
+		ReadContext:        resourceVcdCatalogItemRead,
+		UpdateContext:      resourceVcdCatalogItemUpdate,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdCatalogItemImport,
 		},
@@ -200,12 +200,12 @@ func resourceVcdCatalogItemRead(_ context.Context, d *schema.ResourceData, meta 
 func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), origin)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find media item: %s", err)
-		return diag.Errorf("Unable to find media item: %s", err)
+		log.Printf("[DEBUG] Unable to find catalog item: %s", err)
+		return diag.Errorf("Unable to find catalog item: %s", err)
 	}
 	if catalogItem == nil {
-		log.Printf("[DEBUG] Unable to find media item: %s. Removing from tfstate", err)
-		return diag.Errorf("Unable to find media item")
+		log.Printf("[DEBUG] Unable to find catalog item: %s. Removing from tfstate", err)
+		return diag.Errorf("Unable to find catalog item")
 	}
 
 	vAppTemplate, err := catalogItem.GetVAppTemplate()
