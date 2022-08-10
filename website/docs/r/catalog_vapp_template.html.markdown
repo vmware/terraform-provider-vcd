@@ -1,23 +1,21 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_catalog_item"
-sidebar_current: "docs-vcd-resource-catalog-item"
+page_title: "VMware Cloud Director: vcd_catalog_vapp_template"
+sidebar_current: "docs-vcd-resource-catalog-vapp_template"
 description: |-
-  Provides a VMware Cloud Director catalog item resource. This can be used to upload and delete OVA file inside a catalog.
+  Provides a VMware Cloud Director vApp Template resource. This can be used to upload and delete OVA files inside a catalog.
 ---
 
-# vcd\_catalog\_item
+# vcd\_catalog\_vapp\_template
 
-Provides a VMware Cloud Director catalog item resource. This can be used to upload OVA to catalog and delete it.
+Provides a VMware Cloud Director vApp Template resource. This can be used to upload OVA to catalog and delete it.
 
-Supported in provider *v2.0+*
-
-~> This resource has been deprecated in **v3.8.0** in favor of **[vcd_catalog_vapp_template](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template)**
+Supported in provider *v3.8+*
 
 ## Example Usage
 
 ```hcl
-resource "vcd_catalog_item" "myNewCatalogItem" {
+resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
   org     = "my-org"
   catalog = "my-catalog"
 
@@ -31,9 +29,6 @@ resource "vcd_catalog_item" "myNewCatalogItem" {
     license = "public"
     version = "v1"
   }
-  catalog_item_metadata = {
-    environment = "production"
-  }
 }
 ```
 
@@ -43,14 +38,13 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `catalog` - (Required) The name of the catalog where to upload OVA file
-* `name` - (Required) Item name in catalog
-* `description` - (Optional) Description of item
+* `name` - (Required) vApp Template name in catalog
+* `description` - (Optional) Description of the vApp Template
 * `ova_path` - (Optional) Absolute or relative path to file to upload
-* `ovf_url` - (Optional; *v3.6+*) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
+* `ovf_url` - (Optional) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows seeing upload progress. (See note below)
-* `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign to the associated vApp Template
-* `catalog_item_metadata` - (Optional; *v3.7+*) Key value map of metadata to assign to the Catalog Item
+* `metadata` - (Optional) Key value map of metadata to assign to the associated vApp Template
 
 ### A note about upload progress
 
@@ -68,27 +62,27 @@ $ tail -f go-vcloud-director.log | grep '\[SCREEN\]'
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing catalog item can be [imported][docs-import] into this resource via supplying the full dot separated path for a
-catalog item. For example, using this structure, representing an existing catalog item that was **not** created using Terraform:
+An existing vApp Template can be [imported][docs-import] into this resource via supplying the full dot separated path for a
+vApp Template. For example, using this structure, representing an existing vAppTemplate that was **not** created using Terraform:
 
 ```hcl
-resource "vcd_catalog_item" "my-item" {
+resource "vcd_catalog_vapp_template" "my-vapp-template" {
   org      = "my-org"
   catalog  = "my-catalog"
-  name     = "my-item"
+  name     = "my-vapp-template"
   ova_path = "guess"
 }
 ```
 
-You can import such catalog item into terraform state using this command
+You can import such vApp Template into terraform state using this command
 
 ```
-terraform import vcd_catalog_item.my-item my-org.my-catalog.my-item
+terraform import vcd_catalog_vapp_template.my-vapp-template my-org.my-catalog.my-vapp-template
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 [docs-import]:https://www.terraform.io/docs/import/
 
-After that, you can expand the configuration file and either update or delete the catalog item as needed. Running `terraform plan`
-at this stage will show the difference between the minimal configuration file and the item's stored properties.
+After that, you can expand the configuration file and either update or delete the vApp Template as needed. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the vApp Template's stored properties.

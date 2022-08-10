@@ -1,46 +1,44 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_catalog_item"
-sidebar_current: "docs-vcd-data-source-catalog-item"
+page_title: "VMware Cloud Director: vcd_catalog_vapp_template"
+sidebar_current: "docs-vcd-data-source-catalog-vapp_template"
 description: |-
-  Provides a catalog item data source.
+  Provides a vApp Template data source.
 ---
 
-# vcd\_catalog\_item
+# vcd\_catalog\_vapp\_template
 
-Provides a VMware Cloud Director Catalog item data source. A Catalog item can be used to reference a catalog item and use its 
-data within other resources or data sources.
+Provides a VMware Cloud Director vApp Template data source. A vApp Template can be used to reference an already existing
+vApp Template in VCD and use its data within other resources or data sources.
 
-Supported in provider *v2.5+*
-
-~> This resource has been deprecated in **v3.8.0** in favor of **[vcd_catalog_vapp_template](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template)**
+Supported in provider *v3.8+*
 
 ## Example Usage
 
 ```hcl
-data "vcd_catalog_item" "my-first-item" {
+data "vcd_catalog_vapp_template" "my-first-vapp-template" {
   org     = "my-org"
   catalog = "my-cat"
-  name    = "my-first-item"
+  name    = "my-first-vapp-template"
 }
 
-resource "vcd_catalog_item" "my-second-item" {
-  # Using the data source, two properties from another catalog items are
+resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
+  # Using the data source, two properties from another vApp Templates are
   # used in this resource.
-  # You can read it as "use the org from catalog item `my-first-item`"
-  # and "use the catalog from catalog item `my-first-item`"
-  org     = data.vcd_catalog_item.my-first-item.org
-  catalog = data.vcd_catalog_item.my-first-item.catalog
+  # You can read it as "use the org from vApp Template `my-first-vapp-template`"
+  # and "use the catalog from vApp Template `my-first-vapp-template`"
+  org     = data.vcd_catalog_item.my-first-vapp-template.org
+  catalog = data.vcd_catalog_item.my-first-vapp-template.catalog
 
   name = "my-second-item"
 
   # The description uses the data source to create a dynamic text
   # The description will become "Belongs to my-cat"
-  description          = "Belongs to ${data.vcd_catalog_item.my-first-item.catalog}"
+  description          = "Belongs to ${data.vcd_catalog_item.my-first-vapp-template.catalog}"
   ova_path             = "/path/to/test_vapp_template.ova"
   upload_piece_size    = 5
   show_upload_progress = "true"
-  metadata             = data.vcd_catalog_item.my-first-item.metadata
+  metadata             = data.vcd_catalog_item.my-first-vapp-template.metadata
 }
 ```
 
@@ -50,18 +48,15 @@ The following arguments are supported:
 
 * `org` - (Optional, but required if not set at provider level) Org name 
 * `catalog` - (Required) Catalog name
-* `name` - (Required) Catalog Item name (optional when `filter` is used)
-* `filter` - (Optional; *2.9+*) Retrieves the data source using one or more filter parameters
+* `name` - (Required) vApp Template name (optional when `filter` is used)
+* `filter` - (Optional) Retrieves the data source using one or more filter parameters
 
 ## Attribute Reference
 
-* `description` - Catalog item description.
+* `description` - vApp Template description.
 * `metadata` - Key value map of metadata for the associated vApp template.
-* `catalog_item_metadata` - Key value map of metadata for the catalog item.
 
 ## Filter arguments
-
-(Supported in provider *v2.9+*)
 
 * `name_regex` (Optional) matches the name using a regular expression.
 * `date` (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
@@ -76,4 +71,3 @@ The following arguments are supported:
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
-
