@@ -8,6 +8,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
 	"strings"
+	"time"
 )
 
 func resourceVcdCatalogVappTemplate() *schema.Resource {
@@ -102,7 +103,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	var diagError diag.Diagnostics
 	vappTemplateName := d.Get("name").(string)
 	if d.Get("ova_path").(string) != "" {
-		diagError = uploadFile(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
+		diagError = uploadOvaFromResource(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
 	} else if d.Get("ovf_url").(string) != "" {
 		diagError = uploadFromUrl(d, catalog, vappTemplateName)
 	} else {
@@ -261,4 +262,62 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// uploadOvaFromResource uploads an OVA file specified in the resource to the given catalog
+func uploadOvaFromResource(d *schema.ResourceData, catalog *govcd.Catalog, vappTemplate, resourceName string) diag.Diagnostics {
+	uploadPieceSize := d.Get("upload_piece_size").(int)
+	task, err := catalog.UploadOvf(d.Get("ova_path").(string), vappTemplate, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
+	if err != nil {
+		log.Printf("[DEBUG] Error uploading file: %s", err)
+		return diag.Errorf("error uploading file: %s", err)
+	}
+
+	if d.Get("show_upload_progress").(bool) {
+		for {
+			if err := getError(task); err != nil {
+				return diag.FromErr(err)
+			}
+			logForScreen(resourceName, fmt.Sprintf("%s.%s: Upload progress %s%%\n", resourceName, vappTemplate, task.GetUploadProgress()))
+			if task.GetUploadProgress() == "100.00" {
+				break
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}
+
+	return finishHandlingTask(d, *task.Task, vappTemplate)
+}
+
+func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
+	task, err := catalog.UploadOvfByLink(d.Get("ovf_url").(string), itemName, d.Get("description").(string))
+	if err != nil {
+		log.Printf("[DEBUG] Error uploading OVF from URL: %s", err)
+		return diag.Errorf("error uploading OVF from URL: %s", err)
+	}
+
+	return finishHandlingTask(d, task, itemName)
+}
+
+func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string) diag.Diagnostics {
+	if d.Get("show_upload_progress").(bool) {
+		for {
+			progress, err := task.GetTaskProgress()
+			if err != nil {
+				log.Printf("VCD Error importing new catalog item: %s", err)
+				return diag.Errorf("VCD Error importing new catalog item: %s", err)
+			}
+			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import catalog item progress "+progress+"%%\n"))
+			if progress == "100" {
+				break
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}
+
+	err := task.WaitTaskCompletion()
+	if err != nil {
+		return diag.Errorf("error waiting for task to complete: %+v", err)
+	}
+	return nil
 }
