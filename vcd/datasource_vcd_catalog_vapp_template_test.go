@@ -15,8 +15,7 @@ import (
 // Test catalog and vApp Template data sources
 // Using a catalog data source we reference a vApp Template data source
 // Using a vApp Template data source we create another vApp Template
-// where the description is the first data source ID
-// It also includes deprecated catalog item data source and resource testing.
+// where the description is the first data source ID.
 func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	preTestChecks(t)
 	var TestCatalogVappTemplateDS = "TestCatalogVappTemplateDS"
@@ -33,7 +32,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccCheckVcdCatalogItemDS, params)
+	configText := templateFill(testAccCheckVcdCatalogVAppTemplateDS, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -43,12 +42,11 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	datasourceCatalog := "data.vcd_catalog." + testSuiteCatalogName
 	datasourceCatalogVappTemplate := "data.vcd_catalog_vapp_template." + testSuiteCatalogOVAItem
 	resourceCatalogVappTemplate := "vcd_catalog_vapp_template." + TestCatalogVappTemplateDS
-	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem // Deprecated
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      catalogItemDestroyed(testSuiteCatalogName, TestCatalogVappTemplateDS),
+		CheckDestroy:      catalogVAppTemplateDestroyed(testSuiteCatalogName, TestCatalogVappTemplateDS),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -59,21 +57,11 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 
 					// The description of the new catalog item was created using the ID of the catalog item data source
 					resource.TestMatchResourceAttr(datasourceCatalogVappTemplate, "id", regexp.MustCompile(`urn:vcloud:vapptemplate:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "id", resourceCatalogVappTemplate, "description"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "name", datasourceCatalogItem, "name"), // Deprecated
-					resource.TestCheckResourceAttrSet(datasourceCatalogItem, "id"),                                           // Deprecated
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "id", resourceCatalogVappTemplate, "description"), // Deprecated
 
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key1", "value1"),
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key2", "value2"),
 				),
-			},
-			{ // Deprecated
-				ResourceName:      "vcd_catalog_item." + TestCatalogVappTemplateDS,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgCatalogObject(TestCatalogVappTemplateDS),
-				// These fields can't be retrieved from catalog item data
-				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size", "show_upload_progress"},
 			},
 			{
 				ResourceName:      "vcd_catalog_vapp_template." + TestCatalogVappTemplateDS,
@@ -88,7 +76,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	postTestChecks(t)
 }
 
-func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {
+func catalogVAppTemplateDestroyed(catalog, itemName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
 		org, err := conn.GetOrgByName(testConfig.VCD.Org)
@@ -99,25 +87,18 @@ func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
-		_, err = cat.GetCatalogItemByName(itemName, false)
+		_, err = cat.GetVAppTemplateByName(itemName, false)
 		if err == nil {
-			return fmt.Errorf("catalog item %s not deleted", itemName)
+			return fmt.Errorf("vApp Template %s not deleted", itemName)
 		}
 		return nil
 	}
 }
 
-const testAccCheckVcdCatalogItemDS = `
+const testAccCheckVcdCatalogVAppTemplateDS = `
 data "vcd_catalog" "{{.Catalog}}" {
   org  = "{{.Org}}"
   name = "{{.Catalog}}"
-}
-
-# Deprecated datasource. It's here to avoid regressions
-data "vcd_catalog_item" "{{.VAppTemplate}}" {
-  org     = "{{.Org}}"
-  catalog = data.vcd_catalog.{{.Catalog}}.name
-  name    = "{{.VAppTemplate}}"
 }
 
 data "vcd_catalog_vapp_template" "{{.VAppTemplate}}" {

@@ -11,11 +11,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// Deprecated
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
+
+// Deprecated
 var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
+
+// Deprecated
 var TestAccVcdCatalogItemFromUrl = "TestAccVcdCatalogItemBasicFromUrl"
+
+// Deprecated
 var TestAccVcdCatalogItemDescriptionFromUrl = "TestAccVcdCatalogItemBasicDescriptionFromUrl"
+
+// Deprecated
 var TestAccVcdCatalogItemFromUrlUpdated = "TestAccVcdCatalogItemBasicFromUrlUpdated"
+
+// Deprecated
 var TestAccVcdCatalogItemDescriptionFromUrlUpdated = "TestAccVcdCatalogItemBasicDescriptionFromUrlUpdated"
 
 // Deprecated
@@ -77,7 +88,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItem),
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						resourceCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
@@ -95,7 +106,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItem),
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
@@ -118,7 +129,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "name", TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
@@ -141,7 +152,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "name", TestAccVcdCatalogItemFromUrlUpdated),
 					resource.TestCheckResourceAttr(
@@ -161,6 +172,40 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	postTestChecks(t)
 }
 
+// Deprecated
+func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		catalogItemRs, ok := s.RootModule().Resources[itemName]
+		if !ok {
+			return fmt.Errorf("not found: %s", itemName)
+		}
+
+		if catalogItemRs.Primary.ID == "" {
+			return fmt.Errorf("no catalog item ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		org, err := conn.GetOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
+		}
+
+		catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
+		if err != nil {
+			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
+		}
+
+		_, err = catalog.GetCatalogItemByName(catalogItemRs.Primary.Attributes["name"], false)
+		if err != nil {
+			return fmt.Errorf("catalog item %s does not exist (%s)", catalogItemRs.Primary.ID, err)
+		}
+
+		return nil
+	}
+}
+
+// Deprecated
 func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	for _, rs := range s.RootModule().Resources {
@@ -189,7 +234,9 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 	return nil
 }
 
+// Deprecated
 const testAccCheckVcdCatalogItemBasic = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
@@ -212,7 +259,9 @@ const testAccCheckVcdCatalogItemBasic = `
 }
 `
 
+// Deprecated
 const testAccCheckVcdCatalogItemUpdate = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
@@ -237,7 +286,9 @@ const testAccCheckVcdCatalogItemUpdate = `
 }
 `
 
+// Deprecated
 const testAccCheckVcdCatalogItemFromUrl = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemNameFromUrl}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
@@ -261,7 +312,9 @@ const testAccCheckVcdCatalogItemFromUrl = `
 }
 `
 
+// Deprecated
 const testAccCheckVcdCatalogItemFromUrlUpdated = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemNameFromUrl}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
