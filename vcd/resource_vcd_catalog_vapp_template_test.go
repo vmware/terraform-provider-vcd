@@ -43,19 +43,10 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 		"Tags":                           "catalog",
 	}
 
-	var skipOnVcd1020 bool
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.2") {
-		skipOnVcd1020 = true
-	}
-
 	configText := templateFill(testAccCheckVcdVAppTemplateBasic, params)
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckVcdVAppTemplateUpdate, params)
 
-	if skipOnVcd1020 {
-		params["SkipTest"] = "# skip-binary-test: 10.2.0 binary tests fail"
-	}
 	params["FuncName"] = t.Name() + "-FromUrl"
 	fromUrlConfigText := templateFill(testAccCheckVcdVAppTemplateFromUrl, params)
 
@@ -106,7 +97,6 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
@@ -123,7 +113,6 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
