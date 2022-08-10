@@ -97,7 +97,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				Config:   fromUrlConfigText,
+				Config: fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
@@ -113,7 +113,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				Config:   fromUrlConfigTextUpdate,
+				Config: fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
