@@ -60,7 +60,7 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 }
 
 // getCatalogItemByFilter finds a catalog item using a filter block
-// TODO: This function should be updated in the context of Issue #502
+// Deprecated: This function is deprecated as described in Issue #502. Use getVappTemplateByFilter instead.
 func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.CatalogItem, error) {
 	queryType := types.QtVappTemplate
 	if isSysAdmin {
@@ -79,6 +79,28 @@ func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdm
 		return nil, fmt.Errorf("[getCatalogItemByFilter] error retrieving catalog item %s: %s", queryItem.GetName(), err)
 	}
 	return catalogItem, nil
+}
+
+// getVappTemplateByFilter finds a vApp Template using a filter block.
+// This function deprecates getCatalogItemByFilter
+func getVappTemplateByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.VAppTemplate, error) {
+	queryType := types.QtVappTemplate
+	if isSysAdmin {
+		queryType = types.QtAdminVappTemplate
+	}
+	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
+		return catalog.SearchByFilter(queryType, "catalogName", criteria)
+	}
+	queryItem, err := getEntityByFilter(searchFunc, queryType, "vApp Template", filter)
+	if err != nil {
+		return nil, err
+	}
+
+	vAppTemplate, err := catalog.GetVappTemplateByName(queryItem.GetName(), false)
+	if err != nil {
+		return nil, fmt.Errorf("[getVappTemplateByFilter] error retrieving vApp Template %s: %s", queryItem.GetName(), err)
+	}
+	return vAppTemplate, nil
 }
 
 // getMediaByFilter finds a media item using a filter block
