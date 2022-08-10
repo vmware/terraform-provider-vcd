@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
@@ -12,7 +13,7 @@ import (
 
 func datasourceVcdNsxtTier0Router() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceNsxtTier0RouterRead,
+		ReadContext: datasourceNsxtTier0RouterRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -39,14 +40,14 @@ func datasourceVcdNsxtTier0Router() *schema.Resource {
 // for external network creation - next "apply" would fail with "Tier 0 router not found error". If original endpoint
 // does not find Tier-0 router - then this datasource queries all defined external networks and looks for Tier-0 router
 // backing by name.
-func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceNsxtTier0RouterRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	nsxtManagerId := d.Get("nsxt_manager_id").(string)
 	tier0RouterName := d.Get("name").(string)
 
 	tier0Router, err := vcdClient.GetImportableNsxtTier0RouterByName(tier0RouterName, nsxtManagerId)
 	if err != nil && !govcd.ContainsNotFound(err) {
-		return fmt.Errorf("could not find NSX-T Tier-0 router by name '%s' in NSX-T manager %s: %s",
+		return diag.Errorf("could not find NSX-T Tier-0 router by name '%s' in NSX-T manager %s: %s",
 			tier0RouterName, nsxtManagerId, err)
 	}
 
@@ -64,7 +65,7 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 		// Filtering by network backing is unsupported therefore queryParameters are nil
 		extNets, err := govcd.GetAllExternalNetworksV2(vcdClient.VCDClient, nil)
 		if err != nil {
-			return fmt.Errorf("could not find external networks: %s", err)
+			return diag.Errorf("could not find external networks: %s", err)
 		}
 
 		for _, extNetwork := range extNets {
@@ -80,6 +81,6 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	return fmt.Errorf("%s: could not find NSX-T Tier-0 router by name '%s' in NSX-T manager %s",
+	return diag.Errorf("%s: could not find NSX-T Tier-0 router by name '%s' in NSX-T manager %s",
 		govcd.ErrorEntityNotFound, tier0RouterName, nsxtManagerId)
 }

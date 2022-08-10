@@ -131,7 +131,7 @@ func datasourceVcdOrgUserRead(_ context.Context, d *schema.ResourceData, meta in
 	}
 
 	dSet(d, "user_id", user.User.ID)
-	err = setOrgUserData(d, user, adminOrg)
+	err = setOrgUserData(d, user)
 	if err != nil {
 		return diag.FromErr(err)
 	}

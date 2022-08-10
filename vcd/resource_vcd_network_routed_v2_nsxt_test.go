@@ -107,7 +107,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(t.Name()),
 			},
 
 			{ // step 4
@@ -266,7 +266,7 @@ func TestAccVcdNetworkRoutedV2NsxtOwnerVdc(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(t.Name()),
 			},
 			{ // step 1
 				Config: configText3,
@@ -751,7 +751,7 @@ func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
 				// field nsxt_logical_switch_name cannot be read during import because VCD does not
 				// provider API for reading it after being consumed
 			},
@@ -789,7 +789,7 @@ func TestAccVcdNetworkRoutedV2InheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["NetworkName"].(string)),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
 				// field nsxt_logical_switch_name cannot be read during import because VCD does not
 				// provide API for reading it after being consumed
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name"},

@@ -190,7 +190,7 @@ func resourceVcdSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData,
 	return resourceVcdSecurityGroupRead(ctx, d, meta)
 }
 
-func resourceVcdSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdSecurityGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -252,7 +252,7 @@ func resourceVcdSecurityGroupRead(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceVcdSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdSecurityGroupDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	parentEdgeGatewayOwnerId, nsxtEdgeGateway, err := getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway(vcdClient, d, "security group create")
 	if err != nil {

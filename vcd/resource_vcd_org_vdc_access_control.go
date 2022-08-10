@@ -127,7 +127,7 @@ func resourceVcdVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 	return resourceVcdVdcAccessControlRead(ctx, d, meta)
 }
 
-func resourceVcdVdcAccessControlRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcAccessControlRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -171,7 +171,7 @@ func resourceVcdVdcAccessControlRead(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceVcdVdcAccessControlDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcAccessControlDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// When deleting VDC access control, VDC won't be share with anyone, neither everyone not any single user/group
 	vcdClient := meta.(*VCDClient)
 
@@ -195,7 +195,7 @@ func resourceVcdVdcAccessControlDelete(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVcdVdcAccessControlImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVdcAccessControlImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.vdc")

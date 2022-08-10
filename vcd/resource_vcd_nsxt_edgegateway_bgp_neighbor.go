@@ -204,7 +204,7 @@ func resourceVcdEdgeBgpNeighborUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceVcdEdgeBgpNeighborRead(ctx, d, meta)
 }
 
-func resourceVcdEdgeBgpNeighborRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdEdgeBgpNeighborRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -232,7 +232,7 @@ func resourceVcdEdgeBgpNeighborRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVcdEdgeBgpNeighborDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdEdgeBgpNeighborDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks for BGP configuration is conditional. There are two scenarios:
@@ -274,7 +274,7 @@ func resourceVcdEdgeBgpNeighborDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdEdgeBgpNeighborImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdEdgeBgpNeighborImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.SplitN(d.Id(), ImportSeparator, 4)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.bgp_neighbor_ip, got '%s'", d.Id())

@@ -221,7 +221,7 @@ func TestAccVcdNsxVdcGroupCompleteMigration(t *testing.T) {
 				ResourceName:            "vcd_nsxt_firewall.testing",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, parentVdcGroupName, t.Name()),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(parentVdcGroupName, t.Name()),
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			{
@@ -695,7 +695,7 @@ func TestAccVcdNsxVdcGroupResources(t *testing.T) {
 				ResourceName:            "vcd_nsxt_firewall.testing",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(testConfig, parentVdcGroupName, t.Name()),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcGroupObject(parentVdcGroupName, t.Name()),
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 			{

@@ -87,7 +87,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
 			},
 			{
 				Config: configText2,
@@ -108,7 +108,7 @@ func TestAccVcdNsxtIpSetEmptyStart(t *testing.T) {
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
 			},
 		},
 	})
@@ -202,7 +202,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-ip-set-changed"),
 			},
 			{
 				Config: configText2,
@@ -779,7 +779,7 @@ func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["NsxtEdgeGatewayVcd"].(string), params["IpSetName"].(string)),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(params["NsxtEdgeGatewayVcd"].(string), params["IpSetName"].(string)),
 			},
 			{
 				Config: configText3,
@@ -829,7 +829,7 @@ func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 				ResourceName:      "vcd_nsxt_ip_set.set1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, params["NsxtEdgeGatewayVcd"].(string), params["IpSetName"].(string)),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(params["NsxtEdgeGatewayVcd"].(string), params["IpSetName"].(string)),
 				// field vdc during import isn't set
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},

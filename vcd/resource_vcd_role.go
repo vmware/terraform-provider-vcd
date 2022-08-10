@@ -98,7 +98,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	return genericRoleRead(ctx, d, meta, "resource", "read")
 }
 
-func genericRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericRoleRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	roleName := d.Get("name").(string)
@@ -200,7 +200,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	return genericRoleRead(ctx, d, meta, "resource", "update")
 }
 
-func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRoleDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	roleName := d.Get("name").(string)
@@ -271,7 +271,7 @@ func getRights(client *VCDClient, org *govcd.AdminOrg, label string, d *schema.R
 	return inputRights, nil
 }
 
-func resourceVcdRoleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdRoleImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.role-name")

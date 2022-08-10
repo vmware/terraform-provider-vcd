@@ -208,7 +208,7 @@ func TestAccAuth(t *testing.T) {
 	// auth_type=saml_adfs is only run if credentials were provided
 	testCases = append(testCases, authTestCase{
 		name:       "EmptySysOrg,AuthType=saml_adfs",
-		skip:       (testConfig.Provider.SamlUser == "" || testConfig.Provider.SamlPassword == ""),
+		skip:       testConfig.Provider.SamlUser == "" || testConfig.Provider.SamlPassword == "",
 		skipReason: "testConfig.Provider.SamlUser and testConfig.Provider.SamlPassword must be set",
 		configText: `
 			provider "vcd" {

@@ -172,7 +172,7 @@ func resourceVcdEdgeBgpIpPrefixListUpdate(ctx context.Context, d *schema.Resourc
 	return resourceVcdEdgeBgpIpPrefixListRead(ctx, d, meta)
 }
 
-func resourceVcdEdgeBgpIpPrefixListRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdEdgeBgpIpPrefixListRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -200,7 +200,7 @@ func resourceVcdEdgeBgpIpPrefixListRead(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceVcdEdgeBgpIpPrefixListDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdEdgeBgpIpPrefixListDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks on for BGP configuration is conditional. There are two scenarios:
@@ -242,7 +242,7 @@ func resourceVcdEdgeBgpIpPrefixListDelete(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-func resourceVcdEdgeBgpIpPrefixListImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdEdgeBgpIpPrefixListImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.bgp_prefix_list_name")

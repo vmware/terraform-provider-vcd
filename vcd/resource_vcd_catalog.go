@@ -192,7 +192,7 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 	return nil
 }
 
-func resourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := genericResourceVcdCatalogRead(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -336,7 +336,7 @@ func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	return resourceVcdCatalogRead(ctx, d, meta)
 }
 
-func resourceVcdCatalogDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog delete started")
 
 	vcdClient := meta.(*VCDClient)
@@ -369,7 +369,7 @@ func resourceVcdCatalogDelete(ctx context.Context, d *schema.ResourceData, meta 
 //
 // Example import path (id): org_name.catalog_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog")

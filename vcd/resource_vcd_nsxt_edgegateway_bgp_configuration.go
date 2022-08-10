@@ -117,7 +117,7 @@ func resourceVcdEdgeBgpConfigCreateUpdate(ctx context.Context, d *schema.Resourc
 	return resourceVcdEdgeBgpConfigRead(ctx, d, meta)
 }
 
-func resourceVcdEdgeBgpConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdEdgeBgpConfigRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -142,7 +142,7 @@ func resourceVcdEdgeBgpConfigRead(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceVcdEdgeBgpConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdEdgeBgpConfigDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// Handling locks on for BGP configuration is conditional. There are two scenarios:
@@ -180,7 +180,7 @@ func resourceVcdEdgeBgpConfigDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVcdEdgeBgpConfigImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdEdgeBgpConfigImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway BGP Configuration import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

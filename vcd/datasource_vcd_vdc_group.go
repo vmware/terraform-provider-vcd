@@ -167,7 +167,7 @@ func datasourceVdcGroup() *schema.Resource {
 	}
 }
 
-func datasourceVcdVdcGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdVdcGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)

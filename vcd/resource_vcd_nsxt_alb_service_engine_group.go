@@ -152,7 +152,7 @@ func resourceVcdAlbServiceEngineGroupUpdate(ctx context.Context, d *schema.Resou
 	return resourceVcdAlbServiceEngineGroupRead(ctx, d, meta)
 }
 
-func resourceVcdAlbServiceEngineGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbServiceEngineGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("this resource is only supported for Providers")
@@ -187,7 +187,7 @@ func resourceVcdAlbServiceEngineGroupRead(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-func resourceVcdAlbServiceEngineGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbServiceEngineGroupDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -207,7 +207,7 @@ func resourceVcdAlbServiceEngineGroupDelete(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceVcdAlbServiceEngineGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbServiceEngineGroupImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return nil, fmt.Errorf("this resource is only supported for Providers")

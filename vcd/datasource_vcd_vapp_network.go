@@ -1,12 +1,14 @@
 package vcd
 
 import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdVappNetwork() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVappNetworkRead,
+		ReadContext: datasourceVappNetworkRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -135,6 +137,6 @@ func datasourceVcdVappNetwork() *schema.Resource {
 	}
 }
 
-func datasourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVappNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVappNetworkRead(d, meta, "datasource")
 }

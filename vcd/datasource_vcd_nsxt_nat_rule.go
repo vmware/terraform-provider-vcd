@@ -95,7 +95,7 @@ func datasourceVcdNsxtNatRule() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxtNatRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtNatRuleRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)

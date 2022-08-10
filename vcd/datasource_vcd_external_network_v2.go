@@ -1,7 +1,8 @@
 package vcd
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -11,7 +12,7 @@ import (
 
 func datasourceVcdExternalNetworkV2() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdExternalNetworkV2Read,
+		ReadContext: datasourceVcdExternalNetworkV2Read,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -74,7 +75,7 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 	}
 }
 
-func datasourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdExternalNetworkV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 data source read initiated")
 
@@ -82,10 +83,14 @@ func datasourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}
 
 	extNet, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, name)
 	if err != nil {
-		return fmt.Errorf("could not find external network V2 by name '%s': %s", name, err)
+		return diag.Errorf("could not find external network V2 by name '%s': %s", name, err)
 	}
 
 	d.SetId(extNet.ExternalNetwork.ID)
 
-	return setExternalNetworkV2Data(d, extNet.ExternalNetwork, vcdClient)
+	err = setExternalNetworkV2Data(d, extNet.ExternalNetwork)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

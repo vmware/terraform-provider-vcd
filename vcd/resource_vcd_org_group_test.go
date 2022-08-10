@@ -199,7 +199,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				ResourceName:      "vcd_org_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(testConfig, "ship_crew"),
+				ImportStateIdFunc: importStateIdOrgObject("ship_crew"),
 			},
 		},
 	})

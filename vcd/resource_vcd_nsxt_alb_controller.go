@@ -104,7 +104,7 @@ func resourceVcdAlbControllerUpdate(ctx context.Context, d *schema.ResourceData,
 	return resourceVcdAlbControllerRead(ctx, d, meta)
 }
 
-func resourceVcdAlbControllerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbControllerRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -125,7 +125,7 @@ func resourceVcdAlbControllerRead(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceVcdAlbControllerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbControllerDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("this resource is only supported for Providers")
@@ -144,7 +144,7 @@ func resourceVcdAlbControllerDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVcdAlbControllerImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbControllerImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return nil, fmt.Errorf("this resource is only supported for Providers")

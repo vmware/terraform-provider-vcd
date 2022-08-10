@@ -311,7 +311,7 @@ var (
 	testConfig TestConfig
 
 	// Enables the short test (used by "make test")
-	vcdShortTest bool = os.Getenv("VCD_SHORT_TEST") != ""
+	vcdShortTest = os.Getenv("VCD_SHORT_TEST") != ""
 
 	// Keeps track of test artifact names, to avoid duplicates
 	testArtifactNames = make(map[string]string)
@@ -457,7 +457,7 @@ func templateFill(tmpl string, data StringMap) string {
 	if vcdSkipTemplateWriting {
 		TemplateWriting = false
 	}
-	var writeStr []byte = buf.Bytes()
+	var writeStr = buf.Bytes()
 
 	// This is a quick way of enabling an alternate testing mode:
 	// When REMOVE_ORG_VDC_FROM_TEMPLATE is set, the terraform
@@ -1054,7 +1054,7 @@ func importStateIdTopHierarchy(objectName string) resource.ImportStateIdFunc {
 }
 
 // Used by all entities that depend on Org (such as Catalog, OrgUser)
-func importStateIdOrgObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+func importStateIdOrgObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1066,7 +1066,7 @@ func importStateIdOrgObject(vcd TestConfig, objectName string) resource.ImportSt
 }
 
 // Used by all entities that depend on Org + VDC (such as Vapp, networks, edge gateway)
-func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+func importStateIdOrgVdcObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1081,7 +1081,7 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 
 // importStateIdOrgNsxtVdcObject can be used by all entities that depend on Org + NSX-T VDC (such as Vapp, networks,
 // edge gateway) in NSX-T VDC
-func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+func importStateIdOrgNsxtVdcObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1096,7 +1096,7 @@ func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.I
 
 // importStateIdOrgNsxtVdcGroupObject can be used by all entities that depend on Org + NSX-T VDC
 // Group (such as Vapp, networks, edge gateway) in NSX-T VDC
-func importStateIdOrgNsxtVdcGroupObject(vcd TestConfig, vdcGroupName, objectName string) resource.ImportStateIdFunc {
+func importStateIdOrgNsxtVdcGroupObject(vdcGroupName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1110,7 +1110,7 @@ func importStateIdOrgNsxtVdcGroupObject(vcd TestConfig, vdcGroupName, objectName
 }
 
 // importStateIdNsxtManagerObject can be used by all entities that depend on NSX-T manager name + objectName
-func importStateIdNsxtManagerObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+func importStateIdNsxtManagerObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.Nsxt.Manager == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1120,7 +1120,7 @@ func importStateIdNsxtManagerObject(vcd TestConfig, objectName string) resource.
 }
 
 // Used by all entities that depend on Org + Catalog (such as catalog item, media item)
-func importStateIdOrgCatalogObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+func importStateIdOrgCatalogObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.VCD.Catalog.Name == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1134,7 +1134,7 @@ func importStateIdOrgCatalogObject(vcd TestConfig, objectName string) resource.I
 }
 
 // Used by all entities that depend on Org + VDC + vApp (such as VM, vapp networks)
-func importStateIdVappObject(vcd TestConfig, vappName, objectName string) resource.ImportStateIdFunc {
+func importStateIdVappObject(vappName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappName == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1150,7 +1150,7 @@ func importStateIdVappObject(vcd TestConfig, vappName, objectName string) resour
 }
 
 // Used by all entities that depend on Org + VDC + edge gateway (such as FW, LB, NAT)
-func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+func importStateIdEdgeGatewayObject(edgeGatewayName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
@@ -1166,7 +1166,7 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 }
 
 // importStateIdNsxtEdgeGatewayObject used by all entities that depend on Org + NSX-T VDC + edge gateway (such as FW, NAT, Security Groups)
-func importStateIdNsxtEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+func importStateIdNsxtEdgeGatewayObject(edgeGatewayName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || edgeGatewayName == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path for object %s, %s,%s,%s", objectName, testConfig.VCD.Org, testConfig.Nsxt.Vdc, edgeGatewayName)

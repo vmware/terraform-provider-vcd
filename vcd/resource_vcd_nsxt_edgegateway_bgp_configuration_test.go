@@ -150,7 +150,7 @@ func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway_bgp_configuration.testing",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, testConfig.Nsxt.EdgeGateway),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig.Nsxt.EdgeGateway),
 			},
 			{
 				// Changing some timer values
@@ -381,7 +381,7 @@ func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 				ResourceName:      "vcd_nsxt_edgegateway_bgp_configuration.testing",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(t.Name()),
 			},
 			{
 				Config: configText5,

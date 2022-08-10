@@ -316,7 +316,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 				ResourceName:            resourceAddressVdcGroup,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgObject(testConfig, params["NameUpdated"].(string)),
+				ImportStateIdFunc:       importStateIdOrgObject(params["NameUpdated"].(string)),
 				ImportStateVerifyIgnore: []string{"starting_vdc_id"},
 			},
 			// for clean destroy, otherwise randomly fail due choose wrong connection

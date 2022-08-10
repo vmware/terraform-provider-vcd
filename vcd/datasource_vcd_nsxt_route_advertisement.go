@@ -39,7 +39,7 @@ func datasourceVcdNsxtRouteAdvertisement() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxtRouteAdvertisementRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtRouteAdvertisementRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	edgeGatewayID := d.Get("edge_gateway_id").(string)

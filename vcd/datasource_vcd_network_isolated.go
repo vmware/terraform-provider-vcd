@@ -141,7 +141,7 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkIsolatedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -153,5 +153,5 @@ func datasourceVcdNetworkIsolatedRead(c context.Context, d *schema.ResourceData,
 		logForScreen("vcd_network_isolated", "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkIsolatedRead(c, d, meta, "datasource")
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "datasource")
 }

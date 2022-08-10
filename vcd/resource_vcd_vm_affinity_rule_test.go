@@ -293,7 +293,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, data.name+"-update"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(data.name + "-update"),
 			},
 			// Tests import by ID
 			{

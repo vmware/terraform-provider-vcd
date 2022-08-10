@@ -96,7 +96,7 @@ func resourceVcdNetworkDirect() *schema.Resource {
 	}
 }
 
-func resourceVcdNetworkDirectCreate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkDirectCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -146,11 +146,11 @@ func resourceVcdNetworkDirectCreate(c context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error adding metadata to direct network: %s", err)
 	}
 
-	return resourceVcdNetworkDirectRead(c, d, meta)
+	return resourceVcdNetworkDirectRead(ctx, d, meta)
 }
 
-func resourceVcdNetworkDirectRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkDirectRead(c, d, meta, "resource")
+func resourceVcdNetworkDirectRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkDirectRead(ctx, d, meta, "resource")
 }
 
 func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
@@ -218,7 +218,7 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func resourceVcdNetworkDirectUpdate(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkDirectUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("update of a vcd_network_direct requires system administrator privileges")
@@ -243,7 +243,7 @@ func resourceVcdNetworkDirectUpdate(c context.Context, d *schema.ResourceData, m
 		return diag.Errorf("[direct network update] error updating network metadata: %s", err)
 	}
 
-	return resourceVcdNetworkDirectRead(c, d, meta)
+	return resourceVcdNetworkDirectRead(ctx, d, meta)
 }
 
 func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool, wanted string) (*govcd.OrgVDCNetwork, error) {

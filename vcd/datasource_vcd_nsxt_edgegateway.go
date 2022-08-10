@@ -112,7 +112,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T edge gateway datasource read initiated")
 
 	vcdClient := meta.(*VCDClient)

@@ -167,7 +167,7 @@ func resourceVcdNsxtAppPortProfileUpdate(ctx context.Context, d *schema.Resource
 	return resourceVcdNsxtAppPortProfileRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtAppPortProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -192,7 +192,7 @@ func resourceVcdNsxtAppPortProfileRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVcdNsxtAppPortProfileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtAppPortProfileDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -215,7 +215,7 @@ func resourceVcdNsxtAppPortProfileDelete(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtAppPortProfileImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
 	// There are two paths of possible import of differently scoped NSX-T Application Port Profiles

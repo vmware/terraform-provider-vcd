@@ -946,7 +946,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 		ResourceName:      def.resourceName + "." + networkName,
 		ImportState:       true,
 		ImportStateVerify: true,
-		ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, updateDef.name),
+		ImportStateIdFunc: importStateIdOrgVdcObject(updateDef.name),
 	})
 
 	// Don't convert this test to parallel, as it will cause IP ranges conflicts

@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"os"
 	"regexp"
 
@@ -284,17 +286,17 @@ func Provider() *schema.Provider {
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
 		},
-		ResourcesMap:   globalResourceMap,
-		DataSourcesMap: globalDataSourceMap,
-		ConfigureFunc:  providerConfigure,
+		ResourcesMap:         globalResourceMap,
+		DataSourcesMap:       globalDataSourceMap,
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
 
 	if err := validateProviderSchema(d); err != nil {
-		return nil, fmt.Errorf("[provider validation] :%s", err)
+		return nil, diag.Errorf("[provider validation] :%s", err)
 	}
 
 	// If sysOrg is defined, we use it for authentication.
@@ -325,19 +327,19 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		config.CustomAdfsRptId = d.Get("saml_adfs_rpt_id").(string)
 	case "token":
 		if config.Token == "" {
-			return nil, fmt.Errorf("empty token detected with 'auth_type' == 'token'")
+			return nil, diag.Errorf("empty token detected with 'auth_type' == 'token'")
 		}
 	case "api_token":
 		if config.ApiToken == "" {
-			return nil, fmt.Errorf("empty API token detected with 'auth_type' == 'api_token'")
+			return nil, diag.Errorf("empty API token detected with 'auth_type' == 'api_token'")
 		}
 	default:
 		if config.ApiToken != "" || config.Token != "" {
-			return nil, fmt.Errorf("to use a token, the appropriate 'auth_type' (either 'token' or 'api_token') must be set")
+			return nil, diag.Errorf("to use a token, the appropriate 'auth_type' (either 'token' or 'api_token') must be set")
 		}
 	}
 	if config.ApiToken != "" && config.Token != "" {
-		return nil, fmt.Errorf("only one of 'token' or 'api_token' should be set")
+		return nil, diag.Errorf("only one of 'token' or 'api_token' should be set")
 	}
 
 	// If the provider includes logging directives,
@@ -360,7 +362,11 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	} else {
 		ImportSeparator = d.Get("import_separator").(string)
 	}
-	return config.Client()
+	vcdClient, err := config.Client()
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+	return vcdClient, nil
 }
 
 // vcdSchemaFilter is a function which allows to filters and export type 'map[string]*schema.Resource' which may hold

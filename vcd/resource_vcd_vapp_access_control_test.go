@@ -143,7 +143,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 				ResourceName:      "vcd_vapp_access_control.AC-Vapp1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, "Vapp-AC-1"),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject("Vapp-AC-1"),
 			},
 			// Tests import by ID
 			{

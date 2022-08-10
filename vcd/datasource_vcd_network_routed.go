@@ -166,7 +166,7 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkRoutedRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNetworkRoutedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -178,5 +178,5 @@ func datasourceVcdNetworkRoutedRead(c context.Context, d *schema.ResourceData, m
 		logForScreen("vcd_network_routed", "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkRoutedRead(c, d, meta, "datasource")
+	return genericVcdNetworkRoutedRead(ctx, d, meta, "datasource")
 }

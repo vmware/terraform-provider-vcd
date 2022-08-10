@@ -111,7 +111,7 @@ func resourceRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta 
 	return genericRightsBundleRead(ctx, d, meta, "resource", "read")
 }
 
-func genericRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericRightsBundleRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	var rightsBundle *govcd.RightsBundle
@@ -259,7 +259,7 @@ func resourceRightsBundleUpdate(ctx context.Context, d *schema.ResourceData, met
 	return genericRightsBundleRead(ctx, d, meta, "resource", "update")
 }
 
-func resourceRightsBundleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRightsBundleDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	rightsBundleName := d.Get("name").(string)
@@ -284,7 +284,7 @@ func resourceRightsBundleDelete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceVcdRightsBundleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdRightsBundleImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 1 {
 		return nil, fmt.Errorf("resource name must be specified as rightsBundle-name")

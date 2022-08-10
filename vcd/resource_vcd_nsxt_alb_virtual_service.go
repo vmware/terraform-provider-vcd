@@ -165,7 +165,7 @@ func resourceVcdAlbVirtualServiceUpdate(ctx context.Context, d *schema.ResourceD
 	return resourceVcdAlbVirtualServiceRead(ctx, d, meta)
 }
 
-func resourceVcdAlbVirtualServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbVirtualServiceRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	albVirtualService, err := vcdClient.GetAlbVirtualServiceById(d.Id())
@@ -185,7 +185,7 @@ func resourceVcdAlbVirtualServiceRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVcdAlbVirtualServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbVirtualServiceDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -203,7 +203,7 @@ func resourceVcdAlbVirtualServiceDelete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceVcdAlbVirtualServiceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbVirtualServiceImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T ALB Virtual Service import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

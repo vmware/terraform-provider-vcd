@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,12 +16,12 @@ import (
 //lint:file-ignore SA1019 ignore deprecated functions
 func resourceVcdVmAffinityRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVmAffinityRuleCreate,
-		Read:   resourceVcdVmAffinityRuleRead,
-		Update: resourceVcdVmAffinityRuleUpdate,
-		Delete: resourceVcdVmAffinityRuleDelete,
+		CreateContext: resourceVcdVmAffinityRuleCreate,
+		ReadContext:   resourceVcdVmAffinityRuleRead,
+		UpdateContext: resourceVcdVmAffinityRuleUpdate,
+		DeleteContext: resourceVcdVmAffinityRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdVmAffinityRuleImport,
+			StateContext: resourceVcdVmAffinityRuleImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -141,27 +143,27 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 }
 
 // resourceVcdVmAffinityRuleCreate creates a VM affinity rule from the definition in the resource data
-func resourceVcdVmAffinityRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVmAffinityRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] VM affinity rule creation")
 
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	vmAffinityRuleDef, err := resourceToAffinityRule(d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vmAffinityRule, err := vdc.CreateVmAffinityRule(vmAffinityRuleDef)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId(vmAffinityRule.VmAffinityRule.ID)
 
-	return resourceVcdVmAffinityRuleRead(d, meta)
+	return resourceVcdVmAffinityRuleRead(ctx, d, meta)
 }
 
 // getVmAffinityRule searches a VM affinity rule using the data passed in the resource
@@ -210,12 +212,12 @@ func getVmAffinityRule(d *schema.ResourceData, meta interface{}) (*govcd.VmAffin
 }
 
 // resourceVcdVmAffinityRuleRead reads a resource VM affinity rule
-func resourceVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVmAffinityRuleRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmAffinityRuleRead(d, meta, "resource")
 }
 
 // genericVcdVmAffinityRuleRead retrieve an affinity rule using the resource or data source data
-func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, origin string) error {
+func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] VM affinity rule Read")
 
 	name := d.Get("name").(string)
@@ -226,7 +228,7 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VM affinity rule read] error retrieving VM affinity rule %s: %s", name, err)
+		return diag.Errorf("[VM affinity rule read] error retrieving VM affinity rule %s: %s", name, err)
 	}
 
 	dSet(d, "name", vmAffinityRule.VmAffinityRule.Name)
@@ -245,7 +247,7 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 	endpointVmSet := convertStringsToTypeSet(endpointVMs)
 	err = d.Set("vm_ids", endpointVmSet)
 	if err != nil {
-		return fmt.Errorf("[VM affinity rule read] error setting the list of VM IDs: %s ", err)
+		return diag.Errorf("[VM affinity rule read] error setting the list of VM IDs: %s ", err)
 	}
 
 	d.SetId(vmAffinityRule.VmAffinityRule.ID)
@@ -254,11 +256,11 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 }
 
 // resourceVcdVmAffinityRuleUpdate updates a VM affinity rule, including changing its name
-func resourceVcdVmAffinityRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVmAffinityRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] VM affinity rule Update")
 	vmAffinityRuleDef, err := resourceToAffinityRule(d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	vmAffinityRule, err := getVmAffinityRule(d, meta)
@@ -267,7 +269,7 @@ func resourceVcdVmAffinityRuleUpdate(d *schema.ResourceData, meta interface{}) e
 		return nil
 	}
 	if vmAffinityRuleDef.Polarity != vmAffinityRule.VmAffinityRule.Polarity {
-		return fmt.Errorf("[VM affinity rule update] polarity cannot be changed")
+		return diag.Errorf("[VM affinity rule update] polarity cannot be changed")
 	}
 	vmAffinityRule.VmAffinityRule.Name = vmAffinityRuleDef.Name
 	vmAffinityRule.VmAffinityRule.IsMandatory = vmAffinityRuleDef.IsMandatory
@@ -276,20 +278,24 @@ func resourceVcdVmAffinityRuleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	err = vmAffinityRule.Update()
 	if err != nil {
-		return fmt.Errorf("[VM affinity rule update] error running the update: %s", err)
+		return diag.Errorf("[VM affinity rule update] error running the update: %s", err)
 	}
 
-	return resourceVcdVmAffinityRuleRead(d, meta)
+	return resourceVcdVmAffinityRuleRead(ctx, d, meta)
 }
 
 // resourceVcdVmAffinityRuleDelete removes a VM affinity rule
-func resourceVcdVmAffinityRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVmAffinityRuleDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] VM affinity rule Delete")
 	vmAffinityRule, err := getVmAffinityRule(d, meta)
 	if err != nil {
-		return fmt.Errorf("[VM affinity rule delete] error retrieving VM affinity rule %s: %s", d.Get("name"), err)
+		return diag.Errorf("[VM affinity rule delete] error retrieving VM affinity rule %s: %s", d.Get("name"), err)
 	}
-	return vmAffinityRule.Delete()
+	err = vmAffinityRule.Delete()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 // resourceVcdVmAffinityRuleImport is responsible for importing a VM affinity rule into state
@@ -311,7 +317,7 @@ func resourceVcdVmAffinityRuleDelete(d *schema.ResourceData, meta interface{}) e
 // (3)
 //  terraform import vcd_vm_affinity_rule.unknown list@my-org.my-vdc.any_string
 // Returns an error with all the VM affinity rules (name + ID for each)
-func resourceVcdVmAffinityRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdVmAffinityRuleImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[VM affinity rule import] resource identifier must be specified as org.vdc.my-affinity-rule")

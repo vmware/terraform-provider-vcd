@@ -134,7 +134,7 @@ func TestAccVcdDistributedFirewall(t *testing.T) {
 				ResourceName:      "vcd_nsxt_distributed_firewall.t1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdOrgObject(t.Name()),
 			},
 			{
 				Config: configText4,
