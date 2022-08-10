@@ -5,6 +5,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -43,7 +44,6 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	datasourceCatalogVappTemplate := "data.vcd_catalog_vapp_template." + testSuiteCatalogOVAItem
 	resourceCatalogVappTemplate := "vcd_catalog_vapp_template." + TestCatalogVappTemplateDS
 	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem // Deprecated
-	resourceCatalogItem := "vcd_catalog_item." + TestCatalogVappTemplateDS      // Deprecated
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t, params) },
@@ -53,22 +53,19 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_vapp_template."+TestCatalogVappTemplateDS),
+					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+TestCatalogVappTemplateDS),
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "name", TestCatalogVappTemplateDS),
-					resource.TestCheckResourceAttrPair(datasourceCatalog, "name", resourceCatalogItem, "catalog"),
+					resource.TestCheckResourceAttrPair(datasourceCatalog, "name", resourceCatalogVappTemplate, "catalog"),
 
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestCatalogVappTemplateDS),        // Deprecated
-					resource.TestCheckResourceAttr(resourceCatalogItem, "name", TestCatalogVappTemplateDS), // Deprecated
-
-					// The description of the new catalog item was created using
-					// the ID of the catalog item data source
+					// The description of the new catalog item was created using the ID of the catalog item data source
+					resource.TestMatchResourceAttr(datasourceCatalogVappTemplate, "id", regexp.MustCompile(`urn:vcloud:vapptemplate:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "id", resourceCatalogVappTemplate, "description"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogItem, "id", resourceCatalogItem, "description"), // Deprecated
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "name", datasourceCatalogItem, "name"), // Deprecated
+					resource.TestCheckResourceAttrSet(datasourceCatalogItem, "id"), // Deprecated
+					resource.TestCheckResourceAttrPair(datasourceCatalogItem, "name", resourceCatalogVappTemplate, "name"), // Deprecated
 
-					resource.TestCheckResourceAttr(resourceCatalogItem, "metadata.key1", "value1"),
-					resource.TestCheckResourceAttr(resourceCatalogItem, "metadata.key2", "value2"),
-					resource.TestCheckResourceAttr(resourceCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata"),   // Deprecated
-					resource.TestCheckResourceAttr(resourceCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"), // Deprecated
+					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key1", "value1"),
+					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key2", "value2"),
 				),
 			},
 			{ // Deprecated
@@ -84,7 +81,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(TestCatalogVappTemplateDS),
-				// These fields can't be retrieved from catalog item data
+				// These fields can't be retrieved from vApp Template data
 				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size", "show_upload_progress"},
 			},
 		},
@@ -130,29 +127,12 @@ data "vcd_catalog_vapp_template" "{{.VAppTemplate}}" {
   name    = "{{.VAppTemplate}}"
 }
 
-# Deprecated datasource. It's here to avoid regressions
-resource "vcd_catalog_item" "{{.NewVappTemplate}}" {
-  org     = "{{.Org}}"
-  catalog = data.vcd_catalog.{{.Catalog}}.name
-
-  name                 = "{{.NewVappTemplate}}"
-  description          = data.vcd_catalog_item.{{.VAppTemplate}}.id
-  ova_path             = "{{.OvaPath}}"
-  upload_piece_size    = {{.UploadPieceSize}}
-  show_upload_progress = "{{.UploadProgress}}"
-
-  metadata = {
-    catalogItem_metadata = "catalogItem Metadata"
-    catalogItem_metadata2 = "catalogItem Metadata2"
-  }
-}
-
 resource "vcd_catalog_vapp_template" "{{.NewVappTemplate}}" {
   org     = "{{.Org}}"
   catalog = data.vcd_catalog.{{.Catalog}}.name
 
   name                 = "{{.NewVappTemplate}}"
-  description          = data.vcd_catalog_item.{{.VAppTemplate}}.id
+  description          = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"

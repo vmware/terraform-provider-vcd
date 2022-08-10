@@ -113,7 +113,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 		return diagError
 	}
 
-	vAppTemplate, err := catalog.GetVappTemplateByName(vappTemplateName, true)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(vappTemplateName, true)
 	if err != nil {
 		return diag.Errorf("error retrieving vApp Template %s: %s", vappTemplateName, err)
 	}
@@ -195,7 +195,7 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 	}
 
 	vAppTemplateName := d.Get("name").(string)
-	vAppTemplate, err := catalog.GetVappTemplateByName(vAppTemplateName, false)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vApp Template. Removing from tfstate")
 		return diag.Errorf("unable to find vApp Template %s", vAppTemplateName)
@@ -207,7 +207,7 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 		return diag.Errorf("error removing vApp Template %s", err)
 	}
 
-	_, err = catalog.GetVappTemplateByName(vAppTemplateName, true)
+	_, err = catalog.GetVAppTemplateByName(vAppTemplateName, true)
 	if err == nil {
 		return diag.Errorf("vApp Template %s still found after deletion", vAppTemplateName)
 	}
@@ -250,7 +250,7 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	vAppTemplate, err := catalog.GetVappTemplateByName(vAppTemplateName, false)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName, false)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}

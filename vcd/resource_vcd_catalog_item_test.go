@@ -77,7 +77,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
+					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						resourceCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
@@ -95,7 +95,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
+					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
@@ -118,7 +118,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
+					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "name", TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
@@ -141,7 +141,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
+					testAccCheckVcdVAppTemplateExists("vcd_catalog_item."+TestAccVcdCatalogItemFromUrl),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItemFromUrl, "name", TestAccVcdCatalogItemFromUrlUpdated),
 					resource.TestCheckResourceAttr(
@@ -178,7 +178,7 @@ func checkOvaPath(t *testing.T) {
 	}
 }
 
-func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
+func testAccCheckVcdVAppTemplateExists(itemName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		catalogItemRs, ok := s.RootModule().Resources[itemName]
 		if !ok {
@@ -201,9 +201,9 @@ func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
 		}
 
-		_, err = catalog.GetCatalogItemByName(catalogItemRs.Primary.Attributes["name"], false)
+		_, err = catalog.GetVAppTemplateByName(catalogItemRs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("catalog item %s does not exist (%s)", catalogItemRs.Primary.ID, err)
+			return fmt.Errorf("vApp Template %s does not exist (%s)", catalogItemRs.Primary.ID, err)
 		}
 
 		return nil

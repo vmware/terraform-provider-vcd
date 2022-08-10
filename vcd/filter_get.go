@@ -96,7 +96,7 @@ func getVappTemplateByFilter(catalog *govcd.Catalog, filter interface{}, isSysAd
 		return nil, err
 	}
 
-	vAppTemplate, err := catalog.GetVappTemplateByName(queryItem.GetName(), false)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(queryItem.GetName(), false)
 	if err != nil {
 		return nil, fmt.Errorf("[getVappTemplateByFilter] error retrieving vApp Template %s: %s", queryItem.GetName(), err)
 	}

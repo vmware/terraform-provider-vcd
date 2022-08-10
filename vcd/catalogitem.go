@@ -149,7 +149,7 @@ func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	}
 	// No filter: we continue with single item  GET
 
-	vAppTemplate, err = catalog.GetVappTemplateByNameOrId(identifier, false)
+	vAppTemplate, err = catalog.GetVAppTemplateByNameOrId(identifier, false)
 	if govcd.IsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] Unable to find vApp Template %s. Removing from tfstate", identifier)
 		d.SetId("")
