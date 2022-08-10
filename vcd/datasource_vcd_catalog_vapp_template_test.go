@@ -46,7 +46,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem // Deprecated
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t, params) },
+		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      catalogItemDestroyed(testSuiteCatalogName, TestCatalogVappTemplateDS),
 		Steps: []resource.TestStep{
@@ -61,8 +61,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 					resource.TestMatchResourceAttr(datasourceCatalogVappTemplate, "id", regexp.MustCompile(`urn:vcloud:vapptemplate:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "id", resourceCatalogVappTemplate, "description"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate, "name", datasourceCatalogItem, "name"), // Deprecated
-					resource.TestCheckResourceAttrSet(datasourceCatalogItem, "id"), // Deprecated
-					resource.TestCheckResourceAttrPair(datasourceCatalogItem, "name", resourceCatalogVappTemplate, "name"), // Deprecated
+					resource.TestCheckResourceAttrSet(datasourceCatalogItem, "id"),                                           // Deprecated
 
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key1", "value1"),
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key2", "value2"),

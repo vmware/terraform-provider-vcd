@@ -5,7 +5,6 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -19,6 +18,7 @@ var TestAccVcdCatalogItemDescriptionFromUrl = "TestAccVcdCatalogItemBasicDescrip
 var TestAccVcdCatalogItemFromUrlUpdated = "TestAccVcdCatalogItemBasicFromUrlUpdated"
 var TestAccVcdCatalogItemDescriptionFromUrlUpdated = "TestAccVcdCatalogItemBasicDescriptionFromUrlUpdated"
 
+// Deprecated
 func TestAccVcdCatalogItemBasic(t *testing.T) {
 	preTestChecks(t)
 
@@ -70,7 +70,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 
 	resourceCatalogItem := "vcd_catalog_item." + TestAccVcdCatalogItem
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t, params) },
+		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
@@ -159,55 +159,6 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
-}
-
-func preRunChecks(t *testing.T, params StringMap) {
-	checkOvaPath(t)
-}
-
-func checkOvaPath(t *testing.T) {
-	file, err := os.Stat(testConfig.Ova.OvaPath)
-	if err != nil {
-		t.Fatal("configured catalog item issue. Configured: ", testConfig.Ova.OvaPath, err)
-	}
-	if os.IsNotExist(err) {
-		t.Fatal("configured catalog item isn't found. Configured: ", testConfig.Ova.OvaPath)
-	}
-	if file.IsDir() {
-		t.Fatal("configured catalog item is dir and not a file. Configured: ", testConfig.Ova.OvaPath)
-	}
-}
-
-func testAccCheckVcdVAppTemplateExists(itemName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		catalogItemRs, ok := s.RootModule().Resources[itemName]
-		if !ok {
-			return fmt.Errorf("not found: %s", itemName)
-		}
-
-		if catalogItemRs.Primary.ID == "" {
-			return fmt.Errorf("no catalog item ID is set")
-		}
-
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		org, err := conn.GetOrgByName(testConfig.VCD.Org)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
-		}
-
-		catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
-		if err != nil {
-			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
-		}
-
-		_, err = catalog.GetVAppTemplateByName(catalogItemRs.Primary.Attributes["name"], false)
-		if err != nil {
-			return fmt.Errorf("vApp Template %s does not exist (%s)", catalogItemRs.Primary.ID, err)
-		}
-
-		return nil
-	}
 }
 
 func testAccCheckCatalogItemDestroy(s *terraform.State) error {
