@@ -69,6 +69,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resourceVAppTemplate := "vcd_catalog_vapp_template." + TestAccVcdVAppTemplate
+	resourceVAppTemplateFromUrl := "vcd_catalog_vapp_template." + TestAccVcdVAppTemplateFromUrl
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
@@ -77,7 +78,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+TestAccVcdVAppTemplate),
+					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplate, "name", TestAccVcdVAppTemplate),
 					resource.TestCheckResourceAttr(
@@ -91,49 +92,49 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+TestAccVcdVAppTemplate),
+					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplate, "name", TestAccVcdVAppTemplate),
+						resourceVAppTemplate, "name", TestAccVcdVAppTemplate),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplate, "description", TestAccVcdVAppTemplateDescription),
+						resourceVAppTemplate, "description", TestAccVcdVAppTemplateDescription),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
+						resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2 v2"),
+						resourceVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2 v2"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplate, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+						resourceVAppTemplate, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
 				),
 			},
 			{
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+TestAccVcdVAppTemplateFromUrl),
+					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrl),
+						resourceVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "description", TestAccVcdVAppTemplateDescriptionFromUrl),
+						resourceVAppTemplateFromUrl, "description", TestAccVcdVAppTemplateDescriptionFromUrl),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
+						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
+						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
 				),
 			},
 			{
 				SkipFunc: func() (bool, error) { return skipOnVcd1020, nil },
 				Config:   fromUrlConfigTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+TestAccVcdVAppTemplateFromUrl),
+					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrlUpdated),
+						resourceVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrlUpdated),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "description", TestAccVcdVAppTemplateDescriptionFromUrlUpdated),
+						resourceVAppTemplateFromUrl, "description", TestAccVcdVAppTemplateDescriptionFromUrlUpdated),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
+						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
+						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
 				),
 			},
 		},
