@@ -8,8 +8,7 @@ import (
 
 func datasourceVcdCatalogVappTemplate() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "Use vcd_catalog_vapp_template instead",
-		ReadContext:        dataSourceVcdCatalogItemRead,
+		ReadContext:        datasourceVcdCatalogVappTemplateRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -67,6 +66,6 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 	}
 }
 
-func dataSourceVcdCatalogItemRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdCatalogItemRead(d, meta, "datasource")
+func datasourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "datasource")
 }
