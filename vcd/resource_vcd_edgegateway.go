@@ -531,35 +531,37 @@ func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*
 // This structure is documented below.
 //
 // <GatewayInterface>						<---- maps directly to `external_network` block
-// 	<Name>test_external_network</Name>
-// 	<DisplayName>test_external_network</DisplayName>
-// 	<Network href="...." id="urn:vcloud:network:144bafa4-7cbe-44de-a647-e6e045b7b8c5" type="application/vnd.vmware.admin.network+xml" name="test_external_network"></Network>
-// 	<InterfaceType>uplink</InterfaceType>
-// 	<SubnetParticipation>					<----- maps to nested `subnet` block(s) inside `external_network`
-// 		<Gateway>192.168.30.49</Gateway>
-// 		<Netmask>255.255.255.240</Netmask>
-// 		<IpAddress>192.168.30.51</IpAddress>
-// 		<IpRanges>							<----- maps to `suballocate_pool` block(s) inside `subnet`
-// 			<IpRange>
-// 				<StartAddress>192.168.30.53</StartAddress>
-// 				<EndAddress>192.168.30.55</EndAddress>
-// 			</IpRange>
-// 			<IpRange>
-// 				<StartAddress>192.168.30.58</StartAddress>
-// 				<EndAddress>192.168.30.60</EndAddress>
-// 			</IpRange>
-// 		</IpRanges>
-// 		<UseForDefaultRoute>true</UseForDefaultRoute>
-// 	</SubnetParticipation>
-// 	<SubnetParticipation>				    <---- simple `subnet` block without suballocated pools and automatic IP assignment
-// 		<Gateway>292.168.30.49</Gateway>
-// 		<Netmask>255.255.255.240</Netmask>
-// 		<UseForDefaultRoute>true</UseForDefaultRoute>
-// 	</SubnetParticipation>
-// 	<ApplyRateLimit>true</ApplyRateLimit>
-// 	<InRateLimit>100</InRateLimit>
-// 	<OutRateLimit>100</OutRateLimit>
-// 	<UseForDefaultRoute>true</UseForDefaultRoute>
+//
+//	<Name>test_external_network</Name>
+//	<DisplayName>test_external_network</DisplayName>
+//	<Network href="...." id="urn:vcloud:network:144bafa4-7cbe-44de-a647-e6e045b7b8c5" type="application/vnd.vmware.admin.network+xml" name="test_external_network"></Network>
+//	<InterfaceType>uplink</InterfaceType>
+//	<SubnetParticipation>					<----- maps to nested `subnet` block(s) inside `external_network`
+//		<Gateway>192.168.30.49</Gateway>
+//		<Netmask>255.255.255.240</Netmask>
+//		<IpAddress>192.168.30.51</IpAddress>
+//		<IpRanges>							<----- maps to `suballocate_pool` block(s) inside `subnet`
+//			<IpRange>
+//				<StartAddress>192.168.30.53</StartAddress>
+//				<EndAddress>192.168.30.55</EndAddress>
+//			</IpRange>
+//			<IpRange>
+//				<StartAddress>192.168.30.58</StartAddress>
+//				<EndAddress>192.168.30.60</EndAddress>
+//			</IpRange>
+//		</IpRanges>
+//		<UseForDefaultRoute>true</UseForDefaultRoute>
+//	</SubnetParticipation>
+//	<SubnetParticipation>				    <---- simple `subnet` block without suballocated pools and automatic IP assignment
+//		<Gateway>292.168.30.49</Gateway>
+//		<Netmask>255.255.255.240</Netmask>
+//		<UseForDefaultRoute>true</UseForDefaultRoute>
+//	</SubnetParticipation>
+//	<ApplyRateLimit>true</ApplyRateLimit>
+//	<InRateLimit>100</InRateLimit>
+//	<OutRateLimit>100</OutRateLimit>
+//	<UseForDefaultRoute>true</UseForDefaultRoute>
+//
 // </GatewayInterface>
 func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema.Set) ([]*types.GatewayInterface, error) {
 	var gatewayInterfaceSlice []*types.GatewayInterface

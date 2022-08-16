@@ -169,7 +169,7 @@ func getVM(d *schema.ResourceData, meta interface{}) (*govcd.VM, *govcd.Org, err
 	return vm, org, nil
 }
 
-//update function for "eject_force"
+// update function for "eject_force"
 func resourceVcdMediaEjectUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	dSet(d, "eject_force", d.Get("eject_force"))
 	return nil
