@@ -526,7 +526,7 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 	return metadataMap
 }
 
-//resourceVcdVdcUpdate function updates resource with found configurations changes
+// resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC update initiated: %s", vdcName)

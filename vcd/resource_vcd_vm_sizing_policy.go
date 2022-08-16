@@ -298,7 +298,7 @@ func setVmSizingPolicy(_ context.Context, d *schema.ResourceData, policy types.V
 	return nil
 }
 
-//resourceVmSizingPolicyUpdate function updates resource with found configurations changes
+// resourceVmSizingPolicyUpdate function updates resource with found configurations changes
 func resourceVmSizingPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy update initiated: %s", policyName)

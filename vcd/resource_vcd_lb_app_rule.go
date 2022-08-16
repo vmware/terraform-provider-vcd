@@ -201,10 +201,12 @@ func getLBAppRuleType(d *schema.ResourceData) (*types.LbAppRule, error) {
 // HEREDOC syntax is helpful.
 // This terraform configuration
 // script = <<-EOT
-//   acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page
-//   acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2
-//   acl hello payload(0,6) -m bin 48656c6c6f0a
-//   EOT
+//
+//	acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page
+//	acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2
+//	acl hello payload(0,6) -m bin 48656c6c6f0a
+//	EOT
+//
 // is rendered as such API call
 // <script>acl en req.fhdr(accept-language),language(es;fr;en) -m str en\nuse_backend english if en</script>
 func setLBAppRuleData(d *schema.ResourceData, LBRule *types.LbAppRule) error {
