@@ -12,7 +12,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -534,7 +533,7 @@ func getConfigStruct(config string) TestConfig {
 	if config == "" {
 		panic(fmt.Errorf("configuration file %s not found", config))
 	}
-	jsonFile, err := ioutil.ReadFile(config)
+	jsonFile, err := os.ReadFile(config)
 	if err != nil {
 		panic(fmt.Errorf("could not read config file %s: %v", config, err))
 	}

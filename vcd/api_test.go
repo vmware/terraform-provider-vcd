@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -155,7 +154,7 @@ func getVersionFromFile(fileName string) (string, error) {
 	}
 
 	// Reads the version from the file
-	versionText, err := ioutil.ReadFile(versionFile)
+	versionText, err := os.ReadFile(versionFile)
 	if err != nil {
 		return "", fmt.Errorf("could not read file %s: %v", versionFile, err)
 	}
