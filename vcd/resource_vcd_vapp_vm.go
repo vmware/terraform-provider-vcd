@@ -1135,7 +1135,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	}
 
 	log.Printf("[DEBUG] [VM create] finished")
-	return nil
+	return genericVcdVmRead(d, meta, "create")
 }
 
 func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
