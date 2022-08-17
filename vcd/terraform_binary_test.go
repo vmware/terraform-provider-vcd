@@ -5,7 +5,6 @@ package vcd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -34,7 +33,7 @@ func restoreEnvValues() {
 
 // Reads a file and returns its contents as a string
 func readFile(filename string) (string, error) {
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +45,7 @@ func TestCustomTemplates(t *testing.T) {
 	// do not add pre/post checks
 	var binaryTestList []string
 
-	fileList, err := ioutil.ReadDir(customTemplatesDirectory)
+	fileList, err := os.ReadDir(customTemplatesDirectory)
 	if err != nil {
 		t.Skip("could not read files from " + customTemplatesDirectory)
 	}

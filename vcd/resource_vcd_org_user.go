@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"io/ioutil"
+	"os"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -213,7 +214,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	}
 
 	if passwordFile != "" {
-		passwordBytes, err := ioutil.ReadFile(passwordFile)
+		passwordBytes, err := os.ReadFile(passwordFile)
 		if err != nil {
 			return nil, nil, err
 		}

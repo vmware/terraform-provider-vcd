@@ -309,13 +309,19 @@ func resourceVcdVmAffinityRuleDelete(_ context.Context, d *schema.ResourceData, 
 //
 // examples:
 // (1)
-//  terraform import vcd_vm_affinity_rule.unknown my-org.my-vdc.my-afr
+//
+//	terraform import vcd_vm_affinity_rule.unknown my-org.my-vdc.my-afr
+//
 // if the name is unique, import is executed. If it is not, an error with the IDs of the rules named "my-afr" is returned
 // (2)
-//  terraform import vcd_vm_affinity_rule.unknown my-org.my-vdc.cf73a7aa-ddd2-4d11-aca6-1917816065cc
+//
+//	terraform import vcd_vm_affinity_rule.unknown my-org.my-vdc.cf73a7aa-ddd2-4d11-aca6-1917816065cc
+//
 // If the ID is valid, the import gets performed
 // (3)
-//  terraform import vcd_vm_affinity_rule.unknown list@my-org.my-vdc.any_string
+//
+//	terraform import vcd_vm_affinity_rule.unknown list@my-org.my-vdc.any_string
+//
 // Returns an error with all the VM affinity rules (name + ID for each)
 func resourceVcdVmAffinityRuleImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

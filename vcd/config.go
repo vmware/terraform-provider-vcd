@@ -217,6 +217,7 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 
 // lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
 // Parent means the resource belongs to the VM being locked
+//
 //lint:ignore U1000 For future use
 func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
@@ -704,7 +705,8 @@ func buildUserAgent(version, sysOrg string) string {
 //
 // To display its content at run time, you should run the command below in a separate
 // terminal screen while `terraform apply` is running
-//     tail -f go-vcloud-director.log | grep '\[SCREEN\]'
+//
+//	tail -f go-vcloud-director.log | grep '\[SCREEN\]'
 func logForScreen(origin, msg string) {
 	util.Logger.Printf("[SCREEN] {%s} %s\n", origin, msg)
 }
