@@ -6,7 +6,7 @@ package vcd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -85,7 +85,7 @@ func createSystemTemporaryVCDConnection() *VCDClient {
 	if configFileName == "" {
 		panic(fmt.Errorf("configuration file %s not found", configFileName))
 	}
-	jsonFile, err := ioutil.ReadFile(configFileName)
+	jsonFile, err := os.ReadFile(configFileName)
 	if err != nil {
 		panic(fmt.Errorf("could not read config file %s: %v", configFileName, err))
 	}

@@ -5,7 +5,6 @@ package vcd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -32,7 +31,7 @@ func TestProviderVersion(t *testing.T) {
 		panic("Could not find index.html.markdown file")
 	}
 
-	indexText, err := ioutil.ReadFile(indexFile)
+	indexText, err := os.ReadFile(indexFile)
 	if err != nil {
 		panic(fmt.Errorf("could not read index file %s: %v", indexFile, err))
 	}
@@ -325,7 +324,7 @@ func TestDocsNames(t *testing.T) {
 			continue
 		}
 
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		if err != nil {
 			t.Errorf("error retrieving files from %s", dir)
 			continue
