@@ -4,8 +4,9 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
@@ -179,11 +180,6 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 func resourceVcdExternalNetworkV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 creation initiated")
-
-	err := externalNetworkV2ValidateApiVersionFeatures(d, vcdClient)
-	if err != nil {
-		return diag.Errorf("%s", err)
-	}
 
 	netType, err := getExternalNetworkV2Type(vcdClient, d, "")
 	if err != nil {
@@ -546,13 +542,5 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 		return fmt.Errorf("unrecognized network backing type: %s", net.NetworkBackings.Values[0].BackingType)
 	}
 
-	return nil
-}
-
-func externalNetworkV2ValidateApiVersionFeatures(d *schema.ResourceData, vcdClient *VCDClient) error {
-	// Only VCD 10.3.0+ supports NSX-T Segment backed external network
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") && d.Get("nsxt_network.0.nsxt_segment_name").(string) != "" {
-		return fmt.Errorf("NSX-T Segment backed External Network is only supported in VCD 10.3.0+")
-	}
 	return nil
 }

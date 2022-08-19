@@ -34,11 +34,6 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupEmpty(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
-	}
-
 	configText := templateFill(testAccNsxtDynamicSecurityGroupEmpty, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
@@ -152,11 +147,6 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupMaximumCriteria(t *testing.T) {
 		"Tags":     "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
-
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
-	}
 
 	configText := templateFill(testAccNsxtDynamicSecurityGroupMaximumCriteria, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -424,11 +414,6 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms(t *testing.T) {
 		"Tags":     "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
-
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
-	}
 
 	configText := templateFill(testAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVmsTags, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
@@ -768,11 +753,6 @@ func TestAccVcdNsxtDynamicSecurityGroupIntegration(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
-	}
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -780,6 +760,11 @@ func TestAccVcdNsxtDynamicSecurityGroupIntegration(t *testing.T) {
 
 	configText := templateFill(testAccVcdNsxtDynamicSecurityGroupIntegration, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,

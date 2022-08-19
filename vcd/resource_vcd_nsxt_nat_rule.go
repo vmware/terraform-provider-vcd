@@ -328,20 +328,6 @@ func resourceVcdNsxtNatRuleImport(_ context.Context, d *schema.ResourceData, met
 }
 
 func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRule, error) {
-	// REFLEXIVE rule_type is only supported in VCD 10.3+
-	if d.Get("rule_type").(string) == types.NsxtNatRuleTypeReflexive && client.Client.APIVCDMaxVersionIs("< 36.0") {
-		return nil, fmt.Errorf("rule_type 'REFLEXIVE' can only be used for VCD 10.3+")
-	}
-
-	firewallMatch, firewallMatchOk := d.GetOk("firewall_match")
-	priority, priorityOk := d.GetOk("priority")
-
-	// Only supported in VCD 10.2.2+ (API V35.2) and throw immediate error if used with older versions as API error is
-	// opaque
-	if (firewallMatchOk || priorityOk) && client.Client.APIVCDMaxVersionIs("< 35.2") {
-		return nil, fmt.Errorf("firewall_match and priority fields can only be set for VCD 10.2.2+")
-	}
-
 	nsxtNatRule := &types.NsxtNatRule{
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
@@ -351,25 +337,15 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 		SnatDestinationAddresses: d.Get("snat_destination_address").(string),
 		Logging:                  d.Get("logging").(bool),
 		DnatExternalPort:         d.Get("dnat_external_port").(string),
-	}
-
-	if client.Client.APIVCDMaxVersionIs(">= 36.0") {
-		nsxtNatRule.Type = d.Get("rule_type").(string)
-	} else {
-		nsxtNatRule.RuleType = d.Get("rule_type").(string)
+		Type:                     d.Get("rule_type").(string),
+		FirewallMatch:            d.Get("firewall_match").(string),
+		Priority:                 takeIntPointer(d.Get("priority").(int)),
 	}
 
 	if appPortProf, ok := d.GetOk("app_port_profile_id"); ok {
 		nsxtNatRule.ApplicationPortProfile = &types.OpenApiReference{ID: appPortProf.(string)}
 	}
 
-	if firewallMatchOk {
-		nsxtNatRule.FirewallMatch = firewallMatch.(string)
-	}
-
-	if priorityOk {
-		nsxtNatRule.Priority = takeIntPointer(priority.(int))
-	}
 	return nsxtNatRule, nil
 }
 
@@ -382,22 +358,12 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 	dSet(d, "logging", rule.Logging)
 	dSet(d, "enabled", rule.Enabled)
 	dSet(d, "dnat_external_port", rule.DnatExternalPort)
+	dSet(d, "firewall_match", rule.FirewallMatch)
+	dSet(d, "priority", rule.Priority)
+	dSet(d, "rule_type", rule.Type)
+
 	if rule.ApplicationPortProfile != nil {
 		dSet(d, "app_port_profile_id", rule.ApplicationPortProfile.ID)
-	}
-
-	// Some specific changes in API V35.2 (VCD 10.2.2+)
-	if client.Client.APIVCDMaxVersionIs(">= 35.2") {
-		// firewall_match and priority are new fields introduces in VCD 10.2.2
-		dSet(d, "firewall_match", rule.FirewallMatch)
-		dSet(d, "priority", rule.Priority)
-	}
-
-	// API V36.0+ uses Type field instead of RuleType
-	if client.Client.APIVCDMaxVersionIs(">= 36.0") {
-		dSet(d, "rule_type", rule.Type)
-	} else {
-		dSet(d, "rule_type", rule.RuleType)
 	}
 
 	return nil

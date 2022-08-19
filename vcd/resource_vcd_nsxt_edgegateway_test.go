@@ -217,15 +217,6 @@ func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
-		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
-	}
-
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
