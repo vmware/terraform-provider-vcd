@@ -10,7 +10,7 @@ description: |-
 
 # vcd\_nsxt\_dynamic\_security\_group
 
-Supported in provider *v3.7+* and VCD 10.3+ with NSX-T backed VDC Groups.
+Supported in provider *v3.7+* with NSX-T backed VDC Groups.
 
 Provides a resource to manage NSX-T Dynamic Security Groups. Dynamic Security Groups group Virtual
 Machines based on specific criteria (VM Names or Security tags) to which Distributed Firewall Rules

@@ -48,7 +48,7 @@ The following arguments are supported:
   defined at provider level.
 * `vdc` - (Optional)  **Deprecated** - please use `owner_id` field. The name of VDC that owns the
   NSX-T Edge Gateway. Optional if defined at provider level.
-* `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) **Replaces** `vdc` field. The ID of VDC or VDC Group
+* `owner_id` - (Optional, *v3.6+*) **Replaces** `vdc` field. The ID of VDC or VDC Group
 that this Edge Gateway belongs to. **Note:** Data source
 [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) can be used to lookup ID
 by name.

@@ -121,7 +121,7 @@ The following arguments are supported:
   * `NO_DNAT` prevents external IP translation 
   * `SNAT` translates an internal IP to an external IP and is used for outbound traffic
   * `NO_SNAT` prevents internal IP translation
-  * `REFLEXIVE` (VCD 10.3+)  is also known as Stateless NAT. This translates an internal IP to an external IP and vice 
+  * `REFLEXIVE` is also known as Stateless NAT. This translates an internal IP to an external IP and vice 
     versa. The number of internal addresses should be exactly the same as that of external addresses.
 * `external_address` (Optional) The external address for the NAT Rule. This must be supplied as a single IP or Network
   CIDR. For a `DNAT` rule, this is the external facing IP Address for incoming traffic. For an `SNAT` rule, this is the 
@@ -136,7 +136,7 @@ The following arguments are supported:
   gateway to connect to the internal network.  Can be looked up using `vcd_nsxt_app_port_profile`
   data source or created using `vcd_nsxt_app_port_profile` resource
 * `dnat_external_port` (Optional) - For `DNAT` only. This represents the external port number or port range when doing 
-  `DNAT` port forwarding from external to internal. The default dnatExternalPort is “ANY” meaning traffic on any port
+  `DNAT` port forwarding from external to internal. The default dnatExternalPort is 'ANY' meaning traffic on any port
   for the given IPs selected will be translated.
 * `snat_destination_address` (Optional) For `SNAT` only. The destination addresses to match in the `SNAT` Rule. This 
   must be supplied as a single IP or Network CIDR. Providing no value for this field results in match with ANY 

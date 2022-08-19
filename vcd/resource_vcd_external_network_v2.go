@@ -101,7 +101,6 @@ var networkV2NsxtNetwork = &schema.Resource{
 			Description:  "ID of NSX-T Tier-0 router (for T0 gateway backed external network)",
 			ExactlyOneOf: []string{"nsxt_network.0.nsxt_tier0_router_id", "nsxt_network.0.nsxt_segment_name"},
 		},
-		// NSX-T segment backed external network (VCD 10.3+)
 		"nsxt_segment_name": {
 			Type:         schema.TypeString,
 			Optional:     true,

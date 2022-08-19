@@ -70,7 +70,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 ```
 
-## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network [only VCD 10.3+])
+## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network)
 
 -> NSX-T **Segment backed External Network** is similar to **Imported Org VDC network**. The difference is that
 **External Network can consume one NSX-T Segment and then many VDCs can use it by using NSX-T Direct Network**, 
@@ -202,7 +202,7 @@ The following arguments are supported:
 * `nsxt_manager_id` - (Required) NSX-T manager ID. Can be looked up using [`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_manager) data source.
 * `nsxt_tier0_router_id` - (Optional) NSX-T Tier-0 router ID. Can be looked up using
   [`vcd_nsxt_tier0_router`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router) data source.
-* `nsxt_segment_name` - (Optional; *v3.4+*; *VCD 10.3+*) Existing NSX-T segment name.
+* `nsxt_segment_name` - (Optional; *v3.4+*) Existing NSX-T segment name.
 
 ## Importing
 
