@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+	"net/url"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -432,25 +433,36 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		return fmt.Errorf("error setting metadata: %s", err)
 	}
 
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
-		assignedVmSizingPolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(nil)
-		if err != nil {
-			log.Printf("[DEBUG] Unable to get assigned VM sizing policies")
-			return fmt.Errorf("unable to get assigned VM sizing policies %s", err)
+	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(url.Values{
+		"filter": []string{"isVgpuPolicy==false"},
+	})
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get assigned VM Compute policies")
+		return fmt.Errorf("unable to get assigned VM Compute policies %s", err)
+	}
+	var sizingPolicyIds []string
+	var placementPolicyIds []string
+	for _, policy := range assignedVmComputePolicies {
+		if policy.VdcComputePolicy.IsSizingOnly {
+			sizingPolicyIds = append(sizingPolicyIds, policy.VdcComputePolicy.ID)
+		} else {
+			placementPolicyIds = append(placementPolicyIds, policy.VdcComputePolicy.ID)
 		}
-		var policyIds []string
-		for _, policy := range assignedVmSizingPolicies {
-			policyIds = append(policyIds, policy.VdcComputePolicy.ID)
-		}
-		vmSizingPoliciesSet := convertStringsToTypeSet(policyIds)
+	}
 
-		dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+	vmSizingPoliciesSet := convertStringsToTypeSet(sizingPolicyIds)
+	vmPlacementPoliciesSet := convertStringsToTypeSet(placementPolicyIds)
 
-		err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
-		if err != nil {
-			return err
-		}
+	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+	dSet(d, "default_vm_placement_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
+	err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
+	if err != nil {
+		return err
+	}
+	err = d.Set("vm_placement_policy_ids", vmPlacementPoliciesSet)
+	if err != nil {
+		return err
 	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
