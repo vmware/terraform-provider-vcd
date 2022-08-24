@@ -894,7 +894,6 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 	return nil
 }
 
-
 // changeVmSizingPoliciesAndDefaultId handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
 // Assigning and setting default VM sizing policies requires different API calls. Default policy can't be removed, as result
 // we approach this with adding new policies, set new default, remove all old policies.

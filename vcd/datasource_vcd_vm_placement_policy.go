@@ -18,18 +18,18 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 		ReadContext: datasourceVcdVmPlacementPolicyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Name of the VM Placement Policy",
 			},
 			"provider_vdc_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "ID of the Provider VDC to which the VM Placement Policy belongs",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Description of the VM Placement Policy",
 			},
 			"vm_groups": {
@@ -78,7 +78,7 @@ func datasourceVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceD
 
 		method = "name"
 		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;pvdc==%s",policyName, pVdcId))
+		queryParams.Add("filter", fmt.Sprintf("name==%s;providerVdc==%s", policyName, extractUuid(pVdcId)))
 		filteredPoliciesByName, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s. Removing from tfstate.", policyName, pVdcId)
@@ -108,7 +108,7 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy type
 
 	dSet(d, "name", policy.Name)
 	dSet(d, "description", policy.Description)
-	dSet(d, "vm_groups", policy.NamedVMGroups) // FIXME: Flatten the structure
+	dSet(d, "vm_groups", policy.NamedVMGroups)                    // FIXME: Flatten the structure
 	dSet(d, "logical_vm_groups", policy.LogicalVMGroupReferences) // FIXME: Flatten the structure
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
