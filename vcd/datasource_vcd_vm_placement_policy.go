@@ -15,10 +15,17 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Name of the VM Placement Policy",
+			},
+			"pvdc_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				Description: "ID of the Provider VDC to which the VM Placement Policy belongs",
 			},
 			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Description: "Description of the VM Placement Policy",
 			},
 			"vm_groups": {
 				Type:        schema.TypeSet,
@@ -34,7 +41,6 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 	}
 }
 
-// datasourceVcdVmPlacementPolicyRead reads a data source VM Placement policy
 func datasourceVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVmPlacementPolicyRead(ctx, d, meta)
+	return nil
 }
