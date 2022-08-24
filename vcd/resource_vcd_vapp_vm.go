@@ -625,7 +625,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	templateName := d.Get("template_name").(string)
 	vmName := d.Get("name").(string)
 	description := d.Get("description").(string)
-	powerOn := d.Get("power_on").(bool)
 
 	var vapp *govcd.VApp
 
@@ -708,6 +707,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 			util.Logger.Printf("[VM create] sizingPolicy (%s) %# v", vdcComputePolicy.Href, pretty.Formatter(sizingPolicy))
 		}
+		computePolicy := sizingPolicy
 
 		var vm *govcd.VM
 
@@ -719,7 +719,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			vmParams := types.InstantiateVmTemplateParams{
 				Xmlns:            types.XMLNamespaceVCloud,
 				Name:             vmName,
-				PowerOn:          powerOn,
+				PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
 				AllEULAsAccepted: acceptEulas,
 				ComputePolicy:    vmComputePolicy,
 				Description:      description,
@@ -829,21 +829,33 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		//////////////////// This part is copied from Update to split these operations ////////////////////////
 		//////////////////// This part is copied from Update to split these operations ////////////////////////
 
-		var computePolicy *types.VdcComputePolicy
-		var executionType = "create"
+		// var sizingPolicy *types.VdcComputePolicy
+		// var vmComputePolicy *types.ComputePolicy
+		// if value, ok := d.GetOk("sizing_policy_id"); ok {
+		// 	vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
+		// 	if err != nil {
+		// 		return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+		// 	}
+		// 	sizingPolicy = vdcComputePolicy.VdcComputePolicy
+		// 	if vdcComputePolicy.Href == "" {
+		// 		return fmt.Errorf("empty sizing policy HREF detected")
+		// 	}
+		// 	vmComputePolicy = &types.ComputePolicy{
+		// 		VmSizingPolicy: &types.Reference{HREF: vdcComputePolicy.Href},
+		// 	}
+		// 	util.Logger.Printf("[VM create] sizingPolicy (%s) %# v", vdcComputePolicy.Href, pretty.Formatter(sizingPolicy))
+		// }
+
+		// computePolicy := sizingPolicy
+		// var executionType = "create"
 
 		// err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType, sizingPolicy)
 
-		log.Printf("[DEBUG] [VM update] started without lock")
+		log.Printf("[DEBUG] [VM create-update] started without lock")
 
-		_, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
+		_, org, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
 		if err != nil {
 			return err
-		}
-
-		vmStatusBeforeUpdate, err := vm.GetStatus()
-		if err != nil {
-			return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
 		}
 
 		// Check if the user requested for forced customization of VM
@@ -860,59 +872,27 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 		}
 
-		if d.HasChanges("memory_reservation", "memory_priority", "memory_shares", "memory_limit",
-			"cpu_reservation", "cpu_priority", "cpu_limit", "cpu_shares") {
-			err = updateAdvancedComputeSettings(d, vm)
-			if err != nil {
-				return fmt.Errorf("[VM update] error advanced compute settings for standalone VM %s : %s", vm.VM.Name, err)
-			}
-		}
+		// It was already updated for create phase
+		// if d.HasChanges("memory_reservation", "memory_priority", "memory_shares", "memory_limit",
+		// 	"cpu_reservation", "cpu_priority", "cpu_limit", "cpu_shares") {
+		// 	err = updateAdvancedComputeSettings(d, vm)
+		// 	if err != nil {
+		// 		return fmt.Errorf("[VM update] error advanced compute settings for standalone VM %s : %s", vm.VM.Name, err)
+		// 	}
+		// }
 
-		memoryNeedsColdChange := false
-		cpusNeedsColdChange := false
-		networksNeedsColdChange := false
-		if executionType == "update" {
-			if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
-				memoryNeedsColdChange = true
-			}
-			if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
-				cpusNeedsColdChange = true
-			}
-			if d.HasChange("network") && isPrimaryNicRemoved(d) {
-				networksNeedsColdChange = true
-			}
-		}
-		if executionType == "create" && len(d.Get("network").([]interface{})) > 0 {
-			networksNeedsColdChange = true
-		}
-		log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
+		// log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
 
 		// this represents fields which have to be changed in cold (with VM power off)
 		if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
 			"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-			"memory_hot_add_enabled") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
+			"memory_hot_add_enabled") {
 
 			log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
 				" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), network(%t)",
 				vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 				d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
 				d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("network"))
-
-			if vmStatusBeforeUpdate != "POWERED_OFF" {
-				if d.Get("prevent_update_power_off").(bool) && executionType == "update" {
-					return fmt.Errorf("update stopped: VM needs to power off to change properties, but `prevent_update_power_off` is `true`")
-				}
-				log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
-					vm.VM.Name, vmStatusBeforeUpdate)
-				task, err := vm.Undeploy()
-				if err != nil {
-					return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
-				}
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
-				}
-			}
 
 			// detaching independent disks - only possible when VM power off
 			if d.HasChange("disk") {
@@ -927,20 +907,20 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				}
 			}
 
-			if memoryNeedsColdChange || executionType == "create" {
-				memory, isMemorySet := d.GetOk("memory")
-				isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
-				if isMemoryComingFromSizingPolicy && isMemorySet {
-					logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
-				}
+			// if memoryNeedsColdChange || executionType == "create" {
+			memory, isMemorySet := d.GetOk("memory")
+			isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
+			if isMemoryComingFromSizingPolicy && isMemorySet {
+				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
+			}
 
-				if !isMemoryComingFromSizingPolicy {
-					err = vm.ChangeMemory(int64(memory.(int)))
-					if err != nil {
-						return err
-					}
+			if !isMemoryComingFromSizingPolicy {
+				err = vm.ChangeMemory(int64(memory.(int)))
+				if err != nil {
+					return err
 				}
 			}
+			// }
 
 			if d.HasChange("cpu_cores") {
 				err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
@@ -949,38 +929,37 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				}
 			}
 
-			if cpusNeedsColdChange || (executionType == "create") {
-				cpus, isCpusSet := d.GetOk("cpus")
-				cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
-				isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
-				if isCpuComingFromSizingPolicy && isCpusSet {
-					logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
-				}
-				if isCpuComingFromSizingPolicy && isCpuCoresSet {
-					logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
-				}
-
-				if !isCpuComingFromSizingPolicy {
-					err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
-					if err != nil {
-						return err
-					}
-				}
+			// if cpusNeedsColdChange || (executionType == "create") {
+			cpus, isCpusSet := d.GetOk("cpus")
+			cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
+			isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
+			if isCpuComingFromSizingPolicy && isCpusSet {
+				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
+			}
+			if isCpuComingFromSizingPolicy && isCpuCoresSet {
+				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
 			}
 
-			if networksNeedsColdChange {
-				networkConnectionSection, err := networksToConfig(d, vapp)
+			if !isCpuComingFromSizingPolicy {
+				err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
 				if err != nil {
-					return fmt.Errorf("unable to setup network configuration for update: %s", err)
-				}
-				err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
-				if err != nil {
-					return fmt.Errorf("unable to update network configuration: %s", err)
+					return err
 				}
 			}
+			// }
+
+			// if networksNeedsColdChange {
+			networkConnectionSection, err := networksToConfig(d, vapp)
+			if err != nil {
+				return fmt.Errorf("unable to setup network configuration for update: %s", err)
+			}
+			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+			if err != nil {
+				return fmt.Errorf("unable to update network configuration: %s", err)
+			}
+			// }
 
 			if d.HasChange("expose_hardware_virtualization") {
-
 				task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
 				if err != nil {
 					return fmt.Errorf("error changing hardware assisted virtualization: %s", err)
@@ -1046,16 +1025,49 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 		}
 
-		// If the VM was powered off during update but it has to be powered on
+		// By default the VM is created in POWERED_OFF state
 		if d.Get("power_on").(bool) {
-			vmStatus, err := vm.GetStatus()
-			if err != nil {
-				return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
-			}
+			// vmStatus, err := vm.GetStatus()
+			// if err != nil {
+			// 	return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
+			// }
 
 			// Simply power on if customization is not requested
-			if !customizationNeeded && vmStatus != "POWERED_ON" {
-				log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
+			// if !customizationNeeded && vmStatus != "POWERED_ON" {
+			// 	log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
+			// 	task, err := vm.PowerOn()
+			// 	if err != nil {
+			// 		return fmt.Errorf("error powering on: %s", err)
+			// 	}
+			// 	err = task.WaitTaskCompletion()
+			// 	if err != nil {
+			// 		return fmt.Errorf(errorCompletingTask, err)
+			// 	}
+			// }
+
+			// When customization is requested VM must be un-deployed before starting it
+			if customizationNeeded {
+				// log.Printf("[TRACE] forced customization for VM %s was requested. Current state %s",
+				// 	vm.VM.Name, vmStatus)
+
+				// if vmStatus != "POWERED_OFF" {
+				// 	log.Printf("[TRACE] VM %s is in state %s. Un-deploying", vm.VM.Name, vmStatus)
+				// 	task, err := vm.Undeploy()
+				// 	if err != nil {
+				// 		return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
+				// 	}
+				// 	err = task.WaitTaskCompletion()
+				// 	if err != nil {
+				// 		return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
+				// 	}
+				// }
+
+				log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
+				err = vm.PowerOnAndForceCustomization()
+				if err != nil {
+					return fmt.Errorf("failed powering on with customization: %s", err)
+				}
+			} else {
 				task, err := vm.PowerOn()
 				if err != nil {
 					return fmt.Errorf("error powering on: %s", err)
@@ -1066,31 +1078,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				}
 			}
 
-			// When customization is requested VM must be un-deployed before starting it
-			if customizationNeeded {
-				log.Printf("[TRACE] forced customization for VM %s was requested. Current state %s",
-					vm.VM.Name, vmStatus)
-
-				if vmStatus != "POWERED_OFF" {
-					log.Printf("[TRACE] VM %s is in state %s. Un-deploying", vm.VM.Name, vmStatus)
-					task, err := vm.Undeploy()
-					if err != nil {
-						return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
-					}
-					err = task.WaitTaskCompletion()
-					if err != nil {
-						return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
-					}
-				}
-
-				log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
-				err = vm.PowerOnAndForceCustomization()
-				if err != nil {
-					return fmt.Errorf("failed powering on with customization: %s", err)
-				}
-			}
 		}
-		log.Printf("[DEBUG] [VM update] finished")
+		log.Printf("[DEBUG] [VM create-update] finished")
 
 		//////////////////// End of copied part ////////////////////////
 		//////////////////// End of copied part ////////////////////////
