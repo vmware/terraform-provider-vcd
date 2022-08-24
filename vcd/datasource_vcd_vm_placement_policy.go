@@ -21,13 +21,13 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 				Computed: true,
 			},
 			"vm_groups": {
-				Type:     schema.TypeSet,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Computed:    true,
 				Description: "Collection of VMs with similar host requirements",
 			},
 			"logical_vm_groups": {
-				Type:     schema.TypeSet,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Computed:    true,
 				Description: "One or more Logical VM Groups defined in this VM Placement policy. There is an AND relationship among all the entries fetched to this attribute",
 			},
 		},
