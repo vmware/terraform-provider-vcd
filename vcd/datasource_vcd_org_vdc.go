@@ -214,7 +214,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"default_compute_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of default VM Compute policy, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
+				Description: "ID of default Compute policy for this VDC, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
 			},
 		},
 	}
