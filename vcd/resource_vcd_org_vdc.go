@@ -434,7 +434,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	}
 
 	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(url.Values{
-		"filter": []string{"isVgpuPolicy==false"},
+		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"},
 	})
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get assigned VM Compute policies")
@@ -453,8 +453,8 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	vmSizingPoliciesSet := convertStringsToTypeSet(sizingPolicyIds)
 	vmPlacementPoliciesSet := convertStringsToTypeSet(placementPolicyIds)
 
-	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
-	dSet(d, "default_vm_placement_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
+	dSet(d, "default_vm_compute_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
 	err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
 	if err != nil {
