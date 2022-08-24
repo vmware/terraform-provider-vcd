@@ -144,7 +144,7 @@ resource "vcd_org_vdc" "my-vdc" {
   description = "The pride of my work"
   org         = "my-org"
   # ...  
-  default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_1.id
+  default_compute_policy_id = vcd_vm_sizing_policy.size_1.id
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
 }
 ```
@@ -183,8 +183,10 @@ The following arguments are supported:
 * `include_vm_memory_overhead` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
 * `delete_force` - (Required) When destroying use `delete_force=True` to remove a VDC and any objects it contains, regardless of their state.
 * `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the VDC and any objects it contains that are in a state that normally allows removal.
-* `default_vm_sizing_policy_id` - (Optional, *v3.0+*, *vCD 10.0+*) Set of VM sizing policy IDs. This field requires `vm_sizing_policy_ids` to be configured together. 
-* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Default VM sizing policy ID. This field requires `default_vm_sizing_policy_id` to be configured together.
+* `default_compute_policy_id` - (Optional, *v3.8+*, *vCD 10.0+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy.
+* `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *vCD 10.0+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
+* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `vm_placement_policy_ids` - (Optional, *v3.8+*, *vCD 10.0+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 
 <a id="storageprofile"></a>
 ## Storage Profile
