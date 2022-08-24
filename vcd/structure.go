@@ -156,6 +156,21 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 	return resultReferences
 }
 
+// contains returns true if sliceToSearch contains searched. Returns false otherwise
+func contains(sliceToSearch []string, searched string) bool {
+	if searched == "" && len(sliceToSearch) == 0 {
+		return true
+	}
+	found := false
+	for _, idInSlice := range sliceToSearch {
+		if searched == idInSlice {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
 // MetadataCompatible allows to consider all structs that implement metadata handling to be the same type
 type metadataCompatible interface {
 	GetMetadata() (*types.Metadata, error)

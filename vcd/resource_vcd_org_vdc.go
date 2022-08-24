@@ -599,7 +599,7 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating VDC metadata: %s", err)
 	}
 
-	err = updateAssignedVmComputePolicies(vcdClient, d, meta)
+	err = updateAssignedVmComputePolicies(d, meta)
 	if err != nil {
 		return diag.Errorf("error assigning VM sizing policies to VDC: %s", err)
 	}
@@ -824,7 +824,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Deprecation compatibility: If `default_compute_policy_id` is not set, fallback to deprecated one.
-	// We can do this as `default_vm_sizing_policy_id` in reality is any Compute Policy, not only Sizing.
+	// We can do this as `default_compute_policy_id` contains the same value as `default_vm_sizing_policy_id`.
 	defaultPolicyId, defaultPolicyIsSet := d.GetOk("default_compute_policy_id")
 	if !defaultPolicyIsSet {
 		defaultPolicyId, defaultPolicyIsSet = d.GetOk("default_vm_sizing_policy_id")
@@ -840,7 +840,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Early return
-	if !d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_placement_policy_ids") && !d.HasChange("vm_sizing_policy_ids") {
+	if !d.HasChange("default_compute_policy_id") && !d.HasChange("vm_placement_policy_ids") && !d.HasChange("vm_sizing_policy_ids") {
 		return nil
 	}
 
@@ -860,7 +860,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Compatibility patch: Remove deprecated `default_vm_sizing_policy_id` from this conditional when the attribute is removed.
-	// We can do this as `default_vm_sizing_policy_id` contains any Compute Policy, not only Sizing.
+	// We can do this as `default_compute_policy_id` contains the same value as `default_vm_sizing_policy_id`.
 	if d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id") {
 		vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref.String() + defaultPolicyId.(string), ID: defaultPolicyId.(string)}
 		_, err := vdc.Update()
@@ -870,13 +870,14 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var vmComputePolicyIds []string
-	for _, attribute := range []string{"vm_sizing_policy_ids", "vm_placement_policy_ids"} {
+	computePolicyAttributes := []string{"vm_sizing_policy_ids", "vm_placement_policy_ids"}
+	for _, attribute := range computePolicyAttributes {
 		if d.HasChange(attribute) {
 			vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
-			if !ifIdIsPartOfSlice(defaultPolicyId.(string), vmComputePolicyIds) {
-				return errors.New(fmt.Sprintf("`default_compute_policy_id` %s is not present in `%s`", defaultPolicyId.(string), attribute))
-			}
 		}
+	}
+	if !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
+		return errors.New(fmt.Sprintf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes))
 	}
 
 	var vdcComputePolicyReferenceList []*types.Reference
@@ -898,19 +899,6 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}) e
 	return nil
 }
 
-func ifIdIsPartOfSlice(id string, ids []string) bool {
-	if id == "" && len(ids) == 0 {
-		return true
-	}
-	found := false
-	for _, idInSlice := range ids {
-		if id == idInSlice {
-			found = true
-			break
-		}
-	}
-	return found
-}
 
 // changeVmSizingPoliciesAndDefaultId handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
 // Assigning and setting default VM sizing policies requires different API calls. Default policy can't be removed, as result
@@ -918,7 +906,7 @@ func ifIdIsPartOfSlice(id string, ids []string) bool {
 func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
 	if d.HasChange("default_vm_sizing_policy_id") && d.HasChange("vm_sizing_policy_ids") {
 		vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
-		if !ifIdIsPartOfSlice(d.Get("default_vm_sizing_policy_id").(string), vmSizingPolicyIdStrings) {
+		if !contains(vmSizingPolicyIdStrings, d.Get("default_vm_sizing_policy_id").(string)) {
 			return errors.New("`default_vm_sizing_policy_id` isn't part of `vm_sizing_policy_ids`")
 		}
 		policyReferences := types.VdcComputePolicyReferences{}
