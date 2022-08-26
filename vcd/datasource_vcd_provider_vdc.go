@@ -334,23 +334,29 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 }
 
 // getComputeCapacityForProviderVdc constructs specific struct for Compute Capacity for Provider VDC Terraform state.
-func getComputeCapacityForProviderVdc(computeCapacity *types.RootComputeCapacity) map[string]interface{} {
-	root := make(map[string]interface{})
+func getComputeCapacityForProviderVdc(computeCapacity *types.RootComputeCapacity) []map[string]interface{} {
+	root := make([]map[string]interface{}, 1)
+	inner := make(map[string]interface{})
 
-	root["cpu_allocation"] = computeCapacity.Cpu.Allocation
-	root["cpu_total"] = computeCapacity.Cpu.Total
-	root["cpu_overhead"] = computeCapacity.Cpu.Overhead
-	root["cpu_used"] = computeCapacity.Cpu.Used
-	root["cpu_units"] = computeCapacity.Cpu.Units
-	root["cpu_reserved"] = computeCapacity.Cpu.Reserved
-	root["memory_allocation"] = computeCapacity.Memory.Allocation
-	root["memory_total"] = computeCapacity.Memory.Total
-	root["memory_overhead"] = computeCapacity.Memory.Overhead
-	root["memory_used"] = computeCapacity.Memory.Used
-	root["memory_units"] = computeCapacity.Memory.Units
-	root["memory_reserved"] = computeCapacity.Memory.Reserved
-	root["is_elastic"] = computeCapacity.IsElastic
-	root["is_ha"] = computeCapacity.IsHA
+	if computeCapacity.Cpu != nil {
+		inner["cpu_allocation"] = computeCapacity.Cpu.Allocation
+		inner["cpu_total"] = computeCapacity.Cpu.Total
+		inner["cpu_overhead"] = computeCapacity.Cpu.Overhead
+		inner["cpu_used"] = computeCapacity.Cpu.Used
+		inner["cpu_units"] = computeCapacity.Cpu.Units
+		inner["cpu_reserved"] = computeCapacity.Cpu.Reserved
+	}
+	if computeCapacity.Memory != nil {
+		inner["memory_allocation"] = computeCapacity.Memory.Allocation
+		inner["memory_total"] = computeCapacity.Memory.Total
+		inner["memory_overhead"] = computeCapacity.Memory.Overhead
+		inner["memory_used"] = computeCapacity.Memory.Used
+		inner["memory_units"] = computeCapacity.Memory.Units
+		inner["memory_reserved"] = computeCapacity.Memory.Reserved
+	}
+	inner["is_elastic"] = computeCapacity.IsElastic
+	inner["is_ha"] = computeCapacity.IsHA
 
+	root = append(root, inner)
 	return root
 }
