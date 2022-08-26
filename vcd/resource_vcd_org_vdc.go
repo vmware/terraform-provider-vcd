@@ -258,7 +258,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Deprecated:  "Use `default_compute_policy_id` attribute instead, which can support VM Sizing Policies and VM Placement Policies",
+				Deprecated:  "Use `default_compute_policy_id` attribute instead, which can support VM Sizing Policies, VM Placement Policies and vGPU Policies",
 				Description: "ID of default VM Compute policy, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
 			},
 			"default_compute_policy_id": {
@@ -870,7 +870,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 			}
 		}
 		if !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
-			return errors.New(fmt.Sprintf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes))
+			return fmt.Errorf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes)
 		}
 
 		var vdcComputePolicyReferenceList []*types.Reference
@@ -908,7 +908,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 	// We can do this as `default_compute_policy_id` contains the same value as `default_vm_sizing_policy_id`.
 	defaultPolicyId, defaultPolicyIsSet := d.GetOk("default_compute_policy_id")
 	if !defaultPolicyIsSet {
-		defaultPolicyId, defaultPolicyIsSet = d.GetOk("default_vm_sizing_policy_id")
+		defaultPolicyId, _ = d.GetOk("default_vm_sizing_policy_id")
 	}
 
 	var vmComputePolicyIds []string
@@ -917,7 +917,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 		vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 	}
 	if !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
-		return errors.New(fmt.Sprintf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes))
+		return fmt.Errorf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes)
 	}
 
 	var vdcComputePolicyReferenceList []*types.Reference
