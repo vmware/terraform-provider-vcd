@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 
@@ -10,6 +11,46 @@ import (
 )
 
 func datasourceVcdProviderVdc() *schema.Resource {
+	rootCapacityUsage := func(typeOfCapacity string) *schema.Schema {
+		return &schema.Schema{
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"allocation": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: fmt.Sprintf("Allocated %s for this Provider VDC", typeOfCapacity),
+					},
+					"overhead": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: fmt.Sprintf("%s overhead for this Provider VDC", typeOfCapacity),
+					},
+					"reserved": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: fmt.Sprintf("Reserved %s for this Provider VDC", typeOfCapacity),
+					},
+					"total": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: fmt.Sprintf("Total %s for this Provider VDC", typeOfCapacity),
+					},
+					"units": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: fmt.Sprintf("Units for the %s of this Provider VDC", typeOfCapacity),
+					},
+					"used": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: fmt.Sprintf("Used %s in this Provider VDC", typeOfCapacity),
+					},
+				},
+			},
+		}
+	}
 
 	return &schema.Resource{
 		ReadContext: datasourceVcdProviderVdcRead,
@@ -43,40 +84,12 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Description: "Set of virtual hardware versions supported by this Provider VDC.",
 			},
 			"compute_capacity": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"cpu_allocation": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Allocated CPU for this Provider VDC",
-						},
-						"cpu_overhead": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "CPU overhead for this Provider VDC",
-						},
-						"cpu_reserved": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Reserved CPU for this Provider VDC",
-						},
-						"cpu_total": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Total CPU for this Provider VDC",
-						},
-						"cpu_units": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "CPU units for the CPU attributes of this Provider VDC",
-						},
-						"cpu_used": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Used CPU in this Provider VDC",
-						},
+						"cpu":    rootCapacityUsage("CPU"),
+						"memory": rootCapacityUsage("Memory"),
 						"is_elastic": {
 							Type:        schema.TypeBool,
 							Computed:    true,
@@ -86,36 +99,6 @@ func datasourceVcdProviderVdc() *schema.Resource {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Maximum number of MB allocated for this storage profile. A value of 0 specifies unlimited MB.",
-						},
-						"memory_allocation": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Allocated Memory for this Provider VDC",
-						},
-						"memory_overhead": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Memory overhead for this Provider VDC",
-						},
-						"memory_reserved": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Reserved Memory for this Provider VDC",
-						},
-						"memory_total": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Total Memory for this Provider VDC",
-						},
-						"memory_units": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Memory units for the Memory attributes of this Provider VDC",
-						},
-						"memory_used": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Used Memory in this Provider VDC",
 						},
 					},
 				},
@@ -333,30 +316,43 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-// getComputeCapacityForProviderVdc constructs specific struct for Compute Capacity for Provider VDC Terraform state.
-func getComputeCapacityForProviderVdc(computeCapacity *types.RootComputeCapacity) []map[string]interface{} {
-	root := make([]map[string]interface{}, 1)
-	inner := make(map[string]interface{})
+// getComputeCapacityForProviderVdc constructs a specific struct for `compute_capacity` attribute in the `vcd_provider_vdc` Terraform state.
+func getComputeCapacityForProviderVdc(computeCapacity *types.RootComputeCapacity) *[]map[string]interface{} {
+	rootInternal := map[string]interface{}{}
+	var root []map[string]interface{}
 
+	cpuValueMap := map[string]interface{}{}
 	if computeCapacity.Cpu != nil {
-		inner["cpu_allocation"] = computeCapacity.Cpu.Allocation
-		inner["cpu_total"] = computeCapacity.Cpu.Total
-		inner["cpu_overhead"] = computeCapacity.Cpu.Overhead
-		inner["cpu_used"] = computeCapacity.Cpu.Used
-		inner["cpu_units"] = computeCapacity.Cpu.Units
-		inner["cpu_reserved"] = computeCapacity.Cpu.Reserved
+		cpuValueMap["cpu_allocation"] = *computeCapacity.Cpu.Allocation
+		cpuValueMap["cpu_total"] = computeCapacity.Cpu.Total
+		cpuValueMap["cpu_overhead"] = *computeCapacity.Cpu.Overhead
+		cpuValueMap["cpu_used"] = *computeCapacity.Cpu.Used
+		cpuValueMap["cpu_units"] = computeCapacity.Cpu.Units
+		cpuValueMap["cpu_reserved"] = *computeCapacity.Cpu.Reserved
 	}
+	memoryValueMap := map[string]interface{}{}
 	if computeCapacity.Memory != nil {
-		inner["memory_allocation"] = computeCapacity.Memory.Allocation
-		inner["memory_total"] = computeCapacity.Memory.Total
-		inner["memory_overhead"] = computeCapacity.Memory.Overhead
-		inner["memory_used"] = computeCapacity.Memory.Used
-		inner["memory_units"] = computeCapacity.Memory.Units
-		inner["memory_reserved"] = computeCapacity.Memory.Reserved
+		memoryValueMap["memory_allocation"] = *computeCapacity.Memory.Allocation
+		memoryValueMap["memory_total"] = computeCapacity.Memory.Total
+		memoryValueMap["memory_overhead"] = *computeCapacity.Memory.Overhead
+		memoryValueMap["memory_used"] = *computeCapacity.Memory.Used
+		memoryValueMap["memory_units"] = computeCapacity.Memory.Units
+		memoryValueMap["memory_reserved"] = *computeCapacity.Memory.Reserved
 	}
-	inner["is_elastic"] = computeCapacity.IsElastic
-	inner["is_ha"] = computeCapacity.IsHA
+	var memoryCapacityArray []map[string]interface{}
+	memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
+	var cpuCapacityArray []map[string]interface{}
+	cpuCapacityArray = append(cpuCapacityArray, cpuValueMap)
 
-	root = append(root, inner)
-	return root
+	if computeCapacity.IsElastic != nil {
+		rootInternal["is_elastic"] = *computeCapacity.IsElastic
+	}
+	if computeCapacity.IsHA != nil {
+		rootInternal["is_elastic"] = *computeCapacity.IsHA
+	}
+	rootInternal["cpu"] = &cpuCapacityArray
+	rootInternal["memory"] = &memoryCapacityArray
+
+	root = append(root, rootInternal)
+	return &root
 }
