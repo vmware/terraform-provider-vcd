@@ -93,12 +93,12 @@ func datasourceVcdProviderVdc() *schema.Resource {
 						"is_elastic": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "True if this storage profile is enabled for use in the VDC.",
+							Description: "True if compute capacity can grow or shrink based on demand",
 						},
 						"is_ha": {
-							Type:        schema.TypeInt,
+							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Maximum number of MB allocated for this storage profile. A value of 0 specifies unlimited MB.",
+							Description: "True if compute capacity is highly available",
 						},
 					},
 				},
@@ -113,7 +113,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Computed:    true,
 				Description: "The highest virtual hardware version supported by this Provider VDC",
 			},
-			"nsxt_manager_id": { // FIXME: Should we use name??
+			"nsxt_manager_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "ID of the registered NSX-T Manager that backs networking operations for this Provider VDC",
@@ -289,8 +289,7 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 	dSet(d, "host_ids", items)
 
 	if extendedProviderVdc.VMWProviderVdc.ComputeCapacity != nil {
-		computeCapacity := getComputeCapacityForProviderVdc(extendedProviderVdc.VMWProviderVdc.ComputeCapacity)
-		if err = d.Set("compute_capacity", computeCapacity); err != nil {
+		if err = d.Set("compute_capacity", getComputeCapacityForProviderVdc(extendedProviderVdc.VMWProviderVdc.ComputeCapacity)); err != nil {
 			return diag.Errorf("error setting compute_capacity: %s", err)
 		}
 	}
@@ -318,41 +317,36 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 
 // getComputeCapacityForProviderVdc constructs a specific struct for `compute_capacity` attribute in the `vcd_provider_vdc` Terraform state.
 func getComputeCapacityForProviderVdc(computeCapacity *types.RootComputeCapacity) *[]map[string]interface{} {
-	rootInternal := map[string]interface{}{}
-	var root []map[string]interface{}
-
 	cpuValueMap := map[string]interface{}{}
 	if computeCapacity.Cpu != nil {
-		cpuValueMap["cpu_allocation"] = *computeCapacity.Cpu.Allocation
-		cpuValueMap["cpu_total"] = computeCapacity.Cpu.Total
-		cpuValueMap["cpu_overhead"] = *computeCapacity.Cpu.Overhead
-		cpuValueMap["cpu_used"] = *computeCapacity.Cpu.Used
-		cpuValueMap["cpu_units"] = computeCapacity.Cpu.Units
-		cpuValueMap["cpu_reserved"] = *computeCapacity.Cpu.Reserved
+		cpuValueMap["allocation"] = computeCapacity.Cpu.Allocation
+		cpuValueMap["total"] = computeCapacity.Cpu.Total
+		cpuValueMap["overhead"] = computeCapacity.Cpu.Overhead
+		cpuValueMap["used"] = computeCapacity.Cpu.Used
+		cpuValueMap["units"] = computeCapacity.Cpu.Units
+		cpuValueMap["reserved"] = computeCapacity.Cpu.Reserved
 	}
 	memoryValueMap := map[string]interface{}{}
 	if computeCapacity.Memory != nil {
-		memoryValueMap["memory_allocation"] = *computeCapacity.Memory.Allocation
-		memoryValueMap["memory_total"] = computeCapacity.Memory.Total
-		memoryValueMap["memory_overhead"] = *computeCapacity.Memory.Overhead
-		memoryValueMap["memory_used"] = *computeCapacity.Memory.Used
-		memoryValueMap["memory_units"] = computeCapacity.Memory.Units
-		memoryValueMap["memory_reserved"] = *computeCapacity.Memory.Reserved
+		memoryValueMap["allocation"] = computeCapacity.Memory.Allocation
+		memoryValueMap["total"] = computeCapacity.Memory.Total
+		memoryValueMap["overhead"] = computeCapacity.Memory.Overhead
+		memoryValueMap["used"] = computeCapacity.Memory.Used
+		memoryValueMap["units"] = computeCapacity.Memory.Units
+		memoryValueMap["reserved"] = computeCapacity.Memory.Reserved
 	}
 	var memoryCapacityArray []map[string]interface{}
 	memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
 	var cpuCapacityArray []map[string]interface{}
 	cpuCapacityArray = append(cpuCapacityArray, cpuValueMap)
 
-	if computeCapacity.IsElastic != nil {
-		rootInternal["is_elastic"] = *computeCapacity.IsElastic
-	}
-	if computeCapacity.IsHA != nil {
-		rootInternal["is_elastic"] = *computeCapacity.IsHA
-	}
+	rootInternal := map[string]interface{}{}
 	rootInternal["cpu"] = &cpuCapacityArray
 	rootInternal["memory"] = &memoryCapacityArray
+	rootInternal["is_elastic"] = computeCapacity.IsElastic
+	rootInternal["is_ha"] = computeCapacity.IsHA
 
+	var root []map[string]interface{}
 	root = append(root, rootInternal)
 	return &root
 }
