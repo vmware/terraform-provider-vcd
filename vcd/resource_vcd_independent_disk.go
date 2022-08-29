@@ -213,13 +213,7 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	diskCreateParams.Disk.Description = d.Get("description").(string)
-
-	if value, ok := d.GetOk("sharing_type"); ok {
-		if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-			return diag.Errorf("`sharing_type` is supported from VCD 10.3+ version")
-		}
-		diskCreateParams.Disk.SharingType = value.(string)
-	}
+	diskCreateParams.Disk.SharingType = d.Get("sharing_type").(string)
 
 	task, err := vdc.CreateDisk(diskCreateParams)
 	if err != nil {

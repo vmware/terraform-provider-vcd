@@ -12,6 +12,8 @@ Provides a VMware Cloud Director external network data source. This can be used 
 
 Supported in provider *v2.5+*
 
+~> This resource is deprecated in favor of [`vcd_external_network_v2`](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
+
 ## Example Usage
 
 ```hcl

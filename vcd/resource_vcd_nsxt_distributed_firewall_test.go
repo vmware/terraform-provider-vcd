@@ -396,11 +396,6 @@ func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 35.2") {
-		t.Skipf("This test tests VCD 10.2.2+ (API V35.2+) features. Skipping.")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
