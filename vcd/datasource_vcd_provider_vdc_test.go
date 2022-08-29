@@ -45,7 +45,7 @@ func TestAccVcdDatasourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "compute_provider_scope", "vc1"),
 					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "compute_capacity.0.cpu.0.units", "MHz"),
 					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "compute_capacity.0.is_elastic", "false"),
-					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "compute_capacity.0.is_ha", "0"),
+					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "compute_capacity.0.is_ha", "false"),
 					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "compute_capacity.0.memory.0.units", "MB"),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "external_network_ids.0", getProviderVdcDatasourceAttributeUrnRegex("network")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "capabilities.0", regexp.MustCompile(`vmx-[\d]+`)),
@@ -55,6 +55,7 @@ func TestAccVcdDatasourceProviderVdc(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_containers_ids.0", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_profile_ids.0", getProviderVdcDatasourceAttributeUrnRegex("providervdcstorageprofile")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "vcenter_id", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
+					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "vdc_ids.#", "0"), // For some reason the VDC list is not returned
 				),
 			},
 		},
