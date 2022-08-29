@@ -13,7 +13,7 @@ Requires system administrator privileges.
 
 Supported in provider *v2.2+*
 
-~> **Note:** For NSX-T suported external network please use [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/resources/external_network_v2)
+~> This resource is deprecated in favor of [`vcd_external_network_v2`](/providers/vmware/vcd/latest/docs/resources/external_network_v2)
 
 ## Example Usage
 
