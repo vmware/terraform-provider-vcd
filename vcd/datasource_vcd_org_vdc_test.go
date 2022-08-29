@@ -102,9 +102,9 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+vdcName, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.allocated"),
-					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
+					resource.TestCheckResourceAttrPair(
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.allocated"),
 					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
