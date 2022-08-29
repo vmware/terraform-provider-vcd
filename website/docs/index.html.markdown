@@ -22,6 +22,7 @@ When upgrading the provider please check for such labels for the resources you a
 
 The following Cloud Director versions are supported by this provider:
 
+* 10.2
 * 10.3
 * 10.4
 
