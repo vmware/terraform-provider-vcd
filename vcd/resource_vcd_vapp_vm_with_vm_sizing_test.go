@@ -77,10 +77,6 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		t.Skip("Test can only run as System admin")
 	}
 
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires VCD 10.0+")
-	}
-
 	configTextVM := templateFill(testAccCheckVcdVAppEmptyVmWithSizing, params)
 
 	params["FuncName"] = t.Name() + "-step1"

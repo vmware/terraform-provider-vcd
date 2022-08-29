@@ -158,12 +158,8 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		fmt.Print("`testConfig.Networking.EdgeGateway` value isn't configured, datasource test using this will be skipped\n")
 	}
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 35") {
-		lists = append(lists,
-			listDef{"library_certificate", "vcd_library_certificate", "", "", ""},
-		)
-	}
+	lists = append(lists, listDef{"library_certificate", "vcd_library_certificate", "", "", ""})
+
 	for _, def := range lists {
 		t.Run(def.name+"-"+def.resourceType, func(t *testing.T) { runResourceInfoTest(def, t) })
 	}

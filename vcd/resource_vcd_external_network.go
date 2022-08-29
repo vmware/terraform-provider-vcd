@@ -21,6 +21,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdExternalNetworkImport,
 		},
+		DeprecationMessage: "Please use resource vcd_external_network_v2 instead",
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,

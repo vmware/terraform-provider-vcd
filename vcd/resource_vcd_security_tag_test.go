@@ -34,22 +34,17 @@ func TestAccVcdSecurityTag(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
-	}
-
 	configText := templateFill(testAccSecurityTag, params)
 
 	params["FuncName"] = t.Name() + "-update"
 	configTextUpdate := templateFill(testAccSecurityTagUpdate, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckSecurityTagDestroy(tag1),
