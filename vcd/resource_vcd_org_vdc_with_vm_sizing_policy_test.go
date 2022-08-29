@@ -124,7 +124,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
 
-					resource.TestCheckResourceAttrPair("vcd_org_vdc."+TestAccVcdVdc, "default_vm_sizing_policy_id",
+					resource.TestCheckResourceAttrPair("vcd_org_vdc."+TestAccVcdVdc, "default_compute_policy_id",
 						"vcd_vm_sizing_policy.minSize3", "id"),
 					resource.TestCheckResourceAttr("vcd_org_vdc."+TestAccVcdVdc, "vm_sizing_policy_ids.#",
 						"3"),
@@ -185,7 +185,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
 
-					resource.TestCheckResourceAttrPair("vcd_org_vdc."+TestAccVcdVdc, "default_vm_sizing_policy_id",
+					resource.TestCheckResourceAttrPair("vcd_org_vdc."+TestAccVcdVdc, "default_compute_policy_id",
 						"vcd_vm_sizing_policy.minSize2", "id"),
 					resource.TestCheckResourceAttr("vcd_org_vdc."+TestAccVcdVdc, "vm_sizing_policy_ids.#",
 						"1"),
@@ -289,7 +289,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
-  default_vm_sizing_policy_id = vcd_vm_sizing_policy.minSize3.id
+  default_compute_policy_id = vcd_vm_sizing_policy.minSize3.id
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.minSize2.id,vcd_vm_sizing_policy.minSize3.id]
 }
 `
@@ -376,7 +376,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
-  default_vm_sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
+  default_compute_policy_id   = vcd_vm_sizing_policy.minSize2.id
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize2.id]
 }
 `

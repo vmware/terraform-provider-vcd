@@ -386,7 +386,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
-  default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_full.id
+  default_compute_policy_id = vcd_vm_sizing_policy.size_full.id
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id,vcd_vm_sizing_policy.size_memory.id,vcd_vm_sizing_policy.size_full.id]
 }
 
