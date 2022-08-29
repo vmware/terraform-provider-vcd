@@ -290,7 +290,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
   default_compute_policy_id = vcd_vm_sizing_policy.minSize3.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.minSize2.id,vcd_vm_sizing_policy.minSize3.id]
+  vm_sizing_policy_ids      = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.minSize2.id,vcd_vm_sizing_policy.minSize3.id]
 }
 `
 
