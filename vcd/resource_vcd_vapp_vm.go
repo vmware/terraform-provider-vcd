@@ -601,6 +601,27 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 }
 
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) error {
+
+	// VM creation has 4 case branches at all
+	// * Standalone VM
+	// * VM in vApp
+
+	//            VM from template or empty VM
+	//                          │
+	//                          │
+	//                          │
+	//            ┌─────────────┴────────────────┐
+	//            │                              │
+	//            │From template                 │Empty VM
+	//            │                              │
+	//            ▼                              ▼
+	//To be built inside vApp             Is standalone VM
+	//            │                              │
+	//            │                              │
+	//            │                              │
+	//            │                              │
+	//            ▼                              ▼
+
 	util.Logger.Printf("[DEBUG] [VM create] started")
 	vcdClient := meta.(*VCDClient)
 
@@ -667,7 +688,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			if vmTemplate == nil {
 				return fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
 			}
-			vmParams := types.InstantiateVmTemplateParams{
+
+			// Prepare request body for standalone VM creation. All parameters should be set here to
+			// speed up process of VM creation instead of separate API calls (unless it is
+			// impossible)
+
+			standaloneVmParams := types.InstantiateVmTemplateParams{
 				Xmlns:            types.XMLNamespaceVCloud,
 				Name:             vmName,
 				PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
@@ -685,10 +711,22 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 					VmTemplateInstantiationParams: &types.InstantiationParams{
 						NetworkConnectionSection: &networkConnectionSection,
 					},
+					// VmCapabilities: &types.VmCapabilities{
+					// 	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
+					// 	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
+					// },
 				},
 			}
-			util.Logger.Printf("%# v", pretty.Formatter(vmParams))
-			vm, err = vdc.CreateStandaloneVMFromTemplate(&vmParams)
+
+			if d.Get("memory_hot_add_enabled").(bool) || d.Get("cpu_hot_add_enabled").(bool) {
+				standaloneVmParams.SourcedVmTemplateItem.VmCapabilities = &types.VmCapabilities{
+					MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
+					CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
+				}
+			}
+
+			util.Logger.Printf("%# v", pretty.Formatter(standaloneVmParams))
+			vm, err = vdc.CreateStandaloneVMFromTemplate(&standaloneVmParams)
 			if err != nil {
 				d.SetId("")
 				return fmt.Errorf("[VM creation] error creating standalone VM %s : %s", vmName, err)
@@ -701,27 +739,60 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 			util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 			dSet(d, "vapp_name", vapp.VApp.Name)
-		} else {
+		} else { // VM inside a vApp
 			vapp, err = vdc.GetVAppByName(vappName, false)
 			if err != nil {
 				return fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
 			}
 
-			task, err := vapp.AddNewVMWithComputePolicy(vmName, vappTemplate, &networkConnectionSection, storageProfilePtr, sizingPolicy, d.Get("accept_all_eulas").(bool))
-			if err != nil {
-				return fmt.Errorf("[VM creation] error adding VM: %s", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+			templateHref := vappTemplate.VAppTemplate.HREF
+			if vappTemplate.VAppTemplate.Children != nil && len(vappTemplate.VAppTemplate.Children.VM) != 0 {
+				templateHref = vappTemplate.VAppTemplate.Children.VM[0].HREF
 			}
 
-			vm, err = vapp.GetVMByName(vmName, true)
+			// Prepare request body for standalone VM creation. All parameters should be set here to
+			// speed up process of VM creation instead of separate API calls (unless it is
+			// impossible)
 
+			vappVmParams := &types.ReComposeVAppParams{
+				Ovf:              types.XMLNamespaceOVF,
+				Xsi:              types.XMLNamespaceXSI,
+				Xmlns:            types.XMLNamespaceVCloud,
+				AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
+				Deploy:           false,
+				Name:             vapp.VApp.Name,
+				PowerOn:          false,
+				Description:      vapp.VApp.Description,
+				SourcedItem: &types.SourcedCompositionItemParam{
+					Source: &types.Reference{
+						HREF: templateHref,
+						Name: vmName,
+					},
+					InstantiationParams: &types.InstantiationParams{
+						NetworkConnectionSection: &networkConnectionSection,
+					},
+					StorageProfile: storageProfilePtr,
+					ComputePolicy:  vmComputePolicy,
+					// VmCapabilities: &types.VmCapabilities{
+					// 	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
+					// 	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
+					// },
+				},
+			}
+
+			if d.Get("memory_hot_add_enabled").(bool) || d.Get("cpu_hot_add_enabled").(bool) {
+				vappVmParams.SourcedItem.VmCapabilities = &types.VmCapabilities{
+					MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
+					CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
+				}
+			}
+
+			vm, err = vapp.AddRawVM(vappVmParams)
 			if err != nil {
 				d.SetId("")
 				return fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
 			}
+
 		}
 
 		// Store VM type - `vcd_vm` or `vcd_vapp_vm`
@@ -796,10 +867,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		// log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
 
 		// Ensure CPU/Memory hot add settings are correct
-		_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
-		if err != nil {
-			return fmt.Errorf("error changing VM capabilities: %s", err)
-		}
+		// _, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
+		// if err != nil {
+		// 	return fmt.Errorf("error changing VM capabilities: %s", err)
+		// }
 
 		// Ensure that hypervisor nesting is set as per configuration
 		{
@@ -814,69 +885,82 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 		}
 
-		if d.HasChanges("cpu_cores", "hardware_version", "os_type", "description") {
+		// if d.HasChanges("cpu_cores", "cpu_cores", "hardware_version", "os_type", "description") {
 
-			log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
-				" hardware_version(%t), os_type(%t), description(%t), network(%t)",
-				vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"),
-				d.HasChange("hardware_version"), d.HasChange("os_type"), d.HasChange("description"), d.HasChange("network"))
+		// log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
+		// 	" hardware_version(%t), os_type(%t), description(%t), network(%t)",
+		// 	vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"),
+		// 	d.HasChange("hardware_version"), d.HasChange("os_type"), d.HasChange("description"), d.HasChange("network"))
 
-			memory, isMemorySet := d.GetOk("memory")
-			isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
-			if isMemoryComingFromSizingPolicy && isMemorySet {
-				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
+		memory, isMemorySet := d.GetOk("memory")
+		isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
+		if isMemoryComingFromSizingPolicy && isMemorySet {
+			logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
+		}
+
+		if !isMemoryComingFromSizingPolicy {
+			err = vm.ChangeMemory(int64(memory.(int)))
+			if err != nil {
+				return err
+			}
+		}
+
+		// if d.HasChange("cpu_cores") {
+		// 	err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
+
+		cpus, isCpusSet := d.GetOk("cpus")
+		cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
+		isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
+		if isCpuComingFromSizingPolicy && isCpusSet {
+			logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
+		}
+		if isCpuComingFromSizingPolicy && isCpuCoresSet {
+			logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
+		}
+
+		if !isCpuComingFromSizingPolicy {
+			err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
+			if err != nil {
+				return err
+			}
+		}
+
+		// updating fields of VM spec section
+		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
+			vmSpecSection := vm.VM.VmSpecSection
+			description := vm.VM.Description
+			if d.HasChange("hardware_version") {
+				vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
+			}
+			if d.HasChange("os_type") {
+				vmSpecSection.OsType = d.Get("os_type").(string)
 			}
 
-			if !isMemoryComingFromSizingPolicy {
-				err = vm.ChangeMemory(int64(memory.(int)))
-				if err != nil {
-					return err
-				}
+			if d.HasChange("description") {
+				description = d.Get("description").(string)
 			}
 
-			if d.HasChange("cpu_cores") {
-				err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
-				if err != nil {
-					return err
-				}
+			_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
+			if err != nil {
+				return fmt.Errorf("error changing VM spec section: %s", err)
 			}
+		}
 
-			cpus, isCpusSet := d.GetOk("cpus")
-			cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
-			isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
-			if isCpuComingFromSizingPolicy && isCpusSet {
-				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
-			}
-			if isCpuComingFromSizingPolicy && isCpuCoresSet {
-				logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
-			}
+		// }
 
-			if !isCpuComingFromSizingPolicy {
-				err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
-				if err != nil {
-					return err
+		if d.HasChange("disk") {
+			err = attachDetachDisks(d, *vm, vdc)
+			if err != nil {
+				errAttachedDisk := updateStateOfAttachedDisks(d, *vm)
+				if errAttachedDisk != nil {
+					dSet(d, "disk", nil)
+					return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
 				}
-			}
-
-			// updating fields of VM spec section
-			if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
-				vmSpecSection := vm.VM.VmSpecSection
-				description := vm.VM.Description
-				if d.HasChange("hardware_version") {
-					vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
-				}
-				if d.HasChange("os_type") {
-					vmSpecSection.OsType = d.Get("os_type").(string)
-				}
-
-				if d.HasChange("description") {
-					description = d.Get("description").(string)
-				}
-
-				_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
-				if err != nil {
-					return fmt.Errorf("error changing VM spec section: %s", err)
-				}
+				return fmt.Errorf("error attaching-detaching  disks when updating resource : %s", err)
 			}
 		}
 
