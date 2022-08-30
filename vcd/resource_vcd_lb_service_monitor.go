@@ -91,7 +91,7 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"receive": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "String to be matched in the response content",
+				Description: "String to be matched in the response vmGroupContent",
 			},
 			"extension": {
 				Type:        schema.TypeMap,
@@ -253,7 +253,7 @@ func getLBMonitorExtensionType(d *schema.ResourceData) string {
 	var extensionString string
 	extension := d.Get("extension").(map[string]interface{})
 	for k, v := range extension {
-		if k != "" && v != "" { // When key and value are given it must look like "content-type=STRING"
+		if k != "" && v != "" { // When key and value are given it must look like "vmGroupContent-type=STRING"
 			extensionString += k + "=" + v.(string) + "\n"
 		} else { // If only key is specified it does not need equals sign. Like "no-body" extension
 			extensionString += k + "\n"

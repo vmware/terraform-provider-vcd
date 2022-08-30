@@ -32,81 +32,30 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 				Computed:    true,
 				Description: "Description of the VM Placement Policy",
 			},
-			"vm_groups": {
+			"vm_group_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "Collection of VMs with similar host requirements",
+				Description: "IDs of the collection of VMs with similar host requirements",
 			},
-			"logical_vm_groups": {
+			"logical_vm_group_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "One or more Logical VM Groups defined in this VM Placement policy. There is an AND relationship among all the entries fetched to this attribute",
+				Description: "IDs of one or more Logical VM Groups defined in this VM Placement policy. There is an AND relationship among all the entries fetched to this attribute",
 			},
 		},
 	}
 }
 
 func datasourceVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	policyName := d.Get("name").(string)
-	pVdcId := d.Get("provider_vdc_id").(string)
-	log.Printf("[TRACE] VM Placement Policy read initiated: %s in pVDC with ID %s", policyName, pVdcId)
-
-	vcdClient := meta.(*VCDClient)
-
-	// The method variable stores the information about how we found the rule, for logging purposes
-	method := "id"
-
-	var policy *govcd.VdcComputePolicy
-	var err error
-	if d.Id() != "" {
-		policy, err = vcdClient.Client.GetVdcComputePolicyById(d.Id())
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM Placement Policy %s. Removing from tfstate.", policyName)
-			d.SetId("")
-			return diag.Errorf("unable to find VM Placement Policy %s, err: %s. Removing from tfstate", policyName, err)
-		}
-	}
-
-	// The secondary method of retrieval is from name
-	if d.Id() == "" {
-		if policyName == "" {
-			return diag.Errorf("both Placement Policy name and ID are empty")
-		}
-		if pVdcId == "" {
-			return diag.Errorf("both Provider VDC ID and Placement Policy ID are empty")
-		}
-
-		method = "name"
-		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;pvdcId==%s", policyName, pVdcId))
-		filteredPoliciesByName, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s. Removing from tfstate.", policyName, pVdcId)
-			d.SetId("")
-			return diag.Errorf("unable to find VM Placement policy %s of Provider VDC %s, err: %s. Removing from tfstate", policyName, pVdcId, err)
-		}
-		if len(filteredPoliciesByName) != 1 {
-			log.Printf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s. Found Policies by name: %d. Removing from tfstate.", policyName, pVdcId, len(filteredPoliciesByName))
-			d.SetId("")
-			return diag.Errorf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, pVdcId, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
-		}
-		policy = filteredPoliciesByName[0]
-		d.SetId(policy.VdcComputePolicy.ID)
-	}
-
-	// Fix coverity warning
-	if policy == nil {
-		return diag.Errorf("[datasourceVcdVmPlacementPolicyRead] error defining VM Placement Policy")
-	}
-	util.Logger.Printf("[TRACE] [get VM Placement Policy] Retrieved by %s\n", method)
-	return setVmPlacementPolicy(ctx, d, *policy.VdcComputePolicy)
+	return genericVcdVmPlacementPolicyRead(ctx, d, meta)
 }
+
 
 // TODO: Probably we should move this function to the Resource when it is created, to follow same code style as other resource-datasource pairs.
 // setVmPlacementPolicy sets object state from *govcd.VdcComputePolicy
@@ -114,18 +63,18 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy type
 
 	dSet(d, "name", policy.Name)
 	dSet(d, "description", policy.Description)
-	var vmGroupNames []string
+	var vmGroupIds []string
 	for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
 		for _, namedVmGroup := range namedVmGroupPerPvdc {
-			vmGroupNames = append(vmGroupNames, namedVmGroup.Name)
+			vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
 		}
 	}
-	dSet(d, "vm_groups", vmGroupNames)
-	vmGroupNames = []string{}
+	dSet(d, "vm_group_ids", vmGroupIds)
+	vmGroupIds = []string{}
 	for _, namedVmGroup := range policy.LogicalVMGroupReferences {
-		vmGroupNames = append(vmGroupNames, namedVmGroup.Name)
+		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
 	}
-	dSet(d, "logical_vm_groups", vmGroupNames)
+	dSet(d, "logical_vm_group_ids", vmGroupIds)
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
 	return nil

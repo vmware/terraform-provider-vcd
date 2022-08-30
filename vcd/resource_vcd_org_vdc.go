@@ -880,7 +880,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
 	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
 	isDefaultPolicyChanged := d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id")
-	if !arePoliciesChanged || !isDefaultPolicyChanged {
+	if !arePoliciesChanged && !isDefaultPolicyChanged {
 		return nil
 	}
 
@@ -909,7 +909,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"}, // Filtering out vGPU Policies as there's no attribute support yet.
 	})
 	if err != nil {
-		return fmt.Errorf("error getting VM Compute Policies. %s", err)
+		return fmt.Errorf("error getting Compute Policies. %s", err)
 	}
 	for _, existingPolicy := range existingPolicies {
 		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + existingPolicy.VdcComputePolicy.ID})
@@ -919,14 +919,14 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 	policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
 	_, err = vdc.SetAssignedComputePolicies(policyReferences)
 	if err != nil {
-		return fmt.Errorf("error setting VM Compute Policies. %s", err)
+		return fmt.Errorf("error setting Compute Policies. %s", err)
 	}
 
 	// set default VM sizing policy
 	vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref + defaultPolicyId.(string), ID: defaultPolicyId.(string)}
 	updatedVdc, err := vdc.Update()
 	if err != nil {
-		return fmt.Errorf("error setting default VM sizing policy. %s", err)
+		return fmt.Errorf("error setting default Compute Policy. %s", err)
 	}
 
 	// Now we can remove previously existing policies as default policy changed
@@ -938,7 +938,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 
 	_, err = updatedVdc.SetAssignedComputePolicies(policyReferences)
 	if err != nil {
-		return fmt.Errorf("error setting VM sizing policies. %s", err)
+		return fmt.Errorf("error setting Compute Policies. %s", err)
 	}
 	return nil
 }

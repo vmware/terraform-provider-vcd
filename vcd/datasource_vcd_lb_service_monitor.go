@@ -74,7 +74,7 @@ func datasourceVcdLbServiceMonitor() *schema.Resource {
 			"receive": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "String to be matched in the response content",
+				Description: "String to be matched in the response vmGroupContent",
 			},
 			"extension": {
 				Type:        schema.TypeMap,

@@ -165,7 +165,7 @@ func resourceVmSizingPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	return resourceVmSizingPolicyRead(ctx, d, meta)
 }
 
-// resourceVcdVmAffinityRuleRead reads a resource VM affinity rule
+// resourceVmSizingPolicyRead reads a resource VM Sizing Policy
 func resourceVmSizingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmSizingPolicyRead(ctx, d, meta)
 }
@@ -537,7 +537,7 @@ func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, policyId string
 	vmSizingPolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
-		queryParams.Add("filter", "name=="+policyId)
+		queryParams.Add("filter", "name=="+policyId)  // FIXME: Is this a bug? (Could be a sizing policy or placement or vGPU with same name)
 		vmSizingPolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyId)

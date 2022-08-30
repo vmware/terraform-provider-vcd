@@ -65,7 +65,7 @@ func TestAccVcdDatasourceProviderVdc(t *testing.T) {
 // As the `vcd_provider_vdc` data source has a lot of URNs in its attributes, this function tries to centralize URN checking
 // for this test case.
 func getProviderVdcDatasourceAttributeUrnRegex(itemType string) *regexp.Regexp {
-	return regexp.MustCompile(`urn:vcloud:`+itemType+`:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
+	return regexp.MustCompile(`urn:vcloud:` + itemType + `:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
 }
 
 const testAccVcdDatasourceProviderVdc = `

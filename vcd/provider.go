@@ -177,6 +177,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_neighbor":             resourceVcdEdgeBgpNeighbor(),                  // 3.7
 	"vcd_nsxt_edgegateway_bgp_ip_prefix_list":       resourceVcdEdgeBgpIpPrefixList(),              // 3.7
 	"vcd_nsxt_edgegateway_bgp_configuration":        resourceVcdEdgeBgpConfig(),                    // 3.7
+	"vcd_vm_placement_policy":                       resourceVcdVmPlacementPolicy(),                // 3.8
 }
 
 // Provider returns a terraform.ResourceProvider.

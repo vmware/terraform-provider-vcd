@@ -45,7 +45,7 @@ func resourceLibraryCertificate() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Certificate content",
+				Description: "Certificate vmGroupContent",
 			},
 			"private_key": {
 				Type:        schema.TypeString,
