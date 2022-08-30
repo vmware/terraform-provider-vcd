@@ -606,10 +606,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" && vmType == vappVmType {
-		return fmt.Errorf("vApp name is mandatory for this VM type")
+		return fmt.Errorf("vApp name is mandatory for vApp VM (resource `vcd_vapp_vm`)")
 	}
 	if vappName != "" && vmType == standaloneVmType {
-		return fmt.Errorf("vApp name must not be set for a standalone VM")
+		return fmt.Errorf("vApp name must not be set for a standalone VM (resource `vcd_vm`)")
 	}
 	if vappName != "" && vmType == vappVmType {
 		vcdClient.lockParentVapp(d)
@@ -626,92 +626,43 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	vmName := d.Get("name").(string)
 	description := d.Get("description").(string)
 
-	var vapp *govcd.VApp
+	// If at least Catalog Name and Template name are set - a VM from vApp is being created
+	isVmFromTemplate := catalogName != "" && templateName != ""
+	// VM is standalone if no 'vapp_name' was specified for its creation
+	isStandaloneVm := vappName == ""
+	// isVappVm := !isStandaloneVm
 
 	//create not empty VM - use provided template
-	if catalogName != "" && templateName != "" {
-
-		catalog, err := org.GetCatalogByName(catalogName, false)
+	if isVmFromTemplate {
+		// Lookup vApp template
+		vappTemplate, err := lookupvAppTemplateforVm(d, org, vdc)
 		if err != nil {
-			return fmt.Errorf("error finding catalog %s: %s", catalogName, err)
+			return fmt.Errorf("error finding vApp template: %s", err)
 		}
 
-		var vappTemplate govcd.VAppTemplate
-		if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok {
-			vmInTemplateRecord, err := vdc.QueryVappVmTemplate(catalogName, templateName, vmNameInTemplate.(string))
-			if err != nil {
-				return fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
-			}
-			util.Logger.Printf("[VM create] vmInTemplateRecord %# v", pretty.Formatter(vmInTemplateRecord))
-			returnedVappTemplate, err := catalog.GetVappTemplateByHref(vmInTemplateRecord.HREF)
-			if err != nil {
-				return fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
-			}
-			util.Logger.Printf("[VM create] returnedVappTemplate %#v", pretty.Formatter(returnedVappTemplate))
-			vappTemplate = *returnedVappTemplate
-		} else {
-			catalogItem, err := catalog.GetCatalogItemByName(templateName, false)
-			if err != nil {
-				return fmt.Errorf("error finding catalog item %s: %s", templateName, err)
-			}
-			vappTemplate, err = catalogItem.GetVAppTemplate()
-			if err != nil {
-				return fmt.Errorf("[VM create] error finding VAppTemplate %s: %s", templateName, err)
-			}
-
+		// Prepare network configuration
+		networkConnectionSection, err := networksToConfig(d, nil)
+		if err != nil {
+			return fmt.Errorf("unable to process network configuration: %s", err)
 		}
-		acceptEulas := d.Get("accept_all_eulas").(bool)
+		util.Logger.Printf("[VM create] networkConnectionSection %# v", pretty.Formatter(networkConnectionSection))
 
-		if vappName != "" {
-			vapp, err = vdc.GetVAppByName(vappName, false)
-			if err != nil {
-				return fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
-			}
+		// Lookup storage profile reference if it was specified
+		storageProfilePtr, err := lookupStorageProfile(d, vdc)
+		if err != nil {
+			return fmt.Errorf("error finding storage profile: %s", err)
 		}
 
-		networkConnectionSection := types.NetworkConnectionSection{}
-		if len(d.Get("network").([]interface{})) > 0 {
-			networkConnectionSection, err = networksToConfig(d, vapp)
-			if err != nil {
-				return fmt.Errorf("unable to process network configuration: %s", err)
-			}
-			util.Logger.Printf("[VM create] networkConnectionSection %# v", pretty.Formatter(networkConnectionSection))
-		}
-
-		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		var storageProfile types.Reference
-		storageProfilePtr := &storageProfile
-		storageProfileName := d.Get("storage_profile").(string)
-		if storageProfileName != "" {
-			storageProfile, err = vdc.FindStorageProfileReference(storageProfileName)
-			if err != nil {
-				return fmt.Errorf("[vm creation] error retrieving storage profile %s : %s", storageProfileName, err)
-			}
-		} else {
-			storageProfilePtr = nil
-		}
-
-		var sizingPolicy *types.VdcComputePolicy
-		var vmComputePolicy *types.ComputePolicy
-		if value, ok := d.GetOk("sizing_policy_id"); ok {
-			vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
-			if err != nil {
-				return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
-			}
-			sizingPolicy = vdcComputePolicy.VdcComputePolicy
-			if vdcComputePolicy.Href == "" {
-				return fmt.Errorf("empty sizing policy HREF detected")
-			}
-			vmComputePolicy = &types.ComputePolicy{
-				VmSizingPolicy: &types.Reference{HREF: vdcComputePolicy.Href},
-			}
-			util.Logger.Printf("[VM create] sizingPolicy (%s) %# v", vdcComputePolicy.Href, pretty.Formatter(sizingPolicy))
+		// Lookup sizing policy
+		sizingPolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+		if err != nil {
+			return fmt.Errorf("error finding sizing policy: %s", err)
 		}
 		computePolicy := sizingPolicy
 
 		var vm *govcd.VM
-
-		if vappName == "" {
+		var vapp *govcd.VApp
+		if isStandaloneVm {
 			vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
 			if vmTemplate == nil {
 				return fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
@@ -720,7 +671,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				Xmlns:            types.XMLNamespaceVCloud,
 				Name:             vmName,
 				PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
-				AllEULAsAccepted: acceptEulas,
+				AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 				ComputePolicy:    vmComputePolicy,
 				Description:      description,
 				SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
@@ -751,7 +702,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 			dSet(d, "vapp_name", vapp.VApp.Name)
 		} else {
-			task, err := vapp.AddNewVMWithComputePolicy(vmName, vappTemplate, &networkConnectionSection, storageProfilePtr, sizingPolicy, acceptEulas)
+			vapp, err = vdc.GetVAppByName(vappName, false)
+			if err != nil {
+				return fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
+			}
+
+			task, err := vapp.AddNewVMWithComputePolicy(vmName, vappTemplate, &networkConnectionSection, storageProfilePtr, sizingPolicy, d.Get("accept_all_eulas").(bool))
 			if err != nil {
 				return fmt.Errorf("[VM creation] error adding VM: %s", err)
 			}
@@ -768,6 +724,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 		}
 
+		// Store VM type - `vcd_vm` or `vcd_vapp_vm`
 		var computedVmType string
 		if vapp.VApp.IsAutoNature {
 			computedVmType = string(standaloneVmType)
@@ -824,85 +781,46 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		//////////////////// This part is copied from Update to split these operations ////////////////////////
 		//////////////////// This part is copied from Update to split these operations ////////////////////////
 
-		// var sizingPolicy *types.VdcComputePolicy
-		// var vmComputePolicy *types.ComputePolicy
-		// if value, ok := d.GetOk("sizing_policy_id"); ok {
-		// 	vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
-		// 	if err != nil {
-		// 		return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
-		// 	}
-		// 	sizingPolicy = vdcComputePolicy.VdcComputePolicy
-		// 	if vdcComputePolicy.Href == "" {
-		// 		return fmt.Errorf("empty sizing policy HREF detected")
-		// 	}
-		// 	vmComputePolicy = &types.ComputePolicy{
-		// 		VmSizingPolicy: &types.Reference{HREF: vdcComputePolicy.Href},
-		// 	}
-		// 	util.Logger.Printf("[VM create] sizingPolicy (%s) %# v", vdcComputePolicy.Href, pretty.Formatter(sizingPolicy))
-		// }
-
-		// computePolicy := sizingPolicy
-		// var executionType = "create"
-
-		// err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType, sizingPolicy)
-
 		log.Printf("[DEBUG] [VM create-update] started without lock")
 
-		_, org, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
-		if err != nil {
-			return err
-		}
-
-		// Check if the user requested for forced customization of VM
-		customizationNeeded := isForcedCustomization(d.Get("customization"))
-
-		// Update guest customization if any of the customization related fields have changed
-		if d.HasChanges("customization", "computer_name", "name") {
-			log.Printf("[TRACE] VM %s customization has changes: customization(%t), computer_name(%t), name(%t)",
-				vm.VM.Name, d.HasChange("customization"), d.HasChange("computer_name"), d.HasChange("name"))
-			err = updateGuestCustomizationSetting(d, vm)
-			if err != nil {
-				return fmt.Errorf("errors updating guest customization: %s", err)
-			}
-
-		}
-
-		// It was already updated for create phase
-		// if d.HasChanges("memory_reservation", "memory_priority", "memory_shares", "memory_limit",
-		// 	"cpu_reservation", "cpu_priority", "cpu_limit", "cpu_shares") {
-		// 	err = updateAdvancedComputeSettings(d, vm)
-		// 	if err != nil {
-		// 		return fmt.Errorf("[VM update] error advanced compute settings for standalone VM %s : %s", vm.VM.Name, err)
-		// 	}
+		// _, _, _, _, _, vm, err = getVmFromResource(d, meta, vmType)
+		// if err != nil {
+		// 	return err
 		// }
+
+		err = vm.Refresh()
+		if err != nil {
+			return fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+		}
 
 		// log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
 
-		// this represents fields which have to be changed in cold (with VM power off)
-		if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
-			"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-			"memory_hot_add_enabled") {
+		// Ensure CPU/Memory hot add settings are correct
+		_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
+		if err != nil {
+			return fmt.Errorf("error changing VM capabilities: %s", err)
+		}
 
-			log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-				" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), network(%t)",
-				vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
-				d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
-				d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("network"))
-
-			// detaching independent disks - only possible when VM power off
-			if d.HasChange("disk") {
-				err = attachDetachDisks(d, *vm, vdc)
-				if err != nil {
-					errAttachedDisk := updateStateOfAttachedDisks(d, *vm)
-					if errAttachedDisk != nil {
-						dSet(d, "disk", nil)
-						return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
-					}
-					return fmt.Errorf("error attaching-detaching  disks when updating resource : %s", err)
-				}
+		// Ensure that hypervisor nesting is set as per configuration
+		{
+			task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
+			if err != nil {
+				return fmt.Errorf("error changing hardware assisted virtualization: %s", err)
 			}
 
-			// if memoryNeedsColdChange || executionType == "create" {
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.HasChanges("cpu_cores", "hardware_version", "os_type", "description") {
+
+			log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
+				" hardware_version(%t), os_type(%t), description(%t), network(%t)",
+				vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"),
+				d.HasChange("hardware_version"), d.HasChange("os_type"), d.HasChange("description"), d.HasChange("network"))
+
 			memory, isMemorySet := d.GetOk("memory")
 			isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
 			if isMemoryComingFromSizingPolicy && isMemorySet {
@@ -915,7 +833,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 					return err
 				}
 			}
-			// }
 
 			if d.HasChange("cpu_cores") {
 				err = vm.ChangeCPU(d.Get("cpus").(int), d.Get("cpu_cores").(int))
@@ -924,7 +841,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 				}
 			}
 
-			// if cpusNeedsColdChange || (executionType == "create") {
 			cpus, isCpusSet := d.GetOk("cpus")
 			cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
 			isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
@@ -937,30 +853,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 			if !isCpuComingFromSizingPolicy {
 				err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
-				if err != nil {
-					return err
-				}
-			}
-			// }
-
-			// if networksNeedsColdChange {
-			networkConnectionSection, err := networksToConfig(d, vapp)
-			if err != nil {
-				return fmt.Errorf("unable to setup network configuration for update: %s", err)
-			}
-			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
-			if err != nil {
-				return fmt.Errorf("unable to update network configuration: %s", err)
-			}
-			// }
-
-			if d.HasChange("expose_hardware_virtualization") {
-				task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
-				if err != nil {
-					return fmt.Errorf("error changing hardware assisted virtualization: %s", err)
-				}
-
-				err = task.WaitTaskCompletion()
 				if err != nil {
 					return err
 				}
@@ -986,38 +878,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 					return fmt.Errorf("error changing VM spec section: %s", err)
 				}
 			}
-
-			if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
-				_, err := vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
-				if err != nil {
-					return fmt.Errorf("error changing VM capabilities: %s", err)
-				}
-			}
-
-			// we detach boot image if it's value change to empty.
-			bootImage := d.Get("boot_image")
-			if d.HasChange("boot_image") && bootImage.(string) == "" {
-				previousBootImageValue, _ := d.GetChange("boot_image")
-				previousCatalogName, _ := d.GetChange("catalog_name")
-				catalog, err := org.GetCatalogByName(previousCatalogName.(string), false)
-				if err != nil {
-					return fmt.Errorf("[VM Update] error finding catalog %s: %s", previousCatalogName, err)
-				}
-				result, err := catalog.GetMediaByName(previousBootImageValue.(string), false)
-				if err != nil {
-					return fmt.Errorf("[VM Update] error getting boot image %s : %s", previousBootImageValue, err)
-				}
-
-				task, err := vm.HandleEjectMedia(org, previousCatalogName.(string), result.Media.Name)
-				if err != nil {
-					return fmt.Errorf("error: %#v", err)
-				}
-
-				err = task.WaitTaskCompletion(true)
-				if err != nil {
-					return fmt.Errorf("error: %#v", err)
-				}
-			}
 		}
 
 		err = updateAdvancedComputeSettings(d, vm)
@@ -1027,41 +887,9 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 		// By default the VM is created in POWERED_OFF state
 		if d.Get("power_on").(bool) {
-			// vmStatus, err := vm.GetStatus()
-			// if err != nil {
-			// 	return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
-			// }
-
-			// Simply power on if customization is not requested
-			// if !customizationNeeded && vmStatus != "POWERED_ON" {
-			// 	log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
-			// 	task, err := vm.PowerOn()
-			// 	if err != nil {
-			// 		return fmt.Errorf("error powering on: %s", err)
-			// 	}
-			// 	err = task.WaitTaskCompletion()
-			// 	if err != nil {
-			// 		return fmt.Errorf(errorCompletingTask, err)
-			// 	}
-			// }
-
 			// When customization is requested VM must be un-deployed before starting it
+			customizationNeeded := isForcedCustomization(d.Get("customization"))
 			if customizationNeeded {
-				// log.Printf("[TRACE] forced customization for VM %s was requested. Current state %s",
-				// 	vm.VM.Name, vmStatus)
-
-				// if vmStatus != "POWERED_OFF" {
-				// 	log.Printf("[TRACE] VM %s is in state %s. Un-deploying", vm.VM.Name, vmStatus)
-				// 	task, err := vm.Undeploy()
-				// 	if err != nil {
-				// 		return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
-				// 	}
-				// 	err = task.WaitTaskCompletion()
-				// 	if err != nil {
-				// 		return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
-				// 	}
-				// }
-
 				log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
 				err = vm.PowerOnAndForceCustomization()
 				if err != nil {
@@ -1107,7 +935,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return fmt.Errorf("[VM creation] error creating standalone VM %s : %s", vmName, err)
 		}
 		util.Logger.Printf("[VM create] VM after creation %# v", pretty.Formatter(vm.VM))
-		vapp, err = vm.GetParentVApp()
+		vapp, err := vm.GetParentVApp()
 		if err != nil {
 			d.SetId("")
 			return fmt.Errorf("[VM creation] error retrieving vApp from standalone VM %s : %s", vmName, err)
@@ -3038,7 +2866,6 @@ func handleExposeHardwareVirtualization(d *schema.ResourceData, newVm *govcd.VM)
 	// The below operation assumes VM is powered off and does not check for it because VM is being
 	// powered on in the last stage of create/update cycle
 	if d.Get("expose_hardware_virtualization").(bool) {
-
 		task, err := newVm.ToggleHardwareVirtualization(true)
 		if err != nil {
 			return fmt.Errorf("error enabling hardware assisted virtualization: %s", err)
