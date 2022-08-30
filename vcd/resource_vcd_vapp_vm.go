@@ -811,11 +811,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return err
 		}
 
-		err = updateAdvancedComputeSettings(d, vm)
-		if err != nil {
-			return fmt.Errorf("[VM creation] error applying advanced compute settings for VM %s : %s", vmName, err)
-		}
-
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 
 		//////////////////// This part is copied from Update to split these operations ////////////////////////
@@ -1023,6 +1018,11 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 					return fmt.Errorf("error: %#v", err)
 				}
 			}
+		}
+
+		err = updateAdvancedComputeSettings(d, vm)
+		if err != nil {
+			return fmt.Errorf("[VM creation] error applying advanced compute settings for VM %s : %s", vmName, err)
 		}
 
 		// By default the VM is created in POWERED_OFF state
