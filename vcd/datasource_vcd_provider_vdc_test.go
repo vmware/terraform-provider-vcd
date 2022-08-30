@@ -55,7 +55,6 @@ func TestAccVcdDatasourceProviderVdc(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_containers_ids.0", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_profile_ids.0", getProviderVdcDatasourceAttributeUrnRegex("providervdcstorageprofile")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "vcenter_id", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
-					resource.TestCheckResourceAttr("data.vcd_provider_vdc.pvdc1", "vdc_ids.#", "0"), // For some reason the VDC list is not returned
 				),
 			},
 		},

@@ -118,14 +118,6 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of the registered NSX-T Manager that backs networking operations for this Provider VDC",
 			},
-			"vdc_ids": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Computed:    true,
-				Description: "Set of organization VDCs backed by this Provider VDC",
-			},
 			"storage_containers_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
@@ -217,14 +209,6 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 	dSet(d, "nsxt_manager_id", extendedProviderVdc.VMWProviderVdc.NsxTManagerReference.ID)
 
 	var items []string
-	for _, vdcId := range extendedProviderVdc.VMWProviderVdc.Vdcs {
-		if vdcId != nil {
-			items = append(items, vdcId.ID)
-		}
-	}
-	dSet(d, "vdc_ids", items)
-
-	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.AvailableNetworks != nil {
 		for _, network := range extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network {
 			if network != nil {

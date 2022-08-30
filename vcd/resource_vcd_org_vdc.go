@@ -819,38 +819,21 @@ func resourceVcdVdcDelete(_ context.Context, d *schema.ResourceData, meta interf
 // updateAssignedVmComputePolicies handles VM compute policies.
 func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, vdc *govcd.AdminVdc) error {
 	vcdClient := meta.(*VCDClient)
-	log.Printf("[TRACE] updating assigned VM Compute Policies to VDC")
-
-	// Deprecation compatibility: If `default_compute_policy_id` is not set, fallback to deprecated one.
-	// We can do this as `default_compute_policy_id` contains the same value as `default_vm_sizing_policy_id`.
-	defaultPolicyId, defaultPolicyIsSet := d.GetOk("default_compute_policy_id")
-	if !defaultPolicyIsSet {
-		defaultPolicyId, defaultPolicyIsSet = d.GetOk("default_vm_sizing_policy_id")
+	defaultPolicyId, vcdComputePolicyHref, err := getDefaultPolicyIdAndComputePolicyHref(d, vcdClient)
+	if err != nil {
+		return err
 	}
-	_, sizingOk := d.GetOk("vm_sizing_policy_ids")
-	_, placementOk := d.GetOk("vm_placement_policy_ids")
-
-	if defaultPolicyIsSet && !sizingOk && !placementOk {
-		return fmt.Errorf("when `default_compute_policy_id` is used, it requires also `vm_sizing_policy_ids` or `vm_placement_policy_ids`")
+	if vcdComputePolicyHref == nil || defaultPolicyId == "" {
+		return nil
 	}
 
 	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
 	isDefaultPolicyChanged := d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id")
 
-	// Early return
-	if !isDefaultPolicyChanged && !arePoliciesChanged {
-		return nil
-	}
-
-	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion2_0_0, types.OpenApiEndpointVdcComputePolicies)
-	if err != nil {
-		return fmt.Errorf("error constructing HREF for Compute Policy")
-	}
-
 	// Compatibility patch: Remove deprecated `default_vm_sizing_policy_id` from this conditional when the attribute is removed.
 	// We can do this as `default_compute_policy_id` contains the same value as `default_vm_sizing_policy_id`.
 	if isDefaultPolicyChanged && !arePoliciesChanged {
-		vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref.String() + defaultPolicyId.(string), ID: defaultPolicyId.(string)}
+		vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref.String() + defaultPolicyId, ID: defaultPolicyId}
 		_, err := vdc.Update()
 		if err != nil {
 			return fmt.Errorf("error setting default VM Compute Policy. %s", err)
@@ -866,8 +849,8 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 				vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 			}
 		}
-		if !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
-			return fmt.Errorf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes)
+		if !contains(vmComputePolicyIds, defaultPolicyId) {
+			return fmt.Errorf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId, computePolicyAttributes)
 		}
 
 		var vdcComputePolicyReferenceList []*types.Reference
@@ -921,7 +904,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 	for _, policyId := range vmComputePolicyIds {
 		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
 	}
-	// ------
+
 	existingPolicies, err := vdc.GetAllAssignedVdcComputePolicies(url.Values{
 		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"}, // Filtering out vGPU Policies as there's no attribute support yet.
 	})
@@ -931,7 +914,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 	for _, existingPolicy := range existingPolicies {
 		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + existingPolicy.VdcComputePolicy.ID})
 	}
-	// ------
+
 	policyReferences := types.VdcComputePolicyReferences{}
 	policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
 	_, err = vdc.SetAssignedComputePolicies(policyReferences)
@@ -939,7 +922,6 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 		return fmt.Errorf("error setting VM Compute Policies. %s", err)
 	}
 
-	// -----
 	// set default VM sizing policy
 	vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref + defaultPolicyId.(string), ID: defaultPolicyId.(string)}
 	updatedVdc, err := vdc.Update()
@@ -959,27 +941,22 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 		return fmt.Errorf("error setting VM sizing policies. %s", err)
 	}
 	return nil
-	// ---
 }
 
-// addAssignedVmSizingPolicies handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
-// Assigning and setting default VM sizing policies requires different API calls. Default approach is add new policies, set new default, remove all policies.
-func addAssignedVmSizingPolicies(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
-
+// getDefaultPolicyIdAndComputePolicyHref gets the default compute policy ID and returns the Compute Policy API endpoint.
+func getDefaultPolicyIdAndComputePolicyHref(d *schema.ResourceData, vcdClient *VCDClient) (string, *url.URL, error) {
 	// Deprecation compatibility: If `default_compute_policy_id` is not set, fallback to deprecated one.
 	// We can do this as `default_compute_policy_id` contains the same value as `default_vm_sizing_policy_id`.
-	_, defaultPolicyIsSet := d.GetOk("default_compute_policy_id")
+	defaultPolicyId, defaultPolicyIsSet := d.GetOk("default_compute_policy_id")
 	if !defaultPolicyIsSet {
-		_, defaultPolicyIsSet = d.GetOk("default_vm_sizing_policy_id")
+		defaultPolicyId, defaultPolicyIsSet = d.GetOk("default_vm_sizing_policy_id")
 	}
 
 	_, sizingOk := d.GetOk("vm_sizing_policy_ids")
 	_, placementOk := d.GetOk("vm_placement_policy_ids")
 
 	if defaultPolicyIsSet && !sizingOk && !placementOk {
-		return fmt.Errorf("when `default_compute_policy_id` is used, it requires also `vm_sizing_policy_ids` or `vm_placement_policy_ids`")
+		return "", nil, fmt.Errorf("when `default_compute_policy_id` is used, it requires also `vm_sizing_policy_ids` or `vm_placement_policy_ids`")
 	}
 
 	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
@@ -987,12 +964,26 @@ func addAssignedVmSizingPolicies(d *schema.ResourceData, meta interface{}) error
 
 	// Early return
 	if !isDefaultPolicyChanged && !arePoliciesChanged {
-		return nil
+		return "", nil, nil
 	}
 
 	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion2_0_0, types.OpenApiEndpointVdcComputePolicies)
 	if err != nil {
-		return fmt.Errorf("error constructing HREF for Compute Policy")
+		return "", nil, fmt.Errorf("error constructing HREF for Compute Policy")
+	}
+	return defaultPolicyId.(string), vcdComputePolicyHref, nil
+}
+
+// addAssignedVmSizingPolicies handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
+// Assigning and setting default VM sizing policies requires different API calls. Default approach is add new policies, set new default, remove all policies.
+func addAssignedVmSizingPolicies(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	_, vcdComputePolicyHref, err := getDefaultPolicyIdAndComputePolicyHref(d, vcdClient)
+	if err != nil {
+		return err
+	}
+	if vcdComputePolicyHref != nil {
+		return nil
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
