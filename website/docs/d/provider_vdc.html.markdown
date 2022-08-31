@@ -8,12 +8,10 @@ description: |-
 
 # vcd\_provider\_vdc
 
-Provides a VMware Cloud Director Provider VDC data source. A Provider VDC can be used to reference a VCD and use its 
+Provides a VMware Cloud Director Provider VDC data source. A Provider VDC can be used to reference a Provider VDC and use its 
 data within other resources or data sources.
 
--> **Note:** This resource supports NSX-T and NSX-V based Org VDCs
-
-Supported in provider *v2.5+*
+Supported in provider *v3.8+*
 
 ## Example Usage
 

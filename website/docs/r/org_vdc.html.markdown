@@ -185,8 +185,8 @@ The following arguments are supported:
 * `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the VDC and any objects it contains that are in a state that normally allows removal.
 * `default_compute_policy_id` - (Optional, *v3.8+*, *vCD 10.0+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy.
 * `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *vCD 10.0+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
-* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
-* `vm_placement_policy_ids` - (Optional, *v3.8+*, *vCD 10.0+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.2+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `vm_placement_policy_ids` - (Optional, *v3.8+*, *vCD 10.2+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 
 <a id="storageprofile"></a>
 ## Storage Profile
