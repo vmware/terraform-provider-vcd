@@ -253,7 +253,7 @@ func getLBMonitorExtensionType(d *schema.ResourceData) string {
 	var extensionString string
 	extension := d.Get("extension").(map[string]interface{})
 	for k, v := range extension {
-		if k != "" && v != "" { // When key and value are given it must look like "vmGroupContent-type=STRING"
+		if k != "" && v != "" { // When key and value are given it must look like "content-type=STRING"
 			extensionString += k + "=" + v.(string) + "\n"
 		} else { // If only key is specified it does not need equals sign. Like "no-body" extension
 			extensionString += k + "\n"
