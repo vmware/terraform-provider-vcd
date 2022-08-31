@@ -56,7 +56,6 @@ func datasourceVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceD
 	return genericVcdVmPlacementPolicyRead(ctx, d, meta)
 }
 
-
 // TODO: Probably we should move this function to the Resource when it is created, to follow same code style as other resource-datasource pairs.
 // setVmPlacementPolicy sets object state from *govcd.VdcComputePolicy
 func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {

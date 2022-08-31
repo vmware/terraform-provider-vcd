@@ -1,16 +1,13 @@
 package vcd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"net/url"
 	"strings"
-	"text/tabwriter"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -40,7 +37,7 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Optional: true,
+				Optional:    true,
 				Description: "Description of the VM Placement Policy",
 			},
 			"vm_group_ids": {
@@ -113,7 +110,7 @@ func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiR
 				return nil, fmt.Errorf("error retrieving the associated name of VM Group %s: %s", vmGroupId, err)
 			}
 			vmGroupReferences = append(vmGroupReferences, types.OpenApiReference{
-				ID: vmGroup.VmGroup.NamedVmGroupId,
+				ID:   vmGroup.VmGroup.NamedVmGroupId,
 				Name: vmGroup.VmGroup.Name,
 			})
 		}
@@ -142,8 +139,6 @@ func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.Ope
 	}
 	return types.OpenApiReferences{}, nil
 }
-
-
 
 // resourceVmPlacementPolicyRead reads a resource VM Placement Policy
 func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -281,7 +276,7 @@ func resourceVmPlacementPolicyDelete(_ context.Context, d *schema.ResourceData, 
 }
 
 var errHelpVmPlacementPolicyImport = fmt.Errorf(`resource id must be specified in one of these formats:
-'vm-placement-policy-name', 'vm-placement-policy-id' or 'list@' to get a list of VM sizing policies with their IDs`)
+'vm-placement-policy-name', 'vm-placement-policy-id' or 'list@' to get a list of VM placement policies with their IDs`)
 
 // resourceVmPlacementPolicyImport is responsible for importing the resource.
 // The following steps happen as part of import
@@ -294,94 +289,22 @@ var errHelpVmPlacementPolicyImport = fmt.Errorf(`resource id must be specified i
 // based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_vm_placement_policy.my_existing_policy_name
-// Example import path (_the_id_string_): my_existing_vm_sizing_policy_id
+// Example import path (_the_id_string_): my_existing_vm_placement_policy_id
 // Example list path (_the_id_string_): list@
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVmPlacementPolicyImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
-	log.Printf("[DEBUG] importing VM sizing policy resource with provided id %s", d.Id())
+	log.Printf("[DEBUG] importing VM Placement Policy resource with provided id %s", d.Id())
 
 	if len(resourceURI) != 1 {
-		return nil, errHelpVmSizingPolicyImport
+		return nil, errHelpVmPlacementPolicyImport
 	}
 	if strings.Contains(d.Id(), "list@") {
 
-		return listVmPlacementPoliciesForImport(meta)
+		return listComputePoliciesForImport(meta, "vcd_vm_placement_policy","placement")
 	} else {
 		policyId := resourceURI[0]
-		return getVmPlacementPolicy(d, meta, policyId)
+		return getComputePolicy(d, meta, policyId, "placement")
 	}
-}
-
-func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
-
-	var vmSizingPolicy *govcd.VdcComputePolicy
-	var err error
-	vmSizingPolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
-	if err != nil {
-		queryParams := url.Values{}
-		queryParams.Add("filter", "name=="+policyId) // FIXME: Is this a bug?
-		vmSizingPolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyId)
-			return nil, fmt.Errorf("unable to find VM sizing policy %s, err: %s", policyId, err)
-		}
-		if len(vmSizingPolicies) != 1 {
-			log.Printf("[DEBUG] Unable to find unique VM sizing policy %s", policyId)
-			return nil, fmt.Errorf("unable to find unique VM sizing policy %s, err: %s", policyId, err)
-		}
-		vmSizingPolicy = vmSizingPolicies[0]
-	}
-
-	dSet(d, "name", vmSizingPolicy.VdcComputePolicy.Name)
-	d.SetId(vmSizingPolicy.VdcComputePolicy.ID)
-
-	return []*schema.ResourceData{d}, nil
-}
-
-func listVmPlacementPoliciesForImport(meta interface{}) ([]*schema.ResourceData, error) {
-
-	vcdClient := meta.(*VCDClient)
-	var err error
-
-	buf := new(bytes.Buffer)
-	_, err = fmt.Fprintln(buf, "Retrieving all VM sizing policies")
-	if err != nil {
-		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
-	}
-	policies, err := vcdClient.Client.GetAllVdcComputePolicies(nil)
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
-	}
-
-	writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
-
-	_, err = fmt.Fprintln(writer, "No\tID\tName\t")
-	if err != nil {
-		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
-	}
-	_, err = fmt.Fprintln(writer, "--\t--\t----\t")
-	if err != nil {
-		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
-	}
-
-	for index, policy := range policies {
-		// If we don't skip the auto generated policies, we also get in the list the ones that are
-		// created and assigned to a VDC by default
-		if policy.VdcComputePolicy.IsAutoGenerated {
-			continue
-		}
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s \n", index+1, policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
-		if err != nil {
-			logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error writing to buffer: %s", err))
-		}
-	}
-	err = writer.Flush()
-	if err != nil {
-		logForScreen("vcd_vm_sizing_policy", fmt.Sprintf("error flushing buffer: %s", err))
-	}
-
-	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
 }
