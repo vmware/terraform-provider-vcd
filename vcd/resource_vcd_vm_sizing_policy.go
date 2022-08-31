@@ -198,7 +198,7 @@ func genericVcdVmSizingPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		}
 		method = "name"
 		queryParams := url.Values{}
-		queryParams.Add("filter", "name=="+policyName)
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==true",policyName))
 		filteredPoliciesByName, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
