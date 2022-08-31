@@ -86,8 +86,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Description: "Set of virtual hardware versions supported by this Provider VDC",
 			},
 			"compute_capacity": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Computed:    true,
 				Description: "Read-only indicator of CPU and memory capacity",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

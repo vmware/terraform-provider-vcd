@@ -6,6 +6,7 @@ package vcd
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -114,6 +115,7 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	// EOF Provider part setup
 
 	// NSX-T Edge Gateway configuration
+	time.Sleep(5 * time.Second) // Wait for ALB Controller to be ready
 	fmt.Printf("# Enabling ALB on Edge Gateway. ")
 	adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {

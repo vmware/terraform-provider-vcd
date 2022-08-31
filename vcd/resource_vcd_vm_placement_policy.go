@@ -323,7 +323,7 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 	computePolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==false;isVgpuPolicy==false",policyId))
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==false;isVgpuPolicy==false", policyId))
 		computePolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM Placement Policy %s", policyId)
@@ -375,4 +375,3 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy type
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
 	return nil
 }
-

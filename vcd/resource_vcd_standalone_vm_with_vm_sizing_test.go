@@ -60,23 +60,6 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-
-	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
-	if err != nil {
-		t.Skipf("authentication error: %s", err)
-	}
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip("Test can only run as System admin")
-	}
-
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires VCD 10.0+")
-	}
-
 	configTextVM := templateFill(testAccCheckVcdEmptyVmWithSizing, params)
 
 	params["FuncName"] = t.Name() + "-step1"

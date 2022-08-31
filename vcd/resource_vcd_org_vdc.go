@@ -5,10 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"net/url"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -278,11 +279,6 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	vcdClient := meta.(*VCDClient)
 
-	err := isSizingPolicyAllowed(d, vcdClient)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("functionality requires System administrator privileges")
 	}
@@ -332,17 +328,6 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	return resourceVcdVdcRead(ctx, d, meta)
-}
-
-func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		_, okSizingPolicy := d.GetOk("vm_sizing_policy_ids")
-		_, okDefaultPolicy := d.GetOk("default_vm_sizing_policy_id")
-		if okSizingPolicy || okDefaultPolicy {
-			return fmt.Errorf("'vm_sizing_policy_ids' and `default_vm_sizing_policy_id` only available for VCD 10.0+")
-		}
-	}
-	return nil
 }
 
 // Fetches information about an existing VDC for a data definition
@@ -560,11 +545,6 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	log.Printf("[TRACE] VDC update initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
-
-	err := isSizingPolicyAllowed(d, vcdClient)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
