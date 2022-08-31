@@ -45,6 +45,7 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				Optional:    true,
 				Description: "IDs of the collection of VMs with similar host requirements",
 			},
 			"logical_vm_group_ids": {
@@ -52,6 +53,7 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				Optional:    true,
 				Description: "IDs of one or more Logical VM Groups to define this VM Placement policy. There is an AND relationship among all the entries set in this attribute",
 			},
 		},
@@ -59,10 +61,13 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 }
 
 func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	policyName := d.Get("name").(string)
-	providerVdcId := d.Get("provider_vdc_id").(string)
-	log.Printf("[TRACE] VM Placement Policy creation initiated: %s in pVDC %s", policyName, providerVdcId)
+	_, vmGroupAreSet := d.GetOk("vm_group_ids")
+	_, logicalVmGroupAreSet := d.GetOk("logical_vm_group_ids")
+	if !vmGroupAreSet && !logicalVmGroupAreSet {
+		return diag.Errorf("either `vm_group_ids` or `logical_vm_group_ids` must be set")
+	}
 
+	log.Printf("[TRACE] VM Placement Policy creation initiated: %s in pVDC %s", d.Get("name").(string), d.Get("provider_vdc_id").(string))
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -71,6 +76,7 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 	computePolicy := &types.VdcComputePolicy{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
+		PvdcID:      d.Get("provider_vdc_id").(string),
 	}
 
 	vmGroups, err := getVmGroups(d, vcdClient)
@@ -110,7 +116,7 @@ func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiR
 				return nil, fmt.Errorf("error retrieving the associated name of VM Group %s: %s", vmGroupId, err)
 			}
 			vmGroupReferences = append(vmGroupReferences, types.OpenApiReference{
-				ID:   vmGroup.VmGroup.NamedVmGroupId,
+				ID:   vmGroupId.(string),
 				Name: vmGroup.VmGroup.Name,
 			})
 		}
@@ -131,7 +137,7 @@ func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.Ope
 				return nil, fmt.Errorf("error retrieving the associated name of Logical VM Group %s: %s", vmGroupId, err)
 			}
 			logicalVmGroupReferences = append(logicalVmGroupReferences, types.OpenApiReference{
-				ID:   logicalVmGroup.LogicalVmGroup.ID,
+				ID:   vmGroupId.(string),
 				Name: logicalVmGroup.LogicalVmGroup.Name,
 			})
 		}

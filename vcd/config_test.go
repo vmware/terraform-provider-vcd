@@ -198,6 +198,7 @@ type TestConfig struct {
 		OvaPath                      string `json:"ovaPath"`                      // Ova Path, if different from Ova.OvaPath
 		OrgUser                      string `json:"orgUser"`                      // Org User to be created within the organization
 		OrgUserPassword              string `json:"orgUserPassword"`              // Password for the Org User to be created within the organization
+		PlacementPolicyVmGroup       string `json:"placementPolicyVmGroup"`       // Name of the VM group to create VM Placement Policies
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
