@@ -54,7 +54,7 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Optional:    true,
-				Description: "IDs of one or more Logical VM Groups to define this VM Placement policy. There is an AND relationship among all the entries set in this attribute",
+				Description: "IDs of one or more Logical VM Groups to define this VM Placement Policy. There is an AND relationship among all the entries set in this attribute",
 			},
 		},
 	}
@@ -91,26 +91,26 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 	}
 	computePolicy.LogicalVMGroupReferences = logicalVmGroups
 
-	log.Printf("[DEBUG] Creating VM Placement policy: %#v", computePolicy)
+	log.Printf("[DEBUG] Creating VM Placement Policy: %#v", computePolicy)
 
 	createdVmSizingPolicy, err := vcdClient.Client.CreateVdcComputePolicy(computePolicy)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating VM Placement policy: %s", err)
-		return diag.Errorf("error creating VM Placement policy: %s", err)
+		log.Printf("[DEBUG] Error creating VM Placement Policy: %s", err)
+		return diag.Errorf("error creating VM Placement Policy: %s", err)
 	}
 
 	d.SetId(createdVmSizingPolicy.VdcComputePolicy.ID)
-	log.Printf("[TRACE] VM Placement policy created: %#v", createdVmSizingPolicy.VdcComputePolicy)
+	log.Printf("[TRACE] VM Placement Policy created: %#v", createdVmSizingPolicy.VdcComputePolicy)
 
 	return resourceVmPlacementPolicyRead(ctx, d, meta)
 }
 
-// resourceVmPlacementPolicyRead reads a resource VM Placement Policy
 func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVmPlacementPolicyRead(ctx, d, meta)
+	return sharedVcdVmPlacementPolicyRead(ctx, d, meta)
 }
 
-func genericVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// sharedVcdVmPlacementPolicyRead is a Read function shared between this resource and the corresponding data source.
+func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	pVdcId := d.Get("provider_vdc_id").(string)
 	log.Printf("[TRACE] VM Placement Policy read initiated: %s in pVDC with ID %s", policyName, pVdcId)
@@ -145,20 +145,19 @@ func genericVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData
 		queryParams.Add("filter", fmt.Sprintf("name==%s;pvdcId==%s", policyName, pVdcId))
 		filteredPoliciesByName, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s. Removing from tfstate.", policyName, pVdcId)
+			log.Printf("[DEBUG] Unable to find VM Placement Policy %s of Provider VDC %s. Removing from tfstate.", policyName, pVdcId)
 			d.SetId("")
-			return diag.Errorf("unable to find VM Placement policy %s of Provider VDC %s, err: %s. Removing from tfstate", policyName, pVdcId, err)
+			return diag.Errorf("unable to find VM Placement Policy %s of Provider VDC %s, err: %s. Removing from tfstate", policyName, pVdcId, err)
 		}
 		if len(filteredPoliciesByName) != 1 {
-			log.Printf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s. Found Policies by name: %d. Removing from tfstate.", policyName, pVdcId, len(filteredPoliciesByName))
+			log.Printf("[DEBUG] Unable to find VM Placement Policy %s of Provider VDC %s. Found Policies by name: %d. Removing from tfstate.", policyName, pVdcId, len(filteredPoliciesByName))
 			d.SetId("")
-			return diag.Errorf("[DEBUG] Unable to find VM Placement policy %s of Provider VDC %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, pVdcId, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
+			return diag.Errorf("[DEBUG] Unable to find VM Placement Policy %s of Provider VDC %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, pVdcId, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
 		}
 		policy = filteredPoliciesByName[0]
 		d.SetId(policy.VdcComputePolicy.ID)
 	}
 
-	// Fix coverity warning
 	if policy == nil {
 		return diag.Errorf("[datasourceVcdVmPlacementPolicyRead] error defining VM Placement Policy")
 	}
@@ -166,7 +165,6 @@ func genericVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData
 	return setVmPlacementPolicy(ctx, d, *policy.VdcComputePolicy)
 }
 
-// resourceVmPlacementPolicyUpdate function updates resource with found configurations changes
 func resourceVmPlacementPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy update initiated: %s", policyName)
@@ -204,15 +202,14 @@ func resourceVmPlacementPolicyUpdate(ctx context.Context, d *schema.ResourceData
 
 	_, err = policy.Update()
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VM Placement policy %s with error %s", policyName, err)
-		return diag.Errorf("error updating VM Placement policy %s, err: %s", policyName, err)
+		log.Printf("[DEBUG] Error updating VM Placement Policy %s with error %s", policyName, err)
+		return diag.Errorf("error updating VM Placement Policy %s, err: %s", policyName, err)
 	}
 
-	log.Printf("[TRACE] VM Placement policy update completed: %s", policyName)
+	log.Printf("[TRACE] VM Placement Policy update completed: %s", policyName)
 	return resourceVmPlacementPolicyRead(ctx, d, meta)
 }
 
-// Deletes a VM Placement Policy
 func resourceVmPlacementPolicyDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM Placement Policy delete started: %s", policyName)
@@ -274,6 +271,7 @@ func resourceVmPlacementPolicyImport(_ context.Context, d *schema.ResourceData, 
 	}
 }
 
+// getVmGroups fetches the vm_group_ids attribute and retrieves the associated OpenApiReferences
 func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiReferences, error) {
 	vmGroupIdsSet := d.Get("vm_group_ids").(*schema.Set)
 	if vmGroupIdsSet != nil {
@@ -295,6 +293,7 @@ func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiR
 	return []types.OpenApiReferences{}, nil
 }
 
+// getLogicalVmGroups fetches the logical_vm_group_ids attribute and retrieves the associated OpenApiReferences
 func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.OpenApiReferences, error) {
 	vmGroupIdsSet := d.Get("logical_vm_group_ids").(*schema.Set)
 	if vmGroupIdsSet != nil {
@@ -315,6 +314,7 @@ func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.Ope
 	return types.OpenApiReferences{}, nil
 }
 
+// getVmPlacementPolicy reads the corresponding VM Placement Policy from the resource.
 func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
@@ -355,7 +355,7 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 	return []*schema.ResourceData{d}, nil
 }
 
-// setVmPlacementPolicy sets object state from *govcd.VdcComputePolicy
+// setVmPlacementPolicy sets the Terraform state from the Compute Policy input parameter
 func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
 	dSet(d, "name", policy.Name)
 	dSet(d, "description", policy.Description)

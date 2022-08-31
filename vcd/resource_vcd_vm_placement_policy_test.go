@@ -148,7 +148,7 @@ func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
 		_, err = conn.Client.GetVdcComputePolicyById(rs.Primary.ID)
 
 		if err == nil {
-			return fmt.Errorf("VM sizing policy %s still exists", rs.Primary.ID)
+			return fmt.Errorf("VM Placement Policy %s still exists", rs.Primary.ID)
 		}
 	}
 	return nil

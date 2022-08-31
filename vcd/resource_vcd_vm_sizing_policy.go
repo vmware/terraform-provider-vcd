@@ -529,6 +529,33 @@ func resourceVmSizingPolicyImport(_ context.Context, d *schema.ResourceData, met
 	}
 }
 
+func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+
+	var computePolicy *govcd.VdcComputePolicy
+	var err error
+	computePolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
+	if err != nil {
+		queryParams := url.Values{}
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==true",policyId))
+		computePolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VM Sizing Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find VM Sizing Policy %s, err: %s", policyId, err)
+		}
+		if len(computePolicies) != 1 {
+			log.Printf("[DEBUG] Unable to find unique VM Sizing Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find unique VM Sizing Policy %s, err: %s", policyId, err)
+		}
+		computePolicy = computePolicies[0]
+	}
+
+	dSet(d, "name", computePolicy.VdcComputePolicy.Name)
+	d.SetId(computePolicy.VdcComputePolicy.ID)
+
+	return []*schema.ResourceData{d}, nil
+}
+
 func listComputePoliciesForImport(meta interface{}, origin, policyType string) ([]*schema.ResourceData, error) {
 
 	vcdClient := meta.(*VCDClient)
@@ -581,31 +608,4 @@ func listComputePoliciesForImport(meta interface{}, origin, policyType string) (
 	}
 
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
-}
-
-func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
-
-	var computePolicy *govcd.VdcComputePolicy
-	var err error
-	computePolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
-	if err != nil {
-		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==true",policyId))
-		computePolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM Sizing Policy %s", policyId)
-			return nil, fmt.Errorf("unable to find VM Sizing Policy %s, err: %s", policyId, err)
-		}
-		if len(computePolicies) != 1 {
-			log.Printf("[DEBUG] Unable to find unique VM Sizing Policy %s", policyId)
-			return nil, fmt.Errorf("unable to find unique VM Sizing Policy %s, err: %s", policyId, err)
-		}
-		computePolicy = computePolicies[0]
-	}
-
-	dSet(d, "name", computePolicy.VdcComputePolicy.Name)
-	d.SetId(computePolicy.VdcComputePolicy.ID)
-
-	return []*schema.ResourceData{d}, nil
 }
