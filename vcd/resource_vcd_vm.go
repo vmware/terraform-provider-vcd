@@ -22,6 +22,9 @@ func resourceVcdStandaloneVm() *schema.Resource {
 }
 
 func resourceVcdStandaloneVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.Get("vapp_name").(string) != "" {
+		return diag.Errorf("vApp name must not be set for a standalone VM (resource `vcd_vm`)")
+	}
 	err := genericResourceVmCreate(d, meta, standaloneVmType)
 	if err != nil {
 		return diag.FromErr(err)

@@ -43,7 +43,23 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
+// There are 4 types of VM creation structures:
+// * Standalone VM from template
+// * Empty standalone VM
+// * VM in vApp from template
+// * Empty VM in vApp
+// resourceVcdVAppVmCreate creates a VM within a vApp
 func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		return diag.Errorf("vApp name is mandatory for vApp VM (resource `vcd_vapp_vm`)")
+	}
+
+	// vApp lock must be acquired for VMs that are vApp members
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
 	err := genericResourceVmCreate(d, meta, vappVmType)
 	if err != nil {
 		return diag.FromErr(err)
@@ -624,21 +640,6 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) error {
 	util.Logger.Printf("[DEBUG] [VM create] started")
 
-	vappName := d.Get("vapp_name").(string)
-	if vappName == "" && vmType == vappVmType {
-		return fmt.Errorf("vApp name is mandatory for vApp VM (resource `vcd_vapp_vm`)")
-	}
-	if vappName != "" && vmType == standaloneVmType {
-		return fmt.Errorf("vApp name must not be set for a standalone VM (resource `vcd_vm`)")
-	}
-
-	vcdClient := meta.(*VCDClient)
-	// vApp lock must be acquired for VMs that are vApp members (not standalone VMs)
-	if vappName != "" && vmType == vappVmType {
-		vcdClient.lockParentVapp(d)
-		defer vcdClient.unLockParentVapp(d)
-	}
-
 	// If at least Catalog Name and Template name are set - a VM from vApp is being created
 	isVmFromTemplate := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
 	isEmptyVm := !isVmFromTemplate
@@ -657,7 +658,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return fmt.Errorf("error creating empty VM: %s", err)
 		}
 	default:
-		return fmt.Errorf("unknown VM creation case")
+		return fmt.Errorf("unknown VM type")
 	}
 
 	log.Printf("[DEBUG] [VM create] finished")
@@ -682,7 +683,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return fmt.Errorf("error finding vApp template: %s", err)
 	}
 
-	// Prepare network configuration
+	// Build up network configuration
 	networkConnectionSection, err := networksToConfig(d, nil)
 	if err != nil {
 		return fmt.Errorf("unable to process network configuration: %s", err)
@@ -732,18 +733,14 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 				VmTemplateInstantiationParams: &types.InstantiationParams{
 					NetworkConnectionSection: &networkConnectionSection,
 				},
-				// VmCapabilities: &types.VmCapabilities{
-				// 	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
-				// 	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
-				// },
+				// VmCapabilities are explicitly set using vm.UpdateVmCpuAndMemoryHotAdd below because VM creation does not
+				// respect these parameters here.
+				//VmCapabilities: &types.VmCapabilities{
+				//	Xmlns:               types.XMLNamespaceVCloud,
+				//	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
+				//	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
+				//},
 			},
-		}
-
-		if d.Get("memory_hot_add_enabled").(bool) || d.Get("cpu_hot_add_enabled").(bool) {
-			standaloneVmParams.SourcedVmTemplateItem.VmCapabilities = &types.VmCapabilities{
-				MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
-				CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
-			}
 		}
 
 		util.Logger.Printf("%# v", pretty.Formatter(standaloneVmParams))
@@ -771,7 +768,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			templateHref = vappTemplate.VAppTemplate.Children.VM[0].HREF
 		}
 
-		// Prepare request body for standalone VM creation. All parameters should be set here to
+		// Prepare request body for VM in vApp creation. All parameters should be set here to
 		// speed up process of VM creation instead of separate API calls (unless it is
 		// impossible)
 
@@ -794,18 +791,15 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 				},
 				StorageProfile: storageProfilePtr,
 				ComputePolicy:  vmComputePolicy,
-				// VmCapabilities: &types.VmCapabilities{
-				// 	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
-				// 	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
-				// },
-			},
-		}
 
-		if d.Get("memory_hot_add_enabled").(bool) || d.Get("cpu_hot_add_enabled").(bool) {
-			vappVmParams.SourcedItem.VmCapabilities = &types.VmCapabilities{
-				MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
-				CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
-			}
+				// VmCapabilities are explicitly set using vm.UpdateVmCpuAndMemoryHotAdd below because VM creation does not
+				// respect these parameters here.
+				//VmCapabilities: &types.VmCapabilities{
+				//	Xmlns:               types.XMLNamespaceVCloud,
+				//	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
+				//	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
+				//},
+			},
 		}
 
 		vm, err = vapp.AddRawVM(vappVmParams)
@@ -888,10 +882,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	// log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
 
 	// Ensure CPU/Memory hot add settings are correct
-	// _, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
-	// if err != nil {
-	// 	return fmt.Errorf("error changing VM capabilities: %s", err)
-	// }
+	// It is being set directly in the body, but
+	_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
+	if err != nil {
+		return fmt.Errorf("error changing VM capabilities: %s", err)
+	}
 
 	// Ensure that hypervisor nesting is set as per configuration
 	{
