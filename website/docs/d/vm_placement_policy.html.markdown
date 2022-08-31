@@ -12,7 +12,7 @@ description: |-
 Provides a VMware Cloud Director VM Placement Policy data source. This can be
 used to read a VM Placement Policy.
 
-Supported in provider *v3.8+* and requires VCD 10.0+
+Supported in provider *v3.8+* and requires VCD 10.2+
 
 ## Example Usage
 
@@ -39,4 +39,4 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-TODO
+All attributes defined in [`vcd_vm_placement_policy`](/providers/vmware/vcd/latest/docs/resources/vcd_vm_placement_policy#attribute-reference) resource are supported.
