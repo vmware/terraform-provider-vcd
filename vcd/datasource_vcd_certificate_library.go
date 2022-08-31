@@ -47,7 +47,7 @@ func datasourceLibraryCertificate() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Certificate vmGroupContent",
+				Description: "Certificate content",
 			},
 		},
 	}
