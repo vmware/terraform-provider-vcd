@@ -155,14 +155,14 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				ResourceName:      resource4,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateVmSizingPolicyByIdOrName(resource4, true),
+				ImportStateIdFunc: importStateComputePolicyByIdOrName(resource4, true),
 			},
 			// Tests import by name
 			{
 				ResourceName:      resource4,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateVmSizingPolicyByIdOrName(resource4, false),
+				ImportStateIdFunc: importStateComputePolicyByIdOrName(resource4, false),
 			},
 			{
 				Config: dataSourceText,
@@ -187,7 +187,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	postTestChecks(t)
 }
 
-func importStateVmSizingPolicyByIdOrName(resourceName string, byId bool) resource.ImportStateIdFunc {
+func importStateComputePolicyByIdOrName(resourceName string, byId bool) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {

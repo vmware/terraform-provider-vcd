@@ -82,6 +82,20 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 					resourceFieldsEqual(policyName, datasourcePolicyName, nil),
 				),
 			},
+			// Tests import by id
+			{
+				ResourceName:      policyName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateComputePolicyByIdOrName(policyName, true),
+			},
+			// Tests import by name
+			{
+				ResourceName:      policyName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateComputePolicyByIdOrName(policyName, false),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -137,6 +151,5 @@ func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
 			return fmt.Errorf("VM sizing policy %s still exists", rs.Primary.ID)
 		}
 	}
-
 	return nil
 }

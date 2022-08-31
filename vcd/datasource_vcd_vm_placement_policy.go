@@ -4,8 +4,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
 )
 
 func datasourceVcdVmPlacementPolicy() *schema.Resource {
@@ -50,27 +48,4 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 
 func datasourceVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmPlacementPolicyRead(ctx, d, meta)
-}
-
-// TODO: Probably we should move this function to the Resource when it is created, to follow same code style as other resource-datasource pairs.
-// setVmPlacementPolicy sets object state from *govcd.VdcComputePolicy
-func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
-
-	dSet(d, "name", policy.Name)
-	dSet(d, "description", policy.Description)
-	var vmGroupIds []string
-	for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
-		for _, namedVmGroup := range namedVmGroupPerPvdc {
-			vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
-		}
-	}
-	dSet(d, "vm_group_ids", vmGroupIds)
-	vmGroupIds = []string{}
-	for _, namedVmGroup := range policy.LogicalVMGroupReferences {
-		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
-	}
-	dSet(d, "logical_vm_group_ids", vmGroupIds)
-
-	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
-	return nil
 }

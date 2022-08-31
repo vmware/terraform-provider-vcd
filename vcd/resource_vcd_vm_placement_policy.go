@@ -105,47 +105,6 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 	return resourceVmPlacementPolicyRead(ctx, d, meta)
 }
 
-func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiReferences, error) {
-	vmGroupIdsSet := d.Get("vm_group_ids").(*schema.Set)
-	if vmGroupIdsSet != nil {
-		vmGroupIdsList := vmGroupIdsSet.List()
-		var vmGroupReferences types.OpenApiReferences
-		for _, vmGroupId := range vmGroupIdsList {
-			vmGroup, err := vcdClient.GetVmGroupByNamedVmGroupId(vmGroupId.(string))
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving the associated name of VM Group %s: %s", vmGroupId, err)
-			}
-			vmGroupReferences = append(vmGroupReferences, types.OpenApiReference{
-				ID:   vmGroupId.(string),
-				Name: vmGroup.VmGroup.Name,
-			})
-		}
-		var vmGroupReferencesSlice []types.OpenApiReferences
-		return append(vmGroupReferencesSlice, vmGroupReferences), nil
-	}
-	return []types.OpenApiReferences{}, nil
-}
-
-func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.OpenApiReferences, error) {
-	vmGroupIdsSet := d.Get("logical_vm_group_ids").(*schema.Set)
-	if vmGroupIdsSet != nil {
-		vmGroupIdsList := vmGroupIdsSet.List()
-		var logicalVmGroupReferences types.OpenApiReferences
-		for _, vmGroupId := range vmGroupIdsList {
-			logicalVmGroup, err := vcdClient.GetLogicalVmGroupById(vmGroupId.(string))
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving the associated name of Logical VM Group %s: %s", vmGroupId, err)
-			}
-			logicalVmGroupReferences = append(logicalVmGroupReferences, types.OpenApiReference{
-				ID:   vmGroupId.(string),
-				Name: logicalVmGroup.LogicalVmGroup.Name,
-			})
-		}
-		return logicalVmGroupReferences, nil
-	}
-	return types.OpenApiReferences{}, nil
-}
-
 // resourceVmPlacementPolicyRead reads a resource VM Placement Policy
 func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmPlacementPolicyRead(ctx, d, meta)
@@ -311,6 +270,109 @@ func resourceVmPlacementPolicyImport(_ context.Context, d *schema.ResourceData, 
 		return listComputePoliciesForImport(meta, "vcd_vm_placement_policy", "placement")
 	} else {
 		policyId := resourceURI[0]
-		return getComputePolicy(d, meta, policyId, "placement")
+		return getVmPlacementPolicy(d, meta, policyId)
 	}
 }
+
+func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiReferences, error) {
+	vmGroupIdsSet := d.Get("vm_group_ids").(*schema.Set)
+	if vmGroupIdsSet != nil {
+		vmGroupIdsList := vmGroupIdsSet.List()
+		var vmGroupReferences types.OpenApiReferences
+		for _, vmGroupId := range vmGroupIdsList {
+			vmGroup, err := vcdClient.GetVmGroupByNamedVmGroupId(vmGroupId.(string))
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving the associated name of VM Group %s: %s", vmGroupId, err)
+			}
+			vmGroupReferences = append(vmGroupReferences, types.OpenApiReference{
+				ID:   vmGroupId.(string),
+				Name: vmGroup.VmGroup.Name,
+			})
+		}
+		var vmGroupReferencesSlice []types.OpenApiReferences
+		return append(vmGroupReferencesSlice, vmGroupReferences), nil
+	}
+	return []types.OpenApiReferences{}, nil
+}
+
+func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.OpenApiReferences, error) {
+	vmGroupIdsSet := d.Get("logical_vm_group_ids").(*schema.Set)
+	if vmGroupIdsSet != nil {
+		vmGroupIdsList := vmGroupIdsSet.List()
+		var logicalVmGroupReferences types.OpenApiReferences
+		for _, vmGroupId := range vmGroupIdsList {
+			logicalVmGroup, err := vcdClient.GetLogicalVmGroupById(vmGroupId.(string))
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving the associated name of Logical VM Group %s: %s", vmGroupId, err)
+			}
+			logicalVmGroupReferences = append(logicalVmGroupReferences, types.OpenApiReference{
+				ID:   vmGroupId.(string),
+				Name: logicalVmGroup.LogicalVmGroup.Name,
+			})
+		}
+		return logicalVmGroupReferences, nil
+	}
+	return types.OpenApiReferences{}, nil
+}
+
+func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+
+	var computePolicy *govcd.VdcComputePolicy
+	var err error
+	computePolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
+	if err != nil {
+		queryParams := url.Values{}
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==false;isVgpuPolicy==false",policyId))
+		computePolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VM Placement Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find VM Placement Policy %s, err: %s", policyId, err)
+		}
+		if len(computePolicies) != 1 {
+			log.Printf("[DEBUG] Unable to find unique VM Placement Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find unique VM Placement Policy %s, err: %s", policyId, err)
+		}
+		computePolicy = computePolicies[0]
+	}
+
+	dSet(d, "name", computePolicy.VdcComputePolicy.Name)
+	dSet(d, "provider_vdc_id", computePolicy.VdcComputePolicy.PvdcID)
+	var vmGroupIds []string
+	for _, namedVmGroupReferences := range computePolicy.VdcComputePolicy.NamedVMGroups {
+		for _, namedVmGroupReference := range namedVmGroupReferences {
+			vmGroupIds = append(vmGroupIds, namedVmGroupReference.ID)
+		}
+	}
+	dSet(d, "vm_group_ids", vmGroupIds)
+	vmGroupIds = []string{}
+	for _, logicalVmGroupReference := range computePolicy.VdcComputePolicy.LogicalVMGroupReferences {
+		vmGroupIds = append(vmGroupIds, logicalVmGroupReference.ID)
+	}
+	dSet(d, "logical_vm_group_ids", vmGroupIds)
+	d.SetId(computePolicy.VdcComputePolicy.ID)
+
+	return []*schema.ResourceData{d}, nil
+}
+
+// setVmPlacementPolicy sets object state from *govcd.VdcComputePolicy
+func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
+	dSet(d, "name", policy.Name)
+	dSet(d, "description", policy.Description)
+	var vmGroupIds []string
+	for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
+		for _, namedVmGroup := range namedVmGroupPerPvdc {
+			vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
+		}
+	}
+	dSet(d, "vm_group_ids", vmGroupIds)
+	vmGroupIds = []string{}
+	for _, namedVmGroup := range policy.LogicalVMGroupReferences {
+		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
+	}
+	dSet(d, "logical_vm_group_ids", vmGroupIds)
+
+	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
+	return nil
+}
+

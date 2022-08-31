@@ -525,7 +525,7 @@ func resourceVmSizingPolicyImport(_ context.Context, d *schema.ResourceData, met
 		return listComputePoliciesForImport(meta, "vcd_vm_sizing_policy", "sizing")
 	} else {
 		policyId := resourceURI[0]
-		return getComputePolicy(d, meta, policyId, "sizing")
+		return getVmSizingPolicy(d, meta, policyId)
 	}
 }
 
@@ -583,7 +583,7 @@ func listComputePoliciesForImport(meta interface{}, origin, policyType string) (
 	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
 }
 
-func getComputePolicy(d *schema.ResourceData, meta interface{}, policyId, policyType string) ([]*schema.ResourceData, error) {
+func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	var computePolicy *govcd.VdcComputePolicy
@@ -591,26 +591,15 @@ func getComputePolicy(d *schema.ResourceData, meta interface{}, policyId, policy
 	computePolicy, err = vcdClient.Client.GetVdcComputePolicyById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
-		filter := "name==" + policyId
-		switch policyType {
-		case "sizing":
-			filter += ";isSizingOnly==true"
-		case "placement":
-			filter += ";isVgpuPolicy==false;isSizingOnly==false"
-		case "vgpu":
-			filter += ";isVgpuPolicy==true"
-		default:
-			return nil, fmt.Errorf("unrecognized type of policy to import: %s", policyType)
-		}
-		queryParams.Add("filter", filter)
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==true",policyId))
 		computePolicies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find %s policy %s", policyType, policyId)
-			return nil, fmt.Errorf("unable to find %s policy %s, err: %s", policyType, policyId, err)
+			log.Printf("[DEBUG] Unable to find VM Sizing Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find VM Sizing Policy %s, err: %s", policyId, err)
 		}
 		if len(computePolicies) != 1 {
-			log.Printf("[DEBUG] Unable to find unique %s policy %s", policyType, policyId)
-			return nil, fmt.Errorf("unable to find unique %s policy %s, err: %s", policyType, policyId, err)
+			log.Printf("[DEBUG] Unable to find unique VM Sizing Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find unique VM Sizing Policy %s, err: %s", policyId, err)
 		}
 		computePolicy = computePolicies[0]
 	}
