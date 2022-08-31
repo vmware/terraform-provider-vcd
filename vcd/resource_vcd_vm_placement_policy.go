@@ -302,7 +302,7 @@ func resourceVmPlacementPolicyImport(_ context.Context, d *schema.ResourceData, 
 	}
 	if strings.Contains(d.Id(), "list@") {
 
-		return listComputePoliciesForImport(meta, "vcd_vm_placement_policy","placement")
+		return listComputePoliciesForImport(meta, "vcd_vm_placement_policy", "placement")
 	} else {
 		policyId := resourceURI[0]
 		return getComputePolicy(d, meta, policyId, "placement")

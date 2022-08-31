@@ -2,14 +2,10 @@ package vcd
 
 import (
 	"context"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
-	"net/url"
 )
 
 func datasourceVcdVmPlacementPolicy() *schema.Resource {
