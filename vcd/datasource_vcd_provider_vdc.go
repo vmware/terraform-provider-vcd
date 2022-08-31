@@ -83,11 +83,12 @@ func datasourceVcdProviderVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "Set of virtual hardware versions supported by this Provider VDC.",
+				Description: "Set of virtual hardware versions supported by this Provider VDC",
 			},
 			"compute_capacity": {
 				Type:     schema.TypeList,
 				Computed: true,
+				Description: "Read-only indicator of CPU and memory capacity",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cpu":    rootCapacityUsage("CPU"),
@@ -142,7 +143,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "Set of IDs to the storage profiles available to this Provider VDC.",
+				Description: "Set of IDs to the storage profiles available to this Provider VDC",
 			},
 			"resource_pool_ids": {
 				Type: schema.TypeSet,
@@ -150,7 +151,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "Resource pools backing this provider VDC",
+				Description: "Set of IDs of the resource pools backing this provider VDC",
 			},
 			"network_pool_ids": {
 				Type: schema.TypeSet,
@@ -158,12 +159,12 @@ func datasourceVcdProviderVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "Set of network pools used by this Provider VDC",
+				Description: "Set IDs of the network pools used by this Provider VDC",
 			},
 			"universal_network_pool_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of the universal network reference.",
+				Description: "ID of the universal network reference",
 			},
 			"host_ids": {
 				Type: schema.TypeSet,
