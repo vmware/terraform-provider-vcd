@@ -10,7 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// datasourceVcdProviderVdc Defines the data source for a Provider VDC.
 func datasourceVcdProviderVdc() *schema.Resource {
+	// This internal schema defines the Root Capacity of the Provider VDC.
 	rootCapacityUsage := func(typeOfCapacity string) *schema.Schema {
 		return &schema.Schema{
 			Type:     schema.TypeList,

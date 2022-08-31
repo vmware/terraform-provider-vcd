@@ -68,7 +68,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "timeout", strconv.Itoa(params["Timeout"].(int))),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "max_retries", strconv.Itoa(params["MaxRetries"].(int))),
 					resource.TestMatchResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "id", regexp.MustCompile(`^monitor-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "extension.vmGroupContent-type", "application/json"),
+					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "extension.content-type", "application/json"),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "extension.no-body", ""),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "method", params["Method"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "type", "http"),
@@ -147,7 +147,7 @@ resource "vcd_lb_service_monitor" "lb-service-monitor" {
   url         = "/health"
 
   extension = {
-    "vmGroupContent-type" = "application/json"
+    "content-type" = "application/json"
     "no-body"      = ""
   }
 }

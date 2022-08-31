@@ -208,7 +208,7 @@ resource "vcd_lb_service_monitor" "monitor" {
   url         = "/health"
   send        = "{\"key\": \"value\"}"
   extension = {
-    vmGroupContent-type = "application/json"
+    content-type = "application/json"
     linespan     = ""
   }
 }
