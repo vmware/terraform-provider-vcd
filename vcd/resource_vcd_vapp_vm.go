@@ -43,11 +43,24 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
-// There are 4 types of VM creation structures:
+// Maintenance guide for VM
+// The VM code being a single object (handles two resources `vcd_vapp_vm` (VM inside a vApp) and `vcd_vm`
+// (standalone VM with a hidden vApp) has 4 branches.
 // * Standalone VM from template
 // * Empty standalone VM
 // * VM in vApp from template
 // * Empty VM in vApp
+//
+// These branches require attention while adding new features. While they look very similar - in reality they differ
+// a lot because they use different API calls. Each of these API calls can allow or not allow settings something.
+// In some places (for example NIC configuration 'NetworkConnectionSection') allows to set up NICs, but here is a bug that
+// does not make it set custom MAC address if one is given.
+//
+// In such cases
+//
+// Adding a new feature for VM.
+// While it may be a simple feature one must check 4 paths of
+
 // resourceVcdVAppVmCreate creates a VM within a vApp
 func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vappName := d.Get("vapp_name").(string)
@@ -683,8 +696,17 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return fmt.Errorf("error finding vApp template: %s", err)
 	}
 
+	// Lookup vApp (can only be done for vApp VMs, not standalone ones)
+	var vapp *govcd.VApp
+	if isStandaloneVm && vappName != "" {
+		vapp, err = vdc.GetVAppByName(vappName, false)
+		if err != nil {
+			return fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
+		}
+	}
+
 	// Build up network configuration
-	networkConnectionSection, err := networksToConfig(d, nil)
+	networkConnectionSection, err := networksToConfig(d, vapp)
 	if err != nil {
 		return fmt.Errorf("unable to process network configuration: %s", err)
 	}
@@ -704,7 +726,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	computePolicy := sizingPolicy
 
 	var vm *govcd.VM
-	var vapp *govcd.VApp
 	if isStandaloneVm {
 		vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
 		if vmTemplate == nil {
@@ -779,7 +800,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			Deploy:           false,
 			Name:             vapp.VApp.Name,
-			PowerOn:          false,
+			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
 			Description:      vapp.VApp.Description,
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
@@ -787,6 +808,8 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 					Name: vmName,
 				},
 				InstantiationParams: &types.InstantiationParams{
+					// TODO check in other places
+					// If a MAC address is specified for NIC - it does not get set with this call
 					NetworkConnectionSection: &networkConnectionSection,
 				},
 				StorageProfile: storageProfilePtr,
@@ -806,6 +829,13 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		if err != nil {
 			d.SetId("")
 			return fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
+		}
+
+		// If a MAC address is specified for NIC - it does not get set with initial create call therefore
+		// running additional update call to make sure it is set correctly
+		err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+		if err != nil {
+			return fmt.Errorf("unable to setup network configuration for empty VM %s", err)
 		}
 
 	}
@@ -882,7 +912,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	// log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
 
 	// Ensure CPU/Memory hot add settings are correct
-	// It is being set directly in the body, but
+	// It is not set directly in initial reset body, because API does ignores it
 	_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 	if err != nil {
 		return fmt.Errorf("error changing VM capabilities: %s", err)
