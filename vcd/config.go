@@ -703,7 +703,7 @@ func buildUserAgent(version, sysOrg string) string {
 // * origin is the name of the resource that originates the message
 // * msg is the text that will end up in the logs
 //
-// To display its vmGroupContent at run time, you should run the command below in a separate
+// To display its content at run time, you should run the command below in a separate
 // terminal screen while `terraform apply` is running
 //
 //	tail -f go-vcloud-director.log | grep '\[SCREEN\]'
