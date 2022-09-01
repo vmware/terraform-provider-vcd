@@ -25,23 +25,14 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}
 
-	// Get VM Group ID by PlacementPolicyVmGroup
-	vcdClient := createTemporaryVCDConnection(true)
-	vmGroupId := ""
-	if vcdClient != nil {
-		vmGroup, err := vcdClient.VCDClient.GetVmGroupByName(testConfig.TestEnvBuild.PlacementPolicyVmGroup)
-		if err != nil {
-			t.Skip(t.Name() + " could not find VM Group in testEnvBuild.placementPolicyVmGroup required to test VM Placement Policies")
-		}
-		vmGroupId = vmGroup.VmGroup.NamedVmGroupId
-	}
-	if vmGroupId == "" {
+	vmGroupUrn := getVmGroupUrn()
+	if vmGroupUrn == "" {
 		t.Skip(t.Name() + " could not find VM Group in testEnvBuild.placementPolicyVmGroup required to test VM Placement Policies")
 	}
 
 	var params = StringMap{
 		"PvdcName":    testConfig.VCD.NsxtProviderVdc.Name,
-		"VmGroupId":   fmt.Sprintf("urn:vcloud:namedVmGroup:%s", vmGroupId),
+		"VmGroupId":   vmGroupUrn,
 		"PolicyName":  t.Name(),
 		"Description": t.Name() + "_description",
 	}
@@ -152,4 +143,19 @@ func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+// getVmGroupUrn gets the VM Group URN from the VM Group name present in the test configuration.
+func getVmGroupUrn() string {
+	// Get VM Group ID by PlacementPolicyVmGroup
+	vcdClient := createTemporaryVCDConnection(true)
+	vmGroupId := ""
+	if vcdClient != nil {
+		vmGroup, err := vcdClient.VCDClient.GetVmGroupByName(testConfig.TestEnvBuild.PlacementPolicyVmGroup)
+		if err != nil {
+			return ""
+		}
+		vmGroupId = vmGroup.VmGroup.NamedVmGroupId
+	}
+	return fmt.Sprintf("urn:vcloud:namedVmGroup:%s", vmGroupId)
 }

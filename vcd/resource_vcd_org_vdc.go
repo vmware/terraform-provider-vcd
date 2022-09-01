@@ -324,7 +324,7 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	err = addAssignedComputePolicies(d, meta)
 	if err != nil {
-		return diag.Errorf("error assigning VM sizing policies to VDC: %s", err)
+		return diag.Errorf("error assigning VM Compute Policies to VDC: %s", err)
 	}
 
 	return resourceVcdVdcRead(ctx, d, meta)
@@ -962,7 +962,7 @@ func addAssignedComputePolicies(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	if vcdComputePolicyHref != nil {
+	if vcdComputePolicyHref == nil {
 		return nil
 	}
 
