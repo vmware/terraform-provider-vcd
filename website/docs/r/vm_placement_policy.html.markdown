@@ -23,11 +23,16 @@ data "vcd_provider_vdc" "pvdc" {
   name = "my-pvdc"
 }
 
+data "vcd_vm_group" "vm-group" {
+  name            = "vmware-vm-group"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
 resource "vcd_vm_placement_policy" "test-placement-pol" {
   name            = "my-placement-pol"
   description     = "My awesome VM Placement Policy"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids    = ["urn:vcloud:namedVmGroup:8238c309-2a1c-4d59-9ff3-ef104e208cce"]
+  vm_group_ids    = [data.vcd_vm_group.vm-group.id]
 }
 ```
 ## Argument Reference
