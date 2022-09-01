@@ -38,7 +38,7 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	resourceName := "vcd_org_vdc."+t.Name()
+	resourceName := "vcd_org_vdc." + t.Name()
 	configText := templateFill(testAccCheckVcdVdcVmPlacementPolicies_basic, params)
 	params["FuncName"] = t.Name() + "-Update"
 	updateText := templateFill(testAccCheckVcdVdcVmPlacementPolicies_update, params)
@@ -60,8 +60,8 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "provider_vdc_name", testConfig.VCD.NsxtProviderVdc.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "storage_profile.0.name", testConfig.VCD.NsxtProviderVdc.StorageProfile),
-					resource.TestCheckResourceAttrPair(resourceName, "default_compute_policy_id","vcd_vm_placement_policy.placement1", "id"),
-					resource.TestCheckResourceAttr(resourceName, "vm_placement_policy_ids.#","3"),
+					resource.TestCheckResourceAttrPair(resourceName, "default_compute_policy_id", "vcd_vm_placement_policy.placement1", "id"),
+					resource.TestCheckResourceAttr(resourceName, "vm_placement_policy_ids.#", "3"),
 				),
 			},
 			{
@@ -74,8 +74,8 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "provider_vdc_name", testConfig.VCD.NsxtProviderVdc.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "storage_profile.0.name", testConfig.VCD.NsxtProviderVdc.StorageProfile),
-					resource.TestCheckResourceAttrPair(resourceName, "default_compute_policy_id","vcd_vm_placement_policy.placement3", "id"),
-					resource.TestCheckResourceAttr(resourceName, "vm_placement_policy_ids.#","2"),
+					resource.TestCheckResourceAttrPair(resourceName, "default_compute_policy_id", "vcd_vm_placement_policy.placement3", "id"),
+					resource.TestCheckResourceAttr(resourceName, "vm_placement_policy_ids.#", "2"),
 				),
 			},
 			{
