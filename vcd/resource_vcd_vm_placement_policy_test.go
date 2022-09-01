@@ -25,15 +25,10 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}
 
-	vmGroupUrn := getVmGroupUrn()
-	if vmGroupUrn == "" {
-		t.Skip(t.Name() + " could not find VM Group in testEnvBuild.placementPolicyVmGroup required to test VM Placement Policies")
-	}
-
 	var params = StringMap{
 		"PvdcName":    testConfig.VCD.NsxtProviderVdc.Name,
-		"VmGroupId":   vmGroupUrn,
 		"PolicyName":  t.Name(),
+		"VmGroup":     testConfig.TestEnvBuild.PlacementPolicyVmGroup,
 		"Description": t.Name() + "_description",
 	}
 	testParamsNotEmpty(t, params)
@@ -57,7 +52,7 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(policyName, "description", params["Description"].(string)),
 					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
-					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`urn:vcloud:namedVmGroup:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resourceFieldsEqual(policyName, datasourcePolicyName, nil),
 				),
 			},
@@ -69,7 +64,7 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(policyName, "description", params["Description"].(string)+"-update"),
 					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
-					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`urn:vcloud:namedVmGroup:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resourceFieldsEqual(policyName, datasourcePolicyName, nil),
 				),
 			},
@@ -97,11 +92,16 @@ data "vcd_provider_vdc" "pvdc" {
   name = "{{.PvdcName}}"
 }
 
+data "vcd_vm_group" "vm-group" {
+  name            = "{{.VmGroup}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
 resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
   name        = "{{.PolicyName}}"
   description = "{{.Description}}"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids = [ "{{.VmGroupId}}" ]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
@@ -115,11 +115,16 @@ data "vcd_provider_vdc" "pvdc" {
   name = "{{.PvdcName}}"
 }
 
+data "vcd_vm_group" "vm-group" {
+  name            = "{{.VmGroup}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
 resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
   name        = "{{.PolicyName}}-update"
   description = "{{.Description}}-update"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids = [ "{{.VmGroupId}}" ]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
@@ -143,19 +148,4 @@ func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
 		}
 	}
 	return nil
-}
-
-// getVmGroupUrn gets the VM Group URN from the VM Group name present in the test configuration.
-func getVmGroupUrn() string {
-	// Get VM Group ID by PlacementPolicyVmGroup
-	vcdClient := createTemporaryVCDConnection(true)
-	vmGroupId := ""
-	if vcdClient != nil {
-		vmGroup, err := vcdClient.VCDClient.GetVmGroupByName(testConfig.TestEnvBuild.PlacementPolicyVmGroup)
-		if err != nil {
-			return ""
-		}
-		vmGroupId = vmGroup.VmGroup.NamedVmGroupId
-	}
-	return fmt.Sprintf("urn:vcloud:namedVmGroup:%s", vmGroupId)
 }

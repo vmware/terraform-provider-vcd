@@ -22,13 +22,8 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}
 
-	vmGroupUrn := getVmGroupUrn()
-	if vmGroupUrn == "" {
-		t.Skip(t.Name() + " could not find VM Group in testEnvBuild.placementPolicyVmGroup required to test VM Placement Policies")
-	}
-
 	var params = StringMap{
-		"VmGroup":                   vmGroupUrn,
+		"VmGroup":                   testConfig.TestEnvBuild.PlacementPolicyVmGroup,
 		"VdcName":                   t.Name(),
 		"OrgName":                   testConfig.VCD.Org,
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
@@ -96,25 +91,30 @@ data "vcd_provider_vdc" "pvdc" {
   name = "{{.ProviderVdc}}"
 }
 
+data "vcd_vm_group" "vm-group" {
+  name            = "{{.VmGroup}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
 resource "vcd_vm_placement_policy" "placement1" {
   name        = "placement1"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   description = "placement1 description"
-  vm_group_ids = ["{{.VmGroup}}"]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 resource "vcd_vm_placement_policy" "placement2" {
   name        = "placement2"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   description = "placement2 description"
-  vm_group_ids = ["{{.VmGroup}}"]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 resource "vcd_vm_placement_policy" "placement3" {
   name        = "placement3"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   description = "placement3 description"
-  vm_group_ids = ["{{.VmGroup}}"]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 resource "vcd_org_vdc" "{{.VdcName}}" {
@@ -161,25 +161,30 @@ data "vcd_provider_vdc" "pvdc" {
   name = "{{.ProviderVdc}}"
 }
 
+data "vcd_vm_group" "vm-group" {
+  name            = "{{.VmGroup}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
 resource "vcd_vm_placement_policy" "placement1" {
   name        = "placement1"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   description = "placement1 description"
-  vm_group_ids = ["{{.VmGroup}}"]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 resource "vcd_vm_placement_policy" "placement2" {
   name        = "placement2"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   description = "placement2 description"
-  vm_group_ids = ["{{.VmGroup}}"]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 resource "vcd_vm_placement_policy" "placement3" {
   name        = "placement3"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   description = "placement3 description"
-  vm_group_ids = ["{{.VmGroup}}"]
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
 }
 
 resource "vcd_org_vdc" "{{.VdcName}}" {

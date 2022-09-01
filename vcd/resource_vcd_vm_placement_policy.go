@@ -79,13 +79,13 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 		PvdcID:      d.Get("provider_vdc_id").(string),
 	}
 
-	vmGroups, err := getVmGroups(d, vcdClient)
+	vmGroups, err := getVmGroupReferences(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	computePolicy.NamedVMGroups = vmGroups
 
-	logicalVmGroups, err := getLogicalVmGroups(d, vcdClient)
+	logicalVmGroups, err := getLogicalVmGroupReferences(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -162,7 +162,7 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[datasourceVcdVmPlacementPolicyRead] error defining VM Placement Policy")
 	}
 	util.Logger.Printf("[TRACE] [get VM Placement Policy] Retrieved by %s\n", method)
-	return setVmPlacementPolicy(ctx, d, *policy.VdcComputePolicy)
+	return setVmPlacementPolicy(ctx, d, vcdClient, *policy.VdcComputePolicy)
 }
 
 func resourceVmPlacementPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -186,14 +186,14 @@ func resourceVmPlacementPolicyUpdate(ctx context.Context, d *schema.ResourceData
 	}
 
 	if d.HasChange("vm_group_ids") {
-		vmGroups, err := getVmGroups(d, vcdClient)
+		vmGroups, err := getVmGroupReferences(d, vcdClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		policy.VdcComputePolicy.NamedVMGroups = vmGroups
 	}
 	if d.HasChange("logical_vm_group_ids") {
-		logicalVmGroups, err := getLogicalVmGroups(d, vcdClient)
+		logicalVmGroups, err := getLogicalVmGroupReferences(d, vcdClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -271,19 +271,20 @@ func resourceVmPlacementPolicyImport(_ context.Context, d *schema.ResourceData, 
 	}
 }
 
-// getVmGroups fetches the vm_group_ids attribute and retrieves the associated OpenApiReferences
-func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiReferences, error) {
+// getVmGroupReferences fetches the vm_group_ids attribute and retrieves the associated OpenApiReferences
+func getVmGroupReferences(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiReferences, error) {
 	vmGroupIdsSet := d.Get("vm_group_ids").(*schema.Set)
 	if vmGroupIdsSet != nil {
 		vmGroupIdsList := vmGroupIdsSet.List()
 		var vmGroupReferences types.OpenApiReferences
 		for _, vmGroupId := range vmGroupIdsList {
-			vmGroup, err := vcdClient.GetVmGroupByNamedVmGroupId(vmGroupId.(string))
+			vmGroup, err := vcdClient.GetVmGroupById(vmGroupId.(string))
 			if err != nil {
 				return nil, fmt.Errorf("error retrieving the associated name of VM Group %s: %s", vmGroupId, err)
 			}
+			// VM Placement policies use Named VM ID, not the normal ID
 			vmGroupReferences = append(vmGroupReferences, types.OpenApiReference{
-				ID:   vmGroupId.(string),
+				ID:   fmt.Sprintf("urn:vcloud:namedVmGroup:%s", vmGroup.VmGroup.NamedVmGroupId),
 				Name: vmGroup.VmGroup.Name,
 			})
 		}
@@ -293,8 +294,8 @@ func getVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.OpenApiR
 	return []types.OpenApiReferences{}, nil
 }
 
-// getLogicalVmGroups fetches the logical_vm_group_ids attribute and retrieves the associated OpenApiReferences
-func getLogicalVmGroups(d *schema.ResourceData, vcdClient *VCDClient) (types.OpenApiReferences, error) {
+// getLogicalVmGroupReferences fetches the logical_vm_group_ids attribute and retrieves the associated OpenApiReferences
+func getLogicalVmGroupReferences(d *schema.ResourceData, vcdClient *VCDClient) (types.OpenApiReferences, error) {
 	vmGroupIdsSet := d.Get("logical_vm_group_ids").(*schema.Set)
 	if vmGroupIdsSet != nil {
 		vmGroupIdsList := vmGroupIdsSet.List()
@@ -356,16 +357,24 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 }
 
 // setVmPlacementPolicy sets the Terraform state from the Compute Policy input parameter
-func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, policy types.VdcComputePolicy) diag.Diagnostics {
+func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *VCDClient, policy types.VdcComputePolicy) diag.Diagnostics {
 	dSet(d, "name", policy.Name)
 	dSet(d, "description", policy.Description)
+
 	var vmGroupIds []string
+
 	for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
 		for _, namedVmGroup := range namedVmGroupPerPvdc {
-			vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
+			// The Policy has "Named VM Group IDs" in its attributes, but we need "VM Group IDs" which are unique
+			vmGroup, err := vcdClient.VCDClient.GetVmGroupByNamedVmGroupIdAndProviderVdcUrn(namedVmGroup.ID, policy.PvdcID)
+			if err != nil {
+				return diag.Errorf("could not get VM Group associated to Named VM Group ID %s", namedVmGroup.ID)
+			}
+			vmGroupIds = append(vmGroupIds, vmGroup.VmGroup.ID)
 		}
 	}
 	dSet(d, "vm_group_ids", vmGroupIds)
+
 	vmGroupIds = []string{}
 	for _, namedVmGroup := range policy.LogicalVMGroupReferences {
 		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)

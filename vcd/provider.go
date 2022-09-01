@@ -104,6 +104,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_dynamic_security_group":               datasourceVcdDynamicSecurityGroup(),             // 3.7
 	"vcd_vm_placement_policy":                       datasourceVcdVmPlacementPolicy(),                // 3.8
 	"vcd_provider_vdc":                              datasourceVcdProviderVdc(),                      // 3.8
+	"vcd_vm_group":                                  datasourceVcdVmGroup(),                          // 3.8
 }
 
 var globalResourceMap = map[string]*schema.Resource{
