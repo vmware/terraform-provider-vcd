@@ -16,10 +16,6 @@ func TestAccVcdDatasourceVmGroup(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	// Test configuration
 	var params = StringMap{
@@ -29,6 +25,11 @@ func TestAccVcdDatasourceVmGroup(t *testing.T) {
 	testParamsNotEmpty(t, params)
 	configText := templateFill(testAccVcdDatasourceVmGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	// Test cases
 	resource.Test(t, resource.TestCase{

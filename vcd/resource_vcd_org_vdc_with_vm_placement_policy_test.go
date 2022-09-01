@@ -11,10 +11,6 @@ import (
 
 func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 	preTestChecks(t)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
@@ -40,6 +36,11 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION - update: %s", updateText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,

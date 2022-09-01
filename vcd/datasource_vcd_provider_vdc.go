@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// datasourceVcdProviderVdc Defines the data source for a Provider VDC.
+// datasourceVcdProviderVdc defines the data source for a Provider VDC.
 func datasourceVcdProviderVdc() *schema.Resource {
 	// This internal schema defines the Root Capacity of the Provider VDC.
 	rootCapacityUsage := func(typeOfCapacity string) *schema.Schema {
@@ -121,7 +121,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of the registered NSX-T Manager that backs networking operations for this Provider VDC",
 			},
-			"storage_containers_ids": {
+			"storage_container_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -229,7 +229,7 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 			}
 		}
 	}
-	dSet(d, "storage_containers_ids", items)
+	dSet(d, "storage_container_ids", items)
 
 	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.StorageProfiles != nil {
