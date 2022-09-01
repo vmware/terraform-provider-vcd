@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_vm_group"
-sidebar_current: "docs-vcd-datasource-vm-group"
+sidebar_current: "docs-vcd-data-source-vm-group"
 description: |-
   Provides a VMware Cloud Director VM Group data source. This can be used to fetch vSphere VM Groups and create VM Placement Policies with them.
 ---

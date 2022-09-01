@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_vm_placement_policy"
-sidebar_current: "docs-vcd-datasource-vm-placement-policy"
+sidebar_current: "docs-vcd-data-source-vm-placement-policy"
 description: |-
   Provides a VMware Cloud Director VM Placement Policy data source. This can be
   used to read a VM placement policy.
