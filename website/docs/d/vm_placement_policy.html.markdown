@@ -22,7 +22,7 @@ data "vcd_provider_vdc" "my-pvdc" {
 }
 
 data "vcd_vm_placement_policy" "tf-policy-name" {
-  name = "my-policy"
+  name            = "my-policy"
   provider_vdc_id = data.vcd_provider_vdc.my-pvdc.id
 }
 

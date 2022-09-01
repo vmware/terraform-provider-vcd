@@ -145,7 +145,7 @@ resource "vcd_org_vdc" "my-vdc" {
   org         = "my-org"
   # ...  
   default_compute_policy_id = vcd_vm_sizing_policy.size_1.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
+  vm_sizing_policy_ids      = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
 }
 ```
 

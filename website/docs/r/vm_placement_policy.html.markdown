@@ -24,10 +24,10 @@ data "vcd_provider_vdc" "pvdc" {
 }
 
 resource "vcd_vm_placement_policy" "test-placement-pol" {
-  name        = "my-placement-pol"
-  description = "My awesome VM Placement Policy"
+  name            = "my-placement-pol"
+  description     = "My awesome VM Placement Policy"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids = ["urn:vcloud:namedVmGroup:8238c309-2a1c-4d59-9ff3-ef104e208cce"]
+  vm_group_ids    = ["urn:vcloud:namedVmGroup:8238c309-2a1c-4d59-9ff3-ef104e208cce"]
 }
 ```
 ## Argument Reference
