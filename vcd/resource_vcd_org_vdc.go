@@ -885,14 +885,14 @@ func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyH
 		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
 	}
 
-	existingPolicies, err := vdc.GetAllAssignedVdcComputePolicies(url.Values{
+	existingPolicies, err := vdc.GetAllAssignedVdcComputePoliciesV2(url.Values{
 		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"}, // Filtering out vGPU Policies as there's no attribute support yet.
 	})
 	if err != nil {
 		return fmt.Errorf("error getting Compute Policies. %s", err)
 	}
 	for _, existingPolicy := range existingPolicies {
-		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + existingPolicy.VdcComputePolicy.ID})
+		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + existingPolicy.VdcComputePolicyV2.ID})
 	}
 
 	policyReferences := types.VdcComputePolicyReferences{}
