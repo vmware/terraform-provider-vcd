@@ -297,7 +297,7 @@ func getPvdcNamedVmGroupsMap(d *schema.ResourceData, vcdClient *VCDClient, pVdc 
 			NamedVmGroups: []types.OpenApiReferences{{}},
 			Pvdc: types.OpenApiReference{
 				Name: pVdc.ProviderVdc.Name,
-				ID: pVdc.ProviderVdc.ID,
+				ID:   pVdc.ProviderVdc.ID,
 			},
 		},
 	}
@@ -333,7 +333,7 @@ func getPvdcLogicalVmGroupsMap(d *schema.ResourceData, vcdClient *VCDClient, pVd
 			LogicalVmGroups: types.OpenApiReferences{},
 			Pvdc: types.OpenApiReference{
 				Name: pVdc.ProviderVdc.Name,
-				ID: pVdc.ProviderVdc.ID,
+				ID:   pVdc.ProviderVdc.ID,
 			},
 		},
 	}
