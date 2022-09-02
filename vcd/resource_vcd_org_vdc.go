@@ -437,7 +437,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
 	dSet(d, "default_compute_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
-	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(url.Values{
+	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePoliciesV2(url.Values{
 		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"}, // Filtering out vGPU Policies as there's no attribute support yet.
 	})
 	if err != nil {
@@ -447,10 +447,10 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	var sizingPolicyIds []string
 	var placementPolicyIds []string
 	for _, policy := range assignedVmComputePolicies {
-		if policy.VdcComputePolicy.IsSizingOnly {
-			sizingPolicyIds = append(sizingPolicyIds, policy.VdcComputePolicy.ID)
+		if policy.VdcComputePolicyV2.IsSizingOnly {
+			sizingPolicyIds = append(sizingPolicyIds, policy.VdcComputePolicyV2.ID)
 		} else {
-			placementPolicyIds = append(placementPolicyIds, policy.VdcComputePolicy.ID)
+			placementPolicyIds = append(placementPolicyIds, policy.VdcComputePolicyV2.ID)
 		}
 	}
 
