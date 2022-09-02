@@ -17,7 +17,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 		return &schema.Schema{
 			Type:     schema.TypeList,
 			Computed: true,
-			Description: fmt.Sprintf("Indicator of %s capacity available in the Provider VDC", typeOfCapacity),
+			Description: fmt.Sprintf("Single-element list with an indicator of %s capacity available in the Provider VDC", typeOfCapacity),
 			// MaxItems: 1 - A computed field can't use "MaxItems", this is a reminder that this is a single-element list.
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -91,7 +91,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				// MaxItems: 1 - A computed field can't use "MaxItems", this is a reminder that this is a single-element list.
-				Description: "Read-only indicator of CPU and memory capacity",
+				Description: "Single-element list with an indicator of CPU and memory capacity",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cpu":    rootCapacityUsage("CPU"),

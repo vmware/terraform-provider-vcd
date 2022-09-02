@@ -38,7 +38,7 @@ The following arguments are supported:
 * `status` - Status of the Provider VDC, it can be -1 (creation failed), 0 (not ready), 1 (ready), 2 (unknown) or 3 (unrecognized).
 * `is_enabled` - True if this Provider VDC is enabled and can provide resources to organization VDCs. A Provider VDC is always enabled on creation.
 * `capabilities` - Set of virtual hardware versions supported by this Provider VDC.
-* `compute_capacity` - Read-only indicator of CPU and memory capacity. See [Compute Capacity](#compute-capacity) below for details.
+* `compute_capacity` - Single-element list with an indicator of CPU and memory capacity. See [Compute Capacity](#compute-capacity) below for details.
 * `compute_provider_scope` - Represents the compute fault domain for this Provider VDC. This value is a tenant-facing tag that is shown to tenants when viewing fault domains of the child Organization VDCs (for example, a VDC Group).
 * `highest_supported_hardware_version` - The highest virtual hardware version supported by this Provider VDC.
 * `nsxt_manager_id` - ID of the registered NSX-T Manager that backs networking operations for this Provider VDC.
@@ -57,8 +57,8 @@ The following arguments are supported:
 
 The `compute_capacity` attribute is a list with a single item which has the following nested attributes:
 
-* `cpu` - See below.
-* `memory` - See below.
+* `cpu` - Single-element list with an indicator of CPU. See below.
+* `memory` - Single-element list with an indicator of memory. See below.
 * `is_elastic` -  True if compute capacity can grow or shrink based on demand.
 * `is_ha` - True if compute capacity is highly available.
 
