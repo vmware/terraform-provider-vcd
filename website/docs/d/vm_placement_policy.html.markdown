@@ -34,8 +34,8 @@ output "policyId" {
 
 The following arguments are supported:
 
-* `name` - (Required) The name VM Placement Policy
-* `provider_vdc_id` - (Required) The URN of the Provider VDC to which the VM Placement Policy belongs.
+* `name` - (Required) The name VM Placement Policy.
+* `provider_vdc_id` - (Required) The ID of the [Provider VDC](/providers/vmware/vcd/latest/docs/data-sources/vcd_provider_vdc) to which the VM Placement Policy belongs.
 
 ## Attribute Reference
 

@@ -57,7 +57,7 @@ data "vcd_provider_vdc" "pvdc1" {
 }
 
 data "vcd_vm_group" "vm-group" {
-	name            = "{{.VmGroup}}"
+    name            = "{{.VmGroup}}"
     provider_vdc_id = data.vcd_provider_vdc.pvdc1.id
 }
 `

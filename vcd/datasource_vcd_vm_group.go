@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-// datasourceVcdVmGroup Defines the data source for a VM Group, used to create VM Placement Policies.
+// datasourceVcdVmGroup defines the data source for a VM Group, used to create VM Placement Policies.
 func datasourceVcdVmGroup() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdVmGroupRead,

@@ -30,7 +30,7 @@ data "vcd_vm_group" "vm-group" {
 The following arguments are supported:
 
 * `name` - (Required) The name of VM Group to fetch from vSphere.
-* `provider_vdc_id` - (Required) The name of Provider VDC to which the VM Group belongs.
+* `provider_vdc_id` - (Required) The ID of [Provider VDC](/providers/vmware/vcd/latest/docs/data-sources/vcd_provider_vdc) to which the VM Group belongs.
 
 ## Attributes reference
 
