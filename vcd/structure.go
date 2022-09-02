@@ -145,6 +145,30 @@ func extractNamesFromOpenApiReferences(refs []types.OpenApiReference) []string {
 	return resultStrings
 }
 
+// extractIdsFromReferences extracts []string with IDs from []*types.Reference which contains ID and Names
+func extractIdsFromReferences(refs []*types.Reference) []string {
+	resultStrings := make([]string, len(refs))
+	for index := range refs {
+		resultStrings[index] = refs[index].ID
+	}
+
+	return resultStrings
+}
+
+// extractIdsFromVimObjectRefs extracts []string with IDs from []*types.VimObjectRef which contains *types.Reference
+func extractIdsFromVimObjectRefs(refs []*types.VimObjectRef) []string {
+	resultStrings := make([]string, len(refs))
+	for index := range refs {
+		if refs[index].VimServerRef != nil {
+			resultStrings[index] = refs[index].VimServerRef.ID
+		}
+	}
+
+	return resultStrings
+}
+
+
+
 // convertSliceOfStringsToOpenApiReferenceIds converts []string to []types.OpenApiReference by filling
 // types.OpenApiReference.ID fields
 func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiReference {

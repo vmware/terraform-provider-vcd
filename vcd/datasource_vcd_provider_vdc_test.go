@@ -53,7 +53,7 @@ func TestAccVcdDatasourceProviderVdc(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "host_ids.0", getProviderVdcDatasourceAttributeUrnRegex("host")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "network_pool_ids.0", getProviderVdcDatasourceAttributeUrnRegex("networkpool")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "resource_pool_ids.0", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
-					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_containers_ids.0", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
+					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_container_ids.0", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_profile_ids.0", getProviderVdcDatasourceAttributeUrnRegex("providervdcstorageprofile")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "vcenter_id", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
 				),

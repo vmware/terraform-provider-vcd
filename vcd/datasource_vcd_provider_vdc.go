@@ -214,69 +214,35 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 	dSet(d, "highest_supported_hardware_version", extendedProviderVdc.VMWProviderVdc.HighestSupportedHardwareVersion)
 	dSet(d, "nsxt_manager_id", extendedProviderVdc.VMWProviderVdc.NsxTManagerReference.ID)
 
-	var items []string
 	if extendedProviderVdc.VMWProviderVdc.AvailableNetworks != nil {
-		for _, network := range extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network {
-			if network != nil {
-				items = append(items, network.ID)
-			}
-		}
+		dSet(d, "external_network_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network))
 	}
-	dSet(d, "external_network_ids", items)
 
-	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.DataStoreRefs != nil {
-		for _, vimObject := range extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef {
-			if vimObject != nil && vimObject.VimServerRef != nil {
-				items = append(items, vimObject.VimServerRef.ID)
-			}
-		}
+		dSet(d, "storage_container_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef))
 	}
-	dSet(d, "storage_container_ids", items)
 
-	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.StorageProfiles != nil {
-		for _, storageProfile := range extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile {
-			if storageProfile != nil {
-				items = append(items, storageProfile.ID)
-			}
-		}
+		dSet(d, "storage_profile_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile))
 	}
-	dSet(d, "storage_profile_ids", items)
 
-	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs != nil {
-		for _, vimObject := range extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef {
-			if vimObject != nil && vimObject.VimServerRef != nil {
-				items = append(items, vimObject.VimServerRef.ID)
-			}
-		}
+		dSet(d, "resource_pool_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef))
 	}
-	dSet(d, "resource_pool_ids", items)
 
-	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences != nil {
-		for _, networkPool := range extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences.NetworkPoolReference {
-			if networkPool != nil {
-				items = append(items, networkPool.ID)
-			}
-		}
+		dSet(d, "network_pool_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences.NetworkPoolReference))
 	}
-	dSet(d, "network_pool_ids", items)
 
-	items = []string{}
+	var items []string
 	if extendedProviderVdc.VMWProviderVdc.Capabilities != nil && extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions != nil {
 		items = append(items, extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions.SupportedHardwareVersion...)
 	}
 	dSet(d, "capabilities", items)
 
-	items = []string{}
 	if extendedProviderVdc.VMWProviderVdc.HostReferences != nil {
-		for _, host := range extendedProviderVdc.VMWProviderVdc.HostReferences.HostReference {
-			items = append(items, host.ID)
-		}
+		dSet(d, "host_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.HostReferences.HostReference))
 	}
-	dSet(d, "host_ids", items)
 
 	if extendedProviderVdc.VMWProviderVdc.ComputeCapacity != nil {
 		if err = d.Set("compute_capacity", getComputeCapacityForProviderVdc(extendedProviderVdc.VMWProviderVdc.ComputeCapacity)); err != nil {
