@@ -157,10 +157,10 @@ func extractIdsFromReferences(refs []*types.Reference) []string {
 
 // extractIdsFromVimObjectRefs extracts []string with IDs from []*types.VimObjectRef which contains *types.Reference
 func extractIdsFromVimObjectRefs(refs []*types.VimObjectRef) []string {
-	resultStrings := make([]string, len(refs))
+	var resultStrings []string
 	for index := range refs {
 		if refs[index].VimServerRef != nil {
-			resultStrings[index] = refs[index].VimServerRef.ID
+			resultStrings = append(resultStrings, refs[index].VimServerRef.ID)
 		}
 	}
 
