@@ -15,8 +15,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 	// This internal schema defines the Root Capacity of the Provider VDC.
 	rootCapacityUsage := func(typeOfCapacity string) *schema.Schema {
 		return &schema.Schema{
-			Type:     schema.TypeList,
-			Computed: true,
+			Type:        schema.TypeList,
+			Computed:    true,
 			Description: fmt.Sprintf("Single-element list with an indicator of %s capacity available in the Provider VDC", typeOfCapacity),
 			// MaxItems: 1 - A computed field can't use "MaxItems", this is a reminder that this is a single-element list.
 			Elem: &schema.Resource{
@@ -88,8 +88,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Description: "Set of virtual hardware versions supported by this Provider VDC",
 			},
 			"compute_capacity": {
-				Type:        schema.TypeList,
-				Computed:    true,
+				Type:     schema.TypeList,
+				Computed: true,
 				// MaxItems: 1 - A computed field can't use "MaxItems", this is a reminder that this is a single-element list.
 				Description: "Single-element list with an indicator of CPU and memory capacity",
 				Elem: &schema.Resource{
