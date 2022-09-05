@@ -47,18 +47,24 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	}
 
 	ldapConfigParams := struct {
-		ExternalNetwork   string
-		GuestImage        string
-		CatalogName       string
-		LdapContainerName string
+		VdcGroup            string
+		VdcGroupEdgeGateway string
+		ExternalNetwork     string
+		GuestImage          string
+		CatalogName         string
+		LdapContainerName   string
+		TestName            string
 	}{
-		ExternalNetwork:   testConfig.Networking.ExternalNetwork,
-		GuestImage:        testConfig.VCD.Catalog.CatalogItem,
-		CatalogName:       testConfig.VCD.Catalog.Name,
-		LdapContainerName: ldapContainerName,
+		VdcGroup:            testConfig.Nsxt.VdcGroup,
+		VdcGroupEdgeGateway: testConfig.Nsxt.VdcGroupEdgeGateway,
+		ExternalNetwork:     testConfig.Nsxt.ExternalNetwork,
+		GuestImage:          testConfig.VCD.Catalog.CatalogItem,
+		CatalogName:         testConfig.VCD.Catalog.Name,
+		LdapContainerName:   ldapContainerName,
+		TestName:            t.Name(),
 	}
-	testParamsNotEmpty(t, StringMap{"Networking.ExternalNetwork": testConfig.Networking.ExternalNetwork,
-		"VCD.Catalog.CatalogItem": testConfig.VCD.Catalog.CatalogItem, "VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
+	testParamsNotEmpty(t, StringMap{"Nsxt.VdcGroup": testConfig.Nsxt.VdcGroup,
+		"Nsxt.VdcGroupEdgeGateway": testConfig.Nsxt.VdcGroupEdgeGateway, "VCD.Catalog.NsxtBackedCatalogName": testConfig.VCD.Catalog.NsxtBackedCatalogName})
 
 	// getLdapSetupTemplate does not use regular templateFill because this part is used for
 	// automated LDAP configuration setup
@@ -90,17 +96,17 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	groupConfigText2 := templateFill(testAccOrgGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", groupConfigText2)
 
-	nic0Ip := testCachedFieldValue{}
+	publicIp := testCachedFieldValue{}
 
 	// Instantiate LDAP configuration functions.
 	// Variables passed:
 	// t *testing.T - inserted because TestCase `PreConfig` function does not allow parameters but
 	// we want to fail the test if something breaks in between
-	// nic0Ip - using a `testCachedFieldValue` the IP will be captured after step 0 and will be
+	// publicIp - using a `testCachedFieldValue` the IP will be captured after step 0 and will be
 	// available in Step 1 to configure LDAP server
 	ldapConfig := ldapConfigurator{
-		t:      t,
-		nic0Ip: &nic0Ip,
+		t:        t,
+		publicIp: &publicIp,
 	}
 
 	// make a function with no arguments to suit signature of TestStep.PreConfig
@@ -136,11 +142,9 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				PreConfig: func() { fmt.Println("# Setting up LDAP server") },
 				Config:    ldapSetupConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_direct.net", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vapp.ldap-server", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.direct-net", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm.ldap-container", "id"),
-					nic0Ip.cacheTestResourceFieldValue("vcd_vapp_vm.ldap-container", "network.0.ip"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.route-advertised", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vm.ldap-container", "id"),
+					publicIp.cacheTestResourceFieldValue("data.vcd_nsxt_edgegateway.in-vdc-group", "primary_ip"),
 				),
 			},
 			{
@@ -248,22 +252,61 @@ resource "vcd_org_user" "user1" {
 `
 
 const ldapSetup = `
-resource "vcd_network_direct" "net" {
-  name             = "TestAccVcdOrgGroup"
-  external_network = "{{.ExternalNetwork}}"
+
+data "vcd_vdc_group" "group1" {
+  name = "{{.VdcGroup}}"
 }
 
-resource "vcd_vapp" "ldap-server" {
-  name = "ldap-server"
+data "vcd_nsxt_edgegateway" "in-vdc-group" {
+  owner_id = data.vcd_vdc_group.group1.id
+  name     = "{{.VdcGroupEdgeGateway}}"
 }
 
-resource "vcd_vapp_org_network" "direct-net" {
-  vapp_name        = vcd_vapp.ldap-server.name
-  org_network_name = vcd_network_direct.net.name
+resource "vcd_network_routed_v2" "route-advertised" {
+  name = "{{.TestName}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.in-vdc-group.id
+
+  gateway       = "10.10.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "10.10.1.10"
+    end_address   = "10.10.1.100"
+  }
 }
 
-resource "vcd_vapp_vm" "ldap-container" {
-  vapp_name     = vcd_vapp.ldap-server.name
+resource "vcd_nsxt_route_advertisement" "routed-vdc-group-net" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.in-vdc-group.id
+  enabled         = true
+  subnets         = ["10.10.1.0/24"]
+}
+
+resource "vcd_nsxt_firewall" "testing" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.in-vdc-group.id
+
+  rule {
+    action      = "ALLOW"
+    name        = "Allow all traffic"
+    direction   = "IN_OUT"
+    ip_protocol = "IPV4_IPV6"
+  }
+}
+
+resource "vcd_nsxt_nat_rule" "stateful_dnat" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.in-vdc-group.id
+
+  name        = "DNAT rule for LDAP server access"
+  rule_type   = "DNAT"
+
+  # Using primary_ip from edge gateway
+  external_address = data.vcd_nsxt_edgegateway.in-vdc-group.primary_ip
+  internal_address = vcd_vm.ldap-container.network[0].ip
+}
+
+resource "vcd_vm" "ldap-container" {
+  vdc  = tolist(data.vcd_vdc_group.group1.participating_org_vdcs)[0].vdc_name
+
   name          = "ldap-host"
   catalog_name  = "{{.CatalogName}}"
   template_name = "{{.GuestImage}}"
@@ -287,10 +330,12 @@ resource "vcd_vapp_vm" "ldap-container" {
 
   network {
     type               = "org"
-    name               = vcd_vapp_org_network.direct-net.org_network_name
+    name               = (vcd_network_routed_v2.route-advertised.id != "always-not-equal" ? vcd_network_routed_v2.route-advertised.name : null) 
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
+
+  depends_on = [vcd_network_routed_v2.route-advertised]
 }
 `
 
@@ -367,10 +412,10 @@ type ldapConfigurator struct {
 	t         *testing.T
 	vcdClient *VCDClient
 	org       *govcd.AdminOrg
-	nic0Ip    *testCachedFieldValue
+	publicIp  *testCachedFieldValue
 }
 
-// configureOrgLdap checks that LDAP TCP port 389 is open for ldapConfigurator.nic0Ip and then
+// configureOrgLdap checks that LDAP TCP port 389 is open for ldapConfigurator.publicIp and then
 // configures vCD Org to use that LDAP server
 func (l *ldapConfigurator) configureOrgLdap() {
 	var err error
@@ -382,14 +427,14 @@ func (l *ldapConfigurator) configureOrgLdap() {
 	}
 
 	// Step 1 - ensure LDAP is already UP and serving connections on TCP 389
-	fmt.Printf("# Waiting until LDAP responds on %s:389 :", l.nic0Ip.fieldValue)
-	isPortOpen := isTcpPortOpen(l.nic0Ip.fieldValue, "389", testConfig.Provider.MaxRetryTimeout)
+	fmt.Printf("# Waiting until LDAP responds on %s:389 :", l.publicIp.fieldValue)
+	isPortOpen := isTcpPortOpen(l.publicIp.fieldValue, "389", testConfig.Provider.MaxRetryTimeout)
 	if !isPortOpen {
 		l.t.Error("error waiting for LDAP to respond")
 	}
 
 	// Step 2 - configure LDAP
-	l.orgConfigureLdap(l.nic0Ip.fieldValue)
+	l.orgConfigureLdap(l.publicIp.fieldValue)
 }
 
 func (l *ldapConfigurator) orgConfigureLdap(ldapServerIp string) {
