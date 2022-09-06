@@ -362,7 +362,7 @@ func getUpdatedVmSizingPolicyInput(d *schema.ResourceData, policy *govcd.VdcComp
 	}
 
 	if d.HasChange("description") {
-		policy.VdcComputePolicy.Description = d.Get("description").(string)
+		policy.VdcComputePolicy.Description = getStringAttributeAsPointer(d, "description")
 	}
 
 	if d.HasChange("cpu") {
@@ -381,7 +381,7 @@ func getVmSizingPolicyInput(d *schema.ResourceData) (*types.VdcComputePolicy, er
 
 	params := &types.VdcComputePolicy{
 		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+		Description: getStringAttributeAsPointer(d, "description"),
 	}
 
 	cpuPart := d.Get("cpu").([]interface{})

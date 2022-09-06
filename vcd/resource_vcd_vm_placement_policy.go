@@ -82,7 +82,7 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 	computePolicy := &types.VdcComputePolicyV2{
 		VdcComputePolicy: types.VdcComputePolicy{
 			Name:        d.Get("name").(string),
-			Description: d.Get("description").(string),
+			Description: getStringAttributeAsPointer(d, "description"),
 		},
 		PolicyType: "VdcVmPolicy",
 	}
@@ -190,7 +190,7 @@ func resourceVmPlacementPolicyUpdate(ctx context.Context, d *schema.ResourceData
 	}
 
 	if d.HasChange("description") {
-		policy.VdcComputePolicyV2.Description = d.Get("description").(string)
+		policy.VdcComputePolicyV2.Description = getStringAttributeAsPointer(d, "description")
 	}
 
 	if d.HasChange("vm_group_ids") {

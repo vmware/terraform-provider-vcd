@@ -96,6 +96,16 @@ func takeInt64Pointer(x int64) *int64 {
 	return &x
 }
 
+// getStringAttributeAsPointer returns a pointer to the value of the given attribute from the current resource data.
+// If the attribute is empty, returns a nil pointer.
+func getStringAttributeAsPointer(d *schema.ResourceData, attrName string) *string {
+	attributeValue := d.Get(attrName).(string)
+	if attributeValue == "" {
+		return nil
+	}
+	return &attributeValue
+}
+
 // extractUuid finds an UUID in the input string
 // Returns an empty string if no UUID was found
 func extractUuid(input string) string {
