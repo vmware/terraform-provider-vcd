@@ -146,9 +146,9 @@ func TestAccVcdVmPlacementPolicyWithoutDescription(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"PvdcName":    testConfig.VCD.NsxtProviderVdc.Name,
-		"PolicyName":  t.Name(),
-		"VmGroup":     testConfig.TestEnvBuild.PlacementPolicyVmGroup,
+		"PvdcName":   testConfig.VCD.NsxtProviderVdc.Name,
+		"PolicyName": t.Name(),
+		"VmGroup":    testConfig.TestEnvBuild.PlacementPolicyVmGroup,
 	}
 	testParamsNotEmpty(t, params)
 	policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
