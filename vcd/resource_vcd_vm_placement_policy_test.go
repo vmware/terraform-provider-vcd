@@ -134,6 +134,65 @@ data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
 }
 `
 
+// TestAccVcdVmPlacementPolicyWithoutDescription checks that a VM Placement Policy without description specified in the HCL
+// corresponds to a VM Placement Policy with an empty description in VCD.
+func TestAccVcdVmPlacementPolicyWithoutDescription(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+	}
+	if testConfig.VCD.ProviderVdc.Name == "" {
+		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
+	}
+
+	var params = StringMap{
+		"PvdcName":    testConfig.VCD.NsxtProviderVdc.Name,
+		"PolicyName":  t.Name(),
+		"VmGroup":     testConfig.TestEnvBuild.PlacementPolicyVmGroup,
+	}
+	testParamsNotEmpty(t, params)
+	policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
+	configText := templateFill(testAccCheckVmPlacementPolicyWithoutDescription, params)
+
+	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVmPlacementPolicyDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(policyName, "description", ""),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVmPlacementPolicyWithoutDescription = `
+data "vcd_provider_vdc" "pvdc" {
+  name = "{{.PvdcName}}"
+}
+
+data "vcd_vm_group" "vm-group" {
+  name            = "{{.VmGroup}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
+resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
+  name        = "{{.PolicyName}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
+}
+`
+
 func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	var err error
@@ -142,7 +201,7 @@ func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err = conn.Client.GetVdcComputePolicyById(rs.Primary.ID)
+		_, err = conn.GetVdcComputePolicyV2ById(rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("VM Placement Policy %s still exists", rs.Primary.ID)
