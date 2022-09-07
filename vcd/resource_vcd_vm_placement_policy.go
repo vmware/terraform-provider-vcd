@@ -63,10 +63,10 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 }
 
 func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vmGroups := d.Get("vm_group_ids").(*schema.Set)
-	logicalVmGroups := d.Get("logical_vm_group_ids").(*schema.Set)
-	if len(vmGroups.List()) == 0 && len(logicalVmGroups.List()) == 0 {
-		return diag.Errorf("either `vm_group_ids` or `logical_vm_group_ids` must have a VM Group")
+	vmGroupIds := d.Get("vm_group_ids").(*schema.Set)
+	logicalVmGroupIds := d.Get("logical_vm_group_ids").(*schema.Set)
+	if len(vmGroupIds.List()) == 0 && len(logicalVmGroupIds.List()) == 0 {
+		return diag.Errorf("either `vm_group_ids` or `logical_vm_group_ids` must have a")
 	}
 
 	log.Printf("[TRACE] VM Placement Policy creation initiated: %s in pVDC %s", d.Get("name").(string), d.Get("provider_vdc_id").(string))
@@ -83,8 +83,9 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 
 	computePolicy := &types.VdcComputePolicyV2{
 		VdcComputePolicy: types.VdcComputePolicy{
-			Name:        d.Get("name").(string),
-			Description: getStringAttributeAsPointer(d, "description"),
+			Name:         d.Get("name").(string),
+			Description:  getStringAttributeAsPointer(d, "description"),
+			IsSizingOnly: false,
 		},
 		PolicyType: "VdcVmPolicy",
 	}
@@ -116,11 +117,11 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return sharedVcdVmPlacementPolicyRead(ctx, d, meta)
+	return sharedVcdVmPlacementPolicyRead(ctx, d, meta, true)
 }
 
 // sharedVcdVmPlacementPolicyRead is a Read function shared between this resource and the corresponding data source.
-func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}, isRead bool) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	pVdcId := d.Get("provider_vdc_id").(string)
 	log.Printf("[TRACE] VM Placement Policy read initiated: %s in pVDC with ID %s", policyName, pVdcId)

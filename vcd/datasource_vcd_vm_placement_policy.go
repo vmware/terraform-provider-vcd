@@ -47,5 +47,5 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 }
 
 func datasourceVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return sharedVcdVmPlacementPolicyRead(ctx, d, meta)
+	return sharedVcdVmPlacementPolicyRead(ctx, d, meta, false)
 }
