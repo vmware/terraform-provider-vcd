@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"os"
 	"regexp"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -102,6 +103,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_neighbor":             datasourceVcdEdgeBgpNeighbor(),                  // 3.7
 	"vcd_nsxt_edgegateway_bgp_ip_prefix_list":       datasourceVcdEdgeBgpIpPrefixList(),              // 3.7
 	"vcd_nsxt_dynamic_security_group":               datasourceVcdDynamicSecurityGroup(),             // 3.7
+	"vcd_org_ldap":                                  datasourceVcdOrgLdap(),                          // 3.8
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -175,6 +177,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_neighbor":             resourceVcdEdgeBgpNeighbor(),                  // 3.7
 	"vcd_nsxt_edgegateway_bgp_ip_prefix_list":       resourceVcdEdgeBgpIpPrefixList(),              // 3.7
 	"vcd_nsxt_edgegateway_bgp_configuration":        resourceVcdEdgeBgpConfig(),                    // 3.7
+	"vcd_org_ldap":                                  resourceVcdOrgLdap(),                          // 3.8
 }
 
 // Provider returns a terraform.ResourceProvider.
