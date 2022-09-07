@@ -113,7 +113,7 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 	d.SetId(createdVmSizingPolicy.VdcComputePolicyV2.ID)
 	log.Printf("[TRACE] VM Placement Policy created: %#v", createdVmSizingPolicy.VdcComputePolicyV2)
 
-	return sharedVcdVmPlacementPolicyRead(ctx, d, meta, false)
+	return sharedVcdVmPlacementPolicyRead(ctx, d, meta, true)
 }
 
 func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -121,7 +121,7 @@ func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 // sharedVcdVmPlacementPolicyRead is a Read function shared between this resource and the corresponding data source.
-func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}, isRead bool) diag.Diagnostics {
+func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}, isResource bool) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	pVdcId := d.Get("provider_vdc_id").(string)
 	log.Printf("[TRACE] VM Placement Policy read initiated: %s in pVDC with ID %s", policyName, pVdcId)
@@ -136,9 +136,11 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 	if d.Id() != "" {
 		policy, err = vcdClient.GetVdcComputePolicyV2ById(d.Id())
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM Placement Policy %s. Removing from tfstate.", policyName)
-			d.SetId("")
-			return diag.Errorf("unable to find VM Placement Policy %s, err: %s. Removing from tfstate", policyName, err)
+			if isResource && govcd.ContainsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
+			return diag.Errorf("unable to find VM Placement Policy %s: %s", policyName, err)
 		}
 	}
 
