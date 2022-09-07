@@ -45,26 +45,28 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:    true,
-				Description: "IDs of the collection of VMs with similar host requirements",
+				Optional:     true,
+				Description:  "IDs of the collection of VMs with similar host requirements",
+				AtLeastOneOf: []string{"vm_group_ids", "logical_vm_group_ids"},
 			},
 			"logical_vm_group_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:    true,
-				Description: "IDs of one or more Logical VM Groups to define this VM Placement Policy. There is an AND relationship among all the entries set in this attribute",
+				Optional:     true,
+				Description:  "IDs of one or more Logical VM Groups to define this VM Placement Policy. There is an AND relationship among all the entries set in this attribute",
+				AtLeastOneOf: []string{"vm_group_ids", "logical_vm_group_ids"},
 			},
 		},
 	}
 }
 
 func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	_, vmGroupAreSet := d.GetOk("vm_group_ids")
-	_, logicalVmGroupAreSet := d.GetOk("logical_vm_group_ids")
-	if !vmGroupAreSet && !logicalVmGroupAreSet {
-		return diag.Errorf("either `vm_group_ids` or `logical_vm_group_ids` must be set")
+	vmGroups := d.Get("vm_group_ids").(*schema.Set)
+	logicalVmGroups := d.Get("logical_vm_group_ids").(*schema.Set)
+	if len(vmGroups.List()) == 0 && len(logicalVmGroups.List()) == 0 {
+		return diag.Errorf("either `vm_group_ids` or `logical_vm_group_ids` must have a VM Group")
 	}
 
 	log.Printf("[TRACE] VM Placement Policy creation initiated: %s in pVDC %s", d.Get("name").(string), d.Get("provider_vdc_id").(string))
