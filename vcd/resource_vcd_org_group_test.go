@@ -49,7 +49,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	ldapConfigParams := struct {
 		VdcGroup            string
 		VdcGroupEdgeGateway string
-		ExternalNetwork     string
 		GuestImage          string
 		CatalogName         string
 		LdapContainerName   string
@@ -57,7 +56,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	}{
 		VdcGroup:            testConfig.Nsxt.VdcGroup,
 		VdcGroupEdgeGateway: testConfig.Nsxt.VdcGroupEdgeGateway,
-		ExternalNetwork:     testConfig.Nsxt.ExternalNetwork,
 		GuestImage:          testConfig.VCD.Catalog.CatalogItem,
 		CatalogName:         testConfig.VCD.Catalog.Name,
 		LdapContainerName:   ldapContainerName,
