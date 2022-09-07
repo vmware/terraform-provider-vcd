@@ -55,11 +55,11 @@ via supplying the full dot separated path to VM Placement Policy. An example is
 below:
 
 ```
-terraform import vcd_vm_placement_policy.my-policy policy_name
+terraform import vcd_vm_placement_policy.my-policy policy_name_in_vcd
 ```
 or using IDs:
 ```
-terraform import vcd_vm_placement_policy.my-policy policy_id
+terraform import vcd_vm_placement_policy.my-policy urn:vcloud:vdcComputePolicy:39579936-6211-40b5-adf6-2a74d4413e9e
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
