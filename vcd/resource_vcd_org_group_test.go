@@ -40,10 +40,14 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		return
 	}
 
+	dns1 := "8.8.8.8"
 	ldapContainerName := "rroemhild/test-openldap"
 	// Override LDAP container name if it is specified in config
 	if testConfig.Misc.LdapContainer != "" {
 		ldapContainerName = testConfig.Misc.LdapContainer
+	}
+	if testConfig.TestEnvBuild.Dns1 != "" {
+		dns1 = testConfig.TestEnvBuild.Dns1
 	}
 
 	ldapConfigParams := struct {
@@ -53,6 +57,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		CatalogName         string
 		LdapContainerName   string
 		TestName            string
+		Dns1                string
 	}{
 		VdcGroup:            testConfig.Nsxt.VdcGroup,
 		VdcGroupEdgeGateway: testConfig.Nsxt.VdcGroupEdgeGateway,
@@ -60,6 +65,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		CatalogName:         testConfig.VCD.Catalog.Name,
 		LdapContainerName:   ldapContainerName,
 		TestName:            t.Name(),
+		Dns1:                dns1,
 	}
 	testParamsNotEmpty(t, StringMap{"Nsxt.VdcGroup": testConfig.Nsxt.VdcGroup,
 		"Nsxt.VdcGroupEdgeGateway": testConfig.Nsxt.VdcGroupEdgeGateway, "VCD.Catalog.NsxtBackedCatalogName": testConfig.VCD.Catalog.NsxtBackedCatalogName})
@@ -250,7 +256,6 @@ resource "vcd_org_user" "user1" {
 `
 
 const ldapSetup = `
-
 data "vcd_vdc_group" "group1" {
   name = "{{.VdcGroup}}"
 }
@@ -267,6 +272,7 @@ resource "vcd_network_routed_v2" "route-advertised" {
 
   gateway       = "10.10.1.1"
   prefix_length = 24
+  dns1          = "{{.Dns1}}"
 
   static_ip_pool {
     start_address = "10.10.1.10"
@@ -321,7 +327,7 @@ resource "vcd_vm" "ldap-container" {
 			done
 			systemctl enable docker
 			systemctl start docker
-			docker run --name ldap-server --restart=always -d -p 389:10389 rroemhild/test-openldap
+			docker run --name ldap-server --restart=always -d -p 389:10389 {{.LdapContainerName}}
 		} &
 		EOT
   }
