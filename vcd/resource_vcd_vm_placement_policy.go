@@ -113,7 +113,7 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 	d.SetId(createdVmSizingPolicy.VdcComputePolicyV2.ID)
 	log.Printf("[TRACE] VM Placement Policy created: %#v", createdVmSizingPolicy.VdcComputePolicyV2)
 
-	return resourceVmPlacementPolicyRead(ctx, d, meta)
+	return sharedVcdVmPlacementPolicyRead(ctx, d, meta, false)
 }
 
 func resourceVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
