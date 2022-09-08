@@ -580,7 +580,7 @@ func listComputePoliciesForImport(meta interface{}, origin, policyType string) (
 	}
 	queryParams.Add("filter", filter)
 
-	policies, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
+	policies, err := vcdClient.VCDClient.GetAllVdcComputePoliciesV2(queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve %s policies: %s", policyType, err)
 	}
@@ -597,7 +597,7 @@ func listComputePoliciesForImport(meta interface{}, origin, policyType string) (
 	}
 
 	for index, policy := range policies {
-		_, err = fmt.Fprintf(writer, "%d\t%s\t%s \n", index+1, policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
+		_, err = fmt.Fprintf(writer, "%d\t%s\t%s \n", index+1, policy.VdcComputePolicyV2.ID, policy.VdcComputePolicyV2.Name)
 		if err != nil {
 			logForScreen(origin, fmt.Sprintf("error writing to buffer: %s", err))
 		}
