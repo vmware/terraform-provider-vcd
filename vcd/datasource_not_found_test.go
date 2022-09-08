@@ -207,6 +207,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			// Invalid fields which are required for some resources for search (usually they are used instead of `name`)
 		case "vdc_group_id":
 			templateFields = templateFields + `vdc_group_id = "urn:vcloud:vdcGroup:c19ec5b1-3403-4d00-b414-9da50066dc1e"` + "\n"
+		case "provider_vdc_id":
+			templateFields = templateFields + `provider_vdc_id = "urn:vcloud:providervdc:8453a2e2-1432-4e67-a312-8e713495eabc"` + "\n"
 		case "rule_id":
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":
