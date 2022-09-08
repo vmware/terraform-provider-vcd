@@ -25,7 +25,7 @@ var datasourceLdapUserAttributes = &schema.Schema{
 				Computed:    true,
 				Description: "LDAP attribute to use as the unique identifier for a user. For example, objectGuid",
 			},
-			"user_name": { // Username
+			"username": { // Username
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "LDAP attribute to use when looking up a user name to import. For example, userPrincipalName or samAccountName",

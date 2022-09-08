@@ -2,7 +2,9 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,7 +19,7 @@ var resourceLdapUserAttributes = &schema.Schema{
 	Type:        schema.TypeList,
 	Required:    true,
 	MaxItems:    1,
-	Description: "Custom user settings when `ldap_mode` is CUSTOM",
+	Description: "User settings when `ldap_mode` is CUSTOM",
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"object_class": { // ObjectClass
@@ -30,7 +32,7 @@ var resourceLdapUserAttributes = &schema.Schema{
 				Required:    true,
 				Description: "LDAP attribute to use as the unique identifier for a user. For example, objectGuid",
 			},
-			"user_name": { // Username
+			"username": { // Username
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "LDAP attribute to use when looking up a user name to import. For example, userPrincipalName or samAccountName",
@@ -80,7 +82,7 @@ var resourceLdapGroupAttributes = &schema.Schema{
 	Type:        schema.TypeList,
 	Required:    true,
 	MaxItems:    1,
-	Description: "Custom group settings when `ldap_mode` is CUSTOM",
+	Description: "Group settings when `ldap_mode` is CUSTOM",
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"object_class": { // ObjectClass
@@ -125,10 +127,14 @@ func resourceVcdOrgLdap() *schema.Resource {
 		CreateContext: resourceVcdOrgLdapCreate,
 		UpdateContext: resourceVcdOrgLdapUpdate,
 		DeleteContext: resourceVcdOrgLdapDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdOrgLdapImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Organization name",
 			},
 			"ldap_mode": { // OrgLdapMode
@@ -177,14 +183,18 @@ func resourceVcdOrgLdap() *schema.Resource {
 							Description: "True if the LDAP service requires an SSL connection",
 						},
 						"username": { // Username
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `Username to use when logging in to LDAP, specified using LDAP attribute=value pairs (for example: cn="ldap-admin", c="example", dc="com")`,
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `Username to use when logging in to LDAP, specified using LDAP attribute=value ` +
+								`pairs (for example: cn="ldap-admin", c="example", dc="com")`,
 						},
 						"password": { // Password
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `Password for the user identified by UserName. This value is never returned by GET. It is inspected on create and modify. On modify, the absence of this element indicates that the password should not be changed`,
+							Type:      schema.TypeString,
+							Optional:  true,
+							Sensitive: true,
+							Description: `Password for the user identified by UserName. This value is never returned by GET. ` +
+								`It is inspected on create and modify. ` +
+								`On modify, the absence of this element indicates that the password should not be changed`,
 						},
 						"user_attributes":  resourceLdapUserAttributes,  // CustomOrgLdapSettings.UserAttributes
 						"group_attributes": resourceLdapGroupAttributes, // CustomOrgLdapSettings.GroupAttributes
@@ -195,28 +205,31 @@ func resourceVcdOrgLdap() *schema.Resource {
 	}
 }
 
-func resourceVcdOrgLdapCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdOrgLdapCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return diag.Errorf("[Org LDAP read] error searching for Org %s: %s", orgName, err)
+		return diag.Errorf("[Org LDAP %s] error searching for Org %s: %s", origin, orgName, err)
 	}
 
-	var settings types.OrgLdapSettingsType
-	newSettings, err := adminOrg.LdapConfigure(&settings)
+	settings, err := fillLdapSettings(d)
 	if err != nil {
-		return diag.Errorf("[Org LDAP create] error setting org '%s' LDAP configuration: %s", orgName, err)
+		return diag.Errorf("[Org LDAP %s] error collecting settings values: %s", origin, err)
 	}
-	err = validateLdapSettings(&settings, newSettings)
+
+	_, err = adminOrg.LdapConfigure(settings)
 	if err != nil {
-		return diag.Errorf("[Org LDAP create] error validating LDAP settings: %s", err)
+		return diag.Errorf("[Org LDAP %s] error setting org '%s' LDAP configuration: %s", origin, orgName, err)
 	}
 	return resourceVcdOrgLdapRead(ctx, d, meta)
 }
 
+func resourceVcdOrgLdapCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdOrgLdapCreateOrUpdate(ctx, d, meta, "create")
+}
 func resourceVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdOrgLdapRead(ctx, d, meta, "resource")
 }
@@ -256,12 +269,12 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 			"base_distinguished_name": config.CustomOrgLdapSettings.SearchBase,
 			"is_ssl":                  config.CustomOrgLdapSettings.IsSsl,
 			"username":                config.CustomOrgLdapSettings.Username,
-			"password":                config.CustomOrgLdapSettings.Password,
+			//"password":                "",
 			"user_attributes": []map[string]interface{}{
 				{
 					"object_class":                config.CustomOrgLdapSettings.UserAttributes.ObjectClass,
 					"unique_identifier":           config.CustomOrgLdapSettings.UserAttributes.ObjectIdentifier,
-					"user_name":                   config.CustomOrgLdapSettings.UserAttributes.Username,
+					"username":                    config.CustomOrgLdapSettings.UserAttributes.Username,
 					"email":                       config.CustomOrgLdapSettings.UserAttributes.Email,
 					"full_name":                   config.CustomOrgLdapSettings.UserAttributes.FullName,
 					"given_name":                  config.CustomOrgLdapSettings.UserAttributes.GivenName,
@@ -291,7 +304,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func resourceVcdOrgLdapUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.Errorf("[Org LDAP update] function not yet implemented")
+	return resourceVcdOrgLdapCreateOrUpdate(ctx, d, meta, "update")
 }
 
 func resourceVcdOrgLdapDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -306,7 +319,98 @@ func resourceVcdOrgLdapDelete(ctx context.Context, d *schema.ResourceData, meta 
 	return diag.FromErr(adminOrg.LdapDisable())
 }
 
-func validateLdapSettings(wantedSettings, retrievedSettings *types.OrgLdapSettingsType) error {
+func fillLdapSettings(d *schema.ResourceData) (*types.OrgLdapSettingsType, error) {
+	settings := types.OrgLdapSettingsType{
+		OrgLdapMode: d.Get("ldap_mode").(string),
+	}
 
-	return nil
+	if settings.OrgLdapMode != "CUSTOM" {
+		return &settings, nil
+	}
+	customSettings := d.Get("custom_settings")
+	if customSettings == nil {
+		return nil, fmt.Errorf("custom_settings are empty with CUSTOM ldap_mode")
+	}
+	customSettingsList, ok := customSettings.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid custom settings: %v", reflect.TypeOf(customSettings))
+	}
+	customSettingsMap, ok := customSettingsList[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid custom settings: %v", reflect.TypeOf(customSettingsList))
+	}
+
+	settings.CustomOrgLdapSettings = &types.CustomOrgLdapSettings{
+		HostName:                customSettingsMap["server"].(string),
+		Port:                    customSettingsMap["port"].(int),
+		IsSsl:                   customSettingsMap["is_ssl"].(bool),
+		SearchBase:              customSettingsMap["base_distinguished_name"].(string),
+		Username:                customSettingsMap["username"].(string),
+		Password:                customSettingsMap["password"].(string),
+		AuthenticationMechanism: customSettingsMap["authentication_method"].(string),
+		ConnectorType:           customSettingsMap["connector_type"].(string),
+	}
+
+	rawUserAttributesList, okUserList := customSettingsMap["user_attributes"].([]interface{})
+	rawGroupAttributesList, okGroupList := customSettingsMap["group_attributes"].([]interface{})
+	if !okUserList || len(rawUserAttributesList) == 0 {
+		return nil, fmt.Errorf("user_attributes settings are empty with CUSTOM ldap_mode")
+	}
+	if !okGroupList || len(rawGroupAttributesList) == 0 {
+		return nil, fmt.Errorf("group_attributes settings are empty with CUSTOM ldap_mode")
+	}
+	userAttributesMap, okUser := rawUserAttributesList[0].(map[string]interface{})
+	groupAttributesMap, okGroup := rawGroupAttributesList[0].(map[string]interface{})
+	if !okUser || userAttributesMap == nil || len(userAttributesMap) == 0 {
+		return nil, fmt.Errorf("user_attributes settings are empty with CUSTOM ldap_mode")
+	}
+	if !okGroup || groupAttributesMap == nil || len(groupAttributesMap) == 0 {
+		return nil, fmt.Errorf("group_attributes settings are empty with CUSTOM ldap_mode")
+	}
+	//userAttributesMap := rawUserAttributes
+	//groupAttributesMap := rawGroupAttributes
+	settings.CustomOrgLdapSettings.UserAttributes = &types.OrgLdapUserAttributes{
+		ObjectClass:               userAttributesMap["object_class"].(string),
+		ObjectIdentifier:          userAttributesMap["unique_identifier"].(string),
+		Username:                  userAttributesMap["username"].(string),
+		Email:                     userAttributesMap["email"].(string),
+		FullName:                  userAttributesMap["full_name"].(string),
+		GivenName:                 userAttributesMap["given_name"].(string),
+		Surname:                   userAttributesMap["surname"].(string),
+		Telephone:                 userAttributesMap["telephone"].(string),
+		GroupMembershipIdentifier: userAttributesMap["group_membership_identifier"].(string),
+		GroupBackLinkIdentifier:   userAttributesMap["group_back_link_identifier"].(string),
+	}
+	settings.CustomOrgLdapSettings.GroupAttributes = &types.OrgLdapGroupAttributes{
+		ObjectClass:          groupAttributesMap["object_class"].(string),
+		ObjectIdentifier:     groupAttributesMap["unique_identifier"].(string),
+		GroupName:            groupAttributesMap["name"].(string),
+		Membership:           groupAttributesMap["membership"].(string),
+		MembershipIdentifier: groupAttributesMap["group_membership_identifier"].(string),
+		BackLinkIdentifier:   groupAttributesMap["group_back_link_identifier"].(string),
+	}
+
+	return &settings, nil
+}
+
+// resourceVcdOrgLdapImport is responsible for importing the resource.
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// a name based dot-formatted path to the object to lookup the object and sets the id of object.
+// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+// For this resource, the import path is just the org name.
+//
+// Example import path (id): orgName
+func resourceVcdOrgLdapImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	orgName := d.Id()
+
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	dSet(d, "name", adminOrg.AdminOrg.Name)
+
+	d.SetId(adminOrg.AdminOrg.ID)
+	return []*schema.ResourceData{d}, nil
 }
