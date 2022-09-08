@@ -825,9 +825,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 		var vmComputePolicyIds []string
 		computePolicyAttributes := []string{"vm_sizing_policy_ids", "vm_placement_policy_ids"}
 		for _, attribute := range computePolicyAttributes {
-			if d.HasChange(attribute) {
-				vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
-			}
+			vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 		}
 		if !contains(vmComputePolicyIds, defaultPolicyId) {
 			return fmt.Errorf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId, computePolicyAttributes)
