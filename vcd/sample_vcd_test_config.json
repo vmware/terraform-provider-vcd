@@ -93,7 +93,10 @@
     },
     "vcenter" : "vC1",
     "externalNetworkPortGroup": "ForTestingPG",
-    "externalNetworkPortGroupType": "DV_PORTGROUP"
+    "externalNetworkPortGroupType": "DV_PORTGROUP",
+    "//": "This should be a LDAP server",
+    "//": "configured according to docker testing image https://github.com/rroemhild/docker-test-openldap",
+    "ldap_server": "IP-of-test-LDAP-server"
   },
   "nsxt": {
     "//": "NSX-T manager name to be used as defined in VCD",

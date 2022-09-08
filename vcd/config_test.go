@@ -1,5 +1,5 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate vdcGroup ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate vdcGroup ldap ALL
 
 package vcd
 
@@ -121,6 +121,7 @@ type TestConfig struct {
 		ExternalNetwork              string `json:"externalNetwork,omitempty"`
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup,omitempty"`
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType,omitempty"`
+		LdapServer                   string `json:"ldap_server,omitempty"`
 		Local                        struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
