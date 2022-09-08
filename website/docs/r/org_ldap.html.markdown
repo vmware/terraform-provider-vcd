@@ -12,6 +12,8 @@ Provides a VMware Cloud Director Org LDAP resource. This can be used to create, 
 
 Supported in provider *v3.8+*
 
+-> **Note:** This resource requires system administrator privileges.
+
 ## Example Usage
 
 ```hcl
@@ -117,7 +119,7 @@ For example, using this structure, representing an existing LDAP configuration t
 
 ```hcl
 resource "vcd_org_ldap" "my-org-ldap" {
-  name             = "my-org"
+  name = "my-org"
 }
 ```
 
