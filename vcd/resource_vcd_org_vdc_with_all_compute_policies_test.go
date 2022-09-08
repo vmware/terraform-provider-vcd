@@ -14,9 +14,6 @@ func TestAccVcdOrgVdcWithAllComputePolicies(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
-	if testConfig.VCD.NsxtProviderVdc.Name == "" {
-		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
-	}
 
 	var params = StringMap{
 		"VmGroup":                   testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
