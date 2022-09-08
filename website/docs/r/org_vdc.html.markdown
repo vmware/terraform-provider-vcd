@@ -11,7 +11,7 @@ description: |-
 Provides a VMware Cloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 Requires system administrator privileges.
 
--> **Note:** This resource supports NSX-T and NSX-V based Org Vdcs by providing relevant
+-> **Note:** This resource supports NSX-T and NSX-V based Org VDCs by providing relevant
 `network_pool_name` and `provider_vdc_name`
 
 Supported in provider *v2.2+*
@@ -102,7 +102,7 @@ resource "vcd_org_vdc" "nsxt-vdc" {
 }
 ```
 
-## Example Usage (With VM sizing policies)
+## Example Usage (With VM Sizing Policies)
 
 ```hcl
 resource "vcd_vm_sizing_policy" "size_1" {
@@ -146,6 +146,40 @@ resource "vcd_org_vdc" "my-vdc" {
   # ...  
   default_compute_policy_id = vcd_vm_sizing_policy.size_1.id
   vm_sizing_policy_ids      = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
+}
+```
+
+## Example Usage (With VM Placement Policies)
+
+```hcl
+data "vcd_provider_vdc" "pvdc" {
+  name = "my-pvdc"
+}
+
+# This VM group needs to exist in the backing vSphere
+data "vcd_vm_group" "vmgroup" {
+  name            = "vmware-licensed-vms"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
+resource "vcd_vm_placement_policy" "new-placement-policy" {
+  name            = "place-in-vmware-licensed"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+  vm_group_ids    = [data.vcd_vm_group.vmgroup.id]
+}
+
+data "vcd_vm_placement_policy" "existing-policy" {
+  name            = "place-in-company-licensed"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.provider_vdc_id
+}
+
+resource "vcd_org_vdc" "my-vdc" {
+  name        = "my-vdc"
+  description = "The pride of my work"
+  org         = "my-org"
+  # ...  
+  default_compute_policy_id = data.vcd_vm_placement_policy.existing-policy.id
+  vm_placement_policy_ids   = [data.vcd_vm_placement_policy.existing-policy.id, vcd_vm_placement_policy.new-placement-policy.id]
 }
 ```
 
