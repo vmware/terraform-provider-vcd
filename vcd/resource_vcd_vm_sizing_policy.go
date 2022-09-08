@@ -607,5 +607,11 @@ func listComputePoliciesForImport(meta interface{}, origin, policyType string) (
 		logForScreen(origin, fmt.Sprintf("error flushing buffer: %s", err))
 	}
 
-	return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
+	switch policyType {
+	case "sizing":
+		return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
+	default:
+		return nil, fmt.Errorf("resource was not imported! %s\n%s", errHelpVmSizingPolicyImport, buf.String())
+	}
+
 }
