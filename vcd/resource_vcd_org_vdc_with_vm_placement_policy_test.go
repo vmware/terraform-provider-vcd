@@ -19,7 +19,7 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"VmGroup":                   testConfig.TestEnvBuild.PlacementPolicyVmGroup,
+		"VmGroup":                   testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
 		"VdcName":                   t.Name(),
 		"OrgName":                   testConfig.VCD.Org,
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,

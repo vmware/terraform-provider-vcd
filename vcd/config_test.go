@@ -98,10 +98,11 @@ type TestConfig struct {
 			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {
-			Name            string `json:"name"`
-			StorageProfile  string `json:"storageProfile"`
-			StorageProfile2 string `json:"storageProfile2"`
-			NetworkPool     string `json:"networkPool"`
+			Name                   string `json:"name"`
+			StorageProfile         string `json:"storageProfile"`
+			StorageProfile2        string `json:"storageProfile2"`
+			NetworkPool            string `json:"networkPool"`
+			PlacementPolicyVmGroup string `json:"placementPolicyVmGroup"` // Name of the VM group to create VM Placement Policies
 		} `json:"nsxtProviderVdc"`
 		Catalog struct {
 			Name                    string `json:"name,omitempty"`
@@ -198,7 +199,6 @@ type TestConfig struct {
 		OvaPath                      string `json:"ovaPath"`                      // Ova Path, if different from Ova.OvaPath
 		OrgUser                      string `json:"orgUser"`                      // Org User to be created within the organization
 		OrgUserPassword              string `json:"orgUserPassword"`              // Password for the Org User to be created within the organization
-		PlacementPolicyVmGroup       string `json:"placementPolicyVmGroup"`       // Name of the VM group to create VM Placement Policies
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }

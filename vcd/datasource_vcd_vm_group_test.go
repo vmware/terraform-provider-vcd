@@ -20,7 +20,7 @@ func TestAccVcdDatasourceVmGroup(t *testing.T) {
 	// Test configuration
 	var params = StringMap{
 		"ProviderVdcName": testConfig.VCD.NsxtProviderVdc.Name,
-		"VmGroup":         testConfig.TestEnvBuild.PlacementPolicyVmGroup,
+		"VmGroup":         testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
 	}
 	testParamsNotEmpty(t, params)
 	configText := templateFill(testAccVcdDatasourceVmGroup, params)
