@@ -11,7 +11,7 @@ description: |-
 
 Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to manage NSX-T ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
+Provides a data source to read NSX-T ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
 consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 
 ~> Only `System Administrator` can use this data source.

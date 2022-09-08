@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_bgp_ip_prefix_list"
 sidebar_current: "docs-vcd-datasource-nsxt-edgegateway-bgp-ip-prefix-list"
 description: |-
-  Provides a data source to manage NSX-T Edge Gateway BGP IP Prefix Lists. IP prefix lists can
+  Provides a data source to read NSX-T Edge Gateway BGP IP Prefix Lists. IP prefix lists can
   contain single or multiple IP addresses and can be used to assign BGP neighbors with access
   permissions for route advertisement.
 ---
@@ -12,7 +12,7 @@ description: |-
 
 Supported in provider *v3.7+* and VCD 10.2+ with NSX-T
 
-Provides a resource to manage NSX-T Edge Gateway BGP IP Prefix Lists. IP prefix lists can contain 
+Provides a resource to read NSX-T Edge Gateway BGP IP Prefix Lists. IP prefix lists can contain 
 single or multiple IP addresses and can be used to assign BGP neighbors with access permissions 
 for route advertisement.
 
