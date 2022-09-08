@@ -73,6 +73,7 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 				Config: updateText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(resourceName, "default_compute_policy_id", "vcd_vm_sizing_policy.dummy", "id"),
+					resource.TestCheckResourceAttr(resourceName, "vm_sizing_policy_ids.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "vm_placement_policy_ids.#", "0"),
 				),
 			},
@@ -300,6 +301,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   delete_recursive           = true
 
   default_compute_policy_id = vcd_vm_sizing_policy.dummy.id # As this can't be empty
+  vm_sizing_policy_ids = [vcd_vm_sizing_policy.dummy.id]
   vm_placement_policy_ids   = []
 }
 `
