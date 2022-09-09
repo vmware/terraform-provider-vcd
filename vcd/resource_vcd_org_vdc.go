@@ -259,14 +259,16 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Deprecated:  "Use `default_compute_policy_id` attribute instead, which can support VM Sizing Policies, VM Placement Policies and vGPU Policies",
 				Description: "ID of default VM Compute policy, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
+				ExactlyOneOf: []string{"default_vm_sizing_policy_id, default_compute_policy_id"},
+				Deprecated:  "Use `default_compute_policy_id` attribute instead, which can support VM Sizing Policies, VM Placement Policies and vGPU Policies",
 			},
 			"default_compute_policy_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				Description: "ID of default Compute policy for this VDC, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
+				ExactlyOneOf: []string{"default_vm_sizing_policy_id, default_compute_policy_id"},
 			},
 		},
 	}
