@@ -99,15 +99,15 @@ data "vcd_vm_group" "vm-group" {
 }
 
 resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
-  name        = "{{.PolicyName}}"
-  description = "{{.Description}}"
+  name            = "{{.PolicyName}}"
+  description     = "{{.Description}}"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
+  vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
 }
 
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
-	name = vcd_vm_placement_policy.{{.PolicyName}}.name
-    provider_vdc_id = vcd_vm_placement_policy.{{.PolicyName}}.provider_vdc_id
+  name            = vcd_vm_placement_policy.{{.PolicyName}}.name
+  provider_vdc_id = vcd_vm_placement_policy.{{.PolicyName}}.provider_vdc_id
 }
 `
 
@@ -122,15 +122,15 @@ data "vcd_vm_group" "vm-group" {
 }
 
 resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
-  name        = "{{.PolicyName}}-update"
-  description = "{{.Description}}-update"
+  name            = "{{.PolicyName}}-update"
+  description     = "{{.Description}}-update"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
+  vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
 }
 
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
-	name = vcd_vm_placement_policy.{{.PolicyName}}.name
-    provider_vdc_id = vcd_vm_placement_policy.{{.PolicyName}}.provider_vdc_id
+  name            = vcd_vm_placement_policy.{{.PolicyName}}.name
+  provider_vdc_id = vcd_vm_placement_policy.{{.PolicyName}}.provider_vdc_id
 }
 `
 
@@ -187,9 +187,9 @@ data "vcd_vm_group" "vm-group" {
 }
 
 resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
-  name        = "{{.PolicyName}}"
+  name            = "{{.PolicyName}}"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
-  vm_group_ids = [ data.vcd_vm_group.vm-group.id ]
+  vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
 }
 `
 
