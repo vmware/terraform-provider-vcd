@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -207,7 +206,9 @@ func resourceVcdOrgLdap() *schema.Resource {
 
 func resourceVcdOrgLdapCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
+	if !vcdClient.Client.IsSysAdmin {
+		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
+	}
 	orgName := d.Get("name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
@@ -236,7 +237,9 @@ func resourceVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta in
 
 func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
+	if !vcdClient.Client.IsSysAdmin {
+		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
+	}
 	orgName := d.Get("name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
@@ -253,7 +256,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 	config, err := adminOrg.GetLdapConfiguration()
 	if err != nil {
 		d.SetId("")
-		return diag.Errorf("[Org LDAP read] error getting LDAP settings for Org %s: %s", orgName, err)
+		return diag.Errorf("[Org LDAP read %s] error getting LDAP settings for Org %s: %s", origin, orgName, err)
 	}
 
 	dSet(d, "name", orgName)
@@ -269,7 +272,8 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 			"base_distinguished_name": config.CustomOrgLdapSettings.SearchBase,
 			"is_ssl":                  config.CustomOrgLdapSettings.IsSsl,
 			"username":                config.CustomOrgLdapSettings.Username,
-			//"password":                "",
+			// the password field is never returned by GET. Here we set it explicitly to be reminded of that fact
+			"password": "",
 			"user_attributes": []map[string]interface{}{
 				{
 					"object_class":                config.CustomOrgLdapSettings.UserAttributes.ObjectClass,
@@ -297,7 +301,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		err = d.Set("custom_settings", []map[string]interface{}{customSettings})
 		if err != nil {
-			return diag.Errorf("[Org LDAP read] error setting 'user_attributes' field: %s", err)
+			return diag.Errorf("[Org LDAP read %s] error setting 'user_attributes' field: %s", origin, err)
 		}
 	}
 	return nil
@@ -309,7 +313,9 @@ func resourceVcdOrgLdapUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceVcdOrgLdapDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
+	if !vcdClient.Client.IsSysAdmin {
+		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
+	}
 	orgName := d.Get("name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
@@ -333,11 +339,11 @@ func fillLdapSettings(d *schema.ResourceData) (*types.OrgLdapSettingsType, error
 	}
 	customSettingsList, ok := customSettings.([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("invalid custom settings: %v", reflect.TypeOf(customSettings))
+		return nil, fmt.Errorf("invalid custom settings: expected []interface{}")
 	}
 	customSettingsMap, ok := customSettingsList[0].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("invalid custom settings: %v", reflect.TypeOf(customSettingsList))
+		return nil, fmt.Errorf("invalid custom settings: expected map[string]interface{}")
 	}
 
 	settings.CustomOrgLdapSettings = &types.CustomOrgLdapSettings{
@@ -367,8 +373,6 @@ func fillLdapSettings(d *schema.ResourceData) (*types.OrgLdapSettingsType, error
 	if !okGroup || groupAttributesMap == nil || len(groupAttributesMap) == 0 {
 		return nil, fmt.Errorf("group_attributes settings are empty with CUSTOM ldap_mode")
 	}
-	//userAttributesMap := rawUserAttributes
-	//groupAttributesMap := rawGroupAttributes
 	settings.CustomOrgLdapSettings.UserAttributes = &types.OrgLdapUserAttributes{
 		ObjectClass:               userAttributesMap["object_class"].(string),
 		ObjectIdentifier:          userAttributesMap["unique_identifier"].(string),
