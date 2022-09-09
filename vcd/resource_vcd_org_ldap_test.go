@@ -1,5 +1,5 @@
-//go:build ldap || org || ALL || functional
-// +build ldap org ALL functional
+//go:build ldap || user || org || ALL || functional
+// +build ldap user org ALL functional
 
 package vcd
 
