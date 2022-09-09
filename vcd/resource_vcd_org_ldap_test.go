@@ -34,16 +34,20 @@ func TestAccVcdOrgLdap(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
+	params["FuncName"] = t.Name()
 	configText := templateFill(testAccOrgLdap, params)
 
-	params["FuncName"] = t.Name()
+	params["FuncName"] = t.Name() + "-DS"
+	configTextDS := templateFill(testAccOrgLdap+testAccOrgLdapDS, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION Resource: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION Data source: %s\n", configTextDS)
 
 	ldapResourceDef := "vcd_org_ldap." + orgName
+	ldapDatasourceDef := "data.vcd_org_ldap." + orgName + "-DS"
 	// Note: don't run this test in parallel, as it would clash with TestAccVcdOrgGroup
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -60,6 +64,19 @@ func TestAccVcdOrgLdap(t *testing.T) {
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.connector_type", "OPEN_LDAP"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.user_attributes.0.object_class", "inetOrgPerson"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.group_attributes.0.object_class", "group"),
+				),
+			},
+			{
+				Config: configTextDS,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckOrgLdapExists(ldapResourceDef),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "name", ldapDatasourceDef, "name"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "ldap_mode", ldapDatasourceDef, "ldap_mode"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.server", ldapDatasourceDef, "custom_settings.0.server"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.authentication_method", ldapDatasourceDef, "custom_settings.0.authentication_method"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.connector_type", ldapDatasourceDef, "custom_settings.0.connector_type"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.user_attributes.0.object_class", ldapDatasourceDef, "custom_settings.0.user_attributes.0.object_class"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.group_attributes.0.object_class", ldapDatasourceDef, "custom_settings.0.group_attributes.0.object_class"),
 				),
 			},
 			{
@@ -166,5 +183,12 @@ resource "vcd_org_ldap" "{{.OrgName}}" {
     # password value does not get returned by GET
     ignore_changes = [custom_settings[0].password]
   }
+}
+`
+
+const testAccOrgLdapDS = `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
+data "vcd_org_ldap" "{{.OrgName}}-DS" {
+  name = "{{.OrgName}}"
 }
 `
