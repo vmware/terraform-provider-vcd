@@ -43,26 +43,27 @@ func TestAccVcdOrgLdap(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
-	resourceDef := "vcd_org_ldap." + orgName
+	ldapResourceDef := "vcd_org_ldap." + orgName
+	// Note: don't run this test in parallel, as it would clash with TestAccVcdOrgGroup
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckOrgLdapDestroy(resourceDef),
+		CheckDestroy:      testAccCheckOrgLdapDestroy(ldapResourceDef),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckOrgLdapExists(resourceDef),
-					resource.TestCheckResourceAttr(resourceDef, "name", orgName),
-					resource.TestCheckResourceAttr(resourceDef, "ldap_mode", "CUSTOM"),
-					resource.TestCheckResourceAttr(resourceDef, "custom_settings.0.server", testConfig.Networking.LdapServer),
-					resource.TestCheckResourceAttr(resourceDef, "custom_settings.0.authentication_method", "SIMPLE"),
-					resource.TestCheckResourceAttr(resourceDef, "custom_settings.0.connector_type", "OPEN_LDAP"),
-					resource.TestCheckResourceAttr(resourceDef, "custom_settings.0.user_attributes.0.object_class", "inetOrgPerson"),
-					resource.TestCheckResourceAttr(resourceDef, "custom_settings.0.group_attributes.0.object_class", "group"),
+					testAccCheckOrgLdapExists(ldapResourceDef),
+					resource.TestCheckResourceAttr(ldapResourceDef, "name", orgName),
+					resource.TestCheckResourceAttr(ldapResourceDef, "ldap_mode", "CUSTOM"),
+					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.server", testConfig.Networking.LdapServer),
+					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.authentication_method", "SIMPLE"),
+					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.connector_type", "OPEN_LDAP"),
+					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.user_attributes.0.object_class", "inetOrgPerson"),
+					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.group_attributes.0.object_class", "group"),
 				),
 			},
 			{
-				ResourceName:      resourceDef,
+				ResourceName:      ldapResourceDef,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(orgName),
