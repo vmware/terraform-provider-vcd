@@ -25,7 +25,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		return
 	}
 	skipTestForApiToken(t)
-	// LDAP is being configured using go-vcloud-director - binary test cannot be run
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -65,6 +64,10 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	params["Description"] = "Description2"
 	groupConfigText2 := templateFill(testAccOrgLdap+testAccOrgGroup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", groupConfigText2)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	// groupIdRegex is reused a few times in tests to match IDs
 	groupIdRegex := regexp.MustCompile(`^urn:vcloud:group:`)
