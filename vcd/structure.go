@@ -190,9 +190,6 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 
 // contains returns true if `sliceToSearch` contains `searched`. Returns false otherwise.
 func contains(sliceToSearch []string, searched string) bool {
-	if searched == "" && len(sliceToSearch) == 0 {
-		return true
-	}
 	found := false
 	for _, idInSlice := range sliceToSearch {
 		if searched == idInSlice {
