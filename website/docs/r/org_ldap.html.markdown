@@ -6,7 +6,7 @@ description: |-
   Provides a VMware Cloud Director Organization LDAP resource. This can be used to create, delete, and update LDAP configuration for an organization .
 ---
 
-# vcd\_org_ldap
+# vcd\_org\_ldap
 
 Provides a VMware Cloud Director Org LDAP resource. This can be used to create, update, and delete LDAP configuration for an organization.
 
@@ -27,7 +27,7 @@ provider "vcd" {
 # The settings below (except the server IP) are taken from the LDAP docker testing image
 # https://github.com/rroemhild/docker-test-openldap
 resource "vcd_org_ldap" "my-org-ldap" {
-  name      = "my-org"
+  org_name  = "my-org"
   ldap_mode = "CUSTOM"
   custom_settings {
     server                  = "192.168.1.172"
@@ -68,7 +68,7 @@ resource "vcd_org_ldap" "my-org-ldap" {
 
 The following arguments are supported:
 
-* `name` - (Required) Org name: there is only one LDAP configuration available for an organization. Thus, the resource can be identified by the Org.
+* `org_name` - (Required) Org name: there is only one LDAP configuration available for an organization. Thus, the resource can be identified by the Org.
 * `ldap_mode` - (Required) One of `NONE`, `CUSTOM`, `SYSTEM`. Note that using `NONE` has the effect of removing the LDAP settings
 * `custom_settings` - (Optional) LDAP server configuration. Becomes mandatory if `ldap_mode` is set to `CUSTOM`. See [Custom Settings](#custom-settings) below for details
 
@@ -119,7 +119,7 @@ For example, using this structure, representing an existing LDAP configuration t
 
 ```hcl
 resource "vcd_org_ldap" "my-org-ldap" {
-  name = "my-org"
+  org_name = "my-org"
 }
 ```
 

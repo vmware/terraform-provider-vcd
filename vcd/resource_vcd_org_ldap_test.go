@@ -57,7 +57,7 @@ func TestAccVcdOrgLdap(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrgLdapExists(ldapResourceDef),
-					resource.TestCheckResourceAttr(ldapResourceDef, "name", orgName),
+					resource.TestCheckResourceAttr(ldapResourceDef, "org_name", orgName),
 					resource.TestCheckResourceAttr(ldapResourceDef, "ldap_mode", "CUSTOM"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.server", testConfig.Networking.LdapServer),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.authentication_method", "SIMPLE"),
@@ -70,7 +70,7 @@ func TestAccVcdOrgLdap(t *testing.T) {
 				Config: configTextDS,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrgLdapExists(ldapResourceDef),
-					resource.TestCheckResourceAttrPair(ldapResourceDef, "name", ldapDatasourceDef, "name"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "org_name", ldapDatasourceDef, "org_name"),
 					resource.TestCheckResourceAttrPair(ldapResourceDef, "ldap_mode", ldapDatasourceDef, "ldap_mode"),
 					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.server", ldapDatasourceDef, "custom_settings.0.server"),
 					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.authentication_method", ldapDatasourceDef, "custom_settings.0.authentication_method"),
@@ -149,7 +149,7 @@ func testAccCheckOrgLdapDestroy(identifier string) resource.TestCheckFunc {
 
 const testAccOrgLdap = `
 resource "vcd_org_ldap" "{{.OrgName}}" {
-  name      = "{{.OrgName}}"
+  org_name      = "{{.OrgName}}"
   ldap_mode = "CUSTOM"
   custom_settings {
     server                  = "{{.LdapServerIp}}"
@@ -189,6 +189,6 @@ resource "vcd_org_ldap" "{{.OrgName}}" {
 const testAccOrgLdapDS = `
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 data "vcd_org_ldap" "{{.OrgName}}-DS" {
-  name = "{{.OrgName}}"
+  org_name = "{{.OrgName}}"
 }
 `

@@ -16,7 +16,7 @@ Provides a data source to read LDAP configuration for an organization.
 
 ```hcl
 data "vcd_org_ldap" "first" {
-  name = "my-org"
+  org_name = "my-org"
 }
 ```
 
@@ -24,7 +24,7 @@ data "vcd_org_ldap" "first" {
 
 The following arguments are supported:
 
-* `name` - (Required)  - Name of the organization containing the LDAP settings
+* `org_name` - (Required)  - Name of the organization containing the LDAP settings
 
 ## Attribute Reference
 

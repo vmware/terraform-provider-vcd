@@ -130,7 +130,7 @@ func resourceVcdOrgLdap() *schema.Resource {
 			StateContext: resourceVcdOrgLdapImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"org_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -209,7 +209,7 @@ func resourceVcdOrgLdapCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
 	}
-	orgName := d.Get("name").(string)
+	orgName := d.Get("org_name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
@@ -240,7 +240,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
 	}
-	orgName := d.Get("name").(string)
+	orgName := d.Get("org_name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if govcd.IsNotFound(err) && origin == "resource" {
@@ -259,7 +259,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.Errorf("[Org LDAP read %s] error getting LDAP settings for Org %s: %s", origin, orgName, err)
 	}
 
-	dSet(d, "name", orgName)
+	dSet(d, "org_name", orgName)
 	dSet(d, "ldap_mode", config.OrgLdapMode)
 	d.SetId(adminOrg.AdminOrg.ID)
 
@@ -316,7 +316,7 @@ func resourceVcdOrgLdapDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
 	}
-	orgName := d.Get("name").(string)
+	orgName := d.Get("org_name").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
@@ -413,7 +413,7 @@ func resourceVcdOrgLdapImport(_ context.Context, d *schema.ResourceData, meta in
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	dSet(d, "name", adminOrg.AdminOrg.Name)
+	dSet(d, "org_name", adminOrg.AdminOrg.Name)
 
 	d.SetId(adminOrg.AdminOrg.ID)
 	return []*schema.ResourceData{d}, nil

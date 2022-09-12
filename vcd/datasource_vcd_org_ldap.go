@@ -115,7 +115,7 @@ func datasourceVcdOrgLdap() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdOrgLdapRead,
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"org_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Organization name",
