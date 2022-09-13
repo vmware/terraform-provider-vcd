@@ -138,21 +138,24 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "The name of VDC to use, optional if defined at provider level",
 		},
 		"template_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The name of the vApp Template to use",
+			Type:         schema.TypeString,
+			Optional:     true,
+			ForceNew:     true,
+			Description:  "The name of the vApp Template to use",
+			RequiredWith: []string{"template_name", "catalog_name"},
 		},
 		"vm_name_in_template": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
+			Type:         schema.TypeString,
+			Optional:     true,
+			ForceNew:     true,
+			Description:  "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
+			RequiredWith: []string{"vm_name_in_template", "catalog_name", "template_name"},
 		},
 		"catalog_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "The catalog name in which to find the given vApp Template or media for boot_image",
+			Type:         schema.TypeString,
+			Optional:     true,
+			Description:  "The catalog name in which to find the given vApp Template or media for boot_image",
+			RequiredWith: []string{"catalog_name", "template_name", "boot_image"},
 		},
 		"description": {
 			Type:        schema.TypeString,
@@ -273,9 +276,10 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.)",
 		},
 		"boot_image": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "Media name to add as boot image.",
+			Type:         schema.TypeString,
+			Optional:     true,
+			Description:  "Media name to add as boot image.",
+			RequiredWith: []string{"boot_image", "catalog_name"},
 		},
 		"network_dhcp_wait_seconds": {
 			Optional:     true,
@@ -318,7 +322,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 					"is_primary": {
 						Optional: true,
 						Computed: true,
-						// By default if the value is omitted it will report schema change
+						// By default, if the value is omitted it will report schema change
 						// on every terraform operation. The below function
 						// suppresses such cases "" => "false" when applying.
 						DiffSuppressFunc: falseBoolSuppress(),
