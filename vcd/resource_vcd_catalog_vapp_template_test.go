@@ -6,6 +6,7 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -102,8 +103,8 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrl),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "description", TestAccVcdVAppTemplateDescriptionFromUrl),
+					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
+					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
@@ -251,7 +252,8 @@ const testAccCheckVcdVAppTemplateFromUrl = `
   catalog = "{{.Catalog}}"
 
   name                 = "{{.VAppTemplateNameFromUrl}}"
-  description          = "{{.DescriptionFromUrl}}"
+  # Due to a bug in VCD we omit the description
+  # description          = "{{.DescriptionFromUrl}}"
   ovf_url              = "{{.OvfUrl}}"
   show_upload_progress = "{{.UploadProgressFromUrl}}"
 

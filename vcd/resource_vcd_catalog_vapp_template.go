@@ -42,6 +42,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true, // Due to a bug in VCD when using `ovf_url`, `description` can get ignored
 			},
 			"created": {
 				Type:        schema.TypeString,
@@ -87,14 +88,13 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 
 	vcdClient := meta.(*VCDClient)
 
-	// TODO: Why admin?
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	catalogName := d.Get("catalog").(string)
-	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	catalog, err := org.GetCatalogByName(catalogName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Error finding Catalog: %s", err)
 		return diag.Errorf("error finding Catalog: %s", err)
@@ -183,12 +183,12 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 	log.Printf("[TRACE] vApp Template delete started")
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
+	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		return diag.Errorf("unable to find catalog")
@@ -240,12 +240,12 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 	}
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	org, err := vcdClient.GetOrgByName(orgName)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
 	}
 
-	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	catalog, err := org.GetCatalogByName(catalogName, false)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
