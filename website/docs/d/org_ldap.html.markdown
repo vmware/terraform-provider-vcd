@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_ldap"
-sidebar_current: "docs-vcd-datasource-org-ldap"
+sidebar_current: "docs-vcd-data-source-org-ldap"
 description: |-
   Provides a data source to read LDAP configuration for an organization.
 ---
