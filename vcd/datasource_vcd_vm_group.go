@@ -58,7 +58,7 @@ func datasourceVcdVmGroupRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("could not find any VM Group with name %s and pVDC %s: %s", name, providerVdcId, err)
 	}
 
-	dSet(d, "cluster_name", vmGroup.VmGroup.Name)
+	dSet(d, "cluster_name", vmGroup.VmGroup.ClusterName)
 	dSet(d, "named_vm_group_id", vmGroup.VmGroup.NamedVmGroupId)
 	dSet(d, "vcenter_id", vmGroup.VmGroup.VcenterId)
 	dSet(d, "cluster_moref", vmGroup.VmGroup.ClusterMoref)
