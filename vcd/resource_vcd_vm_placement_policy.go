@@ -418,13 +418,17 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 			vmGroupIds = append(vmGroupIds, vmGroup.VmGroup.ID)
 		}
 	}
-	dSet(d, "vm_group_ids", vmGroupIds)
+	if err := d.Set("vm_group_ids", vmGroupIds); err != nil {
+		return diag.Errorf("Error setting vm_group_ids: %s", err)
+	}
 
 	vmGroupIds = []string{}
 	for _, namedVmGroup := range policy.LogicalVMGroupReferences {
 		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
 	}
-	dSet(d, "logical_vm_group_ids", vmGroupIds)
+	if err := d.Set("logical_vm_group_ids", vmGroupIds); err != nil {
+		return diag.Errorf("Error setting logical_vm_group_ids: %s", err)
+	}
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
 	return nil
