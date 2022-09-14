@@ -212,7 +212,10 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 	dSet(d, "is_enabled", extendedProviderVdc.VMWProviderVdc.IsEnabled)
 	dSet(d, "compute_provider_scope", extendedProviderVdc.VMWProviderVdc.ComputeProviderScope)
 	dSet(d, "highest_supported_hardware_version", extendedProviderVdc.VMWProviderVdc.HighestSupportedHardwareVersion)
-	dSet(d, "nsxt_manager_id", extendedProviderVdc.VMWProviderVdc.NsxTManagerReference.ID)
+
+	if extendedProviderVdc.VMWProviderVdc.NsxTManagerReference != nil {
+		dSet(d, "nsxt_manager_id", extendedProviderVdc.VMWProviderVdc.NsxTManagerReference.ID)
+	}
 
 	if extendedProviderVdc.VMWProviderVdc.AvailableNetworks != nil {
 		dSet(d, "external_network_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network))
