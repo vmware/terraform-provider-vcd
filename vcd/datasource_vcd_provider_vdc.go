@@ -218,33 +218,47 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.AvailableNetworks != nil {
-		dSet(d, "external_network_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network))
+		if err = d.Set("external_network_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network)); err != nil {
+			return diag.Errorf("Error setting external_network_ids: %s", err)
+		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.DataStoreRefs != nil {
-		dSet(d, "storage_container_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef))
+		if err = d.Set("storage_container_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef)); err != nil {
+			return diag.Errorf("Error setting storage_container_ids: %s", err)
+		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.StorageProfiles != nil {
-		dSet(d, "storage_profile_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile))
+		if err = d.Set("storage_profile_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile)); err != nil {
+			return diag.Errorf("Error setting storage_profile_ids: %s", err)
+		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs != nil {
-		dSet(d, "resource_pool_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef))
+		if err = d.Set("resource_pool_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef)); err != nil {
+			return diag.Errorf("Error setting resource_pool_ids: %s", err)
+		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences != nil {
-		dSet(d, "network_pool_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences.NetworkPoolReference))
+		if err = d.Set("network_pool_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences.NetworkPoolReference)); err != nil {
+			return diag.Errorf("Error setting network_pool_ids: %s", err)
+		}
 	}
 
 	var items []string
 	if extendedProviderVdc.VMWProviderVdc.Capabilities != nil && extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions != nil {
 		items = append(items, extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions.SupportedHardwareVersion...)
 	}
-	dSet(d, "capabilities", items)
+	if err = d.Set("capabilities", items); err != nil {
+		return diag.Errorf("Error setting capabilities: %s", err)
+	}
 
 	if extendedProviderVdc.VMWProviderVdc.HostReferences != nil {
-		dSet(d, "host_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.HostReferences.HostReference))
+		if err = d.Set("host_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.HostReferences.HostReference)); err != nil {
+			return diag.Errorf("Error setting host_ids: %s", err)
+		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.ComputeCapacity != nil {
@@ -265,8 +279,7 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 		log.Printf("[DEBUG] Error retrieving metadata for Provider VDC: %s", err)
 		return diag.Errorf("error retrieving metadata for Provider VDC %s: %s", providerVdcName, err)
 	}
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
+	if err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
