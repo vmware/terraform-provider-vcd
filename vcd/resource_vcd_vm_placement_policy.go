@@ -388,14 +388,20 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 			}
 		}
 	}
-	dSet(d, "vm_group_ids", vmGroupIds)
+	if err = d.Set("vm_group_ids", vmGroupIds); err != nil {
+		return nil, fmt.Errorf("error setting vm_group_ids: %s", err)
+	}
+
 	vmGroupIds = []string{}
 	for _, pvdcLogicalVmGroupsMap := range computePolicy.VdcComputePolicyV2.PvdcLogicalVmGroupsMap {
 		for _, logicalVmGroup := range pvdcLogicalVmGroupsMap.LogicalVmGroups {
 			vmGroupIds = append(vmGroupIds, logicalVmGroup.ID)
 		}
 	}
-	dSet(d, "logical_vm_group_ids", vmGroupIds)
+	if err = d.Set("logical_vm_group_ids", vmGroupIds); err != nil {
+		return nil, fmt.Errorf("error setting logical_vm_group_ids: %s", err)
+	}
+
 	d.SetId(computePolicy.VdcComputePolicyV2.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -419,7 +425,7 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 		}
 	}
 	if err := d.Set("vm_group_ids", vmGroupIds); err != nil {
-		return diag.Errorf("Error setting vm_group_ids: %s", err)
+		return diag.Errorf("error setting vm_group_ids: %s", err)
 	}
 
 	vmGroupIds = []string{}
@@ -427,7 +433,7 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
 	}
 	if err := d.Set("logical_vm_group_ids", vmGroupIds); err != nil {
-		return diag.Errorf("Error setting logical_vm_group_ids: %s", err)
+		return diag.Errorf("error setting logical_vm_group_ids: %s", err)
 	}
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)

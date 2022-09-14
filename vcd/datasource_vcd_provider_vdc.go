@@ -219,31 +219,31 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 
 	if extendedProviderVdc.VMWProviderVdc.AvailableNetworks != nil {
 		if err = d.Set("external_network_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network)); err != nil {
-			return diag.Errorf("Error setting external_network_ids: %s", err)
+			return diag.Errorf("error setting external_network_ids: %s", err)
 		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.DataStoreRefs != nil {
 		if err = d.Set("storage_container_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef)); err != nil {
-			return diag.Errorf("Error setting storage_container_ids: %s", err)
+			return diag.Errorf("error setting storage_container_ids: %s", err)
 		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.StorageProfiles != nil {
 		if err = d.Set("storage_profile_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile)); err != nil {
-			return diag.Errorf("Error setting storage_profile_ids: %s", err)
+			return diag.Errorf("error setting storage_profile_ids: %s", err)
 		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs != nil {
 		if err = d.Set("resource_pool_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef)); err != nil {
-			return diag.Errorf("Error setting resource_pool_ids: %s", err)
+			return diag.Errorf("error setting resource_pool_ids: %s", err)
 		}
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences != nil {
 		if err = d.Set("network_pool_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences.NetworkPoolReference)); err != nil {
-			return diag.Errorf("Error setting network_pool_ids: %s", err)
+			return diag.Errorf("error setting network_pool_ids: %s", err)
 		}
 	}
 
@@ -252,12 +252,12 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 		items = append(items, extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions.SupportedHardwareVersion...)
 	}
 	if err = d.Set("capabilities", items); err != nil {
-		return diag.Errorf("Error setting capabilities: %s", err)
+		return diag.Errorf("error setting capabilities: %s", err)
 	}
 
 	if extendedProviderVdc.VMWProviderVdc.HostReferences != nil {
 		if err = d.Set("host_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.HostReferences.HostReference)); err != nil {
-			return diag.Errorf("Error setting host_ids: %s", err)
+			return diag.Errorf("error setting host_ids: %s", err)
 		}
 	}
 
