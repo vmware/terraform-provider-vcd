@@ -27,7 +27,6 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 		"NewVappTemplate": TestCatalogVappTemplateDS,
 		"OvaPath":         testConfig.Ova.OvaPath,
 		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
-		"UploadProgress":  testConfig.Ova.UploadProgress,
 		"Tags":            "catalog",
 	}
 	testParamsNotEmpty(t, params)
@@ -69,7 +68,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(TestCatalogVappTemplateDS),
 				// These fields can't be retrieved from vApp Template data
-				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size", "show_upload_progress"},
+				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size"},
 			},
 		},
 	})
@@ -115,7 +114,6 @@ resource "vcd_catalog_vapp_template" "{{.NewVappTemplate}}" {
   description          = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
-  show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
     key1 = "value1"

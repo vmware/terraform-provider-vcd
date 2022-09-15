@@ -103,7 +103,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	if d.Get("ova_path").(string) != "" {
 		diagError = uploadOvaFromResource(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
 	} else if d.Get("ovf_url").(string) != "" {
-		diagError = uploadFromUrl(d, catalog, vappTemplateName)
+		diagError = uploadFromUrl(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
 	} else {
 		return diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
 	}
@@ -151,6 +151,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the vApp Template: %s", err)
 	}
+	d.SetId(vAppTemplate.VAppTemplate.ID)
 	return nil
 }
 
@@ -271,42 +272,29 @@ func uploadOvaFromResource(d *schema.ResourceData, catalog *govcd.Catalog, vappT
 		return diag.Errorf("error uploading file: %s", err)
 	}
 
-	// This is a deprecated feature from vcd_catalog_item
-	if resourceName == "vcd_catalog_item" && d.Get("show_upload_progress").(bool) {
-		for {
-			if err := getError(task); err != nil {
-				return diag.FromErr(err)
-			}
-			logForScreen(resourceName, fmt.Sprintf("%s.%s: Upload progress %s%%\n", resourceName, vappTemplate, task.GetUploadProgress()))
-			if task.GetUploadProgress() == "100.00" {
-				break
-			}
-			time.Sleep(10 * time.Second)
-		}
-	}
-
-	return finishHandlingTask(d, *task.Task, vappTemplate)
+	return finishHandlingTask(d, *task.Task, vappTemplate, resourceName)
 }
 
-func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName string) diag.Diagnostics {
+func uploadFromUrl(d *schema.ResourceData, catalog *govcd.Catalog, itemName, resourceName string) diag.Diagnostics {
 	task, err := catalog.UploadOvfByLink(d.Get("ovf_url").(string), itemName, d.Get("description").(string))
 	if err != nil {
 		log.Printf("[DEBUG] Error uploading OVF from URL: %s", err)
 		return diag.Errorf("error uploading OVF from URL: %s", err)
 	}
 
-	return finishHandlingTask(d, task, itemName)
+	return finishHandlingTask(d, task, itemName, resourceName)
 }
 
-func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string) diag.Diagnostics {
-	if d.Get("show_upload_progress").(bool) {
+func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string, resourceName string) diag.Diagnostics {
+	// This is a deprecated feature from vcd_catalog_item, to be removed with vcd_catalog_item
+	if resourceName == "vcd_catalog_item" && d.Get("show_upload_progress").(bool) {
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("VCD Error importing new vApp Template: %s", err)
-				return diag.Errorf("VCD Error importing new vApp Template: %s", err)
+				log.Printf("VCD Error importing new catalog item: %s", err)
+				return diag.Errorf("VCD Error importing new catalog item: %s", err)
 			}
-			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import vApp Template progress "+progress+"%%\n"))
+			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import catalog item progress "+progress+"%%\n"))
 			if progress == "100" {
 				break
 			}

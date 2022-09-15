@@ -110,7 +110,7 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 	if d.Get("ova_path").(string) != "" {
 		diagError = uploadOvaFromResource(d, catalog, itemName, "vcd_catalog_item")
 	} else if d.Get("ovf_url").(string) != "" {
-		diagError = uploadFromUrl(d, catalog, itemName)
+		diagError = uploadFromUrl(d, catalog, itemName, "vcd_catalog_item")
 	} else {
 		return diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
 	}
