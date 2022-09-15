@@ -161,7 +161,7 @@ func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	}
 
 	d.SetId(vAppTemplate.VAppTemplate.ID)
-	log.Printf("[TRACE] Catalog item read completed: %#v", vAppTemplate.VAppTemplate)
+	log.Printf("[TRACE] vApp Template read completed: %#v", vAppTemplate.VAppTemplate)
 	return vAppTemplate, nil
 }
 

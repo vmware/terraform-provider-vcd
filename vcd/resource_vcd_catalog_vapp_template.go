@@ -43,13 +43,13 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true, // Due to a bug in VCD when using `ovf_url`, `description` is overridden by the target OVA's description.
-				Description: "Description of the vApp Template. Not to be used when `ovf_url` target OVA has a description",
+				Description: "Description of the vApp Template. Not to be used with `ovf_url` when target OVA has a description",
 				ConflictsWith: []string{"ovf_url"}, // This is to avoid the bug mentioned above.
 			},
 			"created": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Time stamp of when the item was created",
+				Description: "Timestamp of when the vApp Template was created",
 			},
 			"ova_path": {
 				Type:         schema.TypeString,
@@ -70,12 +70,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     1,
-				Description: "size of upload file piece size in mega bytes",
-			},
-			"show_upload_progress": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "shows upload progress in stdout",
+				Description: "Size of upload file piece size in megabytes",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
@@ -276,7 +271,8 @@ func uploadOvaFromResource(d *schema.ResourceData, catalog *govcd.Catalog, vappT
 		return diag.Errorf("error uploading file: %s", err)
 	}
 
-	if d.Get("show_upload_progress").(bool) {
+	// This is a deprecated feature from vcd_catalog_item
+	if resourceName == "vcd_catalog_item" && d.Get("show_upload_progress").(bool) {
 		for {
 			if err := getError(task); err != nil {
 				return diag.FromErr(err)
