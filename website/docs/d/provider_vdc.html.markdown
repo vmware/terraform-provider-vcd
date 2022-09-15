@@ -42,15 +42,15 @@ The following arguments are supported:
 * `compute_provider_scope` - Represents the compute fault domain for this Provider VDC. This value is a tenant-facing tag that is shown to tenants when viewing fault domains of the child Organization VDCs (for example, a VDC Group).
 * `highest_supported_hardware_version` - The highest virtual hardware version supported by this Provider VDC.
 * `nsxt_manager_id` - ID of the registered NSX-T Manager that backs networking operations for this Provider VDC.
-* `storage_containers_ids` - Set of IDs of the vSphere datastores backing this provider VDC.
-* `external_network_ids` - Set of IDs of external networks.
-* `storage_profile_ids` - Set of IDs to the storage profiles available to this Provider VDC.
-* `resource_pool_ids` - Set of IDs of the resource pools backing this provider VDC.
-* `network_pool_ids` - Set IDs of the network pools used by this Provider VDC.
+* `storage_containers_ids` - Set of IDs of the vSphere Datastores backing this Provider VDC.
+* `external_network_ids` - Set of IDs of External Networks.
+* `storage_profile_ids` - Set of IDs to the Storage Profiles available to this Provider VDC.
+* `resource_pool_ids` - Set of IDs of the Resource Pools backing this provider VDC.
+* `network_pool_ids` - Set IDs of the Network Pools used by this Provider VDC.
 * `universal_network_pool_id` - ID of the universal network reference.
 * `host_ids` - Set with all the hosts which are connected to VC server.
-* `vcenter_id` - ID of the vCenter server that provides the resource pools and datastores.
-* `metadata` - Key and value pairs for Provider VDC metadata.
+* `vcenter_id` - ID of the vCenter Server that provides the Resource Pools and Datastores.
+* `metadata` - Key and value pairs for Provider VDC Metadata.
 
 <a id="compute-capacity"></a>
 ## Compute Capacity
