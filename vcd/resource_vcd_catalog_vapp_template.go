@@ -32,7 +32,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "catalog name where upload the OVA file",
+				Description: "Catalog name where upload the OVA file",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -42,7 +42,9 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true, // Due to a bug in VCD when using `ovf_url`, `description` can get ignored
+				Computed: true, // Due to a bug in VCD when using `ovf_url`, `description` is overridden by the target OVA's description.
+				Description: "Description of the vApp Template. Not to be used when `ovf_url` target OVA has a description",
+				ConflictsWith: []string{"ovf_url"}, // This is to avoid the bug mentioned above.
 			},
 			"created": {
 				Type:        schema.TypeString,
@@ -61,6 +63,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				ExactlyOneOf: []string{"ova_path", "ovf_url"},
+				ConflictsWith: []string{"description"}, // This is to avoid the bug mentioned above.
 				Description:  "URL of OVF file",
 			},
 			"upload_piece_size": {
@@ -304,10 +307,10 @@ func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("VCD Error importing new catalog item: %s", err)
-				return diag.Errorf("VCD Error importing new catalog item: %s", err)
+				log.Printf("VCD Error importing new vApp Template: %s", err)
+				return diag.Errorf("VCD Error importing new vApp Template: %s", err)
 			}
-			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import catalog item progress "+progress+"%%\n"))
+			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import vApp Template progress "+progress+"%%\n"))
 			if progress == "100" {
 				break
 			}
