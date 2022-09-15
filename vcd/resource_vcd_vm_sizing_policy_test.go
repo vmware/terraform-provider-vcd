@@ -60,7 +60,12 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	resource4 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_4"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVmSizingPolicyDestroyed,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckComputePolicyDestroyed(params["PolicyName"].(string)+"_1", "sizing"),
+			testAccCheckComputePolicyDestroyed(params["PolicyName"].(string)+"_2", "sizing"),
+			testAccCheckComputePolicyDestroyed(params["PolicyName"].(string)+"_3", "sizing"),
+			testAccCheckComputePolicyDestroyed(params["PolicyName"].(string)+"_updated", "sizing"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -225,22 +230,31 @@ func testAccCheckVmSizingPolicyExists(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckVmSizingPolicyDestroyed(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
-	var err error
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_org_vdc" && rs.Primary.Attributes["name"] != TestVmPolicy {
-			continue
+// Checks that a VM Sizing Policy or a VM Placement Policy (depending on `policyType=sizing` or `policyType=placement`)
+// is deleted from VCD after a Terraform destroy.
+func testAccCheckComputePolicyDestroyed(policyName, policyType string) resource.TestCheckFunc {
+	resourceType := "vcd_vm_" + policyType + "_policy"
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		var err error
+		var id string
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type == resourceType && rs.Primary.Attributes["name"] == policyName {
+				id = rs.Primary.ID
+			}
 		}
 
-		_, err = conn.Client.GetVdcComputePolicyById(rs.Primary.ID)
+		if id == "" {
+			return fmt.Errorf("%s with name %s was not found in tfstate", resourceType, policyName)
+		}
 
+		_, err = conn.GetVdcComputePolicyV2ById(id)
 		if err == nil {
-			return fmt.Errorf("VM sizing policy %s still exists", rs.Primary.ID)
+			return fmt.Errorf("VM %s policy %s still exists", policyType, id)
 		}
-	}
 
-	return nil
+		return nil
+	}
 }
 
 func init() {

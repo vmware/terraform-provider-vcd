@@ -61,7 +61,12 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVdcDestroy,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVdcDestroy,
+			testAccCheckComputePolicyDestroyed("min-size", "sizing"),
+			testAccCheckComputePolicyDestroyed("min-size2", "sizing"),
+			testAccCheckComputePolicyDestroyed("min-size3", "sizing"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,

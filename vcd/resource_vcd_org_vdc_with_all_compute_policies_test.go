@@ -39,7 +39,12 @@ func TestAccVcdOrgVdcWithAllComputePolicies(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVdcDestroy,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVdcDestroy,
+			testAccCheckComputePolicyDestroyed("placement1", "placement"),
+			testAccCheckComputePolicyDestroyed("sizing1", "sizing"),
+			testAccCheckComputePolicyDestroyed("sizing2", "sizing"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,

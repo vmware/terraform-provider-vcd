@@ -4,8 +4,6 @@
 package vcd
 
 import (
-	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
 
@@ -43,7 +41,7 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVmPlacementPolicyDestroyed,
+		CheckDestroy:      testAccCheckComputePolicyDestroyed(t.Name()+"-update", "placement"),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -163,7 +161,7 @@ func TestAccVcdVmPlacementPolicyWithoutDescription(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVmPlacementPolicyDestroyed,
+		CheckDestroy:      testAccCheckComputePolicyDestroyed(t.Name(), "placement"),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -192,20 +190,3 @@ resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
   vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
 }
 `
-
-func testAccCheckVmPlacementPolicyDestroyed(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
-	var err error
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_vm_placement_policy" && rs.Primary.Attributes["name"] != "TestAccVcdVmPlacementPolicy" {
-			continue
-		}
-
-		_, err = conn.GetVdcComputePolicyV2ById(rs.Primary.ID)
-
-		if err == nil {
-			return fmt.Errorf("VM Placement Policy %s still exists", rs.Primary.ID)
-		}
-	}
-	return nil
-}

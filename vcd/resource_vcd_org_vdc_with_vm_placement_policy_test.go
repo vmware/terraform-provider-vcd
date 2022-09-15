@@ -46,7 +46,12 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVdcDestroy,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVdcDestroy,
+			testAccCheckComputePolicyDestroyed("placement1", "placement"),
+			testAccCheckComputePolicyDestroyed("placement2", "placement"),
+			testAccCheckComputePolicyDestroyed("placement3", "placement"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
