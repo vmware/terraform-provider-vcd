@@ -170,7 +170,7 @@ resource "vcd_vm_placement_policy" "new-placement-policy" {
 
 data "vcd_vm_placement_policy" "existing-policy" {
   name            = "place-in-company-licensed"
-  provider_vdc_id = data.vcd_provider_vdc.pvdc.provider_vdc_id
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
 }
 
 resource "vcd_org_vdc" "my-vdc" {
