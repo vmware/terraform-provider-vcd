@@ -170,9 +170,6 @@ type TestConfig struct {
 		MediaName           string `json:"mediaName,omitempty"`
 		NsxtBackedMediaName string `json:"nsxtBackedMediaName,omitempty"`
 	} `json:"media"`
-	Misc struct {
-		LdapContainer string `json:"ldapContainer,omitempty"`
-	} `json:"misc"`
 	Certificates struct {
 		Certificate1Path           string `json:"certificate1Path,omitempty"`           // absolute path to pem file
 		Certificate1PrivateKeyPath string `json:"certificate1PrivateKeyPath,omitempty"` // absolute path to private key pem file

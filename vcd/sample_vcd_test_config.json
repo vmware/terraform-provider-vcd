@@ -146,11 +146,6 @@
     "//": "'mediaName' media is stored in NSX-V VDC backed storage profile while 'nsxtBackedMediaName' is stored in NSX-T VDC Backed storage profile",
     "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog"
   },
-  "misc": {
-    "//": "ldapContainer can be used to pull default LDAP testing container 'rroemhild/test-openldap' from a local",
-    "//": "Docker registry. This can help to overcome Docker registry throttling",
-    "ldapContainer": ""
-  },
   "certificates": {
     "//": "relative path to pem file",
     "certificate1Path": "../test-resources/cert.pem",
