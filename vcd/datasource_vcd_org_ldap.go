@@ -35,7 +35,7 @@ var datasourceLdapUserAttributes = &schema.Schema{
 				Computed:    true,
 				Description: "LDAP attribute to use for the user's email address. For example, mail",
 			},
-			"full_name": { // FullName
+			"display_name": { // FullName
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "LDAP attribute to use for the user's full name. For example, displayName",

@@ -41,7 +41,7 @@ resource "vcd_org_ldap" "my-org-ldap" {
     user_attributes {
       object_class                = "inetOrgPerson"
       unique_identifier           = "uid"
-      full_name                   = "cn"
+      display_name                = "cn"
       username                    = "uid"
       given_name                  = "givenName"
       surname                     = "sn"
@@ -106,7 +106,7 @@ The `custom_settings` section contains the configuration for the LDAP server
 * `unique_identifier` - (Required) LDAP attribute to use as the unique identifier for a user. For example, objectGuid
 * `username` - (Required) LDAP attribute to use when looking up a user name to import. For example, userPrincipalName or samAccountName
 * `email` - (Required) LDAP attribute to use for the user's email address. For example, mail
-* `full_name` - (Required) LDAP attribute to use for the user's full name. For example, displayName
+* `display_name` - (Required) LDAP attribute to use for the user's full name. For example, displayName
 * `given_name` - (Required) LDAP attribute to use for the user's given name. For example, givenName
 * `surname` - (Required) LDAP attribute to use for the user's surname. For example, sn
 * `telephone` - (Required) LDAP attribute to use for the user's telephone number. For example, telephoneNumber

@@ -41,7 +41,7 @@ var resourceLdapUserAttributes = &schema.Schema{
 				Required:    true,
 				Description: "LDAP attribute to use for the user's email address. For example, mail",
 			},
-			"full_name": { // FullName
+			"display_name": { // FullName
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "LDAP attribute to use for the user's full name. For example, displayName",
@@ -280,7 +280,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 					"unique_identifier":           config.CustomOrgLdapSettings.UserAttributes.ObjectIdentifier,
 					"username":                    config.CustomOrgLdapSettings.UserAttributes.Username,
 					"email":                       config.CustomOrgLdapSettings.UserAttributes.Email,
-					"full_name":                   config.CustomOrgLdapSettings.UserAttributes.FullName,
+					"display_name":                config.CustomOrgLdapSettings.UserAttributes.FullName,
 					"given_name":                  config.CustomOrgLdapSettings.UserAttributes.GivenName,
 					"surname":                     config.CustomOrgLdapSettings.UserAttributes.Surname,
 					"telephone":                   config.CustomOrgLdapSettings.UserAttributes.Telephone,
@@ -378,7 +378,7 @@ func fillLdapSettings(d *schema.ResourceData) (*types.OrgLdapSettingsType, error
 		ObjectIdentifier:          userAttributesMap["unique_identifier"].(string),
 		Username:                  userAttributesMap["username"].(string),
 		Email:                     userAttributesMap["email"].(string),
-		FullName:                  userAttributesMap["full_name"].(string),
+		FullName:                  userAttributesMap["display_name"].(string),
 		GivenName:                 userAttributesMap["given_name"].(string),
 		Surname:                   userAttributesMap["surname"].(string),
 		Telephone:                 userAttributesMap["telephone"].(string),

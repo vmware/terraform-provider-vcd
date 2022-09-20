@@ -163,7 +163,7 @@ resource "vcd_org_ldap" "{{.OrgName}}" {
     user_attributes {
       object_class                = "inetOrgPerson"
       unique_identifier           = "uid"
-      full_name                   = "cn"
+      display_name                = "cn"
       username                    = "uid"
       given_name                  = "givenName"
       surname                     = "sn"
