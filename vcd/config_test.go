@@ -121,7 +121,7 @@ type TestConfig struct {
 		ExternalNetwork              string `json:"externalNetwork,omitempty"`
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup,omitempty"`
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType,omitempty"`
-		LdapServer                   string `json:"ldap_server,omitempty"`
+		LdapServer                   string `json:"ldapServer,omitempty"`
 		Local                        struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
