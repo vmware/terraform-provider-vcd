@@ -66,14 +66,18 @@ resource "vcd_org_ldap" "my-org-ldap" {
 
 -> **Note** 
 The password value never gets returned by GET. Therefore, if we want `terraform plan` to return a clean state, we need
-to add the following `lifecycle` block at the end of the resource definition, after creating or updating it.
+to add a `lifecycle` block at the end of the resource definition, after creating or updating it.
 And we need to remove the `lifecycle` block _if we want to change the password_.
 
 ```hcl
+resource "vcd_org_ldap" "my-org-ldap" {
+  # all other fields
+  # ...
   lifecycle {
     # password value does not get returned by GET
     ignore_changes = [custom_settings[0].password]
   }
+}
 ```
 
 ## Argument Reference
