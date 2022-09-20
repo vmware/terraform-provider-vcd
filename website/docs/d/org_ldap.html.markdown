@@ -15,8 +15,12 @@ Provides a data source to read LDAP configuration for an organization.
 ## Example Usage
 
 ```hcl
+data "vcd_org" "my-org" {
+  name = "my-org"
+}
+
 data "vcd_org_ldap" "first" {
-  org_name = "my-org"
+  org_id = data.vcd_org.my-org.id
 }
 ```
 

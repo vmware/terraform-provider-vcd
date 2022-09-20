@@ -24,10 +24,14 @@ provider "vcd" {
   url      = "https://AcmeVcd/api"
 }
 
+data "vcd_org" "my-org" {
+  name = "my-org"
+}
+
 # The settings below (except the server IP) are taken from the LDAP docker testing image
 # https://github.com/rroemhild/docker-test-openldap
 resource "vcd_org_ldap" "my-org-ldap" {
-  org_name  = "my-org"
+  org_id    = data.vcd_org.my-org.id
   ldap_mode = "CUSTOM"
   custom_settings {
     server                  = "192.168.1.172"
@@ -76,7 +80,7 @@ And we need to remove the `lifecycle` block _if we want to change the password_.
 
 The following arguments are supported:
 
-* `org_name` - (Required) Org name: there is only one LDAP configuration available for an organization. Thus, the resource can be identified by the Org.
+* `org_id` - (Required) Org ID: there is only one LDAP configuration available for an organization. Thus, the resource can be identified by the Org.
 * `ldap_mode` - (Required) One of `NONE`, `CUSTOM`, `SYSTEM`. Note that using `NONE` has the effect of removing the LDAP settings
 * `custom_settings` - (Optional) LDAP server configuration. Becomes mandatory if `ldap_mode` is set to `CUSTOM`. See [Custom Settings](#custom-settings) below for details
 
@@ -133,15 +137,22 @@ at the top of the vCD hierarchy, the path corresponds to the Org name.
 For example, using this structure, representing an existing LDAP configuration that was **not** created using Terraform:
 
 ```hcl
+data "vcd_org" "my-org" {
+  name = "my-org"
+}
+
 resource "vcd_org_ldap" "my-org-ldap" {
-  org_name = "my-org"
+  org_id = data.vcd_org.my-org.id
 }
 ```
 
-You can import such LDAP configuration into terraform state using this command
+You can import such LDAP configuration into terraform state using one of the following commands
 
 ```
-terraform import vcd_org_ldap.my-org my-org
+# EITHER
+terraform import vcd_org_ldap.my-org-ldap organization_name
+# OR
+terraform import vcd_org_ldap.my-org-ldap organization_id
 ```
 
 After that, you must expand the configuration file before you can either update or delete the LDAP configuration. Running `terraform plan`
