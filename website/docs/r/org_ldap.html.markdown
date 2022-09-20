@@ -108,6 +108,13 @@ The `custom_settings` section contains the configuration for the LDAP server
 <a id="group-attributes"></a>
 ### Group Attributes
 
+* `object_class` - (Required) LDAP objectClass of which imported groups are members. For example, group
+* `unique_identifier` - (Required) LDAP attribute to use as the unique identifier for a group. For example, objectGuid
+* `name` - (Required) LDAP attribute to use for the group name. For example, cn
+* `membership` - (Required) LDAP attribute to use when getting the members of a group. For example, member
+* `group_membership_identifier` - (Required) LDAP attribute that identifies a group as a member of another group. For example, dn
+* `group_back_link_identifier` - (Optional) LDAP group attribute used to identify a group member
+
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
