@@ -87,7 +87,6 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				Config: ldapSetupConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrgLdapExists(ldapResourceDef),
-					resource.TestCheckResourceAttr(ldapResourceDef, "org_name", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(ldapResourceDef, "ldap_mode", "CUSTOM"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.server", testConfig.Networking.LdapServer),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.authentication_method", "SIMPLE"),

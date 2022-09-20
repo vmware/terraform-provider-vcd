@@ -46,6 +46,7 @@ func TestAccVcdOrgLdap(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION Resource: %s\n", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION Data source: %s\n", configTextDS)
 
+	orgDsDef := "data.vcd_org." + orgName
 	ldapResourceDef := "vcd_org_ldap." + orgName
 	ldapDatasourceDef := "data.vcd_org_ldap." + orgName + "-DS"
 	// Note: don't run this test in parallel, as it would clash with TestAccVcdOrgGroup
@@ -57,20 +58,21 @@ func TestAccVcdOrgLdap(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrgLdapExists(ldapResourceDef),
-					resource.TestCheckResourceAttr(ldapResourceDef, "org_name", orgName),
+					resource.TestCheckResourceAttr(orgDsDef, "name", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(ldapResourceDef, "ldap_mode", "CUSTOM"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.server", testConfig.Networking.LdapServer),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.authentication_method", "SIMPLE"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.connector_type", "OPEN_LDAP"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.user_attributes.0.object_class", "inetOrgPerson"),
 					resource.TestCheckResourceAttr(ldapResourceDef, "custom_settings.0.group_attributes.0.object_class", "group"),
+					resource.TestCheckResourceAttrPair(orgDsDef, "id", ldapResourceDef, "org_id"),
 				),
 			},
 			{
 				Config: configTextDS,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrgLdapExists(ldapResourceDef),
-					resource.TestCheckResourceAttrPair(ldapResourceDef, "org_name", ldapDatasourceDef, "org_name"),
+					resource.TestCheckResourceAttrPair(ldapResourceDef, "org_id", ldapDatasourceDef, "org_id"),
 					resource.TestCheckResourceAttrPair(ldapResourceDef, "ldap_mode", ldapDatasourceDef, "ldap_mode"),
 					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.server", ldapDatasourceDef, "custom_settings.0.server"),
 					resource.TestCheckResourceAttrPair(ldapResourceDef, "custom_settings.0.authentication_method", ldapDatasourceDef, "custom_settings.0.authentication_method"),
@@ -148,8 +150,12 @@ func testAccCheckOrgLdapDestroy(identifier string) resource.TestCheckFunc {
 }
 
 const testAccOrgLdap = `
+data "vcd_org" "{{.OrgName}}" {
+  name = "{{.OrgName}}"
+}
+
 resource "vcd_org_ldap" "{{.OrgName}}" {
-  org_name      = "{{.OrgName}}"
+  org_id    = data.vcd_org.{{.OrgName}}.id
   ldap_mode = "CUSTOM"
   custom_settings {
     server                  = "{{.LdapServerIp}}"
@@ -189,6 +195,7 @@ resource "vcd_org_ldap" "{{.OrgName}}" {
 const testAccOrgLdapDS = `
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 data "vcd_org_ldap" "{{.OrgName}}-DS" {
-  org_name = "{{.OrgName}}"
+  org_id = data.vcd_org.{{.OrgName}}.id
+  depends_on = [vcd_org_ldap.{{.OrgName}}]
 }
 `

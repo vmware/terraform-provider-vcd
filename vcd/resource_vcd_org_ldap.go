@@ -130,11 +130,11 @@ func resourceVcdOrgLdap() *schema.Resource {
 			StateContext: resourceVcdOrgLdapImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"org_name": {
+			"org_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organization name",
+				Description: "Organization ID",
 			},
 			"ldap_mode": { // OrgLdapMode
 				Type:         schema.TypeString,
@@ -209,11 +209,11 @@ func resourceVcdOrgLdapCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
 	}
-	orgName := d.Get("org_name").(string)
+	orgId := d.Get("org_id").(string)
 
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	adminOrg, err := vcdClient.GetAdminOrgById(orgId)
 	if err != nil {
-		return diag.Errorf("[Org LDAP %s] error searching for Org %s: %s", origin, orgName, err)
+		return diag.Errorf("[Org LDAP %s] error searching for Org %s: %s", origin, orgId, err)
 	}
 
 	settings, err := fillLdapSettings(d)
@@ -223,7 +223,7 @@ func resourceVcdOrgLdapCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 
 	_, err = adminOrg.LdapConfigure(settings)
 	if err != nil {
-		return diag.Errorf("[Org LDAP %s] error setting org '%s' LDAP configuration: %s", origin, orgName, err)
+		return diag.Errorf("[Org LDAP %s] error setting org '%s' LDAP configuration: %s", origin, orgId, err)
 	}
 	return resourceVcdOrgLdapRead(ctx, d, meta)
 }
@@ -240,26 +240,26 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
 	}
-	orgName := d.Get("org_name").(string)
+	orgId := d.Get("org_id").(string)
 
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgId)
 	if govcd.IsNotFound(err) && origin == "resource" {
-		log.Printf("[INFO] unable to find Organization %s LDAP settings: %s. Removing from state", orgName, err)
+		log.Printf("[INFO] unable to find Organization %s LDAP settings: %s. Removing from state", orgId, err)
 		d.SetId("")
 		return nil
 	}
 
 	if err != nil {
-		return diag.Errorf("unable to find organization %s: %s", orgName, err)
+		return diag.Errorf("unable to find organization %s: %s", orgId, err)
 	}
 
 	config, err := adminOrg.GetLdapConfiguration()
 	if err != nil {
 		d.SetId("")
-		return diag.Errorf("[Org LDAP read %s] error getting LDAP settings for Org %s: %s", origin, orgName, err)
+		return diag.Errorf("[Org LDAP read %s] error getting LDAP settings for Org %s: %s", origin, orgId, err)
 	}
 
-	dSet(d, "org_name", orgName)
+	dSet(d, "org_id", orgId)
 	dSet(d, "ldap_mode", config.OrgLdapMode)
 	d.SetId(adminOrg.AdminOrg.ID)
 
@@ -316,11 +316,11 @@ func resourceVcdOrgLdapDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("resource vcd_org_ldap requires System administrator privileges")
 	}
-	orgName := d.Get("org_name").(string)
+	orgId := d.Get("org_id").(string)
 
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	adminOrg, err := vcdClient.GetAdminOrgById(orgId)
 	if err != nil {
-		return diag.Errorf("[Org LDAP delete] error searching for Org %s: %s", orgName, err)
+		return diag.Errorf("[Org LDAP delete] error searching for Org %s: %s", orgId, err)
 	}
 	return diag.FromErr(adminOrg.LdapDisable())
 }
@@ -401,19 +401,19 @@ func fillLdapSettings(d *schema.ResourceData) (*types.OrgLdapSettingsType, error
 // The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
-// For this resource, the import path is just the org name.
+// For this resource, the import path is just the org name (or Org ID).
 //
 // Example import path (id): orgName
 func resourceVcdOrgLdapImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgName)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	dSet(d, "org_name", adminOrg.AdminOrg.Name)
+	dSet(d, "org_id", adminOrg.AdminOrg.ID)
 
 	d.SetId(adminOrg.AdminOrg.ID)
 	return []*schema.ResourceData{d}, nil
