@@ -95,40 +95,40 @@ The `custom_settings` section contains the configuration for the LDAP server
 
 * `server` - (Required) The IP address or host name of the server providing the LDAP service
 * `port` - (Required) Port number of the LDAP server (usually 389 for LDAP, 636 for LDAPS)
-* `authentication_method` - (Required) authentication method: one of `SIMPLE`, `MD5DIGEST`, `NTLM`
-* `connector_type` - (Required) type of connector: one of `OPEN_LDAP`, `ACTIVE_DIRECTORY`
+* `authentication_method` - (Required) Authentication method: one of `SIMPLE`, `MD5DIGEST`, `NTLM`
+* `connector_type` - (Required) Type of connector: one of `OPEN_LDAP`, `ACTIVE_DIRECTORY`
 * `base_distinguished_name` - (Required) LDAP search base
 * `is_ssl` - (Optional) True if the LDAP service requires an SSL connection
-* `username` - (Optional) Username to use when logging in to LDAP, specified using LDAP attribute=value pairs 
+* `username` - (Optional) _Username_ to use when logging in to LDAP, specified using LDAP attribute=value pairs 
   (for example: cn="ldap-admin", c="example", dc="com")
-* `password` - (Optional) Password for the user identified by UserName. This value is never returned by GET. 
+* `password` - (Optional) _Password_ for the user identified by UserName. This value is never returned by GET. 
    It is inspected on create and modify. On modify, the absence of this element indicates that the password should not be changed
 
 * `user_attributes` - (Required) User settings when `ldap_mode` is `CUSTOM` See [User Attributes](#user-attributes) below for details
-* `group_attributes` - (Required) User settings when `ldap_mode` is `CUSTOM` See [Group Attributes](#group-attributes) below for details
+* `group_attributes` - (Required) Group settings when `ldap_mode` is `CUSTOM` See [Group Attributes](#group-attributes) below for details
 
 <a id="user-attributes"></a>
 ### User Attributes
 
-* `object_class` - (Required)  LDAP objectClass of which imported users are members. For example, user or person
-* `unique_identifier` - (Required) LDAP attribute to use as the unique identifier for a user. For example, objectGuid
-* `username` - (Required) LDAP attribute to use when looking up a user name to import. For example, userPrincipalName or samAccountName
-* `email` - (Required) LDAP attribute to use for the user's email address. For example, mail
-* `display_name` - (Required) LDAP attribute to use for the user's full name. For example, displayName
-* `given_name` - (Required) LDAP attribute to use for the user's given name. For example, givenName
-* `surname` - (Required) LDAP attribute to use for the user's surname. For example, sn
-* `telephone` - (Required) LDAP attribute to use for the user's telephone number. For example, telephoneNumber
-* `group_membership_identifier` - (Required) LDAP attribute that identifies a user as a member of a group. For example, dn
+* `object_class` - (Required)  LDAP _objectClass_ of which imported users are members. For example, _user_ or _person_
+* `unique_identifier` - (Required) LDAP attribute to use as the unique identifier for a user. For example, _objectGuid_
+* `username` - (Required) LDAP attribute to use when looking up a username to import. For example, _userPrincipalName_ or _samAccountName_
+* `email` - (Required) LDAP attribute to use for the user's email address. For example, _mail_
+* `display_name` - (Required) LDAP attribute to use for the user's full name. For example, _displayName_
+* `given_name` - (Required) LDAP attribute to use for the user's given name. For example, _givenName_
+* `surname` - (Required) LDAP attribute to use for the user's surname. For example, _sn_
+* `telephone` - (Required) LDAP attribute to use for the user's telephone number. For example, _telephoneNumber_
+* `group_membership_identifier` - (Required) LDAP attribute that identifies a user as a member of a group. For example, _dn_
 * `group_back_link_identifier` - (Optional) LDAP attribute that returns the identifiers of all the groups of which the user is a member
 
 <a id="group-attributes"></a>
 ### Group Attributes
 
-* `object_class` - (Required) LDAP objectClass of which imported groups are members. For example, group
-* `unique_identifier` - (Required) LDAP attribute to use as the unique identifier for a group. For example, objectGuid
-* `name` - (Required) LDAP attribute to use for the group name. For example, cn
-* `membership` - (Required) LDAP attribute to use when getting the members of a group. For example, member
-* `group_membership_identifier` - (Required) LDAP attribute that identifies a group as a member of another group. For example, dn
+* `object_class` - (Required) LDAP _objectClass_ of which imported groups are members. For example, _group_
+* `unique_identifier` - (Required) LDAP attribute to use as the unique identifier for a group. For example, _objectGuid_
+* `name` - (Required) LDAP attribute to use for the group name. For example, _cn_
+* `membership` - (Required) LDAP attribute to use when getting the members of a group. For example, _member_
+* `group_membership_identifier` - (Required) LDAP attribute that identifies a group as a member of another group. For example, _dn_
 * `group_back_link_identifier` - (Optional) LDAP group attribute used to identify a group member
 
 ## Importing
