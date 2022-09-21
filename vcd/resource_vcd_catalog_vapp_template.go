@@ -40,10 +40,10 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "vApp Template name",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true, // Due to a bug in VCD when using `ovf_url`, `description` is overridden by the target OVA's description.
-				Description: "Description of the vApp Template. Not to be used with `ovf_url` when target OVA has a description",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true, // Due to a bug in VCD when using `ovf_url`, `description` is overridden by the target OVA's description.
+				Description:   "Description of the vApp Template. Not to be used with `ovf_url` when target OVA has a description",
 				ConflictsWith: []string{"ovf_url"}, // This is to avoid the bug mentioned above.
 			},
 			"created": {
@@ -59,12 +59,12 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description:  "Absolute or relative path to OVA",
 			},
 			"ovf_url": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"ova_path", "ovf_url"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ExactlyOneOf:  []string{"ova_path", "ovf_url"},
 				ConflictsWith: []string{"description"}, // This is to avoid the bug mentioned above.
-				Description:  "URL of OVF file",
+				Description:   "URL of OVF file",
 			},
 			"upload_piece_size": {
 				Type:        schema.TypeInt,
@@ -111,7 +111,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 		return diagError
 	}
 
-	vAppTemplate, err := catalog.GetVAppTemplateByName(vappTemplateName, true)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(vappTemplateName)
 	if err != nil {
 		return diag.Errorf("error retrieving vApp Template %s: %s", vappTemplateName, err)
 	}
@@ -194,7 +194,7 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 	}
 
 	vAppTemplateName := d.Get("name").(string)
-	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName, false)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vApp Template. Removing from tfstate")
 		return diag.Errorf("unable to find vApp Template %s", vAppTemplateName)
@@ -206,7 +206,7 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 		return diag.Errorf("error removing vApp Template %s", err)
 	}
 
-	_, err = catalog.GetVAppTemplateByName(vAppTemplateName, true)
+	_, err = catalog.GetVAppTemplateByName(vAppTemplateName)
 	if err == nil {
 		return diag.Errorf("vApp Template %s still found after deletion", vAppTemplateName)
 	}
@@ -249,7 +249,7 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName, false)
+	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}

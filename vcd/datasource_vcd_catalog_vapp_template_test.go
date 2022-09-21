@@ -86,7 +86,7 @@ func catalogVAppTemplateDestroyed(catalog, itemName string) resource.TestCheckFu
 		if err != nil {
 			return err
 		}
-		_, err = cat.GetVAppTemplateByName(itemName, false)
+		_, err = cat.GetVAppTemplateByName(itemName)
 		if err == nil {
 			return fmt.Errorf("vApp Template %s not deleted", itemName)
 		}

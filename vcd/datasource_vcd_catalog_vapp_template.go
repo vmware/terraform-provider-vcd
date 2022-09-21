@@ -17,9 +17,16 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"catalog": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "catalog containing the vApp Template",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Catalog containing the vApp Template. Can't be used if a specific VDC identifier is set",
+				ExactlyOneOf: []string{"catalog", "vdc_id"},
+			},
+			"vdc_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "ID of the VDC to which the vApp Template belongs. Can't be used if a specific Catalog is set",
+				ExactlyOneOf: []string{"catalog", "vdc_id"},
 			},
 			"name": {
 				Type:         schema.TypeString,

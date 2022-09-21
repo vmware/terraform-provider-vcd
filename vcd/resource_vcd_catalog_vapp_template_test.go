@@ -172,7 +172,7 @@ func testAccCheckVcdVAppTemplateExists(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
 		}
 
-		_, err = catalog.GetVAppTemplateByName(VAppTemplateRs.Primary.Attributes["name"], false)
+		_, err = catalog.GetVAppTemplateByName(VAppTemplateRs.Primary.Attributes["name"])
 		if err != nil {
 			return fmt.Errorf("vApp Template %s does not exist (%s)", VAppTemplateRs.Primary.ID, err)
 		}
@@ -199,7 +199,7 @@ func testAccCheckVAppTemplateDestroy(s *terraform.State) error {
 		}
 
 		itemName := rs.Primary.Attributes["name"]
-		_, err = catalog.GetVAppTemplateByName(itemName, false)
+		_, err = catalog.GetVAppTemplateByName(itemName)
 
 		if err == nil {
 			return fmt.Errorf("vApp Template %s still exists", itemName)

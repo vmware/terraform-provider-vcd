@@ -149,7 +149,26 @@ func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	}
 	// No filter: we continue with single item  GET
 
-	vAppTemplate, err = catalog.GetVAppTemplateByNameOrId(identifier, false)
+	// Data source allows to fetch vApp Templates with the associated VDC
+	getVAppTemplateWithVdc := false
+	if origin == "datasource" {
+		_, isVdcSet := d.GetOk("vdc_id")
+		if isVdcSet {
+			getVAppTemplateWithVdc = true
+		}
+	}
+
+	if getVAppTemplateWithVdc {
+		var vdc *govcd.Vdc
+		vdc, err = adminOrg.GetVDCById("vdcId", false)
+		if err != nil {
+			return nil, err
+		}
+		vAppTemplate, err = vdc.GetVAppTemplateByNameOrId(identifier, false)
+	} else {
+		vAppTemplate, err = catalog.GetVAppTemplateByNameOrId(identifier, false)
+	}
+
 	if govcd.IsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] Unable to find vApp Template %s. Removing from tfstate", identifier)
 		d.SetId("")
