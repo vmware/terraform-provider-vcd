@@ -82,8 +82,6 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 }
 
 func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[TRACE] Catalog vApp Template creation initiated")
-
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -105,7 +103,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	} else if d.Get("ovf_url").(string) != "" {
 		diagError = uploadFromUrl(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
 	} else {
-		return diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
+		diagError = diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
 	}
 	if diagError != nil {
 		return diagError
@@ -116,14 +114,13 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("error retrieving vApp Template %s: %s", vappTemplateName, err)
 	}
 
-	d.SetId(vAppTemplate.VAppTemplate.ID)
-
-	log.Printf("[TRACE] Catalog vApp Template created: %s", vappTemplateName)
-
 	err = createOrUpdateMetadata(d, vAppTemplate, "metadata")
 	if diagError != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId(vAppTemplate.VAppTemplate.ID)
+	log.Printf("[TRACE] Catalog vApp Template created: %s", vappTemplateName)
 
 	return resourceVcdCatalogVappTemplateRead(ctx, d, meta)
 }
@@ -210,7 +207,6 @@ func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceD
 }
 
 func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[TRACE] vApp Template delete started")
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -218,17 +214,18 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := org.GetCatalogById(d.Get("catalog_id").(string), false)
+	catalogId := d.Get("catalog_id").(string)
+	catalog, err := org.GetCatalogById(catalogId, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		return diag.Errorf("unable to find catalog")
+		log.Printf("[DEBUG] Unable to find Catalog with ID %s", catalogId)
+		return diag.Errorf("unable to find Catalog with ID %s", catalogId)
 	}
 
 	vAppTemplateName := d.Get("name").(string)
 	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find vApp Template. Removing from tfstate")
-		return diag.Errorf("unable to find vApp Template %s", vAppTemplateName)
+		log.Printf("[DEBUG] Unable to find vApp Template with name %s", vAppTemplateName)
+		return diag.Errorf("unable to find vApp Template with name %s", vAppTemplateName)
 	}
 
 	err = vAppTemplate.Delete()

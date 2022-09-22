@@ -37,8 +37,6 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	createConfigHcl := templateFill(testAccCheckVcdVAppTemplateCreate, params)
 
 	params["FuncName"] = t.Name() + "-Update"
-	params["VAppTemplateName"] = vAppTemplateName + "Updated"
-	params["Description"] = vAppTemplateDescription + "Updated"
 	updateConfigHcl := templateFill(testAccCheckVcdVAppTemplateUpdate, params)
 
 	params["FuncName"] = t.Name() + "-FromUrl"
@@ -46,7 +44,6 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	createWithUrlConfigHcl := templateFill(testAccCheckVcdVAppTemplateFromUrlCreate, params)
 
 	params["FuncName"] = t.Name() + "-FromUrlUpdate"
-	params["VAppTemplateName"] = vAppTemplateFromUrlName + "Updated"
 	updateWithUrlConfigHcl := templateFill(testAccCheckVcdVAppTemplateFromUrlUpdate, params)
 
 	if vcdShortTest {
@@ -63,7 +60,10 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVAppTemplateDestroy(vAppTemplateName),
+		CheckDestroy:      resource.ComposeTestCheckFunc(
+			testAccCheckVAppTemplateDestroy(vAppTemplateName + "Updated"),
+			testAccCheckVAppTemplateDestroy(vAppTemplateFromUrlName + "Updated"),
+			),
 		Steps: []resource.TestStep{
 			{
 				Config: createConfigHcl,
@@ -236,8 +236,8 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
-  name                 = "{{.VAppTemplateName}}"
-  description          = "{{.Description}}"
+  name                 = "{{.VAppTemplateName}}Updated"
+  description          = "{{.Description}}Updated"
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
 
@@ -282,7 +282,7 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
-  name           = "{{.VAppTemplateName}}"
+  name           = "{{.VAppTemplateName}}Updated"
   # Due to a bug in VCD we omit the description
   # description  = ""
   ovf_url        = "{{.OvfUrl}}"
