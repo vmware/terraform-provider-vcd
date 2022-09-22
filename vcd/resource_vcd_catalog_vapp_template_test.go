@@ -17,13 +17,12 @@ var TestAccVcdVAppTemplate = "TestAccVcdVAppTemplateBasic"
 var TestAccVcdVAppTemplateDescription = "TestAccVcdVAppTemplateBasicDescription"
 var TestAccVcdVAppTemplateFromUrl = "TestAccVcdVAppTemplateBasicFromUrl"
 var TestAccVcdVAppTemplateFromUrlUpdated = "TestAccVcdVAppTemplateBasicFromUrlUpdated"
-var TestAccVcdVAppTemplateDescriptionFromUrlUpdated = "TestAccVcdVAppTemplateBasicDescriptionFromUrlUpdated"
 
-func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
+func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	preTestChecks(t)
 
 	if testConfig.Ova.OvfUrl == "" {
-		t.Skip("Variables Ova.OvfUrl must be set")
+		t.Skip("Variable Ova.OvfUrl must be set in test configuration")
 	}
 
 	var params = StringMap{
@@ -39,21 +38,24 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 		"Tags":                           "catalog",
 	}
 
-	configText := templateFill(testAccCheckVcdVAppTemplateBasic, params)
+	createConfigHcl := templateFill(testAccCheckVcdVAppTemplateCreate, params)
 	params["FuncName"] = t.Name() + "-Update"
-	updateConfigText := templateFill(testAccCheckVcdVAppTemplateUpdate, params)
+	updateConfigHcl := templateFill(testAccCheckVcdVAppTemplateUpdate, params)
 
 	params["FuncName"] = t.Name() + "-FromUrl"
-	fromUrlConfigText := templateFill(testAccCheckVcdVAppTemplateFromUrl, params)
+	createWithUrlConfigHcl := templateFill(testAccCheckVcdVAppTemplateFromUrlCreate, params)
 
 	params["FuncName"] = t.Name() + "-FromUrlUpdate"
-	fromUrlConfigTextUpdate := templateFill(testAccCheckVcdVAppTemplateFromUrlUpdated, params)
+	updateWithUrlConfigHcl := templateFill(testAccCheckVcdVAppTemplateFromUrlUpdate, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createConfigHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateConfigHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createWithUrlConfigHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateWithUrlConfigHcl)
 
 	resourceVAppTemplate := "vcd_catalog_vapp_template." + TestAccVcdVAppTemplate
 	resourceVAppTemplateFromUrl := "vcd_catalog_vapp_template." + TestAccVcdVAppTemplateFromUrl
@@ -63,7 +65,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 		CheckDestroy:      testAccCheckVAppTemplateDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config: createConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
@@ -77,7 +79,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: updateConfigText,
+				Config: updateConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
@@ -93,7 +95,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: fromUrlConfigText,
+				Config: createWithUrlConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
@@ -109,7 +111,7 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: fromUrlConfigTextUpdate,
+				Config: updateWithUrlConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
@@ -204,7 +206,7 @@ func testAccCheckVAppTemplateDestroy(s *terraform.State) error {
 	return nil
 }
 
-const testAccCheckVcdVAppTemplateBasic = `
+const testAccCheckVcdVAppTemplateCreate = `
 data "vcd_catalog" "{{.Catalog}}" {
   org  = "{{.Org}}"
   name = "{{.Catalog}}"
@@ -220,7 +222,7 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   upload_piece_size    = {{.UploadPieceSize}}
 
   metadata = {
-    vapp_template_metadata = "vApp Template Metadata"
+    vapp_template_metadata  = "vApp Template Metadata"
     vapp_template_metadata2 = "vApp Template Metadata2"
   }
 }
@@ -242,14 +244,14 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   upload_piece_size    = {{.UploadPieceSize}}
 
   metadata = {
-    vapp_template_metadata = "vApp Template Metadata v2"
+    vapp_template_metadata  = "vApp Template Metadata v2"
     vapp_template_metadata2 = "vApp Template Metadata2 v2"
     vapp_template_metadata3 = "vApp Template Metadata3"
   }
 }
 `
 
-const testAccCheckVcdVAppTemplateFromUrl = `
+const testAccCheckVcdVAppTemplateFromUrlCreate = `
 data "vcd_catalog" "{{.Catalog}}" {
   org  = "{{.Org}}"
   name = "{{.Catalog}}"
@@ -272,7 +274,7 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
 }
 `
 
-const testAccCheckVcdVAppTemplateFromUrlUpdated = `
+const testAccCheckVcdVAppTemplateFromUrlUpdate = `
 data "vcd_catalog" "{{.Catalog}}" {
   org  = "{{.Org}}"
   name = "{{.Catalog}}"
@@ -288,7 +290,7 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
   ovf_url        = "{{.OvfUrl}}"
 
   metadata = {
-    vapp_template_metadata = "vApp Template Metadata"
+    vapp_template_metadata  = "vApp Template Metadata"
     vapp_template_metadata2 = "vApp Template Metadata2_2"
   }
 }
