@@ -143,6 +143,12 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		if dataSourceName == "vcd_org_ldap" && mandatoryFields[fieldIndex] == "org_id" {
+			// injecting fake Org ID
+			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
+			return templateFields
+		}
+
 		// vcd_portgroup requires portgroup  type
 		if dataSourceName == "vcd_portgroup" && mandatoryFields[fieldIndex] == "type" {
 			templateFields = templateFields + `type = "` + testConfig.Networking.ExternalNetworkPortGroupType + `"` + "\n"
