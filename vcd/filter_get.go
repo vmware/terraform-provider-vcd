@@ -60,7 +60,6 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 }
 
 // getCatalogItemByFilter finds a catalog item using a filter block
-// Deprecated: This function is deprecated as described in Issue #502. Use getVappTemplateByCatalogAndFilter instead.
 func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.CatalogItem, error) {
 	queryType := types.QtVappTemplate
 	if isSysAdmin {
