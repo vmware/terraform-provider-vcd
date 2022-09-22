@@ -13,12 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var TestAccVcdVAppTemplate = "TestAccVcdVAppTemplateBasic"
-var TestAccVcdVAppTemplateDescription = "TestAccVcdVAppTemplateBasicDescription"
-var TestAccVcdVAppTemplateFromUrl = "TestAccVcdVAppTemplateBasicFromUrl"
-var TestAccVcdVAppTemplateFromUrlUpdated = "TestAccVcdVAppTemplateBasicFromUrlUpdated"
-
 func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
+	vAppTemplateName := t.Name()
+	vAppTemplateDescription := vAppTemplateName + "Description"
+	vAppTemplateFromUrlName := t.Name() + "FromUrl"
+
 	preTestChecks(t)
 
 	if testConfig.Ova.OvfUrl == "" {
@@ -26,26 +25,28 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"Org":                            testConfig.VCD.Org,
-		"Catalog":                        testSuiteCatalogName,
-		"VAppTemplateName":               TestAccVcdVAppTemplate,
-		"VAppTemplateNameFromUrl":        TestAccVcdVAppTemplateFromUrl,
-		"VAppTemplateNameFromUrlUpdated": TestAccVcdVAppTemplateFromUrlUpdated,
-		"Description":                    TestAccVcdVAppTemplateDescription,
-		"OvaPath":                        testConfig.Ova.OvaPath,
-		"OvfUrl":                         testConfig.Ova.OvfUrl,
-		"UploadPieceSize":                testConfig.Ova.UploadPieceSize,
-		"Tags":                           "catalog",
+		"Org":                     testConfig.VCD.Org,
+		"Catalog":                 testSuiteCatalogName,
+		"VAppTemplateName":        vAppTemplateName,
+		"Description":             vAppTemplateDescription,
+		"OvaPath":                 testConfig.Ova.OvaPath,
+		"OvfUrl":                  testConfig.Ova.OvfUrl,
+		"UploadPieceSize":         testConfig.Ova.UploadPieceSize,
+		"Tags":                    "catalog",
 	}
-
 	createConfigHcl := templateFill(testAccCheckVcdVAppTemplateCreate, params)
+
 	params["FuncName"] = t.Name() + "-Update"
+	params["VAppTemplateName"] = vAppTemplateName + "Updated"
+	params["Description"] = vAppTemplateDescription + "Updated"
 	updateConfigHcl := templateFill(testAccCheckVcdVAppTemplateUpdate, params)
 
 	params["FuncName"] = t.Name() + "-FromUrl"
+	params["VAppTemplateName"] = vAppTemplateFromUrlName
 	createWithUrlConfigHcl := templateFill(testAccCheckVcdVAppTemplateFromUrlCreate, params)
 
 	params["FuncName"] = t.Name() + "-FromUrlUpdate"
+	params["VAppTemplateName"] = vAppTemplateFromUrlName + "Updated"
 	updateWithUrlConfigHcl := templateFill(testAccCheckVcdVAppTemplateFromUrlUpdate, params)
 
 	if vcdShortTest {
@@ -57,21 +58,21 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createWithUrlConfigHcl)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateWithUrlConfigHcl)
 
-	resourceVAppTemplate := "vcd_catalog_vapp_template." + TestAccVcdVAppTemplate
-	resourceVAppTemplateFromUrl := "vcd_catalog_vapp_template." + TestAccVcdVAppTemplateFromUrl
+	resourceVAppTemplate := "vcd_catalog_vapp_template." + vAppTemplateName
+	resourceVAppTemplateFromUrl := "vcd_catalog_vapp_template." + vAppTemplateFromUrlName
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVAppTemplateDestroy,
+		CheckDestroy:      testAccCheckVAppTemplateDestroy(vAppTemplateName),
 		Steps: []resource.TestStep{
 			{
 				Config: createConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "name", TestAccVcdVAppTemplate),
+						resourceVAppTemplate, "name", vAppTemplateName),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "description", TestAccVcdVAppTemplateDescription),
+						resourceVAppTemplate, "description", vAppTemplateDescription),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
@@ -83,9 +84,9 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "name", TestAccVcdVAppTemplate),
+						resourceVAppTemplate, "name", vAppTemplateName + "Updated"),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "description", TestAccVcdVAppTemplateDescription),
+						resourceVAppTemplate, "description", vAppTemplateDescription + "Updated"),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
 					resource.TestCheckResourceAttr(
@@ -99,7 +100,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrl),
+						resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName),
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttr(
@@ -115,7 +116,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrlUpdated),
+						resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName + "Updated"),
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttr(
@@ -146,15 +147,15 @@ func checkOvaPath(t *testing.T) {
 	}
 }
 
-func testAccCheckVcdVAppTemplateExists(itemName string) resource.TestCheckFunc {
+func testAccCheckVcdVAppTemplateExists(vAppTemplateName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		VAppTemplateRs, ok := s.RootModule().Resources[itemName]
+		vAppTemplateRs, ok := s.RootModule().Resources[vAppTemplateName]
 		if !ok {
-			return fmt.Errorf("not found: %s", itemName)
+			return fmt.Errorf("not found: %s", vAppTemplateName)
 		}
 
-		if VAppTemplateRs.Primary.ID == "" {
-			return fmt.Errorf("no catalog item ID is set")
+		if vAppTemplateRs.Primary.ID == "" {
+			return fmt.Errorf("no vApp Template ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -169,41 +170,38 @@ func testAccCheckVcdVAppTemplateExists(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
 		}
 
-		_, err = catalog.GetVAppTemplateByName(VAppTemplateRs.Primary.Attributes["name"])
+		_, err = catalog.GetVAppTemplateByName(vAppTemplateRs.Primary.Attributes["name"])
 		if err != nil {
-			return fmt.Errorf("vApp Template %s does not exist (%s)", VAppTemplateRs.Primary.ID, err)
+			return fmt.Errorf("vApp Template %s does not exist (%s)", vAppTemplateRs.Primary.ID, err)
 		}
 
 		return nil
 	}
 }
 
-func testAccCheckVAppTemplateDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_catalog_vapp_template" && rs.Primary.Attributes["name"] != TestAccVcdVAppTemplate {
-			continue
+func testAccCheckVAppTemplateDestroy(vAppTemplateName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_catalog_vapp_template" && rs.Primary.Attributes["name"] != vAppTemplateName {
+				continue
+			}
+
+			_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+			if err != nil {
+				return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
+			}
+
+			itemName := rs.Primary.Attributes["name"]
+			_, err = vdc.GetVAppTemplateByName(itemName)
+			if err == nil {
+				return fmt.Errorf("vApp Template %s still exists", itemName)
+			}
 		}
 
-		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
-		}
-
-		catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
-		if err != nil {
-			return fmt.Errorf("catalog query %s ended with error: %s", rs.Primary.ID, err)
-		}
-
-		itemName := rs.Primary.Attributes["name"]
-		_, err = catalog.GetVAppTemplateByName(itemName)
-
-		if err == nil {
-			return fmt.Errorf("vApp Template %s still exists", itemName)
-		}
+		return nil
 	}
 
-	return nil
 }
 
 const testAccCheckVcdVAppTemplateCreate = `
@@ -257,11 +255,11 @@ data "vcd_catalog" "{{.Catalog}}" {
   name = "{{.Catalog}}"
 }
 
-resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
+resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
-  name           = "{{.VAppTemplateNameFromUrl}}"
+  name           = "{{.VAppTemplateName}}"
   # Due to a bug in VCD we omit the description
   # description  = ""
   ovf_url        = "{{.OvfUrl}}"
@@ -280,11 +278,11 @@ data "vcd_catalog" "{{.Catalog}}" {
   name = "{{.Catalog}}"
 }
 
-resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
+resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
-  name           = "{{.VAppTemplateNameFromUrlUpdated}}"
+  name           = "{{.VAppTemplateName}}"
   # Due to a bug in VCD we omit the description
   # description  = ""
   ovf_url        = "{{.OvfUrl}}"
