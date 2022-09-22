@@ -13,13 +13,18 @@ vApp Template in VCD and use its data within other resources or data sources.
 
 Supported in provider *v3.8+*
 
-## Example Usage
+## Example: Fetching a vApp Template from a Catalog
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "my-org"
+  name = "my-catalog"
+}
+
 data "vcd_catalog_vapp_template" "my-first-vapp-template" {
-  org     = "my-org"
-  catalog = "my-cat"
-  name    = "my-first-vapp-template"
+  org        = "my-org"
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "my-first-vapp-template"
 }
 
 resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
@@ -27,18 +32,50 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   # used in this resource.
   # You can read it as "use the org from vApp Template `my-first-vapp-template`"
   # and "use the catalog from vApp Template `my-first-vapp-template`"
-  org     = data.vcd_catalog_item.my-first-vapp-template.org
-  catalog = data.vcd_catalog_item.my-first-vapp-template.catalog
+  org        = data.vcd_catalog_vapp_template.my-first-vapp-template.org
+  catalog_id = data.vcd_catalog_vapp_template.my-first-vapp-template.catalog_id
 
   name = "my-second-item"
 
   # The description uses the data source to create a dynamic text
   # The description will become "Belongs to my-cat"
-  description          = "Belongs to ${data.vcd_catalog_item.my-first-vapp-template.catalog}"
+  description          = "Belongs to ${data.vcd_catalog.my-catalog.name}"
   ova_path             = "/path/to/test_vapp_template.ova"
   upload_piece_size    = 5
-  show_upload_progress = "true"
-  metadata             = data.vcd_catalog_item.my-first-vapp-template.metadata
+  metadata             = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
+}
+```
+
+## Example: Fetching a vApp Template from a VDC
+
+```hcl
+data "vcd_org_vdc" "my-vdc" {
+  org  = "my-org"
+  name = "my-vdc"
+}
+
+data "vcd_catalog_vapp_template" "my-first-vapp-template" {
+  org    = "my-org"
+  vdc_id = data.vcd_org_vdc.my-vdc.id
+  name   = "my-first-vapp-template"
+}
+
+resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
+  # Using the data source, two properties from another vApp Templates are
+  # used in this resource.
+  # You can read it as "use the org from vApp Template `my-first-vapp-template`"
+  # and "use the catalog from vApp Template `my-first-vapp-template`"
+  org        = data.vcd_catalog_vapp_template.my-first-vapp-template.org
+  catalog_id = data.vcd_catalog_vapp_template.my-first-vapp-template.catalog_id
+
+  name = "my-second-item"
+
+  # The description uses the data source to create a dynamic text
+  # The description will become "Belongs to my-vdc"
+  description          = "Belongs to ${data.vcd_org_vdc.my-vdc.name}"
+  ova_path             = "/path/to/test_vapp_template.ova"
+  upload_piece_size    = 5
+  metadata             = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
 }
 ```
 
@@ -47,7 +84,8 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
 The following arguments are supported:
 
 * `org` - (Optional, but required if not set at provider level) Org name 
-* `catalog` - (Required) Catalog name
+* `catalog_id` - (Required) ID of the catalog containing the vApp Template. Can't be used if a specific VDC identifier is set (`vdc_id`).
+* `vdc_id` - (Required) ID of the VDC to which the vApp Template belongs. Can't be used if a specific Catalog is set (`catalog_id`).
 * `name` - (Required) vApp Template name (optional when `filter` is used)
 * `filter` - (Optional) Retrieves the data source using one or more filter parameters
 

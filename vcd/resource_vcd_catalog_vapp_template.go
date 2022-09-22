@@ -32,7 +32,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "ID of the catalog where to upload the OVA file",
+				Description: "ID of the Catalog where to upload the OVA file",
 			},
 			"name": {
 				Type:        schema.TypeString,

@@ -15,9 +15,14 @@ Supported in provider *v3.8+*
 ## Example Usage
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "my-org"
+  name = "my-catalog"
+}
+
 resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
-  org     = "my-org"
-  catalog = "my-catalog"
+  org        = "my-org"
+  catalog_id = data.vcd_catalog.my-catalog.id
 
   name                 = "my ova"
   description          = "new vapp template"
@@ -37,25 +42,13 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `catalog` - (Required) The name of the catalog where to upload OVA file
-* `name` - (Required) vApp Template name in catalog
-* `description` - (Optional) Description of the vApp Template
+* `catalog_id` - (Required) ID of the Catalog where to upload the OVA file
+* `name` - (Required) vApp Template name in Catalog
+* `description` - (Optional) Description of the vApp Template. Not to be used with `ovf_url` when target OVA has a description
 * `ova_path` - (Optional) Absolute or relative path to file to upload
 * `ovf_url` - (Optional) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
-* `show_upload_progress` - (Optional) - Default false. Allows seeing upload progress. (See note below)
 * `metadata` - (Optional) Key value map of metadata to assign to the associated vApp Template
-
-### A note about upload progress
-
-Until version 3.5.0, the progress was optionally shown on the screen. Due to changes in the terraform tool, such operation
-is no longer possible. The progress messages are thus written to the log file (`go-vcloud-director.log`) using a special
-tag `[SCREEN]`. To see the progress at run time, users can run the command below in a separate terminal window while 
-`terraform apply` is working:
-
-```
-$ tail -f go-vcloud-director.log | grep '\[SCREEN\]'
-```
 
 ## Importing
 
@@ -66,11 +59,16 @@ An existing vApp Template can be [imported][docs-import] into this resource via 
 vApp Template. For example, using this structure, representing an existing vAppTemplate that was **not** created using Terraform:
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "my-org"
+  name = "my-catalog"
+}
+
 resource "vcd_catalog_vapp_template" "my-vapp-template" {
-  org      = "my-org"
-  catalog  = "my-catalog"
-  name     = "my-vapp-template"
-  ova_path = "guess"
+  org        = "my-org"
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "my-vapp-template"
+  ova_path   = "guess"
 }
 ```
 
