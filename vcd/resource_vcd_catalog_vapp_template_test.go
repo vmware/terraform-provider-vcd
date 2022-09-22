@@ -25,14 +25,14 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"Org":                     testConfig.VCD.Org,
-		"Catalog":                 testSuiteCatalogName,
-		"VAppTemplateName":        vAppTemplateName,
-		"Description":             vAppTemplateDescription,
-		"OvaPath":                 testConfig.Ova.OvaPath,
-		"OvfUrl":                  testConfig.Ova.OvfUrl,
-		"UploadPieceSize":         testConfig.Ova.UploadPieceSize,
-		"Tags":                    "catalog",
+		"Org":              testConfig.VCD.Org,
+		"Catalog":          testSuiteCatalogName,
+		"VAppTemplateName": vAppTemplateName,
+		"Description":      vAppTemplateDescription,
+		"OvaPath":          testConfig.Ova.OvaPath,
+		"OvfUrl":           testConfig.Ova.OvfUrl,
+		"UploadPieceSize":  testConfig.Ova.UploadPieceSize,
+		"Tags":             "catalog",
 	}
 	createConfigHcl := templateFill(testAccCheckVcdVAppTemplateCreate, params)
 
@@ -60,10 +60,10 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      resource.ComposeTestCheckFunc(
-			testAccCheckVAppTemplateDestroy(vAppTemplateName + "Updated"),
-			testAccCheckVAppTemplateDestroy(vAppTemplateFromUrlName + "Updated"),
-			),
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckVAppTemplateDestroy(vAppTemplateName+"Updated"),
+			testAccCheckVAppTemplateDestroy(vAppTemplateFromUrlName+"Updated"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: createConfigHcl,
@@ -84,9 +84,9 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "name", vAppTemplateName + "Updated"),
+						resourceVAppTemplate, "name", vAppTemplateName+"Updated"),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "description", vAppTemplateDescription + "Updated"),
+						resourceVAppTemplate, "description", vAppTemplateDescription+"Updated"),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
 					resource.TestCheckResourceAttr(
@@ -116,7 +116,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName + "Updated"),
+						resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName+"Updated"),
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttr(
