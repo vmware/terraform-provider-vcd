@@ -60,7 +60,7 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 }
 
 // getCatalogItemByFilter finds a catalog item using a filter block
-// Deprecated: This function is deprecated as described in Issue #502. Use getVappTemplateByFilter instead.
+// Deprecated: This function is deprecated as described in Issue #502. Use getVappTemplateByCatalogAndFilter instead.
 func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.CatalogItem, error) {
 	queryType := types.QtVappTemplate
 	if isSysAdmin {
@@ -81,9 +81,9 @@ func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdm
 	return catalogItem, nil
 }
 
-// getVappTemplateByFilter finds a vApp Template using a filter block.
+// getVappTemplateByCatalogAndFilter finds a vApp Template using a filter block.
 // This function deprecates getCatalogItemByFilter
-func getVappTemplateByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.VAppTemplate, error) {
+func getVappTemplateByCatalogAndFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.VAppTemplate, error) {
 	queryType := types.QtVappTemplate
 	if isSysAdmin {
 		queryType = types.QtAdminVappTemplate
@@ -98,7 +98,28 @@ func getVappTemplateByFilter(catalog *govcd.Catalog, filter interface{}, isSysAd
 
 	vAppTemplate, err := catalog.GetVAppTemplateByName(queryItem.GetName())
 	if err != nil {
-		return nil, fmt.Errorf("[getVappTemplateByFilter] error retrieving vApp Template %s: %s", queryItem.GetName(), err)
+		return nil, fmt.Errorf("[getVappTemplateByCatalogAndFilter] error retrieving vApp Template %s: %s", queryItem.GetName(), err)
+	}
+	return vAppTemplate, nil
+}
+
+// getVappTemplateByVdcAndFilter finds a vApp Template using a filter block.
+func getVappTemplateByVdcAndFilter(vdc *govcd.Vdc, filter interface{}, isSysAdmin bool) (*govcd.VAppTemplate, error) {
+	queryType := types.QtVappTemplate
+	if isSysAdmin {
+		queryType = types.QtAdminVappTemplate
+	}
+	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
+		return vdc.SearchByFilter(queryType, "vdc", criteria)
+	}
+	queryItem, err := getEntityByFilter(searchFunc, queryType, "vApp Template", filter)
+	if err != nil {
+		return nil, err
+	}
+
+	vAppTemplate, err := vdc.GetVAppTemplateByName(queryItem.GetName())
+	if err != nil {
+		return nil, fmt.Errorf("[getVappTemplateByVdcAndFilter] error retrieving vApp Template %s: %s", queryItem.GetName(), err)
 	}
 	return vAppTemplate, nil
 }

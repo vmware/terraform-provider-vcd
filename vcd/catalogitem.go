@@ -111,23 +111,34 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.VAppTemplate, error) {
 	log.Printf("[TRACE] vApp template search initiated")
 
+	identifier := d.Id()
+	// Check if identifier is still in deprecated style `catalogName:mediaName`
+	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
+	if identifier == "" || strings.Count(identifier, ":") <= 1 {
+		identifier = d.Get("name").(string)
+	}
+
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog.")
-		return nil, fmt.Errorf("unable to find catalog: %s", err)
-	}
-
-	identifier := d.Id()
-
-	// Check if identifier is still in deprecated style `catalogName:mediaName`
-	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
-	if identifier == "" || strings.Count(identifier, ":") <= 1 {
-		identifier = d.Get("name").(string)
+	// Get the catalog only if its ID is set, as in data source we can search with VDC ID instead.
+	var catalog *govcd.Catalog
+	var vdc *govcd.Vdc
+	catalogId, isSearchedByCatalog := d.GetOk("catalog")
+	if isSearchedByCatalog {
+		catalog, err = adminOrg.GetCatalogById(catalogId.(string), false)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find Catalog.")
+			return nil, fmt.Errorf("unable to find Catalog: %s", err)
+		}
+	} else {
+		vdc, err = adminOrg.GetVDCById(d.Get("vdc_id").(string), false)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VDC.")
+			return nil, fmt.Errorf("unable to find VDC: %s", err)
+		}
 	}
 
 	var vAppTemplate *govcd.VAppTemplate
@@ -135,38 +146,29 @@ func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 		if !nameOrFilterIsSet(d) {
 			return nil, fmt.Errorf(noNameOrFilterError, "vcd_catalog_vapp_template")
 		}
-		filter, hasFilter := d.GetOk("filter")
-		if hasFilter {
 
-			vAppTemplate, err = getVappTemplateByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+		filter, hasFilter := d.GetOk("filter")
+
+		if hasFilter {
+			if isSearchedByCatalog {
+				vAppTemplate, err = getVappTemplateByCatalogAndFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			} else {
+				vAppTemplate, err = getVappTemplateByVdcAndFilter(vdc, filter, vcdClient.Client.IsSysAdmin)
+			}
 			if err != nil {
 				return nil, err
 			}
-
 			d.SetId(vAppTemplate.VAppTemplate.ID)
 			return vAppTemplate, nil
 		}
 	}
 	// No filter: we continue with single item  GET
 
-	// Data source allows to fetch vApp Templates with the associated VDC
-	getVAppTemplateWithVdc := false
-	if origin == "datasource" {
-		_, isVdcSet := d.GetOk("vdc_id")
-		if isVdcSet {
-			getVAppTemplateWithVdc = true
-		}
-	}
-
-	if getVAppTemplateWithVdc {
-		var vdc *govcd.Vdc
-		vdc, err = adminOrg.GetVDCById("vdcId", false)
-		if err != nil {
-			return nil, err
-		}
-		vAppTemplate, err = vdc.GetVAppTemplateByNameOrId(identifier, false)
-	} else {
+	if isSearchedByCatalog {
+		// In a resource, this is the only possibility
 		vAppTemplate, err = catalog.GetVAppTemplateByNameOrId(identifier, false)
+	} else {
+		vAppTemplate, err = vdc.GetVAppTemplateByNameOrId(identifier, false)
 	}
 
 	if govcd.IsNotFound(err) && origin == "resource" {
