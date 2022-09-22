@@ -44,6 +44,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	datasourceCatalogVappTemplate2 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_2"
 	datasourceCatalogVappTemplate3 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_3"
 	datasourceCatalogVappTemplate4 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_4"
+	datasourceCatalogVappTemplate5 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_5"
 	resourceCatalogVappTemplate := "vcd_catalog_vapp_template." + params["NewVappTemplate"].(string)
 
 	resource.Test(t, resource.TestCase{
@@ -79,6 +80,9 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "id", datasourceCatalogVappTemplate1, "id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "id", , "id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "catalog_id", , "catalog_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "vdc_id", , "vdc_id"),
 				),
 			},
 			{
@@ -165,5 +169,17 @@ data "vcd_catalog_vapp_template" "{{.VAppTemplate}}_4" {
   filter {
     name_regex = "{{.VAppTemplate}}"
   }
+}
+
+data "vcd_catalog_vapp_template" "{{.VAppTemplate}}_5" {
+  org    = "{{.Org}}"
+  vdc_id = data.vcd_org_vdc.{{.Vdc}}.id
+  filter {
+    metadata {
+      key   = "key1"
+      value = "value1"
+    }
+  }
+  depends_on = [ vcd_catalog_vapp_template.{{.NewVappTemplate}} ]
 }
 `
