@@ -16,7 +16,6 @@ import (
 var TestAccVcdVAppTemplate = "TestAccVcdVAppTemplateBasic"
 var TestAccVcdVAppTemplateDescription = "TestAccVcdVAppTemplateBasicDescription"
 var TestAccVcdVAppTemplateFromUrl = "TestAccVcdVAppTemplateBasicFromUrl"
-var TestAccVcdVAppTemplateDescriptionFromUrl = "TestAccVcdVAppTemplateBasicDescriptionFromUrl"
 var TestAccVcdVAppTemplateFromUrlUpdated = "TestAccVcdVAppTemplateBasicFromUrlUpdated"
 var TestAccVcdVAppTemplateDescriptionFromUrlUpdated = "TestAccVcdVAppTemplateBasicDescriptionFromUrlUpdated"
 
@@ -34,13 +33,9 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 		"VAppTemplateNameFromUrl":        TestAccVcdVAppTemplateFromUrl,
 		"VAppTemplateNameFromUrlUpdated": TestAccVcdVAppTemplateFromUrlUpdated,
 		"Description":                    TestAccVcdVAppTemplateDescription,
-		"DescriptionFromUrl":             TestAccVcdVAppTemplateDescriptionFromUrl,
-		"DescriptionFromUrlUpdated":      TestAccVcdVAppTemplateDescriptionFromUrlUpdated,
 		"OvaPath":                        testConfig.Ova.OvaPath,
 		"OvfUrl":                         testConfig.Ova.OvfUrl,
 		"UploadPieceSize":                testConfig.Ova.UploadPieceSize,
-		"UploadProgress":                 testConfig.Ova.UploadProgress,
-		"UploadProgressFromUrl":          testConfig.Ova.UploadProgress,
 		"Tags":                           "catalog",
 	}
 
@@ -119,8 +114,8 @@ func TestAccVcdCatalogVAppTemplateBasic(t *testing.T) {
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplateFromUrl, "name", TestAccVcdVAppTemplateFromUrlUpdated),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "description", TestAccVcdVAppTemplateDescriptionFromUrlUpdated),
+					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
+					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttr(
 						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(
@@ -210,15 +205,19 @@ func testAccCheckVAppTemplateDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVAppTemplateBasic = `
-  resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
   name                 = "{{.VAppTemplateName}}"
   description          = "{{.Description}}"
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
-  show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
     vapp_template_metadata = "vApp Template Metadata"
@@ -228,15 +227,19 @@ const testAccCheckVcdVAppTemplateBasic = `
 `
 
 const testAccCheckVcdVAppTemplateUpdate = `
-  resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
   name                 = "{{.VAppTemplateName}}"
   description          = "{{.Description}}"
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
-  show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
     vapp_template_metadata = "vApp Template Metadata v2"
@@ -247,18 +250,22 @@ const testAccCheckVcdVAppTemplateUpdate = `
 `
 
 const testAccCheckVcdVAppTemplateFromUrl = `
-  resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
 
-  name                 = "{{.VAppTemplateNameFromUrl}}"
+resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+
+  name           = "{{.VAppTemplateNameFromUrl}}"
   # Due to a bug in VCD we omit the description
-  # description          = "{{.DescriptionFromUrl}}"
-  ovf_url              = "{{.OvfUrl}}"
-  show_upload_progress = "{{.UploadProgressFromUrl}}"
+  # description  = ""
+  ovf_url        = "{{.OvfUrl}}"
 
   metadata = {
-    vapp_template_metadata = "vApp Template Metadata"
+    vapp_template_metadata  = "vApp Template Metadata"
     vapp_template_metadata2 = "vApp Template Metadata2"
     vapp_template_metadata3 = "vApp Template Metadata3"
   }
@@ -266,14 +273,19 @@ const testAccCheckVcdVAppTemplateFromUrl = `
 `
 
 const testAccCheckVcdVAppTemplateFromUrlUpdated = `
-  resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
 
-  name                 = "{{.VAppTemplateNameFromUrlUpdated}}"
-  description          = "{{.DescriptionFromUrlUpdated}}"
-  ovf_url              = "{{.OvfUrl}}"
-  show_upload_progress = "{{.UploadProgressFromUrl}}"
+resource "vcd_catalog_vapp_template" "{{.VAppTemplateNameFromUrl}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+
+  name           = "{{.VAppTemplateNameFromUrlUpdated}}"
+  # Due to a bug in VCD we omit the description
+  # description  = ""
+  ovf_url        = "{{.OvfUrl}}"
 
   metadata = {
     vapp_template_metadata = "vApp Template Metadata"
