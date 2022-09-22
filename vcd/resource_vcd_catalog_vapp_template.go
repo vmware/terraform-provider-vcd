@@ -133,7 +133,8 @@ func resourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceD
 }
 
 func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	vAppTemplate, err := findVAppTemplate(d, meta.(*VCDClient), origin)
+	vcdClient := meta.(*VCDClient)
+	vAppTemplate, err := findVAppTemplate(d, vcdClient, origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vApp Template: %s", err)
 		return diag.Errorf("Unable to find vApp Template: %s", err)
@@ -142,6 +143,36 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	dSet(d, "name", vAppTemplate.VAppTemplate.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", vAppTemplate.VAppTemplate.Description)
+	// Data source has either catalog_id or vdc_id empty
+	if origin == "datasource" {
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrg, err)
+		}
+
+		_, isCatalogIdSet := d.GetOk("catalog_id")
+		if !isCatalogIdSet {
+			catalogName, err := vAppTemplate.GetCatalogName()
+			if err != nil {
+				return diag.Errorf("error retrieving the Catalog name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
+			}
+			catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+			if err != nil {
+				return diag.Errorf("error retrieving Catalog from vApp Template with name %s: %s", vAppTemplate.VAppTemplate.Name, err)
+			}
+			dSet(d, "catalog_id", catalog.Catalog.ID)
+		} else {
+			vdcName, err := vAppTemplate.GetVdcName()
+			if err != nil {
+				return diag.Errorf("error retrieving the VDC name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
+			}
+			vdc, err := adminOrg.GetVDCByName(vdcName, false)
+			if err != nil {
+				return diag.Errorf("error retrieving the VDC to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
+			}
+			dSet(d, "vdc_id", vdc.Vdc.ID)
+		}
+	}
 
 	metadata, err := vAppTemplate.GetMetadata()
 	if err != nil {
@@ -261,6 +292,86 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// Finds a vApp Template with the information given in the resource data. If it's a data source it uses a filtering
+// mechanism, if it's a resource it just gets the information.
+func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.VAppTemplate, error) {
+	log.Printf("[TRACE] vApp template search initiated")
+
+	identifier := d.Id()
+	// Check if identifier is still in deprecated style `catalogName:mediaName`
+	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
+	if identifier == "" || strings.Count(identifier, ":") <= 1 {
+		identifier = d.Get("name").(string)
+	}
+
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	// Get the catalog only if its ID is set, as in data source we can search with VDC ID instead.
+	var catalog *govcd.Catalog
+	var vdc *govcd.Vdc
+	catalogId, isSearchedByCatalog := d.GetOk("catalog_id")
+	if isSearchedByCatalog {
+		catalog, err = adminOrg.GetCatalogById(catalogId.(string), false)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find Catalog.")
+			return nil, fmt.Errorf("unable to find Catalog: %s", err)
+		}
+	} else {
+		vdc, err = adminOrg.GetVDCById(d.Get("vdc_id").(string), false)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VDC.")
+			return nil, fmt.Errorf("unable to find VDC: %s", err)
+		}
+	}
+
+	var vAppTemplate *govcd.VAppTemplate
+	if origin == "datasource" {
+		if !nameOrFilterIsSet(d) {
+			return nil, fmt.Errorf(noNameOrFilterError, "vcd_catalog_vapp_template")
+		}
+
+		filter, hasFilter := d.GetOk("filter")
+
+		if hasFilter {
+			if isSearchedByCatalog {
+				vAppTemplate, err = getVappTemplateByCatalogAndFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			} else {
+				vAppTemplate, err = getVappTemplateByVdcAndFilter(vdc, filter, vcdClient.Client.IsSysAdmin)
+			}
+			if err != nil {
+				return nil, err
+			}
+			d.SetId(vAppTemplate.VAppTemplate.ID)
+			return vAppTemplate, nil
+		}
+	}
+	// No filter: we continue with single item  GET
+
+	if isSearchedByCatalog {
+		// In a resource, this is the only possibility
+		vAppTemplate, err = catalog.GetVAppTemplateByNameOrId(identifier, false)
+	} else {
+		vAppTemplate, err = vdc.GetVAppTemplateByNameOrId(identifier, false)
+	}
+
+	if govcd.IsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] Unable to find vApp Template %s. Removing from tfstate", identifier)
+		d.SetId("")
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to find vApp Template %s: %s", identifier, err)
+	}
+
+	d.SetId(vAppTemplate.VAppTemplate.ID)
+	log.Printf("[TRACE] vApp Template read completed: %#v", vAppTemplate.VAppTemplate)
+	return vAppTemplate, nil
 }
 
 // uploadOvaFromResource uploads an OVA file specified in the resource to the given catalog
