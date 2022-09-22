@@ -73,12 +73,12 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key2", "value2"),
 
 					// Check data sources with filter
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "id", datasourceCatalogVappTemplate2, "id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "catalog_id", datasourceCatalogVappTemplate2, "catalog_id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "vdc_id", datasourceCatalogVappTemplate2, "vdc_id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "id", datasourceCatalogVappTemplate2, "id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "catalog_id", datasourceCatalogVappTemplate2, "catalog_id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "vdc_id", datasourceCatalogVappTemplate2, "vdc_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "id", datasourceCatalogVappTemplate1, "id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "id", datasourceCatalogVappTemplate1, "id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
 				),
 			},
 			{
