@@ -133,7 +133,7 @@ func resourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceD
 }
 
 func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	vAppTemplate, err := findVappTemplate(d, meta.(*VCDClient), origin)
+	vAppTemplate, err := findVAppTemplate(d, meta.(*VCDClient), origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vApp Template: %s", err)
 		return diag.Errorf("Unable to find vApp Template: %s", err)
@@ -156,7 +156,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 }
 
 func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vAppTemplate, err := findVappTemplate(d, meta.(*VCDClient), "resource")
+	vAppTemplate, err := findVAppTemplate(d, meta.(*VCDClient), "resource")
 
 	if d.HasChange("description") || d.HasChange("name") {
 		if err != nil {

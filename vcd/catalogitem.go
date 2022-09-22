@@ -48,7 +48,6 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) diag.Diagno
 }
 
 // Finds catalog item which can be vApp template OVA or media ISO file
-// Deprecated: This function is deprecated as described in Issue #502. Use findVappTemplate instead.
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
 
@@ -108,7 +107,7 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 
 // Finds a vApp Template with the information given in the resource data. If it's a data source it uses a filtering
 // mechanism, if it's a resource it just gets the information.
-func findVappTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.VAppTemplate, error) {
+func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.VAppTemplate, error) {
 	log.Printf("[TRACE] vApp template search initiated")
 
 	identifier := d.Id()
