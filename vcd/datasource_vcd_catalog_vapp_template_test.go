@@ -42,6 +42,8 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	datasourceCatalog := "data.vcd_catalog." + params["Catalog"].(string)
 	datasourceCatalogVappTemplate1 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_1"
 	datasourceCatalogVappTemplate2 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_2"
+	datasourceCatalogVappTemplate3 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_3"
+	datasourceCatalogVappTemplate4 := "data.vcd_catalog_vapp_template." + params["VAppTemplate"].(string) + "_4"
 	resourceCatalogVappTemplate := "vcd_catalog_vapp_template." + params["NewVappTemplate"].(string)
 
 	resource.Test(t, resource.TestCase{
@@ -69,6 +71,14 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key1", "value1"),
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key2", "value2"),
+
+					// Check data sources with filter
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "id", datasourceCatalogVappTemplate2, "id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "catalog_id", datasourceCatalogVappTemplate2, "catalog_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "vdc_id", datasourceCatalogVappTemplate2, "vdc_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "id", datasourceCatalogVappTemplate2, "id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "catalog_id", datasourceCatalogVappTemplate2, "catalog_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "vdc_id", datasourceCatalogVappTemplate2, "vdc_id"),
 				),
 			},
 			{
@@ -138,6 +148,22 @@ resource "vcd_catalog_vapp_template" "{{.NewVappTemplate}}" {
   metadata = {
     key1 = "value1"
     key2 = "value2"
+  }
+}
+
+data "vcd_catalog_vapp_template" "{{.VAppTemplate}}_3" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+  filter {
+    name_regex = "{{.VAppTemplate}}"
+  }
+}
+
+data "vcd_catalog_vapp_template" "{{.VAppTemplate}}_4" {
+  org    = "{{.Org}}"
+  vdc_id = data.vcd_org_vdc.{{.Vdc}}.id
+  filter {
+    name_regex = "{{.VAppTemplate}}"
   }
 }
 `
