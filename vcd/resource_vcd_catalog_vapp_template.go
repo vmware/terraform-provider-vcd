@@ -129,6 +129,8 @@ func resourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceD
 	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource")
 }
 
+// genericVcdCatalogVappTemplateRead performs a Read operation for the vApp Template resource (origin="resource")
+// and data source (origin="datasource").
 func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vAppTemplate, err := findVAppTemplate(d, vcdClient, origin)
