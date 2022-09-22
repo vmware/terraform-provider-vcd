@@ -28,11 +28,11 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
-			"catalog": {
+			"catalog_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Catalog name where upload the OVA file",
+				Description: "ID of the catalog where to upload the OVA file",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -91,8 +91,8 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalogName := d.Get("catalog").(string)
-	catalog, err := org.GetCatalogByName(catalogName, false)
+	catalogId := d.Get("catalog_id").(string)
+	catalog, err := org.GetCatalogById(catalogId, false)
 	if err != nil {
 		log.Printf("[DEBUG] Error finding Catalog: %s", err)
 		return diag.Errorf("error finding Catalog: %s", err)
@@ -187,7 +187,7 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
+	catalog, err := org.GetCatalogById(d.Get("catalog_id").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		return diag.Errorf("unable to find catalog")
@@ -255,7 +255,7 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "catalog", catalogName)
+	dSet(d, "catalog_id", catalog.Catalog.ID)
 	dSet(d, "name", vAppTemplate.VAppTemplate.Name)
 	dSet(d, "description", vAppTemplate.VAppTemplate.Description)
 	d.SetId(vAppTemplate.VAppTemplate.ID)
