@@ -1,5 +1,5 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate vdcGroup ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate vdcGroup ldap ALL
 
 package vcd
 
@@ -12,7 +12,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -122,6 +121,7 @@ type TestConfig struct {
 		ExternalNetwork              string `json:"externalNetwork,omitempty"`
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup,omitempty"`
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType,omitempty"`
+		LdapServer                   string `json:"ldapServer,omitempty"`
 		Local                        struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
@@ -170,9 +170,6 @@ type TestConfig struct {
 		MediaName           string `json:"mediaName,omitempty"`
 		NsxtBackedMediaName string `json:"nsxtBackedMediaName,omitempty"`
 	} `json:"media"`
-	Misc struct {
-		LdapContainer string `json:"ldapContainer,omitempty"`
-	} `json:"misc"`
 	Certificates struct {
 		Certificate1Path           string `json:"certificate1Path,omitempty"`           // absolute path to pem file
 		Certificate1PrivateKeyPath string `json:"certificate1PrivateKeyPath,omitempty"` // absolute path to private key pem file
@@ -534,7 +531,7 @@ func getConfigStruct(config string) TestConfig {
 	if config == "" {
 		panic(fmt.Errorf("configuration file %s not found", config))
 	}
-	jsonFile, err := ioutil.ReadFile(config)
+	jsonFile, err := os.ReadFile(config)
 	if err != nil {
 		panic(fmt.Errorf("could not read config file %s: %v", config, err))
 	}
@@ -1301,12 +1298,12 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 // The function returns successfully if all the wanted elements are found within the same set ID
 // For example, given the following contents in the resource:
 //
-//  "shared.2503357709.access_level":"FullControl",
-//  "shared.3479897784.user_id":"urn:vcloud:user:ec571e04-7e75-4dc5-8f53-c3ef63b9b414",
-//  "shared.2503357709.user_id":"urn:vcloud:user:465308a5-7456-42c8-939c-bd971b0e0d3f",
-//  "shared.2503357709.subject_name":"ac-user1",
-//  "shared.3479897784.subject_name":"ac-user2",
-//  "shared.3479897784.access_level":"Change"
+//	"shared.2503357709.access_level":"FullControl",
+//	"shared.3479897784.user_id":"urn:vcloud:user:ec571e04-7e75-4dc5-8f53-c3ef63b9b414",
+//	"shared.2503357709.user_id":"urn:vcloud:user:465308a5-7456-42c8-939c-bd971b0e0d3f",
+//	"shared.2503357709.subject_name":"ac-user1",
+//	"shared.3479897784.subject_name":"ac-user2",
+//	"shared.3479897784.access_level":"Change"
 //
 // We pass "shared" as prefix, and map[string]string{"subject_name": "ac-user1", "access_level": "FullControl"} as wanted
 // The function will match the elements belonging to set "2503357709", and return successfully, because both elements were found.
@@ -1461,22 +1458,22 @@ func timeStamp() string {
 // preTestChecks is to be called at the beginning of a test function.
 // It allows for several skipping mechanisms:
 //
-// 1) It will skip if the file 'skip_vcd_tests' is found.
-//   This allows to interrupt the test suite in  a clean way, by creating the skipping trigger file
-//   during the test run
-//   When the user creates such file, the tests still running will continue until their natural end
-//   and the other tests will skip
+//  1. It will skip if the file 'skip_vcd_tests' is found.
+//     This allows to interrupt the test suite in  a clean way, by creating the skipping trigger file
+//     during the test run
+//     When the user creates such file, the tests still running will continue until their natural end
+//     and the other tests will skip
 //
 // 2) if the file 'skip_vcd_tests' contains a pattern, only the tests with a name that match such pattern will skip
 //
-// 3) It will skip if a test has already run successfully. This is useful when the suite was interrupted,
-//   so that we can repeat the run without repeating the tests that have succeeded
+//  3. It will skip if a test has already run successfully. This is useful when the suite was interrupted,
+//     so that we can repeat the run without repeating the tests that have succeeded
 //
 // 4) It will skip the test if a given environment variable was set
 //
-// 5) It will skip the test if the option -vcd-skip-pattern or the environment variable 'VCD_SKIP_PATTERN'
-//   contains a pattern that matches the test name.
-// 6) If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
+//  5. It will skip the test if the option -vcd-skip-pattern or the environment variable 'VCD_SKIP_PATTERN'
+//     contains a pattern that matches the test name.
+//  6. If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
 func preTestChecks(t *testing.T) {
 	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
 	if !vcdPrePostChecks {

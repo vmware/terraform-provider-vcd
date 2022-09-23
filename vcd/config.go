@@ -217,6 +217,7 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 
 // lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
 // Parent means the resource belongs to the VM being locked
+//
 //lint:ignore U1000 For future use
 func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
@@ -704,7 +705,8 @@ func buildUserAgent(version, sysOrg string) string {
 //
 // To display its content at run time, you should run the command below in a separate
 // terminal screen while `terraform apply` is running
-//     tail -f go-vcloud-director.log | grep '\[SCREEN\]'
+//
+//	tail -f go-vcloud-director.log | grep '\[SCREEN\]'
 func logForScreen(origin, msg string) {
 	util.Logger.Printf("[SCREEN] {%s} %s\n", origin, msg)
 }
@@ -713,15 +715,13 @@ func logForScreen(origin, msg string) {
 // Use only for scalar values (strings, booleans, and numbers)
 func dSet(d *schema.ResourceData, key string, value interface{}) {
 	if value != nil && !isScalar(value) {
-		starLine := strings.Repeat("*", 80)
-
-		logForScreen("", starLine)
-		// This warning should never reach the final user.
+		msg1 := "*** ERROR: only scalar values should be used for dSet()"
+		msg2 := fmt.Sprintf("*** detected '%s' for key '%s' (called from %s)",
+			reflect.TypeOf(value).Kind(), key, callFuncName())
+		starLine := strings.Repeat("*", len(msg2))
+		// This panic should never reach the final user.
 		// Its purpose is to alert the developer that there was an improper use of `dSet`
-		// The warning will work when testing with either `go test` or `make install` + `terraform apply`
-		logForScreen("config", fmt.Sprintf("*** ERROR: only scalar values should be used for dSet() - detected '%s' (called from %s) \n",
-			reflect.TypeOf(value).Kind(), callFuncName()))
-		logForScreen("", starLine)
+		panic(fmt.Sprintf("\n%s\n%s\n%s\n%s\n", starLine, msg1, msg2, starLine))
 	}
 	err := d.Set(key, value)
 	if err != nil {

@@ -277,19 +277,12 @@ func setDistributedFirewallData(vcdClient *VCDClient, dfwRules *types.Distribute
 		netContextProfileSlice := extractIdsFromOpenApiReferences(value.NetworkContextProfiles)
 		netPortProfileSet := convertStringsToTypeSet(netContextProfileSlice)
 
-		var actionFieldValue string
-		if vcdClient.Client.APIVCDMaxVersionIs(">= 35.2") {
-			actionFieldValue = value.ActionValue
-		} else { // TODO remove this when VCD 10.2 support is dropped
-			actionFieldValue = value.Action
-		}
-
 		result[index] = map[string]interface{}{
 			"id":                          value.ID,
 			"name":                        value.Name,
 			"description":                 value.Description,
 			"comment":                     value.Comments,
-			"action":                      actionFieldValue,
+			"action":                      value.ActionValue,
 			"enabled":                     value.Enabled,
 			"ip_protocol":                 value.IpProtocol,
 			"direction":                   value.Direction,
@@ -345,14 +338,6 @@ func getDistributedFirewallTypes(vcdClient *VCDClient, d *schema.ResourceData) (
 			}
 
 			// Perform version specific conversion
-			// TODO remove when VCD 10.2 is not supported anymore
-
-			// ActionValue was introduced in API V35.2 (VCD 10.2.2), for 10.2.0 Action field must
-			// still be used
-			if vcdClient.Client.APIVCDMaxVersionIs("< 35.2") {
-				sliceOfRules[index].Action = sliceOfRules[index].ActionValue
-				sliceOfRules[index].ActionValue = ""
-			}
 
 			// Fields requiring 10.3.2+
 			// TODO remove when VCD 10.3 is not supported anymore

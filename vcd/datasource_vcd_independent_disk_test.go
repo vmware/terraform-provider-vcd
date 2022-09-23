@@ -50,16 +50,6 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 	updateParams["metadataKey"] = "key2"
 	updateParams["metadataValue"] = "value2"
 
-	// regexp for empty value
-	uuidMatchRegexp := regexp.MustCompile(`^$`)
-	vcdClient := createTemporaryVCDConnection(true)
-	sharingType := ""
-	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36") {
-		// from 36.0 API version value is returned
-		uuidMatchRegexp = regexp.MustCompile(`^\S+`)
-		sharingType = "None"
-	}
-
 	params["FuncName"] = t.Name() + "-Step1"
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
 	updateParams["FuncName"] = t.Name() + "-Step2"
@@ -89,8 +79,8 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "metadata."+params["metadataKey"].(string), params["metadataValue"].(string)),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
-					resource.TestMatchOutput("uuid", uuidMatchRegexp),
-					resource.TestCheckOutput("sharing_type", sharingType),
+					resource.TestMatchOutput("uuid", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckOutput("sharing_type", "None"),
 					resource.TestCheckOutput("encrypted", "false"),
 					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),
@@ -115,8 +105,8 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "storage_profile", "*"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
-					resource.TestMatchOutput("uuid", uuidMatchRegexp),
-					resource.TestCheckOutput("sharing_type", sharingType),
+					resource.TestMatchOutput("uuid", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckOutput("sharing_type", "None"),
 					resource.TestCheckOutput("encrypted", "false"),
 					resource.TestCheckOutput("attached_vm_ids", "0"),
 					testCheckDiskNonStringOutputs(),

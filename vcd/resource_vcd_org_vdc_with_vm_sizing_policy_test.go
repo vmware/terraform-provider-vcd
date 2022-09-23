@@ -16,15 +16,6 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires system admin privileges")
 	}
 
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires VCD 10.0+")
-	}
-
 	allocationModel := "Flex"
 
 	var params = StringMap{

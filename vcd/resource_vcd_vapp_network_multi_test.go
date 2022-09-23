@@ -21,7 +21,6 @@ const (
 // Creates a VM with three vApp networks
 // To execute this test, run
 // go test -v -timeout 0 -tags multinetwork -run TestAccVcdVappNetworkMulti .
-//
 func TestAccVcdVappNetworkMulti(t *testing.T) {
 	preTestChecks(t)
 

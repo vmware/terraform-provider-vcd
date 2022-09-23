@@ -21,12 +21,7 @@ func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	// As of 10.1.2 release it is not officially supported (support only introduced in 10.2.0) therefore skipping this
-	// tests for 10.1.X. 10.1.1 allowed to create it, but 10.1.2 introduced a validator and throws error.
-	client := createTemporaryVCDConnection(false)
-	if client.Client.APIVCDMaxVersionIs("< 35") {
-		t.Skip("NSX-T VRF-Lite backed external networks are officially supported only in 10.2.0+")
-	}
+
 	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0routerVrf)
 	postTestChecks(t)
 }
@@ -42,11 +37,6 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10+)")
 	}
 
 	startAddress := "192.168.30.51"
@@ -260,11 +250,6 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10+)")
-	}
-
 	description := "Test External Network"
 	var params = StringMap{
 		"ExternalNetworkName": t.Name(),
@@ -462,70 +447,11 @@ output "portgroup-id" {
 }
 `
 
-// TestAccVcdExternalNetworkV2NsxtSegmentUnsupported tries to create NSX-T Segment backed network on versions that
-// do not support it and expects a correctly handled error to avoid crashes and/or non-informative error messages
-func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
-	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.0") {
-		t.Skip(t.Name() + " this test check requires API version <36.0 (VCD 10.3+)")
-	}
-
-	startAddress := "192.168.30.51"
-	endAddress := "192.168.30.62"
-	description := "Test External Network"
-	var params = StringMap{
-		"NsxtManager":         testConfig.Nsxt.Manager,
-		"NsxtSegment":         testConfig.Nsxt.NsxtImportSegment,
-		"ExternalNetworkName": t.Name(),
-		"StartAddress":        startAddress,
-		"EndAddress":          endAddress,
-		"Description":         description,
-		"Gateway":             "192.168.30.49",
-		"Netmask":             "24",
-		"Tags":                "network extnetwork nsxt",
-	}
-	testParamsNotEmpty(t, params)
-
-	params["FuncName"] = t.Name()
-	skipBinaryConfig := `# skip-binary-test: expected to fail` + testAccCheckVcdExternalNetworkV2NsxtSegment
-	configText := templateFill(skipBinaryConfig, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	resource.Test(t, resource.TestCase{
-		ProviderFactories: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`NSX-T Segment backed External Network is only supported in VCD 10.3.0+`),
-			},
-		},
-	})
-
-	postTestChecks(t)
-
-}
-
 func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
 	}
 
 	startAddress := "192.168.30.51"
@@ -713,11 +639,6 @@ func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10.1+)")
-	}
-
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"
 	description := "Test External Network"
@@ -830,11 +751,6 @@ func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
-		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
 	}
 
 	startAddress := "192.168.30.51"

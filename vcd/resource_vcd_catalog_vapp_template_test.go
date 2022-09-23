@@ -60,10 +60,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckVAppTemplateDestroy(vAppTemplateName+"Updated"),
-			testAccCheckVAppTemplateDestroy(vAppTemplateFromUrlName+"Updated"),
-		),
+		CheckDestroy: testAccCheckVAppTemplateDestroy(vAppTemplateFromUrlName+"Updated"),
 		Steps: []resource.TestStep{
 			{
 				Config: createConfigHcl,

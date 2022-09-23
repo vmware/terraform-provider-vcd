@@ -502,28 +502,14 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
 }
 `
 
-// TestAccVcdNsxtNatRuleFirewallMatchPriority explicitly tests support for two new fields introduced in API 35.2 (VCD 10.2.2)
-// firewall_match and priority. For 10.2.2 versions this should work, while for lower versions it should return an error.
-// This test checks both cases - for versions 10.2.2 it expects it working, while for versions < 10.2.2 it expects an error
+// TestAccVcdNsxtNatRuleFirewallMatchPriority explicitly tests support for two new fields introduced
+// in API 35.2 (VCD 10.2.2) firewall_match and priority.
 func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 	preTestChecks(t)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
-	}
-
-	// expectError must stay nil for versions > 10.2.2, because we expect it to work. For lower versions - it must have
-	// match the runtime validation error
-	var (
-		expectError       *regexp.Regexp
-		expectImportError *regexp.Regexp
-	)
-	client := createTemporaryVCDConnection(false)
-	if client.Client.APIVCDMaxVersionIs("< 35.2") {
-		fmt.Println("# expecting an error for unsupported fields 'firewall_match' and 'priority'")
-		expectError = regexp.MustCompile(`firewall_match and priority fields can only be set for VCD 10.2.2+`)
-		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
 	}
 
 	// String map to fill the template
@@ -558,8 +544,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
 		Steps: []resource.TestStep{
 			{
-				Config:      configText1,
-				ExpectError: expectError,
+				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat-match", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat-match", "name", "test-dnat-rule-match-and-priority"),
@@ -568,8 +553,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 				),
 			},
 			{
-				Config:      configText2,
-				ExpectError: expectError,
+				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat-match", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat-match", "name", "test-dnat-rule-match-and-priority"),
@@ -578,8 +562,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 				),
 			},
 			{
-				Config:      configText3,
-				ExpectError: expectError,
+				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat-match", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat-match", "name", "test-dnat-rule-match-and-priority"),
@@ -589,7 +572,6 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 			},
 			{
 				ResourceName:            "vcd_nsxt_nat_rule.dnat-match",
-				ExpectError:             expectImportError,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-dnat-rule-match-and-priority"),
@@ -627,13 +609,6 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		return
 	}
 
-	// expectError must stay nil for versions > 10.3.0, because we expect it to work. For lower versions - it must have
-	// match the runtime validation error
-	var (
-		expectError       *regexp.Regexp
-		expectImportError *regexp.Regexp
-	)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
@@ -646,13 +621,6 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		"SkipNotice":    " ",
 	}
 
-	client := createTemporaryVCDConnection(false)
-	if client.Client.APIVCDMaxVersionIs("< 36.0") {
-		fmt.Println("# expecting an error for unsupported NAT Rule Type 'REFLEXIVE'")
-		expectError = regexp.MustCompile(`rule_type 'REFLEXIVE' can only be used for VCD 10.3+`)
-		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
-		params["SkipNotice"] = "# skip-binary-test: rule_type 'REFLEXIVE' can only be used for VCD 10.3+"
-	}
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccNsxtNatRuleReflexive, params)
@@ -680,8 +648,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
 		Steps: []resource.TestStep{
 			{
-				Config:      configText1,
-				ExpectError: expectError,
+				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.reflexive", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "name", "test-reflexive-rule-match-and-priority"),
@@ -691,8 +658,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 				),
 			},
 			{
-				Config:      configText2,
-				ExpectError: expectError,
+				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.reflexive", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "name", "test-reflexive-rule-match-and-priority"),
@@ -702,8 +668,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 				),
 			},
 			{
-				Config:      configText3,
-				ExpectError: expectError,
+				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.reflexive", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "name", "test-reflexive-rule-match-and-priority"),
@@ -714,7 +679,6 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 			},
 			{
 				ResourceName:            "vcd_nsxt_nat_rule.reflexive",
-				ExpectError:             expectImportError,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "test-reflexive-rule-match-and-priority"),

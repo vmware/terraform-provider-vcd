@@ -374,17 +374,6 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
 func TestAccVcdVmInternalDiskNvme(t *testing.T) {
 	preTestChecks(t)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	// NVM devices are in VCD starting with version 10.2.1
-	client := createTemporaryVCDConnection(false)
-	if client.Client.APIVCDMaxVersionIs("< 35.1") {
-		t.Skip("NVMe drive support was only introduced in VCD 10.2.1")
-	}
-
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
 		"Vdc":      testConfig.VCD.Vdc,
@@ -396,6 +385,10 @@ func TestAccVcdVmInternalDiskNvme(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configTextNvme := templateFill(sourceTestVmInternalDiskOrgVdcAndVMNvme, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,

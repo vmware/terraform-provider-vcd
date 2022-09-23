@@ -12,9 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-// Test catalog and vApp Template data sources
-// Using a catalog data source we reference a vApp Template data source
-// Using a vApp Template data source we create another vApp Template
+// Test catalog and vApp Template data sources.
+// Using a catalog data source we reference a vApp Template data source.
+// Using a vApp Template data source we create another vApp Template.
 // where the description is the first data source ID.
 func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	preTestChecks(t)
