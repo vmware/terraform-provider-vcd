@@ -385,9 +385,5 @@ func datasourceVcdVAppVm() *schema.Resource {
 }
 
 func datasourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericVcdVmRead(d, meta, "datasource")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return genericVcdVmRead(d, meta, "datasource")
 }

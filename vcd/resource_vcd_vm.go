@@ -25,25 +25,13 @@ func resourceVcdStandaloneVmCreate(_ context.Context, d *schema.ResourceData, me
 	if d.Get("vapp_name").(string) != "" {
 		return diag.Errorf("vApp name must not be set for a standalone VM (resource `vcd_vm`)")
 	}
-	err := genericResourceVmCreate(d, meta, standaloneVmType)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return genericResourceVmCreate(d, meta, standaloneVmType)
 }
 
 func resourceVcdStandaloneVmUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericResourceVcdVmUpdate(d, meta, standaloneVmType)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return genericResourceVcdVmUpdate(d, meta, standaloneVmType)
 }
 
 func resourceVcdVStandaloneVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericVcdVmRead(d, meta, "resource")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return genericVcdVmRead(d, meta, "resource")
 }
