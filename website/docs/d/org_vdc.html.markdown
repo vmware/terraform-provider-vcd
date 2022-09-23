@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_org\_vdc
 
-Provides a VMware Cloud Director Organization VDC data source. An Organization VDC can be used to reference a VCD and use its 
+Provides a VMware Cloud Director Organization VDC data source. An Organization VDC can be used to reference a VDC and use its 
 data within other resources or data sources.
 
 -> **Note:** This resource supports NSX-T and NSX-V based Org VDCs

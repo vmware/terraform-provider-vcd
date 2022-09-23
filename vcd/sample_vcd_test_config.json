@@ -65,7 +65,9 @@
       "name": "nsxTPvdc1",
       "storageProfile": "Must-already-exist-storage-profile-name",
       "storageProfile2": "Must-already-exist-storage-profile-name2",
-      "networkPool": "NSX-T Overlay 1"
+      "networkPool": "NSX-T Overlay 1",
+      "//": "A VM Group that needs to exist in the backing vSphere. This VM Group can be used to create VM Placement Policies.",
+      "placementPolicyVmGroup": "testVmGroup"
     }
   },
   "networking": {
