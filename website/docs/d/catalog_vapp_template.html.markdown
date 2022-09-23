@@ -72,10 +72,10 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
 
   # The description uses the data source to create a dynamic text
   # The description will become "Belongs to my-vdc"
-  description          = "Belongs to ${data.vcd_org_vdc.my-vdc.name}"
-  ova_path             = "/path/to/test_vapp_template.ova"
-  upload_piece_size    = 5
-  metadata             = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
+  description       = "Belongs to ${data.vcd_org_vdc.my-vdc.name}"
+  ova_path          = "/path/to/test_vapp_template.ova"
+  upload_piece_size = 5
+  metadata          = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
 }
 ```
 
