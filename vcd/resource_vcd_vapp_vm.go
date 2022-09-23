@@ -37,20 +37,11 @@ func resourceVcdVAppVm() *schema.Resource {
 }
 
 // Maintenance guide for VM
-// The VM code being a single object (handles two resources `vcd_vapp_vm` (VM inside a vApp) and `vcd_vm`
-// (standalone VM with a hidden vApp) has 4 branches.
-// * Standalone VM from template
-// * Empty standalone VM
-// * VM in vApp from template
-// * Empty VM in vApp
+// * Create function for `vcd_vapp_vm` is `resourceVcdVAppVmCreate`, while `vcd_vm` uses `resourceVcdStandaloneVmCreate`.
+// The difference between these entry functions is that only `vcd_vapp_vm` a parent vApp lock.
 //
-// "Empty VMs" in this context are VMs which are not using template for initial creation.
-//
-// This file contains only main Terraform CRUD functions. Any additional helper functions are to be stored in
-// `resource_vcd_vapp_vm_tools.go` so that sizes remain manageable.
-
-// The entry point for VM creation is `resourceVcdVAppVmCreate` and `resourceVcdVmCreate` functions
-//
+// * Both of above functions for `vcd_vapp_vm` and `vcd_vm` call `genericResourceVmCreate` which is the main function
+// that drives VM creation. It conditionally splits between 2 more code branches -  either `createVmFromTemplate` or `createVmEmpty`
 //
 
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
@@ -77,7 +68,9 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	return genericVcdVmRead(d, meta, "create")
 }
 
-// genericResourceVmCreate splits code execution for VMs being created from template and empty VMs
+// genericResourceVmCreate does the following:
+// * Executes VM create functions based on the type of VM (standalone or vApp member)
+// * Runs additional customization functions which are
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -109,35 +102,56 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("unknown VM type")
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// This part of code performs any additional operations that should be applied to all 4 VM types
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code performs any additional operations that should be applied to all 4 VM types and could not be
+	// applied during initial create VM API call.
+	// Note. The final call should be VM power management.
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Handle Advanced compute settings CPU and Memory shares, limits and reservation
+	// Such schema fields are processed:
+	// * memory_priority
+	// * memory_priority
+	// * memory_shares
+	// * memory_reservation
+	// * cpu_priority
+	// * cpu_limit
+	// * cpu_shares
+	// * cpu_reservation
 	err = updateAdvancedComputeSettings(d, vm)
 	if err != nil {
 		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
 	}
 
 	// Handle Metadata
+	// Such schema fields are processed:
+	// * metadata
 	err = createOrUpdateMetadata(d, vm, "metadata")
 	if err != nil {
 		return diag.Errorf("error setting metadata: %s", err)
 	}
 
 	// Handle Hardware Virtualization setting (used for hypervisor nesting)
+	// Such schema fields are processed:
+	// * expose_hardware_virtualization
 	err = handleExposeHardwareVirtualization(d, vm)
 	if err != nil {
 		return diag.Errorf("error updating hardware virtualization setting: %s", err)
 	}
 
 	// Handle Guest Properties
+	// Such schema fields are processed:
+	// * guest_properties
 	err = addRemoveGuestProperties(d, vm)
 	if err != nil {
 		return diag.Errorf("error setting guest properties: %s", err)
 	}
 
 	// Handle Guest Customization Section
+	// Such schema fields are processed:
+	// * customization
+	// * computer_name
+	// * name
 	err = updateGuestCustomizationSetting(d, vm)
 	if err != nil {
 		return diag.Errorf("error setting guest customization during creation: %s", err)
@@ -146,25 +160,78 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// Explicitly setting CPU and Memory Hot Add settings
 	// Note. VM Creation bodies allow specifying these values, but they are ignored therefore using an explicit
 	// "/vmCapabilities" API endpoint
+	// Such schema fields are processed:
+	// * cpu_hot_add_enabled
+	// * memory_hot_add_enabled
 	_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 	if err != nil {
 		return diag.Errorf("error setting VM CPU/Memory HotAdd capabilities: %s", err)
 	}
 
 	// Independent disk handling
+	// Such schema fields are processed:
+	// * disk
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return diag.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 	err = attachDetachIndependentDisks(d, *vm, vdc)
 	if err != nil {
-		errAttachedDisk := updateStateOfAttachedIndependentDisks(d, *vm)
-		if errAttachedDisk != nil {
-			dSet(d, "disk", nil)
-			return diag.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
-		}
+		//errAttachedDisk := updateStateOfAttachedIndependentDisks(d, *vm)
+		//if errAttachedDisk != nil {
+		//	dSet(d, "disk", nil)
+		//	return diag.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
+		//}
 		return diag.Errorf("error attaching-detaching  disks when updating resource : %s", err)
 	}
+
+	// Still to fix
+
+	sizingPolicy, _, err := lookupComputePolicy(d, vcdClient)
+	if err != nil {
+		return diag.Errorf("error finding sizing policy: %s", err)
+	}
+	computePolicy := sizingPolicy
+
+	memory, isMemorySet := d.GetOk("memory")
+	isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
+	if isMemoryComingFromSizingPolicy && isMemorySet {
+		logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
+	}
+
+	if !isMemoryComingFromSizingPolicy {
+		err = vm.ChangeMemory(int64(memory.(int)))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	cpus, isCpusSet := d.GetOk("cpus")
+	cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
+	isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
+	if isCpuComingFromSizingPolicy && isCpusSet {
+		logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
+	}
+	if isCpuComingFromSizingPolicy && isCpuCoresSet {
+		logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
+	}
+
+	if !isCpuComingFromSizingPolicy {
+		err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	// THIS IS JUST A READ FUNCTION
+	// Internal disk handling
+	// Such fields are processed:
+	// * internal_disk
+	//err = updateStateOfInternalDisks(d, *vm)
+	//if err != nil {
+	//	dSet(d, "internal_disk", nil)
+	//	log.Printf("error reading internal disks : %s", err)
+	//}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// VM power on handling is the last step, no other VM adjustment operations should be performed after this
@@ -262,11 +329,10 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	}
 
 	// Lookup compute policy
-	sizingPolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	_, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
-	computePolicy := sizingPolicy
 
 	var vm *govcd.VM
 
@@ -395,164 +461,61 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("unknown VM type %s", vmType)
 	}
 
-	// Step 3 set/override some VM properties, which couldn't be set initially
-	////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
-	/// Code from here will be applied to both types of VMs - Standalone and vApp VMs.
-	////////////////////////
+	/// __Only__ template based VMs are addressed here.
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// update existing internal disks in template
-	err = updateTemplateInternalDisks(d, meta, *vm)
-	if err != nil {
-		dSet(d, "override_template_disk", nil)
-		return nil, fmt.Errorf("error managing internal disks : %s", err)
-	} else {
-		// add details of internal disk to state
-		errReadInternalDisk := updateStateOfInternalDisks(d, *vm)
-		if errReadInternalDisk != nil {
-			dSet(d, "internal_disk", nil)
-			log.Printf("error reading interal disks : %s", errReadInternalDisk)
-		}
-	}
-
-	//////////////////// This part is copied from Update to split these operations ////////////////////////
-
-	log.Printf("[DEBUG] [VM create-update] started without lock")
-
+	// Refresh VM to have the latest structure
 	err = vm.Refresh()
 	if err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
-	// log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
-
-	// Ensure CPU/Memory hot add settings are correct
-	// It is not set directly in initial reset body, because API does ignores it
-	//_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
-	//if err != nil {
-	//	return nil, fmt.Errorf("error changing VM capabilities: %s", err)
-	//}
-
-	// Ensure that hypervisor nesting is set as per configuration
-	//{
-	//	task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
-	//	if err != nil {
-	//		return nil, fmt.Errorf("error changing hardware assisted virtualization: %s", err)
-	//	}
-	//
-	//	err = task.WaitTaskCompletion()
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
-
-	memory, isMemorySet := d.GetOk("memory")
-	isMemoryComingFromSizingPolicy := computePolicy != nil && (computePolicy.Memory != nil && !isMemorySet)
-	if isMemoryComingFromSizingPolicy && isMemorySet {
-		logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *computePolicy.Memory))
+	// update existing internal disks in template (it is only applicable to VMs created
+	// Such fields are processed:
+	// * override_template_disk
+	err = updateTemplateInternalDisks(d, meta, *vm)
+	if err != nil {
+		dSet(d, "override_template_disk", nil)
+		return nil, fmt.Errorf("error managing internal disks : %s", err)
 	}
 
-	if !isMemoryComingFromSizingPolicy {
-		err = vm.ChangeMemory(int64(memory.(int)))
-		if err != nil {
-			return nil, err
-		}
+	// OS Type and Hardware version should only be changed if specified. (Only applying to vApp VMs as standalone VMs
+	// always require these fields and set them)
+	// Such fields are processed:
+	// * os_type
+	// * hardware_version
+	err = updateHardwareVersionAndOsType(d, vm)
+	if err != nil {
+		return nil, fmt.Errorf("error updating hardware version and OS type : %s", err)
 	}
-
-	cpus, isCpusSet := d.GetOk("cpus")
-	cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
-	isCpuComingFromSizingPolicy := computePolicy != nil && ((computePolicy.CPUCount != nil && !isCpusSet) || (computePolicy.CoresPerSocket != nil && !isCpuCoresSet))
-	if isCpuComingFromSizingPolicy && isCpusSet {
-		logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *computePolicy.CPUCount))
-	}
-	if isCpuComingFromSizingPolicy && isCpuCoresSet {
-		logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *computePolicy.CoresPerSocket))
-	}
-
-	if !isCpuComingFromSizingPolicy {
-		err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// updating fields of VM spec section
-	if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
-		vmSpecSection := vm.VM.VmSpecSection
-		description := vm.VM.Description
-		if d.HasChange("hardware_version") {
-			vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
-		}
-		if d.HasChange("os_type") {
-			vmSpecSection.OsType = d.Get("os_type").(string)
-		}
-
-		if d.HasChange("description") {
-			description = d.Get("description").(string)
-		}
-
-		_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
-		if err != nil {
-			return nil, fmt.Errorf("error changing VM spec section: %s", err)
-		}
-	}
-
-	//if d.HasChange("disk") {
-	//	err = attachDetachIndependentDisks(d, *vm, vdc)
-	//	if err != nil {
-	//		errAttachedDisk := updateStateOfAttachedIndependentDisks(d, *vm)
-	//		if errAttachedDisk != nil {
-	//			dSet(d, "disk", nil)
-	//			return nil, fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
-	//		}
-	//		return nil, fmt.Errorf("error attaching-detaching  disks when updating resource : %s", err)
-	//	}
-	//}
-
-	// By default, the VM is created in POWERED_OFF state
-	//if d.Get("power_on").(bool) {
-	//	// When customization is requested VM must be un-deployed before starting it
-	//	customizationNeeded := isForcedCustomization(d.Get("customization"))
-	//	if customizationNeeded {
-	//		log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
-	//		err = vm.PowerOnAndForceCustomization()
-	//		if err != nil {
-	//			return nil, fmt.Errorf("failed powering on with customization: %s", err)
-	//		}
-	//	} else {
-	//		task, err := vm.PowerOn()
-	//		if err != nil {
-	//			return nil, fmt.Errorf("error powering on: %s", err)
-	//		}
-	//		err = task.WaitTaskCompletion()
-	//		if err != nil {
-	//			return nil, fmt.Errorf(errorCompletingTask, err)
-	//		}
-	//	}
-	//
-	//}
-	log.Printf("[DEBUG] [VM create-update] finished")
-
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-	//////////////////// End of copied part ////////////////////////
-
-	//if err != nil {
-	//	errAttachedDisk := updateStateOfAttachedIndependentDisks(d, *vm)
-	//	if errAttachedDisk != nil {
-	//		dSet(d, "disk", nil)
-	//		return nil, fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
-	//	}
-	//	return nil, err
-	//}
 
 	return vm, nil
+}
+
+func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error {
+	var err error
+	var osTypeOrHardwareVersionChanged bool
+
+	vmSpecSection := vm.VM.VmSpecSection
+	if hardwareVersion := d.Get("hardware_version").(string); hardwareVersion != "" {
+		vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: hardwareVersion}
+		osTypeOrHardwareVersionChanged = true
+	}
+
+	if osType := d.Get("os_type").(string); osType != "" {
+		vmSpecSection.OsType = osType
+		osTypeOrHardwareVersionChanged = true
+	}
+
+	if osTypeOrHardwareVersionChanged {
+		vm, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
+		if err != nil {
+			return fmt.Errorf("error changing VM spec section: %s", err)
+		}
+	}
+	return nil
 }
 
 func createVmEmpty(d *schema.ResourceData, meta interface{}) (*govcd.VM, error) {
