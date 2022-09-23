@@ -55,7 +55,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+createdVAppTemplateName),
+					testAccCheckVcdVAppTemplateExists(resourceCatalogVappTemplate),
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "name", createdVAppTemplateName),
 					resource.TestCheckResourceAttrPair(datasourceCatalog, "id", resourceCatalogVappTemplate, "catalog_id"),
 
@@ -85,7 +85,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_catalog_vapp_template." + createdVAppTemplateName,
+				ResourceName:      resourceCatalogVappTemplate,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(createdVAppTemplateName),
