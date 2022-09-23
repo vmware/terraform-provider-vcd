@@ -18,14 +18,14 @@ import (
 // where the description is the first data source ID.
 func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	preTestChecks(t)
-	var TestCatalogVappTemplateDS = "TestCatalogVappTemplateDS"
+	createdVAppTemplateName := t.Name()
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
 		"Vdc":             testConfig.VCD.Vdc,
 		"Catalog":         testSuiteCatalogName,
 		"VAppTemplate":    testSuiteCatalogOVAItem,
-		"NewVappTemplate": TestCatalogVappTemplateDS,
+		"NewVappTemplate": createdVAppTemplateName,
 		"OvaPath":         testConfig.Ova.OvaPath,
 		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
 		"Tags":            "catalog",
@@ -50,13 +50,13 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      catalogVAppTemplateDestroyed(testSuiteCatalogName, TestCatalogVappTemplateDS),
+		CheckDestroy:      catalogVAppTemplateDestroyed(testSuiteCatalogName, createdVAppTemplateName),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+TestCatalogVappTemplateDS),
-					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "name", TestCatalogVappTemplateDS),
+					testAccCheckVcdVAppTemplateExists("vcd_catalog_vapp_template."+createdVAppTemplateName),
+					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "name", createdVAppTemplateName),
 					resource.TestCheckResourceAttrPair(datasourceCatalog, "id", resourceCatalogVappTemplate, "catalog_id"),
 
 					// The description of the new catalog item was created using the ID of the catalog item data source
@@ -73,23 +73,22 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key1", "value1"),
 					resource.TestCheckResourceAttr(resourceCatalogVappTemplate, "metadata.key2", "value2"),
 
-					// Check data sources with filter
+					// Check data sources with filter. Not using resourceFieldsEqual here as we'd need to exclude all filtering options by hardcoding the combinations.
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "id", datasourceCatalogVappTemplate1, "id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "id", datasourceCatalogVappTemplate1, "id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "id", , "id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "catalog_id", , "catalog_id"),
-					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "vdc_id", , "vdc_id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "id", resourceCatalogVappTemplate, "id"),
+					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate5, "catalog_id", resourceCatalogVappTemplate, "catalog_id"),
 				),
 			},
 			{
-				ResourceName:      "vcd_catalog_vapp_template." + TestCatalogVappTemplateDS,
+				ResourceName:      "vcd_catalog_vapp_template." + createdVAppTemplateName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgCatalogObject(TestCatalogVappTemplateDS),
+				ImportStateIdFunc: importStateIdOrgCatalogObject(createdVAppTemplateName),
 				// These fields can't be retrieved from vApp Template data
 				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size"},
 			},
