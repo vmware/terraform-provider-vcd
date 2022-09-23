@@ -96,6 +96,16 @@ func takeInt64Pointer(x int64) *int64 {
 	return &x
 }
 
+// getStringAttributeAsPointer returns a pointer to the value of the given attribute from the current resource data.
+// If the attribute is empty, returns a nil pointer.
+func getStringAttributeAsPointer(d *schema.ResourceData, attrName string) *string {
+	attributeValue := d.Get(attrName).(string)
+	if attributeValue == "" {
+		return nil
+	}
+	return &attributeValue
+}
+
 // extractUuid finds an UUID in the input string
 // Returns an empty string if no UUID was found
 func extractUuid(input string) string {
@@ -145,6 +155,28 @@ func extractNamesFromOpenApiReferences(refs []types.OpenApiReference) []string {
 	return resultStrings
 }
 
+// extractIdsFromReferences extracts []string with IDs from []*types.Reference which contains ID and Names
+func extractIdsFromReferences(refs []*types.Reference) []string {
+	resultStrings := make([]string, len(refs))
+	for index := range refs {
+		resultStrings[index] = refs[index].ID
+	}
+
+	return resultStrings
+}
+
+// extractIdsFromVimObjectRefs extracts []string with IDs from []*types.VimObjectRef which contains *types.Reference
+func extractIdsFromVimObjectRefs(refs []*types.VimObjectRef) []string {
+	var resultStrings []string
+	for index := range refs {
+		if refs[index].VimServerRef != nil {
+			resultStrings = append(resultStrings, refs[index].VimServerRef.ID)
+		}
+	}
+
+	return resultStrings
+}
+
 // convertSliceOfStringsToOpenApiReferenceIds converts []string to []types.OpenApiReference by filling
 // types.OpenApiReference.ID fields
 func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiReference {
@@ -154,6 +186,18 @@ func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiRef
 	}
 
 	return resultReferences
+}
+
+// contains returns true if `sliceToSearch` contains `searched`. Returns false otherwise.
+func contains(sliceToSearch []string, searched string) bool {
+	found := false
+	for _, idInSlice := range sliceToSearch {
+		if searched == idInSlice {
+			found = true
+			break
+		}
+	}
+	return found
 }
 
 // MetadataCompatible allows to consider all structs that implement metadata handling to be the same type

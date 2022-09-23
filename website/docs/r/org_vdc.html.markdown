@@ -11,7 +11,7 @@ description: |-
 Provides a VMware Cloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 Requires system administrator privileges.
 
--> **Note:** This resource supports NSX-T and NSX-V based Org Vdcs by providing relevant
+-> **Note:** This resource supports NSX-T and NSX-V based Org VDCs by providing relevant
 `network_pool_name` and `provider_vdc_name`
 
 Supported in provider *v2.2+*
@@ -102,7 +102,7 @@ resource "vcd_org_vdc" "nsxt-vdc" {
 }
 ```
 
-## Example Usage (With VM sizing policies)
+## Example Usage (With VM Sizing Policies)
 
 ```hcl
 resource "vcd_vm_sizing_policy" "size_1" {
@@ -144,8 +144,42 @@ resource "vcd_org_vdc" "my-vdc" {
   description = "The pride of my work"
   org         = "my-org"
   # ...  
-  default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_1.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
+  default_compute_policy_id = vcd_vm_sizing_policy.size_1.id
+  vm_sizing_policy_ids      = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
+}
+```
+
+## Example Usage (With VM Placement Policies)
+
+```hcl
+data "vcd_provider_vdc" "pvdc" {
+  name = "my-pvdc"
+}
+
+# This VM group needs to exist in the backing vSphere
+data "vcd_vm_group" "vmgroup" {
+  name            = "vmware-licensed-vms"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
+resource "vcd_vm_placement_policy" "new-placement-policy" {
+  name            = "place-in-vmware-licensed"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+  vm_group_ids    = [data.vcd_vm_group.vmgroup.id]
+}
+
+data "vcd_vm_placement_policy" "existing-policy" {
+  name            = "place-in-company-licensed"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
+resource "vcd_org_vdc" "my-vdc" {
+  name        = "my-vdc"
+  description = "The pride of my work"
+  org         = "my-org"
+  # ...  
+  default_compute_policy_id = data.vcd_vm_placement_policy.existing-policy.id
+  vm_placement_policy_ids   = [data.vcd_vm_placement_policy.existing-policy.id, vcd_vm_placement_policy.new-placement-policy.id]
 }
 ```
 
@@ -163,15 +197,15 @@ The following arguments are supported:
     * AllocationVApp ("Pay as you go")
     * AllocationPool ("Allocation pool")
     * ReservationPool ("Reservation pool")
-    * Flex ("Flex") (*v2.7+*, *vCD 9.7+*)
+    * Flex ("Flex") (*v2.7+*, *VCD 9.7+*)
 * `compute_capacity` - (Required) The compute capacity allocated to this VDC.  See [Compute Capacity](#computecapacity) below for details.
 * `nic_quota` - (Optional) Maximum number of virtual NICs allowed in this VDC. Defaults to 0, which specifies an unlimited number.
 * `network_quota` - (Optional) Maximum number of network objects that can be deployed in this VDC. Defaults to 0, which means no networks can be deployed.
 * `vm_quota` - (Optional) The maximum number of VMs that can be created in this VDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.
 * `enabled` - (Optional) True if this VDC is enabled for use by the organization VDCs. Default is true.
 * `storage_profile` - (Required, System Admin) Storage profiles supported by this VDC.  See [Storage Profile](#storageprofile) below for details.
-* `memory_guaranteed` - (Optional, System Admin) Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when `allocation_model` is AllocationVApp, AllocationPool or Flex. When Allocation model is AllocationPool minimum value is 0.2. If left empty, vCD sets a value.
-* `cpu_guaranteed` - (Optional, System Admin) Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when `allocation_model` is AllocationVApp, AllocationPool or Flex. If left empty, vCD sets a value.
+* `memory_guaranteed` - (Optional, System Admin) Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when `allocation_model` is AllocationVApp, AllocationPool or Flex. When Allocation model is AllocationPool minimum value is 0.2. If left empty, VCD sets a value.
+* `cpu_guaranteed` - (Optional, System Admin) Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when `allocation_model` is AllocationVApp, AllocationPool or Flex. If left empty, VCD sets a value.
 * `cpu_speed` - (Optional, System Admin) Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when `allocation_model` is AllocationVApp, AllocationPool or Flex, and may not be less than 256 MHz. Defaults to 1000 MHz if value isn't provided.
 * `metadata` - (Optional; *v2.4+*) Key value map of metadata to assign to this VDC
 * `enable_thin_provisioning` - (Optional, System Admin) Boolean to request thin provisioning. Request will be honored only if the underlying data store supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.
@@ -179,12 +213,14 @@ The following arguments are supported:
 * `network_pool_name` - (Optional, System Admin) Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.
 * `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the `allocation_model` is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.
 * `enable_vm_discovery` - (Optional) If true, discovery of vCenter VMs is enabled for resource pools backing this VDC. If false, discovery is disabled. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
-* `elasticity` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should be elastic. Required with the Flex allocation model.
-* `include_vm_memory_overhead` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
+* `elasticity` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should be elastic. Required with the Flex allocation model.
+* `include_vm_memory_overhead` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
 * `delete_force` - (Required) When destroying use `delete_force=True` to remove a VDC and any objects it contains, regardless of their state.
 * `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the VDC and any objects it contains that are in a state that normally allows removal.
-* `default_vm_sizing_policy_id` - (Optional, *v3.0+*, *vCD 10.0+*) Set of VM sizing policy IDs. This field requires `vm_sizing_policy_ids` to be configured together. 
-* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Default VM sizing policy ID. This field requires `default_vm_sizing_policy_id` to be configured together.
+* `default_compute_policy_id` - (Optional, *v3.8+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy.
+* `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
+* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *VCD 10.2+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `vm_placement_policy_ids` - (Optional, *v3.8+*, *VCD 10.2+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 
 <a id="storageprofile"></a>
 ## Storage Profile
