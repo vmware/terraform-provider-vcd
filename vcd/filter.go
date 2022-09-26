@@ -96,7 +96,7 @@ var (
 	}
 )
 
-// To see a full filter block, look at datasource_vcd_catalog.go or datasource_vcd_catalog_vapp_template.go
+// To see a full filter block, look at datasource_vcd_catalog.go or datasource_vcd_catalog_item.go
 
 // buildMetadataCriteria expands the values from a metadata block
 // and returns a set of formal metadata filter definitions
