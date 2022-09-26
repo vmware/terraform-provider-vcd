@@ -32,7 +32,6 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 		"OvaPath":          testConfig.Ova.OvaPath,
 		"OvfUrl":           testConfig.Ova.OvfUrl,
 		"UploadPieceSize":  testConfig.Ova.UploadPieceSize,
-		"Tags":             "catalog",
 	}
 	createConfigHcl := templateFill(testAccCheckVcdVAppTemplateCreate, params)
 
