@@ -25,7 +25,7 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 			"vdc_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "ID of the VDC to which the vApp Template belongs. Can't be used if a specific Catalog is set",
+				Description:  "ID of the VDC to which the vApp Template belongs. Can't be used if a specific Catalog identifier is set",
 				ExactlyOneOf: []string{"catalog_id", "vdc_id"},
 			},
 			"name": {

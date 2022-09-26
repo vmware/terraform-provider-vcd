@@ -13,8 +13,6 @@ data within other resources or data sources.
 
 Supported in provider *v2.5+*
 
-~> This resource has been deprecated in **v3.8.0** in favor of **[vcd_catalog_vapp_template](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template)**
-
 ## Example Usage
 
 ```hcl

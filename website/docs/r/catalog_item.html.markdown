@@ -12,8 +12,6 @@ Provides a VMware Cloud Director catalog item resource. This can be used to uplo
 
 Supported in provider *v2.0+*
 
-~> This resource has been deprecated in **v3.8.0** in favor of **[vcd_catalog_vapp_template](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template)**
-
 ## Example Usage
 
 ```hcl
