@@ -73,7 +73,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority", params["MemoryPriorityType"].(string)),
@@ -97,7 +97,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 			},
 			{
 				Config: configText1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority", params["MemoryPriorityTypeUpdate"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_shares", params["MemorySharesUpdate"].(string)),
@@ -120,7 +120,7 @@ func TestAccVcdVmAdvancedComputeProperties(t *testing.T) {
 			},
 			{
 				Config: configText2,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_priority", params["MemoryPriorityTypeUpdate2"].(string)),
 					resource.TestMatchResourceAttr("vcd_vm."+standaloneVmName, "memory_shares", regexp.MustCompile(`^\d+$`)),

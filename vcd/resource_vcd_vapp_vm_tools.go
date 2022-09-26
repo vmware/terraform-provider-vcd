@@ -683,6 +683,13 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 			return fmt.Errorf("error updating advanced compute settings: %s", err)
 		}
 	}
+
+	// Refresh VM to ensure that latest VM structure is used in other function calls
+	err := vm.Refresh()
+	if err != nil {
+		return fmt.Errorf("error refreshing VM after updating advanced compute settings: %s", err)
+	}
+
 	return nil
 }
 

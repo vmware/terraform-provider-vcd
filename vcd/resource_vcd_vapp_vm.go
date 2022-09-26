@@ -37,11 +37,24 @@ func resourceVcdVAppVm() *schema.Resource {
 }
 
 // Maintenance guide for VM
+//
+// VM codebase grew to be quite complicated because of a few reasons:
+// * It is a dated resource with many API quirks
+// * There are 4 different go-vcloud-director SDK types for creating VM
+//   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
+//   * `types.ReComposeVAppParams` (vApp VM from template)
+//   * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
+//   * `types.CreateVmParams` (Empty Standalone VM)
+//
+// To handle VM creation as easy as possible the following approach is used:
 // * Create function for `vcd_vapp_vm` is `resourceVcdVAppVmCreate`, while `vcd_vm` uses `resourceVcdStandaloneVmCreate`.
 // The difference between these entry functions is that only `vcd_vapp_vm` a parent vApp lock.
 //
 // * Both of above functions for `vcd_vapp_vm` and `vcd_vm` call `genericResourceVmCreate` which is the main function
-// that drives VM creation. It conditionally splits between 2 more code branches -  either `createVmFromTemplate` or `createVmEmpty`
+// that drives VM creation. It conditionally splits between 2 more code branches - either `createVmFromTemplate` or `createVmEmpty`
+//
+//
+//
 //
 
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
@@ -70,7 +83,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 
 // genericResourceVmCreate does the following:
 // * Executes VM create functions based on the type of VM (standalone or vApp member)
-// * Runs additional customization functions which are
+// * Runs additional customization functions which are common for all types of VMs
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -106,22 +119,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// This part of code performs any additional operations that should be applied to all 4 VM types and could not be
 	// applied during initial create VM API call.
 	// Note. The final call should be VM power management.
+	//
+	// IMPORTANT. If any of the functions change VM structure, be sure to refresh `vm` structure so that the next
+	// function does not apply old values.
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// Handle Advanced compute settings CPU and Memory shares, limits and reservation
-	// Such schema fields are processed:
-	// * memory_priority
-	// * memory_priority
-	// * memory_shares
-	// * memory_reservation
-	// * cpu_priority
-	// * cpu_limit
-	// * cpu_shares
-	// * cpu_reservation
-	err = updateAdvancedComputeSettings(d, vm)
-	if err != nil {
-		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
-	}
 
 	// Handle Metadata
 	// Such schema fields are processed:
@@ -221,6 +222,21 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	}
+
+	// Handle Advanced compute settings CPU and Memory shares, limits and reservation
+	// Such schema fields are processed:
+	// * memory_priority
+	// * memory_limit
+	// * memory_shares
+	// * memory_reservation
+	// * cpu_priority
+	// * cpu_limit
+	// * cpu_shares
+	// * cpu_reservation
+	err = updateAdvancedComputeSettings(d, vm)
+	if err != nil {
+		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
 	}
 
 	// THIS IS JUST A READ FUNCTION
@@ -395,6 +411,12 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 		dSet(d, "vapp_name", vapp.VApp.Name)
 		dSet(d, "vm_type", string(standaloneVmType))
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
+		/// __Explicitly__ template based Standalone VMs are addressed here.
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	case vappVmType:
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
@@ -457,6 +479,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		if err != nil {
 			return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
 		}
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
+		/// __Explicitly__ template based vApp VMs are addressed here.
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	default:
 		return nil, fmt.Errorf("unknown VM type %s", vmType)
 	}
@@ -689,6 +716,11 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}) (*govcd.VM, error) 
 	}
 	util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 	dSet(d, "vapp_name", vapp.VApp.Name)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
+	/// __Only__ empty VMs are addressed here.
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Due to the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup network configuration with update. Fixed only 10.1 version.
 	networkConnectionSection, err := networksToConfig(d, vapp)
