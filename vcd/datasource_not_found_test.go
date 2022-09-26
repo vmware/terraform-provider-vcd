@@ -143,6 +143,12 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		if dataSourceName == "vcd_org_ldap" && mandatoryFields[fieldIndex] == "org_id" {
+			// injecting fake Org ID
+			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
+			return templateFields
+		}
+
 		// vcd_portgroup requires portgroup  type
 		if dataSourceName == "vcd_portgroup" && mandatoryFields[fieldIndex] == "type" {
 			templateFields = templateFields + `type = "` + testConfig.Networking.ExternalNetworkPortGroupType + `"` + "\n"
@@ -207,6 +213,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			// Invalid fields which are required for some resources for search (usually they are used instead of `name`)
 		case "vdc_group_id":
 			templateFields = templateFields + `vdc_group_id = "urn:vcloud:vdcGroup:c19ec5b1-3403-4d00-b414-9da50066dc1e"` + "\n"
+		case "provider_vdc_id":
+			templateFields = templateFields + `provider_vdc_id = "urn:vcloud:providervdc:8453a2e2-1432-4e67-a312-8e713495eabc"` + "\n"
 		case "rule_id":
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":

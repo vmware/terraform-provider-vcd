@@ -65,7 +65,9 @@
       "name": "nsxTPvdc1",
       "storageProfile": "Must-already-exist-storage-profile-name",
       "storageProfile2": "Must-already-exist-storage-profile-name2",
-      "networkPool": "NSX-T Overlay 1"
+      "networkPool": "NSX-T Overlay 1",
+      "//": "A VM Group that needs to exist in the backing vSphere. This VM Group can be used to create VM Placement Policies.",
+      "placementPolicyVmGroup": "testVmGroup"
     }
   },
   "networking": {
@@ -93,7 +95,10 @@
     },
     "vcenter" : "vC1",
     "externalNetworkPortGroup": "ForTestingPG",
-    "externalNetworkPortGroupType": "DV_PORTGROUP"
+    "externalNetworkPortGroupType": "DV_PORTGROUP",
+    "//": "This should be a LDAP server",
+    "//": "configured according to docker testing image https://github.com/rroemhild/docker-test-openldap",
+    "ldapServer": "IP-of-test-LDAP-server"
   },
   "nsxt": {
     "//": "NSX-T manager name to be used as defined in VCD",
@@ -142,11 +147,6 @@
     "mediaName" : "linuxOS",
     "//": "'mediaName' media is stored in NSX-V VDC backed storage profile while 'nsxtBackedMediaName' is stored in NSX-T VDC Backed storage profile",
     "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog"
-  },
-  "misc": {
-    "//": "ldapContainer can be used to pull default LDAP testing container 'rroemhild/test-openldap' from a local",
-    "//": "Docker registry. This can help to overcome Docker registry throttling",
-    "ldapContainer": ""
   },
   "certificates": {
     "//": "relative path to pem file",
