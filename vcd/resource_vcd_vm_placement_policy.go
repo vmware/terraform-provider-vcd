@@ -7,6 +7,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -365,7 +366,7 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 	computePolicy, err = vcdClient.GetVdcComputePolicyV2ById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==false;isVgpuPolicy==false", policyId))
+		queryParams.Add("filter", fmt.Sprintf("%sname==%s;isSizingOnly==false", getVgpuFilterToPrepend(vcdClient, false), policyId))
 		computePolicies, err := vcdClient.GetAllVdcComputePoliciesV2(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM Placement Policy %s", policyId)
@@ -438,4 +439,14 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
 	return nil
+}
+
+// getVgpuFilterToPrepend gets a vGPU Policy filter set to `isVgpu` if API version of target VCD is greater than 36.0.
+// The semicolon is placed to the right so the returned filter can be prepended to an existing one.
+// Returns an empty string otherwise.
+func getVgpuFilterToPrepend(vcdClient *VCDClient, isVgpu bool) string {
+	if vcdClient.Client.APIVCDMaxVersionIs("> 36.0") {
+			return fmt.Sprintf("isVgpuPolicy==%s;", strconv.FormatBool(isVgpu))
+	}
+	return ""
 }

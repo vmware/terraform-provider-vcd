@@ -440,7 +440,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	dSet(d, "default_compute_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
 	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePoliciesV2(url.Values{
-		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"}, // Filtering out vGPU Policies as there's no attribute support yet.
+		"filter": []string{fmt.Sprintf("%spolicyType==VdcVmPolicy", getVgpuFilterToPrepend(vcdClient,false))}, // Filtering out vGPU Policies as there's no attribute support yet.
 	})
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get assigned VM Compute policies")
@@ -847,7 +847,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 		return nil
 	}
 
-	err = changeComputePoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
+	err = changeComputePoliciesAndDefaultId(d, vcdClient, vcdComputePolicyHref.String(), vdc)
 	if err != nil {
 		return err
 	}
@@ -857,7 +857,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 // changeComputePoliciesAndDefaultId handles Compute policies. Created VDC generates default Compute policy which requires additional handling.
 // Assigning and setting default Compute policies requires different API calls. Default policy can't be removed, as result
 // we approach this with adding new policies, set new default, remove all old policies.
-func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
+func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdClient *VCDClient, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
 	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
 	isDefaultPolicyChanged := d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id")
 	if !arePoliciesChanged && !isDefaultPolicyChanged {
@@ -886,7 +886,7 @@ func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyH
 	}
 
 	existingPolicies, err := vdc.GetAllAssignedVdcComputePoliciesV2(url.Values{
-		"filter": []string{"isVgpuPolicy==false;policyType==VdcVmPolicy"}, // Filtering out vGPU Policies as there's no attribute support yet.
+		"filter": []string{fmt.Sprintf("%spolicyType==VdcVmPolicy", getVgpuFilterToPrepend(vcdClient, false))}, // Filtering out vGPU Policies as there's no attribute support yet.
 	})
 	if err != nil {
 		return fmt.Errorf("error getting Compute Policies. %s", err)
@@ -976,7 +976,7 @@ func addAssignedComputePolicies(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 	}
 
-	err = changeComputePoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
+	err = changeComputePoliciesAndDefaultId(d, nil, vcdComputePolicyHref.String(), vdc)
 	if err != nil {
 		return err
 	}
