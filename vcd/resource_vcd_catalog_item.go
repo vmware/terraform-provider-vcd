@@ -13,10 +13,10 @@ import (
 
 func resourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
-		CreateContext:      resourceVcdCatalogItemCreate,
-		DeleteContext:      resourceVcdCatalogItemDelete,
-		ReadContext:        resourceVcdCatalogItemRead,
-		UpdateContext:      resourceVcdCatalogItemUpdate,
+		CreateContext: resourceVcdCatalogItemCreate,
+		DeleteContext: resourceVcdCatalogItemDelete,
+		ReadContext:   resourceVcdCatalogItemRead,
+		UpdateContext: resourceVcdCatalogItemUpdate,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdCatalogItemImport,
 		},

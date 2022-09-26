@@ -8,7 +8,7 @@ import (
 
 func datasourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:        dataSourceVcdCatalogItemRead,
+		ReadContext: dataSourceVcdCatalogItemRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
