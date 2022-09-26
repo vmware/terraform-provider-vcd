@@ -537,7 +537,7 @@ func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error 
 	}
 
 	if osTypeOrHardwareVersionChanged {
-		vm, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
+		_, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
 		if err != nil {
 			return fmt.Errorf("error changing VM spec section: %s", err)
 		}
