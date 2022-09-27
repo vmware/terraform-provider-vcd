@@ -96,7 +96,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttrPair(resourceVAppTemplateFromUrl, "vdc_id", datasourceVdc, "id"),
-					resource.TestCheckResourceAttrSet(resourceVAppTemplate, "vm_names.0"),
+					resource.TestCheckResourceAttrSet(resourceVAppTemplateFromUrl, "vm_names.0"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
@@ -110,7 +110,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttrPair(resourceVAppTemplateFromUrl, "vdc_id", datasourceVdc, "id"),
-					resource.TestCheckResourceAttrSet(resourceVAppTemplate, "vm_names.0"),
+					resource.TestCheckResourceAttrSet(resourceVAppTemplateFromUrl, "vm_names.0"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
 				),
