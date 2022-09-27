@@ -453,8 +453,8 @@ func getVgpuFilterToPrepend(vcdClient *VCDClient, isVgpu bool) string {
 }
 
 // getFriendlyErrorIfVmPlacementPolicyAlreadyExists is intended to be used when a VM Placement Policy already exists and the provider
-// tries to create another one with the same name. When this happens, VCD discloses a lot of unnecessary information to the user,
-// so this function simplifies the message.
+// tries to create another one with the same name. When this happens, VCD discloses a lot of unnecessary information to the user that is
+// hard to read and understand, so this function simplifies the message.
 // Note: This function should not be needed anymore once VCD 10.4.0 is discontinued.
 func getFriendlyErrorIfVmPlacementPolicyAlreadyExists(vmPlacementPolicyName string, err error) error {
 	if err != nil && strings.Contains(err.Error(), "already exists") {
