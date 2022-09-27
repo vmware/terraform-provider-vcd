@@ -107,8 +107,8 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 
 	createdVmSizingPolicy, err := vcdClient.CreateVdcComputePolicyV2(computePolicy)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating VM Placement Policy: %s", err)
-		return diag.Errorf("error creating VM Placement Policy: %s", err)
+		log.Printf("[DEBUG] Error creating VM Placement Policy: %s", getFriendlyErrorIfVmPlacementPolicyAlreadyExists(computePolicy.Name, err))
+		return diag.Errorf("error creating VM Placement Policy: %s", getFriendlyErrorIfVmPlacementPolicyAlreadyExists(computePolicy.Name, err))
 	}
 
 	d.SetId(createdVmSizingPolicy.VdcComputePolicyV2.ID)
@@ -444,10 +444,21 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 // getVgpuFilterToPrepend gets a vGPU Policy filter set to `isVgpu` if API version of target VCD is greater than 36.2 (VCD 10.3.2).
 // The semicolon is placed to the right so the returned filter can be prepended to an existing one.
 // Returns an empty string otherwise.
-// Note: This function should be not used anymore once VCD 10.3.0 and 10.3.1 are discontinued.
+// Note: This function should not be needed anymore once VCD 10.3.0 and 10.3.1 are discontinued.
 func getVgpuFilterToPrepend(vcdClient *VCDClient, isVgpu bool) string {
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.2") {
 		return fmt.Sprintf("isVgpuPolicy==%s;", strconv.FormatBool(isVgpu))
 	}
 	return ""
+}
+
+// getFriendlyErrorIfVmPlacementPolicyAlreadyExists is intended to be used when a VM Placement Policy already exists and the provider
+// tries to create another one with the same name. When this happens, VCD discloses a lot of unnecessary information to the user,
+// so this function simplifies the message.
+// Note: This function should not be needed anymore once VCD 10.4.0 is discontinued.
+func getFriendlyErrorIfVmPlacementPolicyAlreadyExists(vmPlacementPolicyName string, err error) error {
+	if err != nil && strings.Contains(err.Error(), "already exists") {
+		return fmt.Errorf("VM Placement Policy with name '%s' already exists", vmPlacementPolicyName)
+	}
+	return err
 }
