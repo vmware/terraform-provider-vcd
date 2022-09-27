@@ -444,9 +444,10 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 // getVgpuFilterToPrepend gets a vGPU Policy filter set to `isVgpu` if API version of target VCD is greater than 36.2 (VCD 10.3.2).
 // The semicolon is placed to the right so the returned filter can be prepended to an existing one.
 // Returns an empty string otherwise.
+// Note: This function should be not used anymore once VCD 10.3.0 and 10.3.1 are discontinued.
 func getVgpuFilterToPrepend(vcdClient *VCDClient, isVgpu bool) string {
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.2") {
-			return fmt.Sprintf("isVgpuPolicy==%s;", strconv.FormatBool(isVgpu))
+		return fmt.Sprintf("isVgpuPolicy==%s;", strconv.FormatBool(isVgpu))
 	}
 	return ""
 }
