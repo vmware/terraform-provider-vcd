@@ -123,6 +123,14 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				// These fields can't be retrieved from vApp Template data
 				ImportStateVerifyIgnore: []string{"ovf_url", "ova_path", "upload_piece_size"},
 			},
+			{
+				ResourceName:      resourceVAppTemplateFromUrl,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(vAppTemplateFromUrlName + "Updated"),
+				// These fields can't be retrieved from vApp Template data
+				ImportStateVerifyIgnore: []string{"ovf_url", "ova_path", "upload_piece_size"},
+			},
 		},
 	})
 	postTestChecks(t)

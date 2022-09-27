@@ -269,22 +269,24 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 
 // Imports a vApp Template into Terraform state
 // This function task is to get the data from VCD and fill the resource data container
-// Expects the d.ID() to be a path to the resource made of org_name.catalog_name.vapp_template_name
+// Expects the d.ID() to be a path to the resource by using a Catalog like org_name.catalog_name.vapp_template_name
+// or a VDC like org_name.vdc_name.vapp_template_name
 //
 // Example import path (id): myOrg1.myCatalog2.myvAppTemplate3
+// Example import path (id): myOrg1.myVdc2.myvAppTemplate3
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog_name.vapp_template_name")
 	}
-	orgName, catalogName, vAppTemplateName := resourceURI[0], resourceURI[1], resourceURI[2]
+	orgName, catalogOrVdcName, vAppTemplateName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	if orgName == "" {
 		return nil, fmt.Errorf("import: empty Org name provided")
 	}
-	if catalogName == "" {
-		return nil, fmt.Errorf("import: empty Catalog name provided")
+	if catalogOrVdcName == "" {
+		return nil, fmt.Errorf("import: empty Catalog or VDC name provided")
 	}
 	if vAppTemplateName == "" {
 		return nil, fmt.Errorf("import: empty vApp Template name provided")
@@ -296,20 +298,29 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
 	}
 
-	catalog, err := org.GetCatalogByName(catalogName, false)
+	catalog, err := org.GetCatalogByName(catalogOrVdcName, false)
+	var vdc *govcd.Vdc
 	if err != nil {
-		return nil, govcd.ErrorEntityNotFound
-	}
+		vdc, err = org.GetVDCByName(catalogOrVdcName, false)
+		if err != nil {
+			return nil, govcd.ErrorEntityNotFound
+		}
 
-	vAppTemplate, err := catalog.GetVAppTemplateByName(vAppTemplateName)
+	}
+	var vAppTemplate *govcd.VAppTemplate
+	if vdc != nil {
+		vAppTemplate, err = vdc.GetVAppTemplateByName(vAppTemplateName)
+		dSet(d, "vdc_id", vdc.Vdc.ID)
+	} else {
+		vAppTemplate, err = catalog.GetVAppTemplateByName(vAppTemplateName)
+		dSet(d, "catalog_id", catalog.Catalog.ID)
+	}
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "catalog_id", catalog.Catalog.ID)
 	dSet(d, "name", vAppTemplate.VAppTemplate.Name)
-	dSet(d, "description", vAppTemplate.VAppTemplate.Description)
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
 	return []*schema.ResourceData{d}, nil

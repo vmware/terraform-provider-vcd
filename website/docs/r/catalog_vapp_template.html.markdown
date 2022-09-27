@@ -84,6 +84,13 @@ You can import such vApp Template into terraform state using this command
 terraform import vcd_catalog_vapp_template.my-vapp-template my-org.my-catalog.my-vapp-template
 ```
 
+You can also import a vApp Template using a VDC name instead of a Catalog name:
+
+```
+terraform import vcd_catalog_vapp_template.my-vapp-template my-org.my-vdc.my-vapp-template
+```
+
+
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 [docs-import]:https://www.terraform.io/docs/import/
