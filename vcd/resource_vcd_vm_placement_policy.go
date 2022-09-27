@@ -452,6 +452,18 @@ func getVgpuFilterToPrepend(vcdClient *VCDClient, isVgpu bool) string {
 	return ""
 }
 
+// getVgpuFilter gets a vGPU Policy filter set to `isVgpu` if API version of target VCD is greater than 36.2 (VCD 10.3.2).
+// The filter option is returned WITHOUT any semicolon.
+// Returns an empty string otherwise.
+// Note: This function should not be needed anymore once VCD 10.3.0 and 10.3.1 are discontinued.
+func getVgpuFilter(vcdClient *VCDClient, isVgpu bool) string {
+	vgpuFilterToPrepend := getVgpuFilterToPrepend(vcdClient, isVgpu)
+	if vgpuFilterToPrepend != "" {
+		return vgpuFilterToPrepend[:len(vgpuFilterToPrepend)-1] // Removes semicolon to the right
+	}
+	return ""
+}
+
 // getFriendlyErrorIfVmPlacementPolicyAlreadyExists is intended to be used when a VM Placement Policy already exists and the provider
 // tries to create another one with the same name. When this happens, VCD discloses a lot of unnecessary information to the user that is
 // hard to read and understand, so this function simplifies the message.
