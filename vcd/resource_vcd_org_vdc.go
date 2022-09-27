@@ -976,7 +976,7 @@ func addAssignedComputePolicies(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 	}
 
-	err = changeComputePoliciesAndDefaultId(d, nil, vcdComputePolicyHref.String(), vdc)
+	err = changeComputePoliciesAndDefaultId(d, vcdClient, vcdComputePolicyHref.String(), vdc)
 	if err != nil {
 		return err
 	}
