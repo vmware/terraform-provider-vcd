@@ -48,6 +48,14 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs from the metadata of the vApp template",
 			},
+			"vm_names": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed:    true,
+				Description: "Set of VM names within the vApp template",
+			},
 			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,

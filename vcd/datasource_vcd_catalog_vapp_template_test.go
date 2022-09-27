@@ -54,19 +54,23 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 					// Check that the attributes from the retrieved vApp Template match the related elements
 					resource.TestCheckResourceAttrPair(datasourceCatalog, "id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceVdc, "id", datasourceCatalogVappTemplate1, "vdc_id"),
+					resource.TestCheckResourceAttrSet(datasourceCatalogVappTemplate1, "vm_names.0"),
 
 					// Check both data sources fetched by VDC and Catalog ID are equal
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate1, "id", datasourceCatalogVappTemplate2, "id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate1, "catalog_id", datasourceCatalogVappTemplate2, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate1, "vdc_id", datasourceCatalogVappTemplate2, "vdc_id"),
+					resource.TestCheckResourceAttrSet(datasourceCatalogVappTemplate2, "vm_names.0"),
 
 					// Check data sources with filter. Not using resourceFieldsEqual here as we'd need to exclude all filtering options by hardcoding the combinations.
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "id", datasourceCatalogVappTemplate1, "id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate3, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
+					resource.TestCheckResourceAttrSet(datasourceCatalogVappTemplate3, "vm_names.0"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "id", datasourceCatalogVappTemplate1, "id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "catalog_id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceCatalogVappTemplate4, "vdc_id", datasourceCatalogVappTemplate1, "vdc_id"),
+					resource.TestCheckResourceAttrSet(datasourceCatalogVappTemplate4, "vm_names.0"),
 				),
 			},
 		},

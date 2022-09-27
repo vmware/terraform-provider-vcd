@@ -56,6 +56,14 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "Timestamp of when the vApp Template was created",
 			},
+			"vm_names": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed:    true,
+				Description: "Set of VM names within the vApp template",
+			},
 			"ova_path": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -183,6 +191,18 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the vApp Template: %s", err)
 	}
+
+	var vmNames []string
+	if vAppTemplate.VAppTemplate.Children != nil {
+		for _, vm := range vAppTemplate.VAppTemplate.Children.VM {
+			vmNames = append(vmNames, vm.Name)
+		}
+	}
+	err = d.Set("vm_names", vmNames)
+	if err != nil {
+		diag.Errorf("Unable to set attribute 'vm_names' for the vApp Template: %s", err)
+	}
+
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 	return nil
 }
