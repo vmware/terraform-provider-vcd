@@ -91,7 +91,8 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-* `description` - vApp Template description.
+* `description` - vApp Template description
+* `vm_names` - Set of VM names within the vApp template
 * `metadata` - Key value map of metadata for the associated vApp template.
 
 ## Filter arguments

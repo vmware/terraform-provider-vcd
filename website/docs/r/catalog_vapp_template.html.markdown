@@ -53,6 +53,7 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `vdc_id` - The VDC ID to which this vApp Template belongs
+* `vm_names` - Set of VM names within the vApp template
 * `created` - Timestamp of when the vApp Template was created
 
 ## Importing
