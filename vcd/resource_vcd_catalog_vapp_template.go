@@ -34,6 +34,11 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				ForceNew:    true,
 				Description: "ID of the Catalog where to upload the OVA file",
 			},
+			"vdc_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the VDC to which the vApp Template belongs",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -115,7 +120,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	err = createOrUpdateMetadata(d, vAppTemplate, "metadata")
-	if diagError != nil {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -142,35 +147,32 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	dSet(d, "name", vAppTemplate.VAppTemplate.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", vAppTemplate.VAppTemplate.Description)
-	// Data source has either catalog_id or vdc_id empty
-	if origin == "datasource" {
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrg, err)
-		}
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf(errorRetrievingOrg, err)
+	}
 
-		_, isCatalogIdSet := d.GetOk("catalog_id")
-		if !isCatalogIdSet {
-			catalogName, err := vAppTemplate.GetCatalogName()
-			if err != nil {
-				return diag.Errorf("error retrieving the Catalog name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
-			}
-			catalog, err := adminOrg.GetCatalogByName(catalogName, false)
-			if err != nil {
-				return diag.Errorf("error retrieving Catalog from vApp Template with name %s: %s", vAppTemplate.VAppTemplate.Name, err)
-			}
-			dSet(d, "catalog_id", catalog.Catalog.ID)
-		} else {
-			vdcName, err := vAppTemplate.GetVdcName()
-			if err != nil {
-				return diag.Errorf("error retrieving the VDC name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
-			}
-			vdc, err := adminOrg.GetVDCByName(vdcName, false)
-			if err != nil {
-				return diag.Errorf("error retrieving the VDC to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
-			}
-			dSet(d, "vdc_id", vdc.Vdc.ID)
+	_, isCatalogIdSet := d.GetOk("catalog_id")
+	if !isCatalogIdSet { // This can only happen in the data source.
+		catalogName, err := vAppTemplate.GetCatalogName()
+		if err != nil {
+			return diag.Errorf("error retrieving the Catalog name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
 		}
+		catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+		if err != nil {
+			return diag.Errorf("error retrieving Catalog from vApp Template with name %s: %s", vAppTemplate.VAppTemplate.Name, err)
+		}
+		dSet(d, "catalog_id", catalog.Catalog.ID)
+	} else {
+		vdcName, err := vAppTemplate.GetVdcName()
+		if err != nil {
+			return diag.Errorf("error retrieving the VDC name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(vdcName, false)
+		if err != nil {
+			return diag.Errorf("error retrieving the VDC to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
+		}
+		dSet(d, "vdc_id", vdc.Vdc.ID)
 	}
 
 	metadata, err := vAppTemplate.GetMetadata()

@@ -26,6 +26,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
+		"Vdc":				testConfig.VCD.Vdc, // TODO: Use NSX-T VDC by default
 		"Catalog":          testSuiteCatalogName,
 		"VAppTemplateName": vAppTemplateName,
 		"Description":      vAppTemplateDescription,
@@ -56,6 +57,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 
 	resourceVAppTemplate := "vcd_catalog_vapp_template." + vAppTemplateName
 	resourceVAppTemplateFromUrl := "vcd_catalog_vapp_template." + vAppTemplateFromUrlName
+	datasourceVdc := "data.vcd_org_vdc."+params["Vdc"].(string)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
@@ -65,60 +67,48 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 				Config: createConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "name", vAppTemplateName),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "description", vAppTemplateDescription),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "name", vAppTemplateName),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrPair(resourceVAppTemplate, "vdc_id", datasourceVdc, "id"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
 				),
 			},
 			{
 				Config: updateConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplate),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "name", vAppTemplateName+"Updated"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "description", vAppTemplateDescription+"Updated"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2 v2"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplate, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "name", vAppTemplateName+"Updated"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "description", vAppTemplateDescription+"Updated"),
+					resource.TestCheckResourceAttrPair(resourceVAppTemplate, "vdc_id", datasourceVdc, "id"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2 v2"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
 				),
 			},
 			{
 				Config: createWithUrlConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName),
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+					resource.TestCheckResourceAttrPair(resourceVAppTemplateFromUrl, "vdc_id", datasourceVdc, "id"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
 				),
 			},
 			{
 				Config: updateWithUrlConfigHcl,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppTemplateExists(resourceVAppTemplateFromUrl),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName+"Updated"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "name", vAppTemplateFromUrlName+"Updated"),
 					// FIXME: Due to a bug in VCD, description is overridden by the present in the OVA
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
-					resource.TestCheckResourceAttr(
-						resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
+					resource.TestCheckResourceAttrPair(resourceVAppTemplateFromUrl, "vdc_id", datasourceVdc, "id"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
 				),
 			},
 			{
@@ -214,6 +204,11 @@ data "vcd_catalog" "{{.Catalog}}" {
   name = "{{.Catalog}}"
 }
 
+data "vcd_org_vdc" "{{.Vdc}}" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
+}
+
 resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
@@ -234,6 +229,11 @@ const testAccCheckVcdVAppTemplateUpdate = `
 data "vcd_catalog" "{{.Catalog}}" {
   org  = "{{.Org}}"
   name = "{{.Catalog}}"
+}
+
+data "vcd_org_vdc" "{{.Vdc}}" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
 }
 
 resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
@@ -259,6 +259,11 @@ data "vcd_catalog" "{{.Catalog}}" {
   name = "{{.Catalog}}"
 }
 
+data "vcd_org_vdc" "{{.Vdc}}" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
+}
+
 resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
@@ -280,6 +285,11 @@ const testAccCheckVcdVAppTemplateFromUrlUpdate = `
 data "vcd_catalog" "{{.Catalog}}" {
   org  = "{{.Org}}"
   name = "{{.Catalog}}"
+}
+
+data "vcd_org_vdc" "{{.Vdc}}" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
 }
 
 resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
