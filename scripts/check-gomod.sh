@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is intended to check whether go.mod has a replaced module, exiting with error if so.
+# This script is intended to check whether go.mod has a replaced go-vcloud-director module, exiting with error if so.
 # If the environment variable RELEASE is set, it also checks whether go-vcloud-director is using a released version.
 
 GO_VCLOUD_DIRECTOR_URI='github.com/vmware/go-vcloud-director/v2'
