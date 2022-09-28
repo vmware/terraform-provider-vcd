@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script is intended to check whether go.mod has a replaced module, exiting with error if so.
-# If the environment variable RELEASE is set, it also checks whether go-vcloud-director is used a released version.
+# If the environment variable RELEASE is set, it also checks whether go-vcloud-director is using a released version.
 
 GO_VCLOUD_DIRECTOR_URI='github.com/vmware/go-vcloud-director/v2'
 
@@ -17,13 +17,13 @@ if [ -n "$RELEASE" ]; then
   grepAlpha=$(grep -E "$GO_VCLOUD_DIRECTOR_URI v[1-9]+\.[0-9]+\.[0-9]+\-.*" go.mod)
   if [ -n "$grepAlpha" ]
   then
-    >&2 printf "ERROR: Found a non-released version of go-vcloud-director: %s\n" "$(echo "$grepAlpha" | cut -d' ' -f 2)"
+    printf "ERROR: Found a non-released version of go-vcloud-director: %s\n" "$(echo "$grepAlpha" | cut -d' ' -f 2)"
   fi
 fi
 
 grepReplace=$(grep "replace $GO_VCLOUD_DIRECTOR_URI" go.mod | grep -v '//')
 if [ -n "$grepReplace" ]; then
-  >&2 printf "ERROR: Found these replaced modules:\n%s\n" "$(echo "$grepReplace" | cut -d' ' -f 2)"
+  printf "ERROR: Found these replaced modules:\n%s\n" "$(echo "$grepReplace" | cut -d' ' -f 2)"
 fi
 
 if [ -z "$grepAlpha" ] && [ -z "$grepReplace" ]; then
