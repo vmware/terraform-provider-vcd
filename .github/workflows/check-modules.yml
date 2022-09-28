@@ -1,8 +1,5 @@
 name: check-modules
-on:
-  pull_request:
-    paths:
-      - 'go.mod'
+on: [pull_request]
 
 jobs:
   check-replaced-modules:
