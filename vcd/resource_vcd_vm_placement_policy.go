@@ -107,8 +107,8 @@ func resourceVmPlacementPolicyCreate(ctx context.Context, d *schema.ResourceData
 
 	createdVmSizingPolicy, err := vcdClient.CreateVdcComputePolicyV2(computePolicy)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating VM Placement Policy: %s", getFriendlyErrorIfVmPlacementPolicyAlreadyExists(computePolicy.Name, err))
-		return diag.Errorf("error creating VM Placement Policy: %s", getFriendlyErrorIfVmPlacementPolicyAlreadyExists(computePolicy.Name, err))
+		log.Printf("[DEBUG] Error creating VM Placement Policy: %s", err)
+		return diag.Errorf("error creating VM Placement Policy: %s", err)
 	}
 
 	d.SetId(createdVmSizingPolicy.VdcComputePolicyV2.ID)
@@ -462,15 +462,4 @@ func getVgpuFilter(vcdClient *VCDClient, isVgpu bool) string {
 		return vgpuFilterToPrepend[:len(vgpuFilterToPrepend)-1] // Removes semicolon to the right
 	}
 	return ""
-}
-
-// getFriendlyErrorIfVmPlacementPolicyAlreadyExists is intended to be used when a VM Placement Policy already exists and the provider
-// tries to create another one with the same name. When this happens, VCD discloses a lot of unnecessary information to the user that is
-// hard to read and understand, so this function simplifies the message.
-// Note: This function should not be needed anymore once VCD 10.4.0 is discontinued.
-func getFriendlyErrorIfVmPlacementPolicyAlreadyExists(vmPlacementPolicyName string, err error) error {
-	if err != nil && strings.Contains(err.Error(), "already exists") {
-		return fmt.Errorf("VM Placement Policy with name '%s' already exists", vmPlacementPolicyName)
-	}
-	return err
 }
