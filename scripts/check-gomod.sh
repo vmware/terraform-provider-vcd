@@ -14,14 +14,14 @@ fi
 grepVersion=''
 if [ -n "$RELEASE" ]; then
   echo "INFO: Will check that no unreleased versions of go-vcloud-director are present in go.mod"
-  grepVersion=$(grep -E "$GO_VCLOUD_DIRECTOR_URI v[1-9]+\.[0-9]+\.[0-9]+\-.*" go.mod)
+  grepVersion=$(grep -E "$GO_VCLOUD_DIRECTOR_URI v[1-9]+\.[0-9]+\.[0-9]+\S" go.mod)
   if [ -n "$grepVersion" ]
   then
     printf "ERROR: Found a non-released version of go-vcloud-director: %s\n" "$(echo "$grepVersion" | cut -d' ' -f 2)"
   fi
 fi
 
-grepReplace=$(grep "replace $GO_VCLOUD_DIRECTOR_URI" go.mod | grep -v '//')
+grepReplace=$(grep "replace $GO_VCLOUD_DIRECTOR_URI" go.mod | grep -v '^//')
 if [ -n "$grepReplace" ]; then
   echo "ERROR: Found this replaced module: $grepReplace"
 fi
