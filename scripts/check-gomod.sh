@@ -23,7 +23,7 @@ fi
 
 grepReplace=$(grep "replace $GO_VCLOUD_DIRECTOR_URI" go.mod | grep -v '//')
 if [ -n "$grepReplace" ]; then
-  printf "ERROR: Found these replaced modules:\n%s\n" "$(echo "$grepReplace" | cut -d' ' -f 2)"
+  echo "ERROR: Found this replaced module: $grepReplace"
 fi
 
 if [ -z "$grepAlpha" ] && [ -z "$grepReplace" ]; then
