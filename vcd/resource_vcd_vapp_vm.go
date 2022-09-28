@@ -55,7 +55,9 @@ func resourceVcdVAppVm() *schema.Resource {
 //
 //
 //
-//
+// Important notes.
+// * Whenever calling VM update functions, be sure that VM is refreshed after applying them as the next function call may
+// reset the value to old one as VM does not have flexible structure and often changing the name requires "reconfigure" operation.
 
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
 // other functions that need to be run
@@ -107,7 +109,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 	case isEmptyVm:
 		util.Logger.Printf("[DEBUG] [VM create] creating empty VM")
-		vm, err = createVmEmpty(d, meta)
+		vm, err = createVmEmpty(d, meta, vmType)
 		if err != nil {
 			return diag.Errorf("error creating empty VM: %s", err)
 		}
@@ -123,6 +125,24 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// IMPORTANT. If any of the functions change VM structure, be sure to refresh `vm` structure so that the next
 	// function does not apply old values.
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	if err = vm.Refresh(); err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
+	}
+
+	// Handle VM description
+	// Such schema fields are processed:
+	// * description
+	//
+	// Some VM structures don't allow setting description, and it gets inherited from template
+	err = vm.ChangeDescription(d.Get("description").(string))
+	if err != nil {
+		return diag.Errorf("error setting VM description %s : %s", vm.VM.Name, err)
+	}
+
+	if err = vm.Refresh(); err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
+	}
 
 	// Handle Metadata
 	// Such schema fields are processed:
@@ -545,7 +565,7 @@ func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error 
 	return nil
 }
 
-func createVmEmpty(d *schema.ResourceData, meta interface{}) (*govcd.VM, error) {
+func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
 	util.Logger.Printf("[TRACE] Creating empty VM: %s", d.Get("name").(string))
 
 	vcdClient := meta.(*VCDClient)
@@ -680,6 +700,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}) (*govcd.VM, error) 
 	// Standalone VM
 	if vappName == "" {
 		params := types.CreateVmParams{
+			Xmlns:       types.XMLNamespaceVCloud,
 			Name:        vmName,
 			PowerOn:     false,
 			Description: recomposeVAppParamsForEmptyVm.CreateItem.Description,
@@ -692,7 +713,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}) (*govcd.VM, error) 
 				StorageProfile:            recomposeVAppParamsForEmptyVm.CreateItem.StorageProfile,
 			},
 			Media: mediaReference,
-			Xmlns: types.XMLNamespaceVCloud,
 		}
 		newVm, err = vdc.CreateStandaloneVm(&params)
 		if err != nil {

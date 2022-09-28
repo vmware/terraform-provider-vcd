@@ -376,7 +376,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
