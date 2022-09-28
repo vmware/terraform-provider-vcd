@@ -1,5 +1,7 @@
 name: check-modules
-on: [pull_request]
+on:
+  pull_request:
+    types: [opened, closed, reopened, synchronize, ready_for_review ]
 
 jobs:
   check-replaced-modules:
