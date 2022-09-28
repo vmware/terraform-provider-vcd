@@ -1,4 +1,4 @@
-name: check-code
+name: check-modules
 on: [pull_request]
 
 jobs:
