@@ -1,9 +1,5 @@
 name: check-code
-on:
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'website/**'
+on: [pull_request]
 
 jobs:
   check-replaced-modules:
