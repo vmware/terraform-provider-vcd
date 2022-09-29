@@ -13,3 +13,4 @@ jobs:
 
       - name: check-gomod
         run: ./scripts/check-gomod.sh
+
