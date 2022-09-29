@@ -215,7 +215,7 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("resource name must be specified as org.catalog")
+		return nil, fmt.Errorf("resource name must be specified as org.catalogID or org.catalogName")
 	}
 
 	orgName, catalogIdentifier := resourceURI[0], resourceURI[1]
@@ -228,7 +228,7 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 
 	catalog, err := org.GetCatalogByNameOrId(catalogIdentifier, false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("[catalog access control import] error retrieving catalog '%s' from org '%s'", catalogIdentifier, org.Org.Name)
 	}
 	dSet(d, "org", orgName)
 	dSet(d, "catalog_id", catalog.Catalog.ID)
