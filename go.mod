@@ -61,6 +61,3 @@ require (
 
 replace github.com/vmware/go-vcloud-director/v2 => github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20220906102404-20ad03790c56
 
-
-
-
