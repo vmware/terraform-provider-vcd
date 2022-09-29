@@ -5,6 +5,7 @@ jobs:
   check-replaced-modules:
     name: Check replaced modules
     runs-on: ubuntu-latest
+    if: ${{ github.event.requested_team.name == 'octo-team'}}
     steps:
 
       - name: Check out code
@@ -12,3 +13,4 @@ jobs:
 
       - name: check-gomod
         run: ./scripts/check-gomod.sh
+
