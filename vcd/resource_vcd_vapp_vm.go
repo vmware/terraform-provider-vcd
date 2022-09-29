@@ -4,9 +4,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/kr/pretty"
@@ -22,6 +23,31 @@ const (
 	vappVmType       typeOfVm = "vcd_vapp_vm"
 )
 
+// Maintenance guide for VM code
+//
+// VM codebase grew to be quite complicated because of a few reasons:
+// * It is a dated resource with many API quirks
+// * There are 4 different go-vcloud-director SDK types for creating VM
+//   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
+//   * `types.ReComposeVAppParams` (vApp VM from template)
+//   * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
+//   * `types.CreateVmParams` (Empty Standalone VM)
+// They also use different functions. All VM types are directly populated in resource code instead of
+// pre-creating functions in go-vcloud-director SDK. This is done because we had to constantly change
+// parent SDK functions and add a new field just because there is a new feature - be it storage
+// profile, compute policy, or something else
+//
+//
+// The best chance to avoid breaking feature parity between all 4 types is to create them with minimal
+// configuration and then perform additional updates in a code that is shared between all 4 types.
+// Some features though must go into VM definition during creation (for example storage profile,
+// CPU/RAM/sizing policy configuration)
+//
+// Important notes.
+// * Whenever calling VM update functions, be sure that VM is refreshed after applying them as the
+// next function call may reset the value to old one as VM does not have flexible structure and
+// often changing the name requires "reconfigure" operation.
+
 func resourceVcdVAppVm() *schema.Resource {
 
 	return &schema.Resource{
@@ -35,29 +61,6 @@ func resourceVcdVAppVm() *schema.Resource {
 		Schema: vmSchemaFunc(vappVmType),
 	}
 }
-
-// Maintenance guide for VM
-//
-// VM codebase grew to be quite complicated because of a few reasons:
-// * It is a dated resource with many API quirks
-// * There are 4 different go-vcloud-director SDK types for creating VM
-//   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
-//   * `types.ReComposeVAppParams` (vApp VM from template)
-//   * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
-//   * `types.CreateVmParams` (Empty Standalone VM)
-//
-// To handle VM creation as easy as possible the following approach is used:
-// * Create function for `vcd_vapp_vm` is `resourceVcdVAppVmCreate`, while `vcd_vm` uses `resourceVcdStandaloneVmCreate`.
-// The difference between these entry functions is that only `vcd_vapp_vm` a parent vApp lock.
-//
-// * Both of above functions for `vcd_vapp_vm` and `vcd_vm` call `genericResourceVmCreate` which is the main function
-// that drives VM creation. It conditionally splits between 2 more code branches - either `createVmFromTemplate` or `createVmEmpty`
-//
-//
-//
-// Important notes.
-// * Whenever calling VM update functions, be sure that VM is refreshed after applying them as the next function call may
-// reset the value to old one as VM does not have flexible structure and often changing the name requires "reconfigure" operation.
 
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
 // other functions that need to be run
@@ -85,7 +88,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 
 // genericResourceVmCreate does the following:
 // * Executes VM create functions based on the type of VM (standalone or vApp member)
-// * Runs additional customization functions which are common for all types of VMs
+// * Runs additional customization functions which are common for all 4 types of VMs
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -117,14 +120,14 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("unknown VM type")
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// This part of code performs any additional operations that should be applied to all 4 VM types and could not be
-	// applied during initial create VM API call.
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code performs any additional operations that should be applied to all 4 VM types
+	// and could not be applied during initial create VM API call.
 	// Note. The final call should be VM power management.
 	//
-	// IMPORTANT. If any of the functions change VM structure, be sure to refresh `vm` structure so that the next
-	// function does not apply old values.
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// IMPORTANT. If any of the functions change VM structure, be sure to refresh `vm` structure so
+	// that the next function does not accidentally apply old values.
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	if err = vm.Refresh(); err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)
@@ -179,8 +182,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	}
 
 	// Explicitly setting CPU and Memory Hot Add settings
-	// Note. VM Creation bodies allow specifying these values, but they are ignored therefore using an explicit
-	// "/vmCapabilities" API endpoint
+	// Note. VM Creation bodies allow specifying these values, but they are ignored therefore using
+	// an explicit "/vmCapabilities" API endpoint
 	// Such schema fields are processed:
 	// * cpu_hot_add_enabled
 	// * memory_hot_add_enabled
@@ -269,9 +272,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	//	log.Printf("error reading internal disks : %s", err)
 	//}
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// VM power on handling is the last step, no other VM adjustment operations should be performed after this
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// VM power on handling is the last step, no other VM adjustment operations should be performed
+	// after this
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// By default, the VM is created in POWERED_OFF state
 	if d.Get("power_on").(bool) {
@@ -295,9 +299,9 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 
 	}
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// VM power on handling is the last step, no other VM adjustment operations should be performed after this
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// VM power on handling was the last step, no other VM adjustment operations should be performed
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	return nil
 }
@@ -389,7 +393,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		standaloneVmParams := types.InstantiateVmTemplateParams{
 			Xmlns:            types.XMLNamespaceVCloud,
 			Name:             vmName,
-			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
+			PowerOn:          false, // VM will be powered on after all configuration is done
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			ComputePolicy:    vmComputePolicy,
 			Description:      description,
@@ -432,10 +436,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		dSet(d, "vapp_name", vapp.VApp.Name)
 		dSet(d, "vm_type", string(standaloneVmType))
 
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
-		/// __Explicitly__ template based Standalone VMs are addressed here.
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////////////////
+		// This part of code handles additional VM create operations, which can not be set during
+		// initial VM creation.
+		// __Explicitly__ template based Standalone VMs are addressed here.
+		////////////////////////////////////////////////////////////////////////////////////////////
 
 	case vappVmType:
 		vapp, err = vdc.GetVAppByName(vappName, false)
@@ -499,19 +504,21 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		if err != nil {
 			return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
 		}
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
-		/// __Explicitly__ template based vApp VMs are addressed here.
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////////////////
+		// This part of code handles additional VM create operations, which can not be set during
+		// initial VM creation.
+		// __Explicitly__ template based vApp VMs are addressed here.
+		////////////////////////////////////////////////////////////////////////////////////////////
 
 	default:
 		return nil, fmt.Errorf("unknown VM type %s", vmType)
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
-	/// __Only__ template based VMs are addressed here.
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Only__ template based VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Refresh VM to have the latest structure
 	err = vm.Refresh()
@@ -851,10 +858,11 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 	dSet(d, "vapp_name", vapp.VApp.Name)
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// This part of code handles additional VM create operations, which can not be set during initial VM creation.
-	/// __Only__ empty VMs are addressed here.
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Only__ empty VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Due to the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup network configuration with update. Fixed only 10.1 version.
 	networkConnectionSection, err := networksToConfig(d, vapp)
