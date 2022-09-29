@@ -78,7 +78,7 @@ func resourceVcdCatalogAccessControl() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly, types.ControlAccessReadWrite, types.ControlAccessFullControl}, true),
-							Description:  "The access level for the org, user, or group to which we are sharing. One of [ReadOnly, Change, FullControl] ",
+							Description:  "The access level for the org, user, or group to which we are sharing. One of [ReadOnly, Change, FullControl] for users and groups, but just ReadOnly for Organizations",
 						},
 					},
 				},

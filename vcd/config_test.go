@@ -1292,6 +1292,25 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 	}
 }
 
+func importStateCatalogIdViaResource(resource string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return "", fmt.Errorf("resource not found: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return "", fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		importId := testConfig.VCD.Org + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || rs.Primary.ID == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+		return importId, nil
+	}
+}
+
 // testAccFindValuesInSet finds several elements as belonging to the same item in a set
 // * resourceName is the complete identifier of the resource (such as vcd_vapp_access_control.Name)
 // * prefix is the name of the set (e.g. "shared" in vApp access control)

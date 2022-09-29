@@ -297,7 +297,7 @@ func accessControlListToSharedSet(input []*types.AccessSetting) ([]map[string]in
 		case types.MimeAdminGroup:
 			setting["group_id"] = extractUuid(item.Subject.HREF)
 		case types.MimeOrg, types.MimeAdminOrg:
-			setting["org_id"] = extractUuid(item.Subject.HREF)
+			setting["org_id"] = "urn:vcloud:org:" + extractUuid(item.Subject.HREF)
 		default:
 			return nil, fmt.Errorf("unhandled type '%s' for item %s", item.Subject.Type, item.Subject.Name)
 		}
@@ -321,6 +321,7 @@ func sharedSetToAccessControl(client *VCDClient, org *govcd.AdminOrg, input []in
 		var subjectHref string
 		var subjectType string
 		var subjectName string
+		var orgId string
 
 		for _, id := range validIds {
 			switch id {
@@ -355,7 +356,7 @@ func sharedSetToAccessControl(client *VCDClient, org *govcd.AdminOrg, input []in
 					subjectName = group.Group.Name
 				}
 			case "org_id":
-				orgId, ok := setting[id].(string)
+				orgId, ok = setting[id].(string)
 				if ok && orgId != "" {
 					if usedUp {
 						return nil, fmt.Errorf("only one of %v IDs can be used", validIds)
@@ -380,6 +381,9 @@ func sharedSetToAccessControl(client *VCDClient, org *govcd.AdminOrg, input []in
 			return nil, fmt.Errorf("no org, group, or user found for entry %#v", item)
 		}
 		accessLevel := setting["access_level"].(string)
+		if orgId != "" && accessLevel != types.ControlAccessReadOnly {
+			return nil, fmt.Errorf("access level for an Organization can only be %s", types.ControlAccessReadOnly)
+		}
 
 		output = append(output, &types.AccessSetting{
 			Subject: &types.LocalSubject{
