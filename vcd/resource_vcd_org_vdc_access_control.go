@@ -107,7 +107,7 @@ func resourceVcdVdcAccessControlCreateUpdate(ctx context.Context, d *schema.Reso
 	if !isSharedWithEveryone {
 		everyoneAccessLevel = ""
 
-		accessSettings, err = sharedSetToAccessControl(adminOrg, sharedList)
+		accessSettings, err = sharedSetToAccessControl(vcdClient, adminOrg, sharedList, []string{"group_id", "user_id"})
 		if err != nil {
 			return diag.Errorf("error when reading shared_with from schema - %s", err)
 		}

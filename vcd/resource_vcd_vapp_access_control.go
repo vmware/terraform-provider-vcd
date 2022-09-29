@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"os"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -140,7 +141,7 @@ func resourceAccessControlVappUpdate(ctx context.Context, d *schema.ResourceData
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
 
 	if !isSharedWithEveryone {
-		accessControlList, err := sharedSetToAccessControl(adminOrg, sharedList)
+		accessControlList, err := sharedSetToAccessControl(vcdClient, adminOrg, sharedList, []string{"user_id", "group_id"})
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -295,7 +296,7 @@ func accessControlListToSharedSet(input []*types.AccessSetting) ([]map[string]in
 			setting["user_id"] = "urn:vcloud:user:" + extractUuid(item.Subject.HREF)
 		case types.MimeAdminGroup:
 			setting["group_id"] = extractUuid(item.Subject.HREF)
-		case types.MimeOrg:
+		case types.MimeOrg, types.MimeAdminOrg:
 			setting["org_id"] = extractUuid(item.Subject.HREF)
 		default:
 			return nil, fmt.Errorf("unhandled type '%s' for item %s", item.Subject.Type, item.Subject.Name)
@@ -308,9 +309,11 @@ func accessControlListToSharedSet(input []*types.AccessSetting) ([]map[string]in
 	return output, nil
 }
 
-func sharedSetToAccessControl(org *govcd.AdminOrg, input []interface{}) ([]*types.AccessSetting, error) {
+func sharedSetToAccessControl(client *VCDClient, org *govcd.AdminOrg, input []interface{}, validIds []string) ([]*types.AccessSetting, error) {
 	var output []*types.AccessSetting
+
 	for _, item := range input {
+		usedUp := false
 		setting, ok := item.(map[string]interface{})
 		if !ok {
 			return output, fmt.Errorf("item is not a string map %#v", item)
@@ -319,32 +322,62 @@ func sharedSetToAccessControl(org *govcd.AdminOrg, input []interface{}) ([]*type
 		var subjectType string
 		var subjectName string
 
-		userId, ok := setting["user_id"].(string)
-		if ok && userId != "" {
-			user, err := org.GetUserById(userId, false)
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving user %s: %s", userId, err)
+		for _, id := range validIds {
+			switch id {
+			case "user_id":
+				userId, ok := setting[id].(string)
+				if ok && userId != "" {
+					if usedUp {
+						return nil, fmt.Errorf("only one of %v IDs can be used", validIds)
+					}
+					user, err := org.GetUserById(userId, false)
+					if err != nil {
+						return nil, fmt.Errorf("error retrieving user %s: %s", userId, err)
+					}
+					usedUp = true
+					subjectHref = user.User.Href
+					subjectType = user.User.Type
+					subjectName = user.User.Name
+				}
+			case "group_id":
+				groupId, ok := setting["group_id"].(string)
+				if ok && groupId != "" {
+					if usedUp {
+						return nil, fmt.Errorf("only one of %v IDs can be used", validIds)
+					}
+					group, err := org.GetGroupById(groupId, false)
+					if err != nil {
+						return nil, fmt.Errorf("error retrieving group %s: %s", groupId, err)
+					}
+					usedUp = true
+					subjectHref = group.Group.Href
+					subjectType = group.Group.Type
+					subjectName = group.Group.Name
+				}
+			case "org_id":
+				orgId, ok := setting[id].(string)
+				if ok && orgId != "" {
+					if usedUp {
+						return nil, fmt.Errorf("only one of %v IDs can be used", validIds)
+					}
+					org, err := client.GetOrgById(orgId)
+					if err != nil {
+						return nil, fmt.Errorf("error retrieving Org %s: %s", orgId, err)
+					}
+					usedUp = true
+					subjectHref = org.Org.HREF
+					subjectType = org.Org.Type
+					subjectName = org.Org.Name
+				}
+			default:
+				return nil, fmt.Errorf("[sharedFullSetToAccessControl] invalid ID %s", id)
 			}
-			subjectHref = user.User.Href
-			subjectType = user.User.Type
-			subjectName = user.User.Name
 		}
-
-		groupId, ok := setting["group_id"].(string)
-		if ok && groupId != "" {
-			if userId != "" {
-				return nil, fmt.Errorf("either user ID or group ID can be set, not both")
-			}
-			group, err := org.GetGroupById(groupId, false)
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving group %s: %s", groupId, err)
-			}
-			subjectHref = group.Group.Href
-			subjectType = group.Group.Type
-			subjectName = group.Group.Name
+		if !usedUp {
+			return nil, fmt.Errorf("[sharedFullSetToAccessControl] no filled ID found among %v for entry %#v", validIds, item)
 		}
 		if subjectHref == "" {
-			return nil, fmt.Errorf("no group or user found for entry %#v", item)
+			return nil, fmt.Errorf("no org, group, or user found for entry %#v", item)
 		}
 		accessLevel := setting["access_level"].(string)
 
@@ -359,5 +392,4 @@ func sharedSetToAccessControl(org *govcd.AdminOrg, input []interface{}) ([]*type
 		})
 	}
 	return output, nil
-
 }
