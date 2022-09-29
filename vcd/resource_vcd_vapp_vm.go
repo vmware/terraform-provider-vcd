@@ -49,7 +49,6 @@ const (
 // often changing the name requires "reconfigure" operation.
 
 func resourceVcdVAppVm() *schema.Resource {
-
 	return &schema.Resource{
 		CreateContext: resourceVcdVAppVmCreate,
 		UpdateContext: resourceVcdVAppVmUpdate,
@@ -60,6 +59,137 @@ func resourceVcdVAppVm() *schema.Resource {
 		},
 		Schema: vmSchemaFunc(vappVmType),
 	}
+}
+
+// getComputeValues
+// cpus, cores, memory, vmSizingPolicyId
+//
+// * CPU
+//   - vCpu Speed
+//   - vCpu Count
+//   - Cores per socket
+//   - CPU Reservation Guarantee
+//   - CPU Limit
+//   - CPU Shares
+//
+// * Memory
+//   - Memory MB
+//   - Memory Reservation Guarantee
+//   - Memory Limit
+//   - Memory Shares
+//
+// Priority comes from compute policy
+func getComputeValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int, *int64, error) {
+	vdcComputePolicy, _, err := lookupComputePolicy(d, vcdClient)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error finding sizing policy: %s", err)
+	}
+
+	var (
+		setMemory *int64
+		setCpu    *int
+		setCores  *int
+	)
+
+	// If VDC Compute policy is not set - we're specifying CPU and Memory directly
+	if vdcComputePolicy == nil {
+		if memory, isMemorySet := d.GetOk("memory"); isMemorySet {
+			memInt := int64(memory.(int))
+			setMemory = &memInt
+		}
+
+		if cpus, isCpusSet := d.GetOk("cpus"); isCpusSet {
+			cpuInt := cpus.(int)
+			setCpu = &cpuInt
+		}
+
+		if cpuCores, isCpuCoresSet := d.GetOk("cpu_cores"); isCpuCoresSet {
+			cpuCoresInt := cpuCores.(int)
+			setCores = &cpuCoresInt
+		}
+
+	}
+
+	// Check if sizing policy has any settings set and explicitly remove them from VM definition
+
+	if vdcComputePolicy != nil {
+		if vdcComputePolicy.Memory != nil {
+			setMemory = nil
+		}
+
+		if vdcComputePolicy.CPUCount != nil {
+			setCpu = nil
+		}
+
+		if vdcComputePolicy.CoresPerSocket != nil {
+			setCores = nil
+		}
+
+		// memoryInComputePolicy := vdcComputePolicy.Memory
+		// cpuInComputePolicy := vdcComputePolicy.CPUCount
+		// cpuCores := vdcComputePolicy.CoresPerSocket
+	}
+
+	// Lookup parameters from VM resource schema
+
+	return setCpu, setCores, setMemory, nil
+	// memorySharesLevel, memorySharesLevelOk := d.GetOk("memory_priority")
+	// memoryLimit, memoryLimitOk := d.GetOk("memory_limit")
+	// memoryShares, memorySharesOk := d.GetOk("memory_shares")
+	// memoryReservation, memoryReservationOk := d.GetOk("memory_reservation")
+
+	// memorySharesLevel, memorySharesLevelOk := d.GetOk("cpu_priority")
+	// memoryLimit, memoryLimitOk := d.GetOk("cpu_limit")
+	// memoryShares, memorySharesOk := d.GetOk("cpu_shares")
+	// memoryReservation, memoryReservationOk := d.GetOk("cpu_reservation")
+
+	// computePolicy := sizingPolicy
+
+	// cpuSpeed := computePolicy.CPUSpeed
+	// cpuCount := computePolicy.CPUCount
+	// coresPerSocket := computePolicy.CoresPerSocket
+	// cpuReservation := computePolicy.CPUReservationGuarantee
+	// cpuLimit := computePolicy.CPULimit
+	// cpuShares := computePolicy.CPUShares
+
+	// memory := computePolicy.Memory
+	// memoryReservation := computePolicy.MemoryReservationGuarantee
+	// memoryLimit := computePolicy.MemoryLimit
+	// memoryShares := computePolicy.MemoryShares
+
+	// cpuReservation := computePolicy.CPUReservation
+
+	// memory, isMemorySet := d.GetOk("memory")
+	// isMemoryComingFromSizingPolicy := vdcComputePolicy != nil && (vdcComputePolicy.Memory != nil && !isMemorySet)
+	// if isMemoryComingFromSizingPolicy && isMemorySet {
+	// 	logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *vdcComputePolicy.Memory))
+	// }
+
+	// if !isMemoryComingFromSizingPolicy {
+	// 	err = vm.ChangeMemory(int64(memory.(int)))
+	// 	if err != nil {
+	// 		return diag.FromErr(err)
+	// 	}
+	// }
+
+	// cpus, isCpusSet := d.GetOk("cpus")
+	// cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
+	// isCpuComingFromSizingPolicy := vdcComputePolicy != nil && ((vdcComputePolicy.CPUCount != nil && !isCpusSet) || (vdcComputePolicy.CoresPerSocket != nil && !isCpuCoresSet))
+	// if isCpuComingFromSizingPolicy && isCpusSet {
+	// 	logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *vdcComputePolicy.CPUCount))
+	// }
+	// if isCpuComingFromSizingPolicy && isCpuCoresSet {
+	// 	logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *vdcComputePolicy.CoresPerSocket))
+	// }
+
+	// if !isCpuComingFromSizingPolicy {
+	// 	err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
+	// 	if err != nil {
+	// 		return diag.FromErr(err)
+	// 	}
+	// }
+
+	// return nil
 }
 
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
@@ -535,8 +665,8 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error managing internal disks : %s", err)
 	}
 
-	// OS Type and Hardware version should only be changed if specified. (Only applying to vApp VMs as standalone VMs
-	// always require these fields and set them)
+	// OS Type and Hardware version should only be changed if specified. (Only applying to VMs from
+	//templates as empty VMs require this by default)
 	// Such fields are processed:
 	// * os_type
 	// * hardware_version
@@ -656,11 +786,16 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
 
+	////////////// CPU ///////////////
+	cpuCores, cpuCoresPerSocket, memory, err := getComputeValues(d, vcdClient)
+	if err != nil {
+		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
+	}
+
 	vmName := d.Get("name").(string)
 
 	var newVm *govcd.VM
 	switch vmType {
-
 	case standaloneVmType:
 		var mediaReference *types.Reference
 		if bootImage != nil {
@@ -688,10 +823,12 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					Modified: takeBoolPointer(true),
 					Info:     "Virtual Machine specification",
 					OsType:   osType.(string),
-					//NumCpus:           takeIntPointer(d.Get("cpus").(int)),
-					//NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
+					// NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+					// NumCpus: cpuCores,
+					// NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
+					// NumCoresPerSocket: cpuCoresPerSocket,
+					// MemoryResourceMb:  &types.MemoryResourceMb{Configured: *memory},
 					//CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
-					//MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
 					MediaSection: nil,
 					// can be created with resource internal_disk
 					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
@@ -705,6 +842,26 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			},
 			Media: mediaReference,
 		}
+
+		if cpuCores != nil {
+			params.CreateVm.VmSpecSection.NumCpus = cpuCores
+		}
+
+		if cpuCoresPerSocket != nil {
+			params.CreateVm.VmSpecSection.NumCoresPerSocket = cpuCoresPerSocket
+		}
+
+		if memory != nil {
+			params.CreateVm.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
+		}
+
+		// If compute policy is nil, CPU and memory settings must be applied on create to avoid API error
+		// if vmComputePolicy == nil {
+		// 	params.CreateVm.VmSpecSection.NumCpus = takeIntPointer(d.Get("cpus").(int))
+		// 	params.CreateVm.VmSpecSection.NumCoresPerSocket = takeIntPointer(d.Get("cpu_cores").(int))
+		// 	params.CreateVm.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: int64(d.Get("sizing_policy_id").(int))}
+		// }
+
 		newVm, err = vdc.CreateStandaloneVm(&params)
 		if err != nil {
 			return nil, err
@@ -751,10 +908,22 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			AllEULAsAccepted: true,
 		}
 
-		err = addSizingPolicy(d, vcdClient, recomposeVAppParamsForEmptyVm)
-		if err != nil {
-			return nil, err
+		if cpuCores != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCpus = cpuCores
 		}
+
+		if cpuCoresPerSocket != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCoresPerSocket = cpuCoresPerSocket
+		}
+
+		if memory != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
+		}
+
+		// err = addSizingPolicy(d, vcdClient, recomposeVAppParamsForEmptyVm)
+		// if err != nil {
+		// 	return nil, err
+		// }
 		util.Logger.Printf("[VM create - add empty VM] recomposeVAppParamsForEmptyVm %# v", pretty.Formatter(recomposeVAppParamsForEmptyVm))
 		newVm, err = vapp.AddEmptyVm(recomposeVAppParamsForEmptyVm)
 		if err != nil {
