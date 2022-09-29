@@ -585,11 +585,11 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 	}
 	var ok bool
-	var memory interface{}
-	_, sizingOk := d.GetOk("sizing_policy_id")
-	if memory, ok = d.GetOk("memory"); !ok && !sizingOk {
-		return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
-	}
+	//var memory interface{}
+	//_, sizingOk := d.GetOk("sizing_policy_id")
+	//if memory, ok = d.GetOk("memory"); !ok && !sizingOk {
+	//	return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
+	//}
 
 	var osType interface{}
 	if osType, ok = d.GetOk("os_type"); !ok {
@@ -642,75 +642,59 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	if isVirtualCpuType64 {
 		virtualCpuType = "VM64"
 	}
+
+	// Lookup compute policy
+	_, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	if err != nil {
+		return nil, fmt.Errorf("error finding sizing policy: %s", err)
+	}
+
 	vmName := d.Get("name").(string)
 
-	recomposeVAppParamsForEmptyVm := &types.RecomposeVAppParamsForEmptyVm{
-		XmlnsVcloud: types.XMLNamespaceVCloud,
-		XmlnsOvf:    types.XMLNamespaceOVF,
-		PowerOn:     false, // Power on is handled at the end of VM creation process
-		CreateItem: &types.CreateItem{
-			Name: vmName,
-			// Bug in vCD - accepts only org VDC networks and automatically add them. We add them with update
-			// BUG in vCD 9.5 version, do not allow empty NetworkConnectionSection, so we pass simplest network configuration
-			// and after VM created update with real config
-			NetworkConnectionSection: &types.NetworkConnectionSection{
-				PrimaryNetworkConnectionIndex: 0,
-				NetworkConnection: []*types.NetworkConnection{
-					{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
-			},
-			StorageProfile:            storageProfilePtr,
-			Description:               d.Get("description").(string),
-			GuestCustomizationSection: customizationSection,
-			VmSpecSection: &types.VmSpecSection{
-				Modified:          takeBoolPointer(true),
-				Info:              "Virtual Machine specification",
-				OsType:            osType.(string),
-				NumCpus:           takeIntPointer(d.Get("cpus").(int)),
-				NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
-				CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
-				MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
-				MediaSection:      nil,
-				// can be created with resource internal_disk
-				DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
-				HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
-				VmToolsVersion:   "",
-				VirtualCpuType:   virtualCpuType,
-				TimeSyncWithHost: nil,
-			},
-			BootImage: bootImage,
-		},
-		AllEULAsAccepted: true,
-	}
-
-	err = addSizingPolicy(d, vcdClient, recomposeVAppParamsForEmptyVm)
-	if err != nil {
-		return nil, err
-	}
-
 	var newVm *govcd.VM
-	var mediaReference *types.Reference
-	if bootImage != nil {
-		mediaReference = &types.Reference{
-			HREF: bootImage.HREF,
-			ID:   bootImage.ID,
-			Type: bootImage.Type,
-			Name: bootImage.Name,
+	switch vmType {
+
+	case standaloneVmType:
+		var mediaReference *types.Reference
+		if bootImage != nil {
+			mediaReference = &types.Reference{
+				HREF: bootImage.HREF,
+				ID:   bootImage.ID,
+				Type: bootImage.Type,
+				Name: bootImage.Name,
+			}
 		}
-	}
-	// Standalone VM
-	if vappName == "" {
 		params := types.CreateVmParams{
 			Xmlns:       types.XMLNamespaceVCloud,
 			Name:        vmName,
 			PowerOn:     false,
-			Description: recomposeVAppParamsForEmptyVm.CreateItem.Description,
+			Description: d.Get("description").(string),
 			CreateVm: &types.Vm{
-				Name:                      vmName,
-				ComputePolicy:             recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy,
-				NetworkConnectionSection:  recomposeVAppParamsForEmptyVm.CreateItem.NetworkConnectionSection,
-				VmSpecSection:             recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection,
-				GuestCustomizationSection: recomposeVAppParamsForEmptyVm.CreateItem.GuestCustomizationSection,
-				StorageProfile:            recomposeVAppParamsForEmptyVm.CreateItem.StorageProfile,
+				Name:          vmName,
+				ComputePolicy: vmComputePolicy,
+				NetworkConnectionSection: &types.NetworkConnectionSection{
+					PrimaryNetworkConnectionIndex: 0,
+					NetworkConnection: []*types.NetworkConnection{
+						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
+				},
+				VmSpecSection: &types.VmSpecSection{
+					Modified: takeBoolPointer(true),
+					Info:     "Virtual Machine specification",
+					OsType:   osType.(string),
+					//NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+					//NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
+					//CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
+					//MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
+					MediaSection: nil,
+					// can be created with resource internal_disk
+					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
+					HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
+					VmToolsVersion:   "",
+					VirtualCpuType:   virtualCpuType,
+					TimeSyncWithHost: nil,
+				},
+				GuestCustomizationSection: customizationSection,
+				StorageProfile:            storageProfilePtr,
 			},
 			Media: mediaReference,
 		}
@@ -718,16 +702,146 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		if err != nil {
 			return nil, err
 		}
-	} else {
+		// VM created - store its ID
+		d.SetId(newVm.VM.ID)
+	case vappVmType:
+		recomposeVAppParamsForEmptyVm := &types.RecomposeVAppParamsForEmptyVm{
+			XmlnsVcloud: types.XMLNamespaceVCloud,
+			XmlnsOvf:    types.XMLNamespaceOVF,
+			PowerOn:     false, // Power on is handled at the end of VM creation process
+			CreateItem: &types.CreateItem{
+				Name: vmName,
+				// Bug in vCD - accepts only org VDC networks and automatically add them. We add them with update
+				// BUG in vCD 9.5 version, do not allow empty NetworkConnectionSection, so we pass simplest network configuration
+				// and after VM created update with real config
+				NetworkConnectionSection: &types.NetworkConnectionSection{
+					PrimaryNetworkConnectionIndex: 0,
+					NetworkConnection: []*types.NetworkConnection{
+						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
+				},
+				StorageProfile:            storageProfilePtr,
+				ComputePolicy:             vmComputePolicy,
+				Description:               d.Get("description").(string),
+				GuestCustomizationSection: customizationSection,
+				VmSpecSection: &types.VmSpecSection{
+					Modified: takeBoolPointer(true),
+					Info:     "Virtual Machine specification",
+					OsType:   osType.(string),
+					//NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+					//NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
+					//CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
+					//MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
+					MediaSection: nil,
+					// can be created with resource internal_disk
+					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
+					HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
+					VmToolsVersion:   "",
+					VirtualCpuType:   virtualCpuType,
+					TimeSyncWithHost: nil,
+				},
+				BootImage: bootImage,
+			},
+			AllEULAsAccepted: true,
+		}
+
+		err = addSizingPolicy(d, vcdClient, recomposeVAppParamsForEmptyVm)
+		if err != nil {
+			return nil, err
+		}
 		util.Logger.Printf("[VM create - add empty VM] recomposeVAppParamsForEmptyVm %# v", pretty.Formatter(recomposeVAppParamsForEmptyVm))
 		newVm, err = vapp.AddEmptyVm(recomposeVAppParamsForEmptyVm)
 		if err != nil {
-			d.SetId("")
 			return nil, fmt.Errorf("[VM creation] error creating VM %s : %s", vmName, err)
 		}
+		// VM created - store its ID
+		d.SetId(newVm.VM.ID)
+	default:
+		return nil, fmt.Errorf("unknown VM type %s", vmType)
 	}
 
-	d.SetId(newVm.VM.ID)
+	//recomposeVAppParamsForEmptyVm := &types.RecomposeVAppParamsForEmptyVm{
+	//	XmlnsVcloud: types.XMLNamespaceVCloud,
+	//	XmlnsOvf:    types.XMLNamespaceOVF,
+	//	PowerOn:     false, // Power on is handled at the end of VM creation process
+	//	CreateItem: &types.CreateItem{
+	//		Name: vmName,
+	//		// Bug in vCD - accepts only org VDC networks and automatically add them. We add them with update
+	//		// BUG in vCD 9.5 version, do not allow empty NetworkConnectionSection, so we pass simplest network configuration
+	//		// and after VM created update with real config
+	//		NetworkConnectionSection: &types.NetworkConnectionSection{
+	//			PrimaryNetworkConnectionIndex: 0,
+	//			NetworkConnection: []*types.NetworkConnection{
+	//				{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
+	//		},
+	//		StorageProfile:            storageProfilePtr,
+	//		Description:               d.Get("description").(string),
+	//		GuestCustomizationSection: customizationSection,
+	//		VmSpecSection: &types.VmSpecSection{
+	//			Modified:          takeBoolPointer(true),
+	//			Info:              "Virtual Machine specification",
+	//			OsType:            osType.(string),
+	//			NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+	//			NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
+	//			CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
+	//			MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
+	//			MediaSection:      nil,
+	//			// can be created with resource internal_disk
+	//			DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
+	//			HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
+	//			VmToolsVersion:   "",
+	//			VirtualCpuType:   virtualCpuType,
+	//			TimeSyncWithHost: nil,
+	//		},
+	//		BootImage: bootImage,
+	//	},
+	//	AllEULAsAccepted: true,
+	//}
+	//
+	//err = addSizingPolicy(d, vcdClient, recomposeVAppParamsForEmptyVm)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var mediaReference *types.Reference
+	//if bootImage != nil {
+	//	mediaReference = &types.Reference{
+	//		HREF: bootImage.HREF,
+	//		ID:   bootImage.ID,
+	//		Type: bootImage.Type,
+	//		Name: bootImage.Name,
+	//	}
+	//}
+	//// Standalone VM
+	//if vappName == "" {
+	//	params := types.CreateVmParams{
+	//		Xmlns:       types.XMLNamespaceVCloud,
+	//		Name:        vmName,
+	//		PowerOn:     false,
+	//		Description: recomposeVAppParamsForEmptyVm.CreateItem.Description,
+	//		CreateVm: &types.Vm{
+	//			Name:                      vmName,
+	//			ComputePolicy:             recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy,
+	//			NetworkConnectionSection:  recomposeVAppParamsForEmptyVm.CreateItem.NetworkConnectionSection,
+	//			VmSpecSection:             recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection,
+	//			GuestCustomizationSection: recomposeVAppParamsForEmptyVm.CreateItem.GuestCustomizationSection,
+	//			StorageProfile:            recomposeVAppParamsForEmptyVm.CreateItem.StorageProfile,
+	//		},
+	//		Media: mediaReference,
+	//	}
+	//	newVm, err = vdc.CreateStandaloneVm(&params)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//} else {
+	//	util.Logger.Printf("[VM create - add empty VM] recomposeVAppParamsForEmptyVm %# v", pretty.Formatter(recomposeVAppParamsForEmptyVm))
+	//	newVm, err = vapp.AddEmptyVm(recomposeVAppParamsForEmptyVm)
+	//	if err != nil {
+	//		d.SetId("")
+	//		return nil, fmt.Errorf("[VM creation] error creating VM %s : %s", vmName, err)
+	//	}
+	//}
+	//
+	//d.SetId(newVm.VM.ID)
 
 	util.Logger.Printf("[VM create] VM after creation %# v", pretty.Formatter(newVm.VM))
 	vapp, err = newVm.GetParentVApp()

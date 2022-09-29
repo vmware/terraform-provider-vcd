@@ -1517,6 +1517,9 @@ func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, recomposeVApp
 			return fmt.Errorf("`memory` has to be defined as provided sizing policy `sizing_policy_id` memory isn't configured")
 		}
 		if sizingPolicy.VdcComputePolicy.Memory != nil {
+			if recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb == nil {
+				recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{}
+			}
 			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb.Configured = int64(*sizingPolicy.VdcComputePolicy.Memory)
 		}
 	}
