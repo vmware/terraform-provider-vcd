@@ -43,6 +43,16 @@ const (
 // Some features though must go into VM definition during creation (for example storage profile,
 // CPU/RAM/sizing policy configuration)
 //
+// CPU/Memory management. CPU and Memory settings can come from 3 different places:
+// * `memory` and `cpu` fields in resource definition
+// * from specified sizing policy
+// * inherited from template (only for template based VMs)
+//
+// Template VMs do not require CPU/Memory fields to be set because they inherit it from the template
+// and can additionally be set as per user reuqest in a subsequent API call.
+// Empty VMs on the other hand require CPU/Memory to be set.
+// Fields, defined in sizing policy, override CPU/Memory fields in resource definition.
+//
 // Important notes.
 // * Whenever calling VM update functions, be sure that VM is refreshed after applying them as the
 // next function call may reset the value to old one as VM does not have flexible structure and
@@ -86,43 +96,46 @@ func getComputeValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int,
 	}
 
 	var (
-		setMemory *int64
 		setCpu    *int
 		setCores  *int
+		setMemory *int64
 	)
 
 	// If VDC Compute policy is not set - we're specifying CPU and Memory directly
-	if vdcComputePolicy == nil {
-		if memory, isMemorySet := d.GetOk("memory"); isMemorySet {
-			memInt := int64(memory.(int))
-			setMemory = &memInt
-		}
-
-		if cpus, isCpusSet := d.GetOk("cpus"); isCpusSet {
-			cpuInt := cpus.(int)
-			setCpu = &cpuInt
-		}
-
-		if cpuCores, isCpuCoresSet := d.GetOk("cpu_cores"); isCpuCoresSet {
-			cpuCoresInt := cpuCores.(int)
-			setCores = &cpuCoresInt
-		}
-
+	// if vdcComputePolicy == nil {
+	if memory, isMemorySet := d.GetOk("memory"); isMemorySet {
+		memInt := int64(memory.(int))
+		setMemory = &memInt
 	}
 
-	// Check if sizing policy has any settings set and explicitly remove them from VM definition
+	if cpus, isCpusSet := d.GetOk("cpus"); isCpusSet {
+		cpuInt := cpus.(int)
+		setCpu = &cpuInt
+	}
+
+	if cpuCores, isCpuCoresSet := d.GetOk("cpu_cores"); isCpuCoresSet {
+		cpuCoresInt := cpuCores.(int)
+		setCores = &cpuCoresInt
+	}
+
+	// return setCpu, setCores, setMemory, nil
+
+	// }
+
+	// Check if sizing policy has any settings settings and override VM configuration with it
 
 	if vdcComputePolicy != nil {
 		if vdcComputePolicy.Memory != nil {
-			setMemory = nil
+			mem := int64(*vdcComputePolicy.Memory)
+			setMemory = &mem
 		}
 
 		if vdcComputePolicy.CPUCount != nil {
-			setCpu = nil
+			setCpu = vdcComputePolicy.CPUCount
 		}
 
 		if vdcComputePolicy.CoresPerSocket != nil {
-			setCores = nil
+			setCores = vdcComputePolicy.CoresPerSocket
 		}
 
 		// memoryInComputePolicy := vdcComputePolicy.Memory
@@ -340,7 +353,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	}
 
 	// Still to fix
-
+	///////////////////////
 	sizingPolicy, _, err := lookupComputePolicy(d, vcdClient)
 	if err != nil {
 		return diag.Errorf("error finding sizing policy: %s", err)
@@ -376,6 +389,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return diag.FromErr(err)
 		}
 	}
+
+	///////////////////////////////
 
 	// Handle Advanced compute settings CPU and Memory shares, limits and reservation
 	// Such schema fields are processed:
@@ -722,11 +737,11 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 	}
 	var ok bool
-	//var memory interface{}
-	//_, sizingOk := d.GetOk("sizing_policy_id")
-	//if memory, ok = d.GetOk("memory"); !ok && !sizingOk {
-	//	return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
-	//}
+	// var memory interface{}
+	_, sizingOk := d.GetOk("sizing_policy_id")
+	if _, ok := d.GetOk("memory"); !ok && !sizingOk {
+		return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
+	}
 
 	var osType interface{}
 	if osType, ok = d.GetOk("os_type"); !ok {
@@ -823,13 +838,13 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					Modified: takeBoolPointer(true),
 					Info:     "Virtual Machine specification",
 					OsType:   osType.(string),
-					// NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+					// NumCpus:  cpuCores,
 					// NumCpus: cpuCores,
-					// NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
 					// NumCoresPerSocket: cpuCoresPerSocket,
-					// MemoryResourceMb:  &types.MemoryResourceMb{Configured: *memory},
-					//CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
-					MediaSection: nil,
+					// NumCoresPerSocket: cpuCoresPerSocket,
+					// MemoryResourceMb: &types.MemoryResourceMb{Configured: memory)},
+					CpuResourceMhz: &types.CpuResourceMhz{Configured: 0},
+					MediaSection:   nil,
 					// can be created with resource internal_disk
 					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
 					HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
@@ -891,10 +906,10 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					Modified: takeBoolPointer(true),
 					Info:     "Virtual Machine specification",
 					OsType:   osType.(string),
-					//NumCpus:           takeIntPointer(d.Get("cpus").(int)),
-					//NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
-					//CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
-					//MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
+					// NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+					// NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
+					CpuResourceMhz: &types.CpuResourceMhz{Configured: 0},
+					// MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
 					MediaSection: nil,
 					// can be created with resource internal_disk
 					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
