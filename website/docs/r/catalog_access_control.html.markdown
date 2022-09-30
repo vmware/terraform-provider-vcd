@@ -21,7 +21,6 @@ Supported in provider *v3.8+*
 ## Example Usage
 
 ```hcl
-
 data "vcd_org" "another-org" {
   name = "another-org"
 }
@@ -49,14 +48,12 @@ data "vcd_catalog" "Catalog-AC-2" {
 }
 
 resource "vcd_catalog_access_control" "AC-not-shared" {
-
   catalog_id = data.vcd_catalog.Catalog-AC-0.id
 
   shared_with_everyone = false
 }
 
 resource "vcd_catalog_access_control" "AC-global" {
-
   catalog_id = data.vcd_catalog.Catalog-AC-1.id
 
   shared_with_everyone  = true
