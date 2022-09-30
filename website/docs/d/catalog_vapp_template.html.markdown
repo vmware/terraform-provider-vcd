@@ -33,7 +33,7 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   # You can read it as "use the org from vApp Template `my-first-vapp-template`"
   # and "use the catalog from vApp Template `my-first-vapp-template`"
   org        = data.vcd_catalog_vapp_template.my-first-vapp-template.org
-  catalog_id = data.vcd_catalog_vapp_template.my-first-vapp-template.id
+  catalog_id = data.vcd_catalog_vapp_template.my-first-vapp-template.catalog_id
 
   name = "my-second-item"
 
@@ -66,7 +66,7 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   # You can read it as "use the org from vApp Template `my-first-vapp-template`"
   # and "use the catalog from vApp Template `my-first-vapp-template`"
   org        = data.vcd_catalog_vapp_template.my-first-vapp-template.org
-  catalog_id = data.vcd_catalog_vapp_template.my-first-vapp-template.id
+  catalog_id = data.vcd_catalog_vapp_template.my-first-vapp-template.catalog_id
 
   name = "my-second-item"
 
