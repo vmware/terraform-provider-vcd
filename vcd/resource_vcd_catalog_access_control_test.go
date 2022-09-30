@@ -19,7 +19,7 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 	skipTestForApiToken(t)
 
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdCatalogAccessControl requires system admin privileges")
+		t.Skipf("%s requires system admin privileges", t.Name())
 		return
 	}
 
@@ -48,7 +48,7 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 		"AccessLevel2":             types.ControlAccessReadWrite,
 		"AccessLevel3":             types.ControlAccessReadOnly,
 		"UserPassword":             "TO_BE_DISCARDED",
-		"FuncName":                 "TestAccVcdCatalogAccessControl",
+		"FuncName":                 t.Name(),
 		"Tags":                     "catalog",
 		"SkipNotice":               " ",
 	}
@@ -58,7 +58,7 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 	params["AccessLevel1"] = types.ControlAccessReadWrite
 	params["SharedToEveryone"] = "false"
 	params["EveryoneAccessLevel"] = ""
-	params["FuncName"] = "TestAccVcdCatalogAccessControl-update"
+	params["FuncName"] = t.Name() + "-update"
 	params["SkipNotice"] = "# skip-binary-test: only for updates"
 	updateText := templateFill(testAccCatalogAccessControl, params)
 	if vcdShortTest {

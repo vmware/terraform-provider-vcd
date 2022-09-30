@@ -33,7 +33,7 @@ func resourceVcdCatalogAccessControl() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The name of Catalog to use",
+				Description: "The ID of Catalog to use",
 			},
 			"shared_with_everyone": {
 				Type:        schema.TypeBool,
@@ -57,7 +57,7 @@ func resourceVcdCatalogAccessControl() *schema.Resource {
 						"org_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "ID of the Org to which we are sharing. Required if user_id or group_id not set",
+							Description: "ID of the Org to which we are sharing. Required if user_id or group_id is not set",
 						},
 						"user_id": {
 							Type:        schema.TypeString,
