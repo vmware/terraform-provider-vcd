@@ -43,6 +43,7 @@ const (
 // Some features though must go into VM definition during creation (for example storage profile,
 // CPU/RAM/sizing policy configuration)
 //
+//
 // CPU/Memory management. CPU and Memory settings can come from 3 different places:
 // * `memory` and `cpu` fields in resource definition
 // * from specified sizing policy
@@ -146,63 +147,6 @@ func getComputeValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int,
 	// Lookup parameters from VM resource schema
 
 	return setCpu, setCores, setMemory, nil
-	// memorySharesLevel, memorySharesLevelOk := d.GetOk("memory_priority")
-	// memoryLimit, memoryLimitOk := d.GetOk("memory_limit")
-	// memoryShares, memorySharesOk := d.GetOk("memory_shares")
-	// memoryReservation, memoryReservationOk := d.GetOk("memory_reservation")
-
-	// memorySharesLevel, memorySharesLevelOk := d.GetOk("cpu_priority")
-	// memoryLimit, memoryLimitOk := d.GetOk("cpu_limit")
-	// memoryShares, memorySharesOk := d.GetOk("cpu_shares")
-	// memoryReservation, memoryReservationOk := d.GetOk("cpu_reservation")
-
-	// computePolicy := sizingPolicy
-
-	// cpuSpeed := computePolicy.CPUSpeed
-	// cpuCount := computePolicy.CPUCount
-	// coresPerSocket := computePolicy.CoresPerSocket
-	// cpuReservation := computePolicy.CPUReservationGuarantee
-	// cpuLimit := computePolicy.CPULimit
-	// cpuShares := computePolicy.CPUShares
-
-	// memory := computePolicy.Memory
-	// memoryReservation := computePolicy.MemoryReservationGuarantee
-	// memoryLimit := computePolicy.MemoryLimit
-	// memoryShares := computePolicy.MemoryShares
-
-	// cpuReservation := computePolicy.CPUReservation
-
-	// memory, isMemorySet := d.GetOk("memory")
-	// isMemoryComingFromSizingPolicy := vdcComputePolicy != nil && (vdcComputePolicy.Memory != nil && !isMemorySet)
-	// if isMemoryComingFromSizingPolicy && isMemorySet {
-	// 	logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying a memory of %d that won't be overriden by `memory` attribute", *vdcComputePolicy.Memory))
-	// }
-
-	// if !isMemoryComingFromSizingPolicy {
-	// 	err = vm.ChangeMemory(int64(memory.(int)))
-	// 	if err != nil {
-	// 		return diag.FromErr(err)
-	// 	}
-	// }
-
-	// cpus, isCpusSet := d.GetOk("cpus")
-	// cpuCores, isCpuCoresSet := d.GetOk("cpu_cores")
-	// isCpuComingFromSizingPolicy := vdcComputePolicy != nil && ((vdcComputePolicy.CPUCount != nil && !isCpusSet) || (vdcComputePolicy.CoresPerSocket != nil && !isCpuCoresSet))
-	// if isCpuComingFromSizingPolicy && isCpusSet {
-	// 	logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying CPU count of %d that won't be overriden by `cpus` attribute", *vdcComputePolicy.CPUCount))
-	// }
-	// if isCpuComingFromSizingPolicy && isCpuCoresSet {
-	// 	logForScreen("vcd_vapp_vm", fmt.Sprintf("WARNING: sizing policy is specifying %d CPU cores that won't be overriden by `cpu_cores` attribute", *vdcComputePolicy.CoresPerSocket))
-	// }
-
-	// if !isCpuComingFromSizingPolicy {
-	// 	err = vm.ChangeCPU(cpus.(int), cpuCores.(int))
-	// 	if err != nil {
-	// 		return diag.FromErr(err)
-	// 	}
-	// }
-
-	// return nil
 }
 
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
@@ -610,7 +554,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			Deploy:           false,
 			Name:             vapp.VApp.Name,
 			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
-			Description:      vapp.VApp.Description,
+			Description:      description,
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
 					HREF: templateHref,
