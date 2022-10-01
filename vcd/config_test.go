@@ -111,6 +111,7 @@ type TestConfig struct {
 			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
 			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
 			NsxtBackedCatalogName   string `json:"nsxtBackedCatalogName,omitempty"`
+			NsxtCatalogItem         string `json:"nsxtCatalogItem,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {

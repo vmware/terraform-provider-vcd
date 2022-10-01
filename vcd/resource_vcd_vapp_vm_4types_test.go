@@ -3,82 +3,180 @@
 
 package vcd
 
-/*
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+)
+
+// Terraform codebase for VM management is very complicated and is backed by 4 types of VM:
+//  * `types.InstantiateVmTemplateParams` (Standalone VM from template)
+//  * `types.ReComposeVAppParams` (vApp VM from template)
+//  * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
+//  * `types.CreateVmParams` (Empty Standalone VM)
+//
+// Each of these 4 types have different fields for creation (just like UI differs), but the
+// expectation for the user is to get a VM with all configuration available in HCL, no matter the type.
+//
+// As a result, the architecture of VM creation is such, that it uses above defined types to create
+// VMs with minimal configuration and then perform additions API calls. There are still risks that
+// some VMs get less configured than others. To overcome this risk, there is a new set of tests.
+// Each of these tests aim to ensure that exactly the same configuration is achieved.
+
+// TestAccVcdVAppVm_4types attempts to test minimal create configuration for all 4 types of VMs
 func TestAccVcdVAppVm_4types(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{
-		"Org": testConfig.VCD.Org,
-		"Vdc": testConfig.Nsxt.Vdc,
+		"TestName":    t.Name(),
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.Nsxt.Vdc,
+		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem": testConfig.VCD.Catalog.NsxtCatalogItem,
+
 		// "EdgeGateway":                  testConfig.Networking.EdgeGateway,
 		// "NetworkName":                  "TestAccVcdVAppVmNetHwVirt",
-		"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		// "CatalogItem":                  testConfig.VCD.Catalog.,
-		"VappName":                     vappNameHwVirt,
-		"VmName":                       vmNameHwVirt,
-		"ExposeHardwareVirtualization": "false",
-		"Tags":                         "vapp vm",
+		// "VappName":                     vappNameHwVirt,
+		// "VmName":                       vmNameHwVirt,
+		// "ExposeHardwareVirtualization": "false",
+		"Tags": "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
-	configTextStep0 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
+	configTextStep1 := templateFill(testAccVcdVAppVm_4types_Step1, params)
 
-	params["ExposeHardwareVirtualization"] = "true"
-	params["FuncName"] = t.Name() + "-step1"
-	configTextStep1 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
+	// params["ExposeHardwareVirtualization"] = "true"
+	// params["FuncName"] = t.Name() + "-step1"
+	// configTextStep1 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep0)
-	resource.ParallelTest(t, resource.TestCase{
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
+	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+		// CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+		// testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+		),
 		Steps: []resource.TestStep{
-			{
-				Config: configTextStep0,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmNameHwVirt, "name", vmNameHwVirt),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmNameHwVirt, "expose_hardware_virtualization", "false"),
-				),
-			},
 			{
 				Config: configTextStep1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmNameHwVirt, "name", vmNameHwVirt),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmNameHwVirt, "expose_hardware_virtualization", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
+
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
+
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", t.Name()+"-empty-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "os_type", "sles10_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "hardware_version", "vmx-14"),
+
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
+
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", t.Name()+"-standalone"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "os_type", "sles10_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "hardware_version", "vmx-14"),
 				),
 			},
+			// {
+			// 	Config: configTextStep1,
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),
+			// 		resource.TestCheckResourceAttr(
+			// 			"vcd_vapp_vm."+vmNameHwVirt, "name", vmNameHwVirt),
+			// 		resource.TestCheckResourceAttr(
+			// 			"vcd_vapp_vm."+vmNameHwVirt, "expose_hardware_virtualization", "true"),
+			// 	),
+			// },
 		},
 	})
 	postTestChecks(t)
 }
 
-const testAccCheckVcdVAppVm_hardwareVirtualization = `
-resource "vcd_vapp" "{{.VappName}}" {
-  name = "{{.VappName}}"
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
+const testAccVcdVAppVm_4types_Step1 = `
+resource "vcd_vapp" "template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-template-vm"
+  description = "vApp for Template VM description"
 }
 
-resource "vcd_vapp_vm" "{{.VmName}}" {
-  org                            = "{{.Org}}"
-  vdc                            = "{{.Vdc}}"
-  vapp_name                      = vcd_vapp.{{.VappName}}.name
-  name                           = "{{.VmName}}"
-  catalog_name                   = "{{.Catalog}}"
-  template_name                  = "{{.CatalogItem}}"
-  memory                         = 384
-  cpus                           = 2
-  cpu_cores                      = 1
-  expose_hardware_virtualization = {{.ExposeHardwareVirtualization}}
+resource "vcd_vapp" "empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-empty-vm"
+  description = "vApp for Empty VM description"
+}
+
+resource "vcd_vapp_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  
+  vapp_name   = vcd_vapp.template-vm.name
+  name        = "{{.TestName}}-template-vapp-vm"
+  description = "{{.TestName}}-template-vapp-vm"
+}
+
+resource "vcd_vapp_vm" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.empty-vm.name
+  name          = "{{.TestName}}-empty-vapp-vm"
+  description   = "{{.TestName}}-empty-vapp-vm"
+  computer_name = "vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  
+  name        = "{{.TestName}}-template-standalone-vm"
+  description = "{{.TestName}}-template-standalone-vm"
+}
+
+resource "vcd_vm" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  name          = "{{.TestName}}-empty-standalone-vm"
+  description   = "{{.TestName}}-standalone"
+  computer_name = "standalone"
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
 }
 `
-*/

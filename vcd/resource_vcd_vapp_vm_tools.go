@@ -4,7 +4,6 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"net"
 	"sort"
@@ -93,529 +92,6 @@ func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient) (*types.V
 	return sizingPolicy, vmComputePolicy, nil
 }
 
-// VM Schema is defined as global so that it can be directly accessible in other places
-func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"vapp_name": {
-			Type:        schema.TypeString,
-			Required:    vmType == vappVmType,
-			Optional:    vmType == standaloneVmType,
-			Computed:    vmType == standaloneVmType,
-			ForceNew:    vmType == vappVmType,
-			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
-		},
-		"vm_type": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: fmt.Sprintf("Type of VM: either '%s' or '%s'", vappVmType, standaloneVmType),
-		},
-		"name": {
-			Type:        schema.TypeString,
-			Required:    true,
-			ForceNew:    true,
-			Description: "A name for the VM, unique within the vApp",
-		},
-		"computer_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "Computer name to assign to this virtual machine",
-		},
-		"org": {
-			Type:     schema.TypeString,
-			Optional: true,
-			ForceNew: true,
-			Description: "The name of organization to use, optional if defined at provider " +
-				"level. Useful when connected as sysadmin working across different organizations",
-		},
-		"vdc": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The name of VDC to use, optional if defined at provider level",
-		},
-		"template_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The name of the vApp Template to use",
-			//RequiredWith: []string{"template_name", "catalog_name"},
-		},
-		"vm_name_in_template": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
-			//RequiredWith: []string{"vm_name_in_template", "catalog_name", "template_name"},
-		},
-		"catalog_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "The catalog name in which to find the given vApp Template or media for boot_image",
-			//RequiredWith: []string{"catalog_name", "template_name", "boot_image"},
-		},
-		"description": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "The VM description",
-		},
-		"memory": {
-			Type:         schema.TypeInt,
-			Optional:     true,
-			Computed:     true,
-			Description:  "The amount of RAM (in MB) to allocate to the VM",
-			ValidateFunc: validateMultipleOf4(),
-		},
-		"memory_reservation": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "The amount of RAM (in MB) reservation on the underlying virtualization infrastructure",
-		},
-		"memory_priority": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			Computed:     true,
-			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
-			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
-		},
-		"memory_shares": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "Custom priority for the resource. This is a read-only, unless the `memory_priority` is CUSTOM",
-		},
-		"memory_limit": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "The limit for how much of memory can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
-		},
-		"cpus": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "The number of virtual CPUs to allocate to the VM",
-		},
-		"cpu_cores": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "The number of cores per socket",
-		},
-		"cpu_reservation": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "The amount of MHz reservation on the underlying virtualization infrastructure",
-		},
-		"cpu_priority": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			Computed:     true,
-			Description:  "Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload",
-			ValidateFunc: validation.StringInSlice([]string{"LOW", "NORMAL", "HIGH", "CUSTOM"}, false),
-		},
-		"cpu_shares": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "Custom priority for the resource. This is a read-only, unless the `cpu_priority` is CUSTOM",
-		},
-		"cpu_limit": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
-		},
-		"metadata": {
-			Type:     schema.TypeMap,
-			Optional: true,
-			// For now underlying go-vcloud-director repo only supports
-			// a value of type String in this map.
-			Description: "Key value map of metadata to assign to this VM",
-		},
-		"href": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "VM Hyper Reference",
-		},
-		"accept_all_eulas": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     true,
-			Description: "Automatically accept EULA if OVA has it",
-		},
-		"power_on": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     true,
-			Description: "A boolean value stating if this VM should be powered on",
-		},
-		"storage_profile": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "Storage profile to override the default one",
-		},
-		"os_type": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "Operating System type. Possible values can be found in documentation.",
-		},
-		"hardware_version": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.)",
-		},
-		"boot_image": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "Media name to add as boot image.",
-			//RequiredWith: []string{"boot_image", "catalog_name"},
-		},
-		"network_dhcp_wait_seconds": {
-			Optional:     true,
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Description: "Optional number of seconds to try and wait for DHCP IP (valid for " +
-				"'network' block only)",
-		},
-		"network": {
-			Optional:    true,
-			Type:        schema.TypeList,
-			Description: " A block to define network interface. Multiple can be used.",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"type": {
-						Required:     true,
-						Type:         schema.TypeString,
-						ValidateFunc: vmNetworkTypeValidator(vmType),
-						Description:  "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
-					},
-					"ip_allocation_mode": {
-						Optional:     true,
-						Type:         schema.TypeString,
-						ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
-						Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
-					},
-					"name": {
-						ForceNew:    false,
-						Optional:    true, // In case of type = none it is not required
-						Type:        schema.TypeString,
-						Description: "Name of the network this VM should connect to. Always required except for `type` `NONE`",
-					},
-					"ip": {
-						Computed:     true,
-						Optional:     true,
-						Type:         schema.TypeString,
-						ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
-						Description:  "IP of the VM. Settings depend on `ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
-					},
-					"is_primary": {
-						Optional: true,
-						Computed: true,
-						// By default, if the value is omitted it will report schema change
-						// on every terraform operation. The below function
-						// suppresses such cases "" => "false" when applying.
-						DiffSuppressFunc: falseBoolSuppress(),
-						Type:             schema.TypeBool,
-						Description:      "Set to true if network interface should be primary. First network card in the list will be primary by default",
-					},
-					"mac": {
-						Computed:    true,
-						Optional:    true,
-						Type:        schema.TypeString,
-						Description: "Mac address of network interface",
-					},
-					"adapter_type": {
-						Type:             schema.TypeString,
-						Computed:         true,
-						Optional:         true,
-						DiffSuppressFunc: suppressCase,
-						Description:      "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
-					},
-					"connected": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Default:     true,
-						Description: "It defines if NIC is connected or not.",
-					},
-				},
-			},
-		},
-		"disk": {
-			Type: schema.TypeSet,
-			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
-				"name": {
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: "Independent disk name",
-				},
-				"bus_number": {
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: "Bus number on which to place the disk controller",
-				},
-				"unit_number": {
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: "Unit number (slot) on the bus specified by BusNumber",
-				},
-				"size_in_mb": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "The size of the disk in MB.",
-				},
-			}},
-			Optional: true,
-			Set:      resourceVcdVmIndependentDiskHash,
-		},
-		"override_template_disk": {
-			Type:        schema.TypeSet,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "A block to match internal_disk interface in template. Multiple can be used. Disk will be matched by bus_type, bus_number and unit_number.",
-			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
-				"bus_type": {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata", "nvme"}, false),
-					Description:  "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata, nvme",
-				},
-				"size_in_mb": {
-					Type:        schema.TypeInt,
-					ForceNew:    true,
-					Required:    true,
-					Description: "The size of the disk in MB.",
-				},
-				"bus_number": {
-					Type:        schema.TypeInt,
-					ForceNew:    true,
-					Required:    true,
-					Description: "The number of the SCSI or IDE controller itself.",
-				},
-				"unit_number": {
-					Type:        schema.TypeInt,
-					ForceNew:    true,
-					Required:    true,
-					Description: "The device number on the SCSI or IDE controller of the disk.",
-				},
-				"iops": {
-					Type:        schema.TypeInt,
-					ForceNew:    true,
-					Optional:    true,
-					Description: "Specifies the IOPS for the disk. Default is 0.",
-				},
-				"storage_profile": {
-					Type:        schema.TypeString,
-					ForceNew:    true,
-					Optional:    true,
-					Description: "Storage profile to override the VM default one",
-				},
-			}},
-		},
-		"internal_disk": {
-			Type:        schema.TypeList,
-			Computed:    true,
-			Description: "A block will show internal disk details",
-			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
-				"disk_id": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "The disk ID.",
-				},
-				"bus_type": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata, nvme",
-				},
-				"size_in_mb": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "The size of the disk in MB.",
-				},
-				"bus_number": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "The number of the SCSI or IDE controller itself.",
-				},
-				"unit_number": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "The device number on the SCSI or IDE controller of the disk.",
-				},
-				"thin_provisioned": {
-					Type:        schema.TypeBool,
-					Computed:    true,
-					Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
-				},
-				"iops": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Specifies the IOPS for the disk. Default is 0.",
-				},
-				"storage_profile": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Storage profile to override the VM default one",
-				},
-			}},
-		},
-		"expose_hardware_virtualization": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "Expose hardware-assisted CPU virtualization to guest OS.",
-		},
-		"guest_properties": {
-			Type:        schema.TypeMap,
-			Optional:    true,
-			Description: "Key/value settings for guest properties",
-		},
-		"customization": {
-			Optional:    true,
-			Computed:    true,
-			MinItems:    1,
-			MaxItems:    1,
-			Type:        schema.TypeList,
-			Description: "Guest customization block",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"force": {
-						ValidateFunc: noopValueWarningValidator(true,
-							"Using 'true' value for field 'vcd_vapp_vm.customization.force' will reboot VM on every 'terraform apply' operation"),
-						Type:     schema.TypeBool,
-						Optional: true,
-						Default:  false,
-						// This settings is used as a 'flag' and it does not matter what is set in the
-						// state. If it is 'true' - then it means that 'update' procedure must set the
-						// VM for customization at next boot and reboot it.
-						DiffSuppressFunc: suppressFalse(),
-						Description:      "'true' value will cause the VM to reboot on every 'apply' operation",
-					},
-					"enabled": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "'true' value will enable guest customization. It may occur on first boot or when 'force' is used",
-					},
-					"change_sid": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "'true' value will change SID. Applicable only for Windows VMs",
-					},
-					"allow_local_admin_password": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "Allow local administrator password",
-					},
-					"must_change_password_on_first_login": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "Require Administrator to change password on first login",
-					},
-					"auto_generate_password": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "Auto generate password",
-					},
-					"admin_password": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Computed:    true,
-						Sensitive:   true,
-						Description: "Manually specify admin password",
-					},
-					"number_of_auto_logons": {
-						Type:         schema.TypeInt,
-						Optional:     true,
-						Computed:     true,
-						Description:  "Number of times to log on automatically. '0' - disabled.",
-						ValidateFunc: validation.IntAtLeast(0),
-					},
-					"join_domain": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "Enable this VM to join a domain",
-					},
-					"join_org_domain": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Computed:    true,
-						Description: "Use organization's domain for joining",
-					},
-					"join_domain_name": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Computed:    true,
-						Description: "Custom domain name for join",
-					},
-					"join_domain_user": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Computed:    true,
-						Description: "Username for custom domain name join",
-					},
-					"join_domain_password": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Computed:    true,
-						Sensitive:   true,
-						Description: "Password for custom domain name join",
-					},
-					"join_domain_account_ou": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Computed:    true,
-						Description: "Account organizational unit for domain name join",
-					},
-					"initscript": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Computed:    true,
-						Description: "Script to run on initial boot or with customization.force=true set",
-					},
-				},
-			},
-		},
-		"cpu_hot_add_enabled": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "True if the virtual machine supports addition of virtual CPUs while powered on.",
-		},
-		"memory_hot_add_enabled": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "True if the virtual machine supports addition of memory while powered on.",
-		},
-		"prevent_update_power_off": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "True if the update of resource should fail when virtual machine power off needed.",
-		},
-		"sizing_policy_id": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
-		},
-	}
-}
-
 // vmTemplatefromVappTemplate returns a given VM from a vApp template
 // If no name is provided, it returns the first VM from the template
 func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *types.VAppTemplate {
@@ -628,6 +104,57 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 		}
 	}
 	return nil
+}
+
+// getComputeValues returns CPU, CPU core count and memory variables.
+// Priority comes from schema configuration and then whatever is present in compute policy (if it
+// was specified at all)
+func getComputeValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int, *int64, error) {
+	vdcComputePolicy, _, err := lookupComputePolicy(d, vcdClient)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error finding sizing policy: %s", err)
+	}
+
+	var (
+		setCpu    *int
+		setCores  *int
+		setMemory *int64
+	)
+
+	// If VDC Compute policy is not set - we're specifying CPU and Memory directly
+	// if vdcComputePolicy == nil {
+	if memory, isMemorySet := d.GetOk("memory"); isMemorySet {
+		memInt := int64(memory.(int))
+		setMemory = &memInt
+	}
+
+	if cpus, isCpusSet := d.GetOk("cpus"); isCpusSet {
+		cpuInt := cpus.(int)
+		setCpu = &cpuInt
+	}
+
+	if cpuCores, isCpuCoresSet := d.GetOk("cpu_cores"); isCpuCoresSet {
+		cpuCoresInt := cpuCores.(int)
+		setCores = &cpuCoresInt
+	}
+
+	// Check if sizing policy has any settings settings and override VM configuration with it
+	if vdcComputePolicy != nil {
+		if vdcComputePolicy.Memory != nil {
+			mem := int64(*vdcComputePolicy.Memory)
+			setMemory = &mem
+		}
+
+		if vdcComputePolicy.CPUCount != nil {
+			setCpu = vdcComputePolicy.CPUCount
+		}
+
+		if vdcComputePolicy.CoresPerSocket != nil {
+			setCores = vdcComputePolicy.CoresPerSocket
+		}
+	}
+
+	return setCpu, setCores, setMemory, nil
 }
 
 func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
@@ -1486,43 +1013,6 @@ func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("")
 	}
 
-	return nil
-}
-
-func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, recomposeVAppParamsForEmptyVm *types.RecomposeVAppParamsForEmptyVm) error {
-	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
-	if err != nil {
-		return fmt.Errorf("error constructing HREF for compute policy")
-	}
-
-	if value, ok := d.GetOk("sizing_policy_id"); ok {
-		recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String() + value.(string)}}
-		sizingPolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
-		if err != nil {
-			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
-		}
-		if _, ok = d.GetOk("cpus"); !ok && sizingPolicy.VdcComputePolicy.CPUCount == nil {
-			return fmt.Errorf("`cpus` has to be defined as provided sizing policy `sizing_policy_id` cpu count isn't configured")
-		}
-		if sizingPolicy.VdcComputePolicy.CPUCount != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCpus = sizingPolicy.VdcComputePolicy.CPUCount
-		}
-		if _, ok = d.GetOk("cpu_cores"); !ok && sizingPolicy.VdcComputePolicy.CoresPerSocket == nil {
-			return fmt.Errorf("`cpu_cores` has to be defined as provided sizing policy `sizing_policy_id` cpu cores per socket isn't configured")
-		}
-		if sizingPolicy.VdcComputePolicy.CoresPerSocket != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCoresPerSocket = sizingPolicy.VdcComputePolicy.CoresPerSocket
-		}
-		if _, ok = d.GetOk("memory"); !ok && sizingPolicy.VdcComputePolicy.Memory == nil {
-			return fmt.Errorf("`memory` has to be defined as provided sizing policy `sizing_policy_id` memory isn't configured")
-		}
-		if sizingPolicy.VdcComputePolicy.Memory != nil {
-			if recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb == nil {
-				recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{}
-			}
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb.Configured = int64(*sizingPolicy.VdcComputePolicy.Memory)
-		}
-	}
 	return nil
 }
 
