@@ -667,15 +667,16 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error refreshing VM: %s", err)
 	}
 
+	/// TODO - remove
 	// Handle VM description
 	// Such schema fields are processed:
 	// * description
 	//
 	// Some VM structures don't allow setting description, and it gets inherited from template
-	err = vm.ChangeDescription(d.Get("description").(string))
-	if err != nil {
-		return diag.Errorf("error setting VM description %s : %s", vm.VM.Name, err)
-	}
+	// err = vm.ChangeDescription(d.Get("description").(string))
+	// if err != nil {
+	// 	return diag.Errorf("error setting VM description %s : %s", vm.VM.Name, err)
+	// }
 
 	if err = vm.Refresh(); err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)
@@ -833,7 +834,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 
 	isStandaloneVm := vmType == standaloneVmType
 	vappName := d.Get("vapp_name").(string)
-	description := d.Get("description").(string)
 	vmName := d.Get("name").(string)
 
 	// Lookup vApp template
@@ -892,13 +892,15 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			PowerOn:          false, // VM will be powered on after all configuration is done
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			ComputePolicy:    vmComputePolicy,
-			Description:      description,
 			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
 				Source: &types.Reference{
 					HREF: vmTemplate.HREF,
 					ID:   vmTemplate.ID,
 					Type: vmTemplate.Type,
 					Name: vmTemplate.Name,
+				},
+				VmGeneralParams: &types.VMGeneralParams{
+					Description: d.Get("description").(string),
 				},
 				VmTemplateInstantiationParams: &types.InstantiationParams{
 					NetworkConnectionSection: &networkConnectionSection,
@@ -961,11 +963,13 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			Deploy:           false,
 			Name:             vapp.VApp.Name,
 			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
-			Description:      vapp.VApp.Description,
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
 					HREF: templateHref,
 					Name: vmName,
+				},
+				VMGeneralParams: &types.VMGeneralParams{
+					Description: d.Get("description").(string),
 				},
 				InstantiationParams: &types.InstantiationParams{
 					// TODO check in other places
