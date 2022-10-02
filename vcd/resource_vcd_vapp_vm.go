@@ -1048,12 +1048,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
 
-	if cpuCores != nil {
-		err = vm.ChangeCPU(*cpuCores, *cpuCoresPerSocket)
+	if cpuCores != nil || cpuCoresPerSocket != nil {
+		err = vm.ChangeCPUAndCoreCount(cpuCores, cpuCoresPerSocket)
 		if err != nil {
 			return nil, fmt.Errorf("error changing CPU settings: %s", err)
 		}
-
 	}
 
 	if memory != nil {
