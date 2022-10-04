@@ -667,21 +667,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error refreshing VM: %s", err)
 	}
 
-	/// TODO - remove
-	// Handle VM description
-	// Such schema fields are processed:
-	// * description
-	//
-	// Some VM structures don't allow setting description, and it gets inherited from template
-	// err = vm.ChangeDescription(d.Get("description").(string))
-	// if err != nil {
-	// 	return diag.Errorf("error setting VM description %s : %s", vm.VM.Name, err)
-	// }
-
-	if err = vm.Refresh(); err != nil {
-		return diag.Errorf("error refreshing VM: %s", err)
-	}
-
 	// Handle Metadata
 	// Such schema fields are processed:
 	// * metadata
@@ -1013,8 +998,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Refresh VM to have the latest structure
-	err = vm.Refresh()
-	if err != nil {
+	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
@@ -1025,8 +1009,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error updating VM description: %s", err)
 	}
 
-	err = vm.Refresh()
-	if err != nil {
+	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
@@ -1039,8 +1022,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error managing internal disks : %s", err)
 	}
 
-	err = vm.Refresh()
-	if err != nil {
+	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
@@ -1054,14 +1036,13 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error updating hardware version and OS type : %s", err)
 	}
 
-	err = vm.Refresh()
-	if err != nil {
+	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
-	// vApp template VMs additionaly require CPU/Memory sorting if
+	// Template VMs require CPU/Memory seting
 	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be inherited from
-	cpuCores, cpuCoresPerSocket, memory, err := getComputeValues(d, vcdClient)
+	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
@@ -1072,8 +1053,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			return nil, fmt.Errorf("error changing CPU settings: %s", err)
 		}
 
-		err = vm.Refresh()
-		if err != nil {
+		if err := vm.Refresh(); err != nil {
 			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 		}
 	}
@@ -1084,37 +1064,12 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			return nil, fmt.Errorf("error setting memory size from schema for VM from template: %s", err)
 		}
 
-		err = vm.Refresh()
-		if err != nil {
+		if err := vm.Refresh(); err != nil {
 			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 		}
 	}
 
 	return vm, nil
-}
-
-func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error {
-	var err error
-	var osTypeOrHardwareVersionChanged bool
-
-	vmSpecSection := vm.VM.VmSpecSection
-	if hardwareVersion := d.Get("hardware_version").(string); hardwareVersion != "" {
-		vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: hardwareVersion}
-		osTypeOrHardwareVersionChanged = true
-	}
-
-	if osType := d.Get("os_type").(string); osType != "" {
-		vmSpecSection.OsType = osType
-		osTypeOrHardwareVersionChanged = true
-	}
-
-	if osTypeOrHardwareVersionChanged {
-		_, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
-		if err != nil {
-			return fmt.Errorf("error changing VM spec section: %s", err)
-		}
-	}
-	return nil
 }
 
 func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
@@ -1202,7 +1157,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	}
 
 	// Lookup CPU/Memory parameters
-	cpuCores, cpuCoresPerSocket, memory, err := getComputeValues(d, vcdClient)
+	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}

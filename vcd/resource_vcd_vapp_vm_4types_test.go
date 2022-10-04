@@ -1161,3 +1161,248 @@ resource "vcd_vm" "empty-vm" {
   sizing_policy_id = {{.SizingPolicyId}}
 }
 `
+
+func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"TestName":    t.Name(),
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.Nsxt.Vdc,
+		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem": testConfig.VCD.Catalog.NsxtCatalogItem,
+
+		"Tags": "vapp vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configTextStep1 := templateFill(testAccVcdVAppVm_4types_advancedComputeSettings, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configTextStep1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+
+					// vApp checks
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
+
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
+
+					// Template vApp VM checks
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", ""),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_shares", "480"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_reservation", "8"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_limit", "48"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_shares", "512"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_reservation", "200"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_limit", "1000"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "1024"),
+
+					// Empty vApp VM checks
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", ""),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "os_type", "sles10_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "hardware_version", "vmx-14"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "expose_hardware_virtualization", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_shares", "480"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_reservation", "8"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_limit", "48"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_shares", "512"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_reservation", "200"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_limit", "1000"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
+
+					// Standalone template VM checks
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", ""),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_shares", "480"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_reservation", "8"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_limit", "48"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_shares", "512"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_reservation", "200"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_limit", "1000"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory", "1024"),
+
+					// Standalone empty VM checks
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", ""),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "os_type", "sles10_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "hardware_version", "vmx-14"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "expose_hardware_virtualization", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_shares", "480"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_reservation", "8"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_limit", "48"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_priority", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_shares", "512"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_reservation", "200"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_limit", "1000"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVAppVm_4types_advancedComputeSettings = `
+data "vcd_org_vdc" "nsxt" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
+}
+
+resource "vcd_vapp" "template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-template-vm"
+  description = "vApp for Template VM description"
+}
+
+resource "vcd_vapp" "empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-empty-vm"
+  description = "vApp for Empty VM description"
+}
+
+resource "vcd_vapp_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  
+  vapp_name   = vcd_vapp.template-vm.name
+  name        = "{{.TestName}}-template-vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vapp_vm" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.empty-vm.name
+  name          = "{{.TestName}}-empty-vapp-vm"
+  computer_name = "vapp-vm"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  
+  name        = "{{.TestName}}-template-standalone-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vm" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  name          = "{{.TestName}}-empty-standalone-vm"
+  computer_name = "standalone"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+`

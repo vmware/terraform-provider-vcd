@@ -106,10 +106,9 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 	return nil
 }
 
-// getComputeValues returns CPU, CPU core count and memory variables.
-// Priority comes from schema configuration and then whatever is present in compute policy (if it
-// was specified at all)
-func getComputeValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int, *int64, error) {
+// getCpuMemoryValues returns CPU, CPU core count and Memory variables. Priority comes from HCL
+// schema configuration and then whatever is present in compute policy (if it was specified at all)
+func getCpuMemoryValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int, *int64, error) {
 	vdcComputePolicy, _, err := lookupComputePolicy(d, vcdClient)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error finding sizing policy: %s", err)
@@ -1141,4 +1140,28 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 	}
 
 	return nets, nil
+}
+
+func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error {
+	var err error
+	var osTypeOrHardwareVersionChanged bool
+
+	vmSpecSection := vm.VM.VmSpecSection
+	if hardwareVersion := d.Get("hardware_version").(string); hardwareVersion != "" {
+		vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: hardwareVersion}
+		osTypeOrHardwareVersionChanged = true
+	}
+
+	if osType := d.Get("os_type").(string); osType != "" {
+		vmSpecSection.OsType = osType
+		osTypeOrHardwareVersionChanged = true
+	}
+
+	if osTypeOrHardwareVersionChanged {
+		_, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
+		if err != nil {
+			return fmt.Errorf("error changing VM spec section: %s", err)
+		}
+	}
+	return nil
 }
