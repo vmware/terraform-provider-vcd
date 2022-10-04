@@ -24,7 +24,16 @@ import (
 // Each of these tests aim to ensure that exactly the same configuration is achieved.
 
 // TestAccVcdVAppVm_4types attempts to test minimal create configuration for all 4 types of VMs
+// Template based VMs inherit their CPU/Memory settings from template, while empty ones must have it
+// explicitly specified
+//
+// Additionally such fields are validated:
 // * prevent_update_power_off
+// * expose_hardware_virtualization
+// * cpu_hot_add_enabled
+// * memory_hot_add_enabled
+// * description
+// * network
 func TestAccVcdVAppVm_4types(t *testing.T) {
 	preTestChecks(t)
 
@@ -74,6 +83,7 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "prevent_update_power_off", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.#", "1"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
@@ -88,6 +98,7 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "prevent_update_power_off", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.#", "1"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
@@ -97,6 +108,7 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "prevent_update_power_off", "true"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.#", "1"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
@@ -110,6 +122,7 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "prevent_update_power_off", "true"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.#", "1"),
 				),
 			},
 		},
@@ -118,6 +131,26 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 }
 
 const testAccVcdVAppVm_4types_Step1 = `
+data "vcd_org_vdc" "nsxt" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
+}
+
+resource "vcd_network_isolated_v2" "nsxt-backed" {
+  org      = "{{.Org}}"
+  owner_id = data.vcd_org_vdc.nsxt.id
+
+  name = "{{.TestName}}"
+
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+}
+
 resource "vcd_vapp" "template-vm" {
   org         = "{{.Org}}"
   vdc         = "{{.Vdc}}"
@@ -125,11 +158,27 @@ resource "vcd_vapp" "template-vm" {
   description = "vApp for Template VM description"
 }
 
+resource "vcd_vapp_org_network" "template-vapp" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name        = (vcd_vapp.template-vm.id == "always-not-equal" ? null : vcd_vapp.template-vm.name)
+  org_network_name = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+}
+
 resource "vcd_vapp" "empty-vm" {
   org         = "{{.Org}}"
   vdc         = "{{.Vdc}}"
   name        = "{{.TestName}}-empty-vm"
   description = "vApp for Empty VM description"
+}
+
+resource "vcd_vapp_org_network" "empty-vapp" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name        = (vcd_vapp.empty-vm.id == "always-not-equal" ? null : vcd_vapp.empty-vm.name)
+  org_network_name = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
 }
 
 resource "vcd_vapp_vm" "template-vm" {
@@ -142,6 +191,13 @@ resource "vcd_vapp_vm" "template-vm" {
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
   description = "{{.TestName}}-template-vapp-vm"
+
+  network {
+	type               = "org"
+	name               = (vcd_vapp_org_network.template-vapp.id == "always-not-equal" ? null : vcd_vapp_org_network.template-vapp.org_network_name)
+	adapter_type       = "VMXNET3"
+	ip_allocation_mode = "POOL"
+  }
 
   prevent_update_power_off = true
 }
@@ -161,6 +217,13 @@ resource "vcd_vapp_vm" "empty-vm" {
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
 
+  network {
+	type               = "org"
+	name               = (vcd_vapp_org_network.empty-vapp.id == "always-not-equal" ? null : vcd_vapp_org_network.empty-vapp.org_network_name)
+	adapter_type       = "VMXNET3"
+	ip_allocation_mode = "POOL"
+  }
+
   prevent_update_power_off = true
 }
 
@@ -173,6 +236,13 @@ resource "vcd_vm" "template-vm" {
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
+
+  network {
+	type               = "org"
+	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	adapter_type       = "VMXNET3"
+	ip_allocation_mode = "POOL"
+  }
 
   prevent_update_power_off = true
 }
@@ -191,11 +261,19 @@ resource "vcd_vm" "empty-vm" {
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
 
+  network {
+	type               = "org"
+	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	adapter_type       = "VMXNET3"
+	ip_allocation_mode = "POOL"
+  }
+
   prevent_update_power_off = true
 }
 `
 
 // TestAccVcdVAppVm_4types_storage_profile validates that storage profile assignment works correctly
+// as well as the following fields
 // * cpu_hot_add_enabled
 // * memory_hot_add_enabled
 // * computer_name
@@ -235,7 +313,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configTextStep1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
@@ -246,7 +324,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "true"),
@@ -256,11 +334,12 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm2", "VM Metadata2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.#", "0"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", t.Name()+"-empty-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
@@ -275,11 +354,12 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.#", "0"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "true"),
@@ -289,11 +369,12 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm2", "VM Metadata2"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.#", "0"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", t.Name()+"-standalone"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "os_type", "rhel8_64Guest"),
@@ -307,6 +388,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.#", "0"),
 				),
 			},
 		},
@@ -345,7 +427,6 @@ resource "vcd_vapp_vm" "template-vm" {
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
-  description = "{{.TestName}}-template-vapp-vm"
 
   cpu_hot_add_enabled            = true
   memory_hot_add_enabled         = true
@@ -370,7 +451,6 @@ resource "vcd_vapp_vm" "empty-vm" {
   
   vapp_name     = vcd_vapp.empty-vm.name
   name          = "{{.TestName}}-empty-vapp-vm"
-  description   = "{{.TestName}}-empty-vapp-vm"
   computer_name = "comp-name"
 
   cpus   = 1
@@ -405,7 +485,6 @@ resource "vcd_vm" "template-vm" {
   computer_name = "comp-name"
   
   name        = "{{.TestName}}-template-standalone-vm"
-  description = "{{.TestName}}-template-standalone-vm"
 
   cpu_hot_add_enabled            = true
   memory_hot_add_enabled         = true
@@ -429,7 +508,6 @@ resource "vcd_vm" "empty-vm" {
   vdc  = "{{.Vdc}}"
 
   name          = "{{.TestName}}-empty-standalone-vm"
-  description   = "{{.TestName}}-standalone"
   computer_name = "comp-name"
 
   cpus   = 1
@@ -456,6 +534,8 @@ resource "vcd_vm" "empty-vm" {
 }
 `
 
+// TestAccVcdVAppVm_4types_sizing_policy checks that all types of VMs accept minimal sizing policy
+// (without any CPU/Memory values)
 func TestAccVcdVAppVm_4types_sizing_policy(t *testing.T) {
 	preTestChecks(t)
 

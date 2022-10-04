@@ -882,10 +882,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			return nil, fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
 		}
 
-		// Prepare request body for standalone VM creation. All parameters should be set here to
-		// speed up process of VM creation instead of separate API calls (unless it is
-		// impossible)
-
 		standaloneVmParams := types.InstantiateVmTemplateParams{
 			Xmlns:            types.XMLNamespaceVCloud,
 			Name:             vmName,
@@ -950,10 +946,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		if vappTemplate.VAppTemplate.Children != nil && len(vappTemplate.VAppTemplate.Children.VM) != 0 {
 			templateHref = vappTemplate.VAppTemplate.Children.VM[0].HREF
 		}
-
-		// Prepare request body for VM in vApp creation. All parameters should be set here to
-		// speed up process of VM creation instead of separate API calls (unless it is
-		// impossible)
 
 		vappVmParams := &types.ReComposeVAppParams{
 			Ovf:              types.XMLNamespaceOVF,
@@ -1177,7 +1169,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
 
-	////////////// CPU ///////////////
+	// Lookup CPU/Memory parameters
 	cpuCores, cpuCoresPerSocket, memory, err := getComputeValues(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
@@ -1211,14 +1203,9 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 				},
 				VmSpecSection: &types.VmSpecSection{
-					Modified: takeBoolPointer(true),
-					Info:     "Virtual Machine specification",
-					OsType:   osType.(string),
-					// NumCpus:  cpuCores,
-					// NumCpus: cpuCores,
-					// NumCoresPerSocket: cpuCoresPerSocket,
-					// NumCoresPerSocket: cpuCoresPerSocket,
-					// MemoryResourceMb: &types.MemoryResourceMb{Configured: memory)},
+					Modified:       takeBoolPointer(true),
+					Info:           "Virtual Machine specification",
+					OsType:         osType.(string),
 					CpuResourceMhz: &types.CpuResourceMhz{Configured: 0},
 					MediaSection:   nil,
 					// can be created with resource internal_disk
@@ -1234,6 +1221,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			Media: mediaReference,
 		}
 
+		// Only set CPU/Memory values if they are not nil
 		if cpuCores != nil {
 			params.CreateVm.VmSpecSection.NumCpus = cpuCores
 		}
@@ -1259,9 +1247,8 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			PowerOn:     false, // Power on is handled at the end of VM creation process
 			CreateItem: &types.CreateItem{
 				Name: vmName,
-				// Bug in vCD - accepts only org VDC networks and automatically add them. We add them with update
-				// BUG in vCD 9.5 version, do not allow empty NetworkConnectionSection, so we pass simplest network configuration
-				// and after VM created update with real config
+				// BUG in VCD, do not allow empty NetworkConnectionSection, so we pass simplest
+				// network configuration and after VM created update with real config
 				NetworkConnectionSection: &types.NetworkConnectionSection{
 					PrimaryNetworkConnectionIndex: 0,
 					NetworkConnection: []*types.NetworkConnection{
@@ -1272,13 +1259,9 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				Description:               d.Get("description").(string),
 				GuestCustomizationSection: customizationSection,
 				VmSpecSection: &types.VmSpecSection{
-					Modified: takeBoolPointer(true),
-					Info:     "Virtual Machine specification",
-					OsType:   osType.(string),
-					// NumCpus:           takeIntPointer(d.Get("cpus").(int)),
-					// NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
-					CpuResourceMhz: &types.CpuResourceMhz{Configured: 0},
-					// MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
+					Modified:     takeBoolPointer(true),
+					Info:         "Virtual Machine specification",
+					OsType:       osType.(string),
 					MediaSection: nil,
 					// can be created with resource internal_disk
 					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
@@ -1292,6 +1275,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			AllEULAsAccepted: true,
 		}
 
+		// Only set CPU/Memory values if they are not nil
 		if cpuCores != nil {
 			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCpus = cpuCores
 		}
@@ -1329,7 +1313,8 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	// __Only__ empty VMs are addressed here.
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// Due to the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup network configuration with update. Fixed only 10.1 version.
+	// Due to the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup
+	// network configuration with update.
 	networkConnectionSection, err := networksToConfig(d, vapp)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM: %s", err)
