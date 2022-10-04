@@ -1018,6 +1018,18 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
+	// VMs from template inherit template description if it was not set in HCL schema
+	// This call explicitly ensures that VM description is set correctly (is empty if not set)
+	err = vm.SetDescription(d.Get("description").(string))
+	if err != nil {
+		return nil, fmt.Errorf("error updating VM description: %s", err)
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
 	// update existing internal disks in template (it is only applicable to VMs created
 	// Such fields are processed:
 	// * override_template_disk
@@ -1025,6 +1037,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	if err != nil {
 		dSet(d, "override_template_disk", nil)
 		return nil, fmt.Errorf("error managing internal disks : %s", err)
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
 	// OS Type and Hardware version should only be changed if specified. (Only applying to VMs from
@@ -1035,6 +1052,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	err = updateHardwareVersionAndOsType(d, vm)
 	if err != nil {
 		return nil, fmt.Errorf("error updating hardware version and OS type : %s", err)
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
 	// vApp template VMs additionaly require CPU/Memory sorting if
@@ -1049,12 +1071,22 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		if err != nil {
 			return nil, fmt.Errorf("error changing CPU settings: %s", err)
 		}
+
+		err = vm.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+		}
 	}
 
 	if memory != nil {
 		err = vm.ChangeMemory(*memory)
 		if err != nil {
 			return nil, fmt.Errorf("error setting memory size from schema for VM from template: %s", err)
+		}
+
+		err = vm.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 		}
 	}
 
