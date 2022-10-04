@@ -1,5 +1,5 @@
-//go:build vapp || vm || catalog || ALL || functional
-// +build vapp vm catalog ALL functional
+//go:build vapp || vm || standaloneVm || catalog || ALL || functional
+// +build vapp vm standaloneVm catalog ALL functional
 
 package vcd
 

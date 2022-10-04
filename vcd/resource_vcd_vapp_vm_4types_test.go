@@ -35,20 +35,11 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem": testConfig.VCD.Catalog.NsxtCatalogItem,
 
-		// "EdgeGateway":                  testConfig.Networking.EdgeGateway,
-		// "NetworkName":                  "TestAccVcdVAppVmNetHwVirt",
-		// "VappName":                     vappNameHwVirt,
-		// "VmName":                       vmNameHwVirt,
-		// "ExposeHardwareVirtualization": "false",
 		"Tags": "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
 	configTextStep1 := templateFill(testAccVcdVAppVm_4types_Step1, params)
-
-	// params["ExposeHardwareVirtualization"] = "true"
-	// params["FuncName"] = t.Name() + "-step1"
-	// configTextStep1 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -57,14 +48,16 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-		// testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 		),
 		Steps: []resource.TestStep{
 			{
 				Config: configTextStep1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
@@ -119,16 +112,6 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "prevent_update_power_off", "true"),
 				),
 			},
-			// {
-			// 	Config: configTextStep1,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),
-			// 		resource.TestCheckResourceAttr(
-			// 			"vcd_vapp_vm."+vmNameHwVirt, "name", vmNameHwVirt),
-			// 		resource.TestCheckResourceAttr(
-			// 			"vcd_vapp_vm."+vmNameHwVirt, "expose_hardware_virtualization", "true"),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)
@@ -212,7 +195,7 @@ resource "vcd_vm" "empty-vm" {
 }
 `
 
-// * storage_profile
+// TestAccVcdVAppVm_4types_storage_profile validates that storage profile assignment works correctly
 // * cpu_hot_add_enabled
 // * memory_hot_add_enabled
 // * computer_name
@@ -230,11 +213,6 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
-		// "EdgeGateway":                  testConfig.Networking.EdgeGateway,
-		// "NetworkName":                  "TestAccVcdVAppVmNetHwVirt",
-		// "VappName":                     vappNameHwVirt,
-		// "VmName":                       vmNameHwVirt,
-		// "ExposeHardwareVirtualization": "false",
 		"Tags": "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
@@ -248,9 +226,11 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-		// testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 		),
 		Steps: []resource.TestStep{
 			{
@@ -329,16 +309,6 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-			// {
-			// 	Config: configTextStep1,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		testAccCheckVcdVAppVmExists(vappNameHwVirt, vmNameHwVirt, "vcd_vapp_vm."+vmNameHwVirt, &vapp, &vm),
-			// 		resource.TestCheckResourceAttr(
-			// 			"vcd_vapp_vm."+vmNameHwVirt, "name", vmNameHwVirt),
-			// 		resource.TestCheckResourceAttr(
-			// 			"vcd_vapp_vm."+vmNameHwVirt, "expose_hardware_virtualization", "true"),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)
@@ -532,14 +502,16 @@ func TestAccVcdVAppVm_4types_sizing_policy(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-		// testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 		),
 		Steps: []resource.TestStep{
 			{
 				Config: configTextStep1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
@@ -549,69 +521,19 @@ func TestAccVcdVAppVm_4types_sizing_policy(t *testing.T) {
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
-
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.minSize", "id"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", t.Name()+"-empty-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "os_type", "rhel8_64Guest"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "hardware_version", "vmx-17"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.minSize", "id"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.minSize", "id"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", t.Name()+"-standalone"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "os_type", "rhel8_64Guest"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "hardware_version", "vmx-17"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.minSize", "id"),
 				),
 			},
 		},
@@ -842,14 +764,16 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-		// testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 		),
 		Steps: []resource.TestStep{
 			{
 				Config: configTextStep1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
@@ -862,81 +786,28 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "sizing_policy", "size-full"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "sizing_policy", "size-full"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", t.Name()+"-empty-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "os_type", "rhel8_64Guest"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "hardware_version", "vmx-17"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.empty-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "sizing_policy", "size-full"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "sizing_policy", "size-full"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", t.Name()+"-standalone"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "os_type", "rhel8_64Guest"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "hardware_version", "vmx-17"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vm.empty-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 				),
 			},
 		},
@@ -1025,7 +896,7 @@ resource "vcd_vm" "empty-vm" {
 `
 
 // TestAccVcdVAppVm_4types_sizing_cpu_only checks that assigning sizing policy with CPU only setting
-// works as it should
+// works but memory is still required for empty VMs
 func TestAccVcdVAppVm_4types_sizing_cpu_only(t *testing.T) {
 	preTestChecks(t)
 
@@ -1072,14 +943,16 @@ func TestAccVcdVAppVm_4types_sizing_cpu_only(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-		// testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
 		),
 		Steps: []resource.TestStep{
 			{
 				Config: configTextStep1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
@@ -1092,81 +965,28 @@ func TestAccVcdVAppVm_4types_sizing_cpu_only(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "1024"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "sizing_policy", "size-cpu"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_cpu", "id"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "sizing_policy", "size-cpu"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", t.Name()+"-empty-vapp-vm"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "os_type", "rhel8_64Guest"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "hardware_version", "vmx-17"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm.empty-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_cpu", "id"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory", "1024"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "sizing_policy", "size-cpu"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_cpu", "id"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_cores", "1"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "sizing_policy", "size-cpu"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", t.Name()+"-standalone"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "1"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "1024"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "os_type", "rhel8_64Guest"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "hardware_version", "vmx-17"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "storage_profile", params["StorageProfile"].(string)),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "computer_name", "comp-name"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_hot_add_enabled", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "expose_hardware_virtualization", "true"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm1", "VM Metadata"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", "metadata.vm2", "VM Metadata2"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttrPair("vcd_vm.empty-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_cpu", "id"),
 				),
 			},
 		},
@@ -1199,6 +1019,8 @@ resource "vcd_vapp_vm" "template-vm" {
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
   description = "{{.TestName}}-template-vapp-vm"
+
+  memory = 1024
 
   prevent_update_power_off = true
 
@@ -1233,6 +1055,8 @@ resource "vcd_vm" "template-vm" {
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
+
+  memory = 1024
 
   prevent_update_power_off = true
 
