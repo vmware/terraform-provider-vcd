@@ -1650,6 +1650,10 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) e
 	if err != nil {
 		return fmt.Errorf("[VM read] set metadata: %s", err)
 	}
+	err = setMetadataEntries(d, metadata.MetadataEntry)
+	if err != nil {
+		return fmt.Errorf("[VM read] unable to set metadata entry set: %s", err)
+	}
 
 	if vm.VM.StorageProfile != nil {
 		dSet(d, "storage_profile", vm.VM.StorageProfile.Name)

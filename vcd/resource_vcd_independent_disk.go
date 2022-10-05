@@ -533,6 +533,10 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
 		return fmt.Errorf("error setting metadata: %s", err)
 	}
+	err = setMetadataEntries(d, metadata.MetadataEntry)
+	if err != nil {
+		return fmt.Errorf("unable to set metadata entry set for the Independent disk: %s", err)
+	}
 
 	return nil
 }

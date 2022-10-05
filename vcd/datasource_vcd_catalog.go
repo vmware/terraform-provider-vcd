@@ -148,12 +148,6 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
-	metadata, err := catalog.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
-		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
-	}
-
 	dSet(d, "description", catalog.AdminCatalog.Description)
 	dSet(d, "created", catalog.AdminCatalog.DateCreated)
 	dSet(d, "name", catalog.AdminCatalog.Name)
@@ -165,9 +159,19 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 	}
 
+	metadata, err := catalog.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
+		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
+	}
+
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
+	}
+	err = setMetadataEntries(d, metadata.MetadataEntry)
+	if err != nil {
+		return diag.Errorf("There was an issue when setting metadata_entry set into the schema - %s", err)
 	}
 
 	err = setCatalogData(d, adminOrg, catalog.AdminCatalog.Name)

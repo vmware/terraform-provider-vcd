@@ -218,23 +218,25 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
 	}
 
-	catalogItemMetadata, err := catalogItem.GetMetadata()
-	if err != nil {
-		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
-	}
-
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
+	catalogItemMetadata, err := catalogItem.GetMetadata()
+	if err != nil {
+		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
+	}
 	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
 	}
-
 	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
+	}
+	err = setMetadataEntries(d, catalogItemMetadata.MetadataEntry)
+	if err != nil {
+		return diag.Errorf("Unable to set metadata entry set for the catalog item: %s", err)
 	}
 
 	return nil

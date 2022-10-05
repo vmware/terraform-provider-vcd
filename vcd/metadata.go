@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -20,10 +21,17 @@ var baseMetadataEntrySchema = schema.Schema{
 				Computed:    true,
 				Description: "Value of this metadata entry",
 			},
+			"type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
+				ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+			},
 			"user_access": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "User access level for this metadata entry",
+				Description: fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
+				ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
 			},
 			"is_system": {
 				Type:        schema.TypeBool,
@@ -50,8 +58,14 @@ func setMetadataEntries(d *schema.ResourceData, metadataFromVcd []*types.Metadat
 	for i, metadataEntryFromVcd := range metadataFromVcd {
 		metadataEntry := map[string]interface{}{
 			"key":         metadataEntryFromVcd.Key,
-			"value":       metadataEntryFromVcd.TypedValue.Value,
-			"user_access": metadataEntryFromVcd.Domain,
+		}
+		if metadataEntryFromVcd.TypedValue != nil {
+			metadataEntry["type"] = metadataEntryFromVcd.TypedValue.XsiType
+			metadataEntry["value"] = metadataEntryFromVcd.TypedValue.Value
+		}
+		if metadataEntryFromVcd.Domain != nil {
+			metadataEntry["is_system"] = metadataEntryFromVcd.Domain.Domain == "SYSTEM"
+			metadataEntry["visibility"] = metadataEntryFromVcd.Domain.Visibility
 		}
 		metadataSet[i] = metadataEntry
 	}
