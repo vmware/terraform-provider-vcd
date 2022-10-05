@@ -1039,6 +1039,27 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	return vm, nil
 }
 
+// createVmEmpty is responsible for creating empty VMs of two types:
+// * Standalone VMs
+// * VMs inside vApp (vApp VMs)
+//
+// Code flow has 3 layers:
+// 1. Lookup common information, required for both types of VMs (Standalone and vApp child). Things such as
+//   - OS Type
+//   - Hardware version
+//   - Storage profile configuration
+//   - VM compute policy configuration
+//   - Boot image
+//
+// 2. Perform VM creation operation based on type in separate switch/case
+//   - standaloneVmType
+//   - vAppVmType
+//
+// # This part includes defining initial structures for VM and also any explicitly required operations for that type of VM
+//
+// 3. Perform additional operations which are common for both types of VMs
+//
+// Note. VM Power ON (if it wasn't disabled in HCL configuration) occurs as last step after all configuration is done.
 func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
 	util.Logger.Printf("[TRACE] Creating empty VM: %s", d.Get("name").(string))
 
