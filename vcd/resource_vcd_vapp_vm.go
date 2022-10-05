@@ -887,13 +887,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 					NetworkConnectionSection: &networkConnectionSection,
 				},
 				StorageProfile: storageProfilePtr,
-				// VmCapabilities are explicitly set using vm.UpdateVmCpuAndMemoryHotAdd below because VM creation does not
-				// respect these parameters here.
-				//VmCapabilities: &types.VmCapabilities{
-				//	Xmlns:               types.XMLNamespaceVCloud,
-				//	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
-				//	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
-				//},
 			},
 		}
 
@@ -955,14 +948,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 				},
 				ComputePolicy:  vmComputePolicy,
 				StorageProfile: storageProfilePtr,
-
-				// VmCapabilities are explicitly set using vm.UpdateVmCpuAndMemoryHotAdd below because VM creation does not
-				// respect these parameters here.
-				//VmCapabilities: &types.VmCapabilities{
-				//	Xmlns:               types.XMLNamespaceVCloud,
-				//	MemoryHotAddEnabled: d.Get("memory_hot_add_enabled").(bool),
-				//	CPUHotAddEnabled:    d.Get("cpu_hot_add_enabled").(bool),
-				//},
 			},
 		}
 
