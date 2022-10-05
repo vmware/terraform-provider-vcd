@@ -38,7 +38,6 @@ const (
 // parent SDK functions and add a new field just because there is a new feature - be it storage
 // profile, compute policy, or something else
 //
-//
 // The best chance to avoid breaking feature parity between all 4 types is to create them with minimal
 // configuration and then perform additional updates in a code that is shared between all 4 types.
 // Some features though must go into VM definition during creation (for example storage profile,
@@ -50,10 +49,6 @@ const (
 // * from specified sizing policy
 // * inherited from template (only for template based VMs)
 //
-// Template VMs do not require CPU/Memory fields to be set because they inherit it from the template
-// and can additionally be set as per user reuqest in a subsequent API call.
-// Empty VMs on the other hand require CPU/Memory to be set.
-// Fields, defined in sizing policy, override CPU/Memory fields in resource definition.
 //
 // Important notes.
 // * Whenever calling VM update functions, be sure that VM is refreshed after applying them as the
@@ -688,6 +683,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting guest properties: %s", err)
 	}
 
+	// vm.VM structure contains ProductSection so it needs to be refreshed after
+	// `addRemoveGuestProperties`
+	if err = vm.Refresh(); err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
+	}
+
 	// Handle Guest Customization Section
 	// Such schema fields are processed:
 	// * customization
@@ -696,6 +697,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	err = updateGuestCustomizationSetting(d, vm)
 	if err != nil {
 		return diag.Errorf("error setting guest customization during creation: %s", err)
+	}
+
+	// vm.VM structure contains ProductSection so it needs to be refreshed after
+	// `updateGuestCustomizationSetting`
+	if err = vm.Refresh(); err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
 	}
 
 	// Explicitly setting CPU and Memory Hot Add settings
@@ -718,7 +725,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	}
 	err = attachDetachIndependentDisks(d, *vm, vdc)
 	if err != nil {
-		return diag.Errorf("error attaching-detaching disks when creating VM : %s", err)
+		return diag.Errorf("error attaching-detaching independent disks when creating VM : %s", err)
 	}
 
 	// Handle Advanced compute settings CPU and Memory shares, limits and reservation
@@ -731,6 +738,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// * cpu_limit
 	// * cpu_shares
 	// * cpu_reservation
+	// Note. vm.Refresh happens inside `updateAdvancedComputeSettings`
 	err = updateAdvancedComputeSettings(d, vm)
 	if err != nil {
 		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
@@ -767,6 +775,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// VM power on handling was the last step, no other VM adjustment operations should be performed
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
+	// Read function is called in wrapper functions `resourceVcdVAppVmCreate` and
+	// `resourceVcdStandaloneVmCreate`
 	return nil
 }
 
