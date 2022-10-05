@@ -303,7 +303,10 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 
 		}
 	}
-
+	if adminCatalog.AdminCatalog.ExternalCatalogSubscription != nil {
+		dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
+		dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
+	}
 	err = setCatalogData(d, adminOrg, adminCatalog)
 	if err != nil {
 		return diag.Errorf("%v", err)

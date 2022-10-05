@@ -107,6 +107,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vm_placement_policy":                       datasourceVcdVmPlacementPolicy(),                // 3.8
 	"vcd_provider_vdc":                              datasourceVcdProviderVdc(),                      // 3.8
 	"vcd_vm_group":                                  datasourceVcdVmGroup(),                          // 3.8
+	"vcd_subscribed_catalog":                        datasourceVcdSubscribedCatalog(),                // 3.8
 }
 
 var globalResourceMap = map[string]*schema.Resource{
