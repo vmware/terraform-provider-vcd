@@ -119,20 +119,17 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:    true,
 			ForceNew:    true,
 			Description: "The name of the vApp Template to use",
-			//RequiredWith: []string{"template_name", "catalog_name"},
 		},
 		"vm_name_in_template": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			ForceNew:    true,
 			Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
-			//RequiredWith: []string{"vm_name_in_template", "catalog_name", "template_name"},
 		},
 		"catalog_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "The catalog name in which to find the given vApp Template or media for boot_image",
-			//RequiredWith: []string{"catalog_name", "template_name", "boot_image"},
 		},
 		"description": {
 			Type:        schema.TypeString,
@@ -721,12 +718,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	}
 	err = attachDetachIndependentDisks(d, *vm, vdc)
 	if err != nil {
-		//errAttachedDisk := updateStateOfAttachedIndependentDisks(d, *vm)
-		//if errAttachedDisk != nil {
-		//	dSet(d, "disk", nil)
-		//	return diag.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
-		//}
-		return diag.Errorf("error attaching-detaching  disks when updating resource : %s", err)
+		return diag.Errorf("error attaching-detaching disks when creating VM : %s", err)
 	}
 
 	// Handle Advanced compute settings CPU and Memory shares, limits and reservation
@@ -743,16 +735,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	if err != nil {
 		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
 	}
-
-	// THIS IS JUST A READ FUNCTION
-	// Internal disk handling
-	// Such fields are processed:
-	// * internal_disk
-	//err = updateStateOfInternalDisks(d, *vm)
-	//if err != nil {
-	//	dSet(d, "internal_disk", nil)
-	//	log.Printf("error reading internal disks : %s", err)
-	//}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// VM power on handling is the last step, no other VM adjustment operations should be performed
