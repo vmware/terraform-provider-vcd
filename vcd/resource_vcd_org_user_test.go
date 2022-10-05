@@ -1,5 +1,5 @@
-//go:build user || functional || ALL
-// +build user functional ALL
+//go:build user || ldap || functional || ALL
+// +build user ldap functional ALL
 
 package vcd
 
