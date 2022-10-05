@@ -572,9 +572,9 @@ func listComputePoliciesForImport(meta interface{}, origin, policyType string) (
 	case "sizing":
 		filter += "isSizingOnly==true"
 	case "placement":
-		filter += "isVgpuPolicy==false;isSizingOnly==false"
+		filter += fmt.Sprintf("%sisSizingOnly==false", getVgpuFilterToPrepend(vcdClient, false))
 	case "vgpu":
-		filter += "isVgpuPolicy==true"
+		filter += getVgpuFilter(vcdClient, true)
 	default:
 		return nil, fmt.Errorf("unrecognized type of policy to import: %s", policyType)
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -365,7 +366,7 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 	computePolicy, err = vcdClient.GetVdcComputePolicyV2ById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==false;isVgpuPolicy==false", policyId))
+		queryParams.Add("filter", fmt.Sprintf("%sname==%s;isSizingOnly==false", getVgpuFilterToPrepend(vcdClient, false), policyId))
 		computePolicies, err := vcdClient.GetAllVdcComputePoliciesV2(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM Placement Policy %s", policyId)
@@ -438,4 +439,27 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
 	return nil
+}
+
+// getVgpuFilterToPrepend gets a vGPU Policy filter set to `isVgpu` if API version of target VCD is greater than 36.2 (VCD 10.3.2).
+// The semicolon is placed to the right so the returned filter must be prepended to an existing one.
+// Returns an empty string otherwise.
+// Note: This function should not be needed anymore once VCD 10.3.0 and 10.3.1 are discontinued.
+func getVgpuFilterToPrepend(vcdClient *VCDClient, isVgpu bool) string {
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.2") {
+		return fmt.Sprintf("isVgpuPolicy==%s;", strconv.FormatBool(isVgpu))
+	}
+	return ""
+}
+
+// getVgpuFilter gets a vGPU Policy filter set to `isVgpu` if API version of target VCD is greater than 36.2 (VCD 10.3.2).
+// The filter option is returned WITHOUT any semicolon.
+// Returns an empty string otherwise.
+// Note: This function should not be needed anymore once VCD 10.3.0 and 10.3.1 are discontinued.
+func getVgpuFilter(vcdClient *VCDClient, isVgpu bool) string {
+	vgpuFilterToPrepend := getVgpuFilterToPrepend(vcdClient, isVgpu)
+	if vgpuFilterToPrepend != "" {
+		return vgpuFilterToPrepend[:len(vgpuFilterToPrepend)-1] // Removes semicolon to the right
+	}
+	return ""
 }
