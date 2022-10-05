@@ -126,6 +126,7 @@ func buildMetadataCriteria(metadataBlock interface{}) ([]govcd.MetadataDef, bool
 			case "use_api_search":
 				useApiSearch = value.(bool)
 			}
+			// TODO: Add "visibility"???
 		}
 		definitions = append(definitions, def)
 	}
