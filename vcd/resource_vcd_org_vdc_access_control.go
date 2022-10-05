@@ -139,6 +139,7 @@ func resourceVcdVdcAccessControlRead(_ context.Context, d *schema.ResourceData, 
 	if err != nil {
 		if govcd.IsNotFound(err) {
 			d.SetId("")
+			return nil
 		} else {
 			return diag.Errorf("error while reading VDC - %s", err)
 		}
