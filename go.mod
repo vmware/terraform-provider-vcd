@@ -60,5 +60,3 @@ require (
 )
 
 replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.5
-
-// replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director/
