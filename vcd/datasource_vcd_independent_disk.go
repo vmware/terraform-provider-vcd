@@ -104,6 +104,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for disk metadata",
 			},
+			"metadata_entry": getMetadataEntrySchema("Disk", true),
 		},
 	}
 }

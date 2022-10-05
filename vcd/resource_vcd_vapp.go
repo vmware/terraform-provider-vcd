@@ -56,6 +56,7 @@ func resourceVcdVApp() *schema.Resource {
 				// a value of type String in this map.
 				Description: "Key value map of metadata to assign to this vApp. Key and value can be any string.",
 			},
+			"metadata_entry": getMetadataEntrySchema("vApp", false),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,

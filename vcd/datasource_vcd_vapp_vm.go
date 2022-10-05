@@ -111,6 +111,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Key value map of metadata to assign to this VM",
 		},
+		"metadata_entry": getMetadataEntrySchema("VM", true),
 		"href": {
 			Type:        schema.TypeString,
 			Computed:    true,

@@ -91,6 +91,7 @@ func resourceVcdCatalog() *schema.Resource {
 				Optional:    true,
 				Description: "Key and value pairs for catalog metadata.",
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog", false),
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,

@@ -187,6 +187,7 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for Provider VDC metadata",
 			},
+			"metadata_entry": getMetadataEntrySchema("Provider VDC", true),
 		},
 	}
 }

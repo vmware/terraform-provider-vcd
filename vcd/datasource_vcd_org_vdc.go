@@ -189,7 +189,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for Org VDC metadata",
 			},
-			"metadata_entry": getMetadataEntrySchema(),
+			"metadata_entry": getMetadataEntrySchema("VDC", false),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,

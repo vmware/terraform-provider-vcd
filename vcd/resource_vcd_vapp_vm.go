@@ -207,6 +207,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			// a value of type String in this map.
 			Description: "Key value map of metadata to assign to this VM",
 		},
+		"metadata_entry": getMetadataEntrySchema("VM", false),
 		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,

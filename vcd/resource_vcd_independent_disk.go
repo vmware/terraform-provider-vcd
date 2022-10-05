@@ -127,6 +127,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Optional:    true,
 				Description: "Key value map of metadata to assign to this disk. Key and value can be any string.",
 			},
+			"metadata_entry": getMetadataEntrySchema("Disk", false),
 		},
 	}
 }

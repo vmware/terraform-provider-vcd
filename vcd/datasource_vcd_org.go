@@ -113,6 +113,7 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for organization metadata",
 			},
+			"metadata_entry": getMetadataEntrySchema("Organization", true),
 		},
 	}
 }

@@ -108,6 +108,7 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 				Computed:    true,
 				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
 			},
+			"metadata_entry": getMetadataEntrySchema("Network", true),
 		},
 	}
 }

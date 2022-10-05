@@ -41,6 +41,7 @@ func datasourceVcdCatalogItem() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs from the metadata of the vApp template associated to this catalog item",
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog Item", true),
 			"catalog_item_metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,

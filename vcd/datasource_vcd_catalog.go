@@ -62,6 +62,7 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for catalog metadata",
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog", true),
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
