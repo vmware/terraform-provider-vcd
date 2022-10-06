@@ -56,16 +56,18 @@ func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool)
 	return &metadataEntrySchema
 }
 
-// metadataEntryCompatible allows to consider all resources that implement the "metadata_entry" schema to be the same type.
-type metadataEntryCompatible interface {
+// metadataCompatible allows to consider all structs that implement metadata handling to be the same type
+type metadataCompatible interface {
 	GetMetadata() (*types.Metadata, error)
+	AddMetadataEntry(typedValue, key, value string) error // Deprecated
 	AddMetadataEntryWithVisibility(key, value, typedValue, visibility string, isSystem bool) error
 	MergeMetadataWithMetadataValues(metadata map[string]types.MetadataValue) error
+	MergeMetadata(typedValue string, metadata map[string]interface{}) error // Deprecated
 	DeleteMetadataEntry(key string) error
 }
 
 // createOrUpdateMetadataInVcd creates or updates metadata entries for the given resource.
-func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataEntryCompatible) error {
+func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompatible) error {
 	if d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange("metadata_entry")
 		oldMetadata := oldRaw.([]map[string]interface{})
