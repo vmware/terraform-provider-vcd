@@ -1090,7 +1090,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 	}
 	var ok bool
-	// var memory interface{}
 	_, sizingOk := d.GetOk("sizing_policy_id")
 	if _, ok := d.GetOk("memory"); !ok && !sizingOk {
 		return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
