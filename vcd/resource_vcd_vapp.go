@@ -306,7 +306,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	if err != nil {
 		return diag.Errorf("[vapp read] error setting metadata: %s", err)
 	}
-	err = setMetadataEntries(d, metadata.MetadataEntry)
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("unable to set metadata entry set for the vApp: %s", err)
 	}

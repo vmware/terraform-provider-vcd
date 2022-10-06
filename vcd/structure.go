@@ -200,7 +200,7 @@ func contains(sliceToSearch []string, searched string) bool {
 	return found
 }
 
-// MetadataCompatible allows to consider all structs that implement metadata handling to be the same type
+// metadataCompatible allows to consider all structs that implement metadata handling to be the same type
 type metadataCompatible interface {
 	GetMetadata() (*types.Metadata, error)
 	AddMetadataEntry(typedValue, key, value string) error
@@ -208,7 +208,7 @@ type metadataCompatible interface {
 	DeleteMetadataEntry(key string) error
 }
 
-// createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
+// createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
 	if d.HasChange(attributeName) {
 		oldRaw, newRaw := d.GetChange(attributeName)

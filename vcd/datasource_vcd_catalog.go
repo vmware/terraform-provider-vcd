@@ -169,7 +169,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
-	err = setMetadataEntries(d, metadata.MetadataEntry)
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata_entry set into the schema - %s", err)
 	}

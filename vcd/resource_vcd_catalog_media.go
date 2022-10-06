@@ -265,7 +265,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = setMetadataEntries(d, metadata.MetadataEntry)
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("Unable to set metadata entry set for the catalog media: %s", err)
 	}

@@ -234,7 +234,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
 	}
-	err = setMetadataEntries(d, catalogItemMetadata.MetadataEntry)
+	err = setMetadataEntryInState(d, catalogItemMetadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("Unable to set metadata entry set for the catalog item: %s", err)
 	}

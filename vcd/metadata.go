@@ -42,6 +42,9 @@ var baseMetadataEntrySchema = schema.Schema{
 	},
 }
 
+// getMetadataEntrySchema returns a schema for the "metadata_entry" attribute, that can be used to
+// build data sources (isDatasource=true) or resources (isDatasource=false). The description of the
+// attribute will refer to the input resource name.
 func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool) *schema.Schema {
 	metadataEntrySchema := baseMetadataEntrySchema
 	metadataEntrySchema.Description = fmt.Sprintf("Key and value pairs for %s metadata", resourceNameInDescription)
@@ -53,8 +56,50 @@ func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool)
 	return &metadataEntrySchema
 }
 
-func setMetadataEntries(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
-	metadataSet := make([]interface{}, len(metadataFromVcd))
+// metadataEntryCompatible allows to consider all resources that implement the "metadata_entry" schema to be the same type.
+type metadataEntryCompatible interface {
+	GetMetadata() (*types.Metadata, error)
+	AddMetadataEntryWithVisibility(key, value, typedValue, visibility string, isSystem bool) error
+	MergeMetadataWithMetadataValues(metadata map[string]types.MetadataValue) error
+	DeleteMetadataEntry(key string) error
+}
+
+// createOrUpdateMetadataInVcd creates or updates metadata entries for the given resource.
+func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataEntryCompatible) error {
+	if d.HasChange("metadata_entry") {
+		oldRaw, newRaw := d.GetChange("metadata_entry")
+		oldMetadata := oldRaw.([]map[string]interface{})
+		newMetadata := newRaw.([]map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for _, oldEntry := range oldMetadata {
+			for _, newEntry := range newMetadata {
+				if oldEntry["key"] == newEntry["key"] {
+					toBeRemovedMetadata = append(toBeRemovedMetadata, oldEntry["key"].(string))
+				}
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := resource.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata entries: %s", err)
+			}
+		}
+		if len(newMetadata) > 0 {
+			err := resource.MergeMetadataWithMetadataValues(convertFromStateToMetadataValues(newMetadata))
+			if err != nil {
+				return fmt.Errorf("error adding metadata entries: %s", err)
+			}
+		}
+	}
+	return nil
+}
+
+// setMetadataEntryInState sets the given metadata entries in the Terraform state.
+func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
+	metadataSet := make([]map[string]interface{}, len(metadataFromVcd))
+
 	for i, metadataEntryFromVcd := range metadataFromVcd {
 		metadataEntry := map[string]interface{}{
 			"key":         metadataEntryFromVcd.Key,
@@ -69,6 +114,30 @@ func setMetadataEntries(d *schema.ResourceData, metadataFromVcd []*types.Metadat
 		}
 		metadataSet[i] = metadataEntry
 	}
+
 	err := d.Set("metadata_entry", metadataSet)
 	return err
+}
+
+// convertFromStateToMetadataValues converts the structure retrieved from Terraform state to a structure compatible
+// with the Go SDK.
+func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}) map[string]types.MetadataValue {
+	metadataValue := map[string]types.MetadataValue{}
+	for _, metadataEntry := range metadataAttribute {
+		domain := "GENERAL"
+		if metadataEntry["is_system"].(bool) {
+			domain = "SYSTEM"
+		}
+		metadataValue[metadataEntry["key"].(string)] = types.MetadataValue{
+			Domain:     &types.MetadataDomainTag{
+				Visibility: metadataEntry["visibility"].(string),
+				Domain:     domain,
+			},
+			TypedValue: &types.MetadataTypedValue{
+				XsiType: metadataEntry["type"].(string),
+				Value:   metadataEntry["value"].(string),
+			},
+		}
+	}
+	return metadataValue
 }

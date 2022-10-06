@@ -213,7 +213,7 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = setMetadataEntries(d, metadata.MetadataEntry)
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("unable to set metadata entry set for the direct network: %s", err)
 	}

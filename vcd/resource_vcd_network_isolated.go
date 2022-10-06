@@ -349,7 +349,7 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.Errorf("[isolated network read] unable to set network metadata %s", err)
 	}
-	err = setMetadataEntries(d, metadata.MetadataEntry)
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("unable to set metadata entry set for the isolated network: %s", err)
 	}

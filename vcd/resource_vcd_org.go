@@ -461,7 +461,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
 		return fmt.Errorf("error setting metadata: %s", err)
 	}
-	err = setMetadataEntries(d, metadata.MetadataEntry)
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return fmt.Errorf("unable to set metadata entry set for the Organization: %s", err)
 	}
