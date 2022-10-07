@@ -83,7 +83,14 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "prevent_update_power_off", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.type", "vapp"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.adapter_type", "E1000"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.mac", "00:00:00:AA:BB:CC"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
@@ -98,7 +105,14 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "prevent_update_power_off", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.type", "vapp"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.adapter_type", "E1000"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.mac", "00:00:00:BB:AA:CC"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
@@ -108,7 +122,14 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "prevent_update_power_off", "true"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.adapter_type", "E1000E"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.mac", "00:00:00:11:22:33"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
@@ -122,7 +143,14 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "prevent_update_power_off", "true"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.adapter_type", "E1000E"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.mac", "00:00:00:22:33:44"),
 				),
 			},
 		},
@@ -158,6 +186,23 @@ resource "vcd_vapp" "template-vm" {
   description = "vApp for Template VM description"
 }
 
+resource "vcd_vapp_network" "template" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.TestName}}-template-vm"
+
+  vapp_name          = (vcd_vapp.template-vm.id == "always-not-equal" ? null : vcd_vapp.template-vm.name)
+  gateway            = "192.168.3.1"
+  netmask            = "255.255.255.0"
+
+  static_ip_pool {
+	start_address = "192.168.3.51"
+	end_address   = "192.168.3.100"
+  }
+
+  depends_on = [vcd_vapp.template-vm]
+}
+
 resource "vcd_vapp_org_network" "template-vapp" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -171,6 +216,23 @@ resource "vcd_vapp" "empty-vm" {
   vdc         = "{{.Vdc}}"
   name        = "{{.TestName}}-empty-vm"
   description = "vApp for Empty VM description"
+}
+
+resource "vcd_vapp_network" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.TestName}}-empty-vm"
+
+  vapp_name          = (vcd_vapp.empty-vm.id == "always-not-equal" ? null : vcd_vapp.empty-vm.name)
+  gateway            = "192.168.2.1"
+  netmask            = "255.255.255.0"
+
+  static_ip_pool {
+	start_address = "192.168.2.51"
+	end_address   = "192.168.2.100"
+  }
+
+  depends_on = [vcd_vapp.empty-vm]
 }
 
 resource "vcd_vapp_org_network" "empty-vapp" {
@@ -199,6 +261,16 @@ resource "vcd_vapp_vm" "template-vm" {
 	ip_allocation_mode = "POOL"
   }
 
+  network {
+	type               = "vapp"
+	name               = (vcd_vapp_network.template.id == "always-not-equal" ? null : vcd_vapp_network.template.name)
+	adapter_type       = "E1000"
+	ip_allocation_mode = "POOL"
+	mac                = "00:00:00:AA:BB:CC"
+  }
+
+  depends_on = [vcd_vapp_network.template]
+
   prevent_update_power_off = true
 }
 
@@ -224,6 +296,16 @@ resource "vcd_vapp_vm" "empty-vm" {
 	ip_allocation_mode = "POOL"
   }
 
+  network {
+	type               = "vapp"
+	name               = (vcd_vapp_network.empty-vm.id == "always-not-equal" ? null : vcd_vapp_network.empty-vm.name)
+	adapter_type       = "E1000"
+	ip_allocation_mode = "POOL"
+	mac                = "00:00:00:BB:AA:CC"
+  }
+
+  depends_on = [vcd_vapp_network.empty-vm]
+
   prevent_update_power_off = true
 }
 
@@ -242,6 +324,14 @@ resource "vcd_vm" "template-vm" {
 	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
 	adapter_type       = "VMXNET3"
 	ip_allocation_mode = "POOL"
+  }
+
+  network {
+	type               = "org"
+	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	adapter_type       = "E1000E"
+	ip_allocation_mode = "POOL"
+	mac                = "00:00:00:11:22:33"
   }
 
   prevent_update_power_off = true
@@ -266,6 +356,14 @@ resource "vcd_vm" "empty-vm" {
 	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
 	adapter_type       = "VMXNET3"
 	ip_allocation_mode = "POOL"
+  }
+
+  network {
+	type               = "org"
+	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	adapter_type       = "E1000E"
+	ip_allocation_mode = "POOL"
+	mac                = "00:00:00:22:33:44"
   }
 
   prevent_update_power_off = true

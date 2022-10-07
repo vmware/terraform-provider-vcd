@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -49,6 +50,11 @@ const (
 // * from specified sizing policy
 // * inherited from template (only for template based VMs)
 //
+// There are quite a few `vm.Refresh` operations being run in creation code. This is done because
+// some explicit endpoint API calls still change main VM structure. Calling multiple different
+// functions in a row pose a risk of re-applying older VM structure with subsequent calls.
+// Time cost of `vm.Refresh` was measure to be from ~0.5s up to ~1.2s per call depending on client
+// latency.
 //
 // Important notes.
 // * Whenever calling VM update functions, be sure that VM is refreshed after applying them as the
@@ -591,6 +597,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 // resourceVcdVAppVmCreate is an entry function for VM within vApp creation. It locks parent vApp and cascades down the
 // other functions that need to be run
 func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	startTime := time.Now()
 	util.Logger.Printf("[DEBUG] [VM create] started VM creation in vApp")
 
 	vappName := d.Get("vapp_name").(string)
@@ -608,7 +615,9 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 		return err
 	}
 
-	log.Printf("[DEBUG] [VM create] finished VM creation in vApp")
+	timeElapsed := time.Since(startTime)
+	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
+
 	return genericVcdVmRead(d, meta, "create")
 }
 
@@ -809,19 +818,30 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	isStandaloneVm := vmType == standaloneVmType
-	vappName := d.Get("vapp_name").(string)
-	vmName := d.Get("name").(string)
-
 	// Lookup vApp template
 	vappTemplate, err := lookupvAppTemplateforVm(d, org, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("error finding vApp template: %s", err)
 	}
 
-	// Lookup vApp (can only be done for vApp VMs, not standalone ones)
+	// TOREVIEW - I have started using the same code for both Standalone and vApp VMs as the code
+	// was different but effectivelly doing the same
+
+	// Find correct VM template within vApp.
+	// If `vm_name_in_template` was specified - specified VM template will be returned
+	// If `vm_name_in_template` is not specified - the first VM template within vApp will be picked (backwards compatibility)
+	vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
+	if vmTemplate == nil {
+		return nil, fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template '%s' : %s", vappTemplate.VAppTemplate.Name, err)
+	}
+
+	// Lookup vApp before setting up network configuration. Having a vApp set, will enable
+	// additional network availability in vApp validations in `networksToConfig` function.
+	// It is only possible for vApp VMs, as empty VMs will get their hidden vApps created after the
+	// VM is created.
 	var vapp *govcd.VApp
-	if isStandaloneVm && vappName != "" {
+	if vmType == vappVmType {
+		vappName := d.Get("vapp_name").(string)
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
 			return nil, fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
@@ -842,23 +862,19 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	}
 
 	// Lookup compute policy
-	_, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
 
 	var vm *govcd.VM
+	vmName := d.Get("name").(string)
 
 	// Step 2 - perform VM creation operation based on type
 	// VM creation uses different structure depending on if it is a standaloneVmType or vappVmType
 	// These structures differ and one might accept all required parameters, while other
 	switch vmType {
 	case standaloneVmType:
-		vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
-		if vmTemplate == nil {
-			return nil, fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template %s : %s", vmName, err)
-		}
-
 		standaloneVmParams := types.InstantiateVmTemplateParams{
 			Xmlns:            types.XMLNamespaceVCloud,
 			Name:             vmName,
@@ -876,6 +892,8 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 					Description: d.Get("description").(string),
 				},
 				VmTemplateInstantiationParams: &types.InstantiationParams{
+					// If a MAC address is specified for NIC - it does not get set with this call,
+					// therefore an additional `vm.UpdateNetworkConnectionSection` is required.
 					NetworkConnectionSection: &networkConnectionSection,
 				},
 				StorageProfile: storageProfilePtr,
@@ -888,6 +906,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			d.SetId("")
 			return nil, fmt.Errorf("[VM creation] error creating standalone VM from template %s : %s", vmName, err)
 		}
+
 		d.SetId(vm.VM.ID)
 
 		util.Logger.Printf("[VM create] VM from template after creation %# v", pretty.Formatter(vm.VM))
@@ -907,14 +926,10 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		////////////////////////////////////////////////////////////////////////////////////////////
 
 	case vappVmType:
+		vappName := d.Get("vapp_name").(string)
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
 			return nil, fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
-		}
-
-		templateHref := vappTemplate.VAppTemplate.HREF
-		if vappTemplate.VAppTemplate.Children != nil && len(vappTemplate.VAppTemplate.Children.VM) != 0 {
-			templateHref = vappTemplate.VAppTemplate.Children.VM[0].HREF
 		}
 
 		vappVmParams := &types.ReComposeVAppParams{
@@ -927,15 +942,15 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					HREF: templateHref,
-					Name: vmName,
+					HREF: vmTemplate.HREF,
+					Name: vmName, // This VM name defines the VM name after creation
 				},
 				VMGeneralParams: &types.VMGeneralParams{
 					Description: d.Get("description").(string),
 				},
 				InstantiationParams: &types.InstantiationParams{
-					// TODO check in other places
-					// If a MAC address is specified for NIC - it does not get set with this call, therefore an additional
+					// If a MAC address is specified for NIC - it does not get set with this call,
+					// therefore an additional `vm.UpdateNetworkConnectionSection` is required.
 					NetworkConnectionSection: &networkConnectionSection,
 				},
 				ComputePolicy:  vmComputePolicy,
@@ -949,15 +964,9 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			return nil, fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
 		}
 
-		dSet(d, "vm_type", string(vappVmType))
 		d.SetId(vm.VM.ID)
+		dSet(d, "vm_type", string(vappVmType))
 
-		// If a MAC address is specified for NIC - it does not get set with initial create call therefore
-		// running additional update call to make sure it is set correctly
-		err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
-		if err != nil {
-			return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
-		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		// This part of code handles additional VM create operations, which can not be set during
 		// initial VM creation.
@@ -974,6 +983,14 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	// __Only__ template based VMs are addressed here.
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
+	// If a MAC address is specified for NIC - it does not get set with initial create call therefore
+	// running additional update call to make sure it is set correctly
+
+	err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+	if err != nil {
+		return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
+	}
+
 	// Refresh VM to have the latest structure
 	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
@@ -981,6 +998,8 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 
 	// VMs from template inherit template description if it was not set in HCL schema
 	// This call explicitly ensures that VM description is set correctly (is empty if not set)
+
+	// TODO check if we should leave this behavior change (original description from template is removed)
 	err = vm.SetDescription(d.Get("description").(string))
 	if err != nil {
 		return nil, fmt.Errorf("error updating VM description: %s", err)
@@ -1004,7 +1023,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	}
 
 	// OS Type and Hardware version should only be changed if specified. (Only applying to VMs from
-	//templates as empty VMs require this by default)
+	// templates as empty VMs require this by default)
 	// Such fields are processed:
 	// * os_type
 	// * hardware_version
@@ -1018,8 +1037,9 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	}
 
 	// Template VMs require CPU/Memory seting
-	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be inherited from
-	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vcdClient)
+	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
+	// inherited from template
+	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
@@ -1079,23 +1099,30 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vappName := d.Get("vapp_name").(string)
-
 	var vapp *govcd.VApp
 
-	if vappName != "" {
+	if vmType == vappVmType {
+		vappName := d.Get("vapp_name").(string)
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("[VM create] error finding vApp for empty VM%s: %s", vappName, err)
 		}
 	}
-	var ok bool
-	_, sizingOk := d.GetOk("sizing_policy_id")
-	if _, ok := d.GetOk("memory"); !ok && !sizingOk {
-		return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
-	}
 
+	// TOREVIEW - No need to validate memory as these errors come out good
+	// Error: error creating empty VM: error creating standalone VM: API Error: 400: [ abd18543-e2a0-4b3d-8d0d-faf447780bc1 ] The value for Number of CPUs must be above zero. You provided 0.
+	// Error: error creating empty VM: [VM creation] error creating VM TestAccVcdVAppVm_4types-empty-vapp-vm : [AddEmptyVmAsync] CreateItem.VmSpecSection.MemoryResourceMb can't be empty
+	// Error: error creating empty VM: error creating standalone VM: API Error: 400: Virtual machine reservation or limit or shares settings are invalid: No Memory Resource.
+
+	// or no validation if API error is human readable
+	// _, sizingOk := d.GetOk("sizing_policy_id")
+	// if _, ok := d.GetOk("memory"); !ok && !sizingOk {
+	// 	return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
+	// }
+
+	var ok bool
 	var osType interface{}
+
 	if osType, ok = d.GetOk("os_type"); !ok {
 		return nil, fmt.Errorf("`os_type` is required when creating empty VM")
 	}
@@ -1148,20 +1175,21 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	}
 
 	// Lookup compute policy
-	_, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
 
+	// TOREVIEW - removed lookupComputePolicy in getCpuMemoryValues
 	// Lookup CPU/Memory parameters
-	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vcdClient)
+	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
 
 	vmName := d.Get("name").(string)
-
 	var newVm *govcd.VM
+
 	switch vmType {
 	case standaloneVmType:
 		var mediaReference *types.Reference
@@ -1176,28 +1204,30 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		params := types.CreateVmParams{
 			Xmlns:       types.XMLNamespaceVCloud,
 			Name:        vmName,
-			PowerOn:     false,
+			PowerOn:     false, // Power on is handled at the end of VM creation process
 			Description: d.Get("description").(string),
 			CreateVm: &types.Vm{
 				Name:          vmName,
 				ComputePolicy: vmComputePolicy,
+				// BUG in VCD, do not allow empty NetworkConnectionSection, so we pass simplest
+				// network configuration and after VM created update with real config
 				NetworkConnectionSection: &types.NetworkConnectionSection{
 					PrimaryNetworkConnectionIndex: 0,
 					NetworkConnection: []*types.NetworkConnection{
 						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 				},
 				VmSpecSection: &types.VmSpecSection{
-					Modified:       takeBoolPointer(true),
-					Info:           "Virtual Machine specification",
-					OsType:         osType.(string),
-					CpuResourceMhz: &types.CpuResourceMhz{Configured: 0},
-					MediaSection:   nil,
+					Modified:          takeBoolPointer(true),
+					Info:              "Virtual Machine specification",
+					OsType:            osType.(string),
+					CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
+					NumCpus:           cpuCores,
+					NumCoresPerSocket: cpuCoresPerSocket,
+
 					// can be created with resource internal_disk
-					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
-					HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
-					VmToolsVersion:   "",
-					VirtualCpuType:   virtualCpuType,
-					TimeSyncWithHost: nil,
+					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
+					HardwareVersion: &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
+					VirtualCpuType:  virtualCpuType,
 				},
 				GuestCustomizationSection: customizationSection,
 				StorageProfile:            storageProfilePtr,
@@ -1205,15 +1235,8 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			Media: mediaReference,
 		}
 
-		// Only set CPU/Memory values if they are not nil
-		if cpuCores != nil {
-			params.CreateVm.VmSpecSection.NumCpus = cpuCores
-		}
-
-		if cpuCoresPerSocket != nil {
-			params.CreateVm.VmSpecSection.NumCoresPerSocket = cpuCoresPerSocket
-		}
-
+		// TOREVIEW
+		// Explicitly mapping memory as it cannot be `nil` due to being in64 instead of *int64
 		if memory != nil {
 			params.CreateVm.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
 		}
@@ -1224,6 +1247,8 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 		// VM created - store its ID
 		d.SetId(newVm.VM.ID)
+		dSet(d, "vm_type", string(standaloneVmType))
+
 	case vappVmType:
 		recomposeVAppParamsForEmptyVm := &types.RecomposeVAppParamsForEmptyVm{
 			XmlnsVcloud: types.XMLNamespaceVCloud,
@@ -1243,31 +1268,28 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				Description:               d.Get("description").(string),
 				GuestCustomizationSection: customizationSection,
 				VmSpecSection: &types.VmSpecSection{
-					Modified:     takeBoolPointer(true),
-					Info:         "Virtual Machine specification",
-					OsType:       osType.(string),
-					MediaSection: nil,
+					Modified:          takeBoolPointer(true),
+					Info:              "Virtual Machine specification",
+					OsType:            osType.(string),
+					NumCpus:           cpuCores,
+					NumCoresPerSocket: cpuCoresPerSocket,
 					// can be created with resource internal_disk
-					DiskSection:      &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
-					HardwareVersion:  &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
-					VmToolsVersion:   "",
-					VirtualCpuType:   virtualCpuType,
-					TimeSyncWithHost: nil,
+					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
+					HardwareVersion: &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
+					VirtualCpuType:  virtualCpuType,
 				},
 				BootImage: bootImage,
 			},
-			AllEULAsAccepted: true,
+			// TOREVIEW - there is no EULA Acceptance field documented for Standalone VM
+			// UI does not have any EULA related fields in UI neither for vApp VM, nor for standalone.
+			//
+			//
+			// check if 'AllEULAsAccepted' is an option at all for standalone empty VM structure
+			// AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 		}
 
-		// Only set CPU/Memory values if they are not nil
-		if cpuCores != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCpus = cpuCores
-		}
-
-		if cpuCoresPerSocket != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCoresPerSocket = cpuCoresPerSocket
-		}
-
+		// TOREVIEW
+		// Explicitly mapping memory as it cannot be `nil` due to being in64 instead of *int64
 		if memory != nil {
 			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
 		}
@@ -1279,9 +1301,17 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 		// VM created - store its ID
 		d.SetId(newVm.VM.ID)
+		dSet(d, "vm_type", string(vappVmType))
+
 	default:
 		return nil, fmt.Errorf("unknown VM type %s", vmType)
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Only__ empty VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	util.Logger.Printf("[VM create] VM after creation %# v", pretty.Formatter(newVm.VM))
 	vapp, err = newVm.GetParentVApp()
@@ -1291,23 +1321,20 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 	dSet(d, "vapp_name", vapp.VApp.Name)
 
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// This part of code handles additional VM create operations, which can not be set during
-	// initial VM creation.
-	// __Only__ empty VMs are addressed here.
-	////////////////////////////////////////////////////////////////////////////////////////////////
-
 	// Due to the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup
 	// network configuration with update.
-	networkConnectionSection, err := networksToConfig(d, vapp)
-	if err != nil {
-		return nil, fmt.Errorf("unable to setup network configuration for empty VM: %s", err)
-	}
+
 	// firstly cleanup dummy network as network adapter type can't be changed
 	err = newVm.UpdateNetworkConnectionSection(&types.NetworkConnectionSection{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
 	}
+
+	networkConnectionSection, err := networksToConfig(d, vapp)
+	if err != nil {
+		return nil, fmt.Errorf("unable to setup network configuration for empty VM: %s", err)
+	}
+
 	// add real network configuration
 	err = newVm.UpdateNetworkConnectionSection(&networkConnectionSection)
 	if err != nil {

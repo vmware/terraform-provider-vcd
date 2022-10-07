@@ -108,11 +108,7 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 
 // getCpuMemoryValues returns CPU, CPU core count and Memory variables. Priority comes from HCL
 // schema configuration and then whatever is present in compute policy (if it was specified at all)
-func getCpuMemoryValues(d *schema.ResourceData, vcdClient *VCDClient) (*int, *int, *int64, error) {
-	vdcComputePolicy, _, err := lookupComputePolicy(d, vcdClient)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error finding sizing policy: %s", err)
-	}
+func getCpuMemoryValues(d *schema.ResourceData, vdcComputePolicy *types.VdcComputePolicy) (*int, *int, *int64, error) {
 
 	var (
 		setCpu    *int
@@ -708,13 +704,18 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 
 // networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
+//
+// `vapp“ parameter does not play critical role in the code, but adds additional validations:
+// * `org` type of networks will be checked if they are already attached to vApp
+// * `vapp` type networks will be checked for existence inside the vApp
 func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkConnectionSection, error) {
 	networks := d.Get("network").([]interface{})
 
 	isStandaloneVm := vapp == nil || (vapp != nil && vapp.VApp.IsAutoNature)
 	networkConnectionSection := types.NetworkConnectionSection{}
 
-	// sets existing primary network connection index. Further changes index only if change is found
+	// sets existing primary network connection index. Further code changes index only if change is
+	// found
 	for index, singleNetwork := range networks {
 		nic := singleNetwork.(map[string]interface{})
 		isPrimary := nic["is_primary"].(bool)
