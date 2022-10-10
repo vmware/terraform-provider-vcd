@@ -43,7 +43,8 @@ The following arguments are supported:
 * `media_path` - (Required) - Absolute or relative path to file to upload
 * `upload_piece_size` - (Optional) - size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress. (See note below)
-* `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
+* `metadata` - (Deprecated; *v2.5+*) Use `metadata_entry` instead. Key value map of metadata to assign
+* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute reference
 
@@ -56,6 +57,17 @@ Supported in provider *v2.5+*
 * `size` - (Computed) returns media storage in Bytes
 * `status` - (Computed) returns media status
 * `storage_profile_name` - (Computed) returns storage profile name
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ### A note about upload progress
 

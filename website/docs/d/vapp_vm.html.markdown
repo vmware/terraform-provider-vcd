@@ -103,7 +103,8 @@ The following arguments are supported:
 * `cpu_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload. Values can be: `LOW`, `NORMAL`, `HIGH` and `CUSTOM`
 * `cpu_shares` - Custom priority for the resource in MHz
 * `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited.
-* `metadata` -  Key value map of metadata assigned to this VM
+* `metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata assigned to this VM
+* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to this VM. See [Metadata](#metadata) section for details
 * `disk` -  Independent disk attachment configuration.
 * `network` -  A block defining a network interface. Multiple can be used.
 * `guest_properties` -  Key value map of guest properties
@@ -115,5 +116,15 @@ The following arguments are supported:
 * `hardware_version` - (*v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.).
 * `sizing_policy_id` (*v3.0+*, *vCD 10.0+*) VM sizing policy ID.
 
-
 See [VM resource](/providers/vmware/vcd/latest/docs/resources/vapp_vm#attribute-reference) for more info about VM attributes.
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.

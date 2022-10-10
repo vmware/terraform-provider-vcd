@@ -41,7 +41,8 @@ The following arguments are supported:
 * `external_network` - (Required) The name of the external network.
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.
-* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this network.
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network.
+* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute reference
 
@@ -52,6 +53,17 @@ Supported in provider *v2.5+*
 * `external_network_dns1` - (Computed) returns the first DNS from the external network
 * `external_network_dns2` - (Computed) returns the second DNS from the external network
 * `external_network_dns_suffix` - (Computed) returns the DNS suffix from the external network
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ## Importing
 

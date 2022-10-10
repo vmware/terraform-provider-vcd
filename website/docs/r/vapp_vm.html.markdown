@@ -299,7 +299,8 @@ The following arguments are supported:
 * `cpu_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
 * `cpu_shares` - Custom priority for the resource in MHz. This is a read-only, unless the `cpu_priority` is "CUSTOM"
 * `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited. 
-* `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
+* `metadata` - (Deprecated; *v2.2+*) Use `metadata_entry` instead. Key value map of metadata to assign to this VM
+* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
@@ -317,9 +318,9 @@ example for usage details.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
   for adapters in `network` block with `ip_allocation_mode=DHCP`). It constantly checks if IP is present so the time given
   is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
- * VM has Guest Tools. It waits for IP address to be reported by Guest Tools. This is a slower option, but
+* VM has Guest Tools. It waits for IP address to be reported by Guest Tools. This is a slower option, but
   does not require for the VM to use Edge Gateways DHCP service.
- * VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
+* VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
   relayed). It works by querying DHCP leases on Edge Gateway. In general it is quicker than waiting
   until Guest Tools report IP addresses, but is more constrained. However this is the only option if Guest
   Tools are not present on the VM.
@@ -612,6 +613,17 @@ Notes about **removing** `network`:
 
 * Guest OS must support hot NIC removal for NICs to be removed using network definition. If Guest OS doesn't support it - `power_on=false` can be used to power off the VM before removing NICs.
 * VCD 10.1 has a bug and all NIC removals will be performed in cold manner.
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ## Importing
 

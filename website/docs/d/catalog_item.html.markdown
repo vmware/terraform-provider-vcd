@@ -54,8 +54,20 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `description` - Catalog item description.
-* `metadata` - Key value map of metadata for the associated vApp template.
-* `catalog_item_metadata` - Key value map of metadata for the catalog item.
+* `metadata` - Key value map of metadata assigned to the associated vApp template.
+* `catalog_item_metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata assigned to the catalog item.
+* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to the catalog item. See [Metadata](#metadata) section for details.
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ## Filter arguments
 

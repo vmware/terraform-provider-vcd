@@ -100,7 +100,8 @@ The following arguments are supported:
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `description` (Optional; *v3.3*) An optional description for the vApp, up to 256 characters.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
-* `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
+* `metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
+* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
 
 * `href` - (Computed) The vApp Hyper Reference
@@ -112,6 +113,16 @@ The following arguments are supported:
   * `runtime_lease_in_sec` - How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
   * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
 
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ## Importing
 

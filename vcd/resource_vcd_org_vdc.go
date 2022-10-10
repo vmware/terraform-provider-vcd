@@ -999,12 +999,12 @@ func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
+	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 	}
 
-	return createOrUpdateMetadata(d, vdc, "metadata")
+	return createOrUpdateMetadata(d, adminVdc, "metadata")
 }
 
 // helper for transforming the compute capacity section of the resource input into the VdcConfiguration structure

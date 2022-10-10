@@ -76,7 +76,7 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 		// Creates a list of keys to be removed.
 		oldKeySet := getMetadataKeySet(oldRaw.([]map[string]interface{}))
 		newKeySet := getMetadataKeySet(newMetadata)
-		for oldKey, _ := range oldKeySet {
+		for oldKey := range oldKeySet {
 			if _, newKeyPresent := newKeySet[oldKey]; !newKeyPresent {
 				toBeRemovedMetadata = append(toBeRemovedMetadata, oldKey)
 			}

@@ -60,7 +60,8 @@ The following arguments are supported:
   have a static IP; see [IP Pools](#ip-pools) below for details.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
   virtual machines; see [IP Pools](#ip-pools) below for details.
-* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this network.
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network.
+* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 <a id="ip-pools"></a>
 ## IP Pools
@@ -74,6 +75,17 @@ DHCP Pools additionally support the following attributes:
 
 * `default_lease_time` - (Optional) The default DHCP lease time to use. Defaults to `3600`.
 * `max_lease_time` - (Optional) The maximum DHCP lease time to use. Defaults to `7200`.
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ## Importing
 
