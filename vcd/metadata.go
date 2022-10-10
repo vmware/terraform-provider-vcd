@@ -22,15 +22,15 @@ var baseMetadataEntrySchema = schema.Schema{
 				Description: "Value of this metadata entry",
 			},
 			"type": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
+				Type:         schema.TypeString,
+				Computed:     true,
+				Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
 				ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
 			},
 			"user_access": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
+				Type:         schema.TypeString,
+				Computed:     true,
+				Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
 				ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
 			},
 			"is_system": {
@@ -103,7 +103,7 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 
 	for i, metadataEntryFromVcd := range metadataFromVcd {
 		metadataEntry := map[string]interface{}{
-			"key":         metadataEntryFromVcd.Key,
+			"key": metadataEntryFromVcd.Key,
 		}
 		if metadataEntryFromVcd.TypedValue != nil {
 			metadataEntry["type"] = metadataEntryFromVcd.TypedValue.XsiType
@@ -130,7 +130,7 @@ func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}
 			domain = "SYSTEM"
 		}
 		metadataValue[metadataEntry["key"].(string)] = types.MetadataValue{
-			Domain:     &types.MetadataDomainTag{
+			Domain: &types.MetadataDomainTag{
 				Visibility: metadataEntry["visibility"].(string),
 				Domain:     domain,
 			},

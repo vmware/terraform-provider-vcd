@@ -200,8 +200,6 @@ func contains(sliceToSearch []string, searched string) bool {
 	return found
 }
 
-
-
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 // TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataInVcd`
 // once "metadata" field is removed.
