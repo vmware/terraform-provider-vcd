@@ -25,16 +25,14 @@ var metadataEntryDatasourceSchema = func(resourceNameInDescription string) *sche
 					Description: "Value of this metadata entry",
 				},
 				"type": {
-					Type:         schema.TypeString,
-					Computed:     true,
-					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
-					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
 				},
 				"user_access": {
-					Type:         schema.TypeString,
-					Computed:     true,
-					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
-					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
 				},
 				"is_system": {
 					Type:        schema.TypeBool,
@@ -65,18 +63,21 @@ var metadataEntryResourceSchema = func(resourceNameInDescription string) *schema
 				},
 				"type": {
 					Type:         schema.TypeString,
+					Optional:     true,
 					Default:      types.MetadataStringValue,
 					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'. Defaults to %s", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue, types.MetadataStringValue),
 					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
 				},
 				"user_access": {
 					Type:         schema.TypeString,
+					Optional:     true,
 					Default:      types.MetadataReadWriteVisibility,
 					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'. Defaults to %s", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility, types.MetadataReadWriteVisibility),
 					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
 				},
 				"is_system": {
 					Type:        schema.TypeBool,
+					Optional:    true,
 					Default:     false,
 					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL. Defaults to false.",
 				},
@@ -109,9 +110,9 @@ type metadataCompatible interface {
 func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompatible) error {
 	if d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange("metadata_entry")
-		newMetadata := newRaw.([]map[string]interface{})
+		newMetadata := newRaw.(*schema.Set).List()
 		// Check if any key in old metadata was removed in new metadata to remove it from VCD
-		oldKeySet := getMetadataKeySet(oldRaw.([]map[string]interface{}))
+		oldKeySet := getMetadataKeySet(oldRaw.(*schema.Set).List())
 		newKeySet := getMetadataKeySet(newMetadata)
 		for oldKey := range oldKeySet {
 			if _, newKeyPresent := newKeySet[oldKey]; !newKeyPresent {
@@ -145,7 +146,7 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 		}
 		if metadataEntryFromVcd.Domain != nil {
 			metadataEntry["is_system"] = metadataEntryFromVcd.Domain.Domain == "SYSTEM"
-			metadataEntry["visibility"] = metadataEntryFromVcd.Domain.Visibility
+			metadataEntry["user_access"] = metadataEntryFromVcd.Domain.Visibility
 		}
 		metadataSet[i] = metadataEntry
 	}
@@ -156,16 +157,18 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 
 // convertFromStateToMetadataValues converts the structure retrieved from Terraform state to a structure compatible
 // with the Go SDK.
-func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}) map[string]types.MetadataValue {
+func convertFromStateToMetadataValues(metadataAttribute []interface{}) map[string]types.MetadataValue {
 	metadataValue := map[string]types.MetadataValue{}
-	for _, metadataEntry := range metadataAttribute {
+	for _, rawItem := range metadataAttribute {
+		metadataEntry := rawItem.(map[string]interface{})
+
 		domain := "GENERAL"
 		if metadataEntry["is_system"].(bool) {
 			domain = "SYSTEM"
 		}
 		metadataValue[metadataEntry["key"].(string)] = types.MetadataValue{
 			Domain: &types.MetadataDomainTag{
-				Visibility: metadataEntry["visibility"].(string),
+				Visibility: metadataEntry["user_access"].(string),
 				Domain:     domain,
 			},
 			TypedValue: &types.MetadataTypedValue{
@@ -178,9 +181,10 @@ func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}
 }
 
 // getMetadataKeySet converts the input metadata attribute from Terraform state to a metadata key set.
-func getMetadataKeySet(metadataAttribute []map[string]interface{}) map[string]bool {
+func getMetadataKeySet(metadataAttribute []interface{}) map[string]bool {
 	metadataKeys := map[string]bool{}
-	for _, metadataEntry := range metadataAttribute {
+	for _, rawItem := range metadataAttribute {
+		metadataEntry := rawItem.(map[string]interface{})
 		metadataKeys[metadataEntry["key"].(string)] = true
 	}
 	return metadataKeys

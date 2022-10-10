@@ -12,7 +12,7 @@ import (
 
 // testMetadataEntry executes a test to check CRUD operations on "metadata_entry" attribute for the given HCL
 // template and the given resource.
-// The HCL template requires a {{.Name}} and {{.Metadata}} fields, as the usual {{.Org}} and {{.Vdc}}.
+// The HCL template requires a {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
 func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string) {
 	preTestChecks(t)
 	var params = StringMap{
@@ -31,6 +31,11 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string)
 	updateHcl := templateFill(hclTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
+	params["FuncName"] = t.Name() + "Delete"
+	params["Metadata"] = ""
+	deleteHcl := templateFill(hclTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -41,16 +46,23 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string)
 		Steps: []resource.TestStep{
 			{
 				Config: createHcl,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					assertMetadata(resourceAddress),
 				),
 			},
 			{
 				Config: updateHcl,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					assertUpdatedMetadata(resourceAddress),
+				),
+			},
+			{
+				Config: deleteHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
 				),
 			},
 		},
@@ -97,7 +109,7 @@ func getMetadataTestingHcl() string {
 		key         = "hiddenKey"
 		value       = "I'm a test for hidden values"
 		type        = "MetadataStringValue"
-        user_access = "HIDDEN"
+        user_access = "PRIVATE"
         is_system   = true
 	}
     metadata_entry {
@@ -111,103 +123,165 @@ func getMetadataTestingHcl() string {
 }
 
 func getMetadataTestingHclForUpdate() string {
-	return strings.ReplaceAll(
+	return strings.ReplaceAll(strings.ReplaceAll(
 		strings.ReplaceAll(
 			strings.ReplaceAll(getMetadataTestingHcl(),
 				"I'm a test for", "I'm a test to update"),
 			"1234", "9999"),
-		"2022-10-05", "2022-10-06")
+		"2022-10-05", "2022-10-06"),
+		"true", "false")
 }
 
-// assertMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHcl
+// assertMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHclForUpdate
 func assertMetadata(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "6"),
-
+		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "7"),
 		// Tests default metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.key", "defaultKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.value", "I'm a test for default values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.is_system", "false"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "defaultKey",
+				"value":       "I'm a test for default values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests string metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.key", "stringKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.value", "I'm a test for string values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.is_system", "false"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "stringKey",
+				"value":       "I'm a test for string values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests numeric metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.key", "numberKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.value", "1234"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.type", types.MetadataNumberValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.is_system", "false"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "numberKey",
+				"value":       "1234",
+				"type":        types.MetadataNumberValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
+		// Tests bool metadata values
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "boolKey",
+				"value":       "true",
+				"type":        types.MetadataBooleanValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests date metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.key", "dateKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.value", "2022-10-05T13:44:00.000Z"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.type", types.MetadataDateTimeValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.is_system", "false"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "dateKey",
+				"value":       "2022-10-05T13:44:00.000Z",
+				"type":        types.MetadataDateTimeValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests hidden metadata values in SYSTEM
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.key", "hiddenKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.value", "I'm a test for hidden values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.user_access", types.MetadataHiddenVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.is_system", "true"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "hiddenKey",
+				"value":       "I'm a test for hidden values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataHiddenVisibility,
+				"is_system":   "true",
+			},
+		),
 		// Tests read only metadata values in SYSTEM
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.key", "readOnlyKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.value", "I'm a test for read only values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.user_access", types.MetadataReadOnlyVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.is_system", "true"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "readOnlyKey",
+				"value":       "I'm a test for read only values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataReadOnlyVisibility,
+				"is_system":   "true",
+			},
+		),
 	)
 }
 
-// assertUpdatedMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHclForUpdate
+// assertUpdatedMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHcl
 func assertUpdatedMetadata(resourceName string) resource.TestCheckFunc {
-	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "6"),
-
+	return resource.ComposeAggregateTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "7"),
 		// Tests default metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.key", "defaultKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.value", "I'm a test to update default values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.0.is_system", "false"),
-
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "defaultKey",
+				"value":       "I'm a test to update default values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests string metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.key", "stringKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.value", "I'm a test to update string values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.1.is_system", "false"),
-
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "stringKey",
+				"value":       "I'm a test to update string values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests numeric metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.key", "numberKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.value", "9999"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.type", types.MetadataNumberValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.2.is_system", "false"),
-
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "numberKey",
+				"value":       "9999",
+				"type":        types.MetadataNumberValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
+		// Tests bool metadata values
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "boolKey",
+				"value":       "false",
+				"type":        types.MetadataBooleanValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests date metadata values
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.key", "dateKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.value", "2022-10-06T13:44:00.000Z"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.type", types.MetadataDateTimeValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.user_access", types.MetadataReadWriteVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.3.is_system", "false"),
-
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "dateKey",
+				"value":       "2022-10-06T13:44:00.000Z",
+				"type":        types.MetadataDateTimeValue,
+				"user_access": types.MetadataReadWriteVisibility,
+				"is_system":   "false",
+			},
+		),
 		// Tests hidden metadata values in SYSTEM
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.key", "hiddenKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.value", "I'm a test to update hidden values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.user_access", types.MetadataHiddenVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.4.is_system", "true"),
-
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "hiddenKey",
+				"value":       "I'm a test to update hidden values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataHiddenVisibility,
+				"is_system":   "true",
+			},
+		),
 		// Tests read only metadata values in SYSTEM
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.key", "readOnlyKey"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.value", "I'm a test to update read only values"),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.type", types.MetadataStringValue),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.user_access", types.MetadataReadOnlyVisibility),
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.5.is_system", "true"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
+			map[string]string{
+				"key":         "readOnlyKey",
+				"value":       "I'm a test to update read only values",
+				"type":        types.MetadataStringValue,
+				"user_access": types.MetadataReadOnlyVisibility,
+				"is_system":   "true",
+			},
+		),
 	)
 }

@@ -252,6 +252,11 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
+	if err != nil {
+		return err
+	}
+
 	if len(metadata.MetadataEntry) > 0 {
 		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 		if err != nil {
