@@ -71,20 +71,15 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 	if d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange("metadata_entry")
 		newMetadata := newRaw.([]map[string]interface{})
-		var toBeRemovedMetadata []string
-		// Check if any key in old metadata was removed in new metadata.
-		// Creates a list of keys to be removed.
+		// Check if any key in old metadata was removed in new metadata to remove it from VCD
 		oldKeySet := getMetadataKeySet(oldRaw.([]map[string]interface{}))
 		newKeySet := getMetadataKeySet(newMetadata)
 		for oldKey := range oldKeySet {
 			if _, newKeyPresent := newKeySet[oldKey]; !newKeyPresent {
-				toBeRemovedMetadata = append(toBeRemovedMetadata, oldKey)
-			}
-		}
-		for _, k := range toBeRemovedMetadata {
-			err := resource.DeleteMetadataEntry(k)
-			if err != nil {
-				return fmt.Errorf("error deleting metadata entries: %s", err)
+				err := resource.DeleteMetadataEntry(oldKey)
+				if err != nil {
+					return fmt.Errorf("error deleting metadata entries: %s", err)
+				}
 			}
 		}
 		if len(newMetadata) > 0 {
