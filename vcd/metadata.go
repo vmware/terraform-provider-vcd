@@ -77,7 +77,7 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 		oldKeySet := getMetadataKeySet(oldRaw.([]map[string]interface{}))
 		newKeySet := getMetadataKeySet(newMetadata)
 		for oldKey, _ := range oldKeySet {
-			if newKey, isSet := newKeySet[oldKey]; !newKey || !isSet {
+			if _, newKeyPresent := newKeySet[oldKey]; !newKeyPresent {
 				toBeRemovedMetadata = append(toBeRemovedMetadata, oldKey)
 			}
 		}
@@ -143,6 +143,7 @@ func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}
 	return metadataValue
 }
 
+// getMetadataKeySet gives the metadata key set associated to the input metadata attribute from Terraform state.
 func getMetadataKeySet(metadataAttribute []map[string]interface{}) map[string]bool {
 	metadataKeys := map[string]bool{}
 	for _, metadataEntry := range metadataAttribute {
