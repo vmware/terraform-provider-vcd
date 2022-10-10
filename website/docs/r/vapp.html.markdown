@@ -23,8 +23,9 @@ resource "vcd_network_direct" "direct-network" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata = {
-    CostAccount = "Marketing Department"
+  metadata_entry {
+    key   = "CostAccount"
+    value = "Marketing Department"
   }
 }
 
@@ -84,9 +85,14 @@ resource "vcd_vapp_vm" "web2" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata = {
-    boss = "Why is this vApp empty?"
-    john = "I don't really know. Maybe somebody did forget to clean it up."
+  metadata_entry {
+    key   = "boss"
+    value = "Why is this vApp empty?"
+  }
+
+  metadata_entry {
+    key   = "john"
+    value = "I don't really know. Maybe somebody did forget to clean it up."
   }
 }
 ```
@@ -120,9 +126,9 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 
 * `key` - Key of this metadata entry.
 * `value` - Value of this metadata entry.
-* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
-* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Defaults to `MetadataStringValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Defaults to `READWRITE`.
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, , false if it belongs to `GENERAL`. Defaults to `false`.
 
 ## Importing
 

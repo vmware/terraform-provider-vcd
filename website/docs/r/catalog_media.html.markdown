@@ -25,9 +25,14 @@ resource "vcd_catalog_media" "myNewMedia" {
   upload_piece_size    = 10
   show_upload_progress = true
 
-  metadata = {
-    license = "public"
-    version = "v1"
+  metadata_entry {
+    key   = "license"
+    value = "public"
+  }
+  
+  metadata_entry {
+    key   = "version"
+    value = "v1"
   }
 }
 ```
@@ -65,9 +70,9 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 
 * `key` - Key of this metadata entry.
 * `value` - Value of this metadata entry.
-* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
-* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Defaults to `MetadataStringValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Defaults to `READWRITE`.
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, , false if it belongs to `GENERAL`. Defaults to `false`.
 
 ### A note about upload progress
 

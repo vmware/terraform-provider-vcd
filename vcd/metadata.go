@@ -7,53 +7,92 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-var baseMetadataEntrySchema = schema.Schema{
-	Type: schema.TypeSet,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"key": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Key of this metadata entry",
-			},
-			"value": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Value of this metadata entry",
-			},
-			"type": {
-				Type:         schema.TypeString,
-				Computed:     true,
-				Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
-				ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
-			},
-			"user_access": {
-				Type:         schema.TypeString,
-				Computed:     true,
-				Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
-				ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
-			},
-			"is_system": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+var metadataEntryDatasourceSchema = func(resourceNameInDescription string) *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Computed:    true,
+		Description: fmt.Sprintf("Metadata entries from the given %s", resourceNameInDescription),
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"key": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Key of this metadata entry",
+				},
+				"value": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Value of this metadata entry",
+				},
+				"type": {
+					Type:         schema.TypeString,
+					Computed:     true,
+					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+				},
+				"user_access": {
+					Type:         schema.TypeString,
+					Computed:     true,
+					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
+				},
+				"is_system": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+				},
 			},
 		},
-	},
+	}
+}
+
+var metadataEntryResourceSchema = func(resourceNameInDescription string) *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Optional:    true,
+		Description: fmt.Sprintf("Metadata entries for the given %s", resourceNameInDescription),
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"key": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Key of this metadata entry",
+				},
+				"value": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Value of this metadata entry",
+				},
+				"type": {
+					Type:         schema.TypeString,
+					Default:      types.MetadataStringValue,
+					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'. Defaults to %s", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue, types.MetadataStringValue),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+				},
+				"user_access": {
+					Type:         schema.TypeString,
+					Default:      types.MetadataReadWriteVisibility,
+					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'. Defaults to %s", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility, types.MetadataReadWriteVisibility),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
+				},
+				"is_system": {
+					Type:        schema.TypeBool,
+					Default:     false,
+					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL. Defaults to false.",
+				},
+			},
+		},
+	}
 }
 
 // getMetadataEntrySchema returns a schema for the "metadata_entry" attribute, that can be used to
 // build data sources (isDatasource=true) or resources (isDatasource=false). The description of the
 // attribute will refer to the input resource name.
 func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool) *schema.Schema {
-	metadataEntrySchema := baseMetadataEntrySchema
-	metadataEntrySchema.Description = fmt.Sprintf("Key and value pairs for %s metadata", resourceNameInDescription)
 	if isDatasource {
-		metadataEntrySchema.Computed = true
-	} else {
-		metadataEntrySchema.Optional = true
+		return metadataEntryDatasourceSchema(resourceNameInDescription)
 	}
-	return &metadataEntrySchema
+	return metadataEntryResourceSchema(resourceNameInDescription)
 }
 
 // metadataCompatible allows to consider all structs that implement metadata handling to be the same type
@@ -138,7 +177,7 @@ func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}
 	return metadataValue
 }
 
-// getMetadataKeySet gives the metadata key set associated to the input metadata attribute from Terraform state.
+// getMetadataKeySet converts the input metadata attribute from Terraform state to a metadata key set.
 func getMetadataKeySet(metadataAttribute []map[string]interface{}) map[string]bool {
 	metadataKeys := map[string]bool{}
 	for _, metadataEntry := range metadataAttribute {

@@ -60,11 +60,24 @@ resource "vcd_vapp_vm" "web1" {
   cpus          = 2
   cpu_cores     = 1
 
-  metadata = {
-    role    = "web"
-    env     = "staging"
-    version = "v1"
-    my_key  = "my value"
+  metadata_entry {
+    key   = "role"
+    value = "web"
+  }
+
+  metadata_entry {
+    key   = "env"
+    value = "staging"
+  }
+
+  metadata_entry {
+    key   = "version"
+    value = "v1"
+  }
+
+  metadata_entry {
+    key   = "my_key"
+    value = "my value"
   }
 
   guest_properties = {
@@ -95,11 +108,29 @@ resource "vcd_vapp_vm" "web2" {
   memory        = 1024
   cpus          = 1
 
-  metadata = {
-    role    = "web"
-    env     = "staging"
-    version = "v1"
-    my_key  = "my value"
+  metadata_entry {
+    key   = "role"
+    value = "web"
+  }
+
+  metadata_entry {
+    key   = "env"
+    value = "staging"
+  }
+
+  metadata_entry {
+    key   = "env"
+    value = "staging"
+  }
+
+  metadata_entry {
+    key   = "version"
+    value = "v1"
+  }
+
+  metadata_entry {
+    key   = "my_key"
+    value = "my value"
   }
 
   guest_properties = {
@@ -621,9 +652,9 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 
 * `key` - Key of this metadata entry.
 * `value` - Value of this metadata entry.
-* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
-* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Defaults to `MetadataStringValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Defaults to `READWRITE`.
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, , false if it belongs to `GENERAL`. Defaults to `false`.
 
 ## Importing
 
