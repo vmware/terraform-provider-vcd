@@ -70,16 +70,15 @@ type metadataCompatible interface {
 func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompatible) error {
 	if d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange("metadata_entry")
-		oldMetadata := oldRaw.([]map[string]interface{})
 		newMetadata := newRaw.([]map[string]interface{})
 		var toBeRemovedMetadata []string
 		// Check if any key in old metadata was removed in new metadata.
 		// Creates a list of keys to be removed.
-		for _, oldEntry := range oldMetadata {
-			for _, newEntry := range newMetadata {
-				if oldEntry["key"] == newEntry["key"] {
-					toBeRemovedMetadata = append(toBeRemovedMetadata, oldEntry["key"].(string))
-				}
+		oldKeySet := getMetadataKeySet(oldRaw.([]map[string]interface{}))
+		newKeySet := getMetadataKeySet(newMetadata)
+		for oldKey, _ := range oldKeySet {
+			if newKey, isSet := newKeySet[oldKey]; !newKey || !isSet {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, oldKey)
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
@@ -142,4 +141,12 @@ func convertFromStateToMetadataValues(metadataAttribute []map[string]interface{}
 		}
 	}
 	return metadataValue
+}
+
+func getMetadataKeySet(metadataAttribute []map[string]interface{}) map[string]bool {
+	metadataKeys := map[string]bool{}
+	for _, metadataEntry := range metadataAttribute {
+		metadataKeys[metadataEntry["key"].(string)] = true
+	}
+	return metadataKeys
 }
