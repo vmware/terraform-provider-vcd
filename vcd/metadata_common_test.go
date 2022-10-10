@@ -7,51 +7,100 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"strings"
+	"testing"
 )
+
+// testMetadataEntry executes a test to check CRUD operations on "metadata_entry" attribute for the given HCL
+// template and the given resource.
+// The HCL template requires a {{.Name}} and {{.Metadata}} fields, as the usual {{.Org}} and {{.Vdc}}.
+func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string) {
+	preTestChecks(t)
+	var params = StringMap{
+		"Org":      testConfig.VCD.Org,
+		"Vdc":      testConfig.VCD.NsxtProviderVdc.Name,
+		"Name":     t.Name(),
+		"Metadata": getMetadataTestingHcl(),
+	}
+	testParamsNotEmpty(t, params)
+
+	createHcl := templateFill(hclTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+
+	params["FuncName"] = t.Name() + "Update"
+	params["Metadata"] = getMetadataTestingHclForUpdate()
+	updateHcl := templateFill(hclTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: createHcl,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					assertMetadata(resourceAddress),
+				),
+			},
+			{
+				Config: updateHcl,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					assertUpdatedMetadata(resourceAddress),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
 
 // getMetadataTestingHcl gets valid metadata entries to inject them into an HCL for testing
 func getMetadataTestingHcl() string {
 	return `
-    metadata_entry = {
+    metadata_entry {
 		key         = "defaultKey"
 		value       = "I'm a test for default values"
 	}
-    metadata_entry = {
+    metadata_entry {
 		key         = "stringKey"
 		value       = "I'm a test for string values"
 		type        = "MetadataStringValue"
         user_access = "READWRITE"
         is_system   = false
 	}
-    metadata_entry = {
+    metadata_entry {
 		key         = "numberKey"
 		value       = "1234"
 		type        = "MetadataNumberValue"
         user_access = "READWRITE"
         is_system   = false
 	}
-    metadata_entry = {
+    metadata_entry {
 		key         = "boolKey"
 		value       = true
 		type        = "MetadataBooleanValue"
         user_access = "READWRITE"
         is_system   = false
 	}
-    metadata_entry = {
+    metadata_entry {
 		key         = "dateKey"
 		value       = "2022-10-05T13:44:00.000Z"
 		type        = "MetadataDateTimeValue"
         user_access = "READWRITE"
         is_system   = false
 	}
-    metadata_entry = {
+    metadata_entry {
 		key         = "hiddenKey"
 		value       = "I'm a test for hidden values"
 		type        = "MetadataStringValue"
         user_access = "HIDDEN"
         is_system   = true
 	}
-    metadata_entry = {
+    metadata_entry {
 		key         = "readOnlyKey"
 		value       = "I'm a test for read only values"
 		type        = "MetadataStringValue"
@@ -64,7 +113,10 @@ func getMetadataTestingHcl() string {
 func getMetadataTestingHclForUpdate() string {
 	return strings.ReplaceAll(
 		strings.ReplaceAll(
-			strings.ReplaceAll(getMetadataTestingHcl(), "I'm a test for", "I'm a test to update"), "1234", "9999"), "2022-10-05", "2022-10-06")
+			strings.ReplaceAll(getMetadataTestingHcl(),
+				"I'm a test for", "I'm a test to update"),
+			"1234", "9999"),
+		"2022-10-05", "2022-10-06")
 }
 
 // assertMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHcl
