@@ -46,9 +46,10 @@ var metadataEntryDatasourceSchema = func(resourceNameInDescription string) *sche
 
 var metadataEntryResourceSchema = func(resourceNameInDescription string) *schema.Schema {
 	return &schema.Schema{
-		Type:        schema.TypeSet,
-		Optional:    true,
-		Description: fmt.Sprintf("Metadata entries for the given %s", resourceNameInDescription),
+		Type:          schema.TypeSet,
+		Optional:      true,
+		Description:   fmt.Sprintf("Metadata entries for the given %s", resourceNameInDescription),
+		ConflictsWith: []string{"metadata"},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"key": {
