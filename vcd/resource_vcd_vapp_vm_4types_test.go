@@ -1343,7 +1343,7 @@ func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.template-vm", "description"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "false"),
@@ -1384,7 +1384,7 @@ func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_vm.template-vm", "description"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "false"),
