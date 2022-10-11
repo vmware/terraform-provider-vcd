@@ -1337,3 +1337,57 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
   }
 }
 `
+
+// TestAccVcdDirectNetworkMetadata tests metadata CRUD on a NSX-V direct network
+func TestAccVcdDirectNetworkMetadata(t *testing.T) {
+	testMetadataEntry(t, testAccCheckVcdDirectNetworkMetadata, "vcd_network_direct.test-network-direct", StringMap{
+		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
+		"Vdc":             testConfig.VCD.Vdc,
+	})
+}
+
+const testAccCheckVcdDirectNetworkMetadata = `
+resource "vcd_network_direct" "test-network-direct" {
+  org              = "{{.Org}}"
+  name             = "{{.Name}}"
+  vdc              = "{{.Vdc}}"
+  external_network = "{{.ExternalNetwork}}"
+  {{.Metadata}}
+}
+`
+
+// TestAccVcdIsolatedNetworkMetadata tests metadata CRUD on a NSX-V isolated network
+func TestAccVcdIsolatedNetworkMetadata(t *testing.T) {
+	testMetadataEntry(t, testAccCheckVcdIsolatedNetworkMetadata, "vcd_network_isolated.test-network-isolated", StringMap{
+		"Vdc": testConfig.VCD.Vdc,
+	})
+}
+
+const testAccCheckVcdIsolatedNetworkMetadata = `
+resource "vcd_network_isolated" "test-network-isolated" {
+  org     = "{{.Org}}"
+  name    = "{{.Name}}"
+  vdc     = "{{.Vdc}}"
+  gateway = "192.168.2.1"
+  {{.Metadata}}
+}
+`
+
+// TestAccVcdRoutedNetworkMetadata tests metadata CRUD on a NSX-V routed network
+func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
+	testMetadataEntry(t, testAccCheckVcdRoutedNetworkMetadata, "vcd_network_routed.test-network-routed", StringMap{
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+	})
+}
+
+const testAccCheckVcdRoutedNetworkMetadata = `
+resource "vcd_network_routed" "test-network-routed" {
+  org          = "{{.Org}}"
+  name         = "{{.Name}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+  {{.Metadata}}
+}
+`

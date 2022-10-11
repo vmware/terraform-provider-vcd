@@ -13,7 +13,7 @@ import (
 // testMetadataEntry executes a test to check CRUD operations on "metadata_entry" attribute for the given HCL
 // template and the given resource.
 // The HCL template requires a {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
-// You can add extra parameters as well to inject in the given HCL template.
+// You can add extra parameters as well to inject in the given HCL template, or override existent ones.
 func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
