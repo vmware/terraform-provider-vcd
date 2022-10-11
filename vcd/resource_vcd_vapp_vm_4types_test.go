@@ -4,9 +4,12 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 // Terraform codebase for VM management is very complicated and is backed by 4 types of VM:
@@ -34,21 +37,23 @@ import (
 // * memory_hot_add_enabled
 // * description
 // * network
+// * power_on
 func TestAccVcdVAppVm_4types(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{
-		"TestName":    t.Name(),
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.Nsxt.Vdc,
-		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem": testConfig.VCD.Catalog.NsxtCatalogItem,
+		"TestName":        t.Name(),
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.Nsxt.Vdc,
+		"Catalog":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":     testConfig.VCD.Catalog.NsxtCatalogItem,
+		"NsxtEdgeGateway": testConfig.Nsxt.EdgeGateway,
 
 		"Tags": "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
-	configTextStep1 := templateFill(testAccVcdVAppVm_4types_Step1, params)
+	configTextStep1 := templateFill(testAccVcdVAppVm_4types, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -71,9 +76,13 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "power_on", "false"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "POWERED_OFF"),
 
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "power_on", "false"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "POWERED_OFF"),
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
@@ -91,6 +100,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.mac", "00:00:00:AA:BB:CC"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "power_on", "false"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", t.Name()+"-template-vapp-vm", "POWERED_OFF"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
@@ -113,6 +124,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.mac", "00:00:00:BB:AA:CC"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "power_on", "false"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", t.Name()+"-empty-vapp-vm", "POWERED_OFF"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
@@ -130,6 +143,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.mac", "00:00:00:11:22:33"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "power_on", "false"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-template-standalone-vm", "POWERED_OFF"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
@@ -151,6 +166,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.mac", "00:00:00:22:33:44"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "power_on", "false"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-empty-standalone-vm", "POWERED_OFF"),
 				),
 			},
 		},
@@ -158,15 +175,22 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdVAppVm_4types_Step1 = `
+const testAccVcdVAppVm_4types = `
 data "vcd_org_vdc" "nsxt" {
   org  = "{{.Org}}"
   name = "{{.Vdc}}"
 }
 
-resource "vcd_network_isolated_v2" "nsxt-backed" {
+data "vcd_nsxt_edgegateway" "t1" {
   org      = "{{.Org}}"
   owner_id = data.vcd_org_vdc.nsxt.id
+  name     = "{{.NsxtEdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "nsxt-backed" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.t1.id
 
   name = "{{.TestName}}"
 
@@ -184,6 +208,7 @@ resource "vcd_vapp" "template-vm" {
   vdc         = "{{.Vdc}}"
   name        = "{{.TestName}}-template-vm"
   description = "vApp for Template VM description"
+  power_on    = false
 }
 
 resource "vcd_vapp_network" "template" {
@@ -208,7 +233,7 @@ resource "vcd_vapp_org_network" "template-vapp" {
   vdc = "{{.Vdc}}"
 
   vapp_name        = (vcd_vapp.template-vm.id == "always-not-equal" ? null : vcd_vapp.template-vm.name)
-  org_network_name = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+  org_network_name = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
 }
 
 resource "vcd_vapp" "empty-vm" {
@@ -216,6 +241,7 @@ resource "vcd_vapp" "empty-vm" {
   vdc         = "{{.Vdc}}"
   name        = "{{.TestName}}-empty-vm"
   description = "vApp for Empty VM description"
+  power_on    = false
 }
 
 resource "vcd_vapp_network" "empty-vm" {
@@ -240,7 +266,7 @@ resource "vcd_vapp_org_network" "empty-vapp" {
   vdc = "{{.Vdc}}"
 
   vapp_name        = (vcd_vapp.empty-vm.id == "always-not-equal" ? null : vcd_vapp.empty-vm.name)
-  org_network_name = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+  org_network_name = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
 }
 
 resource "vcd_vapp_vm" "template-vm" {
@@ -253,6 +279,7 @@ resource "vcd_vapp_vm" "template-vm" {
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
   description = "{{.TestName}}-template-vapp-vm"
+  power_on    = false
 
   network {
 	type               = "org"
@@ -282,6 +309,7 @@ resource "vcd_vapp_vm" "empty-vm" {
   name          = "{{.TestName}}-empty-vapp-vm"
   description   = "{{.TestName}}-empty-vapp-vm"
   computer_name = "vapp-vm"
+  power_on      = false
 
   cpus   = 1
   memory = 1024
@@ -318,17 +346,18 @@ resource "vcd_vm" "template-vm" {
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
+  power_on    = false
 
   network {
 	type               = "org"
-	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
 	adapter_type       = "VMXNET3"
 	ip_allocation_mode = "POOL"
   }
 
   network {
 	type               = "org"
-	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
 	adapter_type       = "E1000E"
 	ip_allocation_mode = "POOL"
 	mac                = "00:00:00:11:22:33"
@@ -344,6 +373,7 @@ resource "vcd_vm" "empty-vm" {
   name          = "{{.TestName}}-empty-standalone-vm"
   description   = "{{.TestName}}-standalone"
   computer_name = "standalone"
+  power_on      = false
 
   cpus   = 1
   memory = 1024
@@ -353,14 +383,14 @@ resource "vcd_vm" "empty-vm" {
 
   network {
 	type               = "org"
-	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
 	adapter_type       = "VMXNET3"
 	ip_allocation_mode = "POOL"
   }
 
   network {
 	type               = "org"
-	name               = (vcd_network_isolated_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_isolated_v2.nsxt-backed.name)
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
 	adapter_type       = "E1000E"
 	ip_allocation_mode = "POOL"
 	mac                = "00:00:00:22:33:44"
@@ -378,6 +408,8 @@ resource "vcd_vm" "empty-vm" {
 // * expose_hardware_virtualization
 // * metadata
 // * guest_properties
+// * power_on
+// * description
 func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 	preTestChecks(t)
 
@@ -393,7 +425,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configTextStep1 := templateFill(testAccVcdVAppVm_4types_storage_profile_Step1, params)
+	configTextStep1 := templateFill(testAccVcdVAppVm_4types_storage_profile, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -416,13 +448,16 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "POWERED_ON"),
+
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "POWERED_ON"),
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.template-vm", "description"), // Inherited from vApp template
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "true"),
@@ -433,11 +468,12 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.#", "0"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", t.Name()+"-template-vapp-vm", "POWERED_ON"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.empty-vm", "description"), // Inherited from vApp template
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
@@ -453,6 +489,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.#", "0"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", t.Name()+"-empty-vapp-vm", "POWERED_ON"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
@@ -468,6 +505,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.#", "0"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-template-standalone-vm", "POWERED_ON"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
@@ -487,6 +525,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", `guest_properties.guest.another.subkey`, "another-value"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.#", "0"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-empty-standalone-vm", "POWERED_ON"),
 				),
 			},
 		},
@@ -494,7 +533,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdVAppVm_4types_storage_profile_Step1 = `
+const testAccVcdVAppVm_4types_storage_profile = `
 data "vcd_storage_profile" "nsxt-vdc" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
@@ -632,9 +671,9 @@ resource "vcd_vm" "empty-vm" {
 }
 `
 
-// TestAccVcdVAppVm_4types_sizing_policy checks that all types of VMs accept minimal sizing policy
+// TestAccVcdVAppVm_4types_sizing_min checks that all types of VMs accept minimal sizing policy
 // (without any CPU/Memory values)
-func TestAccVcdVAppVm_4types_sizing_policy(t *testing.T) {
+func TestAccVcdVAppVm_4types_sizing_min(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{
@@ -1504,3 +1543,83 @@ resource "vcd_vm" "empty-vm" {
   cpu_limit       = "1000"
 }
 `
+
+// testAccCheckVcdVMPowerState checks if a given VM has expected status
+// `expectedStatus` comes from types.VAppStatuses
+func testAccCheckVcdVMPowerState(orgName, vdcName string, vappName, vmName, expectedStatus string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
+		}
+
+		var vm *govcd.VM
+
+		// vApp VM
+		if vappName != "" {
+			vapp, err := vdc.GetVAppByName(vappName, false)
+			if err != nil {
+				return err
+			}
+			vm, err = vapp.GetVMByName(vmName, false)
+			if err != nil {
+				return err
+			}
+		} else { // Standalone VM lookup
+			vm, _, err = getVmByName(conn, vdc, vmName)
+			if err != nil {
+				return fmt.Errorf("error looking up standalone VM '%s': %s", vmName, err)
+			}
+		}
+
+		// getVmByName
+
+		vmStatus, err := vm.GetStatus()
+		if err != nil {
+			return fmt.Errorf("error retrieving VM power status: %s", err)
+		}
+
+		if vcdTestVerbose {
+			fmt.Printf("VM '%s' status expected '%s', got '%s'\n", vm.VM.Name, expectedStatus, vmStatus)
+		}
+
+		if vmStatus != expectedStatus {
+			return fmt.Errorf("Expected VM '%s' to have status '%s', got '%s'", vm.VM.Name, expectedStatus, vmStatus)
+		}
+
+		return nil
+	}
+}
+
+// testAccCheckVcdVappPowerState checks if given vApp has expected status
+// `expectedStatus` comes from types.VAppStatuses
+func testAccCheckVcdVappPowerState(orgName, vdcName string, vappName, expectedStatus string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
+		}
+
+		vapp, err := vdc.GetVAppByName(vappName, false)
+		if err != nil {
+			return err
+		}
+
+		vappStatus, err := vapp.GetStatus()
+		if err != nil {
+			return fmt.Errorf("error retrieving vApp power status: %s", err)
+		}
+
+		if vcdTestVerbose {
+			fmt.Printf("vApp '%s' status expected '%s', got '%s'\n", vapp.VApp.Name, expectedStatus, vappStatus)
+		}
+
+		if vappStatus != expectedStatus {
+			return fmt.Errorf("Expected vApp '%s' to have status '%s', got '%s'", vapp.VApp.Name, expectedStatus, vappStatus)
+		}
+
+		return nil
+	}
+}

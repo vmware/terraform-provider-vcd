@@ -824,9 +824,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error finding vApp template: %s", err)
 	}
 
-	// TOREVIEW - I have started using the same code for both Standalone and vApp VMs as the code
-	// was different but effectivelly doing the same
-
 	// Find correct VM template within vApp.
 	// If `vm_name_in_template` was specified - specified VM template will be returned
 	// If `vm_name_in_template` is not specified - the first VM template within vApp will be picked (backwards compatibility)
@@ -996,19 +993,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
-	// VMs from template inherit template description if it was not set in HCL schema
-	// This call explicitly ensures that VM description is set correctly (is empty if not set)
-
-	// TODO check if we should leave this behavior change (original description from template is removed)
-	err = vm.SetDescription(d.Get("description").(string))
-	if err != nil {
-		return nil, fmt.Errorf("error updating VM description: %s", err)
-	}
-
-	if err := vm.Refresh(); err != nil {
-		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
-	}
-
 	// update existing internal disks in template (it is only applicable to VMs created
 	// Such fields are processed:
 	// * override_template_disk
@@ -1109,17 +1093,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 	}
 
-	// TOREVIEW - No need to validate memory as these errors come out good
-	// Error: error creating empty VM: error creating standalone VM: API Error: 400: [ abd18543-e2a0-4b3d-8d0d-faf447780bc1 ] The value for Number of CPUs must be above zero. You provided 0.
-	// Error: error creating empty VM: [VM creation] error creating VM TestAccVcdVAppVm_4types-empty-vapp-vm : [AddEmptyVmAsync] CreateItem.VmSpecSection.MemoryResourceMb can't be empty
-	// Error: error creating empty VM: error creating standalone VM: API Error: 400: Virtual machine reservation or limit or shares settings are invalid: No Memory Resource.
-
-	// or no validation if API error is human readable
-	// _, sizingOk := d.GetOk("sizing_policy_id")
-	// if _, ok := d.GetOk("memory"); !ok && !sizingOk {
-	// 	return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
-	// }
-
 	var ok bool
 	var osType interface{}
 
@@ -1180,11 +1153,15 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
 
-	// TOREVIEW - removed lookupComputePolicy in getCpuMemoryValues
 	// Lookup CPU/Memory parameters
 	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
+	}
+	// Wrap memory definition into a suitable construct if it is set
+	var memoryResourceMb *types.MemoryResourceMb
+	if memory != nil {
+		memoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
 	}
 
 	vmName := d.Get("name").(string)
@@ -1223,6 +1200,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
 					NumCpus:           cpuCores,
 					NumCoresPerSocket: cpuCoresPerSocket,
+					MemoryResourceMb:  memoryResourceMb,
 
 					// can be created with resource internal_disk
 					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
@@ -1233,12 +1211,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				StorageProfile:            storageProfilePtr,
 			},
 			Media: mediaReference,
-		}
-
-		// TOREVIEW
-		// Explicitly mapping memory as it cannot be `nil` due to being in64 instead of *int64
-		if memory != nil {
-			params.CreateVm.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
 		}
 
 		newVm, err = vdc.CreateStandaloneVm(&params)
@@ -1273,6 +1245,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					OsType:            osType.(string),
 					NumCpus:           cpuCores,
 					NumCoresPerSocket: cpuCoresPerSocket,
+					MemoryResourceMb:  memoryResourceMb,
 					// can be created with resource internal_disk
 					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
 					HardwareVersion: &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
@@ -1280,18 +1253,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				},
 				BootImage: bootImage,
 			},
-			// TOREVIEW - there is no EULA Acceptance field documented for Standalone VM
-			// UI does not have any EULA related fields in UI neither for vApp VM, nor for standalone.
-			//
-			//
-			// check if 'AllEULAsAccepted' is an option at all for standalone empty VM structure
-			// AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
-		}
-
-		// TOREVIEW
-		// Explicitly mapping memory as it cannot be `nil` due to being in64 instead of *int64
-		if memory != nil {
-			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: *memory}
 		}
 
 		util.Logger.Printf("[VM create - add empty VM] recomposeVAppParamsForEmptyVm %# v", pretty.Formatter(recomposeVAppParamsForEmptyVm))
