@@ -922,3 +922,28 @@ data "vcd_nsxt_edgegateway" "nsxt-edge" {
   name = "{{.NsxtEdgeGatewayVcd}}"
 }
 `
+
+// TestAccVcdRoutedNetworkV2Metadata tests metadata CRUD on a NSX-T routed network
+func TestAccVcdRoutedNetworkV2Metadata(t *testing.T) {
+	testMetadataEntry(t, testAccCheckVcdRoutedNetworkV2Metadata, "vcd_network_routed_v2.test-network-routed-v2", StringMap{
+		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
+	})
+}
+
+const testAccCheckVcdRoutedNetworkV2Metadata = `
+data "vcd_nsxt_edgegateway" "nsxt-edge-gateway" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.EdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "test-network-routed-v2" {
+  org             = "{{.Org}}"
+  name            = "{{.Name}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.nsxt-edge-gateway.id
+  gateway         = "1.1.1.1"
+  prefix_length = 24
+  {{.Metadata}}
+}
+`

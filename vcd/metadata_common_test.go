@@ -18,7 +18,7 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string,
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
-		"Vdc":      testConfig.VCD.NsxtProviderVdc.Name,
+		"Vdc":      testConfig.Nsxt.Vdc,
 		"Name":     t.Name(),
 		"Metadata": getMetadataTestingHcl(),
 	}

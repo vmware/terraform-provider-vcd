@@ -654,3 +654,19 @@ data "vcd_network_isolated_v2" "net1" {
   name = "{{.NetworkName}}"
 }
 `
+
+// TestAccVcdIsolatedNetworkV2Metadata tests metadata CRUD on a NSX-T isolated network
+func TestAccVcdIsolatedNetworkV2Metadata(t *testing.T) {
+	testMetadataEntry(t, testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2", StringMap{})
+}
+
+const testAccCheckVcdIsolatedNetworkV2Metadata = `
+resource "vcd_network_isolated_v2" "test-network-isolated-v2" {
+  org           = "{{.Org}}"
+  name          = "{{.Name}}"
+  vdc           = "{{.Vdc}}"
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+  {{.Metadata}}
+}
+`
