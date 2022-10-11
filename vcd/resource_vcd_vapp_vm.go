@@ -591,6 +591,16 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
 		},
+		"status": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Shows the status code of the VM",
+		},
+		"status_text": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Shows the status of the VM",
+		},
 	}
 }
 
@@ -927,9 +937,8 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			Xsi:              types.XMLNamespaceXSI,
 			Xmlns:            types.XMLNamespaceVCloud,
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
-			Deploy:           false,
 			Name:             vapp.VApp.Name,
-			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
+			// PowerOn:          false, // Not setting power state as it is related to vApp state
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
 					HREF: vmTemplate.VAppTemplate.HREF,
@@ -1839,6 +1848,13 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
 		dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
 	}
+
+	statusText, err := vm.GetStatus()
+	if err != nil {
+		statusText = vAppUnknownStatus
+	}
+	dSet(d, "status", vm.VM.Status)
+	dSet(d, "status_text", statusText)
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil

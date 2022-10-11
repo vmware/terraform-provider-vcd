@@ -38,6 +38,8 @@ import (
 // * description
 // * network
 // * power_on
+// * status
+// * status_text
 func TestAccVcdVAppVm_4types(t *testing.T) {
 	preTestChecks(t)
 
@@ -77,11 +79,15 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status", "1"), // 1 - means RESOLVED
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status_text", "RESOLVED"),
 					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "POWERED_OFF"),
 
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status", "1"), // 1 - means RESOLVED
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status_text", "RESOLVED"),
 					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "POWERED_OFF"),
 
 					// Template vApp VM checks
@@ -101,6 +107,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.mac", "00:00:00:AA:BB:CC"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "status_text", "POWERED_OFF"),
 					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", t.Name()+"-template-vapp-vm", "POWERED_OFF"),
 
 					// Empty vApp VM checks
@@ -125,6 +133,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.mac", "00:00:00:BB:AA:CC"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "status_text", "POWERED_OFF"),
 					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", t.Name()+"-empty-vapp-vm", "POWERED_OFF"),
 
 					// Standalone template VM checks
@@ -144,6 +154,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.mac", "00:00:00:11:22:33"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "status_text", "POWERED_OFF"),
 					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-template-standalone-vm", "POWERED_OFF"),
 
 					// Standalone empty VM checks
@@ -167,6 +179,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.mac", "00:00:00:22:33:44"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "status_text", "POWERED_OFF"),
 					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-empty-standalone-vm", "POWERED_OFF"),
 				),
 			},
@@ -1541,6 +1555,183 @@ resource "vcd_vm" "empty-vm" {
   cpu_shares      = "512"
   cpu_reservation = "200"
   cpu_limit       = "1000"
+}
+`
+
+func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"TestName":        t.Name(),
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.Nsxt.Vdc,
+		"Catalog":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":     testConfig.VCD.Catalog.NsxtCatalogItem,
+		"NsxtEdgeGateway": testConfig.Nsxt.EdgeGateway,
+
+		"Tags": "vapp vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configTextStep1 := templateFill(testAccVcdVAppVm_4types_PowerState, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-empty-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-empty-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configTextStep1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+
+					// vApp checks
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "power_on", "true"),
+					// Ignoring these two checks and only relying on a function for "live" check because vApp status
+					// changes once a VM is spawned inside it. Due to Terraform inner workings the vApp does not get
+					// refreshed until next read. It reports POWERED_OFF instead of MIXED as its state is stored after creation.
+					//
+					// resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status", "10"), // 10 - means MIXED
+					// resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status_text", "MIXED"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "MIXED"),
+
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
+					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "power_on", "true"),
+					// Ignoring these two checks and only relying on a function for "live" check because vApp status
+					// changes once a VM is spawned inside it. Due to Terraform inner workings the vApp does not get
+					// refreshed until next read. It reports POWERED_OFF instead of MIXED as its state is stored after creation.
+					//
+					// resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status", "10"), // 10 - means MIXED
+					// resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status_text", "MIXED"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "MIXED"),
+
+					// Template vApp VM checks
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "status_text", "POWERED_OFF"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", t.Name()+"-template-vapp-vm", "POWERED_OFF"),
+
+					// Empty vApp VM checks
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", t.Name()+"-empty-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "status_text", "POWERED_OFF"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", t.Name()+"-empty-vapp-vm", "POWERED_OFF"),
+
+					// Standalone template VM checks
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "status_text", "POWERED_OFF"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-template-standalone-vm", "POWERED_OFF"),
+
+					// Standalone empty VM checks
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "name", t.Name()+"-empty-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "description", t.Name()+"-standalone"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "status", "8"), // 8 - means POWERED OFF
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "status_text", "POWERED_OFF"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-empty-standalone-vm", "POWERED_OFF"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVAppVm_4types_PowerState = `
+resource "vcd_vapp" "template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-template-vm"
+  description = "vApp for Template VM description"
+  power_on    = true
+}
+
+resource "vcd_vapp" "empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-empty-vm"
+  description = "vApp for Empty VM description"
+  power_on    = true
+}
+
+resource "vcd_vapp_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  
+  vapp_name   = vcd_vapp.template-vm.name
+  name        = "{{.TestName}}-template-vapp-vm"
+  description = "{{.TestName}}-template-vapp-vm"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.empty-vm.name
+  name          = "{{.TestName}}-empty-vapp-vm"
+  description   = "{{.TestName}}-empty-vapp-vm"
+  computer_name = "vapp-vm"
+  power_on      = false
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  
+  name        = "{{.TestName}}-template-standalone-vm"
+  description = "{{.TestName}}-template-standalone-vm"
+  power_on    = false
+}
+
+resource "vcd_vm" "empty-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  name          = "{{.TestName}}-empty-standalone-vm"
+  description   = "{{.TestName}}-standalone"
+  computer_name = "standalone"
+  power_on      = false
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
 }
 `
 

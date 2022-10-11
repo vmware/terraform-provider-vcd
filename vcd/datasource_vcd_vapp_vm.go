@@ -4,6 +4,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -373,6 +374,16 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:    true,
 			Computed:    true,
 			Description: "VM sizing policy ID.",
+		},
+		"status": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Shows the status code of the VM",
+		},
+		"status_text": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Shows the status of the VM",
 		},
 	}
 }
