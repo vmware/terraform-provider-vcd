@@ -323,10 +323,13 @@ const testAccCheckVcdCatalogItemFromUrlUpdated = `
 
 // TestAccVcdCatalogItemMetadata tests metadata CRUD on catalog items
 func TestAccVcdCatalogItemMetadata(t *testing.T) {
-	testMetadataEntry(t, testAccCheckVcdCatalogItemMetadata, "vcd_catalog_item.test-catalog-item", StringMap{
-		"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"OvfUrl":  testConfig.Ova.OvfUrl,
-	})
+	testMetadataEntry(t,
+		testAccCheckVcdCatalogItemMetadata, "vcd_catalog_item.test-catalog-item",
+		testAccCheckVcdCatalogItemMetadataDatasource, "data.vcd_catalog_item.test-catalog-item-ds",
+		StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"OvfUrl":  testConfig.Ova.OvfUrl,
+		})
 }
 
 // FIXME: Test with "metadata" (vApp Template metadata)?
@@ -338,5 +341,12 @@ resource "vcd_catalog_item" "test-catalog-item" {
   ovf_url = "{{.OvfUrl}}"
 
   {{.Metadata}}
+}
+`
+
+const testAccCheckVcdCatalogItemMetadataDatasource = `
+data "vcd_catalog_item" "test-catalog-item-ds" {
+  org  = vcd_catalog.test-catalog.org
+  name = vcd_catalog.test-catalog.name
 }
 `

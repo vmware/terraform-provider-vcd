@@ -248,7 +248,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "password", "")
 	}
 
-	err = updateMetadata(d, adminOrg)
+	err = updateMetadataInState(d, adminOrg)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
 		return err

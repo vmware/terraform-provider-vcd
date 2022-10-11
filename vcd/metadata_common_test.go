@@ -14,7 +14,7 @@ import (
 // template and the given resource.
 // The HCL template requires a {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
 // You can add extra parameters as well to inject in the given HCL template, or override existent ones.
-func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string, extraParams StringMap) {
+func testMetadataEntry(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
@@ -29,17 +29,21 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string,
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "Create"
-	createHcl := templateFill(hclTemplate, params)
+	createHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+
+	params["FuncName"] = t.Name() + "Datasource"
+	withDatasourceHcl := templateFill(resourceTemplate+datasourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
 
 	params["FuncName"] = t.Name() + "Update"
 	params["Metadata"] = getMetadataTestingHclForUpdate()
-	updateHcl := templateFill(hclTemplate, params)
+	updateHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
 	params["Metadata"] = " "
-	deleteHcl := templateFill(hclTemplate, params)
+	deleteHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
 
 	if vcdShortTest {
@@ -55,6 +59,13 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					assertMetadata(resourceAddress),
+				),
+			},
+			{
+				Config: withDatasourceHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
+					assertMetadata(datasourceAddress),
 				),
 			},
 			{

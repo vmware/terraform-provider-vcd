@@ -224,7 +224,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
-	// This is the exceptional case where we can't use updateMetadata(d, catalogItem)
+	// This is the exceptional case where we can't use updateMetadataInState(d, catalogItem)
 	catalogItemMetadata, err := catalogItem.GetMetadata()
 	if err != nil {
 		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)

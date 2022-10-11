@@ -771,7 +771,10 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 
 // TestAccVcdCatalogMetadata tests metadata CRUD on catalogs
 func TestAccVcdCatalogMetadata(t *testing.T) {
-	testMetadataEntry(t, testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog", nil)
+	testMetadataEntry(t,
+		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
+		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
+		nil)
 }
 
 const testAccCheckVcdCatalogMetadata = `
@@ -781,6 +784,13 @@ resource "vcd_catalog" "test-catalog" {
   delete_force     = "true"
   delete_recursive = "true"
   {{.Metadata}}
+}
+`
+
+const testAccCheckVcdCatalogMetadataDatasource = `
+data "vcd_catalog" "test-catalog-ds" {
+  org  = vcd_catalog.test-catalog.org
+  name = vcd_catalog.test-catalog.name
 }
 `
 

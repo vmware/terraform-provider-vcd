@@ -101,9 +101,9 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Elem:        networkV2IpRange,
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Key value map of metadata to assign to this network. Key and value can be any string",
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
@@ -232,7 +232,7 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		err = updateMetadata(d, orgNetwork)
+		err = updateMetadataInState(d, orgNetwork)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to set routed network v2 metadata: %s", err)
 			return diag.Errorf("[routed network read v2] unable to set Routed network metadata %s", err)

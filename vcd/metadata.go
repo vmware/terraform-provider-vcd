@@ -107,7 +107,7 @@ type metadataCompatible interface {
 	DeleteMetadataEntry(key string) error
 }
 
-// createOrUpdateMetadataInVcd creates or updates metadata entries for the given resource.
+// createOrUpdateMetadataInVcd creates or updates metadata entries in VCD for the given resource.
 func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompatible) error {
 	if d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange("metadata_entry")
@@ -133,10 +133,10 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 	return nil
 }
 
-// updateMetadata updates metadata or metadata_entry in the Terraform state for the given resource.
+// updateMetadataInState updates metadata or metadata_entry in the Terraform state for the given resource.
 // It updates metadata only if it's changed, and the same for metadata_entry. Both can never be changed at same time
 // as they conflict with each other in the schema (it relies on ConflictsWith in schema).
-func updateMetadata(d *schema.ResourceData, resource metadataCompatible) error {
+func updateMetadataInState(d *schema.ResourceData, resource metadataCompatible) error {
 	metadata, err := resource.GetMetadata()
 	if err != nil {
 		return err
