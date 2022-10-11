@@ -41,7 +41,7 @@ func TestAccVcdVappVmDS(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", "web1"),
 					resource.TestCheckResourceAttr(resourceName, "storage_profile", "*"),
 					resource.TestCheckResourceAttrSet(resourceName, "href"),
-					resource.TestCheckResourceAttr(resourceName, "description", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "description"),
 					resource.TestCheckResourceAttr(resourceName, "customization.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "customization.0.change_sid", "false"),
 					resource.TestCheckResourceAttr(resourceName, "customization.0.join_domain", "false"),
