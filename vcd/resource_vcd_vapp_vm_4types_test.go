@@ -473,7 +473,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "name", t.Name()+"-empty-vapp-vm"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm.empty-vm", "description"), // Inherited from vApp template
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "1024"),
@@ -494,7 +494,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_vm.template-vm", "description"), //  Inherited from vApp template
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "true"),
