@@ -23,6 +23,7 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string)
 	}
 	testParamsNotEmpty(t, params)
 
+	params["FuncName"] = t.Name() + "Create"
 	createHcl := templateFill(hclTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
@@ -32,9 +33,9 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
-	params["Metadata"] = ""
+	params["Metadata"] = " "
 	deleteHcl := templateFill(hclTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -73,63 +74,63 @@ func testMetadataEntry(t *testing.T, hclTemplate string, resourceAddress string)
 // getMetadataTestingHcl gets valid metadata entries to inject them into an HCL for testing
 func getMetadataTestingHcl() string {
 	return `
-    metadata_entry {
-		key         = "defaultKey"
-		value       = "I'm a test for default values"
-	}
-    metadata_entry {
+	  metadata_entry {
+		key   = "defaultKey"
+		value = "I'm a test for default values"
+	  }
+	  metadata_entry {
 		key         = "stringKey"
 		value       = "I'm a test for string values"
 		type        = "MetadataStringValue"
-        user_access = "READWRITE"
-        is_system   = false
-	}
-    metadata_entry {
+		user_access = "READWRITE"
+		is_system   = false
+	  }
+	  metadata_entry {
 		key         = "numberKey"
 		value       = "1234"
 		type        = "MetadataNumberValue"
-        user_access = "READWRITE"
-        is_system   = false
-	}
-    metadata_entry {
+		user_access = "READWRITE"
+		is_system   = false
+	  }
+	  metadata_entry {
 		key         = "boolKey"
-		value       = true
+		value       = "true"
 		type        = "MetadataBooleanValue"
-        user_access = "READWRITE"
-        is_system   = false
-	}
-    metadata_entry {
+		user_access = "READWRITE"
+		is_system   = false
+	  }
+	  metadata_entry {
 		key         = "dateKey"
 		value       = "2022-10-05T13:44:00.000Z"
 		type        = "MetadataDateTimeValue"
-        user_access = "READWRITE"
-        is_system   = false
-	}
-    metadata_entry {
+		user_access = "READWRITE"
+		is_system   = false
+	  }
+	  metadata_entry {
 		key         = "hiddenKey"
 		value       = "I'm a test for hidden values"
 		type        = "MetadataStringValue"
-        user_access = "PRIVATE"
-        is_system   = true
-	}
-    metadata_entry {
+		user_access = "PRIVATE"
+		is_system   = true
+	  }
+	  metadata_entry {
 		key         = "readOnlyKey"
 		value       = "I'm a test for read only values"
 		type        = "MetadataStringValue"
-        user_access = "READONLY"
-        is_system   = true
-	}
+		user_access = "READONLY"
+		is_system   = true
+	  }
 `
 }
 
 func getMetadataTestingHclForUpdate() string {
-	return strings.ReplaceAll(strings.ReplaceAll(
-		strings.ReplaceAll(
-			strings.ReplaceAll(getMetadataTestingHcl(),
-				"I'm a test for", "I'm a test to update"),
-			"1234", "9999"),
-		"2022-10-05", "2022-10-06"),
-		"true", "false")
+	replacer := strings.NewReplacer(
+		"I'm a test for", "I'm a test to update",
+		"1234", "9999",
+		"2022-10-05", "2022-10-06",
+		"\"true\"", "\"false\"",
+	)
+	return replacer.Replace(getMetadataTestingHcl())
 }
 
 // assertMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHclForUpdate

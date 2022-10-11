@@ -87,9 +87,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Description: "An optional password to access the catalog. Only ASCII characters are allowed in a valid password.",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for catalog metadata.",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
+				Description:   "Key and value pairs for catalog metadata.",
 			},
 			"metadata_entry": getMetadataEntrySchema("Catalog", false),
 			"catalog_version": {
@@ -246,22 +248,10 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "password", "")
 	}
 
-	metadata, err := adminCatalog.GetMetadata()
+	err = updateMetadata(d, adminOrg)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
+		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
 		return err
-	}
-
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
-	if err != nil {
-		return err
-	}
-
-	if len(metadata.MetadataEntry) > 0 && d.GetOk("metadata_entry") {
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
-			return err
-		}
 	}
 
 	err = setCatalogData(d, adminOrg, adminCatalog.AdminCatalog.Name)

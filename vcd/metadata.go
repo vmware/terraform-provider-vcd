@@ -133,13 +133,41 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 	return nil
 }
 
+// updateMetadata updates metadata or metadata_entry in the Terraform state for the given resource.
+// It updates metadata only if it's changed, and the same for metadata_entry. Both can never be changed at same time
+// as they conflict with each other in the schema.
+func updateMetadata(d *schema.ResourceData, resource metadataCompatible) error {
+	metadata, err := resource.GetMetadata()
+	if err != nil {
+		return err
+	}
+
+	if d.HasChange("metadata_entry") {
+		err = setMetadataEntryInState(d, metadata.MetadataEntry)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("metadata") && len(metadata.MetadataEntry) > 0 {
+		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // setMetadataEntryInState sets the given metadata entries in the Terraform state.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
 	metadataSet := make([]map[string]interface{}, len(metadataFromVcd))
 
 	for i, metadataEntryFromVcd := range metadataFromVcd {
 		metadataEntry := map[string]interface{}{
-			"key": metadataEntryFromVcd.Key,
+			"key":         metadataEntryFromVcd.Key,
+			"is_system":   false,                             // Default value unless it comes populated from VCD
+			"user_access": types.MetadataReadWriteVisibility, // Default value unless it comes populated from VCD
 		}
 		if metadataEntryFromVcd.TypedValue != nil {
 			metadataEntry["type"] = metadataEntryFromVcd.TypedValue.XsiType
