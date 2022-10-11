@@ -106,20 +106,6 @@ func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient) (*types.V
 	return sizingPolicy, vmComputePolicy, nil
 }
 
-// vmTemplatefromVappTemplate returns a given VM from a vApp template
-// If no name is provided, it returns the first VM from the template
-func vmTemplatefromVappTemplate(vmNameInTemplate string, vappTemplate *types.VAppTemplate) *types.VAppTemplate {
-	if vappTemplate.Children == nil {
-		return nil
-	}
-	for _, vm := range vappTemplate.Children.VM {
-		if vmNameInTemplate == vm.Name || vmNameInTemplate == "" {
-			return vm
-		}
-	}
-	return nil
-}
-
 // getCpuMemoryValues returns CPU, CPU core count and Memory variables. Priority comes from HCL
 // schema configuration and then whatever is present in compute policy (if it was specified at all)
 func getCpuMemoryValues(d *schema.ResourceData, vdcComputePolicy *types.VdcComputePolicy) (*int, *int, *int64, error) {
