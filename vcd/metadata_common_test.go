@@ -10,10 +10,11 @@ import (
 	"testing"
 )
 
-// testMetadataEntry executes a test to check CRUD operations on "metadata_entry" attribute for the given HCL
-// template and the given resource.
-// The HCL template requires a {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
-// You can add extra parameters as well to inject in the given HCL template, or override existent ones.
+// testMetadataEntry executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
+// templates, that must correspond to a resource and a data source referencing this resource.
+// The HCL template requires {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
+// You can add extra parameters as well to inject in the given HCL template, or override these mentioned ones.
+// The data source HCL is always concatenated to the resource after first creation, and it's skipped on binary tests.
 func testMetadataEntry(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
@@ -33,7 +34,7 @@ func testMetadataEntry(t *testing.T, resourceTemplate, resourceAddress, datasour
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
 	params["FuncName"] = t.Name() + "Datasource"
-	withDatasourceHcl := templateFill(resourceTemplate+datasourceTemplate, params)
+	withDatasourceHcl := templateFill(datasourceTemplate+"\n# skip-binary-test\n"+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
 
 	params["FuncName"] = t.Name() + "Update"
