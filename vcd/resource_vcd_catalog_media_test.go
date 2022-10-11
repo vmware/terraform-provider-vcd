@@ -235,3 +235,21 @@ const testAccCheckVcdCatalogMediaUpdate = `
   }
 }
 `
+
+// TestAccVcdCatalogMediaMetadata tests metadata CRUD on catalog media
+func TestAccVcdCatalogMediaMetadata(t *testing.T) {
+	testMetadataEntry(t, testAccCheckVcdCatalogMediaMetadata, "vcd_catalog_media.test-catalog-media", StringMap{
+		"Catalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"MediaPath": testConfig.Media.MediaPath,
+	})
+}
+
+const testAccCheckVcdCatalogMediaMetadata = `
+resource "vcd_catalog_media" "test-catalog-media" {
+  org        = "{{.Org}}"
+  name       = "{{.Name}}"
+  catalog    = "{{.Catalog}}"
+  media_path = "{{.MediaPath}}"
+  {{.Metadata}}
+}
+`

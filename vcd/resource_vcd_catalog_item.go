@@ -82,9 +82,11 @@ func resourceVcdCatalogItem() *schema.Resource {
 			},
 			"metadata_entry": getMetadataEntrySchema("Catalog Item", false),
 			"catalog_item_metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for catalog item metadata",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Key and value pairs for catalog item metadata",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
 		},
 	}
@@ -222,21 +224,29 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
+	// This is the exceptional case where we can't use updateMetadata(d, catalogItem)
 	catalogItemMetadata, err := catalogItem.GetMetadata()
 	if err != nil {
 		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
 	}
-	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
+
+	if d.HasChange("metadata") {
+		err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
+		if err != nil {
+			return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
+		}
 	}
-	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
+	if d.HasChange("catalog_item_metadata") {
+		err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
+		if err != nil {
+			return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
+		}
 	}
-	err = setMetadataEntryInState(d, catalogItemMetadata.MetadataEntry)
-	if err != nil {
-		return diag.Errorf("Unable to set metadata entry set for the catalog item: %s", err)
+	if d.HasChange("metadata_entry") {
+		err = setMetadataEntryInState(d, catalogItemMetadata.MetadataEntry)
+		if err != nil {
+			return diag.Errorf("Unable to set metadata entry set for the catalog item: %s", err)
+		}
 	}
 
 	return nil

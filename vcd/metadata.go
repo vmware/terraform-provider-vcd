@@ -135,7 +135,7 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 
 // updateMetadata updates metadata or metadata_entry in the Terraform state for the given resource.
 // It updates metadata only if it's changed, and the same for metadata_entry. Both can never be changed at same time
-// as they conflict with each other in the schema.
+// as they conflict with each other in the schema (it relies on ConflictsWith in schema).
 func updateMetadata(d *schema.ResourceData, resource metadataCompatible) error {
 	metadata, err := resource.GetMetadata()
 	if err != nil {
