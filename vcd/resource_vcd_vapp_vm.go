@@ -818,18 +818,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// Lookup vApp template
-	vappTemplate, err := lookupvAppTemplateforVm(d, org, vdc)
+	// Lookup VM template inside vApp template - either specified by `vm_name_in_template` or the
+	// first one in vApp
+	vmTemplate, err := lookupvAppTemplateforVm(d, org, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("error finding vApp template: %s", err)
-	}
-
-	// Find correct VM template within vApp.
-	// If `vm_name_in_template` was specified - specified VM template will be returned
-	// If `vm_name_in_template` is not specified - the first VM template within vApp will be picked (backwards compatibility)
-	vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
-	if vmTemplate == nil {
-		return nil, fmt.Errorf("[VM creation] VM template isn't found. Please check vApp template '%s' : %s", vappTemplate.VAppTemplate.Name, err)
 	}
 
 	// Lookup vApp before setting up network configuration. Having a vApp set, will enable
@@ -874,16 +867,16 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	case standaloneVmType:
 		standaloneVmParams := types.InstantiateVmTemplateParams{
 			Xmlns:            types.XMLNamespaceVCloud,
-			Name:             vmName,
-			PowerOn:          false, // VM will be powered on after all configuration is done
+			Name:             vmName, // VM name post creation
+			PowerOn:          false,  // VM will be powered on after all configuration is done
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			ComputePolicy:    vmComputePolicy,
 			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
 				Source: &types.Reference{
-					HREF: vmTemplate.HREF,
-					ID:   vmTemplate.ID,
-					Type: vmTemplate.Type,
-					Name: vmTemplate.Name,
+					HREF: vmTemplate.VAppTemplate.HREF,
+					ID:   vmTemplate.VAppTemplate.ID,
+					Type: vmTemplate.VAppTemplate.Type,
+					Name: vmTemplate.VAppTemplate.Name,
 				},
 				VmGeneralParams: &types.VMGeneralParams{
 					Description: d.Get("description").(string),
@@ -939,7 +932,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			PowerOn:          false, // Power on is set to false as there will be additional operations before final VM creation
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					HREF: vmTemplate.HREF,
+					HREF: vmTemplate.VAppTemplate.HREF,
 					Name: vmName, // This VM name defines the VM name after creation
 				},
 				VMGeneralParams: &types.VMGeneralParams{

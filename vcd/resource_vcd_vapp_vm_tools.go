@@ -18,6 +18,15 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// lookupvAppTemplateforVm will do the following
+// evaluate if optional parameter `vm_name_in_template` was specified.
+//
+// If `vm_name_in_template` was specified
+// * It will lookup exact VM with given `vm_name_in_template` inside `template_name` if catalog `catalog_name`
+//
+// If `vm_name_in_template` was not specified:
+// * It will lookup vApp template with name `template_name` in `catalog_name`
+// * After it is found - it will pick the first child VM template
 func lookupvAppTemplateforVm(d *schema.ResourceData, org *govcd.Org, vdc *govcd.Vdc) (govcd.VAppTemplate, error) {
 	catalogName := d.Get("catalog_name").(string)
 	templateName := d.Get("template_name").(string)
@@ -27,32 +36,37 @@ func lookupvAppTemplateforVm(d *schema.ResourceData, org *govcd.Org, vdc *govcd.
 		return govcd.VAppTemplate{}, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
 	}
 
-	var vappTemplate govcd.VAppTemplate
-	if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok {
+	var vappTemplateHref string
+	if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok { // specific VM name in template is given
 		vmInTemplateRecord, err := vdc.QueryVappVmTemplate(catalogName, templateName, vmNameInTemplate.(string))
 		if err != nil {
 			return govcd.VAppTemplate{}, fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
 		}
-		util.Logger.Printf("[VM create] vmInTemplateRecord %# v", pretty.Formatter(vmInTemplateRecord))
-		returnedVappTemplate, err := catalog.GetVappTemplateByHref(vmInTemplateRecord.HREF)
-		if err != nil {
-			return govcd.VAppTemplate{}, fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
-		}
-		util.Logger.Printf("[VM create] returned VappTemplate %#v", pretty.Formatter(returnedVappTemplate))
-		vappTemplate = *returnedVappTemplate
-	} else {
+
+		vappTemplateHref = vmInTemplateRecord.HREF
+	} else { // No specific `vm_name_in_template` was given - will pick first item in vApp template
 		catalogItem, err := catalog.GetCatalogItemByName(templateName, false)
 		if err != nil {
 			return govcd.VAppTemplate{}, fmt.Errorf("error finding catalog item %s: %s", templateName, err)
 		}
-		vappTemplate, err = catalogItem.GetVAppTemplate()
+		vappTemplate, err := catalogItem.GetVAppTemplate()
 		if err != nil {
 			return govcd.VAppTemplate{}, fmt.Errorf("[VM create] error finding VAppTemplate %s: %s", templateName, err)
 		}
 
+		if vappTemplate.VAppTemplate == nil || vappTemplate.VAppTemplate.Children == nil {
+			return govcd.VAppTemplate{}, fmt.Errorf("error finding VM template")
+		}
+		vappTemplateHref = vappTemplate.VAppTemplate.Children.VM[0].HREF
+
 	}
 
-	return vappTemplate, nil
+	returnedVappTemplate, err := catalog.GetVappTemplateByHref(vappTemplateHref)
+	if err != nil || returnedVappTemplate == nil {
+		return govcd.VAppTemplate{}, fmt.Errorf("error retrieving Catalog Item by HREF: '%s'", err)
+	}
+
+	return *returnedVappTemplate, nil
 }
 
 func lookupStorageProfile(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Reference, error) {
@@ -94,12 +108,12 @@ func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient) (*types.V
 
 // vmTemplatefromVappTemplate returns a given VM from a vApp template
 // If no name is provided, it returns the first VM from the template
-func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *types.VAppTemplate {
+func vmTemplatefromVappTemplate(vmNameInTemplate string, vappTemplate *types.VAppTemplate) *types.VAppTemplate {
 	if vappTemplate.Children == nil {
 		return nil
 	}
 	for _, vm := range vappTemplate.Children.VM {
-		if name == vm.Name || name == "" {
+		if vmNameInTemplate == vm.Name || vmNameInTemplate == "" {
 			return vm
 		}
 	}
