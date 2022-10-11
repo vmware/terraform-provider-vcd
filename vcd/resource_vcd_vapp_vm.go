@@ -938,7 +938,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			Xmlns:            types.XMLNamespaceVCloud,
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			Name:             vapp.VApp.Name,
-			// PowerOn:          false, // Not setting power state as it is related to vApp state
+			PowerOn:          false, // VM will be powered on after all configuration is done
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
 					HREF: vmTemplate.VAppTemplate.HREF,
