@@ -193,7 +193,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	err = setCatalogData(d, adminOrg, catalog)
+	err = setCatalogData(d, adminOrg, catalog, "vcd_catalog")
 	if err != nil {
 		return diag.FromErr(err)
 	}

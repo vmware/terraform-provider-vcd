@@ -13,6 +13,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+const taskFileName = "vcd-catalog-sync-tasks-{ID}.json"
+
 func resourceVcdSubscribedCatalog() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdSubscribedCatalogCreate,
@@ -20,7 +22,7 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 		UpdateContext: resourceVcdSubscribedCatalogUpdate,
 		DeleteContext: resourceVcdSubscribedCatalogDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdSUbscribedCatalogImport,
+			StateContext: resourceVcdSubscribedCatalogImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -36,8 +38,9 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 				ForceNew: true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A subscribed catalog description is inherited from the publisher catalog and cannot be changed. It is updated on sync",
 			},
 			"storage_profile_id": {
 				Type:        schema.TypeString,
@@ -57,40 +60,28 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 				Description: "When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.",
 			},
 			"subscription_url": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"subscription_url", "subscription_catalog_href"},
-				Description:  "The URL to subscribe to the external catalog. Required when 'subscription_catalog_href' is not provided",
-			},
-			"subscription_catalog_href": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"subscription_url", "subscription_catalog_href"},
-				Description:  "The HREF of the external catalog we want to subscribe to. Required when 'subscription_url' is not given",
-			},
-			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
-				Sensitive:   true,
-				Description: "An optional password to access the catalog. Only ASCII characters are allowed in a valid password.",
+				ForceNew:    true,
+				Description: "The URL to subscribe to the external catalog. Required when 'subscription_catalog_href' is not provided",
+			},
+			"subscription_password": {
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				Sensitive: true,
+				Description: "An optional password to access the catalog. Only ASCII characters are allowed in a valid password." +
+					"Passing in six asterisks '******' indicates to keep current password. Passing in null or empty string indicates to remove password.",
 			},
 			"make_local_copy": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Start immediately importing subscribed items into local storage",
-			},
-			"synchronize": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Get subscribed contents (only used during updates)",
+				Description: "If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed. ",
 			},
 			"timeout": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Default:      15,
+				Type:     schema.TypeInt,
+				Optional: true,
+				//Default:      15,
 				RequiredWith: []string{"make_local_copy"},
 				Description:  "Timeout (in minutes) for import completion. Required when 'make_local_copy' is true. Default 15 minutes. (0 = no timeout)",
 			},
@@ -151,31 +142,73 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "True if this catalog is shared to all organizations.",
 			},
-			// The following properties are not used in this resource. Left here for compatibility with vcd_catalog
-			"publish_subscription_type": {
+			"sync_on_refresh": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Boolean value that shows if sync should be performed on every refresh",
+			},
+			"sync_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ConflictsWith: []string{"sync_catalog", "sync_all_vapp_templates", "sync_vapp_templates",
+					"sync_all_media_items", "sync_media_items", "sync_vapp_templates"},
+				Description: "If true, synchronise this catalog and all items",
+			},
+			"sync_catalog": {
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ConflictsWith: []string{"sync_all"},
+				Description:   "If true, synchronise this catalog",
+			},
+			"sync_all_vapp_templates": {
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ConflictsWith: []string{"sync_all", "sync_vapp_templates"},
+				Description:   "if true, synchronises all vApp templates",
+			},
+			"sync_all_media_items": {
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ConflictsWith: []string{"sync_all", "sync_media_items"},
+				Description:   "if true, synchronises all media items",
+			},
+			"sync_vapp_templates": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				ConflictsWith: []string{"sync_all", "sync_all_vapp_templates"},
+				Description:   "Synchronises vApp templates from this list of names",
+			},
+			"sync_media_items": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				ConflictsWith: []string{"sync_all", "sync_all_media_items"},
+				Description:   "Synchronises media items from this list of names",
+			},
+			"running_tasks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of running synchronization tasks",
+			},
+			"failed_tasks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of failed synchronization tasks",
+			},
+			"store_tasks": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "If true, saves list of tasks to file for later update",
+			},
+			"tasks_file_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "[UNUSED] PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
-			},
-			"publish_subscription_url": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "[UNUSED] URL to which other catalogs can subscribe",
-			},
-			"publish_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "[UNUSED] True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation.",
-			},
-			"cache_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "[UNUSED] True enables early catalog export to optimize synchronization",
-			},
-			"preserve_identity_information": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "[UNUSED] Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
+				Description: "where the running tasks IDs have been stored",
 			},
 		},
 	}
@@ -197,12 +230,15 @@ func resourceVcdSubscribedCatalogCreate(ctx context.Context, d *schema.ResourceD
 	var storageProfiles *types.CatalogStorageProfiles
 
 	catalogName := d.Get("name").(string)
-	catalogDescription := d.Get("description").(string)
-	password := d.Get("password").(string)
+	password := d.Get("subscription_password").(string)
 	storageProfileId := d.Get("storage_profile_id").(string)
 	subscriptionUrl := d.Get("subscription_url").(string)
 	makeLocalCopy := d.Get("make_local_copy").(bool)
-	timeout := d.Get("timeout").(int)
+	rawTimeout, okTimeout := d.GetOk("timeout")
+	var timeout int
+	if okTimeout {
+		timeout = rawTimeout.(int)
+	}
 	if storageProfileId != "" {
 		storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 		if err != nil {
@@ -210,43 +246,23 @@ func resourceVcdSubscribedCatalogCreate(ctx context.Context, d *schema.ResourceD
 		}
 		storageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 	}
-	subscriptionCatalogHref := d.Get("subscription_catalog_href").(string)
-	if subscriptionCatalogHref != "" {
-		if subscriptionUrl != "" {
-			return diag.Errorf("only one of 'subscription_catalog_href' or 'subscription_url' can be filled")
-		}
-		fromCatalog, err := vcdClient.Client.GetAdminCatalogByHref(subscriptionCatalogHref)
-		if err != nil {
-			return diag.Errorf("error fetching admin catalog %s: %s", subscriptionCatalogHref, err)
-		}
-		if makeLocalCopy {
-			adminCatalog, err = adminOrg.ImportFromCatalog(fromCatalog, storageProfiles,
-				catalogName, catalogDescription, password, makeLocalCopy, time.Duration(timeout)*time.Minute)
-		} else {
-			adminCatalog, err = adminOrg.ImportFromCatalogAsync(fromCatalog, storageProfiles, catalogName, catalogDescription, password, makeLocalCopy)
-		}
-		if err != nil {
-			return diag.Errorf("error importing from catalog %s: %s", fromCatalog.AdminCatalog.Name, err)
-		}
+	if makeLocalCopy && okTimeout {
+		adminCatalog, err = adminOrg.CreateCatalogFromSubscription(types.ExternalCatalogSubscription{
+			SubscribeToExternalFeeds: true,
+			Location:                 subscriptionUrl,
+			Password:                 password,
+			LocalCopy:                makeLocalCopy,
+		}, storageProfiles, catalogName, password, makeLocalCopy, time.Duration(timeout)*time.Minute)
 	} else {
-		if makeLocalCopy {
-			adminCatalog, err = adminOrg.CreateCatalogFromSubscription(types.ExternalCatalogSubscription{
-				SubscribeToExternalFeeds: true,
-				Location:                 subscriptionUrl,
-				Password:                 password,
-				LocalCopy:                makeLocalCopy,
-			}, storageProfiles, catalogName, catalogDescription, password, makeLocalCopy, time.Duration(timeout)*time.Minute)
-		} else {
-			adminCatalog, err = adminOrg.CreateCatalogFromSubscriptionAsync(types.ExternalCatalogSubscription{
-				SubscribeToExternalFeeds: true,
-				Location:                 subscriptionUrl,
-				Password:                 password,
-				LocalCopy:                makeLocalCopy,
-			}, storageProfiles, catalogName, catalogDescription, password, makeLocalCopy)
-		}
-		if err != nil {
-			return diag.Errorf("error creating catalog %s from subscription: %s", catalogName, err)
-		}
+		adminCatalog, err = adminOrg.CreateCatalogFromSubscriptionAsync(types.ExternalCatalogSubscription{
+			SubscribeToExternalFeeds: true,
+			Location:                 subscriptionUrl,
+			Password:                 password,
+			LocalCopy:                makeLocalCopy,
+		}, storageProfiles, catalogName, password, makeLocalCopy)
+	}
+	if err != nil {
+		return diag.Errorf("error creating catalog %s from subscription: %s", catalogName, err)
 	}
 	d.SetId(adminCatalog.AdminCatalog.ID)
 
@@ -307,11 +323,68 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 		dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
 		dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
 	}
-	err = setCatalogData(d, adminOrg, adminCatalog)
+	err = setCatalogData(d, adminOrg, adminCatalog, "vcd_subscribed_catalog")
 	if err != nil {
 		return diag.Errorf("%v", err)
 	}
 
+	syncOnRefresh := d.Get("sync_on_refresh").(bool)
+	if syncOnRefresh {
+		err = resourceVcdSubscribedCatalogSync(d, vcdClient, adminCatalog, "refresh")
+	}
+	taskIdCollection, err := readTaskIdCollection(vcdClient, adminCatalog.AdminCatalog.ID, d)
+	if err != nil {
+		return diag.Errorf("error retrieving task list for catalog %s: %s", adminCatalog.AdminCatalog.ID, err)
+	}
+	newTaskIdCollection, err := skimTaskCollection(vcdClient, taskIdCollection)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	// add internal tasks
+	if adminCatalog.AdminCatalog.Tasks != nil {
+		var seenTasks = make(map[string]bool)
+		for _, existingTask := range taskIdCollection.Running {
+			seenTasks[existingTask] = true
+		}
+		tasks := adminCatalog.AdminCatalog.Tasks.Task
+		for _, task := range tasks {
+			_, seen := seenTasks[task.ID]
+			if !seen {
+				taskIdCollection.Running = append(taskIdCollection.Running, task.ID)
+				seenTasks[task.ID] = true
+			}
+			// add the subtasks, if any
+			if task.Tasks != nil {
+				for _, subTask := range task.Tasks.Task {
+					_, seen = seenTasks[subTask.ID]
+					if !seen {
+						taskIdCollection.Running = append(taskIdCollection.Running, subTask.ID)
+					}
+					seenTasks[subTask.ID] = true
+				}
+			}
+		}
+	}
+	// give it a chance to remove finished tasks
+	if syncOnRefresh {
+		time.Sleep(3 * time.Second)
+		newTaskIdCollection, err = skimTaskCollection(vcdClient, taskIdCollection)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	err = d.Set("running_tasks", newTaskIdCollection.Running)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = d.Set("failed_tasks", newTaskIdCollection.Failed)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = storeTaskIdCollection(adminCatalog.AdminCatalog.ID, newTaskIdCollection, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Subscribed Catalog read completed: %#v", adminCatalog.AdminCatalog)
@@ -320,47 +393,54 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceVcdSubscribedCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	// The update in this resource differs only in the "syncronize", "make_local_copy", and "password" fields
-	// Thus, we use the regular catalog update first, and add the specifics for subscribed next
-	err := resourceVcdCatalogUpdate(ctx, d, meta)
-	if err != nil {
-		return diag.Errorf("%v", err)
+	// The update in this resource differs from vcd_catalog only in the subscription and synchronising data
+	// Thus, we use the vcd_catalog update with a custom function to update the subscription and sync parameters
+
+	var updateSubscriptionFunc moreUpdateCatalogFunc
+	if d.HasChanges("subscription_url", "make_local_copy", "subscription_password") {
+		params := types.ExternalCatalogSubscription{
+			SubscribeToExternalFeeds: true,
+			Location:                 d.Get("subscription_url").(string),
+			Password:                 d.Get("subscription_password").(string),
+			LocalCopy:                d.Get("make_local_copy").(bool),
+		}
+		updateSubscriptionFunc = func(_ *schema.ResourceData, _ *VCDClient, c *govcd.AdminCatalog, _ string) error {
+			return c.UpdateSubscriptionParams(params)
+		}
 	}
-
-	// TODO: add a synchronise method
-	// TODO: add an update subscription settings method
-
-	return resourceVcdSubscribedCatalogRead(ctx, d, meta)
+	return genericResourceVcdCatalogUpdate(ctx, d, meta,
+		[]moreUpdateCatalogFunc{
+			updateSubscriptionFunc,
+			resourceVcdSubscribedCatalogSync,
+		},
+		resourceVcdSubscribedCatalogRead)
 }
 
 func resourceVcdSubscribedCatalogDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := resourceVcdCatalogDelete(ctx, d, meta)
-	if err != nil {
-		return diag.Errorf("%v", err)
-	}
-	return nil
+	return resourceVcdCatalogDelete(ctx, d, meta)
 }
 
-func resourceVcdSUbscribedCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdSubscribedCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("resource name must be specified as org.catalog")
+		return nil, fmt.Errorf("resource name must be specified as org-name.catalog-name or org-name.catalog-ID")
 	}
-	orgName, catalogName := resourceURI[0], resourceURI[1]
+	orgName, catalogIdentifier := resourceURI[0], resourceURI[1]
 
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
 	}
 
-	catalog, err := adminOrg.GetAdminCatalogByName(catalogName, false)
+	catalog, err := adminOrg.GetAdminCatalogByNameOrId(catalogIdentifier, false)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
 
 	dSet(d, "org", orgName)
-	dSet(d, "name", catalogName)
+	dSet(d, "name", catalogIdentifier)
 	dSet(d, "description", catalog.AdminCatalog.Description)
 	d.SetId(catalog.AdminCatalog.ID)
 

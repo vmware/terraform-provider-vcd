@@ -15,6 +15,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
+// moreUpdateCatalogFunc is a typed func used to pass actions to the catalog update
+type moreUpdateCatalogFunc func(d *schema.ResourceData, vcdClient *VCDClient, catalog *govcd.AdminCatalog, operation string) error
+
 func resourceVcdCatalog() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdCatalogCreate,
@@ -285,7 +288,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	err = setCatalogData(d, adminOrg, adminCatalog)
+	err = setCatalogData(d, adminOrg, adminCatalog, "vcd_catalog")
 	if err != nil {
 		return err
 	}
@@ -299,6 +302,13 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 // resourceVcdCatalogUpdate does not require actions for  fields "delete_force", "delete_recursive",
 // but does allow changing `storage_profile`
 func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericResourceVcdCatalogUpdate(ctx, d, meta, nil, resourceVcdCatalogRead)
+}
+
+// genericResourceVcdCatalogUpdate can handle update for both vcd_catalog and vcd_subscribed_catalog
+// The mucf parameter is a slice of updating functions which –if provided– will be processed sequentially
+// The readFunc parameter is the Read function to be used at the end of update.
+func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, mucf []moreUpdateCatalogFunc, readFunc schema.ReadContextFunc) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -312,6 +322,10 @@ func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		d.SetId("")
 		return diag.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
+
+	// A subscribed catalog has some restrictions on update.
+	isSubscribed := adminCatalog.AdminCatalog.ExternalCatalogSubscription != nil &&
+		adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location != ""
 
 	// Create a copy of adminCatalog to only set and change things which are related to this update section and skip the
 	// other fields. This is important as this provider does not cover all settings available in API and they should not be
@@ -340,7 +354,9 @@ func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	if d.HasChange("description") {
+	if !isSubscribed && d.HasChange("description") {
+		// Subscribed catalogs get their description from the publishing catalog.
+		// Attempting to change it will fail silently
 		newAdminCatalog.AdminCatalog.Description = d.Get("description").(string)
 	}
 
@@ -349,20 +365,32 @@ func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
 	}
 
-	if d.HasChanges("publish_enabled", "cache_enabled", "preserve_identity_information", "password") {
-		err = updatePublishToExternalOrgSettings(d, newAdminCatalog)
+	// Subscribed catalogs cannot add or change publishing parameters or metadata
+	if !isSubscribed {
+		if d.HasChanges("publish_enabled", "cache_enabled", "preserve_identity_information", "password") {
+			err = updatePublishToExternalOrgSettings(d, newAdminCatalog)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		log.Printf("[TRACE] updating metadata for catalog")
+		err = createOrUpdateMetadata(d, adminCatalog, "metadata")
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.Errorf("error updating catalog metadata: %s", err)
 		}
 	}
 
-	log.Printf("[TRACE] updating metadata for catalog")
-	err = createOrUpdateMetadata(d, adminCatalog, "metadata")
-	if err != nil {
-		return diag.Errorf("error updating catalog metadata: %s", err)
+	// If there are custom catalog update functions, we run them one at the time
+	for _, f := range mucf {
+		if f != nil {
+			err = f(d, vcdClient, newAdminCatalog, "update")
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
 	}
-
-	return resourceVcdCatalogRead(ctx, d, meta)
+	return readFunc(ctx, d, meta)
 }
 
 func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -430,7 +458,7 @@ func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatalog *govcd.AdminCatalog) error {
+func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatalog *govcd.AdminCatalog, resourceType string) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := adminOrg.FindCatalogRecords(adminCatalog.AdminCatalog.Name)
 	if err != nil {
@@ -444,7 +472,9 @@ func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatal
 	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
 	dSet(d, "is_published", catalogRecords[0].IsPublished)
 	dSet(d, "is_shared", catalogRecords[0].IsShared)
-	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+	if resourceType == "vcd_catalog" {
+		dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+	}
 
 	var rawMediaItemsList []interface{}
 	var rawVappTemplatesList []interface{}

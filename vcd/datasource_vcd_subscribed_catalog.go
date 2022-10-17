@@ -32,18 +32,11 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 				Description: "Optional storage profile ID",
 			},
 			"subscription_url": {
-				Type:     schema.TypeString,
-				Optional: true,
-				//ExactlyOneOf: []string{"subscription_url", "subscription_catalog_href"},
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "The URL to subscribe to the external catalog. Required when 'subscription_catalog_href' is not provided",
 			},
-			"subscription_catalog_href": {
-				Type:     schema.TypeString,
-				Optional: true,
-				//ExactlyOneOf: []string{"subscription_url", "subscription_catalog_href"},
-				Description: "The HREF of the external catalog we want to subscribe to. Required when 'subscription_url' is not given",
-			},
-			"password": {
+			"subscription_password": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "An optional password to access the catalog.",
@@ -51,12 +44,7 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 			"make_local_copy": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Start immediately importing subscribed items into local storage",
-			},
-			"metadata": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Key and value pairs for catalog metadata.",
+				Description: "If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed.",
 			},
 			"href": {
 				Type:        schema.TypeString,
@@ -110,31 +98,28 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "True if this catalog is shared to all organizations.",
 			},
-			// The following properties are not used in this data source. Left here for compatibility with vcd_catalog
-			"publish_subscription_type": {
+			"running_tasks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of running synchronization tasks",
+			},
+			"failed_tasks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of failed synchronization tasks",
+			},
+			"store_tasks": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "If true, saves list of tasks to file for later update",
+			},
+			"tasks_file_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "[UNUSED] PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
-			},
-			"publish_subscription_url": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "[UNUSED] URL to which other catalogs can subscribe",
-			},
-			"publish_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "[UNUSED] True allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation.",
-			},
-			"cache_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "[UNUSED] True enables early catalog export to optimize synchronization",
-			},
-			"preserve_identity_information": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "[UNUSED] Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
+				Description: "Where the running tasks IDs have been stored",
 			},
 		},
 	}
@@ -150,9 +135,14 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
+	catalogName := d.Get("name").(string)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = catalogName
+	}
+	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(identifier, false)
 	if err != nil {
-		return diag.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+		return diag.Errorf("error retrieving catalog '%s.%s' : %s", adminOrg.AdminOrg.Name, identifier, err)
 	}
 
 	if adminCatalog.AdminCatalog.CatalogStorageProfiles != nil && len(adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile) > 0 {
@@ -165,29 +155,32 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 	dSet(d, "description", adminCatalog.AdminCatalog.Description)
 	dSet(d, "created", adminCatalog.AdminCatalog.DateCreated)
 
-	metadata, err := adminCatalog.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
-		return diag.Errorf("%v", err)
-	}
-
-	if len(metadata.MetadataEntry) > 0 {
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
-			return diag.Errorf("%v", err)
-
-		}
-	}
-
 	if adminCatalog.AdminCatalog.ExternalCatalogSubscription != nil {
 		dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
 		dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
 	}
-	err = setCatalogData(d, adminOrg, adminCatalog)
+	err = setCatalogData(d, adminOrg, adminCatalog, "vcd_subscribed_catalog")
 	if err != nil {
 		return diag.Errorf("%v", err)
 	}
 
+	log.Printf("[TRACE] Catalog sync read initiated")
+
+	taskIdCollection, err := readTaskIdCollection(vcdClient, adminCatalog.AdminCatalog.ID, d)
+	if err != nil {
+		return diag.Errorf("error retrieving task list for catalog %s: %s", adminCatalog.AdminCatalog.ID, err)
+	}
+	newTaskIdCollection, err := skimTaskCollection(vcdClient, taskIdCollection)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if len(newTaskIdCollection.Running) < len(taskIdCollection.Running) {
+		err = storeTaskIdCollection(adminCatalog.AdminCatalog.ID, newTaskIdCollection, d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return nil
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Subscribed Catalog read completed: %#v", adminCatalog.AdminCatalog)
