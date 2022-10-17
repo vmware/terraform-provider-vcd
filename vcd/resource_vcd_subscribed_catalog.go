@@ -331,10 +331,13 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 	syncOnRefresh := d.Get("sync_on_refresh").(bool)
 	if syncOnRefresh {
 		err = resourceVcdSubscribedCatalogSync(d, vcdClient, adminCatalog, "refresh")
+		if err != nil {
+			return diag.Errorf("error running synchronisation for catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
+		}
 	}
 	taskIdCollection, err := readTaskIdCollection(vcdClient, adminCatalog.AdminCatalog.ID, d)
 	if err != nil {
-		return diag.Errorf("error retrieving task list for catalog %s: %s", adminCatalog.AdminCatalog.ID, err)
+		return diag.Errorf("error retrieving task list for catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
 	}
 	newTaskIdCollection, err := skimTaskCollection(vcdClient, taskIdCollection)
 	if err != nil {

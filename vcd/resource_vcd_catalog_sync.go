@@ -273,6 +273,9 @@ func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.Reso
 	util.Logger.Printf("reading %# v\n", pretty.Formatter(collection))
 	// before setting the list of tasks, we remove the ones that are already completed
 	collection, err = skimTaskCollection(vcdClient, collection)
+	if err != nil {
+		return TaskIdCollection{}, err
+	}
 	err = d.Set("running_tasks", collection.Running)
 	if err != nil {
 		return TaskIdCollection{}, err
