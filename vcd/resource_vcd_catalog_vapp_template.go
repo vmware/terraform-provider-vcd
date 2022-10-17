@@ -112,7 +112,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	var diagError diag.Diagnostics
 	vappTemplateName := d.Get("name").(string)
 	if d.Get("ova_path").(string) != "" {
-		diagError = uploadOvaFromResource(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
+		diagError = uploadOvaFroFilePath(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
 	} else if d.Get("ovf_url").(string) != "" {
 		diagError = uploadFromUrl(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
 	} else {
@@ -406,8 +406,8 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	return vAppTemplate, nil
 }
 
-// uploadOvaFromResource uploads an OVA file specified in the resource to the given catalog
-func uploadOvaFromResource(d *schema.ResourceData, catalog *govcd.Catalog, vappTemplate, resourceName string) diag.Diagnostics {
+// uploadOvaFroFilePath uploads an OVA file specified in the resource to the given catalog
+func uploadOvaFroFilePath(d *schema.ResourceData, catalog *govcd.Catalog, vappTemplate, resourceName string) diag.Diagnostics {
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), vappTemplate, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
