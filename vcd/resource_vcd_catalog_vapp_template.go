@@ -333,8 +333,7 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 
 	identifier := d.Id()
 	// Check if identifier is still in deprecated style `catalogName:mediaName`
-	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
-	if identifier == "" || strings.Count(identifier, ":") <= 1 {
+	if origin == "datasource" && identifier == "" || strings.Count(identifier, ":") <= 1 {
 		identifier = d.Get("name").(string)
 	}
 
