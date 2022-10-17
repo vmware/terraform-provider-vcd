@@ -48,7 +48,7 @@ The following arguments are supported:
 * `ova_path` - (Optional) Absolute or relative path to file to upload
 * `ovf_url` - (Optional) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB
-* `metadata` - (Optional) Key value map of metadata to assign to the associated vApp Template
+* `metadata` - (Optional) Key/value map of metadata to assign to the associated vApp Template
 
 ## Attribute Reference
 
