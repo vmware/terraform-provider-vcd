@@ -110,12 +110,6 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of failed synchronization tasks",
 			},
-			"store_tasks": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "If true, saves list of tasks to file for later update",
-			},
 			"tasks_file_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -174,13 +168,14 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if len(newTaskIdCollection.Running) < len(taskIdCollection.Running) {
-		err = storeTaskIdCollection(adminCatalog.AdminCatalog.ID, newTaskIdCollection, d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	err = d.Set("running_tasks", newTaskIdCollection.Running)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	return nil
+	err = d.Set("failed_tasks", newTaskIdCollection.Failed)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Subscribed Catalog read completed: %#v", adminCatalog.AdminCatalog)
