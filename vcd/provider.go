@@ -108,6 +108,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_provider_vdc":                              datasourceVcdProviderVdc(),                      // 3.8
 	"vcd_vm_group":                                  datasourceVcdVmGroup(),                          // 3.8
 	"vcd_subscribed_catalog":                        datasourceVcdSubscribedCatalog(),                // 3.8
+	"vcd_task":                                      datasourceVcdTask(),                             // 3.8
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -184,6 +185,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_org_ldap":                                  resourceVcdOrgLdap(),                          // 3.8
 	"vcd_vm_placement_policy":                       resourceVcdVmPlacementPolicy(),                // 3.8
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
+	//"vcd_catalog_sync":                              resourceVcdCatalogSync(),                      // 3.8
 }
 
 // Provider returns a terraform.ResourceProvider.
