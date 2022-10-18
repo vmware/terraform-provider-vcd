@@ -215,37 +215,25 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 		return diag.Errorf("Unable to find Vapp template: %s", err)
 	}
 
-	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
-	if err != nil {
-		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
-	}
-
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
-	// This is the exceptional case where we can't use updateMetadataInState(d, catalogItem)
-	catalogItemMetadata, err := catalogItem.GetMetadata()
+	// Catalog Item metadata
+	err = updateMetadataInState(d, catalogItem, origin)
 	if err != nil {
-		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
+		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
 	}
 
-	if d.HasChange("metadata") {
+	// vApp Template metadata
+	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
+	if err != nil {
+		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
+	}
+	if origin == "datasource" || (origin == "resource" && d.HasChange("metadata")) {
 		err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
 		if err != nil {
 			return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
-		}
-	}
-	if d.HasChange("catalog_item_metadata") {
-		err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
-		if err != nil {
-			return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
-		}
-	}
-	if d.HasChange("metadata_entry") {
-		err = setMetadataEntryInState(d, catalogItemMetadata.MetadataEntry)
-		if err != nil {
-			return diag.Errorf("Unable to set metadata entry set for the catalog item: %s", err)
 		}
 	}
 

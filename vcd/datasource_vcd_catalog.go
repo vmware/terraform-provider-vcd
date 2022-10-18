@@ -159,19 +159,10 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 	}
 
-	metadata, err := catalog.GetMetadata()
+	err = updateMetadataInState(d, catalog, "datasource")
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
-		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
-	}
-
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
-	}
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
-	if err != nil {
-		return diag.Errorf("There was an issue when setting metadata_entry set into the schema - %s", err)
+		log.Printf("[DEBUG] Unable to set catalog metadata: %s", err)
+		return diag.Errorf("There was an issue when setting metadata - %s", err)
 	}
 
 	err = setCatalogData(d, adminOrg, catalog.AdminCatalog.Name)

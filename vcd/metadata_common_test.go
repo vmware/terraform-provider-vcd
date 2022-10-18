@@ -4,11 +4,20 @@
 package vcd
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"strings"
 	"testing"
 )
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
 
 // testMetadataEntry executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
 // templates, that must correspond to a resource and a data source referencing this resource.
@@ -66,6 +75,7 @@ func testMetadataEntry(t *testing.T, resourceTemplate, resourceAddress, datasour
 				Config: withDatasourceHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
+					assertMetadata(resourceAddress),
 					assertMetadata(datasourceAddress),
 				),
 			},
@@ -73,6 +83,7 @@ func testMetadataEntry(t *testing.T, resourceTemplate, resourceAddress, datasour
 				Config: updateHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					stateDumper(),
 					assertUpdatedMetadata(resourceAddress),
 				),
 			},

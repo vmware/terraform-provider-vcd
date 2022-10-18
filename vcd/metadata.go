@@ -133,23 +133,30 @@ func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompat
 	return nil
 }
 
-// updateMetadataInState updates metadata or metadata_entry in the Terraform state for the given resource.
-// It updates metadata only if it's changed, and the same for metadata_entry. Both can never be changed at same time
-// as they conflict with each other in the schema (it relies on ConflictsWith in schema).
-func updateMetadataInState(d *schema.ResourceData, resource metadataCompatible) error {
-	metadata, err := resource.GetMetadata()
+// updateMetadataInState updates metadata or metadata_entry in the Terraform state for the given receiver object.
+// If the origin is "resource", it updates metadata attribute only if it's changed, and the same for metadata_entry.
+// Both can never be changed at same time as they conflict with each other in the schema (it relies on ConflictsWith in schema).
+// If the origin is "datasource", it updates both metadata and metadata_entry as both are Computed.
+//
+// The goal of this logic is that metadata and metadata_entry can live together until metadata gets deprecated.
+func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompatible, origin string) error {
+	metadata, err := receiverObject.GetMetadata()
 	if err != nil {
 		return err
 	}
 
-	if d.HasChange("metadata_entry") {
+	if len(metadata.MetadataEntry) == 0 {
+		return nil
+	}
+
+	if origin == "datasource" || (origin == "resource" && d.HasChange("metadata_entry")) {
 		err = setMetadataEntryInState(d, metadata.MetadataEntry)
 		if err != nil {
 			return err
 		}
 	}
 
-	if d.HasChange("metadata") && len(metadata.MetadataEntry) > 0 {
+	if origin == "datasource" || (origin == "resource" && d.HasChange("metadata")) {
 		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 		if err != nil {
 			return err

@@ -259,6 +259,8 @@ resource "vcd_catalog_media" "test-catalog-media" {
 
 const testAccCheckVcdCatalogMediaMetadataDatasource = `
 data "vcd_catalog_media" "test-catalog-media-ds" {
-
+  org     = vcd_catalog_item.test-catalog-item.org
+  catalog = vcd_catalog_item.test-catalog-item.catalog
+  name    = vcd_catalog_item.test-catalog-item.name
 }
 `
