@@ -22,10 +22,11 @@ import (
 // evaluate if optional parameter `vm_name_in_template` was specified.
 //
 // If `vm_name_in_template` was specified
-// * It will lookup exact VM with given `vm_name_in_template` inside `template_name` if catalog `catalog_name`
+// * It will look up the exact VM with given `vm_name_in_template` inside `template_name` in catalog
+// `catalog_name`
 //
 // If `vm_name_in_template` was not specified:
-// * It will lookup vApp template with name `template_name` in `catalog_name`
+// * It will look up vApp template with name `template_name` in `catalog_name`
 // * After it is found - it will pick the first child VM template
 func lookupvAppTemplateforVm(d *schema.ResourceData, org *govcd.Org, vdc *govcd.Vdc) (govcd.VAppTemplate, error) {
 	catalogName := d.Get("catalog_name").(string)
@@ -155,7 +156,9 @@ func getCpuMemoryValues(d *schema.ResourceData, vdcComputePolicy *types.VdcCompu
 func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	vmSpecSection := vm.VM.VmSpecSection
 	description := vm.VM.Description
-	// update treats same values as changes and fails, with no values provided - no changes are made for that section
+
+	// DiskSection must be nil because leaving it with actual configuration values will try to
+	// update and fail
 	vmSpecSection.DiskSection = nil
 
 	updateNeeded := false
@@ -216,7 +219,7 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-// isItVappNetwork checks if it is an vApp network (not vApp Org Network)
+// isItVappNetwork checks if it is a vApp network (not vApp Org Network)
 func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -304,7 +307,7 @@ func addRemoveGuestProperties(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-// isPrimaryNicRemoved checks if new schema has a primary NIC at all
+// isPrimaryNicRemoved checks if the updated schema has a primary NIC at all
 func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 	_, newNetworkRaw := d.GetChange("network")
 	newNetworks := newNetworkRaw.([]interface{})
@@ -388,7 +391,8 @@ func getVmFromResource(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 	return vcdClient, org, vdc, vapp, identifier, vm, nil
 }
 
-// updates attached disks to latest state. Removed not needed and add new ones
+// attachDetachIndependentDisks updates attached disks to latest state, removes not needed, and adds
+// new ones
 func attachDetachIndependentDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
 	oldValues, newValues := d.GetChange("disk")
 
@@ -702,11 +706,11 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	return hashcodeString(buf.String())
 }
 
-// networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
+// networksToConfig converts terraform schema for 'network' to types.NetworkConnectionSection
 // which is used for creating new VM
 //
-// `vapp“ parameter does not play critical role in the code, but adds additional validations:
-// * `org` type of networks will be checked if they are already attached to vApp
+// The `vapp` parameter does not play critical role in the code, but adds additional validations:
+// * `org` type of networks will be checked if they are already attached to the vApp
 // * `vapp` type networks will be checked for existence inside the vApp
 func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkConnectionSection, error) {
 	networks := d.Get("network").([]interface{})
@@ -789,7 +793,7 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 	return networkConnectionSection, nil
 }
 
-// isItVappOrgNetwork checks if it is an vApp Org network (not vApp Network)
+// isItVappOrgNetwork checks if it is a vApp Org network (not vApp Network)
 func isItVappOrgNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -1016,10 +1020,11 @@ func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-// handleExposeHardwareVirtualization toggles hardware virtualization according `expose_hardware_virtualization` field value.
+// handleExposeHardwareVirtualization toggles hardware virtualization according to
+// `expose_hardware_virtualization` field value.
 func handleExposeHardwareVirtualization(d *schema.ResourceData, newVm *govcd.VM) error {
-	// The below operation assumes VM is powered off and does not check for it because VM is being
-	// powered on in the last stage of create/update cycle
+	// The operation below assumes the VM is powered off and does not check for status because the
+	// VM is being powered on in the last stage of create/update cycle
 	if d.Get("expose_hardware_virtualization").(bool) {
 		task, err := newVm.ToggleHardwareVirtualization(true)
 		if err != nil {
@@ -1098,7 +1103,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 	if maxDhcpWaitSeconds, ok := d.GetOk("network_dhcp_wait_seconds"); ok && vmStatus == "POWERED_ON" {
 		maxDhcpWaitSecondsInt := maxDhcpWaitSeconds.(int)
 
-		// lookup NIC indexes which have DHCP enabled
+		// look up NIC indexes which have DHCP enabled
 		dhcpNicIndexes := getVmNicIndexesWithDhcpEnabled(vm.VM.NetworkConnectionSection)
 		log.Printf("[DEBUG] [VM read] [DHCP IP Lookup] '%s' DHCP is used on NICs %v with wait time '%d seconds'",
 			vm.VM.Name, dhcpNicIndexes, maxDhcpWaitSecondsInt)
@@ -1117,7 +1122,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 			useNsxvDhcpLeaseCheck := vdc.IsNsxv()
 			nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(dhcpNicIndexes, maxDhcpWaitSecondsInt, useNsxvDhcpLeaseCheck)
 			if err != nil {
-				return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", dhcpNicIndexes, err)
+				return nil, fmt.Errorf("unable to to look up DHCP IPs for VM NICs '%v': %s", dhcpNicIndexes, err)
 			}
 
 			if timeout {

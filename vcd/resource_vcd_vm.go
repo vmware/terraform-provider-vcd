@@ -31,15 +31,13 @@ func resourceVcdStandaloneVmCreate(_ context.Context, d *schema.ResourceData, me
 		return diag.Errorf("vApp name must not be set for a standalone VM (resource `vcd_vm`)")
 	}
 
-	util.Logger.Printf("[DEBUG] [VM create] finished standalone VM creation")
-
 	err := genericResourceVmCreate(d, meta, standaloneVmType)
 	if err != nil {
 		return err
 	}
 
 	timeElapsed := time.Since(startTime)
-	util.Logger.Printf("[DEBUG] [VM create] finished standalone VM creation [took %f seconds]", timeElapsed.Seconds())
+	util.Logger.Printf("[DEBUG] [VM create] finished standalone VM creation [took %s ]", timeElapsed)
 
 	return genericVcdVmRead(d, meta, "create")
 }

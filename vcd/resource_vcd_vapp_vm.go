@@ -51,9 +51,9 @@ const (
 // * inherited from template (only for template based VMs)
 //
 // There are quite a few `vm.Refresh` operations being run in creation code. This is done because
-// some explicit endpoint API calls still change main VM structure. Calling multiple different
-// functions in a row pose a risk of re-applying older VM structure with subsequent calls.
-// Time cost of `vm.Refresh` was measure to be from ~0.5s up to ~1.2s per call depending on client
+// some explicit endpoint API calls still change the main VM structure. Calling multiple different
+// functions in a row poses a risk of re-applying older VM structure with subsequent calls.
+// Time cost of `vm.Refresh` was measured to be from ~0.5s up to ~1.2s per call depending on client
 // latency.
 //
 // Important notes.
@@ -1128,8 +1128,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 
 		bootImage = &types.Media{HREF: result.Media.HREF, Name: result.Media.Name, ID: result.Media.ID}
-	} else {
-		bootImage = nil
 	}
 
 	storageProfilePtr, err := lookupStorageProfile(d, vdc)
@@ -1284,8 +1282,8 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 	dSet(d, "vapp_name", vapp.VApp.Name)
 
-	// Due to the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup
-	// network configuration with update.
+	// Due to the Bug in VCD, VM creation works only with Org VDC networks, not vApp networks - we
+	// setup network configuration with update.
 
 	// firstly cleanup dummy network as network adapter type can't be changed
 	err = newVm.UpdateNetworkConnectionSection(&types.NetworkConnectionSection{})

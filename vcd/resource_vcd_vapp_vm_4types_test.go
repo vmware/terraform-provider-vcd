@@ -21,12 +21,12 @@ import (
 // Each of these 4 types have different fields for creation (just like UI differs), but the
 // expectation for the user is to get a VM with all configuration available in HCL, no matter the type.
 //
-// As a result, the architecture of VM creation is such, that it uses above defined types to create
-// VMs with minimal configuration and then perform additions API calls. There are still risks that
-// some VMs get less configured than others. To overcome this risk, there is a new set of tests.
-// Each of these tests aim to ensure that exactly the same configuration is achieved.
+// As a result, the architecture of VM creation is such that it uses the above defined types to
+// create VMs with minimal configuration and then perform additions API calls. There are still risks
+// that some VMs get less configured than others. To overcome this risk, there is a new set of
+// tests. Each of these tests aim to ensure that exactly the same configuration is achieved.
 
-// TestAccVcdVAppVm_4types attempts to test minimal create configuration for all 4 types of VMs
+// TestAccVcdVAppVm_4types attempts to test the minimal create configuration for all 4 types of VMs
 // Template based VMs inherit their CPU/Memory settings from template, while empty ones must have it
 // explicitly specified
 //
@@ -1558,9 +1558,10 @@ resource "vcd_vm" "empty-vm" {
 }
 `
 
-// TestAccVcdVAppVm_4types_PowerState aims to test if power management works correctly for vApps and VMs
-// Step 1 creates 4 types of powered off VMs. Two of these VMs are places in powered on vApps.
-// The result is that vApps power state should resolve as MIXED, while all VMs must be POWERED OF
+// TestAccVcdVAppVm_4types_PowerState aims to test if power management works correctly for vApps and
+// VMs
+// Step 1 creates 4 types of powered off VMs. Two of these VMs are placed in powered-on vApps.
+// The result is that vApps power state should resolve as MIXED, while all VMs must be POWERED OFF
 //
 // Step 2 additionally adds two more VM to existing vApps. Both of them are powered on and all power
 // states are verified again. It also checks that adding a new VM did not change power statuses of
@@ -1904,7 +1905,7 @@ func testAccCheckVcdVMPowerState(orgName, vdcName string, vappName, vmName, expe
 		}
 
 		if vmStatus != expectedStatus {
-			return fmt.Errorf("Expected VM '%s' to have status '%s', got '%s'", vm.VM.Name, expectedStatus, vmStatus)
+			return fmt.Errorf("expected VM '%s' to have status '%s', got '%s'", vm.VM.Name, expectedStatus, vmStatus)
 		}
 
 		return nil
@@ -1936,7 +1937,7 @@ func testAccCheckVcdVappPowerState(orgName, vdcName string, vappName, expectedSt
 		}
 
 		if vappStatus != expectedStatus {
-			return fmt.Errorf("Expected vApp '%s' to have status '%s', got '%s'", vapp.VApp.Name, expectedStatus, vappStatus)
+			return fmt.Errorf("expected vApp '%s' to have status '%s', got '%s'", vapp.VApp.Name, expectedStatus, vappStatus)
 		}
 
 		return nil
