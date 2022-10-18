@@ -411,3 +411,29 @@ resource "vcd_org" "{{.OrgName}}" {
   }
 }
 `
+
+// TestAccVcdOrgMetadata tests metadata CRUD on organizations
+func TestAccVcdOrgMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
+		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
+		StringMap{
+			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}
+
+const testAccCheckVcdOrgMetadata = `
+resource "vcd_org" "test-org" {
+  name             = "{{.Name}}"
+  full_name        = "{{.Name}}"
+  delete_recursive = "true"
+  delete_force     = "true"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdOrgMetadataDatasource = `
+data "vcd_org" "test-org-ds" {
+  name = vcd_org.test-org.name
+}
+`
