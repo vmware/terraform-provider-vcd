@@ -351,7 +351,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	err = setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	err = setOrgVdcData(d, vcdClient, adminVdc, "resource")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -359,7 +359,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc, origin string) error {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -421,24 +421,10 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	vdcName := d.Get("name").(string)
-	vdc, err := adminOrg.GetVDCByName(vdcName, false)
+	err := updateMetadataInState(d, adminVdc, origin)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
-		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
-	}
-	metadata, err := vdc.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to get VDC metadata")
-		return fmt.Errorf("unable to get VDC metadata %s", err)
-	}
-
-	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-		return fmt.Errorf("error setting metadata: %s", err)
-	}
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
-	if err != nil {
-		return fmt.Errorf("unable to set metadata entry set for the VDC: %s", err)
+		log.Printf("[DEBUG] Unable to set VDC metadata")
+		return fmt.Errorf("unable to set VDC metadata %s", err)
 	}
 
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility

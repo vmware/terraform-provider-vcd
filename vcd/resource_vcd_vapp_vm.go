@@ -1642,17 +1642,9 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) e
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	metadata, err := vm.GetMetadata()
+	err = updateMetadataInState(d, vm, origin)
 	if err != nil {
-		return fmt.Errorf("[vm read] get metadata: %s", err)
-	}
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return fmt.Errorf("[VM read] set metadata: %s", err)
-	}
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
-	if err != nil {
-		return fmt.Errorf("[VM read] unable to set metadata entry set: %s", err)
+		return fmt.Errorf("[vm read] set metadata: %s", err)
 	}
 
 	if vm.VM.StorageProfile != nil {

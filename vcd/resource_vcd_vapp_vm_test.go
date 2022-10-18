@@ -316,3 +316,83 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   }
 }
 `
+
+// TestAccVcdVAppVmMetadata tests metadata CRUD on vApp VMs
+func TestAccVcdVAppVmMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdVAppVmMetadata, "vcd_vapp_vm.test-vapp-vm",
+		testAccCheckVcdVAppVmMetadataDatasource, "data.vcd_vapp_vm.test-vapp-vm-ds",
+		StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"Media": testConfig.Media.NsxtBackedMediaName,
+		})
+}
+
+const testAccCheckVcdVAppVmMetadata = `
+resource "vcd_vapp" "test-vapp" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.Name}}"
+}
+
+resource "vcd_vapp_vm" "test-vapp-vm" {
+  org              = vcd_vapp.test-vapp.org
+  vdc              = vcd_vapp.test-vapp.vdc
+  name             = vcd_vapp.test-vapp.name
+  vapp_name        = vcd_vapp.test-vapp.name
+  computer_name    = "dummy"
+  memory           = 2048
+  cpus             = 2
+  cpu_cores        = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdVAppVmMetadataDatasource = `
+data "vcd_vapp_vm" "test-vapp-vm-ds" {
+  org       = vcd_vapp_vm.test-vapp-vm.org
+  vdc       = vcd_vapp_vm.test-vapp-vm.vdc
+  vapp_name = vcd_vapp_vm.test-vapp-vm.name
+  name      = vcd_vapp_vm.test-vapp-vm.name
+}
+`
+
+// TestAccVcdVmMetadata tests metadata CRUD on VMs
+func TestAccVcdVmMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdVmMetadata, "vcd_vm.test-vm",
+		testAccCheckVcdVmMetadataDatasource, "data.vcd_vm.test-vm-ds",
+		StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"Media": testConfig.Media.NsxtBackedMediaName,
+		})
+}
+
+const testAccCheckVcdVmMetadata = `
+resource "vcd_vm" "test-vm" {
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.Name}}"
+  computer_name    = "dummy"
+  memory           = 2048
+  cpus             = 2
+  cpu_cores        = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdVmMetadataDatasource = `
+data "vcd_vm" "test-vm-ds" {
+  org       = vcd_vm.test-vm.org
+  vdc       = vcd_vm.test-vm.vdc
+  name      = vcd_vm.test-vm.name
+}
+`
