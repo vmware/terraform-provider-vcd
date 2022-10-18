@@ -19,12 +19,12 @@ func stateDumper() resource.TestCheckFunc {
 	}
 }
 
-// testMetadataEntry executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
+// testMetadataEntryCRUD executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
 // templates, that must correspond to a resource and a data source referencing this resource.
 // The HCL template requires {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
 // You can add extra parameters as well to inject in the given HCL template, or override these mentioned ones.
 // The data source HCL is always concatenated to the resource after first creation, and it's skipped on binary tests.
-func testMetadataEntry(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
+func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,

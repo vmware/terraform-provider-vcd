@@ -2,9 +2,8 @@ package vcd
 
 import (
 	"context"
-	"log"
-
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -232,13 +231,9 @@ func datasourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData,
 
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		metadata, err := network.GetMetadata()
+		err = updateMetadataInState(d, network, "datasource")
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find routed network v2 metadata: %s", err)
-			return diag.Errorf("[routed network read v2] unable to find Org VDC network metadata %s", err)
-		}
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
+			log.Printf("[DEBUG] Unable to set routed network v2 metadata: %s", err)
 			return diag.Errorf("[routed network read v2] unable to set Org VDC network metadata %s", err)
 		}
 	}

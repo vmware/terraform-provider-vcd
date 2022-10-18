@@ -657,17 +657,22 @@ data "vcd_network_isolated_v2" "net1" {
 
 // TestAccVcdIsolatedNetworkV2Metadata tests metadata CRUD on a NSX-T isolated network
 func TestAccVcdIsolatedNetworkV2Metadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
 		StringMap{})
 }
 
 const testAccCheckVcdIsolatedNetworkV2Metadata = `
+data "vcd_org_vdc" "test-vdc" {
+  org  = "{{.Org}}"
+  name = "{{.Vdc}}"
+}
+
 resource "vcd_network_isolated_v2" "test-network-isolated-v2" {
-  org           = "{{.Org}}"
+  org           = data.vcd_org_vdc.test-vdc.org
+  owner_id      = data.vcd_org_vdc.test-vdc.id
   name          = "{{.Name}}"
-  vdc           = "{{.Vdc}}"
   gateway       = "1.1.1.1"
   prefix_length = 24
   {{.Metadata}}
@@ -676,7 +681,8 @@ resource "vcd_network_isolated_v2" "test-network-isolated-v2" {
 
 const testAccCheckVcdIsolatedNetworkV2MetadataDatasource = `
 data "vcd_network_isolated_v2" "test-network-isolated-v2-ds" {
-  org           = vcd_network_isolated_v2.test-network-isolated-v2.org
-  name          = vcd_network_isolated_v2.test-network-isolated-v2.name
+  org      = vcd_network_isolated_v2.test-network-isolated-v2.org
+  owner_id = vcd_network_isolated_v2.test-network-isolated-v2.owner_id
+  name     = vcd_network_isolated_v2.test-network-isolated-v2.name
 }
 `

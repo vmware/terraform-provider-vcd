@@ -323,7 +323,7 @@ const testAccCheckVcdCatalogItemFromUrlUpdated = `
 
 // TestAccVcdCatalogItemMetadata tests metadata CRUD on catalog items
 func TestAccVcdCatalogItemMetadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogItemMetadata, "vcd_catalog_item.test-catalog-item",
 		testAccCheckVcdCatalogItemMetadataDatasource, "data.vcd_catalog_item.test-catalog-item-ds",
 		StringMap{

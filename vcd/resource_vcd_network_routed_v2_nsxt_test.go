@@ -925,7 +925,7 @@ data "vcd_nsxt_edgegateway" "nsxt-edge" {
 
 // TestAccVcdRoutedNetworkV2Metadata tests metadata CRUD on a NSX-T routed network
 func TestAccVcdRoutedNetworkV2Metadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdRoutedNetworkV2Metadata, "vcd_network_routed_v2.test-network-routed-v2",
 		testAccCheckVcdRoutedNetworkV2MetadataDatasource, "data.vcd_network_routed_v2.test-network-routed-v2-ds",
 		StringMap{

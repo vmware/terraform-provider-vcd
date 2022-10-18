@@ -238,7 +238,7 @@ const testAccCheckVcdCatalogMediaUpdate = `
 
 // TestAccVcdCatalogMediaMetadata tests metadata CRUD on catalog media
 func TestAccVcdCatalogMediaMetadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogMediaMetadata, "vcd_catalog_media.test-catalog-media",
 		testAccCheckVcdCatalogMediaMetadataDatasource, "data.vcd_catalog_media.test-catalog-media-ds",
 		StringMap{
@@ -259,8 +259,8 @@ resource "vcd_catalog_media" "test-catalog-media" {
 
 const testAccCheckVcdCatalogMediaMetadataDatasource = `
 data "vcd_catalog_media" "test-catalog-media-ds" {
-  org     = vcd_catalog_item.test-catalog-item.org
-  catalog = vcd_catalog_item.test-catalog-item.catalog
-  name    = vcd_catalog_item.test-catalog-item.name
+  org     = vcd_catalog_media.test-catalog-media.org
+  catalog = vcd_catalog_media.test-catalog-media.catalog
+  name    = vcd_catalog_media.test-catalog-media.name
 }
 `

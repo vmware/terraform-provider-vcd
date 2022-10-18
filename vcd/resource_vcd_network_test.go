@@ -1340,7 +1340,7 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
 
 // TestAccVcdDirectNetworkMetadata tests metadata CRUD on a NSX-V direct network
 func TestAccVcdDirectNetworkMetadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdDirectNetworkMetadata, "vcd_network_direct.test-network-direct",
 		testAccCheckVcdDirectNetworkMetadataDatasource, "data.vcd_network_direct.test-network-direct-ds",
 		StringMap{
@@ -1360,14 +1360,16 @@ resource "vcd_network_direct" "test-network-direct" {
 `
 
 const testAccCheckVcdDirectNetworkMetadataDatasource = `
-data "vcd_network_direct" "test-network-direct" {
-
+data "vcd_network_direct" "test-network-direct-ds" {
+  org  = vcd_network_direct.test-network-direct.org
+  name = vcd_network_direct.test-network-direct.name
+  vdc  = vcd_network_direct.test-network-direct.vdc
 }
 `
 
 // TestAccVcdIsolatedNetworkMetadata tests metadata CRUD on a NSX-V isolated network
 func TestAccVcdIsolatedNetworkMetadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdIsolatedNetworkMetadata, "vcd_network_isolated.test-network-isolated",
 		testAccCheckVcdIsolatedNetworkMetadataDatasource, "data.vcd_network_isolated.test-network-isolated-ds",
 		StringMap{
@@ -1386,14 +1388,16 @@ resource "vcd_network_isolated" "test-network-isolated" {
 `
 
 const testAccCheckVcdIsolatedNetworkMetadataDatasource = `
-data "vcd_network_isolated" "test-network-isolated" {
-
+data "vcd_network_isolated" "test-network-isolated-ds" {
+  org  = vcd_network_isolated.test-network-isolated.org
+  name = vcd_network_isolated.test-network-isolated.name
+  vdc  = vcd_network_isolated.test-network-isolated.vdc
 }
 `
 
 // TestAccVcdRoutedNetworkMetadata tests metadata CRUD on a NSX-V routed network
 func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
-	testMetadataEntry(t,
+	testMetadataEntryCRUD(t,
 		testAccCheckVcdRoutedNetworkMetadata, "vcd_network_routed.test-network-routed",
 		testAccCheckVcdRoutedNetworkMetadataDatasource, "data.vcd_network_routed.test-network-routed-ds",
 		StringMap{
@@ -1415,6 +1419,8 @@ resource "vcd_network_routed" "test-network-routed" {
 
 const testAccCheckVcdRoutedNetworkMetadataDatasource = `
 data "vcd_network_routed" "test-network-routed-ds" {
-
+  org  = vcd_network_routed.test-network-routed.org
+  name = vcd_network_routed.test-network-routed.name
+  vdc  = vcd_network_routed.test-network-routed.vdc
 }
 `
