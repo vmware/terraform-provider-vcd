@@ -184,6 +184,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_configuration":        resourceVcdEdgeBgpConfig(),                    // 3.7
 	"vcd_org_ldap":                                  resourceVcdOrgLdap(),                          // 3.8
 	"vcd_vm_placement_policy":                       resourceVcdVmPlacementPolicy(),                // 3.8
+	"vcd_catalog_access_control":                    resourceVcdCatalogAccessControl(),             // 3.8
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
 	//"vcd_catalog_sync":                              resourceVcdCatalogSync(),                      // 3.8
 }
