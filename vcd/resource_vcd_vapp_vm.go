@@ -28,7 +28,7 @@ const (
 // Maintenance guide for VM code
 //
 // VM codebase grew to be quite complicated because of a few reasons:
-// * It is a dated resource with many API quirks
+// * It is a resource with many API quirks
 // * There are 4 different go-vcloud-director SDK types for creating VM
 //   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
 //   * `types.ReComposeVAppParams` (vApp VM from template)
@@ -37,7 +37,7 @@ const (
 // They also use different functions. All VM types are directly populated in resource code instead of
 // pre-creating functions in go-vcloud-director SDK. This is done because we had to constantly change
 // parent SDK functions and add a new field just because there is a new feature - be it storage
-// profile, compute policy, or something else
+// profile, compute policy, or something else.
 //
 // The best chance to avoid breaking feature parity between all 4 types is to create them with minimal
 // configuration and then perform additional updates in a code that is shared between all 4 types.
@@ -254,7 +254,6 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Media name to add as boot image.",
-			//RequiredWith: []string{"boot_image", "catalog_name"},
 		},
 		"network_dhcp_wait_seconds": {
 			Optional:     true,
@@ -718,7 +717,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting guest customization during creation: %s", err)
 	}
 
-	// vm.VM structure contains ProductSection so it needs to be refreshed after
+	// vm.VM structure contains GuestCustomizationSection so it needs to be refreshed after
 	// `updateGuestCustomizationSetting`
 	if err = vm.Refresh(); err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)
@@ -828,14 +827,14 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// Lookup VM template inside vApp template - either specified by `vm_name_in_template` or the
+	// Look up VM template inside vApp template - either specified by `vm_name_in_template` or the
 	// first one in vApp
 	vmTemplate, err := lookupvAppTemplateforVm(d, org, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("error finding vApp template: %s", err)
 	}
 
-	// Lookup vApp before setting up network configuration. Having a vApp set, will enable
+	// Look up vApp before setting up network configuration. Having a vApp set, will enable
 	// additional network availability in vApp validations in `networksToConfig` function.
 	// It is only possible for vApp VMs, as empty VMs will get their hidden vApps created after the
 	// VM is created.
@@ -861,7 +860,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error finding storage profile: %s", err)
 	}
 
-	// Lookup compute policy
+	// Look up compute policy
 	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
@@ -919,11 +918,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		dSet(d, "vapp_name", vapp.VApp.Name)
 		dSet(d, "vm_type", string(standaloneVmType))
 
-		////////////////////////////////////////////////////////////////////////////////////////////
-		// This part of code handles additional VM create operations, which can not be set during
-		// initial VM creation.
-		// __Explicitly__ template based Standalone VMs are addressed here.
-		////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Explicitly__ template based Standalone VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	case vappVmType:
 		vappName := d.Get("vapp_name").(string)
@@ -966,11 +965,11 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		d.SetId(vm.VM.ID)
 		dSet(d, "vm_type", string(vappVmType))
 
-		////////////////////////////////////////////////////////////////////////////////////////////
-		// This part of code handles additional VM create operations, which can not be set during
-		// initial VM creation.
-		// __Explicitly__ template based vApp VMs are addressed here.
-		////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Explicitly__ template based vApp VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	default:
 		return nil, fmt.Errorf("unknown VM type %s", vmType)
@@ -1221,6 +1220,12 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		d.SetId(newVm.VM.ID)
 		dSet(d, "vm_type", string(standaloneVmType))
 
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Explicitly__ empty  Standalone VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////
+
 	case vappVmType:
 		recomposeVAppParamsForEmptyVm := &types.RecomposeVAppParamsForEmptyVm{
 			XmlnsVcloud: types.XMLNamespaceVCloud,
@@ -1263,6 +1268,12 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		// VM created - store its ID
 		d.SetId(newVm.VM.ID)
 		dSet(d, "vm_type", string(vappVmType))
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Explicitly__ empty vApp VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	default:
 		return nil, fmt.Errorf("unknown VM type %s", vmType)
