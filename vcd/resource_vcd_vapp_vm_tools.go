@@ -1,6 +1,12 @@
 package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
+// This code relies on using `d.GetOkExists` which is provided by terraform-plugin-sdk.
+// The use case for using this function is to have tristate boolean (to separate between an `empty`
+// and `false` values)
+// This field is deprecated in SDK to discourage its usage, but is not going to be removed without a
+// proper solution. Only an experimental option exists now.
+// More information in https://github.com/hashicorp/terraform-plugin-sdk/issues/817
 import (
 	"bytes"
 	"fmt"
@@ -86,6 +92,10 @@ func lookupStorageProfile(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Refere
 
 }
 
+// lookupComputePolicy returns two types of compute policy structures:
+// * types.VdcComputePolicy contains ID and all technical configuration which that policy provides
+// * types.ComputePolicy structure is used in VM creation structure to assign a Compute Policy (and
+// does not hold technical details, only references)
 func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcComputePolicy, *types.ComputePolicy, error) {
 	var sizingPolicy *types.VdcComputePolicy
 	var vmComputePolicy *types.ComputePolicy
@@ -278,6 +288,15 @@ func expandDisksProperties(v interface{}) ([]diskParams, error) {
 	return diskParamsArray, nil
 }
 
+// getVmIndependentDisks iterates over VirtualHardwareSection of VM and returns slice of independent (named) disk references
+//
+// item.ResourceType == 17 is a Hard disk
+// item.HostResource[0].Disk provides the distinction between VM disks and Independent (named)
+// disks. For VM disks the `item.HostResource[0].Disk` is empty, while for independent (named) disk
+// it contains a reference to that named disk.
+// Sample HostResource value for:
+// * VM disk: <rasd:HostResource ns10:storageProfileHref="https://HOST/api/vdcStorageProfile/ef9fd5e2-a417-4e63-9c30-60bc8a8f53d0" ns10:busType="6" ns10:busSubType="VirtualSCSI" ns10:capacity="16384" ns10:iops="0" ns10:storageProfileOverrideVmDefault="false"></rasd:HostResource>
+// * Independent (named) disk: <rasd:HostResource ns10:storageProfileHref="https://HOST/api/vdcStorageProfile/ef9fd5e2-a417-4e63-9c30-60bc8a8f53d0" ns10:disk="https://HOST/api/disk/55da11ad-967a-43ba-a744-81e3c86b4b9e" ns10:busType="6" ns10:busSubType="VirtualSCSI" ns10:capacity="100" ns10:iops="0" ns10:storageProfileOverrideVmDefault="true"></rasd:HostResource>
 func getVmIndependentDisks(vm govcd.VM) []string {
 
 	var disks []string
@@ -352,6 +371,13 @@ func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, descr
 	return nil
 }
 
+// getVmFromResource retrieves a VM by using HCL schema configuration
+// It returns VM and its parent structures:
+// * VCDClient
+// * Org
+// * VDC
+// * vApp
+// * VM
 func getVmFromResource(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
 	vcdClient := meta.(*VCDClient)
 
