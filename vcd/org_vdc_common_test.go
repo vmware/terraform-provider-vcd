@@ -424,7 +424,7 @@ func TestAccVcdVdcMetadata(t *testing.T) {
 		testAccCheckVcdVdcMetadata, "vcd_org_vdc.test-vdc",
 		testAccCheckVcdVdcMetadataDatasource, "data.vcd_org_vdc.test-vdc-ds",
 		StringMap{
-			"ProviderVdc": testConfig.VCD.NsxtProviderVdc.Name,
+			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})
 }
@@ -467,4 +467,3 @@ data "vcd_org_vdc" "test-vdc-ds" {
   name = vcd_org_vdc.test-vdc.name
 }
 `
-

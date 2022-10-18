@@ -324,7 +324,7 @@ func TestAccVcdVAppVmMetadata(t *testing.T) {
 		testAccCheckVcdVAppVmMetadataDatasource, "data.vcd_vapp_vm.test-vapp-vm-ds",
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
-			"Media": testConfig.Media.NsxtBackedMediaName,
+			"Media":   testConfig.Media.NsxtBackedMediaName,
 		})
 }
 
@@ -368,7 +368,7 @@ func TestAccVcdVmMetadata(t *testing.T) {
 		testAccCheckVcdVmMetadataDatasource, "data.vcd_vm.test-vm-ds",
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
-			"Media": testConfig.Media.NsxtBackedMediaName,
+			"Media":   testConfig.Media.NsxtBackedMediaName,
 		})
 }
 

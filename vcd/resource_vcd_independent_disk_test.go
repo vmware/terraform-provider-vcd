@@ -539,4 +539,3 @@ data "vcd_independent_disk" "test-independent-disk-ds" {
   name    = vcd_independent_disk.test-independent-disk.name
 }
 `
-
