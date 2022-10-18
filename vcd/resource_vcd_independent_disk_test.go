@@ -509,3 +509,34 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 }
 `
+
+// TestAccVcdIndependentDiskMetadata tests metadata CRUD on independent disks
+func TestAccVcdIndependentDiskMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdIndependentDiskMetadata, "vcd_independent_disk.test-independent-disk",
+		testAccCheckVcdIndependentDiskMetadataDatasource, "data.vcd_independent_disk.test-independent-disk-ds",
+		StringMap{
+			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}
+
+const testAccCheckVcdIndependentDiskMetadata = `
+resource "vcd_independent_disk" "test-independent-disk" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  name            = "{{.Name}}"
+  size_in_mb      = "1024"
+  bus_type        = "SCSI"
+  bus_sub_type    = "VirtualSCSI"
+  storage_profile = "{{.StorageProfile}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdIndependentDiskMetadataDatasource = `
+data "vcd_independent_disk" "test-independent-disk-ds" {
+  org     = vcd_independent_disk.test-independent-disk.org
+  name    = vcd_independent_disk.test-independent-disk.name
+}
+`
+
