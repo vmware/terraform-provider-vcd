@@ -1,5 +1,5 @@
-//go:build ALL || functional
-// +build ALL functional
+//go:build catalog || disk || network || nsxt || vdc || org || vapp || vm || functional || ALL
+// +build catalog disk network nsxt vdc org vapp vm functional ALL
 
 package vcd
 
