@@ -29,7 +29,7 @@ resource "vcd_catalog_media" "myNewMedia" {
     key   = "license"
     value = "public"
   }
-  
+
   metadata_entry {
     key   = "version"
     value = "v1"
