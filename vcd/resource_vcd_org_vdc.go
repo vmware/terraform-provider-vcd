@@ -231,11 +231,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "When destroying use delete_recursive=True to remove the VDC and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for Org VDC metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Key and value pairs for Org VDC metadata",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": getMetadataEntrySchema("VDC", false),
 			"vm_sizing_policy_ids": {

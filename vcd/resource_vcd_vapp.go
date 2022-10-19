@@ -50,11 +50,11 @@ func resourceVcdVApp() *schema.Resource {
 				Description: "Optional description of the vApp",
 			},
 			"metadata": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
-				Description: "Key value map of metadata to assign to this vApp. Key and value can be any string.",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Key value map of metadata to assign to this vApp. Key and value can be any string.",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": getMetadataEntrySchema("vApp", false),
 			"href": {
@@ -297,18 +297,10 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "status_text", statusText)
 	dSet(d, "href", vapp.VApp.HREF)
 	dSet(d, "description", vapp.VApp.Description)
-	metadata, err := vapp.GetMetadata()
-	if err != nil {
-		return diag.Errorf("[vapp read] error retrieving metadata: %s", err)
-	}
-	metadataStruct := getMetadataStruct(metadata.MetadataEntry)
-	err = d.Set("metadata", metadataStruct)
+
+	err = updateMetadataInState(d, vapp, origin)
 	if err != nil {
 		return diag.Errorf("[vapp read] error setting metadata: %s", err)
-	}
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
-	if err != nil {
-		return diag.Errorf("unable to set metadata entry set for the vApp: %s", err)
 	}
 
 	d.SetId(vapp.VApp.ID)
