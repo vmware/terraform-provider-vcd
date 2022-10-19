@@ -35,7 +35,7 @@ func TestAccVcdStorageProfileDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t, params) },
+		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{

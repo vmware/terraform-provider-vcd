@@ -81,9 +81,9 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of organization to which the vApp belongs. Optional if defined at provider level.
 * `vapp_id` - (Required) A unique identifier for the vApp.
 * `shared_with_everyone` - (Required) Whether the vApp is shared with everyone. If any `shared_with` blocks are included,
-  this property cannot be used.
+  this property must be set to `false`.
 * `everyone_access_level` - (Optional) Access level when the vApp is shared with everyone (one of `ReadOnly`, `Change`, 
-`FullControl`). Required if `shared_with_everyone` is set.
+`FullControl`). Required if `shared_with_everyone` is `true`.
 * `shared_with` - (Optional) one or more blocks defining a subject to which we are sharing. 
    See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is set.
 
@@ -101,7 +101,7 @@ The following arguments are supported:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing `access_control_vapp` can be [imported][docs-import] into this resource via supplying its full dot separated path.
+An existing `vcd_vapp_access_control` can be [imported][docs-import] into this resource via supplying its full dot separated path.
 For example, using this structure, representing an existing access control structure that was **not** created using Terraform:
 
 ```hcl
