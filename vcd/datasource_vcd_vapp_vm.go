@@ -4,6 +4,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -375,6 +376,16 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "VM sizing policy ID.",
 		},
+		"status": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Shows the status code of the VM",
+		},
+		"status_text": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Shows the status of the VM",
+		},
 	}
 }
 
@@ -386,9 +397,5 @@ func datasourceVcdVAppVm() *schema.Resource {
 }
 
 func datasourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericVcdVmRead(d, meta, "datasource")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return genericVcdVmRead(d, meta, "datasource")
 }
