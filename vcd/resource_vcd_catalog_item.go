@@ -74,9 +74,9 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Description: "shows upload progress in stdout",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": getMetadataEntrySchema("Catalog Item", false),
