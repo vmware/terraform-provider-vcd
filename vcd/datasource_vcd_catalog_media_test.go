@@ -45,7 +45,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t, params) },
+		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{
@@ -54,7 +54,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
-					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^^\d{4}-\d{2}-\d{2}.*`)),
+					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^\d{4}-\d{2}-\d{2}.*`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`^\S+`)),
 					testCheckMediaNonStringOutputs(),

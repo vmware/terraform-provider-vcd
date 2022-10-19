@@ -5,20 +5,31 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// Deprecated
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
+
+// Deprecated
 var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
+
+// Deprecated
 var TestAccVcdCatalogItemFromUrl = "TestAccVcdCatalogItemBasicFromUrl"
+
+// Deprecated
 var TestAccVcdCatalogItemDescriptionFromUrl = "TestAccVcdCatalogItemBasicDescriptionFromUrl"
+
+// Deprecated
 var TestAccVcdCatalogItemFromUrlUpdated = "TestAccVcdCatalogItemBasicFromUrlUpdated"
+
+// Deprecated
 var TestAccVcdCatalogItemDescriptionFromUrlUpdated = "TestAccVcdCatalogItemBasicDescriptionFromUrlUpdated"
 
+// Deprecated
 func TestAccVcdCatalogItemBasic(t *testing.T) {
 	preTestChecks(t)
 
@@ -61,7 +72,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 
 	resourceCatalogItem := "vcd_catalog_item." + TestAccVcdCatalogItem
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t, params) },
+		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
@@ -150,23 +161,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	postTestChecks(t)
 }
 
-func preRunChecks(t *testing.T, params StringMap) {
-	checkOvaPath(t)
-}
-
-func checkOvaPath(t *testing.T) {
-	file, err := os.Stat(testConfig.Ova.OvaPath)
-	if err != nil {
-		t.Fatal("configured catalog item issue. Configured: ", testConfig.Ova.OvaPath, err)
-	}
-	if os.IsNotExist(err) {
-		t.Fatal("configured catalog item isn't found. Configured: ", testConfig.Ova.OvaPath)
-	}
-	if file.IsDir() {
-		t.Fatal("configured catalog item is dir and not a file. Configured: ", testConfig.Ova.OvaPath)
-	}
-}
-
+// Deprecated
 func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		catalogItemRs, ok := s.RootModule().Resources[itemName]
@@ -199,6 +194,7 @@ func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 	}
 }
 
+// Deprecated
 func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	for _, rs := range s.RootModule().Resources {
@@ -227,7 +223,9 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 	return nil
 }
 
+// Deprecated
 const testAccCheckVcdCatalogItemBasic = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
@@ -250,7 +248,9 @@ const testAccCheckVcdCatalogItemBasic = `
 }
 `
 
+// Deprecated
 const testAccCheckVcdCatalogItemUpdate = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemName}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
@@ -275,7 +275,9 @@ const testAccCheckVcdCatalogItemUpdate = `
 }
 `
 
+// Deprecated
 const testAccCheckVcdCatalogItemFromUrl = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemNameFromUrl}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
@@ -299,7 +301,9 @@ const testAccCheckVcdCatalogItemFromUrl = `
 }
 `
 
+// Deprecated
 const testAccCheckVcdCatalogItemFromUrlUpdated = `
+  # Deprecated
   resource "vcd_catalog_item" "{{.CatalogItemNameFromUrl}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"

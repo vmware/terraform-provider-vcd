@@ -107,6 +107,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vm_placement_policy":                       datasourceVcdVmPlacementPolicy(),                // 3.8
 	"vcd_provider_vdc":                              datasourceVcdProviderVdc(),                      // 3.8
 	"vcd_vm_group":                                  datasourceVcdVmGroup(),                          // 3.8
+	"vcd_catalog_vapp_template":                     datasourceVcdCatalogVappTemplate(),              // 3.8
 	"vcd_subscribed_catalog":                        datasourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_task":                                      datasourceVcdTask(),                             // 3.8
 }
@@ -184,6 +185,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_bgp_configuration":        resourceVcdEdgeBgpConfig(),                    // 3.7
 	"vcd_org_ldap":                                  resourceVcdOrgLdap(),                          // 3.8
 	"vcd_vm_placement_policy":                       resourceVcdVmPlacementPolicy(),                // 3.8
+	"vcd_catalog_vapp_template":                     resourceVcdCatalogVappTemplate(),              // 3.8
 	"vcd_catalog_access_control":                    resourceVcdCatalogAccessControl(),             // 3.8
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
 	//"vcd_catalog_sync":                              resourceVcdCatalogSync(),                      // 3.8
