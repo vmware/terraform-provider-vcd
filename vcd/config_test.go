@@ -110,6 +110,7 @@ type TestConfig struct {
 			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
 			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
 			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
+			NsxtCatalogItem         string `json:"nsxtCatalogItem,omitempty"`
 			NsxtBackedCatalogName   string `json:"nsxtBackedCatalogName,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
@@ -1286,6 +1287,25 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 
 		importId := testConfig.VCD.Org + "." + testConfig.Nsxt.Vdc + "." + rs.Primary.ID
 		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || rs.Primary.ID == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+		return importId, nil
+	}
+}
+
+func importStateCatalogIdViaResource(resource string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return "", fmt.Errorf("resource not found: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return "", fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		importId := testConfig.VCD.Org + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil

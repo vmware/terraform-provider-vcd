@@ -176,6 +176,36 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		case "catalog":
 			testParamsNotEmpty(t, StringMap{"VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
 			templateFields = templateFields + `catalog = "` + testConfig.VCD.Catalog.Name + `"` + "\n"
+		case "catalog_id":
+			testParamsNotEmpty(t, StringMap{
+				"VCD.Org":          testConfig.VCD.Org,
+				"VCD.Catalog.Name": testConfig.VCD.Catalog.Name})
+			org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
+			if err != nil {
+				t.Skip("No suitable Organization found for this test")
+				return ""
+			}
+			catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
+			if err != nil {
+				t.Skip("No suitable Catalog found for this test")
+				return ""
+			}
+			templateFields = templateFields + `catalog_id = "` + catalog.Catalog.ID + `"` + "\n"
+		case "vdc_id":
+			testParamsNotEmpty(t, StringMap{
+				"VCD.Org": testConfig.VCD.Org,
+				"VCD.Vdc": testConfig.VCD.Vdc})
+			org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
+			if err != nil {
+				t.Skip("No suitable Organization found for this test")
+				return ""
+			}
+			vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
+			if err != nil {
+				t.Skip("No suitable VDC found for this test")
+				return ""
+			}
+			templateFields = templateFields + `vdc_id = "` + vdc.Vdc.ID + `"` + "\n"
 		case "vapp_name":
 			testParamsNotEmpty(t, StringMap{"VCD.Org": testConfig.VCD.Org, "testConfig.Nsxt.Vdc": testConfig.Nsxt.Vdc})
 			vapp, err := getAvailableVapp()
