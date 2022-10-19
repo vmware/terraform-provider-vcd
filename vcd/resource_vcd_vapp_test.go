@@ -259,9 +259,9 @@ resource "vcd_vapp" "test-vapp" {
 `
 
 const testAccCheckVcdVAppMetadataDatasource = `
-data "vcd_vapp_vm" "test-vapp-ds" {
-  org       = vcd_vapp.test-vapp.org
-  vdc       = vcd_vapp.test-vapp.vdc
-  vapp_name = vcd_vapp.test-vapp.name
+data "vcd_vapp" "test-vapp-ds" {
+  org  = vcd_vapp.test-vapp.org
+  vdc  = vcd_vapp.test-vapp.vdc
+  name = vcd_vapp.test-vapp.name
 }
 `
