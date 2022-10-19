@@ -130,7 +130,7 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 * `value` - Value of this metadata entry.
 * `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Defaults to `MetadataStringValue`.
 * `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Defaults to `READWRITE`.
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, , false if it belongs to `GENERAL`. Defaults to `false`.
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`. Defaults to `false`.
 
 ## Importing
 
