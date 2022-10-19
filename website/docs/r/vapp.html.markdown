@@ -110,9 +110,10 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `href` - (Computed) The vApp Hyper Reference
-* `status` - (Computed; *v2.5+*) The vApp status as a numeric code
+* `href` - (Computed) The vApp Hyper Reference.
+* `status` - (Computed; *v2.5+*) The vApp status as a numeric code.
 * `status_text` - (Computed; *v2.5+*) The vApp status as text.
+
 ## Importing
 
 Supported in provider *v2.5+*
