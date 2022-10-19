@@ -336,14 +336,12 @@ func TestAccVcdCatalogItemMetadata(t *testing.T) {
 		})
 }
 
-// FIXME: Test with "metadata" (vApp Template metadata)?
 const testAccCheckVcdCatalogItemMetadata = `
 resource "vcd_catalog_item" "test-catalog-item" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
   name    = "{{.Name}}"
   ovf_url = "{{.OvfUrl}}"
-
   {{.Metadata}}
 }
 `
