@@ -141,7 +141,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if this catalog is shared to all organizations.",
+				Description: "True if this catalog is published.",
 			},
 			"publish_subscription_type": {
 				Type:        schema.TypeString,
@@ -472,9 +472,7 @@ func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatal
 	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
 	dSet(d, "is_published", catalogRecords[0].IsPublished)
 	dSet(d, "is_shared", catalogRecords[0].IsShared)
-	if resourceType == "vcd_catalog" {
-		dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
-	}
+	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
 
 	var rawMediaItemsList []interface{}
 	var rawVappTemplatesList []interface{}

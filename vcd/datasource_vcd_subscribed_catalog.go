@@ -96,7 +96,12 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if this catalog is shared to all organizations.",
+				Description: "True if this catalog is published.",
+			},
+			"publish_subscription_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
 			},
 			"running_tasks": {
 				Type:        schema.TypeList,
@@ -139,6 +144,12 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("error retrieving catalog '%s.%s' : %s", adminOrg.AdminOrg.Name, identifier, err)
 	}
 
+	// We try to determine early if this catalog was created by subscription, and fail otherwise
+	if adminCatalog.AdminCatalog.ExternalCatalogSubscription == nil ||
+		adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location == "" {
+		return diag.Errorf("catalog '%s' is not a subscribed catalog", adminCatalog.AdminCatalog.Name)
+	}
+
 	if adminCatalog.AdminCatalog.CatalogStorageProfiles != nil && len(adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile) > 0 {
 		storageProfileId := adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile[0].ID
 		dSet(d, "storage_profile_id", storageProfileId)
@@ -148,11 +159,10 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 
 	dSet(d, "description", adminCatalog.AdminCatalog.Description)
 	dSet(d, "created", adminCatalog.AdminCatalog.DateCreated)
+	dSet(d, "publish_subscription_type", "SUBSCRIBED")
 
-	if adminCatalog.AdminCatalog.ExternalCatalogSubscription != nil {
-		dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
-		dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
-	}
+	dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
+	dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
 	err = setCatalogData(d, adminOrg, adminCatalog, "vcd_subscribed_catalog")
 	if err != nil {
 		return diag.Errorf("%v", err)

@@ -44,13 +44,18 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		}
 	)
 
-	configText := templateFill(testAccVcdPublisherCatalogCreation+testAccVcdPublisherCatalogItems, params)
+	configText := templateFill(testAccVcdPublisherCatalogCreation+
+		testAccVcdPublisherCatalogItems, params)
 
 	params["FuncName"] = t.Name() + "-subscriber"
-	subscriberConfigText := templateFill(testAccVcdPublisherCatalogCreation+testAccVcdPublisherCatalogItems+testAccSubscribedCatalogCreation, params)
+	subscriberConfigText := templateFill(testAccVcdPublisherCatalogCreation+
+		testAccVcdPublisherCatalogItems+
+		testAccSubscribedCatalogCreation, params)
 
 	params["FuncName"] = t.Name() + "-subscriber-update"
-	subscriberConfigTextUpdate := templateFill(testAccVcdPublisherCatalogCreation+testAccVcdPublisherCatalogItems+testAccSubscribedCatalogUpdate, params)
+	subscriberConfigTextUpdate := templateFill(testAccVcdPublisherCatalogCreation+
+		testAccVcdPublisherCatalogItems+
+		testAccSubscribedCatalogUpdate, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -71,7 +76,8 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config:       configText,
+				ResourceName: resourcePublisher,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourcePublisher),
 					resource.TestCheckResourceAttr(resourcePublisher, "name", publisherCatalog),
@@ -81,7 +87,8 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 				),
 			},
 			{
-				Config: subscriberConfigText,
+				Config:       subscriberConfigText,
+				ResourceName: resourceSubscriber,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourcePublisher),
 					testAccCheckVcdCatalogExists(resourceSubscriber),

@@ -140,7 +140,12 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if this catalog is shared to all organizations.",
+				Description: "True if this catalog is published.",
+			},
+			"publish_subscription_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
 			},
 			"sync_on_refresh": {
 				Type:        schema.TypeBool,
