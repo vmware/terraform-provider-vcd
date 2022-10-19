@@ -52,7 +52,9 @@
       "//": "VM name in default OVA is thirdVM",
       "vmName2InMultiVmItem": "thirdVM",
       "//": "'nsxtBackedCatalogName' is configured to use NSX-T VDC backed storage profile",
-      "nsxtBackedCatalogName": "catalog-in-nsxt-vdc-storage"
+      "nsxtBackedCatalogName": "catalog-in-nsxt-vdc-storage",
+      "//": "The same OS image as 'catalogItem', but put in NSX-T Catalog",
+      "nsxtCatalogItem": "nsxt-backed-catalog-item"
     },
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",

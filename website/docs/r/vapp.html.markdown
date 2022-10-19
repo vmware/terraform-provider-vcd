@@ -102,16 +102,17 @@ The following arguments are supported:
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
-
-* `href` - (Computed) The vApp Hyper Reference
-* `status` - (Computed; *v2.5+*) The vApp status as a numeric code
-* `status_text` - (Computed; *v2.5+*) The vApp status as text.
 * `lease` - (Optional *v3.5+*) the information about the vApp lease. It includes the fields below. When this section is 
    included, both fields are mandatory. If lease values are higher than the ones allowed for the whole Org, the values
    are **silently** reduced to the highest value allowed.
   * `runtime_lease_in_sec` - How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
   * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by Org). Regular values accepted from 3600+.
 
+## Attribute reference
+
+* `href` - (Computed) The vApp Hyper Reference.
+* `status` - (Computed; *v2.5+*) The vApp status as a numeric code.
+* `status_text` - (Computed; *v2.5+*) The vApp status as text.
 
 ## Importing
 
