@@ -7,7 +7,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-var metadataEntryDatasourceSchema = func(resourceNameInDescription string) *schema.Schema {
+// metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given datasource.
+// The description will refer to the resource name given as input.
+func metadataEntryDatasourceSchema(resourceNameInDescription string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Computed:    true,
@@ -44,7 +46,9 @@ var metadataEntryDatasourceSchema = func(resourceNameInDescription string) *sche
 	}
 }
 
-var metadataEntryResourceSchema = func(resourceNameInDescription string) *schema.Schema {
+// metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
+// The description will refer to the resource name given as input.
+func metadataEntryResourceSchema(resourceNameInDescription string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
@@ -107,7 +111,8 @@ type metadataCompatible interface {
 	DeleteMetadataEntry(key string) error
 }
 
-// createOrUpdateMetadataInVcd creates or updates metadata entries in VCD for the given resource.
+// createOrUpdateMetadataInVcd creates or updates metadata entries in VCD for the given resource, only if the attribute
+// metadata_entry has been set or updated in the state.
 func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompatible) error {
 	if d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange("metadata_entry")
@@ -166,7 +171,7 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 	return nil
 }
 
-// setMetadataEntryInState sets the given metadata entries in the Terraform state.
+// setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
 	metadataSet := make([]map[string]interface{}, len(metadataFromVcd))
 
