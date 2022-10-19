@@ -162,8 +162,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 
 	err = updateMetadataInState(d, catalog, "datasource")
 	if err != nil {
-		log.Printf("[DEBUG] Unable to set catalog metadata: %s", err)
-		return diag.Errorf("There was an issue when setting metadata - %s", err)
+		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
 	err = setCatalogData(d, adminOrg, catalog.AdminCatalog.Name)
