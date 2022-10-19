@@ -7,13 +7,13 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given datasource.
-// The description will refer to the resource name given as input.
-func metadataEntryDatasourceSchema(resourceNameInDescription string) *schema.Schema {
+// metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
+// The description will refer to the object name given as input.
+func metadataEntryDatasourceSchema(objectNameInDescription string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Computed:    true,
-		Description: fmt.Sprintf("Metadata entries from the given %s", resourceNameInDescription),
+		Description: fmt.Sprintf("Metadata entries from the given %s", objectNameInDescription),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"key": {
@@ -47,12 +47,12 @@ func metadataEntryDatasourceSchema(resourceNameInDescription string) *schema.Sch
 }
 
 // metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
-// The description will refer to the resource name given as input.
-func metadataEntryResourceSchema(resourceNameInDescription string) *schema.Schema {
+// The description will refer to the object name given as input.
+func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
-		Description:   fmt.Sprintf("Metadata entries for the given %s", resourceNameInDescription),
+		Description:   fmt.Sprintf("Metadata entries for the given %s", objectNameInDescription),
 		ConflictsWith: []string{"metadata"},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
