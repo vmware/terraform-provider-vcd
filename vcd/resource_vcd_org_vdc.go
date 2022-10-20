@@ -351,7 +351,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	err = setOrgVdcData(d, vcdClient, adminVdc, "resource")
+	err = setOrgVdcData(d, vcdClient, adminVdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -359,7 +359,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc, origin string) error {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) error {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -421,7 +421,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	err := updateMetadataInState(d, adminVdc, origin)
+	err := updateMetadataInState(d, adminVdc)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
 		return fmt.Errorf("unable to set VDC metadata %s", err)

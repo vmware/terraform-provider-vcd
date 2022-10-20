@@ -160,7 +160,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 	}
 
-	err = updateMetadataInState(d, catalog, "datasource")
+	err = updateMetadataInState(d, catalog)
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}

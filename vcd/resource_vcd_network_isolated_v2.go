@@ -216,7 +216,7 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		err = updateMetadataInState(d, orgNetwork, "resource")
+		err = updateMetadataInState(d, orgNetwork)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to set isolated network v2 metadata: %s", err)
 			return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)

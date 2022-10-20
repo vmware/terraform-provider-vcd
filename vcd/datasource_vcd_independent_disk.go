@@ -168,7 +168,7 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	err = setMainData(d, disk, diskRecord, "datasource")
+	err = setMainData(d, disk, diskRecord)
 	if err != nil {
 		diag.FromErr(err)
 	}

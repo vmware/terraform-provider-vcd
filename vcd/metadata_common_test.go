@@ -4,11 +4,21 @@
 package vcd
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"regexp"
 	"strings"
 	"testing"
 )
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
 
 // testMetadataEntryCRUD executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
 // templates, that must correspond to a resource and a data source referencing this resource.
@@ -43,8 +53,13 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
-	params["Metadata"] = " "
+	params["Metadata"] = "metadata_entry {}"
 	deleteHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
+
+	params["FuncName"] = t.Name() + "Wrong1"
+	params["Metadata"] = "metadata_entry {\n\tkey = \"foo\"\n}"
+	wrongHcl := templateFill("# skip-binary-test\n"+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
 
 	if vcdShortTest {
@@ -81,8 +96,14 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Config: deleteHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
+					// This is a side effect of having `metadata_entry` as Computed to be able to delete metadata.
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
+					stateDumper(),
 				),
+			},
+			{
+				Config: wrongHcl,
+				ExpectError: regexp.MustCompile(".*"),
 			},
 		},
 	})
@@ -92,10 +113,6 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 // getMetadataTestingHcl gets valid metadata entries to inject them into an HCL for testing
 func getMetadataTestingHcl() string {
 	return `
-	  metadata_entry {
-		key   = "defaultKey"
-		value = "I'm a test for default values"
-	  }
 	  metadata_entry {
 		key         = "stringKey"
 		value       = "I'm a test for string values"
@@ -154,17 +171,7 @@ func getMetadataTestingHclForUpdate() string {
 // assertMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHclForUpdate
 func assertMetadata(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "7"),
-		// Tests default metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "defaultKey",
-				"value":       "I'm a test for default values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
+		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "6"),
 		// Tests string metadata values
 		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
 			map[string]string{
@@ -231,17 +238,7 @@ func assertMetadata(resourceName string) resource.TestCheckFunc {
 // assertUpdatedMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHcl
 func assertUpdatedMetadata(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "7"),
-		// Tests default metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "defaultKey",
-				"value":       "I'm a test to update default values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
+		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "6"),
 		// Tests string metadata values
 		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
 			map[string]string{

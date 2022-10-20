@@ -395,7 +395,7 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
-func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, origin string) error {
+func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -455,7 +455,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, origin string)
 		}
 	}
 
-	err = updateMetadataInState(d, adminOrg, origin)
+	err = updateMetadataInState(d, adminOrg)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to set Org metadata")
 		return fmt.Errorf("unable to set Org metadata %s", err)
@@ -500,7 +500,7 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	err = setOrgData(d, adminOrg, "resource")
+	err = setOrgData(d, adminOrg)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -523,7 +523,7 @@ func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	err = setOrgData(d, adminOrg, "resource")
+	err = setOrgData(d, adminOrg)
 
 	if err != nil {
 		return []*schema.ResourceData{}, err

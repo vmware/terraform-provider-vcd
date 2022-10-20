@@ -89,6 +89,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 				Description:   "Key and value pairs for catalog metadata.",
@@ -248,7 +249,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "password", "")
 	}
 
-	err = updateMetadataInState(d, adminCatalog, "resource")
+	err = updateMetadataInState(d, adminCatalog)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
 		return err
