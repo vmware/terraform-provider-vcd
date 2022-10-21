@@ -76,7 +76,6 @@ func resourceVcdCatalogItem() *schema.Resource {
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
-				Computed:      true, // To be compatible with `metadata_entry`
 				Description:   "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 				ConflictsWith: []string{"metadata_entry"},
 			},
@@ -86,6 +85,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:      true,
 				Description:   "Key and value pairs for catalog item metadata",
 				Deprecated:    "Use metadata_entry instead",
+				Computed:      true, // To be compatible with `metadata_entry`
 				ConflictsWith: []string{"metadata_entry"},
 			},
 		},
@@ -173,11 +173,9 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
 	}
-	if origin == "datasource" || (origin == "resource" && d.HasChange("metadata")) {
-		err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
-		if err != nil {
-			return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
-		}
+	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
 	}
 
 	return nil
