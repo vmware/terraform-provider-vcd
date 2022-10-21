@@ -4,13 +4,11 @@
 package vcd
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -741,18 +739,8 @@ data "vcd_nsxt_dynamic_security_group" "group6" {
 //
 // Note. Dynamic security groups can only be created when an NSX-T Edge Gateway is a member of VDC
 // Group, but when it is - Dynamic Security Groups can be used in regular Edge Gateway firewalls.
-//
-// This test will skip binary test as it has to restore "allow all" firewall rule at the end of test
-// which is achieved using resetFirewall() function.
 func TestAccVcdNsxtDynamicSecurityGroupIntegration(t *testing.T) {
 	preTestChecks(t)
-
-	// No binary tests are being run to prevent reseting "default to accept" firewall rule in Edge
-	// Gateway
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -773,13 +761,15 @@ func TestAccVcdNsxtDynamicSecurityGroupIntegration(t *testing.T) {
 	configText := templateFill(testAccVcdNsxtDynamicSecurityGroupIntegration, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckNsxtFirewallGroupDestroy(testConfig.Nsxt.Vdc, "test-dynamic-security-group", types.FirewallGroupTypeVmCriteria),
-			// This call will restore "ALLOW ALL" firewall rule after test run, which would be
-			// otherwise removed by vcd_nsxt_firewall destroy operation
-			resetFirewall(t),
 		),
 		Steps: []resource.TestStep{
 			{
@@ -851,40 +841,3 @@ resource "vcd_nsxt_firewall" "testing" {
   }
 }
 `
-
-func resetFirewall(t *testing.T) resource.TestCheckFunc {
-	vcdClient := createTemporaryVCDConnection(false)
-	org, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
-	if err != nil {
-		t.Fatalf("error looking up Org: %s", err)
-	}
-
-	vdcGroup, err := org.GetVdcGroupByName(testConfig.Nsxt.VdcGroup)
-	if err != nil {
-		t.Fatalf("error looking up VDC Group: %s", err)
-	}
-
-	nsxtEdgeGateway, err := vdcGroup.GetNsxtEdgeGatewayByName(testConfig.Nsxt.VdcGroupEdgeGateway)
-	if err != nil {
-		t.Fatalf("error looking up NSX-T Edge Gateway: %s", err)
-	}
-
-	config := &types.NsxtFirewallRuleContainer{
-		UserDefinedRules: []*types.NsxtFirewallRule{
-			{
-				Name:    "Allow all traffic",
-				Action:  "ALLOW",
-				Enabled: true,
-			},
-		},
-	}
-
-	return func(*terraform.State) error {
-		_, err := nsxtEdgeGateway.UpdateNsxtFirewall(config)
-		if err != nil {
-			return fmt.Errorf("error restoring firewall rule: %s", err)
-		}
-
-		return nil
-	}
-}
