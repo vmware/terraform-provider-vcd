@@ -5,13 +5,22 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 )
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
 
 // testMetadataEntryCRUD executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
 // templates, that must correspond to a resource and a data source referencing this resource.
@@ -89,7 +98,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
 	params["FuncName"] = t.Name() + "DeprecatedDelete"
-	params["Metadata"] = " "
+	params["Metadata"] = "metadata = {}"
 	deprecatedDeleteHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
@@ -193,7 +202,8 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Config: deprecatedDeleteHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata.#", "0"),
+					stateDumper(),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata.%", "0"),
 				),
 			},
 			{

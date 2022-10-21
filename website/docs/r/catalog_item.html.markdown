@@ -84,6 +84,12 @@ To remove all metadata one needs to specify an empty `metadata_entry`, like:
 metadata_entry {}
 ```
 
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
+
 ### A note about upload progress
 
 Until version 3.5.0, the progress was optionally shown on the screen. Due to changes in the terraform tool, such operation

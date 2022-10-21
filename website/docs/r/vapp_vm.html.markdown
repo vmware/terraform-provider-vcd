@@ -679,6 +679,12 @@ To remove all metadata one needs to specify an empty `metadata_entry`, like:
 metadata_entry {}
 ```
 
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
+
 ## Importing
 
 Supported in provider *v2.6+*

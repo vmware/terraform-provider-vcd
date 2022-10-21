@@ -140,6 +140,12 @@ To remove all metadata one needs to specify an empty `metadata_entry`, like:
 metadata_entry {}
 ```
 
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
+
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
