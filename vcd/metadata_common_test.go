@@ -77,6 +77,22 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	wrongHcl := templateFill("# skip-binary-test\n"+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
 
+	// These are for the deprecated `metadata` value, to minimize possible regressions
+	params["FuncName"] = t.Name() + "DeprecatedCreate"
+	params["Metadata"] = "metadata = {\n\tfoo = \"bar\"\n}"
+	deprecatedCreateHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+
+	params["FuncName"] = t.Name() + "DeprecatedUpdate"
+	params["Metadata"] = "metadata = {\n\tfoo = \"bar2\"\n}"
+	deprecatedUpdateHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+
+	params["FuncName"] = t.Name() + "DeprecatedDelete"
+	params["Metadata"] = " "
+	deprecatedDeleteHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -157,6 +173,27 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 					// This is a side effect of having `metadata_entry` as Computed to be able to delete metadata.
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
 					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "", "", "", "", "false"),
+				),
+			},
+			{
+				Config: deprecatedCreateHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata.foo", "bar"),
+				),
+			},
+			{
+				Config: deprecatedUpdateHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata.foo", "bar2"),
+				),
+			},
+			{
+				Config: deprecatedDeleteHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata.#", "0"),
 				),
 			},
 			{
