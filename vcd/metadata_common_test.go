@@ -13,13 +13,6 @@ import (
 	"testing"
 )
 
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
-
 // testMetadataEntryCRUD executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
 // templates, that must correspond to a resource and a data source referencing this resource.
 // The HCL template requires {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
@@ -98,12 +91,11 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					// This is a side effect of having `metadata_entry` as Computed to be able to delete metadata.
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
-					stateDumper(),
 				),
 			},
 			{
 				Config: wrongHcl,
-				ExpectError: regexp.MustCompile(".*"),
+				ExpectError: regexp.MustCompile(".*all fields in a metadata_entry are required, but got some empty.*"),
 			},
 		},
 	})
