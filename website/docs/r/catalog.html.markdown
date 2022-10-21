@@ -80,11 +80,11 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 
 The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
 
-* `key` - Key of this metadata entry. Required.
-* `value` - Value of this metadata entry. Required.
-* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Required.
-* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Required.
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`. Required.
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 Example:
 
