@@ -122,18 +122,21 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 Example:
 
 ```hcl
-metadata_entry {
-  key = "foo"
-  type = "MetadataStringValue"
-  value = "bar"
-  user_access = "PRIVATE"
-  is_system = "true"
+resource "vcd_network_isolated_v2" "example" {
+  # ...
+  metadata_entry {
+    key         = "foo"
+    type        = "MetadataStringValue"
+    value       = "bar"
+    user_access = "PRIVATE"
+    is_system   = "true"
+  }
 }
 ```
 
 To remove all metadata one needs to specify an empty `metadata_entry`, like:
 
-```hcl
+```
 metadata_entry {}
 ```
 
