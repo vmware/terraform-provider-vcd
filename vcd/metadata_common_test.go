@@ -4,9 +4,11 @@
 package vcd
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -15,14 +17,24 @@ import (
 // templates, that must correspond to a resource and a data source referencing this resource.
 // The HCL template requires {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
 // You can add extra parameters as well to inject in the given HCL template, or override these mentioned ones.
-// The data source HCL is always concatenated to the resource after first creation, and it's skipped on binary tests.
+// The data source HCL is always concatenated to the resource after creation, and it's skipped on binary tests.
+//
+// Test scenario:
+// - Create 7 metadata entries, 2 for string and 1 for number, bool, date, readOnly and hidden
+// - Delete 1 of string value (so it remains one of each type)
+// - Add a data source
+// - Update 2 entries
+// - Delete all of them except the string one
+// - Delete all of them
+// - Check a malformed metadata entry
 func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
+	metadataHcl := getMetadataTestingHcl(2, 1, 1, 1, 1, 1)
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
 		"Vdc":      testConfig.Nsxt.Vdc,
 		"Name":     t.Name(),
-		"Metadata": getMetadataTestingHcl(),
+		"Metadata": metadataHcl,
 	}
 
 	for extraParam, extraParamValue := range extraParams {
@@ -34,13 +46,25 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	createHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
+	params["FuncName"] = t.Name() + "DeleteSomeKeys"
+	metadataHcl = getMetadataTestingHcl(1, 1, 1, 1, 1, 1)
+	params["Metadata"] = metadataHcl
+	deleteSomeKeysHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+
 	params["FuncName"] = t.Name() + "Datasource"
 	withDatasourceHcl := templateFill(datasourceTemplate+"\n# skip-binary-test\n"+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
 
 	params["FuncName"] = t.Name() + "Update"
-	params["Metadata"] = getMetadataTestingHclForUpdate()
+	params["Metadata"] = strings.NewReplacer("stringValue", "stringValueUpdated", "2022-10-", "2021-10-").Replace(metadataHcl)
 	updateHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
+
+	params["FuncName"] = t.Name() + "Update2"
+	metadataHcl = getMetadataTestingHcl(1, 0, 0, 0, 0, 0)
+	params["Metadata"] = metadataHcl
+	update2Hcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
@@ -65,22 +89,65 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Config: createHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					assertMetadata(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "7"),
+
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey2", "stringValue2", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "privateKey1", "privateValue1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
+				),
+			},
+			{
+				Config: deleteSomeKeysHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "6"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "privateKey1", "privateValue1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
 				),
 			},
 			{
 				Config: withDatasourceHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
-					assertMetadata(resourceAddress),
-					assertMetadata(datasourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "6"),
+					resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "6"),
+					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "privateKey1", "privateValue1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
 				),
 			},
 			{
 				Config: updateHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					assertUpdatedMetadata(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "6"),
+					// Updated values:
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValueUpdated1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2021-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					// Not updated values:
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "privateKey1", "privateValue1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
+				),
+			},
+			{
+				Config: update2Hcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 				),
 			},
 			{
@@ -89,6 +156,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					// This is a side effect of having `metadata_entry` as Computed to be able to delete metadata.
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
+					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "", "", "", "", "false"),
 				),
 			},
 			{
@@ -101,193 +169,50 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 }
 
 // getMetadataTestingHcl gets valid metadata entries to inject them into an HCL for testing
-func getMetadataTestingHcl() string {
+func getMetadataTestingHcl(stringEntries, numberEntries, boolEntries, dateEntries, readOnlyEntries, privateEntries int) string {
+	hcl := ""
+	for i := 1; i <= stringEntries; i++ {
+		hcl += getMetadataEntryHcl(fmt.Sprintf("stringKey%d", i), fmt.Sprintf("stringValue%d", i), types.MetadataStringValue, types.MetadataReadWriteVisibility, "false")
+	}
+	for i := 1; i <= numberEntries; i++ {
+		hcl += getMetadataEntryHcl(fmt.Sprintf("numberKey%d", i), fmt.Sprintf("%d", i), types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false")
+	}
+	for i := 1; i <= boolEntries; i++ {
+		hcl += getMetadataEntryHcl(fmt.Sprintf("boolKey%d", i), strconv.FormatBool(i%2 == 0), types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false")
+	}
+	for i := 1; i <= dateEntries; i++ {
+		hcl += getMetadataEntryHcl(fmt.Sprintf("dateKey%d", i), fmt.Sprintf("2022-10-%02dT12:00:00.000Z", i%30), types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false")
+	}
+	for i := 1; i <= readOnlyEntries; i++ {
+		hcl += getMetadataEntryHcl(fmt.Sprintf("readOnlyKey%d", i), fmt.Sprintf("readOnlyValue%d", i), types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true")
+	}
+	for i := 1; i <= privateEntries; i++ {
+		hcl += getMetadataEntryHcl(fmt.Sprintf("privateKey%d", i), fmt.Sprintf("privateValue%d", i), types.MetadataStringValue, types.MetadataHiddenVisibility, "true")
+	}
+	return hcl
+
+}
+
+func getMetadataEntryHcl(key, value, typedValue, userAccess, isSystem string) string {
 	return `
-	  metadata_entry {
-		key         = "stringKey"
-		value       = "I'm a test for string values"
-		type        = "MetadataStringValue"
-		user_access = "READWRITE"
-		is_system   = false
-	  }
-	  metadata_entry {
-		key         = "numberKey"
-		value       = "1234"
-		type        = "MetadataNumberValue"
-		user_access = "READWRITE"
-		is_system   = false
-	  }
-	  metadata_entry {
-		key         = "boolKey"
-		value       = "true"
-		type        = "MetadataBooleanValue"
-		user_access = "READWRITE"
-		is_system   = false
-	  }
-	  metadata_entry {
-		key         = "dateKey"
-		value       = "2022-10-05T13:44:00.000Z"
-		type        = "MetadataDateTimeValue"
-		user_access = "READWRITE"
-		is_system   = false
-	  }
-	  metadata_entry {
-		key         = "hiddenKey"
-		value       = "I'm a test for hidden values"
-		type        = "MetadataStringValue"
-		user_access = "PRIVATE"
-		is_system   = true
-	  }
-	  metadata_entry {
-		key         = "readOnlyKey"
-		value       = "I'm a test for read only values"
-		type        = "MetadataStringValue"
-		user_access = "READONLY"
-		is_system   = true
-	  }
-`
+		  metadata_entry {
+			key         = "` + key + `"
+			value       = "` + value + `"
+			type        = "` + typedValue + `"
+			user_access = "` + userAccess + `"
+			is_system   = "` + isSystem + `"
+		  }`
 }
 
-func getMetadataTestingHclForUpdate() string {
-	replacer := strings.NewReplacer(
-		"I'm a test for", "I'm a test to update",
-		"1234", "9999",
-		"2022-10-05", "2022-10-06",
-		"\"true\"", "\"false\"",
-	)
-	return replacer.Replace(getMetadataTestingHcl())
-}
-
-// assertMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHclForUpdate
-func assertMetadata(resourceName string) resource.TestCheckFunc {
-	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "6"),
-		// Tests string metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "stringKey",
-				"value":       "I'm a test for string values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests numeric metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "numberKey",
-				"value":       "1234",
-				"type":        types.MetadataNumberValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests bool metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "boolKey",
-				"value":       "true",
-				"type":        types.MetadataBooleanValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests date metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "dateKey",
-				"value":       "2022-10-05T13:44:00.000Z",
-				"type":        types.MetadataDateTimeValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests hidden metadata values in SYSTEM
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "hiddenKey",
-				"value":       "I'm a test for hidden values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataHiddenVisibility,
-				"is_system":   "true",
-			},
-		),
-		// Tests read only metadata values in SYSTEM
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "readOnlyKey",
-				"value":       "I'm a test for read only values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataReadOnlyVisibility,
-				"is_system":   "true",
-			},
-		),
-	)
-}
-
-// assertUpdatedMetadata checks that the state is updated after applying the HCL returned by getMetadataTestingHcl
-func assertUpdatedMetadata(resourceName string) resource.TestCheckFunc {
-	return resource.ComposeAggregateTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "6"),
-		// Tests string metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "stringKey",
-				"value":       "I'm a test to update string values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests numeric metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "numberKey",
-				"value":       "9999",
-				"type":        types.MetadataNumberValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests bool metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "boolKey",
-				"value":       "false",
-				"type":        types.MetadataBooleanValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests date metadata values
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "dateKey",
-				"value":       "2022-10-06T13:44:00.000Z",
-				"type":        types.MetadataDateTimeValue,
-				"user_access": types.MetadataReadWriteVisibility,
-				"is_system":   "false",
-			},
-		),
-		// Tests hidden metadata values in SYSTEM
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "hiddenKey",
-				"value":       "I'm a test to update hidden values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataHiddenVisibility,
-				"is_system":   "true",
-			},
-		),
-		// Tests read only metadata values in SYSTEM
-		resource.TestCheckTypeSetElemNestedAttrs(resourceName, "metadata_entry.*",
-			map[string]string{
-				"key":         "readOnlyKey",
-				"value":       "I'm a test to update read only values",
-				"type":        types.MetadataStringValue,
-				"user_access": types.MetadataReadOnlyVisibility,
-				"is_system":   "true",
-			},
-		),
+// testCheckMetadataEntrySetElemNestedAttrs asserts that a given metadata_entry has the expected input for the given resourceAddress.
+func testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, expectedKey, expectedValue, expectedType, expectedUserAccess, expectedIsSystem string) resource.TestCheckFunc {
+	return resource.TestCheckTypeSetElemNestedAttrs(resourceAddress, "metadata_entry.*",
+		map[string]string{
+			"key":         expectedKey,
+			"value":       expectedValue,
+			"type":        expectedType,
+			"user_access": expectedUserAccess,
+			"is_system":   expectedIsSystem,
+		},
 	)
 }
