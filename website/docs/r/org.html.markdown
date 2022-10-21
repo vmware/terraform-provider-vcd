@@ -61,7 +61,7 @@ The following arguments are supported:
 * `can_subscribe_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to subscribe to external catalogs. Default is `false`.
 * `delay_after_power_on_seconds` - (Optional) Specifies this organization's default for virtual machine boot delay after power on. Default is `0`.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this organization.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `vapp_lease` - (Optional; *v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (Optional; *v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 

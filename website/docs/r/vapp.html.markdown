@@ -107,7 +107,7 @@ The following arguments are supported:
 * `description` (Optional; *v3.3*) An optional description for the vApp, up to 256 characters.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
 * `metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
-* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
 * `lease` - (Optional *v3.5+*) the information about the vApp lease. It includes the fields below. When this section is 
    included, both fields are mandatory. If lease values are higher than the ones allowed for the whole Org, the values

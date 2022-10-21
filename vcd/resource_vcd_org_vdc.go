@@ -233,6 +233,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
 				Description:   "Key and value pairs for Org VDC metadata",
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},

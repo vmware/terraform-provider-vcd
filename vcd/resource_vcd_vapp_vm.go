@@ -210,6 +210,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"metadata": {
 			Type:          schema.TypeMap,
 			Optional:      true,
+			Computed:      true, // To be compatible with `metadata_entry`
 			Description:   "Key value map of metadata to assign to this VM",
 			Deprecated:    "Use metadata_entry instead",
 			ConflictsWith: []string{"metadata_entry"},

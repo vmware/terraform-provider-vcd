@@ -63,7 +63,7 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 * `preserve_identity_information` - (Optional, *v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary. Default is `false`.
 * `password` - (Optional, *v3.6+*) An optional password to access the catalog. Only ASCII characters are allowed in a valid password.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 

@@ -331,7 +331,7 @@ The following arguments are supported:
 * `cpu_shares` - Custom priority for the resource in MHz. This is a read-only, unless the `cpu_priority` is "CUSTOM"
 * `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited. 
 * `metadata` - (Deprecated; *v2.2+*) Use `metadata_entry` instead. Key value map of metadata to assign to this VM
-* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`

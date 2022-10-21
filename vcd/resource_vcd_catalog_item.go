@@ -76,6 +76,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
 				Description:   "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 				ConflictsWith: []string{"metadata_entry"},
 			},

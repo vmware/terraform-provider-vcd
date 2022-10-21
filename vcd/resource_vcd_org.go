@@ -165,6 +165,7 @@ func resourceOrg() *schema.Resource {
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
 				Description:   "Key value map of metadata to assign to this organization. Key and value can be any string.",
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},

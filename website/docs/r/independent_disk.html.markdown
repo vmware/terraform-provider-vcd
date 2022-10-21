@@ -50,7 +50,7 @@ The following arguments are supported:
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
 * `sharing_type` - (Optional, *v3.6+* and VCD 10.2+) This is the sharing type. Values can be: `DiskSharing`,`ControllerSharing`, or `None`
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this independent disk.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute reference
 

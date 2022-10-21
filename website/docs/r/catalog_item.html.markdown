@@ -49,7 +49,7 @@ The following arguments are supported:
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows seeing upload progress. (See note below)
 * `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign to the associated vApp Template
-* `metadata_entry` - (*v3.8+*) A set of metadata entries to assign to the Catalog Item. See [Metadata](#metadata) section for details.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign to the Catalog Item. See [Metadata](#metadata) section for details.
 * `catalog_item_metadata` - (Deprecated; *v3.7+*) Use `metadata_entry` instead.  Key value map of metadata to assign to the Catalog Item
 
 <a id="metadata"></a>
