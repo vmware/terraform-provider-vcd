@@ -113,11 +113,29 @@ Static IP Pools support the following attributes:
 
 The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
 
-* `key` - Key of this metadata entry.
-* `value` - Value of this metadata entry.
-* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Defaults to `MetadataStringValue`.
-* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Defaults to `READWRITE`.
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`. Defaults to `false`.
+* `key` - Key of this metadata entry. Required.
+* `value` - Value of this metadata entry. Required.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`. Required.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write). Required.
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`. Required.
+
+Example:
+
+```hcl
+metadata_entry {
+  key = "foo"
+  type = "MetadataStringValue"
+  value = "bar"
+  user_access = "PRIVATE"
+  is_system = "true"
+}
+```
+
+To remove all metadata one needs to specify an empty `metadata_entry`, like:
+
+```hcl
+metadata_entry {}
+```
 
 ## Importing
 

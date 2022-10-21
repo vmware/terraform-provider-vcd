@@ -68,22 +68,22 @@ func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema 
 					Description: "Value of this metadata entry. Required if the metadata entry is not empty",
 				},
 				"type": {
-					Type:         schema.TypeString,
-					Optional:     true,
+					Type:     schema.TypeString,
+					Optional: true,
 					// Default:      types.MetadataStringValue, // Can't be set like this as we must allow empty `metadata_entry`, to be able to delete metadata (see above comment)
 					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
 					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
 				},
 				"user_access": {
-					Type:         schema.TypeString,
-					Optional:     true,
+					Type:     schema.TypeString,
+					Optional: true,
 					// Default:      types.MetadataReadWriteVisibility, // Can't be set like this as we must allow empty `metadata_entry`, to be able to delete metadata (see above comment)
 					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
 					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
 				},
 				"is_system": {
-					Type:        schema.TypeBool,
-					Optional:    true,
+					Type:     schema.TypeBool,
+					Optional: true,
 					// Default:     false,  // Can't be set like this as we must allow empty `metadata_entry`, to be able to delete metadata (see above comment)
 					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
 				},
@@ -109,7 +109,7 @@ type metadataCompatible interface {
 	AddMetadataEntryWithVisibility(key, value, typedValue, visibility string, isSystem bool) error
 	MergeMetadataWithMetadataValues(metadata map[string]types.MetadataValue) error
 	MergeMetadata(typedValue string, metadata map[string]interface{}) error // Deprecated
-	DeleteMetadataEntry(key string) error // Deprecated
+	DeleteMetadataEntry(key string) error                                   // Deprecated
 	DeleteMetadataEntryWithDomain(key string, isSystem bool) error
 }
 

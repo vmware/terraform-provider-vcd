@@ -4,9 +4,7 @@
 package vcd
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
 	"strings"
@@ -94,7 +92,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				),
 			},
 			{
-				Config: wrongHcl,
+				Config:      wrongHcl,
 				ExpectError: regexp.MustCompile(".*all fields in a metadata_entry are required, but got some empty.*"),
 			},
 		},
