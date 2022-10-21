@@ -212,12 +212,13 @@ func convertFromStateToMetadataValues(metadataAttribute []interface{}) (map[stri
 		metadataEntry := rawItem.(map[string]interface{})
 
 		// This is a workaround for metadata_entry deletion, as one needs to set `metadata_entry {}` to be able
-		// to delete metadata. Hence, if all fields are empty we consider that the entry must be ignored.
+		// to delete metadata. Here, if all fields are empty we consider that the entry must be ignored.
 		// This must be done as long as metadata_entry is Computed and key, value, etc; are Optional.
+		//
+		// The len(metadataEntry)-1 is because Terraform doesn't have a tri-valued TypeBool, hence an empty value in `is_system`
+		// is always "false", which makes the count of empty attributes wrong by 1.
 		metadataEmptyAttributes := getMetadataEmptySubAttributes(metadataEntry)
 		if len(metadataEntry)-1 == metadataEmptyAttributes {
-			// The len(metadataEntry)-1 is because Terraform doesn't have a tri-valued bool, hence an empty value
-			// is always "false", which pollutes the count of empty attributes, so we ignore it.
 			continue
 		}
 		// On the other hand, if some fields are empty but not all of them, it is not that we set "metadata_entry {}",
@@ -257,10 +258,11 @@ func getMetadataKeyWithDomainMap(metadataAttribute []interface{}) map[string]boo
 		// This is a workaround for metadata_entry deletion, as one needs to set `metadata_entry {}` to be able
 		// to delete metadata. Hence, if all fields are empty we consider that the entry must be ignored.
 		// This must be done as long as metadata_entry is Computed and key, value, etc; are Optional.
+		//
+		// The len(metadataEntry)-1 is because Terraform doesn't have a tri-valued TypeBool, hence an empty value in `is_system`
+		// is always "false", which makes the count of empty attributes wrong by 1.
 		metadataEmptyAttributes := getMetadataEmptySubAttributes(metadataEntry)
 		if len(metadataEntry)-1 == metadataEmptyAttributes {
-			// The len(metadataEntry)-1 is because Terraform doesn't have a tri-valued bool, hence an empty value
-			// is always "false", which pollutes the count of empty attributes, so we ignore it.
 			continue
 		}
 		isSystem := false
@@ -274,7 +276,7 @@ func getMetadataKeyWithDomainMap(metadataAttribute []interface{}) map[string]boo
 }
 
 // getMetadataEmptySubAttributes returns the number of empty attributes inside one metadata_entry, ignoring the bool `is_system`.
-// Returned value can be at most len(metadataEntry)-1 (because we ignore is_system).
+// Returned value can be at most len(metadataEntry).
 func getMetadataEmptySubAttributes(metadataEntry map[string]interface{}) int {
 	emptySubAttributes := 0
 	for _, v := range metadataEntry {

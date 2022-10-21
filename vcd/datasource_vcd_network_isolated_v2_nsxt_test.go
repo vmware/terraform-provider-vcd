@@ -61,7 +61,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field) and
 					// 'metadata_entry', as resource has set deprecated field 'metadata' instead, which populates metadata in VCD resource.
-					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%", "metadata_entry.#"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 			{
@@ -70,7 +70,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field) and
 					// 'metadata_entry', as resource has set deprecated field 'metadata' instead, which populates metadata in VCD resource.
-					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%", "metadata_entry.#"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 			{
@@ -79,7 +79,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field) and
 					// 'metadata_entry', as resource has set deprecated field 'metadata' instead, which populates metadata in VCD resource.
-					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%", "metadata_entry.#"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 		},
