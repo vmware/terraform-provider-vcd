@@ -177,7 +177,7 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
 	// This early return guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
-	// set a nil attribute in state, which would taint it and ask for an update all the time.
+	// set an empty attribute in state, which would taint it and ask for an update all the time.
 	if len(metadataFromVcd) == 0 {
 		return nil
 	}
