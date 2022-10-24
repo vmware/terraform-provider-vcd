@@ -74,7 +74,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createWithSystemHcl)
 
 	params["FuncName"] = t.Name() + "UpdateWithSystem"
-	params["Metadata"] = strings.NewReplacer("privateValue", "privateValueUpdated").Replace(createWithSystemHcl)
+	params["Metadata"] = strings.NewReplacer("privateValue", "privateValueUpdated").Replace(params["Metadata"].(string))
 	updateWithSystemHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateWithSystemHcl)
 
