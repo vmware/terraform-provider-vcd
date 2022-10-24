@@ -100,6 +100,9 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 * `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
 * `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
+~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
+   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
+
 Example:
 
 ```hcl
@@ -110,7 +113,7 @@ resource "vcd_org" "example" {
     type        = "MetadataStringValue"
     value       = "bar"
     user_access = "PRIVATE"
-    is_system   = "true"
+    is_system   = "true" # Requires System admin privileges
   }
 }
 ```

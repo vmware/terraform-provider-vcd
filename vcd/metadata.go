@@ -275,7 +275,7 @@ func getMetadataKeyWithDomainMap(metadataAttribute []interface{}) map[string]boo
 	return metadataKeys
 }
 
-// getMetadataEmptySubAttributes returns the number of empty attributes inside one metadata_entry, ignoring the bool `is_system`.
+// getMetadataEmptySubAttributes returns the number of empty attributes inside one metadata_entry.
 // Returned value can be at most len(metadataEntry).
 func getMetadataEmptySubAttributes(metadataEntry map[string]interface{}) int {
 	emptySubAttributes := 0
