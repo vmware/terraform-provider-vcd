@@ -34,9 +34,9 @@ import (
 func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":      testConfig.VCD.Org,
-		"Vdc":      testConfig.Nsxt.Vdc,
-		"Name":     t.Name(),
+		"Org":  testConfig.VCD.Org,
+		"Vdc":  testConfig.Nsxt.Vdc,
+		"Name": t.Name(),
 	}
 
 	for extraParam, extraParamValue := range extraParams {
@@ -212,7 +212,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				ExpectError: regexp.MustCompile(".*all fields in a metadata_entry are required, but got some empty.*"),
 			},
 			{
-				Config:      wrongDomainHcl,
+				Config: wrongDomainHcl,
 				SkipFunc: func() (bool, error) {
 					return usingSysAdmin(), nil
 				},
