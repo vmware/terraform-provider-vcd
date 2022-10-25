@@ -114,6 +114,7 @@ The following arguments are supported:
 * `os_type` - (*v2.9+*) Operating System type.
 * `hardware_version` - (*v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.).
 * `sizing_policy_id` (*v3.0+*, *vCD 10.0+*) VM sizing policy ID.
+* `placement_policy_id` (*v3.8+*) VM placement policy ID.
 * `status` - (*v3.8+*) The vApp status as a numeric code.
 * `status_text` - (*v3.8+*) The vApp status as text.
 

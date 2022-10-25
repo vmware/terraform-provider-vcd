@@ -590,6 +590,12 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
 		},
+		"placement_policy_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			Description: "VM placement policy ID. Has to be assigned to Org VDC.",
+		},
 		"status": {
 			Type:        schema.TypeInt,
 			Computed:    true,
@@ -860,10 +866,21 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error finding storage profile: %s", err)
 	}
 
-	// Look up compute policy
-	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	// Look up compute policies
+	sizingPolicy, sizingPolicyRef, err := lookupComputePolicy(d, vcdClient, "sizing_policy_id")
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
+	}
+	_, placementPolicyRef, err := lookupComputePolicy(d, vcdClient, "placement_policy_id")
+	if err != nil {
+		return nil, fmt.Errorf("error finding placement policy: %s", err)
+	}
+	var vmComputePolicy *types.ComputePolicy
+	if sizingPolicyRef != nil || placementPolicyRef != nil {
+		vmComputePolicy = &types.ComputePolicy{
+			VmSizingPolicy: sizingPolicyRef,
+			VmPlacementPolicy: placementPolicyRef,
+		}
 	}
 
 	var vm *govcd.VM
@@ -1024,7 +1041,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	// Template VMs require CPU/Memory seting
 	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
 	// inherited from template
-	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
+	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, sizingPolicy)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
@@ -1146,14 +1163,25 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		virtualCpuType = "VM64"
 	}
 
-	// Lookup compute policy
-	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	// Look up compute policies
+	sizingPolicy, sizingPolicyRef, err := lookupComputePolicy(d, vcdClient, "sizing_policy_id")
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
+	_, placementPolicyRef, err := lookupComputePolicy(d, vcdClient, "placement_policy_id")
+	if err != nil {
+		return nil, fmt.Errorf("error finding placement policy: %s", err)
+	}
+	var vmComputePolicy *types.ComputePolicy
+	if sizingPolicyRef != nil || placementPolicyRef != nil {
+		vmComputePolicy = &types.ComputePolicy{
+			VmSizingPolicy: sizingPolicyRef,
+			VmPlacementPolicy: placementPolicyRef,
+		}
+	}
 
 	// Lookup CPU/Memory parameters
-	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
+	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, sizingPolicy)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
@@ -1854,8 +1882,13 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "os_type", vm.VM.VmSpecSection.OsType)
 	}
 
-	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
-		dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+	if vm.VM.ComputePolicy != nil {
+		if vm.VM.ComputePolicy.VmSizingPolicy != nil {
+			dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+		}
+		if vm.VM.ComputePolicy.VmPlacementPolicy != nil {
+			dSet(d, "placement_policy_id", vm.VM.ComputePolicy.VmPlacementPolicy.ID)
+		}
 	}
 
 	statusText, err := vm.GetStatus()

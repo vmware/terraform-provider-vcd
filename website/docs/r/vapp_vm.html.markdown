@@ -246,6 +246,35 @@ resource "vcd_vapp_vm" "secondVM" {
 
 ```
 
+## Example Usage (VM with sizing policy and VM placement policy)
+This example shows how to create a VM using a VM sizing policy and a VM placement policy.
+
+```hcl
+data "vcd_vm_sizing_policy" "minSize" {
+  name = "minimum size"
+}
+
+data "vcd_provider_vdc" "myPvdc" {
+  name        = "nsxt-Pvdc"
+}
+
+data "vcd_vm_placement_policy" "placementPolicy" {
+  name        = "vmware"
+  provider_id = data.vcd_provider_vdc.myPvdc.id
+}
+
+resource "vcd_vapp_vm" "secondVM" {
+  vapp_name           = vcd_vapp.web.name
+  name                = "secondVM"
+  computer_name       = "db-vm"
+  catalog_name        = "cat-where-is-template"
+  template_name       = "vappWithMultiVm"
+  sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
+  placement_policy_id = data.vcd_vm_placement_policy.placementPolicy.id
+}
+
+```
+
 ## Example Usage (using advanced compute settings)
 This example shows how to create an empty VM with advanced compute settings.
 
@@ -317,9 +346,9 @@ example for usage details.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
   for adapters in `network` block with `ip_allocation_mode=DHCP`). It constantly checks if IP is present so the time given
   is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
- * VM has Guest Tools. It waits for IP address to be reported by Guest Tools. This is a slower option, but
+* VM has Guest Tools. It waits for IP address to be reported by Guest Tools. This is a slower option, but
   does not require for the VM to use Edge Gateways DHCP service.
- * VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
+* VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
   relayed). It works by querying DHCP leases on Edge Gateway. In general it is quicker than waiting
   until Guest Tools report IP addresses, but is more constrained. However this is the only option if Guest
   Tools are not present on the VM.
@@ -329,7 +358,8 @@ example for usage details.
 * `cpu_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
-* `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC using `vcd_org_vdc.vm_sizing_policy_ids` and `vcd_org_vdc.default_vm_sizing_policy_id`.
+* `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc) using `vcd_org_vdc.vm_sizing_policy_ids` and optionally `vcd_org_vdc.default_compute_policy_id`.
+* `placement_policy_id` (Optional; *v3.8+*) VM placement policy ID. Has to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc) using `vcd_org_vdc.vm_placement_policy_ids` and optionally `vcd_org_vdc.default_compute_policy_id`.
 
 ## Attribute reference
 
@@ -608,7 +638,7 @@ These fields can be updated only when VM is **powered off** (provider automatica
 
 These fields can be updated when VM is **powered on**:
 
-`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id` 
+`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id` FIXME!!!!????
 
 Notes about **removing** `network`:
 
