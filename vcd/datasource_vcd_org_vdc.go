@@ -2,9 +2,11 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -247,10 +249,29 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	err = setEdgeClusterData(d, adminVdc)
+	err = setDataSourceEdgeClusterData(d, adminVdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	return nil
+}
+
+// setDataSourceEdgeClusterData is like setEdgeClusterData however it must handle
+func setDataSourceEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminVdc) error {
+	vdcNetworkProfile, err := adminVdc.GetVdcNetworkProfile()
+	if err != nil {
+		// Conciously ignoring this error and loggin it to output as it will most probably be
+		// insufficient rights that the user has. It will work with System user but might not work
+		// for users that got
+		logForScreen("data.vcd_org_vdc", fmt.Sprintf("got error while attempting to retrieve Edge Cluster ID: %s", err))
+		return nil
+	}
+
+	if vdcNetworkProfile != nil && vdcNetworkProfile.ServicesEdgeCluster != nil {
+		dSet(d, "edge_cluster_id", vdcNetworkProfile.ServicesEdgeCluster.BackingID)
+	} else {
+		dSet(d, "edge_cluster_id", "")
+	}
 	return nil
 }
