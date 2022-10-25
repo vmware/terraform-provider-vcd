@@ -94,7 +94,7 @@ func datasourceNsxtEdgeCluster(_ context.Context, d *schema.ResourceData, meta i
 	case pVdcId != "":
 		queryParams.Add("filter", fmt.Sprintf("pvdcId==%s", pVdcId))
 	default:
-		// The original filtering option
+		// The original (now deprecated) filtering option
 		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 		if err != nil {
 			return diag.Errorf(errorRetrievingOrgAndVdc, err)
