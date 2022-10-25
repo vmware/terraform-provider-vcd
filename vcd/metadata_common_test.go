@@ -133,7 +133,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 			},
 			{
 				Config: createHcl,
-				Taint: []string{resourceAddress}, // Forces re-creation to test Create with metadata.
+				Taint:  []string{resourceAddress}, // Forces re-creation to test Create with metadata.
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "4"),
