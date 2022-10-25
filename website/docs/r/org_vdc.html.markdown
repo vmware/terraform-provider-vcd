@@ -72,8 +72,8 @@ data "vcd_provider_vdc" "nsxt-pvdc" {
 }
 
 data "vcd_nsxt_edge_cluster" "ec" {
-	provider_vdc_id = data.vcd_provider_vdc.nsxt-pvdc.id
-	name            = "edge-cluster-1"
+  provider_vdc_id = data.vcd_provider_vdc.nsxt-pvdc.id
+  name            = "edge-cluster-1"
 }
 
 resource "vcd_org_vdc" "nsxt-vdc" {
