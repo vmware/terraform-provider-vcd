@@ -2,7 +2,11 @@ package vcd
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -18,9 +22,29 @@ func datasourceVcdNsxtEdgeCluster() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "The name of VDC to use, optional if defined at provider level",
+				ConflictsWith: []string{"vdc_id", "vdc_group_id", "provider_vdc_id"},
+				Deprecated:    "This field is deprecated in favor of 'owner_id' which accepts IDs of VDC, VDC Group and Provider VDC",
+			},
+			"vdc_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "ID of VDC, VDC Group or Provider VDC",
+				ConflictsWith: []string{"vdc", "vdc_group_id", "provider_vdc_id"},
+			},
+			"vdc_group_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "ID of VDC, VDC Group or Provider VDC",
+				ConflictsWith: []string{"vdc", "vdc_id", "provider_vdc_id"},
+			},
+			"provider_vdc_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "ID of VDC, VDC Group or Provider VDC",
+				ConflictsWith: []string{"vdc", "vdc_id", "vdc_group_id"},
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -55,22 +79,61 @@ func datasourceNsxtEdgeCluster(_ context.Context, d *schema.ResourceData, meta i
 	vcdClient := meta.(*VCDClient)
 	nsxtEdgeClusterName := d.Get("name").(string)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
+	vdcId := d.Get("vdc_id").(string)
+	vdcGroupId := d.Get("vdc_group_id").(string)
+	pVdcId := d.Get("provider_vdc_id").(string)
+
+	// Using Raw filter query parameters instead of SDK based functions because filtering is
+	// conditional based on filter type.
+	queryParams := url.Values{}
+	switch {
+	case vdcId != "":
+		queryParams.Add("filter", fmt.Sprintf("orgVdcId==%s", vdcId))
+	case vdcGroupId != "":
+		queryParams.Add("filter", fmt.Sprintf("vdcGroupId==%s", vdcGroupId))
+	case pVdcId != "":
+		queryParams.Add("filter", fmt.Sprintf("pvdcId==%s", pVdcId))
+	default:
+		// The original filtering option
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrgAndVdc, err)
+		}
+		queryParams.Add("filter", fmt.Sprintf("orgVdcId==%s", vdc.Vdc.ID))
 	}
 
-	nsxtEdgeCluster, err := vdc.GetNsxtEdgeClusterByName(nsxtEdgeClusterName)
+	allEdgeClusters, err := vcdClient.GetAllNsxtEdgeClusters(queryParams)
 	if err != nil {
-		return diag.Errorf("could not find NSX-T Edge Cluster by name '%s': %s", nsxtEdgeClusterName, err)
+		return diag.Errorf("error retrieving NSX-T Edge Clusters: %s", err)
 	}
 
-	dSet(d, "description", nsxtEdgeCluster.NsxtEdgeCluster.Description)
-	dSet(d, "node_count", nsxtEdgeCluster.NsxtEdgeCluster.NodeCount)
-	dSet(d, "node_type", nsxtEdgeCluster.NsxtEdgeCluster.NodeType)
-	dSet(d, "deployment_type", nsxtEdgeCluster.NsxtEdgeCluster.DeploymentType)
+	nameFilteredNsxtEdgeClusters := filterNsxtEdgeClusters(nsxtEdgeClusterName, allEdgeClusters)
 
-	d.SetId(nsxtEdgeCluster.NsxtEdgeCluster.ID)
+	if len(nameFilteredNsxtEdgeClusters) == 0 {
+		return diag.Errorf("%s: no NSX-T Edge Cluster with name '%s' and filter '%s'", govcd.ErrorEntityNotFound, nsxtEdgeClusterName, queryParams.Get("filter"))
+	}
+
+	if len(nameFilteredNsxtEdgeClusters) > 1 {
+		return diag.Errorf("more than one (%d) NSX-T Edge Cluster with name '%s' and filter '%s'", len(nameFilteredNsxtEdgeClusters), nsxtEdgeClusterName, queryParams.Get("filter"))
+	}
+
+	dSet(d, "description", nameFilteredNsxtEdgeClusters[0].NsxtEdgeCluster.Description)
+	dSet(d, "node_count", nameFilteredNsxtEdgeClusters[0].NsxtEdgeCluster.NodeCount)
+	dSet(d, "node_type", nameFilteredNsxtEdgeClusters[0].NsxtEdgeCluster.NodeType)
+	dSet(d, "deployment_type", nameFilteredNsxtEdgeClusters[0].NsxtEdgeCluster.DeploymentType)
+
+	d.SetId(nameFilteredNsxtEdgeClusters[0].NsxtEdgeCluster.ID)
 
 	return nil
+}
+
+func filterNsxtEdgeClusters(name string, allNnsxtEdgeCluster []*govcd.NsxtEdgeCluster) []*govcd.NsxtEdgeCluster {
+	filteredNsxtEdgeClusters := make([]*govcd.NsxtEdgeCluster, 0)
+	for index, nsxtEdgeCluster := range allNnsxtEdgeCluster {
+		if allNnsxtEdgeCluster[index].NsxtEdgeCluster.Name == name {
+			filteredNsxtEdgeClusters = append(filteredNsxtEdgeClusters, nsxtEdgeCluster)
+		}
+	}
+
+	return filteredNsxtEdgeClusters
 }

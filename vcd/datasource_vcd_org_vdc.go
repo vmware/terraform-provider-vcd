@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -216,6 +217,11 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of default Compute policy for this VDC, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
 			},
+			"edge_cluster_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
+			},
 		},
 	}
 }
@@ -240,5 +246,11 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	err = setEdgeClusterData(d, adminVdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }

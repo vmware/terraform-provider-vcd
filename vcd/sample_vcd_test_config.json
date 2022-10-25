@@ -117,7 +117,9 @@
     "//": "Existing NSX-T Edge Gateway",
     "edgeGateway": "nsxt-gw",
     "//": "Existing NSX-T segment to test Org VDC Imported network",
-    "nsxtImportSegment": "import-segment"
+    "nsxtImportSegment": "import-segment",
+    "//": "Existing NSX-T Edge Cluster",
+    "nsxtEdgeCluster": "edgeCluster1"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",
