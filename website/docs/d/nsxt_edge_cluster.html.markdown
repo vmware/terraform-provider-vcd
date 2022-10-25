@@ -25,9 +25,9 @@ data "vcd_org_vdc" "existing" {
 }
 
 data "vcd_nsxt_edge_cluster" "first" {
-  org     = "my-org"
-  vdc_id  = data.vcd_org_vdc.existing.id
-  name    = "edge-cluster-one"
+  org    = "my-org"
+  vdc_id = data.vcd_org_vdc.existing.id
+  name   = "edge-cluster-one"
 }
 ```
 
@@ -54,9 +54,9 @@ data "vcd_provider_vdc" "nsxt-pvdc" {
 }
 
 data "vcd_nsxt_edge_cluster" "first" {
-  org              = "my-org"
-  provider_vdc_id  = data.vcd_provider_vdc.nsxt-pvdc.id
-  name             = "edge-cluster-one"
+  org             = "my-org"
+  provider_vdc_id = data.vcd_provider_vdc.nsxt-pvdc.id
+  name            = "edge-cluster-one"
 }
 ```
 
