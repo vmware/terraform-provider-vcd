@@ -265,6 +265,7 @@ func setDataSourceEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminV
 		// insufficient rights that the user has. It will work with System user but might not work
 		// for users that got
 		logForScreen("data.vcd_org_vdc", fmt.Sprintf("got error while attempting to retrieve Edge Cluster ID: %s", err))
+		dSet(d, "edge_cluster_id", "")
 		return nil
 	}
 
