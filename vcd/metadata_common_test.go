@@ -20,17 +20,18 @@ import (
 // The data source HCL is always concatenated to the resource after creation, and it's skipped on binary tests.
 //
 // Tests:
-// - Step 1:  Create 4 metadata entries, 1 for string, number, bool, date with GENERAL domain (is_system = false)
-// - Step 2:  Add a data source
-// - Step 3:  Delete 1 metadata entry, the bool one
-// - Step 4:  Update the string and date metadata values
-// - Step 5:  Delete all of them
-// - Step 6:  (Sysadmin only) Create 2 entries with is_system=true (readonly and private user_access)
-// - Step 7:  (Sysadmin only) Update the hidden one
-// - Step 8:  (Sysadmin only) Delete all of them
-// - Step 9:  Check a malformed metadata entry
-// - Step 10: (Org user only) Check that specifying an is_system metadata entry with a tenant user gives an error
-// - Step 11,12: Some extra tests for deprecated `metadata` attribute
+// - Step 1:  Start with no metadata
+// - Step 2:  Create 4 metadata entries, 1 for string, number, bool, date with GENERAL domain (is_system = false)
+// - Step 3:  Add a data source
+// - Step 4:  Delete 1 metadata entry, the bool one
+// - Step 5:  Update the string and date metadata values
+// - Step 6:  Delete all of them
+// - Step 7:  (Sysadmin only) Create 2 entries with is_system=true (readonly and private user_access)
+// - Step 8:  (Sysadmin only) Update the hidden one
+// - Step 9:  (Sysadmin only) Delete all of them
+// - Step 10:  Check a malformed metadata entry
+// - Step 11: (Org user only) Check that specifying an is_system metadata entry with a tenant user gives an error
+// - Step 12+: Some extra tests for deprecated `metadata` attribute
 func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
@@ -43,6 +44,11 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 		params[extraParam] = extraParamValue
 	}
 	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "NoMetadata"
+	params["Metadata"] = " "
+	noMetadataHcl := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", noMetadataHcl)
 
 	params["FuncName"] = t.Name() + "Create"
 	params["Metadata"] = getMetadataTestingHcl(1, 1, 1, 1, 0, 0)
@@ -117,6 +123,14 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				Config: noMetadataHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata.%", "0"), // Deprecated
+				),
+			},
 			{
 				Config: createHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(

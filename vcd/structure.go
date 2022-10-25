@@ -225,13 +225,13 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible,
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := resource.DeleteMetadataEntry(k)
+			err = resource.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		if len(newMetadata) > 0 {
-			err := resource.MergeMetadata(types.MetadataStringValue, newMetadata)
+			err = resource.MergeMetadata(types.MetadataStringValue, newMetadata)
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}

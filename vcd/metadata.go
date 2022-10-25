@@ -165,7 +165,7 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 		return err
 	}
 
-	// Deprecated, just for compatibility reasons
+	// Set deprecated metadata attribute, just for compatibility reasons
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return err
