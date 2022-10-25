@@ -113,9 +113,9 @@ type metadataCompatible interface {
 	DeleteMetadataEntryWithDomain(key string, isSystem bool) error
 }
 
-// createOrUpdateMetadataInVcd creates or updates metadata entries in VCD for the given resource, only if the attribute
+// createOrUpdateMetadataEntryInVcd creates or updates metadata entries in VCD for the given resource, only if the attribute
 // metadata_entry has been set or updated in the state.
-func createOrUpdateMetadataInVcd(d *schema.ResourceData, resource metadataCompatible) error {
+func createOrUpdateMetadataEntryInVcd(d *schema.ResourceData, resource metadataCompatible) error {
 	if !d.HasChange("metadata_entry") {
 		return nil
 	}
