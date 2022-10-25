@@ -878,7 +878,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	var vmComputePolicy *types.ComputePolicy
 	if sizingPolicyRef != nil || placementPolicyRef != nil {
 		vmComputePolicy = &types.ComputePolicy{
-			VmSizingPolicy: sizingPolicyRef,
+			VmSizingPolicy:    sizingPolicyRef,
 			VmPlacementPolicy: placementPolicyRef,
 		}
 	}
@@ -1175,7 +1175,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	var vmComputePolicy *types.ComputePolicy
 	if sizingPolicyRef != nil || placementPolicyRef != nil {
 		vmComputePolicy = &types.ComputePolicy{
-			VmSizingPolicy: sizingPolicyRef,
+			VmSizingPolicy:    sizingPolicyRef,
 			VmPlacementPolicy: placementPolicyRef,
 		}
 	}
