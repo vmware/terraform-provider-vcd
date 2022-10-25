@@ -205,7 +205,7 @@ func contains(sliceToSearch []string, searched string) bool {
 // once "metadata" field is removed.
 func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
 	// We invoke the new "metadata_entry" metadata creation here to have it centralized and reduce duplication.
-	// Ideally, once "metadata" is removed in a new major, the implementation of `createOrUpdateMetadataEntryInVcd` should
+	// Ideally, once "metadata" is removed in a new major version, the implementation of `createOrUpdateMetadataEntryInVcd` should
 	// just go here in the `createOrUpdateMetadata` body.
 	err := createOrUpdateMetadataEntryInVcd(d, resource)
 	if err != nil {
