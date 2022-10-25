@@ -1418,17 +1418,33 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		return diag.FromErr(err)
 	}
 
-	if d.HasChange("sizing_policy_id") {
-		var sizingPolicy *types.VdcComputePolicy
-		value := d.Get("sizing_policy_id")
-		vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
-		if err != nil {
-			return diag.Errorf("error getting sizing policy %s: %s", value.(string), err)
+	sizingPolicyChanged := d.HasChange("sizing_policy_id")
+	placementPolicyChanged := d.HasChange("placement_policy_id")
+	if sizingPolicyChanged || placementPolicyChanged {
+
+		var sizingPolicy *types.VdcComputePolicyV2
+		if sizingPolicyChanged {
+			sizingPolicyId := d.Get("sizing_policy_id").(string)
+			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(sizingPolicyId)
+			if err != nil {
+				return diag.Errorf("error getting sizing policy %s: %s", sizingPolicyId, err)
+			}
+			sizingPolicy = vdcComputePolicy.VdcComputePolicyV2
 		}
-		sizingPolicy = vdcComputePolicy.VdcComputePolicy
-		_, err = vm.UpdateComputePolicy(sizingPolicy)
+
+		var placementPolicy *types.VdcComputePolicyV2
+		if placementPolicyChanged {
+			placementPolicyId := d.Get("placement_policy_id").(string)
+			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(placementPolicyId)
+			if err != nil {
+				return diag.Errorf("error getting placement policy %s: %s", placementPolicyId, err)
+			}
+			placementPolicy = vdcComputePolicy.VdcComputePolicyV2
+		}
+
+		_, err = vm.UpdateComputePolicyV2(sizingPolicy, placementPolicy)
 		if err != nil {
-			return diag.Errorf("error updating sizing policy %s: %s", value.(string), err)
+			return diag.Errorf("error updating compute policy: %s", err)
 		}
 	}
 

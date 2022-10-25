@@ -638,7 +638,7 @@ These fields can be updated only when VM is **powered off** (provider automatica
 
 These fields can be updated when VM is **powered on**:
 
-`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id` FIXME!!!!????
+`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id`
 
 Notes about **removing** `network`:
 
