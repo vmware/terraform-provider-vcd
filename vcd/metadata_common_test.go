@@ -20,8 +20,8 @@ import (
 // The data source HCL is always concatenated to the resource after creation, and it's skipped on binary tests.
 //
 // Tests:
-// - Step 1:  Start with no metadata
-// - Step 2:  Create 4 metadata entries, 1 for string, number, bool, date with GENERAL domain (is_system = false)
+// - Step 1:  Create the resource with no metadata
+// - Step 2:  Taint and re-create with 4 metadata entries, 1 for string, number, bool, date with GENERAL domain (is_system = false)
 // - Step 3:  Add a data source
 // - Step 4:  Delete 1 metadata entry, the bool one
 // - Step 5:  Update the string and date metadata values
@@ -133,6 +133,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 			},
 			{
 				Config: createHcl,
+				Taint: []string{resourceAddress}, // Forces re-creation to test Create with metadata.
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "4"),
@@ -159,6 +160,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "3"),
+					// The bool is deleted
 					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
 					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
