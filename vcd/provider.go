@@ -188,7 +188,6 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_catalog_vapp_template":                     resourceVcdCatalogVappTemplate(),              // 3.8
 	"vcd_catalog_access_control":                    resourceVcdCatalogAccessControl(),             // 3.8
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
-	//"vcd_catalog_sync":                              resourceVcdCatalogSync(),                      // 3.8
 }
 
 // Provider returns a terraform.ResourceProvider.

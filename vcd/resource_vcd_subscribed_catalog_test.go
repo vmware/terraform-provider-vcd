@@ -34,7 +34,6 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 			"VappTemplateBaseName":    "test-vt",
 			"MediaItemBaseName":       "test-media",
 			"MakeLocalCopy":           false,
-			"SubscriptionTimeout":     15,
 			"OvaPath":                 testConfig.Ova.OvaPath,
 			"MediaPath":               testConfig.Media.MediaPath,
 			"NumberOfVappTemplates":   numberOfVappTemplates,
@@ -151,7 +150,7 @@ resource "vcd_catalog" "{{.PublisherCatalog}}" {
   delete_recursive = "true"
 
   publish_enabled               = "true"
-  cache_enabled                 = "false"
+  cache_enabled                 = "true"
   preserve_identity_information = "false"
   password                      = "{{.Password}}"
 }
@@ -191,8 +190,9 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 
   subscription_url      = vcd_catalog.{{.PublisherCatalog}}.publish_subscription_url
   make_local_copy       = {{.MakeLocalCopy}}
-  timeout               = {{.SubscriptionTimeout}}
   subscription_password = "{{.Password}}"
+
+  sync_on_refresh = true
 }
 `
 
@@ -206,9 +206,9 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 
   subscription_url      = vcd_catalog.{{.PublisherCatalog}}.publish_subscription_url
   make_local_copy       = {{.MakeLocalCopy}}
-  timeout               = {{.SubscriptionTimeout}}
   subscription_password = "{{.Password}}"
 
-  sync_all = true
+  sync_on_refresh = true
+  sync_all        = true
 }
 `
