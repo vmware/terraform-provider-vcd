@@ -50,8 +50,8 @@ resource "vcd_subscribed_catalog" "subscriber" {
   make_local_copy       = false
   subscription_password = var.subscription_password
 
-  sync_on_refresh         = true
-  sync_all                = true
+  sync_on_refresh = true
+  sync_all        = true
 }
 ```
 

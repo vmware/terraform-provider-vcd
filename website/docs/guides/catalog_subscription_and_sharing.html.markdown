@@ -125,7 +125,7 @@ resource "vcd_catalog" "publisher" {
   # publishing parameters
   publish_enabled               = true
   cache_enabled                 = true
-  preserve_identity_information = false             
+  preserve_identity_information = false
   password                      = var.password
 }
 ```

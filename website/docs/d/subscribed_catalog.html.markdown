@@ -19,8 +19,7 @@ Supported in provider *v3.8+*
 ## Example
 
 ```hcl
-
-data  "vcd_subscribed_catalog" "subscriber" {
+data "vcd_subscribed_catalog" "subscriber" {
   org  = "my-org"
   name = "subscriber"
 }
