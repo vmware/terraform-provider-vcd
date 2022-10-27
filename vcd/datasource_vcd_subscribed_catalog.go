@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func datasourceVcdSubscribedCatalog() *schema.Resource {
@@ -59,7 +60,7 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Catalog version number.",
+				Description: "Catalog version number. Inherited from the publishing catalog.",
 			},
 			"owner_name": {
 				Type:        schema.TypeString,
@@ -115,10 +116,21 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of failed synchronization tasks",
 			},
-			"tasks_file_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Where the running tasks IDs have been stored",
+			"filter": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving a catalog by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
+						"date":       elementDate,
+						"earliest":   elementEarliest,
+						"latest":     elementLatest,
+						"metadata":   elementMetadata,
+					},
+				},
 			},
 		},
 	}
@@ -139,7 +151,15 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 	if identifier == "" {
 		identifier = catalogName
 	}
-	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(identifier, false)
+
+	var adminCatalog *govcd.AdminCatalog
+	filter, hasFilter := d.GetOk("filter")
+
+	if hasFilter {
+		adminCatalog, err = getCatalogByFilter(adminOrg, filter, vcdClient.Client.IsSysAdmin)
+	} else {
+		adminCatalog, err = adminOrg.GetAdminCatalogByNameOrId(identifier, false)
+	}
 	if err != nil {
 		return diag.Errorf("error retrieving catalog '%s.%s' : %s", adminOrg.AdminOrg.Name, identifier, err)
 	}
