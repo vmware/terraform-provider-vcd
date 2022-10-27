@@ -1107,7 +1107,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		vappName := d.Get("vapp_name").(string)
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
-			return nil, fmt.Errorf("[VM create] error finding vApp for empty VM%s: %s", vappName, err)
+			return nil, fmt.Errorf("[VM create] error finding vApp for empty VM %s: %s", vappName, err)
 		}
 	}
 
