@@ -114,7 +114,7 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
 			},
-			"published_subscription_url": {
+			"publish_subscription_url": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL to which other catalogs can subscribe",
@@ -185,7 +185,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "publish_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
 		dSet(d, "cache_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
 		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
-		dSet(d, "published_subscription_url", catalog.FullSubscriptionUrl())
+		dSet(d, "publish_subscription_url", catalog.FullSubscriptionUrl())
 	}
 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
