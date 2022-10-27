@@ -7,6 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// Note: This data source was created as help to troubleshooting vcd_subscribed_catalogs.
+// With fortified code in that resource, however, the need to use the task data source has
+// gone away. It is undocumented, for now (entry in vcd.erb commented out), and it will stay so unless we decide to make it public.
+
 func datasourceVcdTask() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdTaskRead,
