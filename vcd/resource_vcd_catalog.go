@@ -75,7 +75,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"cache_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
+				Default:     true,
 				Description: "True enables early catalog export to optimize synchronization",
 			},
 			"preserve_identity_information": {
