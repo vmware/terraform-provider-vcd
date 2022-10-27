@@ -23,6 +23,8 @@ type TaskIdCollection struct {
 	Failed  []string
 }
 
+type contextString string
+
 const taskFileName = "vcd-catalog-sync-tasks-{ID}.json"
 
 func resourceVcdSubscribedCatalog() *schema.Resource {
@@ -268,7 +270,7 @@ func resourceVcdSubscribedCatalogCreate(ctx context.Context, d *schema.ResourceD
 	d.SetId(adminCatalog.AdminCatalog.ID)
 
 	// Creation will start the initial synchronisation. A new one should not be run when `sync_on_refresh` is set
-	ctx = context.WithValue(ctx, "operation", "create")
+	ctx = context.WithValue(ctx, contextString("operation"), contextString("create"))
 	log.Printf("[TRACE] Subscribed Catalog created: %#v", adminCatalog)
 	return resourceVcdSubscribedCatalogRead(ctx, d, meta)
 }
@@ -421,7 +423,7 @@ func resourceVcdSubscribedCatalogUpdate(ctx context.Context, d *schema.ResourceD
 			return c.UpdateSubscriptionParams(params)
 		}
 	}
-	ctx = context.WithValue(ctx, "operation", "update")
+	ctx = context.WithValue(ctx, contextString("operation"), contextString("update"))
 	return genericResourceVcdCatalogUpdate(ctx, d, meta,
 		[]moreUpdateCatalogFunc{
 			updateSubscriptionFunc,
