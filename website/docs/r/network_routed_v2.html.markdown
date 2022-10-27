@@ -156,6 +156,14 @@ resource "vcd_network_routed_v2" "example" {
     user_access = "PRIVATE"
     is_system   = "true" # Requires System admin privileges
   }
+
+  metadata_entry {
+    key         = "myBool"
+    type        = "MetadataBooleanValue"
+    value       = "true"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
 }
 ```
 
