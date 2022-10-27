@@ -19,12 +19,6 @@ Supported in provider *v3.8+*
 ## Example creation usage
 
 ```hcl
-
-data "vcd_catalog" "publisher" {
-  org  = "some-other-org"  
-  name = "publisher"
-}
-
 resource "vcd_subscribed_catalog" "subscriber" {
   org  = "my-org"
   name = "subscriber"
@@ -32,9 +26,8 @@ resource "vcd_subscribed_catalog" "subscriber" {
   delete_force     = "true"
   delete_recursive = "true"
 
-  subscription_url      = data.vcd_catalog.publisher.publish_subscription_url
+  subscription_url      = var.subscription_url
   make_local_copy       = true
-  timeout               = 15
   subscription_password = var.subscription_password
 }
 
@@ -46,11 +39,6 @@ When a subscribed catalog needs to be updated (i.e. getting new items that were 
 refresh the resource:
 
 ```hcl
-data "vcd_catalog" "publisher" {
-  org  = "some-other-org"  
-  name = "publisher"
-}
-
 resource "vcd_subscribed_catalog" "subscriber" {
   org  = "my-org"
   name = "subscriber"
@@ -58,13 +46,12 @@ resource "vcd_subscribed_catalog" "subscriber" {
   delete_force     = "true"
   delete_recursive = "true"
 
-  subscription_url      = data.vcd_catalog.publisher.publish_subscription_url
+  subscription_url      = var.subscription_url
   make_local_copy       = false
   subscription_password = var.subscription_password
 
   sync_on_refresh         = true
   sync_all                = true
-  
 }
 ```
 
@@ -72,24 +59,43 @@ resource "vcd_subscribed_catalog" "subscriber" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `org` - (Optional) The name of organization to use, optional if defined at provider level.
 * `name` - (Required) Catalog name
-* `storage_profile_id` - (Optional, *v3.1+*) Allows to set specific storage profile to be used for catalog. **Note.** Data
-source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/storage_profile) can help to lookup storage profile ID.
-* `delete_recursive` - (Required) When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal
-* `delete_force` -(Required) When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state
-* `subscription_password` - An optional password to access the catalog. Only ASCII characters are allowed in a valid password.
-
+* `storage_profile_id` - (Optional) Allows to set specific storage profile to be used for catalog.
+* `delete_recursive` - (Required) When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.
+* `delete_force` -(Required) When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.
+* `subscription_password` - (Optional) An optional password to access the catalog. Only ASCII characters are allowed in a valid password. 
+  The password is only required when set by the publishing catalog. Passing in six asterisks '******' indicates to keep current password. 
+  Passing in an empty string indicates to remove password.
+* `subscription_url` - (Required) The URL to subscribe to the external catalog.
+* `make_local_copy` - (Optional) If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed.
+* `sync_on_refresh` - (Optional) Boolean value that shows if sync should be performed on every refresh.
+* `sync_all` - (Optional) If true, synchronise this catalog and all items. 
+* `sync_catalog` (Optional) If true, synchronise this catalog. Not to be used when `sync_all` is set. This operation fetches the list of items. If `make_local_copy` is set, it also synchronises all the items.
+* `sync_all_vapp_templates` (Optional) If true, synchronise all vApp templates. Not to be used when `sync_all` is set.
+* `sync_all_media_items` (Optional) If true, synchronise all media items. Not to be used when `sync_all` is set.
+* `sync_vapp_templates` (Optional) Synchronise a list of vApp templates. Not to be used when `sync_all` or `sync_all_vapp_templates` are set.
+* `sync_media_items` (Optional) Synchronise a list of media items. Not to be used when `sync_all` or `sync_all_media_items` are set.
+* `store_tasks` - (Optional) if true, saves the list of tasks to a file for later update.
+ 
 ## Attribute Reference
 
-* `description` -  Description of catalog. This is inherited from the publishing catalog
-* `catalog_version` - Version number from this catalog.
+* `description` -  Description of catalog. This is inherited from the publishing catalog and updated on sync.
+* `metadata` -  Optional metadata of the catalog. This is inherited from the publishing catalog and updated on sync.
+* `catalog_version` - Version number from this catalog. This is inherited from the publishing catalog and updated on sync.
 * `owner_name` - Owner of the catalog.
 * `number_of_vapp_templates` - Number of vApp templates available in this catalog.
 * `number_of_media` - Number of media items available in this catalog.
+* `vapp_template_list` List of vApp templates in this catalog.
+* `media_item_list` List of media items in this catalog.
 * `is_shared` - Indicates if the catalog is shared.
-* `is_published` - Indicates if this catalog is available for subscription.
-* `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those.
+* `is_published` - Indicates if this catalog is available for subscription. (Always false)
+* `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those. (Always "SUBSCRIBED")
+* `href` - the Hyper reference of the catalog.
+* `created` - Date and time of catalog creation. This is the creation date of the subscription, not the original published catalog.
+* `running_tasks` - List of running synchronization tasks that are still running. They can refer to the catalog or any of its catalog items.
+* `failed_tasks` - List of synchronization tasks that are have failed. They can refer to the catalog or any of its catalog items.
+* `tasks_file_name` Where the running tasks IDs have been stored. Only if `store_tasks` is set.
 
 ## Importing
 
