@@ -593,7 +593,6 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"placement_policy_id": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "VM placement policy ID. Has to be assigned to Org VDC.",
 		},
 		"status": {
@@ -1424,7 +1423,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 
 		var sizingPolicy *types.VdcComputePolicyV2
 		if sizingPolicyChanged {
-			sizingPolicyId := d.Get("sizing_policy_id").(string)
+			sizingPolicyId := d.Get("sizing_policy_id").(string) // It's always set as it's Computed
 			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(sizingPolicyId)
 			if err != nil {
 				return diag.Errorf("error getting sizing policy %s: %s", sizingPolicyId, err)
@@ -1434,8 +1433,11 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 
 		var placementPolicy *types.VdcComputePolicyV2
 		if placementPolicyChanged {
-			placementPolicyId := d.Get("placement_policy_id").(string)
-			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(placementPolicyId)
+			placementPolicyId, newPlacementPolicyId := d.GetChange("placement_policy_id")
+			if newPlacementPolicyId.(string) != "" {
+				placementPolicyId = newPlacementPolicyId
+			}
+			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(placementPolicyId.(string))
 			if err != nil {
 				return diag.Errorf("error getting placement policy %s: %s", placementPolicyId, err)
 			}

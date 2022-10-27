@@ -5,6 +5,8 @@
 package vcd
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -70,20 +72,26 @@ func TestAccVcdStandaloneVmWithVmPlacement(t *testing.T) {
 					// vApp VM
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
+					stateDumper(),
 				),
 			},
 			{
 				Config: deletePlacementHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Standalone VM
 					resource.TestCheckNoResourceAttr("vcd_vm."+t.Name(), "placement_policy_id"),
-					// vApp VM
 					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 				),
 			},
 		},
 	})
 	postTestChecks(t)
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
 }
 
 const testAccCheckVcdVappVmAndVmWithPlacementPreReqs = `
@@ -215,8 +223,6 @@ resource "vcd_vapp_vm" "{{.Name}}" {
   catalog_name     = "{{.Catalog}}"
   boot_image       = "{{.Media}}"
   power_on         = "true"
-
-  vm_sizing_policy_id = vcd_vm_sizing_policy.sizing.id
 }
 
 resource "vcd_vm" "{{.Name}}" {
@@ -232,7 +238,5 @@ resource "vcd_vm" "{{.Name}}" {
   catalog_name      = "{{.Catalog}}"
   boot_image        = "{{.Media}}"
   power_on          = "true"
-
-  vm_sizing_policy_id = vcd_vm_sizing_policy.sizing.id
 }
 `
