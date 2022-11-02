@@ -8,7 +8,7 @@ sc_exit_code=0
 
 if [ ! -d ./vcd ]
 then
-    echo "source directory ./govcd not found"
+    echo "source directory ./vcd not found"
     exit 1
 fi
 
