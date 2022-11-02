@@ -6,7 +6,7 @@ cd - > /dev/null
 
 sc_exit_code=0
 
-if [ ! -d ./govcd ]
+if [ ! -d ./vcd ]
 then
     echo "source directory ./govcd not found"
     exit 1
