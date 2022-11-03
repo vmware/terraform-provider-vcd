@@ -26,24 +26,25 @@ func datasourceVcdNsxtEdgeCluster() *schema.Resource {
 				Optional:      true,
 				Description:   "The name of VDC to use, optional if defined at provider level",
 				ConflictsWith: []string{"vdc_id", "vdc_group_id", "provider_vdc_id"},
-				Deprecated:    "This field is deprecated in favor of 'owner_id' which accepts IDs of VDC, VDC Group and Provider VDC",
+				Deprecated: "This field is deprecated in favor of 'vdc', 'vdc_group_id', and " +
+					"'provider_vdc_id' which accept IDs of VDC, VDC Group and Provider VDC respectively",
 			},
 			"vdc_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "ID of VDC, VDC Group or Provider VDC",
+				Description:   "ID of VDC",
 				ConflictsWith: []string{"vdc", "vdc_group_id", "provider_vdc_id"},
 			},
 			"vdc_group_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "ID of VDC, VDC Group or Provider VDC",
+				Description:   "ID of VDC Group",
 				ConflictsWith: []string{"vdc", "vdc_id", "provider_vdc_id"},
 			},
 			"provider_vdc_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "ID of VDC, VDC Group or Provider VDC",
+				Description:   "ID Provider VDC",
 				ConflictsWith: []string{"vdc", "vdc_id", "vdc_group_id"},
 			},
 			"name": {
