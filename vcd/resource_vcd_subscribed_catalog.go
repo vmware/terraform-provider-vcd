@@ -507,7 +507,7 @@ func storeTaskIdCollection(catalogId string, collection TaskIdCollection, d *sch
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(fileName, encoded, 0666)
+	err = os.WriteFile(filepath.Clean(fileName), encoded, 0600)
 	if err != nil {
 		return err
 	}
@@ -526,7 +526,7 @@ func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.Reso
 	if err != nil {
 		return TaskIdCollection{}, fmt.Errorf("error setting file name for task collection: %s", err)
 	}
-	contents, err := os.ReadFile(fileName)
+	contents, err := os.ReadFile(filepath.Clean(fileName))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return TaskIdCollection{}, nil
