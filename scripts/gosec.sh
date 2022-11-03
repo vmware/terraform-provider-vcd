@@ -29,23 +29,13 @@ function get_gosec {
     gosec=$(exists_in_path gosec)
     if [ -z "$gosec" -a -n "$GITHUB_ACTIONS" ]
     then
-        # Variables found in gosec-config.sh
-        # GOSEC_URL
-        # GOSEC_VERSION
-        if [ -f $scripts_dir/gosec-config.sh ]
-        then
-            source $scripts_dir/gosec-config.sh
-        else
-            echo "File $scripts_dir/gosec-config.sh not found - Skipping gosec"
-            exit 0
-        fi
         curl=$(exists_in_path curl)
         if [ -z "$curl" ]
         then
             echo "'curl' executable not found - Skipping gosec"
             exit 0
         fi
-        $curl -sfL "$GOSEC_URL" | sh -s "$GOSEC_VERSION"
+        $curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh
         exit_code=$?
         if [ "$exit_code" != "0" ]
         then
@@ -68,7 +58,7 @@ function get_gosec {
 function run_gosec {
     if [ -n "$gosec" ]
     then
-        $gosec ./... -tags ALL .
+        $gosec -tests -tags ALL ./...
         exit_code=$?
         if [ "$exit_code" != "0" ]
         then
