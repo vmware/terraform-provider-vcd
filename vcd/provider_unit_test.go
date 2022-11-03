@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -31,7 +32,7 @@ func TestProviderVersion(t *testing.T) {
 		panic("Could not find index.html.markdown file")
 	}
 
-	indexText, err := os.ReadFile(indexFile)
+	indexText, err := os.ReadFile(filepath.Clean(indexFile))
 	if err != nil {
 		panic(fmt.Errorf("could not read index file %s: %v", indexFile, err))
 	}
