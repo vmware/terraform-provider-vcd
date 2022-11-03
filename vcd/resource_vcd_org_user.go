@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -214,8 +215,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	}
 
 	if passwordFile != "" {
-		// #nosec G304 -- The idea is that one can put any path here, this is pretty much how HCL works.
-		passwordBytes, err := os.ReadFile(passwordFile)
+		passwordBytes, err := os.ReadFile(filepath.Clean(passwordFile))
 		if err != nil {
 			return nil, nil, err
 		}

@@ -1599,7 +1599,7 @@ func isTestInFile(testName, fileType string) bool {
 	if !fileExists(fileName) {
 		return false
 	}
-	f, err := os.Open(fileName) // #nosec G304
+	f, err := os.Open(filepath.Clean(fileName))
 	if err != nil {
 		return false
 	}
