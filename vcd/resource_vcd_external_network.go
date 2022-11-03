@@ -201,6 +201,10 @@ func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) er
 	extNeRes, ID, err := getExternalNetworkResource(vcdClient.VCDClient, identifier)
 
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("error fetching external network (%s) details %s", identifier, err)
 	}
 	err = setExternalNetworkData(d, extNeRes)

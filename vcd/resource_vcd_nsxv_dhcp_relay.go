@@ -135,6 +135,10 @@ func resourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) erro
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 

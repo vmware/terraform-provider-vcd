@@ -172,6 +172,11 @@ func resourceAccessControlVappRead(_ context.Context, d *schema.ResourceData, me
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			// If vApp is not found - it means that Access Control must be recreated as well
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("[resourceAccessControlVappRead] error retrieving vApp %s. %s", vappId, err)
 	}
 

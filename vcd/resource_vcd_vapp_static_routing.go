@@ -2,10 +2,12 @@ package vcd
 
 import (
 	"context"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
 )
 
 func resourceVcdVappNetworkStaticRouting() *schema.Resource {
@@ -155,6 +157,10 @@ func resourceVappNetworkStaticRoutingRead(_ context.Context, d *schema.ResourceD
 
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error finding vApp network. %s", err)
 	}
 

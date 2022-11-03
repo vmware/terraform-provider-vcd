@@ -318,6 +318,10 @@ func resourceVcdOrgUserRead(_ context.Context, d *schema.ResourceData, meta inte
 
 	orgUser, _, err := resourceToOrgUser(d, meta)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("[user read] error filling data %s", err)
 	}
 	err = setOrgUserData(d, orgUser)
