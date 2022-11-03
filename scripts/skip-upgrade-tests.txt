@@ -227,3 +227,4 @@ vcd.ResourceSchema-vcd_org_vdc.tf v3.7.0 "Changed 'sizing_policy_id' description
 vcd.ResourceSchema-vcd_vapp.tf v3.7.0 "Deprecated 'metadata' attribute is now Computed (PR 917)"
 vcd.ResourceSchema-vcd_vapp_vm.tf v3.7.0 "Deprecated 'metadata' attribute is now Computed (PR 917)"
 vcd.ResourceSchema-vcd_vm.tf v3.7.0 "Deprecated 'metadata' attribute is now Computed (PR 917)"
+vcd.TestAccVcdStandaloneVmTemplate.tf v3.7.0 "Added 'status', 'status_text' and 'metadata_entry' computed attributes (PR 901)"
