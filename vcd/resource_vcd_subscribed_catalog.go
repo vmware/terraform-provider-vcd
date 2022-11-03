@@ -218,7 +218,7 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 			"store_tasks": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
+				Default:     false,
 				Description: "If true, saves list of tasks to file for later update",
 			},
 			"tasks_file_name": {
