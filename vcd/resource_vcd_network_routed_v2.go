@@ -231,7 +231,8 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	// Metadata is not supported when the network is in a VDC Group
+	// Metadata is not supported when the network is in a VDC Group, although it is still present in the entity.
+	// Hence, we skip the read.
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
 		err = updateMetadataInState(d, orgNetwork)
 		if err != nil {
