@@ -38,7 +38,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
+				//ForceNew: true,
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -360,9 +360,12 @@ func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData
 		newAdminCatalog.AdminCatalog.Description = d.Get("description").(string)
 	}
 
-	err = newAdminCatalog.Update()
-	if err != nil {
-		return diag.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
+	if d.HasChanges("name", "description", "storage_profile_id") {
+		newAdminCatalog.AdminCatalog.Name = d.Get("name").(string)
+		err = newAdminCatalog.Update()
+		if err != nil {
+			return diag.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
+		}
 	}
 
 	// Subscribed catalogs cannot add or change publishing parameters or metadata
@@ -468,8 +471,6 @@ func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatal
 
 	dSet(d, "catalog_version", catalogRecords[0].Version)
 	dSet(d, "owner_name", catalogRecords[0].OwnerName)
-	dSet(d, "number_of_vapp_templates", catalogRecords[0].NumberOfVAppTemplates)
-	dSet(d, "number_of_media", catalogRecords[0].NumberOfMedia)
 	dSet(d, "is_published", catalogRecords[0].IsPublished)
 	dSet(d, "is_shared", catalogRecords[0].IsShared)
 	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
@@ -514,6 +515,8 @@ func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatal
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
+	dSet(d, "number_of_vapp_templates", len(vappTemplates))
+	dSet(d, "number_of_media", len(mediaItems))
 
 	return nil
 }
