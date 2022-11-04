@@ -79,6 +79,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 				ResourceName: resourcePublisher,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdCatalogExists(resourcePublisher),
+					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
 					resource.TestCheckResourceAttr(resourcePublisher, "name", publisherCatalog),
 					resource.TestCheckResourceAttr(resourcePublisher, "description", publisherDescription),
 					resource.TestCheckResourceAttr(resourcePublisher, "publish_subscription_type", "PUBLISHED"),
@@ -88,24 +89,83 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 			{
 				Config:       subscriberConfigText,
 				ResourceName: resourceSubscriber,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogExists(resourcePublisher),
-					testAccCheckVcdCatalogExists(resourceSubscriber),
-					resource.TestCheckResourceAttr(resourceSubscriber, "name", resourceSubscriber),
-					resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, false, 0, 0, 0),
+					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
 					resource.TestCheckResourceAttr(
 						resourcePublisher, "number_of_vapp_templates", fmt.Sprintf("%d", numberOfVappTemplates)),
 					resource.TestCheckResourceAttr(
 						resourcePublisher, "number_of_media", fmt.Sprintf("%d", numberOfMediaItems)),
-					resource.TestCheckResourceAttr(
-						resourceSubscriber, "number_of_vapp_templates", fmt.Sprintf("%d", numberOfVappTemplates)),
-					resource.TestCheckResourceAttr(
-						resourceSubscriber, "number_of_media", fmt.Sprintf("%d", numberOfMediaItems)),
+					resource.TestCheckResourceAttr(resourceSubscriber, "number_of_vapp_templates", "0"),
+					resource.TestCheckResourceAttr(resourceSubscriber, "number_of_media", "0"),
+				),
+			},
+			{
+				Config:       subscriberConfigTextUpdate,
+				ResourceName: resourceSubscriber,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+					resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
 				),
 			},
 		},
 	})
 	postTestChecks(t)
+}
+
+// testCheckCatalogAndItemsExist checks that a catalog exists, and optionally that it has as many items as expected
+// * checkItems defines whether we count the items or not
+// * expectedItems is the total number of catalog items (includes both vApp templates and media items)
+// * expectedTemplates is the number of vApp templates
+// expectedMedia is the number of Media
+func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
+		if err != nil {
+			return err
+		}
+		catalog, err := org.GetAdminCatalogByName(catalogName, false)
+		if err != nil {
+			return err
+		}
+		if !checkItems {
+			return nil
+		}
+
+		if catalog.AdminCatalog.Tasks != nil {
+			err = catalog.WaitForTasks()
+			if err != nil {
+				return err
+			}
+		}
+
+		items, err := catalog.QueryCatalogItemList()
+		if err != nil {
+			return err
+		}
+		vappTemplates, err := catalog.QueryVappTemplateList()
+		if err != nil {
+			return err
+		}
+		mediaItems, err := catalog.QueryMediaList()
+		if err != nil {
+			return err
+		}
+		if len(items) != expectedItems {
+			return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
+		}
+		if len(vappTemplates) != expectedTemplates {
+			return fmt.Errorf("catalog '%s' -expected %d vApp templates - found %d", catalogName, expectedTemplates, len(vappTemplates))
+		}
+		if len(mediaItems) != expectedMedia {
+			return fmt.Errorf("catalog '%s' -expected %d media items - found %d", catalogName, expectedMedia, len(mediaItems))
+		}
+		return nil
+	}
 }
 
 func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc {
@@ -157,18 +217,18 @@ resource "vcd_catalog" "{{.PublisherCatalog}}" {
 `
 
 const testAccVcdPublisherCatalogItems = `
-resource "vcd_catalog_item" "test_vt" {
-  count = {{.NumberOfVappTemplates}}
-  org     = "{{.PublisherOrg}}"
-  catalog = vcd_catalog.{{.PublisherCatalog}}.name
+resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
+  count      = {{.NumberOfVappTemplates}}
+  org        = "{{.PublisherOrg}}"
+  catalog_id = vcd_catalog.{{.PublisherCatalog}}.id
 
-  name                 = "{{.VappTemplateBaseName}}-${count.index}"
-  description          = "test vapp template {{.VappTemplateBaseName}}-${count.index}"
-  ova_path             = "{{.OvaPath}}"
-  upload_piece_size    = 5
+  name              = "{{.VappTemplateBaseName}}-${count.index}"
+  description       = "test vapp template {{.VappTemplateBaseName}}-${count.index}"
+  ova_path          = "{{.OvaPath}}"
+  upload_piece_size = 5
 }
 
-resource "vcd_catalog_media" "test_media" {
+resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
   count   = {{.NumberOfMediaItems}}
   org     = "{{.PublisherOrg}}"
   catalog = vcd_catalog.{{.PublisherCatalog}}.name
