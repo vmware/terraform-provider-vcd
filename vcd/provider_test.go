@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -85,7 +86,7 @@ func createSystemTemporaryVCDConnection() *VCDClient {
 	if configFileName == "" {
 		panic(fmt.Errorf("configuration file %s not found", configFileName))
 	}
-	jsonFile, err := os.ReadFile(configFileName)
+	jsonFile, err := os.ReadFile(filepath.Clean(configFileName))
 	if err != nil {
 		panic(fmt.Errorf("could not read config file %s: %v", configFileName, err))
 	}
