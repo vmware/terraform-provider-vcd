@@ -28,12 +28,19 @@ func TestAccVcdStandaloneVmWithVmPlacement(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	params["AssignedPlacement"] = "placement1"
+	params["AssignedSizing"] = "1"
+	params["AssignedPlacement"] = "1"
 	createHcl := templateFill(testAccCheckVcdVappVmAndVmWithPlacement, params)
 
 	params["FuncName"] = t.Name() + "UpdatePlacement"
-	params["AssignedPlacement"] = "placement2"
+	params["AssignedSizing"] = "1"
+	params["AssignedPlacement"] = "2"
 	updatePlacementHcl := templateFill(testAccCheckVcdVappVmAndVmWithPlacement, params)
+
+	params["FuncName"] = t.Name() + "UpdateSizing"
+	params["AssignedSizing"] = "2"
+	params["AssignedPlacement"] = "2"
+	updateSizingHcl := templateFill(testAccCheckVcdVappVmAndVmWithPlacement, params)
 
 	params["FuncName"] = t.Name() + "DeletePlacement"
 	deletePlacementHcl := templateFill(testAccCheckVcdVappVmAndVmWithoutPlacement, params)
@@ -55,10 +62,14 @@ func TestAccVcdStandaloneVmWithVmPlacement(t *testing.T) {
 					testAccCheckVcdStandaloneVmExistsByVdc(t.Name(), t.Name()+"_vapp_vm", "vcd_vapp_vm."+t.Name()),
 					// Standalone VM
 					resource.TestCheckResourceAttr("vcd_vm."+t.Name(), "name", t.Name()+"_vm"),
+					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "sizing_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement1", "id"),
 					// vApp VM
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "name", t.Name()+"_vapp_vm"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "sizing_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement1", "id"),
 				),
@@ -67,9 +78,28 @@ func TestAccVcdStandaloneVmWithVmPlacement(t *testing.T) {
 				Config: updatePlacementHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Standalone VM
+					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "sizing_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 					// vApp VM
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "sizing_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
+				),
+			},
+			{
+				Config: updateSizingHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Standalone VM
+					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "sizing_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "placement_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
+					// vApp VM
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "sizing_policy_id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 					stateDumper(),
@@ -78,6 +108,7 @@ func TestAccVcdStandaloneVmWithVmPlacement(t *testing.T) {
 			{
 				Config: deletePlacementHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					stateDumper(),
 					resource.TestCheckNoResourceAttr("vcd_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 				),
@@ -116,8 +147,12 @@ resource "vcd_vm_placement_policy" "placement2" {
   vm_group_ids    = [data.vcd_vm_group.vmgroup.id]
 }
 
-resource "vcd_vm_sizing_policy" "sizing" {
-  name        = "sizing"
+resource "vcd_vm_sizing_policy" "sizing1" {
+  name        = "sizing1"
+}
+
+resource "vcd_vm_sizing_policy" "sizing2" {
+  name        = "sizing2"
 }
 
 resource "vcd_org_vdc" "{{.Name}}" {
@@ -152,11 +187,10 @@ resource "vcd_org_vdc" "{{.Name}}" {
   delete_force               = true
   delete_recursive           = true
 
-  default_compute_policy_id   = vcd_vm_placement_policy.{{.AssignedPlacement}}.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.sizing.id]
+  default_compute_policy_id   = vcd_vm_sizing_policy.sizing1.id
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.sizing1.id, vcd_vm_sizing_policy.sizing2.id]
   vm_placement_policy_ids     = [vcd_vm_placement_policy.placement1.id, vcd_vm_placement_policy.placement2.id]
 }
-
 `
 
 const testAccCheckVcdVappVmAndVmWithPlacement = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
@@ -181,7 +215,8 @@ resource "vcd_vapp_vm" "{{.Name}}" {
   boot_image       = "{{.Media}}"
   power_on         = "true"
 
-  placement_policy_id = vcd_vm_placement_policy.{{.AssignedPlacement}}.id
+  sizing_policy_id    = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
+  placement_policy_id = vcd_vm_placement_policy.placement{{.AssignedPlacement}}.id
 }
 
 resource "vcd_vm" "{{.Name}}" {
@@ -198,7 +233,8 @@ resource "vcd_vm" "{{.Name}}" {
   boot_image        = "{{.Media}}"
   power_on          = "true"
 
-  placement_policy_id = vcd_vm_placement_policy.{{.AssignedPlacement}}.id
+  sizing_policy_id    = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
+  placement_policy_id = vcd_vm_placement_policy.placement{{.AssignedPlacement}}.id
 }
 `
 
@@ -223,6 +259,8 @@ resource "vcd_vapp_vm" "{{.Name}}" {
   catalog_name     = "{{.Catalog}}"
   boot_image       = "{{.Media}}"
   power_on         = "true"
+
+  sizing_policy_id    = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
 }
 
 resource "vcd_vm" "{{.Name}}" {
@@ -238,5 +276,7 @@ resource "vcd_vm" "{{.Name}}" {
   catalog_name      = "{{.Catalog}}"
   boot_image        = "{{.Media}}"
   power_on          = "true"
+
+  sizing_policy_id    = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
 }
 `

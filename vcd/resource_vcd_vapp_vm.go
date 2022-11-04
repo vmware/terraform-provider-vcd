@@ -1377,7 +1377,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 }
 
 func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
-	vcdClient, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
+	_, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1420,31 +1420,17 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 	sizingPolicyChanged := d.HasChange("sizing_policy_id")
 	placementPolicyChanged := d.HasChange("placement_policy_id")
 	if sizingPolicyChanged || placementPolicyChanged {
-
-		var sizingPolicy *types.VdcComputePolicyV2
+		sizingId, newSizingId := d.GetChange("sizing_policy_id")
+		placementId, newPlacementId := d.GetChange("placement_policy_id")
+		// This is done because we need to update both policies at the same time, therefore we need to use
+		// the old value if the policy didn't change to preserve it, or update to the new if it changed. // TODO: If it's removed we need sizingId = "" to delete it
 		if sizingPolicyChanged {
-			sizingPolicyId := d.Get("sizing_policy_id").(string) // It's always set as it's Computed
-			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(sizingPolicyId)
-			if err != nil {
-				return diag.Errorf("error getting sizing policy %s: %s", sizingPolicyId, err)
-			}
-			sizingPolicy = vdcComputePolicy.VdcComputePolicyV2
+			sizingId = newSizingId
 		}
-
-		var placementPolicy *types.VdcComputePolicyV2
 		if placementPolicyChanged {
-			placementPolicyId, newPlacementPolicyId := d.GetChange("placement_policy_id")
-			if newPlacementPolicyId.(string) != "" {
-				placementPolicyId = newPlacementPolicyId
-			}
-			vdcComputePolicy, err := vcdClient.GetVdcComputePolicyV2ById(placementPolicyId.(string))
-			if err != nil {
-				return diag.Errorf("error getting placement policy %s: %s", placementPolicyId, err)
-			}
-			placementPolicy = vdcComputePolicy.VdcComputePolicyV2
+			placementId = newPlacementId
 		}
-
-		_, err = vm.UpdateComputePolicyV2(sizingPolicy, placementPolicy)
+		_, err = vm.UpdateComputePolicyV2(sizingId.(string), placementId.(string))
 		if err != nil {
 			return diag.Errorf("error updating compute policy: %s", err)
 		}
