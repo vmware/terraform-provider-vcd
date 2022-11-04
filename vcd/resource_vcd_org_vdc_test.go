@@ -5,6 +5,8 @@ package vcd
 
 import (
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func init() {
@@ -184,5 +186,101 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"MemoryOverheadUpdateValueForAssert": "true",
 	}
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
+}
+
+func TestAccVcdOrgVdcResourceNotFound(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+	}
+
+	// This test invokes go-vcloud-director SDK directly
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"VdcName":                    t.Name(),
+		"OrgName":                    testConfig.VCD.Org,
+		"AllocationModel":            "ReservationPool",
+		"ProviderVdc":                testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"Allocated":                  "1024",
+		"Reserved":                   "1024",
+		"Limit":                      "1024",
+		"LimitIncreased":             "1100",
+		"AllocatedIncreased":         "1100",
+		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
+		"Tags":                       "vdc",
+		"FuncName":                   t.Name(),
+		// cause vDC ignores empty values and use default
+		"MemoryGuaranteed": "1",
+		"CpuGuaranteed":    "1",
+		// The parameters below are for Flex allocation model
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
+		"equalsChar":                         " ",
+		"FlexElasticKey":                     " ",
+		"FlexElasticValue":                   " ",
+		"FlexElasticValueUpdate":             " ",
+		"FlexMemoryOverheadKey":              " ",
+		"FlexMemoryOverheadValue":            " ",
+		"FlexMemoryOverheadValueUpdate":      " ",
+		"MemoryOverheadValueForAssert":       "true",
+		"MemoryOverheadUpdateValueForAssert": "true",
+		"ElasticityValueForAssert":           "false",
+		"ElasticityUpdateValueForAssert":     "false",
+	}
+
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccCheckVcdVdc_basic, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resourceDef := "vcd_org_vdc." + params["VdcName"].(string)
+	cachedId := &testCachedFieldValue{}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVdcExists("vcd_org_vdc."+params["VdcName"].(string)),
+					resource.TestCheckResourceAttr(resourceDef, "name", params["VdcName"].(string)),
+					cachedId.cacheTestResourceFieldValue(resourceDef, "id"),
+				),
+			},
+			{
+				// This function finds newly created resource and deletes it before
+				// next plan check
+				PreConfig: func() {
+					vcdClient := createSystemTemporaryVCDConnection()
+					adminOrg, err := vcdClient.GetAdminOrgByName(params["OrgName"].(string))
+					if err != nil {
+						t.Errorf("error finding getting AdminOrg: %s", err)
+					}
+
+					vdc, err := adminOrg.GetVDCById(cachedId.fieldValue, false)
+					if err != nil {
+						t.Errorf("error finding vdc: %s", err)
+					}
+
+					err = vdc.DeleteWait(true, true)
+					if err != nil {
+						t.Errorf("error deleting vdc: %s", err)
+					}
+
+				},
+				// Expecting to get a non-empty plan because resource was removed using SDK in
+				// PreConfig
+				Config:             configText,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 	postTestChecks(t)
 }
