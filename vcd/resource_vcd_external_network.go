@@ -188,8 +188,12 @@ func setExternalNetworkData(d *schema.ResourceData, extNetRes StringMap) error {
 	return nil
 }
 
-// resourceVcdExternalNetworkRead fetches information about an existing external network
 func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdExternalNetworkRead(d, meta, "resource")
+}
+
+// genericVcdExternalNetworkRead fetches information about an existing external network
+func genericVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	log.Printf("[TRACE] external network read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -201,7 +205,7 @@ func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) er
 	extNeRes, ID, err := getExternalNetworkResource(vcdClient.VCDClient, identifier)
 
 	if err != nil {
-		if govcd.ContainsNotFound(err) {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}

@@ -129,13 +129,17 @@ func resourceVcdNsxvDhcpRelayUpdate(d *schema.ResourceData, meta interface{}) er
 	return resourceVcdNsxvDhcpRelayCreate(d, meta)
 }
 
-// resourceVcdNsxvDhcpRelayRead reads DHCP relay configuration and persists to statefile
 func resourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNsxvDhcpRelayRead(d, meta, "resource")
+}
+
+// genericVcdNsxvDhcpRelayRead reads DHCP relay configuration and persists to statefile
+func genericVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
-		if govcd.ContainsNotFound(err) {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
