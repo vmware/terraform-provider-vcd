@@ -307,6 +307,7 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 	dSet(d, "description", adminCatalog.AdminCatalog.Description)
 	dSet(d, "created", adminCatalog.AdminCatalog.DateCreated)
 
+	var metadataStruct StringMap
 	metadata, err := adminCatalog.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
@@ -314,10 +315,11 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if len(metadata.MetadataEntry) > 0 {
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
-			return diag.Errorf("%v", err)
-		}
+		metadataStruct = getMetadataStruct(metadata.MetadataEntry)
+	}
+	err = d.Set("metadata", metadataStruct)
+	if err != nil {
+		return diag.Errorf("%v", err)
 	}
 	if adminCatalog.AdminCatalog.ExternalCatalogSubscription == nil ||
 		adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location == "" {
