@@ -472,7 +472,7 @@ func templateFill(tmpl string, data StringMap) string {
 	}
 	if TemplateWriting {
 		if !dirExists(testArtifactsDirectory) {
-			err := os.Mkdir(testArtifactsDirectory, 0755)
+			err := os.Mkdir(testArtifactsDirectory, 0750)
 			if err != nil {
 				panic(fmt.Errorf("error creating directory %s: %s", testArtifactsDirectory, err))
 			}
@@ -484,7 +484,7 @@ func templateFill(tmpl string, data StringMap) string {
 		}
 		testArtifactNames[resourceFile] = realCaller
 
-		file, err := os.Create(resourceFile)
+		file, err := os.Create(filepath.Clean(resourceFile))
 		if err != nil {
 			panic(fmt.Errorf("error creating file %s: %s", resourceFile, err))
 		}
@@ -533,7 +533,7 @@ func getConfigStruct(config string) TestConfig {
 	if config == "" {
 		panic(fmt.Errorf("configuration file %s not found", config))
 	}
-	jsonFile, err := os.ReadFile(config)
+	jsonFile, err := os.ReadFile(filepath.Clean(config))
 	if err != nil {
 		panic(fmt.Errorf("could not read config file %s: %v", config, err))
 	}
@@ -951,21 +951,26 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 // DownloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.
-func downloadFile(filepath string, url string) error {
+func downloadFile(filePath string, url string) error {
 
 	// Create the file
-	out, err := os.Create(filepath)
+	out, err := os.Create(filepath.Clean(filePath))
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer safeClose(out)
 
 	// Get the data
+	// #nosec G107 -- The URL needs to come from a variable for this purpose
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			util.Logger.Printf("[ERROR] Could not close body: %s", err)
+		}
+	}()
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
@@ -1273,7 +1278,10 @@ func (env *envHelper) unsetVcdVars() {
 // restoreVcdVars restores all env variables with prefix "VCD" stored in parent struct
 func (env *envHelper) restoreVcdVars() {
 	for keyName, valueName := range env.vars {
-		os.Setenv(keyName, valueName)
+		err := os.Setenv(keyName, valueName)
+		if err != nil {
+			util.Logger.Printf("[ERROR] error setting environment variable %s with value %s", keyName, valueName)
+		}
 	}
 }
 
@@ -1595,11 +1603,11 @@ func isTestInFile(testName, fileType string) bool {
 	if !fileExists(fileName) {
 		return false
 	}
-	f, err := os.Open(fileName) // #nosec G304
+	f, err := os.Open(filepath.Clean(fileName))
 	if err != nil {
 		return false
 	}
-	defer f.Close()
+	defer safeClose(f)
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -1643,14 +1651,14 @@ func addToTestRunList(testName, fileType string) error {
 	var file *os.File
 	var err error
 	if fileExists(fileName) {
-		file, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		file, err = os.OpenFile(filepath.Clean(fileName), os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	} else {
-		file, err = os.Create(fileName)
+		file, err = os.Create(filepath.Clean(fileName))
 	}
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer safeClose(file)
 
 	w := bufio.NewWriter(file)
 	_, err = fmt.Fprintf(w, "%s\n", testName)

@@ -21,7 +21,10 @@ type userTestData struct {
 	secondRole string // The role to which we change using Update()
 }
 
+// #nosec G101 -- These are fake credentials for testing
 var orgUserPasswordText = "CHANGE-ME"
+
+// #nosec G101 -- These are fake credentials for testing
 var orgUserPasswordFile = "org_user_pwd.txt"
 
 func cleanUserData(t *testing.T) {

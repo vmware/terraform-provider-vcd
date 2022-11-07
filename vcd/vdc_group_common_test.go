@@ -5,6 +5,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"os"
 )
 
@@ -83,11 +84,17 @@ func overrideDefaultVdcForTest(temporaryVdcFieldValue string) func() {
 		fmt.Printf("# Overriding 'vdc' field in provider configuration to be '%s' instead of '%s'\n", temporaryVdcFieldValue, originalVdcValue)
 	}
 
-	os.Setenv("VCD_VDC", temporaryVdcFieldValue)
+	err := os.Setenv("VCD_VDC", temporaryVdcFieldValue)
+	if err != nil {
+		util.Logger.Printf("[ERROR] error setting environment variable VCD_VDC with value %s", temporaryVdcFieldValue)
+	}
 	return func() {
 		if vcdTestVerbose {
 			fmt.Printf("# Restoring 'vdc' field in provider configuration be '%s'\n", originalVdcValue)
 		}
-		os.Setenv("VCD_VDC", originalVdcValue)
+		err := os.Setenv("VCD_VDC", originalVdcValue)
+		if err != nil {
+			util.Logger.Printf("[ERROR] error setting environment variable VCD_VDC with value %s", originalVdcValue)
+		}
 	}
 }
