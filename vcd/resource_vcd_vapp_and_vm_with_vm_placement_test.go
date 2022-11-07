@@ -65,15 +65,11 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 					testAccCheckVcdStandaloneVmExistsByVdc(t.Name(), t.Name()+"_vapp_vm", "vcd_vapp_vm."+t.Name()),
 					// Standalone VM
 					resource.TestCheckResourceAttr("vcd_vm."+t.Name(), "name", t.Name()+"_vm"),
-					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "sizing_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement1", "id"),
 					// vApp VM
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "name", t.Name()+"_vapp_vm"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "sizing_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement1", "id"),
 				),
 			},
@@ -81,14 +77,10 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 				Config: updatePlacementHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Standalone VM
-					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "sizing_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 					// vApp VM
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "sizing_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 				),
 			},
@@ -96,21 +88,21 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 				Config: updateSizingHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Standalone VM
-					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "sizing_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 					// vApp VM
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "sizing_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+t.Name(), "placement_policy_id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 				),
 			},
 			{
 				Config: deletePlacementHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					// VM
+					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+t.Name(), "placement_policy_id", ""),
+					// vApp VM
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "placement_policy_id", ""),
 					stateDumper(),
 				),
@@ -118,8 +110,12 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 			{
 				Config: deleteSizingHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					// VM
 					resource.TestCheckResourceAttr("vcd_vm."+t.Name(), "sizing_policy_id", ""),
+					resource.TestCheckResourceAttrPair("vcd_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
+					// vApp VM
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "sizing_policy_id", ""),
+					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
 				),
 			},
 		},

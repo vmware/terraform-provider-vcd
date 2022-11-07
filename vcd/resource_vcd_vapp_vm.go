@@ -1425,11 +1425,19 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		// This is done because we need to update both policies at the same time, as not populating one of them will make
 		// that policy to be unassigned from the VM.
 		// Therefore, we need to use the old value if the policy didn't change to preserve it, or update to the new if it changed.
-		if sizingPolicyChanged {
-			sizingId = newSizingId
-		}
 		if placementPolicyChanged {
 			placementId = newPlacementId
+		}
+		if sizingPolicyChanged {
+			sizingId = newSizingId
+		} else {
+			// The only way to unset the Computed+Optional sizing_policy_id should be to write `sizing_policy_id = ""` in the HCL.
+			// However, when this is done, Terraform SDK doesn't detect this change: d.HasChange() returns false
+			// and d.GetChange returns both old values. The only way is to inspect raw HCL.
+			hclMap := d.GetRawConfig().AsValueMap()
+			if hclValue, ok := hclMap["sizing_policy_id"]; ok && strings.TrimSpace(hclValue.AsString()) == "" {
+				sizingId = ""
+			}
 		}
 		_, err = vm.UpdateComputePolicyV2(sizingId.(string), placementId.(string))
 		if err != nil {
@@ -1877,7 +1885,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	}
 
 	if err := setGuestCustomizationData(d, vm); err != nil {
-		return diag.Errorf("error storing customzation block: %s", err)
+		return diag.Errorf("error storing customization block: %s", err)
 	}
 
 	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil && vm.VM.VmSpecSection.HardwareVersion.Value != "" {
@@ -1888,6 +1896,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	}
 
 	if vm.VM.ComputePolicy != nil {
+		dSet(d, "sizing_policy_id", "")
 		if vm.VM.ComputePolicy.VmSizingPolicy != nil {
 			dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
 		}
