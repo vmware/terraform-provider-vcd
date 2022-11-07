@@ -162,6 +162,12 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 				Default:     false,
 				Description: "Boolean value that shows if sync should be performed on every refresh.",
 			},
+			"cancel_failed_tasks": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "When true, the subscribed catalog will attempt canceling failed tasks",
+			},
 			"sync_all": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -354,7 +360,7 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error retrieving task list for catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
 	}
 	newTaskIdCollection, err := skimTaskCollection(vcdClient, taskIdCollection)
-	if err != nil {
+	if err != nil && !syncOnRefresh {
 		return diag.FromErr(err)
 	}
 	// add internal tasks
@@ -475,6 +481,12 @@ func resourceVcdSubscribedCatalogImport(ctx context.Context, d *schema.ResourceD
 		return nil, govcd.ErrorEntityNotFound
 	}
 
+	if catalog.AdminCatalog.ExternalCatalogSubscription == nil ||
+		catalog.AdminCatalog.ExternalCatalogSubscription.Location == "" {
+		// If this error occurs, we have probably a catalog data mismatch or replacement
+		// i.e. we are trying to read a regular catalog as a subscribed one
+		return nil, fmt.Errorf("subscribed catalog '%s' doesn't have a subscription", catalog.AdminCatalog.Name)
+	}
 	dSet(d, "org", orgName)
 	dSet(d, "name", catalogIdentifier)
 	dSet(d, "description", catalog.AdminCatalog.Description)
@@ -518,9 +530,21 @@ func storeTaskIdCollection(catalogId string, collection TaskIdCollection, d *sch
 	return nil
 }
 
-// readTaskIdCollection reads the collection of tasks from filr, if "store_tasks" was set
+// readTaskIdCollection reads the collection of tasks from file, if "store_tasks" was set
 func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.ResourceData) (TaskIdCollection, error) {
 	var collection TaskIdCollection
+	rawRunningTasks := d.Get("running_tasks")
+	if rawRunningTasks != nil {
+		for _, item := range rawRunningTasks.([]interface{}) {
+			collection.Running = append(collection.Running, item.(string))
+		}
+	}
+	rawFailedTasks := d.Get("failed_tasks")
+	if rawFailedTasks != nil {
+		for _, item := range rawFailedTasks.([]interface{}) {
+			collection.Failed = append(collection.Failed, item.(string))
+		}
+	}
 	if !d.Get("store_tasks").(bool) {
 		return collection, nil
 	}
@@ -563,10 +587,33 @@ func skimTaskCollection(vcdClient *VCDClient, collection TaskIdCollection) (Task
 	if err != nil {
 		return TaskIdCollection{}, err
 	}
+	if len(failed) > 0 {
+		errorMessage := ""
+		taskTypes := make(map[string]bool)
+		for _, taskId := range failed {
+			task, err := vcdClient.VCDClient.Client.GetTaskById(taskId)
+			if err != nil {
+				return TaskIdCollection{}, err
+			}
+			taskTypes[task.Task.Name] = true
+			if task.Task.Error == nil {
+				continue
+			}
+			if errorMessage != "" {
+				errorMessage += "\n"
+			}
+			errorMessage += task.Task.Error.Error()
+		}
+		taskTypeText := ""
+		for k := range taskTypes {
+			taskTypeText += k + " "
+		}
+		err = fmt.Errorf("%d tasks have failed - task types [%s]: %s", len(failed), taskTypeText, errorMessage)
+	}
 	return TaskIdCollection{
 		Running: running,
 		Failed:  failed,
-	}, nil
+	}, err
 }
 
 // runSubscribedCatalogSyncOperations runs all the requested synchronisation operations
@@ -585,12 +632,39 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 	var collection TaskIdCollection
 	var taskList []string
 	var err error
-	if operation == "update" || operation == "refresh" {
-		collection, err = readTaskIdCollection(vcdClient, catalogId, d)
-		if err != nil {
-			return fmt.Errorf("error reading catalog task IDs")
+	collection, err = readTaskIdCollection(vcdClient, catalogId, d)
+	if err != nil {
+		return fmt.Errorf("error reading catalog task IDs")
+	}
+	taskList = collection.Running
+
+	cancelFailedTasks := d.Get("cancel_failed_tasks").(bool)
+	if len(collection.Failed) > 0 {
+		for _, taskId := range collection.Failed {
+			task, err := vcdClient.Client.GetTaskById(taskId)
+			if err == nil {
+				util.Logger.Printf("[runSubscribedCatalogSyncOperations] %s (%s) %s\n",
+					task.Task.OperationName, task.Task.Status, task.Task.Operation)
+				if cancelFailedTasks {
+					err = task.CancelTask()
+					if err != nil {
+						util.Logger.Printf("[runSubscribedCatalogSyncOperations] error canceling task %s", taskId)
+					}
+				}
+			}
 		}
-		taskList = collection.Running
+		time.Sleep(3 * time.Second)
+		collection, err = skimTaskCollection(vcdClient, collection)
+		if err != nil {
+			return fmt.Errorf("error running skimTaskCollection: %s", err)
+		}
+	}
+
+	if len(collection.Failed) > 0 {
+		if operation == "refresh" {
+			return nil
+		}
+		return fmt.Errorf("%d tasks failed. See logs for details", len(collection.Failed))
 	}
 
 	if syncCatalog || syncAll {
@@ -603,7 +677,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 		if err != nil {
 			return fmt.Errorf("error synchronising catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
 		}
-		if makeLocalCopy {
+		if makeLocalCopy && task != nil && task.Task != nil {
 			taskList = append(taskList, task.Task.ID)
 		}
 	}
