@@ -18,8 +18,10 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		publisherDescription  = "test publisher catalog"
 		publisherCatalog      = "test-publisher"
 		subscriberCatalog     = "test-subscriber"
+		testVm                = "testVmSubscribed"
 		publisherOrg          = testConfig.VCD.Org
 		subscriberOrg         = testConfig.VCD.Org + "-1"
+		subscriberVdc         = testConfig.Nsxt.Vdc + "-1"
 		numberOfVappTemplates = 2
 		numberOfMediaItems    = 3
 		params                = StringMap{
@@ -28,9 +30,11 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 			"PublisherCatalog":        publisherCatalog,
 			"PublisherDescription":    publisherDescription,
 			"PublisherStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+			"VmName":                  testVm,
 			"Password":                "superUnknown",
 			"SubscriberOrg":           subscriberOrg,
 			"SubscriberCatalog":       subscriberCatalog,
+			"SubscriberVdc":           subscriberVdc,
 			"VappTemplateBaseName":    "test-vt",
 			"MediaItemBaseName":       "test-media",
 			"MakeLocalCopy":           false,
@@ -56,6 +60,12 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		testAccVcdPublisherCatalogItems+
 		testAccSubscribedCatalogUpdate, params)
 
+	params["FuncName"] = t.Name() + "-subscriber-sync"
+	subscriberConfigTextSync := templateFill(testAccVcdPublisherCatalogCreation+
+		testAccVcdPublisherCatalogItems+
+		testAccSubscribedCatalogUpdate+
+		testAccSubscribedCatalogSync, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -63,10 +73,11 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION publisher: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION subscriber: %s", subscriberConfigText)
 	debugPrintf("#[DEBUG] CONFIGURATION subscriber update: %s", subscriberConfigTextUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION subscriber sync: %s", subscriberConfigTextSync)
 
 	resourcePublisher := "vcd_catalog." + publisherCatalog
 	resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
@@ -110,6 +121,41 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
 					resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
 				),
+			},
+			{
+				Config:       subscriberConfigTextSync,
+				ResourceName: resourceSubscriber,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+					testAccCheckVcdStandaloneVmExists(testVm, "vcd_vm."+testVm, subscriberOrg, subscriberVdc),
+					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+
+					// A subscribed catalog gets its description and metadata from the publisher
+					resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
+					resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog"),
+
+					// Subscribed catalog items also get their metadata from the corresponding published items
+					resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+					resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+					resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+
+					// If this VM exists, it means that the corresponding vApp template is fully functional
+					resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
+				),
+			},
+			{
+				ResourceName:      resourceSubscriber,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgObject(subscriberOrg, subscriberCatalog),
+				// These fields can't be retrieved from catalog data
+				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive",
+					"sync_catalog", "sync_all", "sync_on_refresh", "subscription_password",
+					"cancel_failed_tasks", "store_tasks", "sync_all_vapp_templates",
+					"sync_vapp_templates", "sync_all_media_items", "tasks_file_name",
+					"sync_media_items",
+				},
 			},
 		},
 	})
@@ -193,6 +239,7 @@ func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc
 	}
 }
 
+// testAccVcdPublisherCatalogCreation contains the creation of the publishing catalog
 const testAccVcdPublisherCatalogCreation = `
 data "vcd_storage_profile" "storage_profile" {
   org  = "{{.PublisherOrg}}"
@@ -209,6 +256,10 @@ resource "vcd_catalog" "{{.PublisherCatalog}}" {
   delete_force     = "true"
   delete_recursive = "true"
 
+  metadata = {
+    identity = "published catalog"
+    parent   = "{{.PublisherOrg}}"
+  }
   publish_enabled               = "true"
   cache_enabled                 = "true"
   preserve_identity_information = "false"
@@ -216,6 +267,7 @@ resource "vcd_catalog" "{{.PublisherCatalog}}" {
 }
 `
 
+// testAccVcdPublisherCatalogItems creates all items that depend on the publishing catalog
 const testAccVcdPublisherCatalogItems = `
 resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
   count      = {{.NumberOfVappTemplates}}
@@ -226,6 +278,11 @@ resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
   description       = "test vapp template {{.VappTemplateBaseName}}-${count.index}"
   ova_path          = "{{.OvaPath}}"
   upload_piece_size = 5
+
+  metadata = {
+    identity  = "published vApp template {{.VappTemplateBaseName}}-${count.index}"
+    ancestors = "{{.PublisherOrg}}.{{.PublisherCatalog}}"
+  }
 }
 
 resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
@@ -233,13 +290,19 @@ resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
   org     = "{{.PublisherOrg}}"
   catalog = vcd_catalog.{{.PublisherCatalog}}.name
 
-  name                 = "{{.MediaItemBaseName}}-${count.index}"
-  description          = "test media item {{.MediaItemBaseName}}-${count.index}"
-  media_path           = "{{.MediaPath}}"
-  upload_piece_size    = 5
+  name              = "{{.MediaItemBaseName}}-${count.index}"
+  description       = "test media item {{.MediaItemBaseName}}-${count.index}"
+  media_path        = "{{.MediaPath}}"
+  upload_piece_size = 5
+
+  metadata = {
+    identity  = "published media item {{.MediaItemBaseName}}-${count.index}"
+    ancestors = "{{.PublisherOrg}}.{{.PublisherCatalog}}"
+  }
 }
 `
 
+// testAccSubscribedCatalogCreation creates the subscribed catalog (in a different Org)
 const testAccSubscribedCatalogCreation = `
 resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
   org  = "{{.SubscriberOrg}}"
@@ -256,6 +319,7 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 }
 `
 
+// testAccSubscribedCatalogUpdate adds parameters to the subscribed catalog to handle synchronisation
 const testAccSubscribedCatalogUpdate = `
 resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
   org  = "{{.SubscriberOrg}}"
@@ -270,5 +334,37 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 
   sync_on_refresh = true
   sync_all        = true
+}
+`
+
+// testAccSubscribedCatalogSync adds data sources for a few catalog items
+// and a VM that uses one of the subscribed items
+const testAccSubscribedCatalogSync = `
+data "vcd_catalog_item" "{{.VappTemplateBaseName}}-1" {
+  org     = "{{.SubscriberOrg}}"
+  catalog = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
+  name    = "{{.VappTemplateBaseName}}-1"
+}
+
+data "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}-1" {
+  org        = "{{.SubscriberOrg}}"
+  catalog_id = vcd_subscribed_catalog.{{.SubscriberCatalog}}.id
+  name       = "{{.VappTemplateBaseName}}-1"
+}
+
+data "vcd_catalog_media" "{{.MediaItemBaseName}}-1" {
+  org     = "{{.SubscriberOrg}}"
+  catalog = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
+  name    = "{{.MediaItemBaseName}}-1"
+}
+
+resource "vcd_vm" "{{.VmName}}" {
+  org           = "{{.SubscriberOrg}}"
+  vdc           = "{{.SubscriberVdc}}"
+  name          = "{{.VmName}}"
+  catalog_name  = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
+  template_name = "{{.VappTemplateBaseName}}-1"
+  description   = "test standalone VM"
+  power_on      = false
 }
 `
