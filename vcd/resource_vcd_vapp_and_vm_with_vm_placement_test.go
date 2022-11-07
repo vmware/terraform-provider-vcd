@@ -196,16 +196,16 @@ resource "vcd_org_vdc" "{{.Name}}" {
   vm_sizing_policy_ids        = [vcd_vm_sizing_policy.sizing1.id, vcd_vm_sizing_policy.sizing2.id]
   vm_placement_policy_ids     = [vcd_vm_placement_policy.placement1.id, vcd_vm_placement_policy.placement2.id]
 }
-`
 
-const testAccCheckVcdVappVmAndVmWithPlacement = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
 resource "vcd_vapp" "{{.Name}}" {
   org         = "{{.Org}}"
   vdc         = vcd_org_vdc.{{.Name}}.name
   name        = "{{.Name}}"
   description = "{{.Name}}"
 }
+`
 
+const testAccCheckVcdVappVmAndVmWithPlacement = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
 resource "vcd_vapp_vm" "{{.Name}}" {
   vdc              = vcd_vapp.{{.Name}}.vdc
   vapp_name        = vcd_vapp.{{.Name}}.name
@@ -244,13 +244,6 @@ resource "vcd_vm" "{{.Name}}" {
 `
 
 const testAccCheckVcdVappVmAndVmWithoutPlacement = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
-resource "vcd_vapp" "{{.Name}}" {
-  org         = "{{.Org}}"
-  vdc         = vcd_org_vdc.{{.Name}}.name
-  name        = "{{.Name}}"
-  description = "{{.Name}}"
-}
-
 resource "vcd_vapp_vm" "{{.Name}}" {
   vdc              = vcd_vapp.{{.Name}}.vdc
   vapp_name        = vcd_vapp.{{.Name}}.name
@@ -287,13 +280,6 @@ resource "vcd_vm" "{{.Name}}" {
 `
 
 const testAccCheckVcdVappVmAndVmWithoutSizing = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
-resource "vcd_vapp" "{{.Name}}" {
-  org         = "{{.Org}}"
-  vdc         = vcd_org_vdc.{{.Name}}.name
-  name        = "{{.Name}}"
-  description = "{{.Name}}"
-}
-
 resource "vcd_vapp_vm" "{{.Name}}" {
   vdc              = vcd_vapp.{{.Name}}.vdc
   vapp_name        = vcd_vapp.{{.Name}}.name
