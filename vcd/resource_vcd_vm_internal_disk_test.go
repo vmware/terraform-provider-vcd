@@ -441,9 +441,9 @@ resource "vcd_vm_internal_disk" "nvme" {
 }
 `
 
-// TestAccVcdVmInternalDiskNotFound checks that internal disk resource does not return error when
-// parent vApp is deleted. Instead it resets the ID using d.SetId("")
-func TestAccVcdVmInternalDiskNotFound(t *testing.T) {
+// TestAccVcdVmInternalDiskResourceNotFound checks that internal disk resource does not return error
+// when parent VM is deleted.
+func TestAccVcdVmInternalDiskResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 
 	// In general VM internal disks works with Org users, but since we need to create VDC with disabled fast provisioning value, we have to be sys admins
@@ -458,58 +458,26 @@ func TestAccVcdVmInternalDiskNotFound(t *testing.T) {
 		return
 	}
 
-	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
-		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
-	}
-
-	vappName := t.Name()
-	vmName := t.Name()
-	vdcName := t.Name()
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"FuncName":           t.Name(),
-		"Tags":               "vm",
-		"DiskResourceName":   "disk1",
-		"Size":               "13333",
-		"BusType":            "sata",
-		"BusNumber":          "1",
-		"UnitNumber":         "0",
-		"StorageProfileName": testConfig.VCD.ProviderVdc.StorageProfile,
-
-		"VdcName":                   vdcName,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           "ReservationPool",
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "1024",
-		"Reserved":                  "1024",
-		"Limit":                     "1024",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		// because vDC ignores empty values and use default
-		"MemoryGuaranteed": "1",
-		"CpuGuaranteed":    "1",
-
-		"Catalog":          testSuiteCatalogName,
-		"CatalogItem":      testSuiteCatalogOVAItem,
-		"VappName":         vappName,
-		"VmName":           vmName,
-		"ComputerName":     vmName + "Unique",
-		"InternalDiskSize": 20000,
+		"Org":      testConfig.VCD.Org,
+		"Vdc":      testConfig.Nsxt.Vdc,
+		"TestName": t.Name(),
+		"Tags":     "vm",
 	}
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(sourceTestVmInternalDiskResourceNotFound, params)
-	cachedvAppId := &testCachedFieldValue{}
+	cachedvAppName := &testCachedFieldValue{}
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_vm_internal_disk."+params["DiskResourceName"].(string), "id"),
-					cachedvAppId.cacheTestResourceFieldValue("vcd_vapp."+vappName, "id"),
+					resource.TestCheckResourceAttrSet("vcd_vm_internal_disk.destroy-test", "id"),
+					cachedvAppName.cacheTestResourceFieldValue("vcd_vm.disk-vm", "vapp_name"),
 				),
 			},
 			{
@@ -517,18 +485,18 @@ func TestAccVcdVmInternalDiskNotFound(t *testing.T) {
 				// next plan check
 				PreConfig: func() {
 					vcdClient := createSystemTemporaryVCDConnection()
-					org, err := vcdClient.GetAdminOrgByName(params["OrgName"].(string))
+					org, err := vcdClient.GetAdminOrgByName(params["Org"].(string))
 					if err != nil {
 						t.Errorf("error: could not find Org: %s", err)
 					}
-					vdc, err := org.GetVDCByName(params["VdcName"].(string), false)
+					vdc, err := org.GetVDCByName(params["Vdc"].(string), false)
 					if err != nil {
 						t.Errorf("error: could not find VDC: %s", err)
 					}
 
-					vapp, err := vdc.GetVAppById(cachedvAppId.fieldValue, false)
+					vapp, err := vdc.GetVAppByName(cachedvAppName.fieldValue, false)
 					if err != nil {
-						t.Errorf("could not find vApp %s: %s", cachedvAppId.fieldValue, err)
+						t.Errorf("could not find vApp %s: %s", cachedvAppName.fieldValue, err)
 					}
 
 					task, err := vapp.Delete()
@@ -541,8 +509,8 @@ func TestAccVcdVmInternalDiskNotFound(t *testing.T) {
 						t.Errorf("vApp deletion task error: %s", err)
 					}
 				},
-				// Expecting to get a non-empty plan because resource was removed using SDK in
-				// PreConfig
+				// Expecting to get a non-empty plan (but not an error) because resource was removed
+				// using SDK in PreConfig
 				Config:             configText,
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -552,17 +520,31 @@ func TestAccVcdVmInternalDiskNotFound(t *testing.T) {
 	postTestChecks(t)
 }
 
-const sourceTestVmInternalDiskResourceNotFound = sourceTestVmInternalDiskOrgVdcAndVM + `
-resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
-  org             = "{{.Org}}"
-  vdc             = vcd_org_vdc.{{.VdcName}}.name
-  vapp_name       = vcd_vapp.{{.VappName}}.name
-  vm_name         = vcd_vapp_vm.{{.VmName}}.name
-  bus_type        = "{{.BusType}}"
-  size_in_mb      = "{{.Size}}"
-  bus_number      = "{{.BusNumber}}"
-  unit_number     = "{{.UnitNumber}}"
-  storage_profile = "{{.StorageProfileName}}"
-  allow_vm_reboot = "false"
+const sourceTestVmInternalDiskResourceNotFound = `
+resource "vcd_vm" "disk-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name          = "{{.TestName}}"
+  computer_name = "emptyVM"
+  power_on      = false
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_vm_internal_disk" "destroy-test" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name       = vcd_vm.disk-vm.vapp_name
+  vm_name         = vcd_vm.disk-vm.name
+  bus_type        = "sata"
+  size_in_mb      = "100"
+  bus_number      = "1"
+  unit_number     = "0"
 }
 `

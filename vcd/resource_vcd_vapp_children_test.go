@@ -11,7 +11,7 @@ import (
 
 // TestAccVcdVappNetworkChildrenResourceNotFound checks that deletion of parent vApp network
 // correctly handles when resource disappears (remove ID by using d.SetId("") instead of throwing
-// error) outside of Terraform control.
+// error) outside of Terraform control. The following resources are verified here:
 // * vcd_vapp_firewall_rules
 // * vcd_vapp_nat_rules
 // * vcd_vapp_static_routing
@@ -205,5 +205,141 @@ resource "vcd_vapp_static_routing" "sr1" {
     network_cidr = "10.10.0.0/24"
     next_hop_ip  = "10.10.102.3"
   }
+}
+`
+
+// TestAccVcdVappChildrenResourceNotFound checks that deletion of parent vApp
+// correctly handles when resource disappears (remove ID by using d.SetId("") instead of throwing
+// error) outside of Terraform control. The following resources are verified here:
+// * vcd_vapp_network
+// * vcd_vapp_org_network
+func TestAccVcdVappChildrenResourceNotFound(t *testing.T) {
+	preTestChecks(t)
+
+	// This test invokes go-vcloud-director SDK directly
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   testConfig.Networking.EdgeGateway,
+		"DefaultAction": "drop",
+		"Name1":         "Name1",
+		"VmName1":       t.Name() + "-1",
+		"NetworkName":   "TestAccVcdVAppVmNet",
+		"VappName":      t.Name() + "_vapp",
+		"Tags":          "vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdVappChildrenResourceNotFound, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	cachedvAppId := &testCachedFieldValue{}
+	cachedvAppNetworkId := &testCachedFieldValue{}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.vapp1", "id"),
+					cachedvAppId.cacheTestResourceFieldValue("vcd_vapp.vapp1", "id"),
+				),
+			},
+			{
+				// This function finds newly created resource and deletes it before
+				// next plan check
+				PreConfig: func() {
+					vcdClient := createSystemTemporaryVCDConnection()
+					org, err := vcdClient.GetAdminOrgByName(params["Org"].(string))
+					if err != nil {
+						t.Errorf("error: could not find Org: %s", err)
+					}
+					vdc, err := org.GetVDCByName(params["Vdc"].(string), false)
+					if err != nil {
+						t.Errorf("error: could not find VDC: %s", err)
+					}
+
+					vapp, err := vdc.GetVAppById(cachedvAppId.fieldValue, false)
+					if err != nil {
+						t.Errorf("could not find vApp %s: %s", cachedvAppId.fieldValue, err)
+					}
+
+					task, err := vapp.Delete()
+					if err != nil {
+						t.Errorf("could not trigger vApp removal task %s: %s", cachedvAppNetworkId.fieldValue, err)
+					}
+
+					err = task.WaitTaskCompletion()
+					if err != nil {
+						t.Errorf("vApp removal task failed %s: %s", cachedvAppNetworkId.fieldValue, err)
+					}
+
+				},
+				// Expecting to get a non-empty plan because resource was removed using SDK in
+				// PreConfig
+				Config:             configText,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVappChildrenResourceNotFound = `
+resource "vcd_network_routed" "network_routed" {
+  name         = "{{.NetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
+}
+
+resource "vcd_network_routed" "network_routed_2" {
+  name         = "{{.NetworkName}}-2"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "50.10.102.1"
+
+  static_ip_pool {
+    start_address = "50.10.102.2"
+    end_address   = "50.10.102.254"
+  }
+}
+
+resource "vcd_vapp" "vapp1" {
+  name = "{{.VappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_network" "vappRoutedNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name             = "vapp-routed-net"
+  vapp_name        = vcd_vapp.vapp1.name
+  gateway          = "192.168.2.1"
+  netmask          = "255.255.255.0"
+  org_network_name = vcd_network_routed.network_routed.name
+}
+
+resource "vcd_vapp_org_network" "vappAttachedNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name        = vcd_vapp.vapp1.name
+  org_network_name = vcd_network_routed.network_routed_2.name
 }
 `
