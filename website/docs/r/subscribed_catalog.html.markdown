@@ -70,6 +70,7 @@ The following arguments are supported:
 * `subscription_url` - (Required) The URL to subscribe to the external catalog.
 * `make_local_copy` - (Optional) If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed.
 * `sync_on_refresh` - (Optional) Boolean value that shows if sync should be performed on every refresh.
+* `cancel_failed_tasks` - (Optional) When true, the subscribed catalog will attempt canceling failed tasks.
 * `sync_all` - (Optional) If true, synchronise this catalog and all items. 
 * `sync_catalog` (Optional) If true, synchronise this catalog. Not to be used when `sync_all` is set. This operation fetches the list of items. If `make_local_copy` is set, it also synchronises all the items.
 * `sync_all_vapp_templates` (Optional) If true, synchronise all vApp templates. Not to be used when `sync_all` is set.

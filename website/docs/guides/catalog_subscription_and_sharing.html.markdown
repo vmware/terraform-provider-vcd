@@ -225,15 +225,12 @@ Thus, we have two ways of operating:
   will happen every time the resource is read, which may introduce some delays in the operations if you were expecting
   `terraform refresh` to be quick. Despite the possible side effects, this is the recommended way.
 
-<!--
-// Probably removing this functionality
 ### Synchronisation fine tuning
 
 If we want to have fine control over the synchronisation, we can use the list of tasks being generated during the [subscribed
 catalog][subscribed] operations. Such list is produced and updated for every update operation (and even during refresh
 if `sync_on_refresh` is set). The list is optionally saved on file, when the property `store_tasks` is set. This allows
 us to see which tasks are running, and even show the details of the tasks using a data source.
--->
 
 ### Subscribed resources monitoring
 
@@ -295,11 +292,7 @@ the vApp templates, and try creating a data source using the ID of a temporary e
 
 ## Troubleshooting
 
----------------------
---- Work in progress
----------------------
-
-### Side effects of "sync\_on\_refresh"
+### Stuck on deletion: side effects of "sync\_on\_refresh"
 
 We said before that the most efficient way of keeping the subscribed catalog synchronised is to use `sync_on_refresh`,
 allowing a synchronisation every time the catalog is read, which means `terraform plan`, `terraform refresh`, and
@@ -322,6 +315,22 @@ because of `sync_on_refresh`. Then the update will kick in, invoking another syn
 size of the catalog items, this double request may cause an error.
 
 Usually, repeating a simple refresh should fix the issue. 
+
+### Subscribed vApp templates data sources 
+
+There is one scenario where data sources of catalog entities (vApp templates and media items) may not be usable immediately.
+This happens in one of the following cases:
+
+1. The subscribed catalog has `make_local_copy=false`, and has only synchronised the catalog (`sync_catalog`) but not the dependant items.
+2. The subscribed catalog has `make_local_copy=true`, but the full synchronisation is still happening.
+
+If you try using a vApp template to create a VM, and get an error about the item being unavailable, the reason could be
+an incomplete synchronisation.
+
+The remedy, in case #1, is to add one of `sync_all_vapp_templates` or `sync_vapp_templates` to the configuration file, and
+run a refresh (if `synch_on_refresh` was set) or an update.
+
+In case #2 –which may also occur for #1 after the remedy was applied– the only remedy is **waiting** until the synchronisation is done.
 
 
 [catalog]: </providers/vmware/vcd/latest/docs/resources/catalog> (vcd_catalog)
