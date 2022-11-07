@@ -1053,12 +1053,16 @@ func importStateIdTopHierarchy(objectName string) resource.ImportStateIdFunc {
 }
 
 // Used by all entities that depend on Org (such as Catalog, OrgUser)
-func importStateIdOrgObject(objectName string) resource.ImportStateIdFunc {
+// If the orgName is empty, it uses the default Org from testConfig
+func importStateIdOrgObject(orgName string, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || objectName == "" {
+		if orgName == "" {
+			orgName = testConfig.VCD.Org
+		}
+		if orgName == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
 		}
-		return testConfig.VCD.Org +
+		return orgName +
 			ImportSeparator +
 			objectName, nil
 	}
