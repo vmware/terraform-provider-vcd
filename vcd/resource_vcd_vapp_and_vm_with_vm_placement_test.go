@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdStandaloneVmWithVmPlacement(t *testing.T) {
+func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{

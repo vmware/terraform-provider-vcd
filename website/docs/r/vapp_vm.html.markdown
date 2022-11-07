@@ -272,7 +272,6 @@ resource "vcd_vapp_vm" "secondVM" {
   sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
   placement_policy_id = data.vcd_vm_placement_policy.placementPolicy.id
 }
-
 ```
 
 ## Example Usage (using advanced compute settings)
