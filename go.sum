@@ -32,8 +32,8 @@ github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221103170231-00a3a9cf974f h1:bfxN/iINmtvA2rV95CdE9KLSh8pox5kN+1kQtr2O5QY=
-github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221103170231-00a3a9cf974f/go.mod h1:VRA1ZLDf6CtL1atU1ceMj6/3h9HJg+zjBLaMNODF1qQ=
+github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221107152528-b6e6159e2505 h1:FUJAl+PctUUhc6tXnRLJ57NWUrE8JdNKa7h7ze8ny4I=
+github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221107152528-b6e6159e2505/go.mod h1:VRA1ZLDf6CtL1atU1ceMj6/3h9HJg+zjBLaMNODF1qQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
