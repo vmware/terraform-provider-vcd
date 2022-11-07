@@ -1422,8 +1422,9 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 	if sizingPolicyChanged || placementPolicyChanged {
 		sizingId, newSizingId := d.GetChange("sizing_policy_id")
 		placementId, newPlacementId := d.GetChange("placement_policy_id")
-		// This is done because we need to update both policies at the same time, therefore we need to use
-		// the old value if the policy didn't change to preserve it, or update to the new if it changed. // TODO: If it's removed we need sizingId = "" to delete it
+		// This is done because we need to update both policies at the same time, as not populating one of them will make
+		// that policy to be unassigned from the VM.
+		// Therefore, we need to use the old value if the policy didn't change to preserve it, or update to the new if it changed.
 		if sizingPolicyChanged {
 			sizingId = newSizingId
 		}
