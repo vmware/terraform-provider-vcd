@@ -126,6 +126,7 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(_ context.Context, d *schem
 	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
+			log.Printf("ALB Service Engine Group assignment not found. Removing from state file: %s", err)
 			d.SetId("")
 			return nil
 		}

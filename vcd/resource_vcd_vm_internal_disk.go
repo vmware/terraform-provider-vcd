@@ -373,7 +373,7 @@ func resourceVmInternalDiskRead(_ context.Context, d *schema.ResourceData, m int
 	vm, _, err := getVm(vcdClient, d)
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
-			logForScreen("resourceVmInternalDiskRead", fmt.Sprintf("[DEBUG] Unable to find VM that owns the disk '%s'. Removing its disk from tfstate: %s", d.Id(), err))
+			log.Printf("unable to find VM that owns the disk '%s'. Removing its disk from tfstate: %s", d.Id(), err)
 			d.SetId("")
 			return nil
 		}

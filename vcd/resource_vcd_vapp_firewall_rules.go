@@ -239,6 +239,7 @@ func resourceVappFirewallRulesRead(_ context.Context, d *schema.ResourceData, me
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
+			log.Printf("vApp network not found. Removing from state file: %s", err)
 			d.SetId("")
 			return nil
 		}

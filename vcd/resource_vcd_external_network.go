@@ -206,6 +206,7 @@ func genericVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}, ori
 
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
+			log.Printf("[external network read] external network not found. Removing from state file: %s", err)
 			d.SetId("")
 			return nil
 		}

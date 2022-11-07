@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -174,6 +175,7 @@ func resourceAccessControlVappRead(_ context.Context, d *schema.ResourceData, me
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			// If vApp is not found - it means that Access Control must be recreated as well
+			log.Printf("parent vApp not found. Removing access control from state file: %s", err)
 			d.SetId("")
 			return nil
 		}
