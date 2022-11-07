@@ -109,6 +109,7 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 	postTestChecks(t)
 }
 
+// #nosec G101 -- This doesn't contain any credential
 const testAccCheckVcdVmDhcpWaitShared = `
 resource "vcd_network_routed" "net" {
   org = "{{.Org}}"

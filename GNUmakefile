@@ -65,6 +65,10 @@ token:
 static: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' static"
 
+# security runs the source code security analysis tool `gosec`
+security: fmtcheck
+	@./scripts/gosec.sh
+
 # runs the unit tests
 testunit: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' unit"
