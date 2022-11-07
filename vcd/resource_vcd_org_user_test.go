@@ -418,6 +418,7 @@ data "vcd_org_user" "DSExistingUser" {
 // Terraform control.
 func TestAccVcdOrgUserResourceNotFound(t *testing.T) {
 	preTestChecks(t)
+	_ = prepareUserData(t) // This will create PasswordFile and store password for user
 	skipTestForApiToken(t)
 
 	// This test invokes go-vcloud-director SDK directly
