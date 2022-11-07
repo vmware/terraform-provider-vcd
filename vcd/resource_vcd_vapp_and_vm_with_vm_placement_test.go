@@ -5,6 +5,8 @@
 package vcd
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -42,6 +44,9 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "DeletePlacement"
 	deletePlacementHcl := templateFill(testAccCheckVcdVappVmAndVmWithoutPlacement, params)
+
+	params["FuncName"] = t.Name() + "DeleteSizing"
+	deleteSizingHcl := templateFill(testAccCheckVcdVappVmAndVmWithoutSizing, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -107,11 +112,26 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_vm."+t.Name(), "placement_policy_id", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "placement_policy_id", ""),
+					stateDumper(),
+				),
+			},
+			{
+				Config: deleteSizingHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_vm."+t.Name(), "sizing_policy_id", ""),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "sizing_policy_id", ""),
 				),
 			},
 		},
 	})
 	postTestChecks(t)
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
 }
 
 const testAccCheckVcdVappVmAndVmWithPlacementPreReqs = `
@@ -249,7 +269,7 @@ resource "vcd_vapp_vm" "{{.Name}}" {
   boot_image       = "{{.Media}}"
   power_on         = "true"
 
-  sizing_policy_id    = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
+  sizing_policy_id = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
 }
 
 resource "vcd_vm" "{{.Name}}" {
@@ -266,6 +286,51 @@ resource "vcd_vm" "{{.Name}}" {
   boot_image        = "{{.Media}}"
   power_on          = "true"
 
-  sizing_policy_id    = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
+  sizing_policy_id = vcd_vm_sizing_policy.sizing{{.AssignedSizing}}.id
+}
+`
+
+const testAccCheckVcdVappVmAndVmWithoutSizing = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
+resource "vcd_vapp" "{{.Name}}" {
+  org         = "{{.Org}}"
+  vdc         = vcd_org_vdc.{{.Name}}.name
+  name        = "{{.Name}}"
+  description = "{{.Name}}"
+}
+
+resource "vcd_vapp_vm" "{{.Name}}" {
+  vdc              = vcd_vapp.{{.Name}}.vdc
+  vapp_name        = vcd_vapp.{{.Name}}.name
+  name             = "{{.Name}}_vapp_vm"
+  memory           = 512
+  cpus             = 1
+  cpu_cores        = 1
+  os_type          = "sles11_64Guest"
+  hardware_version = "vmx-14"
+  computer_name    = "foo"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
+  power_on         = "true"
+
+  sizing_policy_id    = ""
+  placement_policy_id = vcd_vm_placement_policy.placement{{.AssignedPlacement}}.id
+}
+
+resource "vcd_vm" "{{.Name}}" {
+  name              = "{{.Name}}_vm"
+  org               = "{{.Org}}"
+  vdc               = vcd_org_vdc.{{.Name}}.name
+  memory            = 512
+  cpus              = 1
+  cpu_cores         = 1
+  os_type           = "sles11_64Guest"
+  hardware_version  = "vmx-14"
+  computer_name     = "foo"
+  catalog_name      = "{{.Catalog}}"
+  boot_image        = "{{.Media}}"
+  power_on          = "true"
+
+  sizing_policy_id    = ""
+  placement_policy_id = vcd_vm_placement_policy.placement{{.AssignedPlacement}}.id
 }
 `
