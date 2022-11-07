@@ -469,7 +469,7 @@ func TestAccVcdVmInternalDiskResourceNotFound(t *testing.T) {
 	configText := templateFill(sourceTestVmInternalDiskResourceNotFound, params)
 	cachedvAppName := &testCachedFieldValue{}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 
