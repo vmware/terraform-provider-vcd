@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -214,7 +215,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	}
 
 	if passwordFile != "" {
-		passwordBytes, err := os.ReadFile(passwordFile)
+		passwordBytes, err := os.ReadFile(filepath.Clean(passwordFile))
 		if err != nil {
 			return nil, nil, err
 		}

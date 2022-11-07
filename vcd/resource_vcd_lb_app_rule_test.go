@@ -29,6 +29,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 `
 
 	// String map to fill the template
+	// #nosec G203 -- template.HTML - We can't escape HCL heredoc. Also the code is safe as it's hardcoded from this test.
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Vdc":              testConfig.VCD.Vdc,
