@@ -189,6 +189,9 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 	postTestChecks(t)
 }
 
+// TestAccVcdOrgVdcResourceNotFound checks that deletion of VDC is correctly handled when resource
+// disappears (remove ID by using d.SetId("") instead of throwing error) outside of Terraform
+// control.
 func TestAccVcdOrgVdcResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {

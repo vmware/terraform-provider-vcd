@@ -442,17 +442,11 @@ resource "vcd_vm_internal_disk" "nvme" {
 `
 
 // TestAccVcdVmInternalDiskResourceNotFound checks that internal disk resource does not return error
-// when parent VM is deleted.
+// when parent VM is deleted, but removes it from state instead.
 func TestAccVcdVmInternalDiskResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 
-	// In general VM internal disks works with Org users, but since we need to create VDC with disabled fast provisioning value, we have to be sys admins
-	if !usingSysAdmin() {
-		t.Skip("VM internal disks tests requires system admin privileges")
-		return
-	}
-
-	// This test invokes go-vcloud-director SDK directly
+	// This test invokes go-vcloud-director SDK directly therefore it should not run binary tests
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

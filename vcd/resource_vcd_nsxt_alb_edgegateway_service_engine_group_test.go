@@ -244,6 +244,9 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 }
 `
 
+// TestAccVcdNsxtEdgeGatewayServiceEngineGroupResourceNotFound checks that deletion of ALB Service
+// Engine Group assignment is correctly handled when resource disappears (remove ID by using
+// d.SetId("") instead of throwing error) outside of Terraform control.
 func TestAccVcdNsxtEdgeGatewayServiceEngineGroupResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {

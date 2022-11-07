@@ -10,8 +10,8 @@ import (
 )
 
 // TestAccVcdEdgeGatewayChildrenResourceNotFound checks that deletion of parent Edge Gateway network
-// correctly handles when resource disappears (removes ID by using d.SetId("") instead of throwing
-// error) outside of Terraform control. The following resources are verified here:
+// is correctly handled when resource disappears (removes ID by using d.SetId("") instead of
+// throwing error) outside of Terraform control. The following resources are verified here:
 // * vcd_edgegateway_settings
 // * vcd_nsxv_dhcp_relay
 func TestAccVcdEdgeGatewayChildrenResourceNotFound(t *testing.T) {

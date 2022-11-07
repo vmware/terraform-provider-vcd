@@ -4,13 +4,15 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // TestAccVcdVappNetworkChildrenResourceNotFound checks that deletion of parent vApp network
-// correctly handles when resource disappears (remove ID by using d.SetId("") instead of throwing
+// is correctly handled when resource disappears (remove ID by using d.SetId("") instead of throwing
 // error) outside of Terraform control. The following resources are verified here:
 // * vcd_vapp_firewall_rules
 // * vcd_vapp_nat_rules
@@ -18,7 +20,7 @@ import (
 func TestAccVcdVappNetworkChildrenResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 
-	// This test invokes go-vcloud-director SDK directly
+	// This test invokes go-vcloud-director SDK directly therefore it should not run binary tests
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -209,14 +211,14 @@ resource "vcd_vapp_static_routing" "sr1" {
 `
 
 // TestAccVcdVappChildrenResourceNotFound checks that deletion of parent vApp
-// correctly handles when resource disappears (remove ID by using d.SetId("") instead of throwing
+// is correctly handled when resource disappears (remove ID by using d.SetId("") instead of throwing
 // error) outside of Terraform control. The following resources are verified here:
 // * vcd_vapp_network
 // * vcd_vapp_org_network
 func TestAccVcdVappChildrenResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 
-	// This test invokes go-vcloud-director SDK directly
+	// This test invokes go-vcloud-director SDK directly therefore it should not run binary tests
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -341,5 +343,98 @@ resource "vcd_vapp_org_network" "vappAttachedNet" {
 
   vapp_name        = vcd_vapp.vapp1.name
   org_network_name = vcd_network_routed.network_routed_2.name
+}
+`
+
+// TestAccVcdVappAccessControlResourceNotFound checks that deletion of parent vApp
+// correctly handles when resource disappears (remove ID by using d.SetId("") instead of throwing
+// error) outside of Terraform control. The following resources are verified here
+func TestAccVcdVappAccessControlResourceNotFound(t *testing.T) {
+	preTestChecks(t)
+	skipTestForApiToken(t)
+	// This test invokes go-vcloud-director SDK directly therefore it should not run binary tests
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"Vdc":                 testConfig.Nsxt.Vdc,
+		"SharedToEveryone":    "true",
+		"EveryoneAccessLevel": fmt.Sprintf(`everyone_access_level = "%s"`, types.ControlAccessReadWrite),
+		"VappName":            t.Name(),
+		"Tags":                "vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVappAccessControlResourceNotFound, params)
+	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
+
+	cachedId := &testCachedFieldValue{}
+
+	resourceName := "vcd_vapp_access_control.ac1"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.Nsxt.Vdc, []string{params["VappName"].(string)}),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVappAccessControlExists(resourceName, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+					cachedId.cacheTestResourceFieldValue(resourceName, "id"),
+				),
+			},
+			{
+				// This function finds newly created resource and deletes it before
+				// next plan check
+				PreConfig: func() {
+					vcdClient := createSystemTemporaryVCDConnection()
+					org, err := vcdClient.GetAdminOrgByName(params["Org"].(string))
+					if err != nil {
+						t.Errorf("error: could not find Org: %s", err)
+					}
+					vdc, err := org.GetVDCByName(params["Vdc"].(string), false)
+					if err != nil {
+						t.Errorf("error: could not find VDC: %s", err)
+					}
+
+					vapp, err := vdc.GetVAppById(cachedId.fieldValue, false)
+					if err != nil {
+						t.Errorf("could not find vApp %s: %s", cachedId.fieldValue, err)
+					}
+					task, err := vapp.Delete()
+					if err != nil {
+						t.Errorf("could not remove vApp '%s': %s", cachedId.fieldValue, err)
+					}
+
+					err = task.WaitTaskCompletion()
+					if err != nil {
+						t.Errorf("vApp removal task is failing '%s': %s", cachedId.fieldValue, err)
+					}
+				},
+				// Expecting to get a non-empty plan because resource was removed using SDK in
+				// PreConfig
+				Config:             configText,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVappAccessControlResourceNotFound = `
+resource "vcd_vapp" "test1" {
+  name = "{{.VappName}}"
+}
+
+resource "vcd_vapp_access_control" "ac1" {
+  org      = "{{.Org}}"
+  vdc      = "{{.Vdc}}"
+  vapp_id  = vcd_vapp.test1.id
+
+  shared_with_everyone    = {{.SharedToEveryone}}
+  {{.EveryoneAccessLevel}}
 }
 `

@@ -413,6 +413,9 @@ data "vcd_org_user" "DSExistingUser" {
 }
 `
 
+// TestAccVcdOrgUserResourceNotFound checks that deletion of Org User is correctly handled when
+// resource disappears (remove ID by using d.SetId("") instead of throwing error) outside of
+// Terraform control.
 func TestAccVcdOrgUserResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 	skipTestForApiToken(t)
