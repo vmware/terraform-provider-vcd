@@ -1419,9 +1419,27 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 
 	sizingPolicyChanged := d.HasChange("sizing_policy_id")
 	placementPolicyChanged := d.HasChange("placement_policy_id")
+
+	sizingId, newSizingId := d.GetChange("sizing_policy_id")
+	placementId, newPlacementId := d.GetChange("placement_policy_id")
+
+	foo := d.Get("sizing_policy_id")
+	bar := d.Get("placement_policy_id")
+
+	util.Logger.Printf("%s %s", foo, bar)
+
+	if !sizingPolicyChanged {
+		// As sizing_policy_id is Computed+Optional, the only way to unset it should be to write `sizing_policy_id = ""`
+		// in the HCL. However, when this is done, Terraform SDK doesn't detect this change: d.HasChange() returns false,
+		// d.GetChange returns both old values and d.Get returns old value, hence `sizingPolicyChanged` will be always false.
+		// We need to inspect the raw HCL to get the correct value.
+		hclMap := d.GetRawConfig().AsValueMap()
+		if hclValue, ok := hclMap["sizing_policy_id"]; ok && strings.TrimSpace(hclValue.AsString()) == "" {
+			sizingId = ""
+		}
+	}
+
 	if sizingPolicyChanged || placementPolicyChanged {
-		sizingId, newSizingId := d.GetChange("sizing_policy_id")
-		placementId, newPlacementId := d.GetChange("placement_policy_id")
 		// This is done because we need to update both policies at the same time, as not populating one of them will make
 		// that policy to be unassigned from the VM.
 		// Therefore, we need to use the old value if the policy didn't change to preserve it, or update to the new if it changed.
@@ -1430,14 +1448,6 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		}
 		if sizingPolicyChanged {
 			sizingId = newSizingId
-		} else {
-			// The only way to unset the Computed+Optional sizing_policy_id should be to write `sizing_policy_id = ""` in the HCL.
-			// However, when this is done, Terraform SDK doesn't detect this change: d.HasChange() returns false
-			// and d.GetChange returns both old values. The only way is to inspect raw HCL.
-			hclMap := d.GetRawConfig().AsValueMap()
-			if hclValue, ok := hclMap["sizing_policy_id"]; ok && strings.TrimSpace(hclValue.AsString()) == "" {
-				sizingId = ""
-			}
 		}
 		_, err = vm.UpdateComputePolicyV2(sizingId.(string), placementId.(string))
 		if err != nil {

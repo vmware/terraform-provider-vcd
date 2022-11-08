@@ -7,6 +7,7 @@ package vcd
 import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -47,6 +48,9 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "DeleteSizing"
 	deleteSizingHcl := templateFill(testAccCheckVcdVappVmAndVmWithoutSizing, params)
+
+	params["FuncName"] = t.Name() + "EmptyPolicies"
+	emptyPoliciesHcl := templateFill(testAccCheckVcdVappVmAndVmEmptyPolicies, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -104,7 +108,6 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 					// vApp VM
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing2", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "placement_policy_id", ""),
-					stateDumper(),
 				),
 			},
 			{
@@ -116,7 +119,12 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 					// vApp VM
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "sizing_policy_id", ""),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
+					stateDumper(),
 				),
+			},
+			{
+				Config:      emptyPoliciesHcl,
+				ExpectError: regexp.MustCompile(".*error updating compute policy.*"),
 			},
 		},
 	})
@@ -314,5 +322,42 @@ resource "vcd_vm" "{{.Name}}" {
 
   sizing_policy_id    = ""
   placement_policy_id = vcd_vm_placement_policy.placement{{.AssignedPlacement}}.id
+}
+`
+
+const testAccCheckVcdVappVmAndVmEmptyPolicies = testAccCheckVcdVappVmAndVmWithPlacementPreReqs + `
+# skip-binary: This test is meant to fail
+resource "vcd_vapp_vm" "{{.Name}}" {
+  vdc              = vcd_vapp.{{.Name}}.vdc
+  vapp_name        = vcd_vapp.{{.Name}}.name
+  name             = "{{.Name}}_vapp_vm"
+  memory           = 512
+  cpus             = 1
+  cpu_cores        = 1
+  os_type          = "sles11_64Guest"
+  hardware_version = "vmx-14"
+  computer_name    = "foo"
+  catalog_name     = "{{.Catalog}}"
+  boot_image       = "{{.Media}}"
+  power_on         = "true"
+
+  sizing_policy_id = ""
+}
+
+resource "vcd_vm" "{{.Name}}" {
+  name              = "{{.Name}}_vm"
+  org               = "{{.Org}}"
+  vdc               = vcd_org_vdc.{{.Name}}.name
+  memory            = 512
+  cpus              = 1
+  cpu_cores         = 1
+  os_type           = "sles11_64Guest"
+  hardware_version  = "vmx-14"
+  computer_name     = "foo"
+  catalog_name      = "{{.Catalog}}"
+  boot_image        = "{{.Media}}"
+  power_on          = "true"
+
+  sizing_policy_id = ""
 }
 `
