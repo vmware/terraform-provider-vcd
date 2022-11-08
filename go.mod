@@ -1,6 +1,6 @@
 module github.com/vmware/terraform-provider-vcd/v3
 
-go 1.18
+go 1.19
 
 require (
 	github.com/davecgh/go-spew v1.1.1
@@ -59,6 +59,6 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221107152528-b6e6159e2505
+replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221108073345-aaaa65e53485
 
 // replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director
