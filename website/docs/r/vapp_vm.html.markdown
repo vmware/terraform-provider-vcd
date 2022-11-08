@@ -255,7 +255,7 @@ data "vcd_vm_sizing_policy" "minSize" {
 }
 
 data "vcd_provider_vdc" "myPvdc" {
-  name        = "nsxt-Pvdc"
+  name = "nsxt-Pvdc"
 }
 
 data "vcd_vm_placement_policy" "placementPolicy" {
