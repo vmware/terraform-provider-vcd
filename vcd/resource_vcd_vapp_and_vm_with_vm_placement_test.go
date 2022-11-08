@@ -5,8 +5,6 @@
 package vcd
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
 
@@ -119,7 +117,6 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 					// vApp VM
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+t.Name(), "sizing_policy_id", ""),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement2", "id"),
-					stateDumper(),
 				),
 			},
 			{
@@ -129,13 +126,6 @@ func TestAccVcdVAppAndVmWithPlacementPolicy(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
 }
 
 const testAccCheckVcdVappVmAndVmWithPlacementPreReqs = `
