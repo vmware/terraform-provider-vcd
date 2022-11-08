@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var nsxtDhcpPoolSetSchema = &schema.Resource{
@@ -57,6 +58,14 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Parent Org VDC network ID",
+			},
+			"dhcp_mode": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "EDGE",
+				ValidateFunc: validation.StringInSlice([]string{"EDGE", "NETWORK", "RELAY"}, false),
+				Description:  "Parent Org VDC network ID",
 			},
 			"pool": {
 				Type:        schema.TypeSet,
