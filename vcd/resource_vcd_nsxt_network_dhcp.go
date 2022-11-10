@@ -59,17 +59,17 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 				ForceNew:    true,
 				Description: "Parent Org VDC network ID",
 			},
-			"dhcp_mode": {
+			"mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Default:      "EDGE",
 				ValidateFunc: validation.StringInSlice([]string{"EDGE", "NETWORK", "RELAY"}, false),
-				Description:  "Parent Org VDC network ID",
+				Description:  "DHCP mode. One of 'EDGE' (default), 'NETWORK', 'RELAY'",
 			},
 			"pool": {
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Description: "IP ranges used for DHCP pool allocation in the network",
 				Elem:        nsxtDhcpPoolSetSchema,
 			},
@@ -81,6 +81,21 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"lease_time": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+				Description: "Lease time in seconds",
+			},
+			"listener_ip_address": {
+				Type: schema.TypeString,
+				// API still does not allow to change IP address in 10.4.0, but the error is human
+				// readable and it might allow changing in future. For this reason ForceNew remains
+				// commented.
+				// ForceNew:    true,
+				Optional:    true,
+				Description: "IP Address of DHCP server in network. Only applicable when mode=NETWORK",
 			},
 		},
 	}
@@ -215,31 +230,29 @@ func resourceVcdOpenApiDhcpImport(_ context.Context, d *schema.ResourceData, met
 func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVdcNetworkDhcp {
 	orgVdcNetDhcp := &types.OpenApiOrgVdcNetworkDhcp{
 		DhcpPools: nil,
+		Mode:      d.Get("mode").(string),
 	}
 
-	dhcpPool := d.Get("pool")
-	if dhcpPool == nil {
-		return orgVdcNetDhcp
-	}
+	if dhcpPool, dhcpPoolIsSet := d.GetOk("pool"); dhcpPoolIsSet {
+		dhcpPoolSet := dhcpPool.(*schema.Set)
+		dhcpPoolList := dhcpPoolSet.List()
 
-	dhcpPoolSet := dhcpPool.(*schema.Set)
-	dhcpPoolList := dhcpPoolSet.List()
-
-	if len(dhcpPoolList) > 0 {
-		dhcpPools := make([]types.OpenApiOrgVdcNetworkDhcpPools, len(dhcpPoolList))
-		for index, pool := range dhcpPoolList {
-			poolMap := pool.(map[string]interface{})
-			onePool := types.OpenApiOrgVdcNetworkDhcpPools{
-				IPRange: types.OpenApiOrgVdcNetworkDhcpIpRange{
-					StartAddress: poolMap["start_address"].(string),
-					EndAddress:   poolMap["end_address"].(string),
-				},
+		if len(dhcpPoolList) > 0 {
+			dhcpPools := make([]types.OpenApiOrgVdcNetworkDhcpPools, len(dhcpPoolList))
+			for index, pool := range dhcpPoolList {
+				poolMap := pool.(map[string]interface{})
+				onePool := types.OpenApiOrgVdcNetworkDhcpPools{
+					IPRange: types.OpenApiOrgVdcNetworkDhcpIpRange{
+						StartAddress: poolMap["start_address"].(string),
+						EndAddress:   poolMap["end_address"].(string),
+					},
+				}
+				dhcpPools[index] = onePool
 			}
-			dhcpPools[index] = onePool
-		}
 
-		// Inject data into main structure
-		orgVdcNetDhcp.DhcpPools = dhcpPools
+			// Inject data into main structure
+			orgVdcNetDhcp.DhcpPools = dhcpPools
+		}
 	}
 
 	dnsServers, ok := d.GetOk("dns_servers")
@@ -249,6 +262,15 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 			dnsServerSet[i] = v.(string)
 		}
 		orgVdcNetDhcp.DnsServers = dnsServerSet
+	}
+
+	if leaseTime, isLeaseTimeSet := d.GetOk("lease_time"); isLeaseTimeSet {
+		leaseTimeInt := leaseTime.(int)
+		orgVdcNetDhcp.LeaseTime = &leaseTimeInt
+	}
+
+	if ipAddress, ipAddressIsSet := d.GetOk("listener_ip_address"); ipAddressIsSet {
+		orgVdcNetDhcp.IPAddress = ipAddress.(string)
 	}
 
 	return orgVdcNetDhcp
@@ -279,6 +301,14 @@ func setOpenAPIOrgVdcNetworkDhcpData(orgNetworkId string, orgVdcNetwork *types.O
 		if err != nil {
 			return fmt.Errorf("error setting DNS servers: %s", err)
 		}
+	}
+
+	dSet(d, "mode", orgVdcNetwork.Mode)
+	if orgVdcNetwork.LeaseTime != nil {
+		dSet(d, "lease_time", *orgVdcNetwork.LeaseTime)
+	}
+	if orgVdcNetwork.IPAddress != "" {
+		dSet(d, "listener_ip_address", orgVdcNetwork.IPAddress)
 	}
 
 	return nil
