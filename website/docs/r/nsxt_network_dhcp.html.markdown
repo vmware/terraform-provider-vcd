@@ -59,8 +59,8 @@ resource "vcd_network_isolated_v2" "net1" {
 }
 
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "cloud"
-  vdc  = vcd_org_vdc.with-edge-cluster.name
+  org = "cloud"
+  vdc = vcd_org_vdc.with-edge-cluster.name
 
   org_network_id      = vcd_network_isolated_v2.net1.id
   mode                = "NETWORK"
