@@ -60,6 +60,6 @@ require (
 )
 
 //replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20221021090940-184ca8d500ae
-replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20221110103540-4db841146136
+replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20221111082537-8727a0593678
 
 //replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director

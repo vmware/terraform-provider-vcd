@@ -92,8 +92,8 @@ resource "vcd_network_routed_v2" "net1" {
 }
 
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "cloud"
-  vdc  = "nsxt-vdc-cloud"
+  org = "cloud"
+  vdc = "nsxt-vdc-cloud"
 
   org_network_id = vcd_network_routed_v2.net1.id
 
