@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -24,141 +25,159 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		subscriberVdc         = testConfig.Nsxt.Vdc + "-1"
 		numberOfVappTemplates = 2
 		numberOfMediaItems    = 3
-		params                = StringMap{
-			"PublisherOrg":            publisherOrg,
-			"PublisherVdc":            testConfig.Nsxt.Vdc,
-			"PublisherCatalog":        publisherCatalog,
-			"PublisherDescription":    publisherDescription,
-			"PublisherStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
-			"VmName":                  testVm,
-			"Password":                "superUnknown",
-			"SubscriberOrg":           subscriberOrg,
-			"SubscriberCatalog":       subscriberCatalog,
-			"SubscriberVdc":           subscriberVdc,
-			"VappTemplateBaseName":    "test-vt",
-			"MediaItemBaseName":       "test-media",
-			"MakeLocalCopy":           false,
-			"OvaPath":                 testConfig.Ova.OvaPath,
-			"MediaPath":               testConfig.Media.MediaPath,
-			"NumberOfVappTemplates":   numberOfVappTemplates,
-			"NumberOfMediaItems":      numberOfMediaItems,
-			"Tags":                    "catalog subscribe",
-			"FuncName":                t.Name(),
-		}
 	)
 
-	configText := templateFill(testAccVcdPublisherCatalogCreation+
-		testAccVcdPublisherCatalogItems, params)
-
-	params["FuncName"] = t.Name() + "-subscriber"
-	subscriberConfigText := templateFill(testAccVcdPublisherCatalogCreation+
-		testAccVcdPublisherCatalogItems+
-		testAccSubscribedCatalogCreation, params)
-
-	params["FuncName"] = t.Name() + "-subscriber-update"
-	subscriberConfigTextUpdate := templateFill(testAccVcdPublisherCatalogCreation+
-		testAccVcdPublisherCatalogItems+
-		testAccSubscribedCatalogUpdate, params)
-
-	params["FuncName"] = t.Name() + "-subscriber-sync"
-	subscriberConfigTextSync := templateFill(testAccVcdPublisherCatalogCreation+
-		testAccVcdPublisherCatalogItems+
-		testAccSubscribedCatalogUpdate+
-		testAccSubscribedCatalogSync, params)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
+	var localCopyBehavior = map[bool]string{
+		true:  "sync_catalog = true",
+		false: "sync_all = true",
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION publisher: %s", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION subscriber: %s", subscriberConfigText)
-	debugPrintf("#[DEBUG] CONFIGURATION subscriber update: %s", subscriberConfigTextUpdate)
-	debugPrintf("#[DEBUG] CONFIGURATION subscriber sync: %s", subscriberConfigTextSync)
 
-	resourcePublisher := "vcd_catalog." + publisherCatalog
-	resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testCheckCatalogDestroy(publisherOrg, publisherCatalog),
-			testCheckCatalogDestroy(subscriberOrg, subscriberCatalog),
-		),
-		Steps: []resource.TestStep{
-			{
-				Config:       configText,
-				ResourceName: resourcePublisher,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdCatalogExists(resourcePublisher),
-					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-					resource.TestCheckResourceAttr(resourcePublisher, "name", publisherCatalog),
-					resource.TestCheckResourceAttr(resourcePublisher, "description", publisherDescription),
-					resource.TestCheckResourceAttr(resourcePublisher, "publish_subscription_type", "PUBLISHED"),
-					resource.TestMatchResourceAttr(resourcePublisher, "publish_subscription_url", regexp.MustCompile(`^https://\S+$`)),
-				),
-			},
-			{
-				Config:       subscriberConfigText,
-				ResourceName: resourceSubscriber,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, false, 0, 0, 0),
-					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
-					resource.TestCheckResourceAttr(
-						resourcePublisher, "number_of_vapp_templates", fmt.Sprintf("%d", numberOfVappTemplates)),
-					resource.TestCheckResourceAttr(
-						resourcePublisher, "number_of_media", fmt.Sprintf("%d", numberOfMediaItems)),
-					resource.TestCheckResourceAttr(resourceSubscriber, "number_of_vapp_templates", "0"),
-					resource.TestCheckResourceAttr(resourceSubscriber, "number_of_media", "0"),
-				),
-			},
-			{
-				Config:       subscriberConfigTextUpdate,
-				ResourceName: resourceSubscriber,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
-					resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
-				),
-			},
-			{
-				Config:       subscriberConfigTextSync,
-				ResourceName: resourceSubscriber,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-					testAccCheckVcdStandaloneVmExists(testVm, "vcd_vm."+testVm, subscriberOrg, subscriberVdc),
-					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+	for makeLocalCopy, syncWhat := range localCopyBehavior {
+		testName := fmt.Sprintf("%s-with-local-copy", t.Name())
+		if !makeLocalCopy {
+			testName = fmt.Sprintf("%s-no-local-copy", t.Name())
+		}
+		t.Run(fmt.Sprintf("make_local_copy=%v", makeLocalCopy), func(t *testing.T) {
+			var params = StringMap{
+				"PublisherOrg":            publisherOrg,
+				"PublisherVdc":            testConfig.Nsxt.Vdc,
+				"PublisherCatalog":        publisherCatalog,
+				"PublisherDescription":    publisherDescription,
+				"PublisherStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+				"VmName":                  testVm,
+				"Password":                "superUnknown",
+				"SubscriberOrg":           subscriberOrg,
+				"SubscriberCatalog":       subscriberCatalog,
+				"SubscriberVdc":           subscriberVdc,
+				"VappTemplateBaseName":    "test-vt",
+				"MediaItemBaseName":       "test-media",
+				"MakeLocalCopy":           makeLocalCopy,
+				"SyncWhat":                syncWhat,
+				"OvaPath":                 testConfig.Ova.OvaPath,
+				"MediaPath":               testConfig.Media.MediaPath,
+				"NumberOfVappTemplates":   numberOfVappTemplates,
+				"NumberOfMediaItems":      numberOfMediaItems,
+				"Tags":                    "catalog subscribe",
+				"FuncName":                testName,
+			}
 
-					// A subscribed catalog gets its description and metadata from the publisher
-					resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
-					resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog"),
+			configText := templateFill(testAccVcdPublisherCatalogCreation+
+				testAccVcdPublisherCatalogItems, params)
 
-					// Subscribed catalog items also get their metadata from the corresponding published items
-					resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
-					resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
-					resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+			params["FuncName"] = testName + "-subscriber"
+			subscriberConfigText := templateFill(testAccVcdPublisherCatalogCreation+
+				testAccVcdPublisherCatalogItems+
+				testAccSubscribedCatalogCreation, params)
 
-					// If this VM exists, it means that the corresponding vApp template is fully functional
-					resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
+			params["FuncName"] = testName + "-subscriber-update"
+			subscriberConfigTextUpdate := templateFill(testAccVcdPublisherCatalogCreation+
+				testAccVcdPublisherCatalogItems+
+				testAccSubscribedCatalogUpdate, params)
+
+			params["FuncName"] = testName + "-subscriber-sync"
+			subscriberConfigTextSync := templateFill(testAccVcdPublisherCatalogCreation+
+				testAccVcdPublisherCatalogItems+
+				testAccSubscribedCatalogUpdate+
+				testAccSubscribedCatalogSync, params)
+
+			if vcdShortTest {
+				t.Skip(acceptanceTestsSkipped)
+				return
+			}
+			debugPrintf("#[DEBUG] CONFIGURATION publisher: %s", configText)
+			debugPrintf("#[DEBUG] CONFIGURATION subscriber: %s", subscriberConfigText)
+			debugPrintf("#[DEBUG] CONFIGURATION subscriber update: %s", subscriberConfigTextUpdate)
+			debugPrintf("#[DEBUG] CONFIGURATION subscriber sync: %s", subscriberConfigTextSync)
+
+			resourcePublisher := "vcd_catalog." + publisherCatalog
+			resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
+			resource.Test(t, resource.TestCase{
+				PreCheck:          func() { preRunChecks(t) },
+				ProviderFactories: testAccProviders,
+				CheckDestroy: resource.ComposeTestCheckFunc(
+					testCheckCatalogDestroy(publisherOrg, publisherCatalog),
+					testCheckCatalogDestroy(subscriberOrg, subscriberCatalog),
 				),
-			},
-			{
-				ResourceName:      resourceSubscriber,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(subscriberOrg, subscriberCatalog),
-				// These fields can't be retrieved from catalog data
-				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive",
-					"sync_catalog", "sync_all", "sync_on_refresh", "subscription_password",
-					"cancel_failed_tasks", "store_tasks", "sync_all_vapp_templates",
-					"sync_vapp_templates", "sync_all_media_items", "tasks_file_name",
-					"sync_media_items",
+				Steps: []resource.TestStep{
+					{
+						Config:       configText,
+						ResourceName: resourcePublisher,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							testAccCheckVcdCatalogExists(resourcePublisher),
+							testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+							resource.TestCheckResourceAttr(resourcePublisher, "name", publisherCatalog),
+							resource.TestCheckResourceAttr(resourcePublisher, "description", publisherDescription),
+							resource.TestCheckResourceAttr(resourcePublisher, "publish_subscription_type", "PUBLISHED"),
+							resource.TestMatchResourceAttr(resourcePublisher, "publish_subscription_url", regexp.MustCompile(`^https://\S+$`)),
+						),
+					},
+					{
+						Config:       subscriberConfigText,
+						ResourceName: resourceSubscriber,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+							testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, false, 0, 0, 0),
+							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+							resource.TestCheckResourceAttr(
+								resourcePublisher, "number_of_vapp_templates", fmt.Sprintf("%d", numberOfVappTemplates)),
+							resource.TestCheckResourceAttr(
+								resourcePublisher, "number_of_media", fmt.Sprintf("%d", numberOfMediaItems)),
+							resource.TestCheckResourceAttr(resourceSubscriber, "number_of_vapp_templates", "0"),
+							resource.TestCheckResourceAttr(resourceSubscriber, "number_of_media", "0"),
+						),
+					},
+					{
+						Config:       subscriberConfigTextUpdate,
+						ResourceName: resourceSubscriber,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+							testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+							resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
+						),
+					},
+					{
+						PreConfig: func() {
+							time.Sleep(10 * time.Second)
+						},
+						Config:       subscriberConfigTextSync,
+						ResourceName: resourceSubscriber,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+							testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
+							testAccCheckVcdStandaloneVmExists(testVm, "vcd_vm."+testVm, subscriberOrg, subscriberVdc),
+							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+
+							// A subscribed catalog gets its description and metadata from the publisher
+							resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
+							resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog"),
+
+							// Subscribed catalog items also get their metadata from the corresponding published items
+							resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+							resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+							resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+
+							// If this VM exists, it means that the corresponding vApp template is fully functional
+							resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
+						),
+					},
+					{
+						ResourceName:      resourceSubscriber,
+						ImportState:       true,
+						ImportStateVerify: true,
+						ImportStateIdFunc: importStateIdOrgObject(subscriberOrg, subscriberCatalog),
+						// These fields can't be retrieved from catalog data
+						ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive",
+							"sync_catalog", "sync_all", "sync_on_refresh", "subscription_password",
+							"cancel_failed_tasks", "store_tasks", "sync_all_vapp_templates",
+							"sync_vapp_templates", "sync_all_media_items", "tasks_file_name",
+							"sync_media_items",
+						},
+					},
 				},
-			},
-		},
-	})
+			})
+		})
+	}
 	postTestChecks(t)
 }
 
@@ -333,7 +352,7 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
   subscription_password = "{{.Password}}"
 
   sync_on_refresh = true
-  sync_all        = true
+  {{.SyncWhat}}
 }
 `
 
@@ -363,7 +382,7 @@ resource "vcd_vm" "{{.VmName}}" {
   vdc           = "{{.SubscriberVdc}}"
   name          = "{{.VmName}}"
   catalog_name  = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
-  template_name = "{{.VappTemplateBaseName}}-1"
+  template_name = data.vcd_catalog_item.{{.VappTemplateBaseName}}-1.name
   description   = "test standalone VM"
   power_on      = false
 }
