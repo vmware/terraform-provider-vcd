@@ -59,8 +59,8 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 * `delete_recursive` - (Required) When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal
 * `delete_force` -(Required) When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state
 * `publish_enabled` - (Optional, *v3.6+*) Enable allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation. Default is `false`. 
-* `cache_enabled` - (Optional, *v3.6+*) Enable early catalog export to optimize synchronization. Default is `false`.
-* `preserve_identity_information` - (Optional, *v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary. Default is `false`.
+* `cache_enabled` - (Optional, *v3.6+*) Enable early catalog export to optimize synchronization. Default is `false`. It is recommended to set it to `true` when publishing the catalog.
+* `preserve_identity_information` - (Optional, *v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package, and you should use it only when necessary. Default is `false`.
 * `password` - (Optional, *v3.6+*) An optional password to access the catalog. Only ASCII characters are allowed in a valid password.
 * `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign.
 
@@ -69,13 +69,13 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 * `catalog_version` - (*v3.6+*) Version number from this catalog.
 * `owner_name` - (*v3.6+*) Owner of the catalog.
 * `number_of_vapp_templates` - (*v3.6+*) Number of vApp templates available in this catalog.
-* `vapp_template_list` (*v3.8+*) List of vApp templates in this catalog
-* `media_item_list` (*v3.8+*) List of media items in this catalog
+* `vapp_template_list` (*v3.8+*) List of vApp template names in this catalog, in alphabetical order.
+* `media_item_list` (*v3.8+*) List of media item names in this catalog, in alphabetical order.
 * `number_of_media` - (*v3.6+*) Number of media items available in this catalog.
 * `is_shared` - (*v3.6+*) Indicates if the catalog is shared.
 * `is_published` - (*v3.6+*) Indicates if this catalog is shared to all organizations.
 * `created` - (*v3.6+*) Date and time of catalog creation
-* `publish_subscription_type` - (*v3.6+*) Shows if the catalog is published, if it is a subscription from another one or none of those.
+* `publish_subscription_type` - (*v3.6+*) Shows if the catalog is `PUBLISHED`, if it is a subscription from another one (`SUBSCRIBED`), or none of those (`UNPUBLISHED`).
 * `publish_subscription_url` - (*v3.8+*) URL to which other catalogs can subscribe.
 
 ## Importing

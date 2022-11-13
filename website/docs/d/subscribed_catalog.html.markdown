@@ -35,20 +35,19 @@ The following arguments are supported:
 
 ## Attribute Reference
 * `storage_profile_id` - Allows to set specific storage profile to be used for catalog.
-* `subscription_password` - An optional password to access the catalog. It will always return an empty string.
-* `subscription_url` - The URL to subscribe to the external catalog.
-* `description` - Description of catalog. This is inherited from the publishing catalog
+* `subscription_url` - The URL to which this catalog is subscribed.
+* `description` - Description of the catalog. This is inherited from the publishing catalog
 * `metadata` - Optional metadata of the catalog. This is inherited from the publishing catalog
 * `catalog_version` - Version number from this catalog.
 * `owner_name` - Owner of the catalog.
 * `number_of_vapp_templates` - Number of vApp templates available in this catalog.
 * `number_of_media` - Number of media items available in this catalog.
-* `vapp_template_list` List of vApp templates in this catalog
-* `media_item_list` List of media items in this catalog
-* `is_shared` - Indicates if the catalog is shared.
-* `is_published` - Indicates if this catalog is available for subscription.
-* `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those.
-* `href` - the Hyper reference of the catalog.
+* `vapp_template_list` List of vApp template names in this catalog, in alphabetical order.
+* `media_item_list` List of media item names in this catalog, in alphabetical order.
+* `is_shared` - Indicates if the catalog is shared (`true` or `false`).
+* `is_published` - Indicates if this catalog is available for subscription. (Always return `false` for this data source)
+* `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those. (Always returns `SUBSCRIBED` for this data source)
+* `href` - the catalog's Hyper reference.
 * `created` - Date and time of catalog creation.
 * `running_tasks` - List of running synchronization tasks that are still running. They can refer to the catalog or any of its catalog items.
 * `failed_tasks` - List of synchronization tasks that are have failed. They can refer to the catalog or any of its catalog items.

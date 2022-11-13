@@ -62,13 +62,13 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level.
 * `name` - (Required) Catalog name
 * `storage_profile_id` - (Optional) Allows to set specific storage profile to be used for catalog.
-* `delete_recursive` - (Required) When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.
-* `delete_force` -(Required) When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.
+* `delete_recursive` - (Optional) When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.
+* `delete_force` -(Optional) When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.
 * `subscription_password` - (Optional) An optional password to access the catalog. Only ASCII characters are allowed in a valid password. 
   The password is only required when set by the publishing catalog. Passing in six asterisks '******' indicates to keep current password. 
   Passing in an empty string indicates to remove password.
 * `subscription_url` - (Required) The URL to subscribe to the external catalog.
-* `make_local_copy` - (Optional) If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed.
+* `make_local_copy` - (Optional) If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalog items unless a sync operation is performed.
 * `sync_on_refresh` - (Optional) Boolean value that shows if sync should be performed on every refresh.
 * `cancel_failed_tasks` - (Optional) When true, the subscribed catalog will attempt canceling failed tasks.
 * `sync_all` - (Optional) If true, synchronise this catalog and all items. 
@@ -87,12 +87,12 @@ The following arguments are supported:
 * `owner_name` - Owner of the catalog.
 * `number_of_vapp_templates` - Number of vApp templates available in this catalog.
 * `number_of_media` - Number of media items available in this catalog.
-* `vapp_template_list` List of vApp templates in this catalog.
-* `media_item_list` List of media items in this catalog.
+* `vapp_template_list` List of vApp template names in this catalog, in alphabetical order.
+* `media_item_list` List of media item names in this catalog, in alphabetical order.
 * `is_shared` - Indicates if the catalog is shared.
 * `is_published` - Indicates if this catalog is available for subscription. (Always false)
-* `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those. (Always "SUBSCRIBED")
-* `href` - the Hyper reference of the catalog.
+* `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those. (Always `SUBSCRIBED`)
+* `href` - the catalog's Hyper reference.
 * `created` - Date and time of catalog creation. This is the creation date of the subscription, not the original published catalog.
 * `running_tasks` - List of running synchronization tasks that are still running. They can refer to the catalog or any of its catalog items.
 * `failed_tasks` - List of synchronization tasks that are have failed. They can refer to the catalog or any of its catalog items.

@@ -69,7 +69,7 @@ func datasourceVcdTask() *schema.Resource {
 			"cancel_requested": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Whether user has requested this processing to be canceled.",
+				Description: "Whether user has requested this processing to be canceled. (true or false)",
 			},
 			"owner_name": {
 				Type:        schema.TypeString,

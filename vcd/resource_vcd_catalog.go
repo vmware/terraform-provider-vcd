@@ -38,7 +38,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				//ForceNew: true,
+				// Not ForceNew, to allow the resource name to be updated
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -75,7 +75,7 @@ func resourceVcdCatalog() *schema.Resource {
 			"cache_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
+				Default:     false,
 				Description: "True enables early catalog export to optimize synchronization",
 			},
 			"preserve_identity_information": {
@@ -267,7 +267,11 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "publish_enabled", adminCatalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
 		dSet(d, "cache_enabled", adminCatalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
 		dSet(d, "preserve_identity_information", adminCatalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
-		dSet(d, "publish_subscription_url", adminCatalog.FullSubscriptionUrl())
+		subscriptionUrl, err := adminCatalog.FullSubscriptionUrl()
+		if err != nil {
+			return fmt.Errorf("error retrieving subscription URL from catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
+		}
+		dSet(d, "publish_subscription_url", subscriptionUrl)
 	} else {
 		dSet(d, "publish_enabled", false)
 		dSet(d, "cache_enabled", false)

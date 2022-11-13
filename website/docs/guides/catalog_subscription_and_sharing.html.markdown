@@ -19,7 +19,7 @@ This document explains some common scenarios in VMware Cloud Director catalog us
 ## Glossary
 
 * A [catalog][catalog] is a container of [catalog items][item], which in turn could be either [vApp templates][template] or [media items][media]. It could be published, subscribed, or shared.
-* A [catalog item][item] is a generic object that represents a more specifc entity: a [vApp template][template] or a [media item][media]
+* A [catalog item][item] is a generic object that represents a more specific entity: a [vApp template][template] or a [media item][media]
 * A [media item][media] is a catalog element containing user-defined data. Usually, they are .ISO files, but users can put basically any file. It is located inside a [catalog item][item].
 * A [vApp template][template] is a special file that either has been exported from a vApp or has been assembled to become one. It must have a specific format (usually a .OVA). It is located inside a [catalog item][item].
 * A [subscribed_catalog][subscribed] is a catalog that was created by subscribing to another catalog. It is not modifiable and not publishable.
@@ -50,7 +50,7 @@ Bottom line: _It's still my catalog, but I allow others to use it_.
 A `vcd_catalog` is [published][catalog] when its owners open it for external access. Unlike a shared catalog, external users can't use
 the catalog contents directly, but obtain a subscription to it. There are no degrees of publishing like in sharing: it's
 either published or not published. When it is published, anyone who knows the subscription URL and the optional password
-can access it. The publishing operation is blind, i.e. the owners may not know who will access the catalog , or from where.
+can access it. The publishing operation is blind, i.e. the owners may not know who will access the catalog, or from where.
 Another important difference between publishing and sharing is that publishing can be practiced between different VCDs, while sharing
 must be done within the same VCD.
 
@@ -138,7 +138,7 @@ through a data source:
   to help subscribers see the difference between available items and already synchronised ones.   
 
 The moment when the catalog is published is important for subscribers, although they will have no say in that. It's important,
-however, that the publishing entity –either a provider or a designated tenant– understands this point:
+however, that the publishing entity –either a provider or a designated tenant– understands these points:
 
 * publishing a catalog after it is filled with all its items will give subscribers immediate access to the published resources;
 * publishing a catalog at creation may force subscribers to run synchronisation operations more often.
@@ -236,7 +236,7 @@ us to see which tasks are running, and even show the details of the tasks using 
 
 Compared to other resources, `vcd_subscribed_catalog` is peculiar for several reasons:
 
-* While we subscribe to one resource(catalog), we are getting several more (vApp templates and media items) that arrive
+* While we subscribe to one resource (catalog), we are getting several more (vApp templates and media items) that arrive
   in background.
 * The additional resources are not visible to Terraform, and there is currently (as of *v3.8*) no easy way to import then
   into Terraform state.
@@ -305,7 +305,7 @@ not. In our case, this situation will trigger a synchronisation right when we do
 to remove the subscribed catalog.
 
 To avoid this side effect, we need to remove `sync_on_refresh` from both the configuration file **and from the state file**
-(`terraform.tfstate`).
+(`terraform.tfstate`) before calling `terraform destroy`.
 
 ### Mixing "sync\_on\_refresh" and update
 

@@ -185,7 +185,11 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "publish_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
 		dSet(d, "cache_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
 		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
-		dSet(d, "publish_subscription_url", catalog.FullSubscriptionUrl())
+		subscriptionUrl, err := catalog.FullSubscriptionUrl()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		dSet(d, "publish_subscription_url", subscriptionUrl)
 	}
 
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))

@@ -70,7 +70,7 @@ The following arguments are supported:
 * `start_time` - The date and time the system started executing the task. May not be present if the task has not been executed yet.
 * `end_time` - The date and time that processing of the task was completed. May not be present if the task is still being executed.
 * `expiry_time` - The date and time at which the task resource will be destroyed and no longer available for retrieval. May not be present if the task has not been executed or is still being executed.
-* `cancel_requested` - Whether user has requested this processing to be canceled.
+* `cancel_requested` - Whether user has requested this processing to be canceled (`true` or `false`).
 * `owner_name` - The name of the task owner. This is typically the object that the task is creating or updating.
 * `owner_type` - The type of the task owner.
 * `owner_id` - The unique identifier of the task owner.

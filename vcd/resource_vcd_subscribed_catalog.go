@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +20,7 @@ import (
 type TaskIdCollection struct {
 	Running []string
 	Failed  []string
+	skip    []string
 }
 
 type contextString string
@@ -92,7 +92,7 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Description: "If true, subscription to a catalog creates a local copy of all items. " +
-					"Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed. ",
+					"Defaults to false, which does not create a local copy of catalog items unless a sync operation is performed. ",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
@@ -122,7 +122,7 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 			"number_of_vapp_templates": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Number of vApps templates this catalog contains.",
+				Description: "Number of vApp templates this catalog contains.",
 			},
 			"number_of_media": {
 				Type:        schema.TypeInt,
@@ -238,7 +238,7 @@ func resourceVcdSubscribedCatalog() *schema.Resource {
 
 // resourceVcdSubscribedCatalogCreate creates a subscribed catalog
 func resourceVcdSubscribedCatalogCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[TRACE] Subscribed Catalog creation initiated")
+	util.Logger.Println("[TRACE] entering resourceVcdSubscribedCatalogCreate")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -277,14 +277,14 @@ func resourceVcdSubscribedCatalogCreate(ctx context.Context, d *schema.ResourceD
 
 	// Creation will start the initial synchronisation. A new one should not be run when `sync_on_refresh` is set
 	ctx = context.WithValue(ctx, contextString("operation"), contextString("create"))
-	log.Printf("[TRACE] Subscribed Catalog created: %#v", adminCatalog)
+	util.Logger.Printf("[TRACE] Subscribed Catalog created: %#v\n", adminCatalog)
 	return resourceVcdSubscribedCatalogRead(ctx, d, meta)
 }
 
 // resourceVcdSubscribedCatalogRead reads or refreshes the subscribed catalog
 // if `sync_on_refresh` was set, it also performs the catalog synchronisation
 func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[TRACE] Subscribed Catalog read initiated")
+	util.Logger.Println("[TRACE] entering resourceVcdSubscribedCatalogRead")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -296,7 +296,7 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
-			log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
+			util.Logger.Printf("[DEBUG] Unable to find catalog. Removing from tfstate\n")
 			d.SetId("")
 			return nil
 		}
@@ -316,7 +316,7 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 	var metadataStruct StringMap
 	metadata, err := adminCatalog.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
+		util.Logger.Printf("[DEBUG] Unable to find catalog metadata: %s\n", err)
 		return diag.Errorf("%v", err)
 	}
 
@@ -331,7 +331,7 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 		adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location == "" {
 		// If this error occurs, we have probably a catalog data mismatch or replacement
 		// i.e. we are trying to read a regular catalog as a subscribed one
-		return diag.Errorf("subscribed catalog '%s' doesn't have a subscription", adminCatalog.AdminCatalog.Name)
+		return diag.Errorf("catalog '%s' doesn't have a subscription - please use 'vcd_catalog' instead", adminCatalog.AdminCatalog.Name)
 	}
 	dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
 	dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
@@ -410,12 +410,13 @@ func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceDat
 	}
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
-	log.Printf("[TRACE] Subscribed Catalog read completed: %#v", adminCatalog.AdminCatalog)
+	util.Logger.Printf("[TRACE] Subscribed Catalog read completed: %#v\n", adminCatalog.AdminCatalog)
 	return nil
 }
 
 // resourceVcdSubscribedCatalogUpdate updates a subscribed catalog
 func resourceVcdSubscribedCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	util.Logger.Println("[TRACE] entering resourceVcdSubscribedCatalogUpdate")
 	// The update in this resource differs from vcd_catalog only in the subscription and synchronising data
 	// Thus, we use the vcd_catalog update with a custom function to update the subscription and sync parameters
 
@@ -443,6 +444,7 @@ func resourceVcdSubscribedCatalogUpdate(ctx context.Context, d *schema.ResourceD
 // resourceVcdSubscribedCatalogDelete deletes a subscribed catalog
 // It defers the main operation to the regular catalog resource, and then removes the tasks file, if it exists
 func resourceVcdSubscribedCatalogDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	util.Logger.Println("[TRACE] entering resourceVcdSubscribedCatalogDelete")
 	diagErr := resourceVcdCatalogDelete(ctx, d, meta)
 	fileName, err := getTaskListFileName(d.Id(), nil)
 	if err == nil && fileName != "" {
@@ -451,10 +453,7 @@ func resourceVcdSubscribedCatalogDelete(ctx context.Context, d *schema.ResourceD
 			util.Logger.Printf("[INFO] no task file found for catalog %s\n", d.Get("name").(string))
 		}
 	}
-	if diagErr != nil {
-		return diagErr
-	}
-	return nil
+	return diagErr
 }
 
 // resourceVcdSubscribedCatalogImport imports a subscribed catalog
@@ -463,6 +462,7 @@ func resourceVcdSubscribedCatalogDelete(ctx context.Context, d *schema.ResourceD
 // or
 // terraform import vcd_subscribed_catalog.catalog-name  org-name.catalog-id
 func resourceVcdSubscribedCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	util.Logger.Println("[TRACE] entering resourceVcdSubscribedCatalogImport")
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.catalog-name or org-name.catalog-ID")
@@ -485,7 +485,7 @@ func resourceVcdSubscribedCatalogImport(ctx context.Context, d *schema.ResourceD
 		catalog.AdminCatalog.ExternalCatalogSubscription.Location == "" {
 		// If this error occurs, we have probably a catalog data mismatch or replacement
 		// i.e. we are trying to read a regular catalog as a subscribed one
-		return nil, fmt.Errorf("subscribed catalog '%s' doesn't have a subscription", catalog.AdminCatalog.Name)
+		return nil, fmt.Errorf("catalog '%s' doesn't have a subscription- Please use 'vcd_catalog' instead", catalog.AdminCatalog.Name)
 	}
 	dSet(d, "org", orgName)
 	dSet(d, "name", catalogIdentifier)
@@ -498,6 +498,7 @@ func resourceVcdSubscribedCatalogImport(ctx context.Context, d *schema.ResourceD
 // getTaskListFileName retrieves the task list file name.
 // The name will never change for this catalog
 func getTaskListFileName(catalogId string, d *schema.ResourceData) (string, error) {
+	util.Logger.Println("[TRACE] entering getTaskListFileName")
 	fileName, err := filepath.Abs(strings.Replace(taskFileName, "{ID}", extractUuid(catalogId), 1))
 	if err != nil {
 		return "", err
@@ -510,6 +511,7 @@ func getTaskListFileName(catalogId string, d *schema.ResourceData) (string, erro
 
 // storeTaskIdCollection will store the task ID collections into the tasks file if "store_tasks" was set
 func storeTaskIdCollection(catalogId string, collection TaskIdCollection, d *schema.ResourceData) error {
+	util.Logger.Println("[TRACE] entering storeTaskIdCollection")
 	if !d.Get("store_tasks").(bool) {
 		return nil
 	}
@@ -532,6 +534,7 @@ func storeTaskIdCollection(catalogId string, collection TaskIdCollection, d *sch
 
 // readTaskIdCollection reads the collection of tasks from file, if "store_tasks" was set
 func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.ResourceData) (TaskIdCollection, error) {
+	util.Logger.Println("[TRACE] entering readTaskIdCollection")
 	var collection TaskIdCollection
 	rawRunningTasks := d.Get("running_tasks")
 	if rawRunningTasks != nil {
@@ -580,20 +583,20 @@ func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.Reso
 	return collection, nil
 }
 
-// skimTaskCollection will remove from the task list all the tasks that are already complete
-func skimTaskCollection(vcdClient *VCDClient, collection TaskIdCollection) (TaskIdCollection, error) {
-
+func processTasks(vcdClient *VCDClient, collection TaskIdCollection, callNo int) (TaskIdCollection, error, bool) {
+	needsRepeating := false
 	running, failed, err := vcdClient.Client.SkimTasksList(collection.Running)
 	if err != nil {
-		return TaskIdCollection{}, err
+		return TaskIdCollection{}, err, false
 	}
+	var newFailedTasks []string
 	if len(failed) > 0 {
 		errorMessage := ""
 		taskTypes := make(map[string]bool)
 		for _, taskId := range failed {
 			task, err := vcdClient.VCDClient.Client.GetTaskById(taskId)
 			if err != nil {
-				return TaskIdCollection{}, err
+				return TaskIdCollection{}, err, false
 			}
 			taskTypes[task.Task.Name] = true
 			if task.Task.Error == nil {
@@ -602,23 +605,58 @@ func skimTaskCollection(vcdClient *VCDClient, collection TaskIdCollection) (Task
 			if errorMessage != "" {
 				errorMessage += "\n"
 			}
-			errorMessage += task.Task.Error.Error()
+			// Catch a possible race condition
+			// If this message is in the task error message, we don't return the task ID to the caller,
+			// but keep it for the next run
+			if strings.Contains(task.Task.Error.Error(), "updated or deleted by another transaction") {
+				util.Logger.Printf("[TRACE] [SKIP-FAILED-TASK] task %s skipped. Error: %s\n", taskId, task.Task.Error)
+				needsRepeating = true
+				collection.skip = append(collection.skip, taskId)
+			} else {
+				errorMessage += task.Task.Error.Error()
+				newFailedTasks = append(newFailedTasks, taskId)
+			}
 		}
 		taskTypeText := ""
 		for k := range taskTypes {
 			taskTypeText += k + " "
 		}
 		err = fmt.Errorf("%d tasks have failed - task types [%s]: %s", len(failed), taskTypeText, errorMessage)
+
+	}
+	// On the second run, if we still have task failures, we add the failed tasks from the previous run
+	if callNo > 1 && len(newFailedTasks) > 0 {
+		newFailedTasks = append(newFailedTasks, collection.skip...)
 	}
 	return TaskIdCollection{
 		Running: running,
-		Failed:  failed,
-	}, err
+		Failed:  newFailedTasks,
+		skip:    collection.skip,
+	}, err, needsRepeating
+}
+
+// skimTaskCollection will remove from the task list all the tasks that are already complete
+func skimTaskCollection(vcdClient *VCDClient, collection TaskIdCollection) (TaskIdCollection, error) {
+	util.Logger.Println("[TRACE] entering skimTaskCollection")
+	var needsRepeating bool
+	var err error
+	collection, err, needsRepeating = processTasks(vcdClient, collection, 1)
+	if err != nil {
+		// If a possible race was detected, repeat the skim a second time
+		if needsRepeating {
+			time.Sleep(10 * time.Second)
+			collection, err, _ = processTasks(vcdClient, collection, 2)
+		}
+	}
+	if err != nil {
+		return TaskIdCollection{}, err
+	}
+	return collection, nil
 }
 
 // runSubscribedCatalogSyncOperations runs all the requested synchronisation operations
 func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDClient, adminCatalog *govcd.AdminCatalog, operation string) error {
-	log.Printf("[TRACE] Catalog '%s' sync initiated [%s]", adminCatalog.AdminCatalog.Name, operation)
+	util.Logger.Printf("[TRACE] Catalog '%s' sync initiated [%s]\n", adminCatalog.AdminCatalog.Name, operation)
 
 	catalogId := adminCatalog.AdminCatalog.ID
 	makeLocalCopy := d.Get("make_local_copy").(bool)
@@ -640,6 +678,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 
 	cancelFailedTasks := d.Get("cancel_failed_tasks").(bool)
 	if len(collection.Failed) > 0 {
+		util.Logger.Printf("[TRACE] Catalog '%s' sync - collecting failed tasks\n", adminCatalog.AdminCatalog.Name)
 		for _, taskId := range collection.Failed {
 			task, err := vcdClient.Client.GetTaskById(taskId)
 			if err == nil {
@@ -648,7 +687,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 				if cancelFailedTasks {
 					err = task.CancelTask()
 					if err != nil {
-						util.Logger.Printf("[runSubscribedCatalogSyncOperations] error canceling task %s", taskId)
+						util.Logger.Printf("[runSubscribedCatalogSyncOperations] error canceling task %s\n", taskId)
 					}
 				}
 			}
@@ -668,6 +707,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 	}
 
 	if syncCatalog || syncAll {
+		util.Logger.Printf("[TRACE] Catalog '%s' sync - sync_catalog [make_local_copy=%v]\n", adminCatalog.AdminCatalog.Name, makeLocalCopy)
 		var task *govcd.Task
 		if makeLocalCopy {
 			task, err = adminCatalog.LaunchSync()
@@ -687,6 +727,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 		return storeTaskIdCollection(catalogId, collection, d)
 	}
 	if syncAllVappTemplates || syncAll {
+		util.Logger.Printf("[TRACE] Catalog '%s' sync - sync_all_vapp_templates [make_local_copy=%v]\n", adminCatalog.AdminCatalog.Name, makeLocalCopy)
 		tasks, err := adminCatalog.LaunchSynchronisationAllVappTemplates()
 		if err != nil {
 			return fmt.Errorf("error synchronising all vApp templates for catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
@@ -696,15 +737,19 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 		}
 	}
 	if syncAllMediaItems || syncAll {
+		util.Logger.Printf("[TRACE] Catalog '%s' sync - sync_all_media_items [make_local_copy=%v]\n", adminCatalog.AdminCatalog.Name, makeLocalCopy)
 		tasks, err := adminCatalog.LaunchSynchronisationAllMediaItems()
 		if err != nil {
 			return fmt.Errorf("error synchronising all media items for catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
 		}
 		for _, task := range tasks {
-			taskList = append(taskList, task.Task.ID)
+			if task != nil {
+				taskList = append(taskList, task.Task.ID)
+			}
 		}
 	}
 	if len(rawSyncVappTemplates) > 0 {
+		util.Logger.Printf("[TRACE] Catalog '%s' sync - sync_vapp_templates [make_local_copy=%v]\n", adminCatalog.AdminCatalog.Name, makeLocalCopy)
 		var syncVappTemplates []string
 		for _, item := range rawSyncVappTemplates {
 			syncVappTemplates = append(syncVappTemplates, item.(string))
@@ -718,6 +763,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 		}
 	}
 	if len(rawSyncMediaItems) > 0 {
+		util.Logger.Printf("[TRACE] Catalog '%s' sync - sync_all_media_items [make_local_copy=%v]\n", adminCatalog.AdminCatalog.Name, makeLocalCopy)
 		var syncMediaItems []string
 		for _, item := range rawSyncMediaItems {
 			syncMediaItems = append(syncMediaItems, item.(string))

@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func datasourceVcdSubscribedCatalog() *schema.Resource {
@@ -35,17 +36,12 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 			"subscription_url": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The URL to subscribe to the external catalog. Required when 'subscription_catalog_href' is not provided",
-			},
-			"subscription_password": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "An optional password to access the catalog.",
+				Description: "The URL to which this catalog is subscribed.",
 			},
 			"make_local_copy": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalogItems unless sync operation is performed.",
+				Description: "If true, subscription to a catalog creates a local copy of all items. If false, it does not create a local copy of catalogItems unless sync operation is performed.",
 			},
 			"href": {
 				Type:        schema.TypeString,
@@ -102,7 +98,7 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 			"publish_subscription_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
+				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise. (Always SUBSCRIBED for this data source)",
 			},
 			"running_tasks": {
 				Type:        schema.TypeList,
@@ -137,7 +133,7 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 }
 
 func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[TRACE] Subscribed Catalog read initiated")
+	util.Logger.Printf("[TRACE] Subscribed Catalog data source read initiated\n")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -167,7 +163,7 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 	// We try to determine early if this catalog was created by subscription, and fail otherwise
 	if adminCatalog.AdminCatalog.ExternalCatalogSubscription == nil ||
 		adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location == "" {
-		return diag.Errorf("catalog '%s' is not a subscribed catalog", adminCatalog.AdminCatalog.Name)
+		return diag.Errorf("catalog '%s' is not a subscribed catalog - please use 'vcd_catalog' instead", adminCatalog.AdminCatalog.Name)
 	}
 
 	if adminCatalog.AdminCatalog.CatalogStorageProfiles != nil && len(adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile) > 0 {
@@ -180,6 +176,7 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 	dSet(d, "description", adminCatalog.AdminCatalog.Description)
 	dSet(d, "created", adminCatalog.AdminCatalog.DateCreated)
 	dSet(d, "publish_subscription_type", "SUBSCRIBED")
+	dSet(d, "is_published", false)
 
 	dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
 	dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
@@ -208,6 +205,6 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 	}
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
-	log.Printf("[TRACE] Subscribed Catalog read completed: %#v", adminCatalog.AdminCatalog)
+	util.Logger.Printf("[TRACE] Subscribed Catalog data source read completed: %#v\n", adminCatalog.AdminCatalog)
 	return nil
 }
