@@ -6,6 +6,10 @@ jobs:
     env:
       GO111MODULE: on
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.19'
       - name: Checkout Source
         uses: actions/checkout@v2
       - name: gosec
