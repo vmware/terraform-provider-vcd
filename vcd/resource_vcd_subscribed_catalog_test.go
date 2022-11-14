@@ -25,6 +25,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		subscriberVdc         = testConfig.Nsxt.Vdc + "-1"
 		numberOfVappTemplates = 2
 		numberOfMediaItems    = 3
+		skipMessage           = "# skip-binary-test: not suitable for binary tests due to timing considerations"
 	)
 
 	var localCopyBehavior = map[bool]string{
@@ -39,6 +40,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		}
 		t.Run(fmt.Sprintf("make_local_copy=%v", makeLocalCopy), func(t *testing.T) {
 			var params = StringMap{
+				"SkipMessage":             skipMessage,
 				"PublisherOrg":            publisherOrg,
 				"PublisherVdc":            testConfig.Nsxt.Vdc,
 				"PublisherCatalog":        publisherCatalog,
@@ -70,11 +72,14 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 				testAccSubscribedCatalogCreation, params)
 
 			params["FuncName"] = testName + "-subscriber-update"
+			// Enable binary tests only for this stage, as the others would have timing problems
+			params["SkipMessage"] = ""
 			subscriberConfigTextUpdate := templateFill(testAccVcdPublisherCatalogCreation+
 				testAccVcdPublisherCatalogItems+
 				testAccSubscribedCatalogUpdate, params)
 
 			params["FuncName"] = testName + "-subscriber-sync"
+			params["SkipMessage"] = skipMessage
 			subscriberConfigTextSync := templateFill(testAccVcdPublisherCatalogCreation+
 				testAccVcdPublisherCatalogItems+
 				testAccSubscribedCatalogUpdate+
@@ -260,6 +265,7 @@ func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc
 
 // testAccVcdPublisherCatalogCreation contains the creation of the publishing catalog
 const testAccVcdPublisherCatalogCreation = `
+{{.SkipMessage}}
 data "vcd_storage_profile" "storage_profile" {
   org  = "{{.PublisherOrg}}"
   vdc  = "{{.PublisherVdc}}"
