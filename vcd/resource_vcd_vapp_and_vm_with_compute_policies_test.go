@@ -16,7 +16,6 @@ func TestAccVcdVAppAndVmWithComputePolicies(t *testing.T) {
 	var params = StringMap{
 		"Name":                      t.Name(),
 		"Org":                       testConfig.VCD.Org,
-		"Description":               t.Name(),
 		"PvdcName":                  testConfig.VCD.NsxtProviderVdc.Name,
 		"VmGroupName":               testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
 		"Catalog":                   testConfig.VCD.Catalog.NsxtBackedCatalogName,
@@ -212,7 +211,6 @@ resource "vcd_vapp_vm" "{{.Name}}" {
   vdc              = vcd_vapp.{{.Name}}.vdc
   vapp_name        = vcd_vapp.{{.Name}}.name
   name             = "{{.Name}}_vapp_vm"
-  description      = "{{.Description}}"
   memory           = 512
   cpus             = 1
   cpu_cores        = 1
@@ -229,7 +227,6 @@ resource "vcd_vapp_vm" "{{.Name}}" {
 
 resource "vcd_vm" "{{.Name}}" {
   name              = "{{.Name}}_vm"
-  description       = "{{.Description}}"
   org               = "{{.Org}}"
   vdc               = vcd_org_vdc.{{.Name}}.name
   memory            = 512
