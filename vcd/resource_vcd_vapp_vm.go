@@ -1443,7 +1443,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		if sizingPolicyChanged {
 			sizingId = newSizingId
 		}
-		_, err = vm.UpdateComputePolicyV2(sizingId.(string), placementId.(string))
+		_, err = vm.UpdateComputePolicyV2(sizingId.(string), placementId.(string), "")
 		if err != nil {
 			return diag.Errorf("error updating compute policy: %s", err)
 		}
