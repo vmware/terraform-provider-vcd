@@ -24,7 +24,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	preTestChecks(t)
 
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
 

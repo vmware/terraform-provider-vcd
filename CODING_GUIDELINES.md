@@ -98,7 +98,7 @@ func datasourceEntityRead(_ context.Context, d *schema.ResourceData, meta interf
 
 ### Handling Terraform Resource read
 
-Resource is an entity that is created and managed by Terraform.It can happen that a resource created
+Resource is an entity that is created and managed by Terraform. It can happen that a resource created
 with Terraform is removed from VCD by other means (UI, CLI, etc.). This would cause an error when a
 `refresh` operation (which happens as part of `plan` and `apply` operations) is triggered as the
 resource is no longer found. This can *"brick"* workflow as all the user would get on any Terraform
