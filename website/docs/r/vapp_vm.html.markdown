@@ -358,11 +358,11 @@ example for usage details.
 * `memory_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
 * `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
-  using `vcd_org_vdc.vm_sizing_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default), and in this case the VM will require either
-  a sizing policy or a placement policy (see the attribute below, `placement_policy_id`).
+  using `vcd_org_vdc.vm_sizing_policy_ids` (and `vcd_org_vdc.default_compute_policy_id` to make it default).
+  In this case, if the sizing policy is not set, it will pick the VDC default on creation.
 * `placement_policy_id` (Optional; *v3.8+*) VM placement policy ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
-  using `vcd_org_vdc.vm_placement_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default), and in this case the VM will require either
-  a placement policy or a sizing policy (see the attribute above, `sizing_policy_id`).
+  using `vcd_org_vdc.vm_placement_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default).
+  In this case, if the placement policy is not set, it will pick the VDC default on creation.
 
 ## Attribute reference
 

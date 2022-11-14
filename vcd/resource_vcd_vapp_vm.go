@@ -587,12 +587,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"sizing_policy_id": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
+			Computed:    true, // As it can get populated automatically by VDC default policy
 			Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
 		},
 		"placement_policy_id": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true, // As it can get populated automatically by VDC default policy
 			Description: "VM placement policy ID. Has to be assigned to Org VDC.",
 		},
 		"status": {
@@ -1429,8 +1430,15 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		// hence `sizingPolicyChanged` will be always false.
 		// We need to inspect the raw HCL to get the correct value.
 		hclMap := d.GetRawConfig().AsValueMap()
-		if hclValue, ok := hclMap["sizing_policy_id"]; ok && strings.TrimSpace(hclValue.AsString()) == "" {
+		if hclValue, ok := hclMap["sizing_policy_id"]; ok && !hclValue.IsNull() && strings.TrimSpace(hclValue.AsString()) == "" {
 			sizingId = ""
+		}
+	}
+	if !placementPolicyChanged {
+		// Same as above
+		hclMap := d.GetRawConfig().AsValueMap()
+		if hclValue, ok := hclMap["placement_policy_id"]; ok && !hclValue.IsNull() && strings.TrimSpace(hclValue.AsString()) == "" {
+			placementId = ""
 		}
 	}
 
@@ -1905,6 +1913,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		if vm.VM.ComputePolicy.VmSizingPolicy != nil {
 			dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
 		}
+		dSet(d, "placement_policy_id", "")
 		if vm.VM.ComputePolicy.VmPlacementPolicy != nil {
 			dSet(d, "placement_policy_id", vm.VM.ComputePolicy.VmPlacementPolicy.ID)
 		}
