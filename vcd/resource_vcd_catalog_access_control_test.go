@@ -159,7 +159,7 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 				ResourceName:      "vcd_catalog_access_control.AC-Catalog1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject("Catalog-AC-1"),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, "Catalog-AC-1"),
 			},
 			// Tests import by ID
 			{
