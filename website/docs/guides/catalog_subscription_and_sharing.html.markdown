@@ -225,6 +225,9 @@ Thus, we have two ways of operating:
   will happen every time the resource is read, which may introduce some delays in the operations if you were expecting
   `terraform refresh` to be quick. Despite the possible side effects, this is the recommended way.
 
+In the [examples directory](https://github.com/vmware/terraform-provider-vcd/examples/subscribed_catalog) we can see a full
+example of a published and a subscribed catalog.
+
 ### Synchronisation fine tuning
 
 If we want to have fine control over the synchronisation, we can use the list of tasks being generated during the [subscribed
@@ -304,8 +307,7 @@ oddly enough, `terraform destroy`. The first operation before apply and destroy 
 not. In our case, this situation will trigger a synchronisation right when we don't need it, since we have decided
 to remove the subscribed catalog.
 
-To avoid this side effect, we need to remove `sync_on_refresh` from both the configuration file **and from the state file**
-(`terraform.tfstate`) before calling `terraform destroy`.
+To avoid this side effect, we should call `terraform destroy` with the option `-refresh=false`.
 
 ### Mixing "sync\_on\_refresh" and update
 
