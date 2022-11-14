@@ -5,7 +5,6 @@
 package vcd
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -53,13 +52,6 @@ func TestAccVcdVAppAndVmWithComputePolicies(t *testing.T) {
 	params["FuncName"] = t.Name() + "5-BothPolicies"
 	bothPoliciesHcl := templateFill(testAccCheckVcdVappVmAndVmWithComputePolicies, params)
 
-	params["SizingPolicy"] = "sizing_policy_id = \"\""
-	params["PlacementPolicy"] = "placement_policy_id = \"\""
-	params["Description"] = t.Name() + "-step6" // Forces an update, otherwise Terraform doesn't detect the change.
-	params["FuncName"] = t.Name() + "6-NoPoliciesShouldFail"
-	// As this test must fail, we add the skip binary label
-	noPoliciesHcl := templateFill("# skip-binary-test\n"+testAccCheckVcdVappVmAndVmWithComputePolicies, params)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -70,7 +62,6 @@ func TestAccVcdVAppAndVmWithComputePolicies(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION 3: %s\n", createWithSizingPolicy)
 	debugPrintf("#[DEBUG] CONFIGURATION 4: %s\n", changeToPlacementPolicyHcl)
 	debugPrintf("#[DEBUG] CONFIGURATION 5: %s\n", bothPoliciesHcl)
-	debugPrintf("#[DEBUG] CONFIGURATION 6: %s\n", noPoliciesHcl)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -137,10 +128,6 @@ func TestAccVcdVAppAndVmWithComputePolicies(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "sizing_policy_id", "vcd_vm_sizing_policy.sizing1", "id"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+t.Name(), "placement_policy_id", "vcd_vm_placement_policy.placement1", "id"),
 				),
-			},
-			{
-				Config:      noPoliciesHcl,
-				ExpectError: regexp.MustCompile(".*either sizing policy ID or placement policy ID is needed.*"),
 			},
 		},
 	})
