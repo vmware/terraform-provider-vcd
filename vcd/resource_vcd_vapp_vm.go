@@ -1424,8 +1424,9 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 	placementPolicyChanged := d.HasChange("placement_policy_id")
 	if !sizingPolicyChanged {
 		// As sizing_policy_id is Computed+Optional, the only way to unset it should be to write `sizing_policy_id = ""`
-		// in the HCL. However, when this is done, Terraform SDK doesn't detect this change: d.HasChange() returns false,
-		// d.GetChange returns both old values and d.Get returns old value, hence `sizingPolicyChanged` will be always false.
+		// in the HCL. However, when this is done, Terraform SDK (terraform-plugin-sdk v2.24.0) doesn't detect this change:
+		// d.HasChange() returns false, d.GetChange returns both old values and d.Get returns old value,
+		// hence `sizingPolicyChanged` will be always false.
 		// We need to inspect the raw HCL to get the correct value.
 		hclMap := d.GetRawConfig().AsValueMap()
 		if hclValue, ok := hclMap["sizing_policy_id"]; ok && strings.TrimSpace(hclValue.AsString()) == "" {
