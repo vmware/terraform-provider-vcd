@@ -218,7 +218,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				ResourceName:      "vcd_org_vdc." + params["VdcName"].(string),
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(params["VdcName"].(string)),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, params["VdcName"].(string)),
 				// These fields can't be retrieved
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},
