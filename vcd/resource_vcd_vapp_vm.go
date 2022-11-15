@@ -119,7 +119,14 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			ForceNew:    true,
+			Deprecated:  "Use `template_id` instead",
 			Description: "The name of the vApp Template to use",
+		},
+		"template_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+			Description: "The URN of the vApp Template to use",
 		},
 		"vm_name_in_template": {
 			Type:        schema.TypeString,
@@ -130,6 +137,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"catalog_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Deprecated:  "You should use `template_id` without the need of a catalog name",
 			Description: "The catalog name in which to find the given vApp Template or media for boot_image",
 		},
 		"description": {
@@ -255,7 +263,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"boot_image": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Deprecated:  "Use `boot_image_id` instead",
 			Description: "Media name to add as boot image.",
+		},
+		"boot_image_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "URN of the media to use as boot image.",
 		},
 		"network_dhcp_wait_seconds": {
 			Optional:     true,
