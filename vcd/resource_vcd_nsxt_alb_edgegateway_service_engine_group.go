@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -129,6 +130,11 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(_ context.Context, d *schem
 
 	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			log.Printf("ALB Service Engine Group assignment not found. Removing from state file: %s", err)
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error reading ALB Service Engine Group assignment: %s", err)
 	}
 	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment)

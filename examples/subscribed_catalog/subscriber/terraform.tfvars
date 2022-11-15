@@ -1,0 +1,6 @@
+vcd_url  = "https://some-other-vcd.com"
+org      = "myorg"
+vdc      = "myvdc"
+user     = "administrator"
+password = "mypassword"
+subscription_url = "REPLACE this variable with subscription URL obtained from publishing catalog"

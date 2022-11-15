@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -214,7 +215,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	}
 
 	if passwordFile != "" {
-		passwordBytes, err := os.ReadFile(passwordFile)
+		passwordBytes, err := os.ReadFile(filepath.Clean(passwordFile))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -318,6 +319,10 @@ func resourceVcdOrgUserRead(_ context.Context, d *schema.ResourceData, meta inte
 
 	orgUser, _, err := resourceToOrgUser(d, meta)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("[user read] error filling data %s", err)
 	}
 	err = setOrgUserData(d, orgUser)
