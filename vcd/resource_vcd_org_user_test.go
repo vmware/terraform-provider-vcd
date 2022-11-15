@@ -251,7 +251,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 						ResourceName:      resourceName,
 						ImportState:       true,
 						ImportStateVerify: true,
-						ImportStateIdFunc: importStateIdOrgObject(ud.name),
+						ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, ud.name),
 						// These fields can't be retrieved from user data
 						ImportStateVerifyIgnore: []string{"take_ownership", "password", "password_file"},
 					},
@@ -412,3 +412,74 @@ data "vcd_org_user" "DSExistingUser" {
   name = "{{.DSUserName}}"
 }
 `
+
+// TestAccVcdOrgUserResourceNotFound checks that deletion of Org User is correctly handled when
+// resource disappears (remove ID by using d.SetId("") instead of throwing error) outside of
+// Terraform control.
+func TestAccVcdOrgUserResourceNotFound(t *testing.T) {
+	preTestChecks(t)
+	_ = prepareUserData(t) // This will create PasswordFile and store password for user
+	skipTestForApiToken(t)
+
+	// This test invokes go-vcloud-director SDK directly
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"Org":          testConfig.VCD.Org,
+		"UserName":     strings.ToLower(t.Name()), // username must be lower cased
+		"PasswordFile": orgUserPasswordFile,
+		"RoleName":     govcd.OrgUserRoleOrganizationAdministrator,
+		"Tags":         "user",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccOrgUserBasic, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resourceName := "vcd_org_user." + params["UserName"].(string)
+	cachedId := &testCachedFieldValue{}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", params["UserName"].(string)),
+					cachedId.cacheTestResourceFieldValue(resourceName, "id"),
+				),
+			},
+			{
+				// This function finds newly created resource and deletes it before
+				// next plan check
+				PreConfig: func() {
+					vcdClient := createSystemTemporaryVCDConnection()
+					adminOrg, err := vcdClient.GetAdminOrgByName(params["Org"].(string))
+					if err != nil {
+						t.Errorf("error finding getting AdminOrg: %s", err)
+					}
+
+					user, err := adminOrg.GetUserById(cachedId.fieldValue, false)
+					if err != nil {
+						t.Errorf("error finding user: %s", err)
+					}
+
+					err = user.Delete(false)
+					if err != nil {
+						t.Errorf("error deleting user: %s", err)
+					}
+
+				},
+				// Expecting to get a non-empty plan because resource was removed using SDK in
+				// PreConfig
+				Config:             configText,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+
+	postTestChecks(t)
+}

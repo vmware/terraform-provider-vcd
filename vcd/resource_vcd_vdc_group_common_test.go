@@ -717,7 +717,7 @@ func TestAccVcdNsxVdcGroupResources(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObjectUsingVdcGroup(parentVdcGroupName, t.Name(), "First"),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"vdc", "status", "ike_service_status", "ike_fail_reason"},
 			},
 			{
 				Config: configText4,

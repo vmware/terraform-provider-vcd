@@ -361,6 +361,10 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}

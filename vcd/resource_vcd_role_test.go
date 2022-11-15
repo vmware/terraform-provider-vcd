@@ -69,7 +69,7 @@ func TestAccVcdRole(t *testing.T) {
 				ResourceName:      resourceDef,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(roleUpdateName),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, roleUpdateName),
 			},
 		},
 	})
