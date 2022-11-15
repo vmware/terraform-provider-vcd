@@ -57,11 +57,18 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary.",
 			},
+			"href": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog HREF",
+			},
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for catalog metadata",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog", true),
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -82,6 +89,18 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "Number of Medias this catalog contains.",
 			},
+			"vapp_template_list": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of catalog items in this catalog",
+			},
+			"media_item_list": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of Media items in this catalog",
+			},
 			"is_shared": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -96,6 +115,11 @@ func datasourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "PUBLISHED if published externally, SUBSCRIBED if subscribed to an external catalog, UNPUBLISHED otherwise.",
+			},
+			"publish_subscription_url": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL to which other catalogs can subscribe",
 			},
 			"filter": {
 				Type:        schema.TypeList,
@@ -147,29 +171,29 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
-	metadata, err := catalog.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
-		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
-	}
-
 	dSet(d, "description", catalog.AdminCatalog.Description)
 	dSet(d, "created", catalog.AdminCatalog.DateCreated)
 	dSet(d, "name", catalog.AdminCatalog.Name)
 
+	dSet(d, "href", catalog.AdminCatalog.HREF)
 	d.SetId(catalog.AdminCatalog.ID)
 	if catalog.AdminCatalog.PublishExternalCatalogParams != nil {
 		dSet(d, "publish_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsPublishedExternally)
 		dSet(d, "cache_enabled", catalog.AdminCatalog.PublishExternalCatalogParams.IsCachedEnabled)
 		dSet(d, "preserve_identity_information", catalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
+		subscriptionUrl, err := catalog.FullSubscriptionUrl()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		dSet(d, "publish_subscription_url", subscriptionUrl)
 	}
 
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	err = updateMetadataInState(d, catalog)
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	err = setCatalogData(d, adminOrg, catalog.AdminCatalog.Name)
+	err = setCatalogData(d, adminOrg, catalog, "vcd_catalog")
 	if err != nil {
 		return diag.FromErr(err)
 	}

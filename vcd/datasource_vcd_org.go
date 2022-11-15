@@ -112,7 +112,9 @@ func datasourceVcdOrg() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for organization metadata",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("Organization", true),
 		},
 	}
 }

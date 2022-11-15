@@ -135,6 +135,11 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		if dataSourceName == "vcd_task" && mandatoryFields[fieldIndex] == "id" {
+			templateFields = templateFields + `id = "deadbeef-dead-beef-dead-deadbeefdead"` + "\n"
+			return templateFields
+		}
+
 		if (dataSourceName == "vcd_nsxt_edgegateway_bgp_configuration" || dataSourceName == "vcd_nsxt_alb_settings" ||
 			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement") &&
 			mandatoryFields[fieldIndex] == "edge_gateway_id" {

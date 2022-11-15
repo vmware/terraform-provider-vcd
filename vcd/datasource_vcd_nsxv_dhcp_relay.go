@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdNsxvDhcpRelay() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdNsxvDhcpRelayRead,
+		Read: datasourceVcdNsxvDhcpRelayRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -71,4 +71,8 @@ func datasourceVcdNsxvDhcpRelay() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNsxvDhcpRelayRead(d, meta, "datasource")
 }

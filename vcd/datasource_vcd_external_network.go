@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdExternalNetwork() *schema.Resource {
 	return &schema.Resource{
-		Read:               resourceVcdExternalNetworkRead,
+		Read:               datasourceVcdExternalNetworkRead,
 		DeprecationMessage: "Please use data source vcd_external_network_v2 instead",
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -101,4 +101,8 @@ func datasourceVcdExternalNetwork() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdExternalNetworkRead(d, meta, "datasource")
 }

@@ -86,10 +86,14 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "Size of upload file piece size in megabytes",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for the metadata of this vApp Template",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key and value pairs for the metadata of this vApp Template",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("vApp Template", false),
 		},
 	}
 }
@@ -183,13 +187,9 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 		dSet(d, "vdc_id", vdc.Vdc.ID)
 	}
 
-	metadata, err := vAppTemplate.GetMetadata()
+	err = updateMetadataInState(d, vAppTemplate)
 	if err != nil {
-		return diag.Errorf("Unable to find vApp template metadata: %s", err)
-	}
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("Unable to set metadata for the vApp Template: %s", err)
+		return diag.Errorf("Unable to set vApp template metadata: %s", err)
 	}
 
 	var vmNames []string

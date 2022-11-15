@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -61,10 +63,14 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				Description: "Maximum number of virtual services to be used in this Service Engine Group",
 			},
 			"reserved_virtual_services": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				Description: "Number of reserved virtual services for this Service Engine Group",
+				// This field could be TypeInt, but Terraform cannot differentiate if a value is
+				// empty or '0'. TypeString solves this problem by differentiating empty string
+				// and "0".
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "Number of reserved virtual services for this Service Engine Group",
+				ValidateFunc: IsIntAndAtLeast(0),
 			},
 			"deployed_virtual_services": {
 				Type:        schema.TypeInt,
@@ -124,6 +130,11 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupRead(_ context.Context, d *schem
 
 	edgeAlbServiceEngineGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentById(d.Id())
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			log.Printf("ALB Service Engine Group assignment not found. Removing from state file: %s", err)
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error reading ALB Service Engine Group assignment: %s", err)
 	}
 	setAlbServiceEngineGroupAssignmentData(d, edgeAlbServiceEngineGroupAssignment.NsxtAlbServiceEngineGroupAssignment)
@@ -193,8 +204,10 @@ func setAlbServiceEngineGroupAssignmentData(d *schema.ResourceData, t *types.Nsx
 	dSet(d, "service_engine_group_id", t.ServiceEngineGroupRef.ID)
 	dSet(d, "service_engine_group_name", t.ServiceEngineGroupRef.Name)
 	dSet(d, "max_virtual_services", t.MaxVirtualServices)
-	dSet(d, "reserved_virtual_services", t.MinVirtualServices)
 	dSet(d, "deployed_virtual_services", t.NumDeployedVirtualServices)
+	if t.MinVirtualServices != nil {
+		dSet(d, "reserved_virtual_services", strconv.Itoa(*t.MinVirtualServices))
+	}
 }
 
 func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtAlbServiceEngineGroupAssignment {
@@ -210,7 +223,11 @@ func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtA
 	}
 
 	if reservedServicesInterface, isSet := d.GetOk("reserved_virtual_services"); isSet {
-		edgeAlbServiceEngineAssignmentConfig.MinVirtualServices = takeIntPointer(reservedServicesInterface.(int))
+		reservedServicesInterfaceString := reservedServicesInterface.(string)
+		// Ignoring error of `strconv.Atoi` because there is a validator enforced in schema field
+		// 'reserved_virtual_services' - IsIntAndAtLeast(0),
+		reservedServicesInt, _ := strconv.Atoi(reservedServicesInterfaceString)
+		edgeAlbServiceEngineAssignmentConfig.MinVirtualServices = &reservedServicesInt
 	}
 
 	return edgeAlbServiceEngineAssignmentConfig

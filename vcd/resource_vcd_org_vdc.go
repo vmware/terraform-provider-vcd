@@ -231,12 +231,14 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "When destroying use delete_recursive=True to remove the VDC and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for Org VDC metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key and value pairs for Org VDC metadata",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("VDC", false),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -361,11 +363,15 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	err = setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	err = setOrgVdcData(d, vcdClient, adminVdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -379,7 +385,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) error {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -441,20 +447,10 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	vdcName := d.Get("name").(string)
-	vdc, err := adminOrg.GetVDCByName(vdcName, false)
+	err := updateMetadataInState(d, adminVdc)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
-		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
-	}
-	metadata, err := vdc.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to get VDC metadata")
-		return fmt.Errorf("unable to get VDC metadata %s", err)
-	}
-
-	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-		return fmt.Errorf("error setting metadata: %s", err)
+		log.Printf("[DEBUG] Unable to set VDC metadata")
+		return fmt.Errorf("unable to set VDC metadata %s", err)
 	}
 
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
@@ -1028,12 +1024,12 @@ func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
+	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 	}
 
-	return createOrUpdateMetadata(d, vdc, "metadata")
+	return createOrUpdateMetadata(d, adminVdc, "metadata")
 }
 
 // helper for transforming the compute capacity section of the resource input into the VdcConfiguration structure

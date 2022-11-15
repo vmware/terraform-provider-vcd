@@ -191,7 +191,9 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for Org VDC metadata",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("VDC", false),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -244,7 +246,7 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(adminVdc.AdminVdc.ID)
 
-	err = setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+	err = setOrgVdcData(d, vcdClient, adminVdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}

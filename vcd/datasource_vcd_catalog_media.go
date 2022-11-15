@@ -36,9 +36,9 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for catalog item metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("Media", true),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
