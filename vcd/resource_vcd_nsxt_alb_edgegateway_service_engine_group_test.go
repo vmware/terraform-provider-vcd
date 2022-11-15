@@ -154,6 +154,10 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 	configText3 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupSharedStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupSharedStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -192,6 +196,15 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "max_virtual_services", "70"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", "35"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", "0"),
+				),
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "max_virtual_services", "70"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "reserved_virtual_services", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", "0"),
 				),
 			},
@@ -241,6 +254,19 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 
   max_virtual_services      = 70
   reserved_virtual_services = 35
+}
+`
+
+const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupSharedStep4 = testAccVcdNsxtAlbGeneralSettings + `
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
+  service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+
+  max_virtual_services      = 70
+  reserved_virtual_services = 0
 }
 `
 
