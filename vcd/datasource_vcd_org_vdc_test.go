@@ -122,7 +122,10 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "default_compute_policy_id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "vm_sizing_policy_ids.#", regexp.MustCompile(`[1-9]`))), // At least 1 sizing policy (the System default)
+						"data."+datasourceVdc, "vm_sizing_policy_ids.#", regexp.MustCompile(`[1-9]`)),
+					resource.TestCheckResourceAttr("data."+datasourceVdc, "edge_cluster_id", ""), // Edge Cluster ID is empty in an already existing VDC
+				), // At least 1 sizing policy (the System default)
+
 			},
 		},
 	})
@@ -155,7 +158,9 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "storage_profile.0.storage_used_in_mb", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "default_compute_policy_id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "vm_sizing_policy_ids.#", regexp.MustCompile(`[1-9]`))), // At least 1 sizing policy (the System default)
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "vm_sizing_policy_ids.#", regexp.MustCompile(`[1-9]`)),
+					resource.TestCheckResourceAttr("data."+datasourceVdc, "edge_cluster_id", ""), // Edge Cluster ID is empty in an already existing VDC
+				), // At least 1 sizing policy (the System default)
 			},
 		},
 	})
