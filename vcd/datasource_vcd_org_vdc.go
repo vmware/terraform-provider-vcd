@@ -2,8 +2,11 @@ package vcd
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"fmt"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -218,6 +221,11 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of default Compute policy for this VDC, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
 			},
+			"edge_cluster_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
+			},
 		},
 	}
 }
@@ -241,6 +249,34 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 	err = setOrgVdcData(d, vcdClient, adminVdc)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	err = setDataSourceEdgeClusterData(d, adminVdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+// setDataSourceEdgeClusterData is like setEdgeClusterData however it must handle the case where
+// user has insufficient rights to retrieve VDC Network Profile. Resource itself is not affected
+// by this problem because it requires provider user to create VDC.
+func setDataSourceEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminVdc) error {
+	vdcNetworkProfile, err := adminVdc.GetVdcNetworkProfile()
+	if err != nil {
+		// Conciously ignoring this error and loggin it to output as it will most probably be
+		// insufficient rights that the user has. It will work with System user but might not work
+		// for users that got lower privileges.
+		logForScreen("data.vcd_org_vdc", fmt.Sprintf("got error while attempting to retrieve Edge Cluster ID: %s", err))
+		dSet(d, "edge_cluster_id", "")
+		return nil
+	}
+
+	if vdcNetworkProfile != nil && vdcNetworkProfile.ServicesEdgeCluster != nil {
+		dSet(d, "edge_cluster_id", vdcNetworkProfile.ServicesEdgeCluster.BackingID)
+	} else {
+		dSet(d, "edge_cluster_id", "")
 	}
 	return nil
 }

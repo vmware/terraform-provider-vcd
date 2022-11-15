@@ -74,8 +74,17 @@ resource "vcd_org_vdc" "my-vdc" {
 }
 ```
 
-## Example Usage (NSX-T)
+## Example Usage (NSX-T VDC with specified Edge Cluster)
 ```hcl
+data "vcd_provider_vdc" "nsxt-pvdc" {
+  name = "my-nsxt-pvdc"
+}
+
+data "vcd_nsxt_edge_cluster" "ec" {
+  provider_vdc_id = data.vcd_provider_vdc.nsxt-pvdc.id
+  name            = "edge-cluster-1"
+}
+
 resource "vcd_org_vdc" "nsxt-vdc" {
   name = "NSXT-VDC"
   org  = "main-org"
@@ -83,6 +92,7 @@ resource "vcd_org_vdc" "nsxt-vdc" {
   allocation_model  = "ReservationPool"
   network_pool_name = "NSX-T Overlay 1"
   provider_vdc_name = "nsxTPvdc1"
+  edge_cluster_id   = data.vcd_nsxt_edge_cluster.ec.id
 
   compute_capacity {
     cpu {
@@ -231,6 +241,9 @@ The following arguments are supported:
 * `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
 * `vm_sizing_policy_ids` - (Optional, *v3.0+*, *VCD 10.2+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 * `vm_placement_policy_ids` - (Optional, *v3.8+*, *VCD 10.2+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `edge_cluster_id` - (Optional, *v3.8+*, *VCD 10.3+*) An ID of NSX-T Edge Cluster which should
+  provide vApp Networking Services or DHCP for isolated networks. Can be looked up using
+  `vcd_nsxt_edge_cluster` data source.
 
 <a id="storageprofile"></a>
 ## Storage Profile

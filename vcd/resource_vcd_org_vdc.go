@@ -272,6 +272,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description:   "ID of default Compute policy for this VDC, which can be a VM Sizing Policy, VM Placement Policy or vGPU Policy",
 				ConflictsWith: []string{"default_vm_sizing_policy_id"},
 			},
+			"edge_cluster_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
+			},
 		},
 	}
 }
@@ -331,6 +336,16 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error assigning VM Compute Policies to VDC: %s", err)
 	}
 
+	// Edge Cluster ID uses different endpoint (VDC Network Profiles endpoint) and it shouldn't be
+	// set on create if it is not present
+	edgeClusterId := d.Get("edge_cluster_id").(string)
+	if edgeClusterId != "" {
+		err = setVdcEdgeCluster(d, vdc)
+		if err != nil {
+			return diag.Errorf("error setting Edge Cluster: %s", err)
+		}
+	}
+
 	return resourceVcdVdcRead(ctx, d, meta)
 }
 
@@ -360,6 +375,12 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	err = setEdgeClusterData(d, adminVdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -566,7 +587,7 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
-	_, err = changedAdminVdc.Update()
+	updatedAdminVdc, err := changedAdminVdc.Update()
 	if err != nil {
 		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
 		return diag.Errorf("error updating VDC %s, err: %s", vdcName, err)
@@ -589,6 +610,19 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 			return diag.Errorf("[VDC update] error updating storage profiles: %s", err)
 		}
 	}
+
+	if d.HasChange("edge_cluster_id") {
+		orgVdc, err := adminOrg.GetVDCByName(updatedAdminVdc.AdminVdc.Name, false)
+		if orgVdc == nil || err != nil {
+			return diag.Errorf("error retrieving Org VDC from Admin VDC '%s': %s", updatedAdminVdc.AdminVdc.Name, err)
+		}
+		err = setVdcEdgeCluster(d, orgVdc)
+		if err != nil {
+			return diag.Errorf("error updating 'edge_cluster_id': %s", err)
+		}
+
+	}
+
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
 	return resourceVcdVdcRead(ctx, d, meta)
 }
@@ -1319,4 +1353,47 @@ func resourceVcdOrgVdcImport(_ context.Context, d *schema.ResourceData, meta int
 	d.SetId(adminVdc.AdminVdc.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// setVdcEdgeCluster handles setting of Edge Cluster for NSX-T VDCs
+//
+// Note. VcdNetworkProfile structure contains more fields (it also depends on the VCD version used).
+// The problem is that one must send all other already set fields to avoid reseting them. UI does
+// this as well. To make this work well with Terraform and avoid removing other values, current
+// state of the structure must always be retrieved and only the required value should be changed.
+func setVdcEdgeCluster(d *schema.ResourceData, vdc *govcd.Vdc) error {
+	// Set the value even if it is empty as this allows to remove it from configuration
+	edgeClusterId := d.Get("edge_cluster_id").(string)
+
+	if !vdc.IsNsxt() {
+		return fmt.Errorf("'edge_cluster_id' is only applicable for NSX-T VDCs")
+	}
+
+	currentNetworkProfile, err := vdc.GetVdcNetworkProfile()
+	if err != nil {
+		return fmt.Errorf("error retrieving current VDC Network Profile: %s", err)
+	}
+
+	currentNetworkProfile.ServicesEdgeCluster = &types.VdcNetworkProfileServicesEdgeCluster{BackingID: edgeClusterId}
+
+	_, err = vdc.UpdateVdcNetworkProfile(currentNetworkProfile)
+	if err != nil {
+		return fmt.Errorf("error setting 'edge_cluster_id' '%s' for VDC '%s': %s", edgeClusterId, vdc.Vdc.Name, err)
+	}
+
+	return nil
+}
+
+func setEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminVdc) error {
+	vdcNetworkProfile, err := adminVdc.GetVdcNetworkProfile()
+	if err != nil {
+		return fmt.Errorf("error retrieving VDC Network Profile: %s", err)
+	}
+
+	if vdcNetworkProfile != nil && vdcNetworkProfile.ServicesEdgeCluster != nil {
+		dSet(d, "edge_cluster_id", vdcNetworkProfile.ServicesEdgeCluster.BackingID)
+	} else {
+		dSet(d, "edge_cluster_id", "")
+	}
+	return nil
 }
