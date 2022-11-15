@@ -125,7 +125,7 @@ func TestAccVcdCatalog(t *testing.T) {
 				ResourceName:      resourceAddress,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(TestAccVcdCatalogName),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, TestAccVcdCatalogName),
 				// These fields can't be retrieved from catalog data
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},
