@@ -269,7 +269,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"boot_image_id": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "URN of the media to use as boot image.",
+			Description: "The URN of the media to use as boot image.",
 		},
 		"network_dhcp_wait_seconds": {
 			Optional:     true,
