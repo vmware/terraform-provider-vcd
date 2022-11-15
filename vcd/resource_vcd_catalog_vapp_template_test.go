@@ -319,3 +319,37 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   }
 }
 `
+
+// TestAccVcdCatalogVAppTemplateMetadata tests metadata CRUD on Catalog vApp Templates
+func TestAccVcdCatalogVAppTemplateMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdCatalogVAppTemplateMetadata, "vcd_catalog_vapp_template.test-catalog-vapp-template",
+		testAccCheckVcdCatalogVAppTemplateMetadataDatasource, "data.vcd_catalog_vapp_template.test-catalog-vapp-template-ds",
+		StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"OvfUrl":  testConfig.Ova.OvfUrl,
+		})
+}
+
+const testAccCheckVcdCatalogVAppTemplateMetadata = `
+data "vcd_catalog" "test-catalog" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_catalog_vapp_template" "test-catalog-vapp-template" {
+  org        = data.vcd_catalog.test-catalog.org
+  catalog_id = data.vcd_catalog.test-catalog.id
+  name       = "{{.Name}}"
+  ovf_url    = "{{.OvfUrl}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdCatalogVAppTemplateMetadataDatasource = `
+data "vcd_catalog_vapp_template" "test-catalog-vapp-template-ds" {
+  org        = vcd_catalog_vapp_template.test-catalog-vapp-template.org
+  catalog_id = vcd_catalog_vapp_template.test-catalog-vapp-template.catalog_id
+  name       = vcd_catalog_vapp_template.test-catalog-vapp-template.name
+}
+`

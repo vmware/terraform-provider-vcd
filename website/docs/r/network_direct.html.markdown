@@ -41,7 +41,8 @@ The following arguments are supported:
 * `external_network` - (Required) The name of the external network.
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.
-* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this network.
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute reference
 
@@ -52,6 +53,55 @@ Supported in provider *v2.5+*
 * `external_network_dns1` - (Computed) returns the first DNS from the external network
 * `external_network_dns2` - (Computed) returns the second DNS from the external network
 * `external_network_dns_suffix` - (Computed) returns the DNS suffix from the external network
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+
+~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
+   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
+
+Example:
+
+```hcl
+resource "vcd_network_direct" "example" {
+  # ...
+  metadata_entry {
+    key         = "foo"
+    type        = "MetadataStringValue"
+    value       = "bar"
+    user_access = "PRIVATE"
+    is_system   = "true" # Requires System admin privileges
+  }
+
+  metadata_entry {
+    key         = "myBool"
+    type        = "MetadataBooleanValue"
+    value       = "true"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+}
+```
+
+To remove all metadata one needs to specify an empty `metadata_entry`, like:
+
+```
+metadata_entry {}
+```
+
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
 
 ## Importing
 

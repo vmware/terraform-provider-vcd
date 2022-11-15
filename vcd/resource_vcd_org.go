@@ -163,10 +163,14 @@ func resourceOrg() *schema.Resource {
 				Description: "When destroying use delete_recursive=True to remove the org and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of metadata to assign to this organization. Key and value can be any string.",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key value map of metadata to assign to this organization. Key and value can be any string.",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("Organization", false),
 		},
 	}
 }
@@ -452,13 +456,10 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 		}
 	}
 
-	metadata, err := adminOrg.GetMetadata()
+	err = updateMetadataInState(d, adminOrg)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to get Org metadata")
-		return fmt.Errorf("unable to get Org metadata %s", err)
-	}
-	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-		return fmt.Errorf("error setting metadata: %s", err)
+		log.Printf("[DEBUG] Unable to set Org metadata")
+		return fmt.Errorf("unable to set Org metadata %s", err)
 	}
 
 	return nil

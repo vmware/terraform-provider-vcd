@@ -200,17 +200,19 @@ func contains(sliceToSearch []string, searched string) bool {
 	return found
 }
 
-// MetadataCompatible allows to consider all structs that implement metadata handling to be the same type
-type metadataCompatible interface {
-	GetMetadata() (*types.Metadata, error)
-	AddMetadataEntry(typedValue, key, value string) error
-	MergeMetadata(typedValue string, metadata map[string]interface{}) error
-	DeleteMetadataEntry(key string) error
-}
-
-// createOrUpdateOrgMetadata creates or updates metadata entries for the given resource and attribute name
+// createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
+// TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataEntryInVcd`
+// once "metadata" field is removed.
 func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
-	if d.HasChange(attributeName) {
+	// We invoke the new "metadata_entry" metadata creation here to have it centralized and reduce duplication.
+	// Ideally, once "metadata" is removed in a new major version, the implementation of `createOrUpdateMetadataEntryInVcd` should
+	// just go here in the `createOrUpdateMetadata` body.
+	err := createOrUpdateMetadataEntryInVcd(d, resource)
+	if err != nil {
+		return err
+	}
+
+	if d.HasChange(attributeName) && !d.HasChange("metadata_entry") {
 		oldRaw, newRaw := d.GetChange(attributeName)
 		oldMetadata := oldRaw.(map[string]interface{})
 		newMetadata := newRaw.(map[string]interface{})
@@ -223,13 +225,13 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible,
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := resource.DeleteMetadataEntry(k)
+			err = resource.DeleteMetadataEntry(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		if len(newMetadata) > 0 {
-			err := resource.MergeMetadata(types.MetadataStringValue, newMetadata)
+			err = resource.MergeMetadata(types.MetadataStringValue, newMetadata)
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}

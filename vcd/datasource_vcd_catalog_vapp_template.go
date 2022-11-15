@@ -47,7 +47,9 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs from the metadata of the vApp template",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("vApp Template", true),
 			"vm_names": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{

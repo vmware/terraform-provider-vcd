@@ -324,3 +324,32 @@ const testAccCheckVcdCatalogItemFromUrlUpdated = `
   }
 }
 `
+
+// TestAccVcdCatalogItemMetadata tests metadata CRUD on catalog items
+func TestAccVcdCatalogItemMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdCatalogItemMetadata, "vcd_catalog_item.test-catalog-item",
+		testAccCheckVcdCatalogItemMetadataDatasource, "data.vcd_catalog_item.test-catalog-item-ds",
+		StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"OvfUrl":  testConfig.Ova.OvfUrl,
+		})
+}
+
+const testAccCheckVcdCatalogItemMetadata = `
+resource "vcd_catalog_item" "test-catalog-item" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+  name    = "{{.Name}}"
+  ovf_url = "{{.OvfUrl}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdCatalogItemMetadataDatasource = `
+data "vcd_catalog_item" "test-catalog-item-ds" {
+  org     = vcd_catalog_item.test-catalog-item.org
+  catalog = vcd_catalog_item.test-catalog-item.catalog
+  name    = vcd_catalog_item.test-catalog-item.name
+}
+`

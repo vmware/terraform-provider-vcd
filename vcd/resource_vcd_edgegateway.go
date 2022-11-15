@@ -689,7 +689,7 @@ func getGatewayInterfaceIpRangeType(suballocatePoolSet *schema.Set) ([]*types.IP
 // It must only convert to such structure only
 // `uplink` interfaces. One uplink exception in the case of distributed routing support (DLR) is an
 // `uplink` network `DLR_to_EDGE_%s` which is a transit interface
-func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface, origin string) (*schema.Set, error) {
+func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
 	edgeGatewayName := d.Get("name").(string)
 	isDistributedRouter := d.Get("distributed_routing").(bool)
 
@@ -829,7 +829,7 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	}
 
 	if origin == "datasource" {
-		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface, origin)
+		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
 		if err != nil {
 			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
 		}
