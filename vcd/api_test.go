@@ -154,7 +154,7 @@ func getVersionFromFile(fileName string) (string, error) {
 	}
 
 	// Reads the version from the file
-	versionText, err := os.ReadFile(versionFile)
+	versionText, err := os.ReadFile(filepath.Clean(versionFile))
 	if err != nil {
 		return "", fmt.Errorf("could not read file %s: %v", versionFile, err)
 	}

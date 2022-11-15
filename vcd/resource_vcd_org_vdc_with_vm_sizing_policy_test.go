@@ -203,7 +203,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 				ResourceName:      "vcd_org_vdc." + TestAccVcdVdc,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(TestAccVcdVdc),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, TestAccVcdVdc),
 				// These fields can't be retrieved
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},

@@ -45,7 +45,9 @@ The following arguments are supported:
 
 * `alias` - (Required)  - Alias (name) of certificate
 * `description` - (Optional)  - Certificate description
-* `certificate` - (Required)  - Content of Certificate
+* `certificate` - (Required)  - Content of Certificate. **Note.** it is best to avoid trailing
+  newlines in the certificate, as some versions of VCD trim trailing newline and `plan/apply`
+  operations might always report it.  
 * `private_key` - (Optional)  - Content of private key
 * `private_key_passphrase` - (Optional)  - private key pass phrase 
 

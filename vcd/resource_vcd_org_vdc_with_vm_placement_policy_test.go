@@ -86,7 +86,7 @@ func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(t.Name()),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, t.Name()),
 				// These fields can't be retrieved
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},

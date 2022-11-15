@@ -440,3 +440,105 @@ resource "vcd_vm_internal_disk" "nvme" {
   depends_on = [vcd_vm.nvme]
 }
 `
+
+// TestAccVcdVmInternalDiskResourceNotFound checks that internal disk resource does not return error
+// when parent VM is deleted, but removes it from state instead.
+func TestAccVcdVmInternalDiskResourceNotFound(t *testing.T) {
+	preTestChecks(t)
+
+	// This test invokes go-vcloud-director SDK directly therefore it should not run binary tests
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"Org":      testConfig.VCD.Org,
+		"Vdc":      testConfig.Nsxt.Vdc,
+		"TestName": t.Name(),
+		"Tags":     "vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(sourceTestVmInternalDiskResourceNotFound, params)
+	cachedvAppName := &testCachedFieldValue{}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vm_internal_disk.destroy-test", "id"),
+					cachedvAppName.cacheTestResourceFieldValue("vcd_vm.disk-vm", "vapp_name"),
+				),
+			},
+			{
+				// This function finds newly created resource and deletes it before
+				// next plan check
+				PreConfig: func() {
+					vcdClient := createSystemTemporaryVCDConnection()
+					org, err := vcdClient.GetAdminOrgByName(params["Org"].(string))
+					if err != nil {
+						t.Errorf("error: could not find Org: %s", err)
+					}
+					vdc, err := org.GetVDCByName(params["Vdc"].(string), false)
+					if err != nil {
+						t.Errorf("error: could not find VDC: %s", err)
+					}
+
+					vapp, err := vdc.GetVAppByName(cachedvAppName.fieldValue, false)
+					if err != nil {
+						t.Errorf("could not find vApp %s: %s", cachedvAppName.fieldValue, err)
+					}
+
+					task, err := vapp.Delete()
+					if err != nil {
+						t.Errorf("error triggering vApp delete: %s", err)
+					}
+
+					err = task.WaitTaskCompletion()
+					if err != nil {
+						t.Errorf("vApp deletion task error: %s", err)
+					}
+				},
+				// Expecting to get a non-empty plan (but not an error) because resource was removed
+				// using SDK in PreConfig
+				Config:             configText,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const sourceTestVmInternalDiskResourceNotFound = `
+resource "vcd_vm" "disk-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name          = "{{.TestName}}"
+  computer_name = "emptyVM"
+  power_on      = false
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_vm_internal_disk" "destroy-test" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name       = vcd_vm.disk-vm.vapp_name
+  vm_name         = vcd_vm.disk-vm.name
+  bus_type        = "sata"
+  size_in_mb      = "100"
+  bus_number      = "1"
+  unit_number     = "0"
+}
+`

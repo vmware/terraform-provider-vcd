@@ -52,6 +52,9 @@ The following arguments are supported:
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign to the Catalog Item. See [Metadata](#metadata) section for details.
 * `catalog_item_metadata` - (Deprecated; *v3.7+*) Use `metadata_entry` instead.  Key value map of metadata to assign to the Catalog Item
 
+  -> This resource handles metadata in the following way: `metadata` attribute assigns metadata to the associated **vApp Template**.
+  `metadata_entry` attribute assigns metadata to the **Catalog Item**. `catalog_item_metadata` is deprecated and should not be used.
+
 <a id="metadata"></a>
 ## Metadata
 

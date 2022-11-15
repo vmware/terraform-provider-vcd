@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -237,6 +238,11 @@ func resourceVappFirewallRulesRead(_ context.Context, d *schema.ResourceData, me
 
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			log.Printf("vApp network not found. Removing from state file: %s", err)
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error finding vApp network. %s", err)
 	}
 

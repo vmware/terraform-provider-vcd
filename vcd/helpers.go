@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -21,4 +23,11 @@ func onlyHasChange(fieldName string, schema map[string]*schema.Schema, d *schema
 		}
 	}
 	return true
+}
+
+// safeClose closes a file and logs the error, if any. This can be used instead of file.Close()
+func safeClose(file *os.File) {
+	if err := file.Close(); err != nil {
+		util.Logger.Printf("Error closing file: %s\n", err)
+	}
 }
