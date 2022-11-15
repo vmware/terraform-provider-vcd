@@ -8,8 +8,8 @@ description: |-
 
 # vcd\_org\_vdc
 
-Provides a VMware Cloud Director Organization VDC data source. An Organization VDC can be used to reference a VDC and use its 
-data within other resources or data sources.
+Provides a VMware Cloud Director Organization VDC data source. An Organization VDC can be used to
+reference a VDC and use its data within other resources or data sources.
 
 -> **Note:** This resource supports NSX-T and NSX-V based Org VDCs
 
@@ -38,5 +38,10 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [organization VDC resource](/providers/vmware/vcd/latest/docs/resources/org_vdc#attribute-reference) are supported.
+* `edge_cluster_id` - (*v3.8+*, *VCD 10.3+*) An ID of NSX-T Edge Cluster which should provide vApp
+  Networking Services or DHCP for Isolated Networks. This value **might be unavailable** in data
+  source if user has insufficient rights.
+
+All other attributes are defined in [organization VDC
+resource](/providers/vmware/vcd/latest/docs/resources/org_vdc#attribute-reference) are supported.
 

@@ -143,6 +143,7 @@ type TestConfig struct {
 		VdcGroup            string `json:"vdcGroup"`
 		VdcGroupEdgeGateway string `json:"vdcGroupEdgeGateway"`
 		NsxtImportSegment   string `json:"nsxtImportSegment"`
+		NsxtEdgeCluster     string `json:"nsxtEdgeCluster"`
 
 		NsxtAlbControllerUrl      string `json:"nsxtAlbControllerUrl"`
 		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
