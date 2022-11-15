@@ -1153,22 +1153,34 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("`computer_name` is required when creating empty VM")
 	}
 
+	_, bootImageIdSet := d.GetOk("boot_image_id")
+	_, bootImageName := d.GetOk("boot_image")
 	var bootImage *types.Media
-	if bootImageName, ok := d.GetOk("boot_image"); ok {
-		var catalogName interface{}
-		if catalogName, ok = d.GetOk("catalog_name"); !ok {
-			return nil, fmt.Errorf("`catalog_name` is required when creating empty VM with boot_image")
+	if bootImageIdSet || bootImageName {
+		var bootMediaIdentifier string
+		var obtainedMedia *govcd.Media
+		var err error
+		if bootImageIdSet {
+			bootMediaIdentifier = d.Get("boot_image_id").(string)
+			obtainedMedia, err = vdc.GetMediaById(bootMediaIdentifier)
+		} else {
+			bootMediaIdentifier = d.Get("boot_image").(string)
+			var catalogName interface{}
+			if catalogName, ok = d.GetOk("catalog_name"); !ok {
+				return nil, fmt.Errorf("`catalog_name` is required when creating empty VM with boot_image")
+			}
+			var catalog *govcd.Catalog
+			catalog, err = org.GetCatalogByName(catalogName.(string), false)
+			if err != nil {
+				return nil, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
+			}
+			obtainedMedia, err = catalog.GetMediaByName(bootMediaIdentifier, false)
 		}
-		catalog, err := org.GetCatalogByName(catalogName.(string), false)
 		if err != nil {
-			return nil, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
-		}
-		result, err := catalog.GetMediaByName(bootImageName.(string), false)
-		if err != nil {
-			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootImageName, err)
+			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootMediaIdentifier, err)
 		}
 
-		bootImage = &types.Media{HREF: result.Media.HREF, Name: result.Media.Name, ID: result.Media.ID}
+		bootImage = &types.Media{HREF: obtainedMedia.Media.HREF, Name: obtainedMedia.Media.Name, ID: obtainedMedia.Media.ID}
 	}
 
 	storageProfilePtr, err := lookupStorageProfile(d, vdc)

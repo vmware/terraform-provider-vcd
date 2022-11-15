@@ -27,15 +27,30 @@ import (
 // evaluate if optional parameter `vm_name_in_template` was specified.
 //
 // If `vm_name_in_template` was specified
-// * It will look up the exact VM with given `vm_name_in_template` inside `template_name` in catalog
-// `catalog_name`
+// * It will look up the exact VM with given `vm_name_in_template` inside `template_id` (or deprecated `template_name` and catalog
+// `catalog_name`)
 //
 // If `vm_name_in_template` was not specified:
-// * It will look up vApp template with name `template_name` in `catalog_name`
+// * It will look up vApp template with ID `template_id` (or deprecated `template_name` in catalog `catalog_name`)
 // * After it is found - it will pick the first child VM template
 func lookupvAppTemplateforVm(d *schema.ResourceData, org *govcd.Org, vdc *govcd.Vdc) (govcd.VAppTemplate, error) {
+	// Deprecated fields, we use them for compatibility reasons
 	catalogName := d.Get("catalog_name").(string)
 	templateName := d.Get("template_name").(string)
+
+	// If the URN of the vApp Template is available, we use it instead of the deprecated fields above
+	templateId, templateIdSet := d.GetOk("template_id")
+	if templateIdSet {
+		vAppTemplate, err := vdc.GetVAppTemplateById(templateId.(string))
+		if err != nil {
+			return govcd.VAppTemplate{}, fmt.Errorf("error finding vApp Template with URN %s: %s", templateId.(string), err)
+		}
+		catalogName, err = vAppTemplate.GetCatalogName()
+		if err != nil {
+			return govcd.VAppTemplate{}, fmt.Errorf("error finding vApp Template %s associated catalog: %s", templateId.(string), err)
+		}
+		templateName = vAppTemplate.VAppTemplate.Name
+	}
 
 	catalog, err := org.GetCatalogByName(catalogName, false)
 	if err != nil {
