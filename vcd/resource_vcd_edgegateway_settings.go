@@ -136,9 +136,12 @@ func getVcdEdgeGateway(d *schema.ResourceData, meta interface{}) (*govcd.EdgeGat
 func resourceVcdEdgeGatewaySettingsRead(d *schema.ResourceData, meta interface{}) error {
 	edgeGateway, err := getVcdEdgeGateway(d, meta)
 	if err != nil {
-		log.Printf("[edgegateway settings read] edge gateway not found. Removing from state file: %s", err)
-		d.SetId("")
-		return nil
+		if govcd.ContainsNotFound(err) {
+			log.Printf("[edgegateway settings read] edge gateway not found. Removing from state file: %s", err)
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("[edgegateway settings read] edge gateway not found: %s", err)
 	}
 	if err := setLoadBalancerData(d, *edgeGateway); err != nil {
 		return err
