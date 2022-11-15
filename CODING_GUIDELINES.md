@@ -72,9 +72,9 @@ Every feature in the provider must include testing. See
 [TESTING.md](https://github.com/vmware/terraform-provider-vcd/blob/main/TESTING.md)
 for more info.
 
-## Handling Terraform Read of dissapeared (removed by other means than Terraform) entities
+## Handling Terraform Read of disappeared (removed by other means than Terraform) entities
 
-There are some specific about handling entities in read code (handled in `schema.Resource.Read`)
+There are some specifics about handling entities in read code (handled in `schema.Resource.Read`)
 functions. It also depends on whether it is a resource or a data source.
 
 ### Handling Terraform Data Source read
