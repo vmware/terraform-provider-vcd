@@ -63,7 +63,7 @@ func datasourceVcdAlbEdgeGatewayServiceEngineGroup() *schema.Resource {
 				Description: "Maximum number of virtual services to be used in this Service Engine Group",
 			},
 			"reserved_virtual_services": {
-				Type:        schema.TypeInt,
+				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Number of reserved virtual services for this Service Engine Group",
 			},
