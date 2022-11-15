@@ -128,55 +128,6 @@ The same applies also for deprecated `metadata` attribute:
 metadata = {}
 ```
 
-<a id="metadata"></a>
-## Metadata
-
-The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
-
-* `key` - (Required) Key of this metadata entry.
-* `value` - (Required) Value of this metadata entry.
-* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
-* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
-* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
-
-~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
-   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
-
-Example:
-
-```hcl
-resource "vcd_catalog" "example" {
-  # ...
-  metadata_entry {
-    key         = "foo"
-    type        = "MetadataStringValue"
-    value       = "bar"
-    user_access = "PRIVATE"
-    is_system   = "true" # Requires System admin privileges
-  }
-
-  metadata_entry {
-    key         = "myBool"
-    type        = "MetadataBooleanValue"
-    value       = "true"
-    user_access = "READWRITE"
-    is_system   = "false"
-  }
-}
-```
-
-To remove all metadata one needs to specify an empty `metadata_entry`, like:
-
-```
-metadata_entry {}
-```
-
-The same applies also for deprecated `metadata` attribute:
-
-```
-metadata = {}
-```
-
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
