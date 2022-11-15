@@ -68,7 +68,9 @@ func resourceVcdOpenApiDhcp() *schema.Resource {
 				Description:  "DHCP mode. One of 'EDGE' (default), 'NETWORK', 'RELAY'",
 			},
 			"pool": {
-				Type:        schema.TypeSet,
+				Type: schema.TypeSet,
+				// Pool specification is optional, because mode=RELAY requires to have no pool
+				// configuration
 				Optional:    true,
 				Description: "IP ranges used for DHCP pool allocation in the network",
 				Elem:        nsxtDhcpPoolSetSchema,
