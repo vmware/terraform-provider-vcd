@@ -130,6 +130,11 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
+			log.Printf("vApp not found. Removing vApp network from state file: %s", err)
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error finding Vapp: %s", err)
 	}
 

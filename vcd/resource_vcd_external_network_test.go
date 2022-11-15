@@ -12,6 +12,10 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
+func init() {
+	testingTags["extnetwork"] = "resource_vcd_external_network_test.go"
+}
+
 var TestAccVcdExternalNetwork = "TestAccVcdExternalNetworkBasic"
 var externalNetwork govcd.ExternalNetwork
 
@@ -20,7 +24,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	preTestChecks(t)
 
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
 
@@ -138,10 +142,6 @@ func testAccCheckExternalNetworkDestroy(s *terraform.State) error {
 	return nil
 }
 
-func init() {
-	testingTags["extnetwork"] = "resource_vcd_external_network_test.go"
-}
-
 const testAccCheckVcdExternalNetwork_basic = `
 resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   name        = "{{.ExternalNetworkName}}"
@@ -169,3 +169,85 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   retain_net_info_across_deployments = "false"
 }
 `
+
+func TestAccVcdExternalNetworkResourceNotFound(t *testing.T) {
+	preTestChecks(t)
+
+	// This test invokes go-vcloud-director SDK directly
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
+		return
+	}
+
+	startAddress := "192.168.30.51"
+	endAddress := "192.168.30.62"
+	description := "Test External Network"
+	gateway := "192.168.30.49"
+	netmask := "255.255.255.240"
+	dns1 := "192.168.0.164"
+	dns2 := "192.168.0.196"
+	var params = StringMap{
+		"ExternalNetworkName": TestAccVcdExternalNetwork,
+		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
+		"Vcenter":             testConfig.Networking.Vcenter,
+		"StartAddress":        startAddress,
+		"EndAddress":          endAddress,
+		"Description":         description,
+		"Gateway":             gateway,
+		"Netmask":             netmask,
+		"Dns1":                dns1,
+		"Dns2":                dns2,
+		"Tags":                "network extnetwork",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccCheckVcdExternalNetwork_basic, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resourceName := "vcd_external_network." + TestAccVcdExternalNetwork
+
+	cachedId := &testCachedFieldValue{}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdExternalNetworkExists(resourceName, &externalNetwork),
+					resource.TestCheckResourceAttr(resourceName, "name", TestAccVcdExternalNetwork),
+					cachedId.cacheTestResourceFieldValue(resourceName, "id"),
+				),
+			},
+			{
+				// This function finds newly created external network by ID and deletes it before
+				// next plan
+				PreConfig: func() {
+					vcdClient := createSystemTemporaryVCDConnection()
+					externalNetwork, err := vcdClient.GetExternalNetworkById(cachedId.fieldValue)
+					if err != nil {
+						t.Errorf("error finding external network: %s", err)
+					}
+
+					err = externalNetwork.DeleteWait()
+					if err != nil {
+						t.Errorf("error deleting external network: %s", err)
+					}
+
+				},
+				// Expecting to get a non-empty plan because External Network is removed in PreConfig
+				Config:             configText,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+	postTestChecks(t)
+}
