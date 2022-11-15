@@ -3,22 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_network_dhcp"
 sidebar_current: "docs-vcd-resource-nsxt-network-dhcp"
 description: |-
-  Provides a resource to manage DHCP pools for NSX-T Org VDC Routed network.
+  Provides a resource to manage DHCP pools for NSX-T Org VDC networks.
 ---
 
 # vcd\_nsxt\_network\_dhcp
 
-Provides a resource to manage DHCP pools for NSX-T Org VDC Routed network.
+Provides a resource to manage DHCP pools for NSX-T Org VDC networks.
 
-## Specific usage notes
-
-**DHCP pool support** for NSX-T Org networks is **limited** by the VCD in the following ways:
-
-* VCD 10.2 only allows to remove all DHCP pools at once (terraform destroy/resource removal)
-
-* VCD 10.3+ allows to add and remove DHCP pools one by one
-
-## Example Usage 1
+## Example Usage 1 (Routed Org VDC Network with EDGE mode)
 
 ```hcl
 resource "vcd_network_routed_v2" "parent-network" {
@@ -50,26 +42,65 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 ```
 
-## Example Usage 2 (Pool removal on VCD 10.2.0)
+## Example Usage 2 (Isolated Org VDC Network with NETWORK mode)
+```hcl
+resource "vcd_network_isolated_v2" "net1" {
+  org      = "cloud"
+  owner_id = vcd_org_vdc.with-edge-cluster.id # VDC ID with Edge Cluster configured
+  name     = "private-network"
 
-DHCP pool definitions can only be removed all at once and not one by one. To do so in Terraform one
-needs to destroy and create the resource. One can also achieve that by tainting the resource using 
-Terraform native `taint` command. Example below:
+  gateway       = "7.1.1.1"
+  prefix_length = 24
 
-* Define the network and DHCP pools as in [Example Usage 1](#example-usage-1)
-* Use `terraform taint` on the parent network to force recreation:
-   ```sh
-   # terraform taint vcd_network_routed_v2.parent-network
-   Resource instance vcd_nsxt_network_dhcp.pools has been marked as tainted.
-   ```
-* Modify/remove `vcd_nsxt_network_dhcp` definition as per your needs
-* Perform `terraform apply`. This will recreate tainted parent Org VDC network and new DHCP pools if defined.
-You will see a WARNING during removal but it will not break :
-```sh
-vcd_nsxt_network_dhcp.pools: Destroying... [id=urn:vcloud:network:74754019-31f1-41ea-a9e2-fc21455d6d2b]
-vcd_nsxt_network_dhcp.pools: Destruction complete after 11s
-vcd_nsxt_network_dhcp.pools: Creating...
-vcd_nsxt_network_dhcp.pools: Creation complete after 21s [id=urn:vcloud:network:74754019-31f1-41ea-a9e2-fc21455d6d2b]
+  static_ip_pool {
+    start_address = "7.1.1.10"
+    end_address   = "7.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org = "cloud"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  org_network_id      = vcd_network_isolated_v2.net1.id
+  mode                = "NETWORK"
+  listener_ip_address = "7.1.1.254"
+
+  pool {
+    start_address = "7.1.1.100"
+    end_address   = "7.1.1.110"
+  }
+}
+```
+
+## Example Usage 3 (Routed Org VDC Network with RELAY mode)
+```hcl
+resource "vcd_network_routed_v2" "net1" {
+  org  = "cloud"
+  vdc  = "nsxt-vdc-cloud"
+  name = "nsxt-routed-dhcp"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  gateway       = "7.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "7.1.1.10"
+    end_address   = "7.1.1.20"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org = "cloud"
+  vdc = "nsxt-vdc-cloud"
+
+  org_network_id = vcd_network_routed_v2.net1.id
+
+  # DHCP forwarding must be configured on NSX-T Edge Gateway
+  # for RELAY mode
+  mode = "RELAY"
+}
 ```
 
 ## Argument Reference
@@ -78,11 +109,21 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `org_network_id` - (Required) ID of parent Org VDC Routed network
-* `pool` - (Required) One or more blocks to define DHCP pool ranges. See [Pools](#pools) and example 
-for usage details.
-* `dns_servers` - (Optional; *v3.7+*) - The DNS server IPs to be assigned by this DHCP service. Maximum two values. 
-This argument is supported from VCD 10.3.1+.
+* `org_network_id` - (Required) ID of parent Org VDC Routed network.
+* `pool` - (Optional) One or more blocks to define DHCP pool ranges. Must not be set when
+  `mode=RELAY`. See [Pools](#pools) and example for usage details.
+* `mode` - (Optional; *v3.8+*) One of `EDGE`, `NETWORK` or `RELAY`. Default is `EDGE`
+  * `EDGE` can be used with Routed Org VDC networks.
+  * `NETWORK` can be used for Isolated and Routed Org VDC networks. It requires
+    `listener_ip_address` to be set and Edge Cluster must be assigned to VDC. 
+  * `RELAY` can be used with Routed Org VDC networks, but requires DHCP forwarding configuration in
+    NSX-T Edge Gateway.
+* `listener_ip_address` - (Optional; *v3.8+*) IP address of DHCP server in network. Must match
+  subnet. **Only** used when `mode=NETWORK`.
+* `lease_time` - (Optional; *v3.8+*; VCD `10.3.1+`) - Lease time in seconds. Minimum value is 60s
+  and maximum is 4294967295s (~ 49 days).
+* `dns_servers` - (Optional; *v3.7+*; VCD `10.3.1+`) - The DNS server IPs to be assigned by this
+  DHCP service. Maximum two values. 
 
 ## Pools
 

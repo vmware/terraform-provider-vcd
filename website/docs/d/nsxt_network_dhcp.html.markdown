@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_network_dhcp"
 sidebar_current: "docs-vcd-datasource-nsxt-network-dhcp"
 description: |-
-  Provides a data source to read DHCP pools for NSX-T Org VDC Routed network.
+  Provides a data source to read DHCP pools for NSX-T Org VDC networks.
 ---
 
 # vcd\_nsxt\_network\_dhcp
 
-Provides a data source to read DHCP pools for NSX-T Org VDC Routed network.
+Provides a data source to read DHCP pools for NSX-T Org VDC networks.
 
 ## Example Usage 1
 
@@ -24,7 +24,7 @@ data "vcd_network_routed_v2" "parent" {
 data "vcd_nsxt_network_dhcp" "pools" {
   org = "my-org"
 
-  org_network_id = vcd_network_routed_v2.parent.id
+  org_network_id = data.vcd_network_routed_v2.parent.id
 }
 ```
 
