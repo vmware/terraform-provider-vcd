@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -92,25 +91,20 @@ func lookupStorageProfile(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Refere
 
 }
 
-// lookupComputePolicy returns two types of compute policy structures associated to the value of the given Compute Policy attribute:
-// * types.VdcComputePolicyV2 contains ID and all technical configuration which that policy provides
-// * types.Reference structure is used in VM creation to assign a Compute Policy (and does not hold technical details, it's only a reference)
-func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient, computePolicyAttribute string) (*types.VdcComputePolicyV2, *types.Reference, error) {
-	var computePolicy *types.VdcComputePolicyV2
-	var computePolicyRef *types.Reference
+// lookupComputePolicy returns the Compute Policy associated to the value of the given Compute Policy attribute. If the
+// attribute is not set, the returned policy will be nil. If the obtained policy is incorrect, it will return an error.
+func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient, computePolicyAttribute string) (*govcd.VdcComputePolicyV2, error) {
 	if value, ok := d.GetOk(computePolicyAttribute); ok {
 		computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(value.(string))
 		if err != nil {
-			return nil, nil, fmt.Errorf("error getting compute policy %s: %s", value.(string), err)
+			return nil, fmt.Errorf("error getting compute policy %s: %s", value.(string), err)
 		}
 		if computePolicy.Href == "" {
-			return nil, nil, fmt.Errorf("empty compute policy HREF detected")
+			return nil, fmt.Errorf("empty compute policy HREF detected")
 		}
-		computePolicyRef = &types.Reference{HREF: computePolicy.Href}
-		util.Logger.Printf("[VM create] compute policy reference (%s) %# v", computePolicy.Href, pretty.Formatter(computePolicy.VdcComputePolicyV2))
+		return computePolicy, nil
 	}
-
-	return computePolicy, computePolicyRef, nil
+	return nil, nil
 }
 
 // getCpuMemoryValues returns CPU, CPU core count and Memory variables. Priority comes from HCL
