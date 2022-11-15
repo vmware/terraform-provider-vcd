@@ -102,7 +102,9 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("Network", true),
 		},
 	}
 }
@@ -179,13 +181,9 @@ func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceDat
 
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		metadata, err := network.GetMetadata()
+		err = updateMetadataInState(d, network)
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
-			return diag.Errorf("[isolated network read v2] unable to find Org VDC network metadata %s", err)
-		}
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
+			log.Printf("[DEBUG] Unable to set isolated network v2 metadata: %s", err)
 			return diag.Errorf("[isolated network read v2] unable to set Org VDC network metadata %s", err)
 		}
 	}

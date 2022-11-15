@@ -88,10 +88,14 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key value map of metadata to assign to this network. Key and value can be any string",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("Network", false),
 		},
 	}
 }
@@ -202,14 +206,9 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	metadata, err := network.GetMetadata()
+	err = updateMetadataInState(d, network)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find direct network metadata: %s", err)
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
+		log.Printf("[DEBUG] Unable to set direct network metadata: %s", err)
 		return diag.FromErr(err)
 	}
 

@@ -60,7 +60,8 @@ The following arguments are supported:
 * `can_publish_external_catalogs` - (*v3.6+*) True if this organization is allowed to publish external catalogs.
 * `can_subscribe_external_catalogs` - (*v3.6+*) True if this organization is allowed to subscribe to external catalogs.
 * `delay_after_power_on_seconds` - Specifies this organization's default for virtual machine boot delay after power on.
-* `metadata` - (*v3.6+*) Key value map of metadata assigned to this organization.
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata assigned to this organization.
+* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to the organization. See [Metadata](#metadata) section for details.
 * `vapp_lease` - (*v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (*v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 
@@ -81,3 +82,14 @@ The `vapp_template_lease` section contains lease parameters for vApp templates c
 
 * `maximum_storage_lease_in_sec` - How long vApp templates are available before being automatically cleaned up (in seconds)
 * `delete_on_storage_lease_expiration` - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.

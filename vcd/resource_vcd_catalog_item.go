@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
 
@@ -78,10 +79,14 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:    true,
 				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog Item", false),
 			"catalog_item_metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for catalog item metadata",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Key and value pairs for catalog item metadata",
+				Deprecated:    "Use metadata_entry instead",
+				Computed:      true, // To be compatible with `metadata_entry`
+				ConflictsWith: []string{"metadata_entry"},
 			},
 		},
 	}
@@ -153,28 +158,34 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 		return diag.Errorf("Unable to find Vapp template: %s", err)
 	}
 
-	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
-	if err != nil {
-		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
-	}
-
-	catalogItemMetadata, err := catalogItem.GetMetadata()
-	if err != nil {
-		return diag.Errorf("Unable to find metadata for the catalog item: %s", err)
-	}
-
 	dSet(d, "name", catalogItem.CatalogItem.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
+	// We can't use updateMetadataInState(d, catalogItem) because the attribute name is different.
+	// We have three metadata attributes here.
+	metadata, err := catalogItem.GetMetadata()
+	if err != nil {
+		return diag.Errorf("Unable to find catalog item's metadata: %s", err)
+	}
+
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
+	if err != nil {
+		return diag.Errorf("Unable to set catalog item's metadata entries: %s", err)
+	}
+	err = d.Set("catalog_item_metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set catalog item's metadata: %s", err)
+	}
+
+	// vApp Template metadata
+	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
+	if err != nil {
+		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
+	}
 	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
-	}
-
-	err = d.Set("catalog_item_metadata", getMetadataStruct(catalogItemMetadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("Unable to set metadata for the catalog item: %s", err)
 	}
 
 	return nil
@@ -233,13 +244,39 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	err = createOrUpdateMetadata(d, &vAppTemplate, "metadata")
+	err = createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
 	if err != nil {
 		return err
-
 	}
 
-	return createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
+	// vApp Template metadata
+	if d.HasChange("metadata") && !d.HasChange("metadata_entry") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := vAppTemplate.DeleteMetadataEntry(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		if len(newMetadata) > 0 {
+			err := vAppTemplate.MergeMetadata(types.MetadataStringValue, newMetadata)
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Imports a CatalogItem into Terraform state

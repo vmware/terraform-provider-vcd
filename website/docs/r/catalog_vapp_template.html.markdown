@@ -48,13 +48,63 @@ The following arguments are supported:
 * `ova_path` - (Optional) Absolute or relative path to file to upload
 * `ovf_url` - (Optional) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB
-* `metadata` - (Optional) Key/value map of metadata to assign to the associated vApp Template
+* `metadata` -  (Deprecated) Use `metadata_entry` instead. Key/value map of metadata to assign to the associated vApp Template
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 
 * `vdc_id` - The VDC ID to which this vApp Template belongs
 * `vm_names` - Set of VM names within the vApp template
 * `created` - Timestamp of when the vApp Template was created
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+
+~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
+   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
+
+Example:
+
+```hcl
+resource "vcd_catalog_vapp_template" "example" {
+  # ...
+  metadata_entry {
+    key         = "foo"
+    type        = "MetadataStringValue"
+    value       = "bar"
+    user_access = "PRIVATE"
+    is_system   = "true" # Requires System admin privileges
+  }
+
+  metadata_entry {
+    key         = "myBool"
+    type        = "MetadataBooleanValue"
+    value       = "true"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+}
+```
+
+To remove all metadata one needs to specify an empty `metadata_entry`, like:
+
+```
+metadata_entry {}
+```
+
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
 
 ## Importing
 

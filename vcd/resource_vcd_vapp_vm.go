@@ -208,12 +208,14 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "The limit for how much of CPU can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.",
 		},
 		"metadata": {
-			Type:     schema.TypeMap,
-			Optional: true,
-			// For now underlying go-vcloud-director repo only supports
-			// a value of type String in this map.
-			Description: "Key value map of metadata to assign to this VM",
+			Type:          schema.TypeMap,
+			Optional:      true,
+			Computed:      true, // To be compatible with `metadata_entry`
+			Description:   "Key value map of metadata to assign to this VM",
+			Deprecated:    "Use metadata_entry instead",
+			ConflictsWith: []string{"metadata_entry"},
 		},
+		"metadata_entry": getMetadataEntrySchema("VM", false),
 		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -1861,11 +1863,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	metadata, err := vm.GetMetadata()
-	if err != nil {
-		return diag.Errorf("[vm read] get metadata: %s", err)
-	}
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	err = updateMetadataInState(d, vm)
 	if err != nil {
 		return diag.Errorf("[VM read] set metadata: %s", err)
 	}
