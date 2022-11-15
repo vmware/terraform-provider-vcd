@@ -60,7 +60,8 @@ The following arguments are supported:
 * `can_publish_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to publish external catalogs. Default is `false`.
 * `can_subscribe_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to subscribe to external catalogs. Default is `false`.
 * `delay_after_power_on_seconds` - (Optional) Specifies this organization's default for virtual machine boot delay after power on. Default is `0`.
-* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this organization.
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this organization.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `vapp_lease` - (Optional; *v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (Optional; *v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 
@@ -87,6 +88,55 @@ The `vapp_template_lease` section contains lease parameters for vApp templates c
 <br>Note: Default when the whole `vapp_template_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
 * `delete_on_storage_lease_expiration` - (Required) If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted. 
 <br>Note: Default when the whole `vapp_template_lease` block is omitted is false
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+
+~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
+   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
+
+Example:
+
+```hcl
+resource "vcd_org" "example" {
+  # ...
+  metadata_entry {
+    key         = "foo"
+    type        = "MetadataStringValue"
+    value       = "bar"
+    user_access = "PRIVATE"
+    is_system   = "true" # Requires System admin privileges
+  }
+
+  metadata_entry {
+    key         = "myBool"
+    type        = "MetadataBooleanValue"
+    value       = "true"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+}
+```
+
+To remove all metadata one needs to specify an empty `metadata_entry`, like:
+
+```
+metadata_entry {}
+```
+
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
 
 ## Importing
 

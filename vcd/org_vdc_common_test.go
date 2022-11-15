@@ -417,3 +417,53 @@ const additionalStorageProfile = `
   }
   #END_STORAGE_PROFILE
 `
+
+// TestAccVcdVdcMetadata tests metadata CRUD on VDCs
+func TestAccVcdVdcMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdVdcMetadata, "vcd_org_vdc.test-vdc",
+		testAccCheckVcdVdcMetadataDatasource, "data.vcd_org_vdc.test-vdc-ds",
+		StringMap{
+			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}
+
+const testAccCheckVcdVdcMetadata = `
+resource "vcd_org_vdc" "test-vdc" {
+  org              = "{{.Org}}"
+  name             = "{{.Name}}"
+  allocation_model  = "AllocationVApp"
+  provider_vdc_name = "{{.ProviderVdc}}"
+
+  compute_capacity {
+    cpu {
+      allocated = 0
+      limit     = 0
+    }
+
+    memory {
+      allocated = 0
+      limit     = 0
+    }
+  }
+
+  storage_profile {
+    name    = "{{.ProviderVdcStorageProfile}}"
+    limit   = 100
+    default = true
+  }
+
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdVdcMetadataDatasource = `
+data "vcd_org_vdc" "test-vdc-ds" {
+  org  = vcd_org_vdc.test-vdc.org
+  name = vcd_org_vdc.test-vdc.name
+}
+`

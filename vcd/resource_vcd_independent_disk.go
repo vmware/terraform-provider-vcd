@@ -123,10 +123,14 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				},
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of metadata to assign to this disk. Key and value can be any string.",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key value map of metadata to assign to this disk. Key and value can be any string.",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("Disk", false),
 		},
 	}
 }
@@ -524,15 +528,11 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 		return fmt.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	metadata, err := disk.GetMetadata()
+	err = updateMetadataInState(d, disk)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to get Independent disk metadata")
-		return fmt.Errorf("unable to get Independent disk metadata %s", err)
+		log.Printf("[DEBUG] Unable to set Independent disk metadata")
+		return fmt.Errorf("unable to set Independent disk metadata %s", err)
 	}
-	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-		return fmt.Errorf("error setting metadata: %s", err)
-	}
-
 	return nil
 }
 

@@ -94,10 +94,14 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Elem:        networkV2IpRange,
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key value map of metadata to assign to this network. Key and value can be any string",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("Network", false),
 		},
 	}
 }
@@ -211,17 +215,18 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	// Metadata is not supported when the network is in a VDC Group
+	// Metadata is not supported when the network is in a VDC Group, although it is still present in the entity.
+	// Hence, we skip the read to preserve its value in state.
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		metadata, err := orgNetwork.GetMetadata()
-		if err != nil {
-			log.Printf("[DEBUG] Unable to find isolated network v2 metadata: %s", err)
-			return diag.Errorf("[isolated network v2 read] unable to find Isolated network metadata %s", err)
-		}
-		err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-		if err != nil {
-			return diag.Errorf("[isolated network v2 read] unable to set Isolated network metadata %s", err)
-		}
+		err = updateMetadataInState(d, orgNetwork)
+	} else if _, ok := d.GetOk("metadata"); !ok {
+		// If it's a VDC Group and metadata is not set, we explicitly compute it to empty. Otherwise, its value should
+		// be preserved as it is still present in the entity.
+		err = d.Set("metadata", StringMap{})
+	}
+	if err != nil {
+		log.Printf("[DEBUG] Unable to set isolated network v2 metadata: %s", err)
+		return diag.Errorf("[isolated network read v2] unable to set Isolated network metadata %s", err)
 	}
 
 	return nil

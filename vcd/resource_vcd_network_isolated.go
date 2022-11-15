@@ -156,10 +156,14 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of metadata to assign to this network. Key and value can be any string",
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key value map of metadata to assign to this network. Key and value can be any string",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("Network", false),
 		},
 	}
 }
@@ -338,14 +342,9 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	metadata, err := network.GetMetadata()
+	err = updateMetadataInState(d, network)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find isolated network metadata: %s", err)
-		return diag.Errorf("[isolated network read] unable to find network metadata %s", err)
-	}
-
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
+		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
 		return diag.Errorf("[isolated network read] unable to set network metadata %s", err)
 	}
 

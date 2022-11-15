@@ -66,7 +66,9 @@ func datasourceVcdStorageProfile() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key value map of metadata retrieved from this storage profile. Key and value can be any string.",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("Storage Profile", true),
 			"iops_settings": {
 				Type:        schema.TypeList,
 				Computed:    true,

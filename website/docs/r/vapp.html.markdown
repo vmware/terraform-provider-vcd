@@ -23,8 +23,9 @@ resource "vcd_network_direct" "direct-network" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata = {
-    CostAccount = "Marketing Department"
+  metadata_entry {
+    key   = "CostAccount"
+    value = "Marketing Department"
   }
 }
 
@@ -84,9 +85,14 @@ resource "vcd_vapp_vm" "web2" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata = {
-    boss = "Why is this vApp empty?"
-    john = "I don't really know. Maybe somebody did forget to clean it up."
+  metadata_entry {
+    key   = "boss"
+    value = "Why is this vApp empty?"
+  }
+
+  metadata_entry {
+    key   = "john"
+    value = "I don't really know. Maybe somebody did forget to clean it up."
   }
 }
 ```
@@ -100,7 +106,8 @@ The following arguments are supported:
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `description` (Optional; *v3.3*) An optional description for the vApp, up to 256 characters.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
-* `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
+* `metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
 * `lease` - (Optional *v3.5+*) the information about the vApp lease. It includes the fields below. When this section is 
    included, both fields are mandatory. If lease values are higher than the ones allowed for the whole Org, the values
@@ -113,6 +120,55 @@ The following arguments are supported:
 * `href` - (Computed) The vApp Hyper Reference.
 * `status` - (Computed; *v2.5+*) The vApp status as a numeric code.
 * `status_text` - (Computed; *v2.5+*) The vApp status as text.
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+
+~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
+   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
+
+Example:
+
+```hcl
+resource "vcd_vapp" "example" {
+  # ...
+  metadata_entry {
+    key         = "foo"
+    type        = "MetadataStringValue"
+    value       = "bar"
+    user_access = "PRIVATE"
+    is_system   = "true" # Requires System admin privileges
+  }
+
+  metadata_entry {
+    key         = "myBool"
+    type        = "MetadataBooleanValue"
+    value       = "true"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+}
+```
+
+To remove all metadata one needs to specify an empty `metadata_entry`, like:
+
+```
+metadata_entry {}
+```
+
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
 
 ## Importing
 

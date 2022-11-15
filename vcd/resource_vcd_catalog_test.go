@@ -769,6 +769,31 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 	}
 }
 
+// TestAccVcdCatalogMetadata tests metadata CRUD on catalogs
+func TestAccVcdCatalogMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
+		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
+		nil)
+}
+
+const testAccCheckVcdCatalogMetadata = `
+resource "vcd_catalog" "test-catalog" {
+  org              = "{{.Org}}"
+  name             = "{{.Name}}"
+  delete_force     = "true"
+  delete_recursive = "true"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdCatalogMetadataDatasource = `
+data "vcd_catalog" "test-catalog-ds" {
+  org  = vcd_catalog.test-catalog.org
+  name = vcd_catalog.test-catalog.name
+}
+`
+
 func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {
 	// Filtering by name and in correct pVdc to avoid picking NSX-V VDC storage profile
 	results, _ := client.QueryWithNotEncodedParams(nil, map[string]string{

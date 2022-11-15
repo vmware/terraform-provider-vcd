@@ -235,3 +235,32 @@ const testAccCheckVcdCatalogMediaUpdate = `
   }
 }
 `
+
+// TestAccVcdCatalogMediaMetadata tests metadata CRUD on catalog media
+func TestAccVcdCatalogMediaMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdCatalogMediaMetadata, "vcd_catalog_media.test-catalog-media",
+		testAccCheckVcdCatalogMediaMetadataDatasource, "data.vcd_catalog_media.test-catalog-media-ds",
+		StringMap{
+			"Catalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"MediaPath": testConfig.Media.MediaPath,
+		})
+}
+
+const testAccCheckVcdCatalogMediaMetadata = `
+resource "vcd_catalog_media" "test-catalog-media" {
+  org        = "{{.Org}}"
+  name       = "{{.Name}}"
+  catalog    = "{{.Catalog}}"
+  media_path = "{{.MediaPath}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdCatalogMediaMetadataDatasource = `
+data "vcd_catalog_media" "test-catalog-media-ds" {
+  org     = vcd_catalog_media.test-catalog-media.org
+  catalog = vcd_catalog_media.test-catalog-media.catalog
+  name    = vcd_catalog_media.test-catalog-media.name
+}
+`

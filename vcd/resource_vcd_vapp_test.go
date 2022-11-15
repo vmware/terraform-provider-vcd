@@ -240,3 +240,28 @@ resource "vcd_vapp_vm" "test_vm1" {
   computer_name                  = "compNameUp"
 }
 `
+
+// TestAccVcdVAppMetadata tests metadata CRUD on vApps
+func TestAccVcdVAppMetadata(t *testing.T) {
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdVAppMetadata, "vcd_vapp.test-vapp",
+		testAccCheckVcdVAppMetadataDatasource, "data.vcd_vapp.test-vapp-ds",
+		nil)
+}
+
+const testAccCheckVcdVAppMetadata = `
+resource "vcd_vapp" "test-vapp" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.Name}}"
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdVAppMetadataDatasource = `
+data "vcd_vapp" "test-vapp-ds" {
+  org  = vcd_vapp.test-vapp.org
+  vdc  = vcd_vapp.test-vapp.vdc
+  name = vcd_vapp.test-vapp.name
+}
+`

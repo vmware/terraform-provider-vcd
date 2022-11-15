@@ -68,12 +68,14 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Description: "shows upload progress in stdout",
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key and value pairs for catalog item metadata",
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true, // To be compatible with `metadata_entry`
+				Description:   "Key and value pairs for catalog item metadata",
+				Deprecated:    "Use metadata_entry instead",
+				ConflictsWith: []string{"metadata_entry"},
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog Media", false),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -254,14 +256,9 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
-	metadata, err := media.GetMetadata()
+	err = updateMetadataInState(d, media)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find media item metadata: %s", err)
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
+		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
 		return diag.FromErr(err)
 	}
 	return nil

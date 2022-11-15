@@ -93,7 +93,8 @@ The following arguments are supported:
 
 * `description` - vApp Template description
 * `vm_names` - Set of VM names within the vApp template
-* `metadata` - Key/value map of metadata for the associated vApp template.
+* `metadata` - (Deprecated) Use `metadata_entry` instead. Key/value map of metadata for the associated vApp template.
+* `metadata_entry` - A set of metadata entries assigned to this vApp Template. See [Metadata](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template#metadata) section for details.
 
 ## Filter arguments
 

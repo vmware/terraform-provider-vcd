@@ -46,7 +46,8 @@ The following arguments are supported:
 * `publish_enabled` - (*v3.6+*) Enable allows to publish a catalog externally to make its vApp templates and media files available for subscription by organizations outside the Cloud Director installation. Default is `false`.
 * `cache_enabled` - (*v3.6+*) Enable early catalog export to optimize synchronization. Default is `false`.
 * `preserve_identity_information` - (*v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary. Default is `false`.
-* `metadata` - (*v3.6+*) Key value map of metadata.
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata.
+* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to this Catalog. See [Metadata](#metadata) section for details.
 * `catalog_version` - (*v3.6+*) Version number from this catalog.
 * `owner_name` - (*v3.6+*) Owner of the catalog.
 * `number_of_vapp_templates` - (*v3.6+*) Number of vApp templates available in this catalog.
@@ -58,6 +59,17 @@ The following arguments are supported:
 * `created` - (*v3.6+*) Date and time of catalog creation
 * `publish_subscription_type` - (*v3.6+*) Shows if the catalog is `PUBLISHED`, if it is a subscription from another one (`SUBSCRIBED`), or none of those (`UNPUBLISHED`).
 * `publish_subscription_url` - (*v3.8+*) URL to which other catalogs can subscribe.
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - Key of this metadata entry.
+* `value` - Value of this metadata entry.
+* `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
 
 ## Filter arguments
 

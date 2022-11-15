@@ -49,8 +49,8 @@ The following arguments are supported:
 * `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI`, `ahci` for `SATA` and (*v3.6+*) `nvmecontroller` for `NVME`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
 * `sharing_type` - (Optional, *v3.6+* and VCD 10.2+) This is the sharing type. Values can be: `DiskSharing`,`ControllerSharing`, or `None`
-* `metadata` - (Optional; *v3.6+*) Key value map of metadata to assign to this independent disk.
-
+* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this independent disk.
+* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute reference
 
@@ -63,6 +63,55 @@ Supported in provider *v2.5+*
 * `encrypted` - (Computed, *v3.6+* and VCD 10.2+) True if disk is encrypted
 * `uuid` - (Computed, *v3.6+* and VCD 10.2+) The UUID of this named disk's device backing
 * `attached_vm_ids` - (Computed, *v3.6+*) IDs of VM which are using the disk
+
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
+* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
+* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+
+~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
+   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
+
+Example:
+
+```hcl
+resource "vcd_independent_disk" "example" {
+  # ...
+  metadata_entry {
+    key         = "foo"
+    type        = "MetadataStringValue"
+    value       = "bar"
+    user_access = "PRIVATE"
+    is_system   = "true" # Requires System admin privileges
+  }
+
+  metadata_entry {
+    key         = "myBool"
+    type        = "MetadataBooleanValue"
+    value       = "true"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+}
+```
+
+To remove all metadata one needs to specify an empty `metadata_entry`, like:
+
+```
+metadata_entry {}
+```
+
+The same applies also for deprecated `metadata` attribute:
+
+```
+metadata = {}
+```
 
 ## Importing
 

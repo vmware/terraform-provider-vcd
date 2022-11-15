@@ -66,7 +66,9 @@ func datasourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for catalog metadata",
+				Deprecated:  "Use metadata_entry instead",
 			},
+			"metadata_entry": getMetadataEntrySchema("Catalog", true),
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -169,12 +171,6 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
-	metadata, err := catalog.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog metadata: %s", err)
-		return diag.Errorf("There was an issue when retrieving metadata - %s", err)
-	}
-
 	dSet(d, "description", catalog.AdminCatalog.Description)
 	dSet(d, "created", catalog.AdminCatalog.DateCreated)
 	dSet(d, "name", catalog.AdminCatalog.Name)
@@ -192,7 +188,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "publish_subscription_url", subscriptionUrl)
 	}
 
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	err = updateMetadataInState(d, catalog)
 	if err != nil {
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
