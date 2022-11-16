@@ -658,9 +658,11 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// If at least Catalog Name and Template name are set - a VM from vApp template is being created
-	isVmFromTemplate := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
-	isEmptyVm := !isVmFromTemplate
+	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
+	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
+
+	isVmFromTemplate := d.Get("template_id").(string) != ""
+	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code conditionally calls functions for VM creation from template and empty VMs
@@ -670,7 +672,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	var err error
 	var vm *govcd.VM
 	switch {
-	case isVmFromTemplate:
+	case isVmFromTemplateDeprecated || isVmFromTemplate:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM from template")
 		vm, err = createVmFromTemplate(d, meta, vmType)
 		if err != nil {
