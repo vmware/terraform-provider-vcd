@@ -1107,7 +1107,7 @@ func importStateIdOrgNsxtVdcObject(objectName string) resource.ImportStateIdFunc
 // Group (such as Vapp, networks, edge gateway) in NSX-T VDC
 func importStateIdOrgNsxtVdcGroupObject(vdcGroupName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
+		if testConfig.VCD.Org == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +

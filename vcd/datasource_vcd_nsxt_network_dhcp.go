@@ -46,6 +46,11 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 				ForceNew:    true,
 				Description: "Parent Org VDC network name",
 			},
+			"mode": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "DHCP mode. One of 'EDGE', 'NETWORK', 'RELAY'",
+			},
 			"pool": {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -60,6 +65,16 @@ func datasourceVcdOpenApiDhcp() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"lease_time": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Lease time in seconds",
+			},
+			"listener_ip_address": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IP Address of DHCP server in network",
 			},
 		},
 	}

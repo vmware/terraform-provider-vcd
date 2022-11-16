@@ -139,7 +139,6 @@ resource "vcd_org_vdc" "with-edge-cluster" {
   enable_fast_provisioning   = true
   delete_force               = true
   delete_recursive           = true
-
 }
 `
 
