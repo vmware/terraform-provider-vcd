@@ -373,6 +373,34 @@ resource "vcd_vapp_vm" "secondVM" {
 }
 ```
 
+## Example Usage (VM with sizing policy and VM placement policy)
+This example shows how to create a VM using a VM sizing policy and a VM placement policy.
+
+```hcl
+data "vcd_vm_sizing_policy" "minSize" {
+  name = "minimum size"
+}
+
+data "vcd_provider_vdc" "myPvdc" {
+  name = "nsxt-Pvdc"
+}
+
+data "vcd_vm_placement_policy" "placementPolicy" {
+  name        = "vmware"
+  provider_id = data.vcd_provider_vdc.myPvdc.id
+}
+
+resource "vcd_vapp_vm" "secondVM" {
+  vapp_name           = vcd_vapp.web.name
+  name                = "secondVM"
+  computer_name       = "db-vm"
+  catalog_name        = "cat-where-is-template"
+  template_name       = "vappWithMultiVm"
+  sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
+  placement_policy_id = data.vcd_vm_placement_policy.placementPolicy.id
+}
+```
+
 ## Example Usage (using advanced compute settings)
 This example shows how to create an empty VM with advanced compute settings.
 
