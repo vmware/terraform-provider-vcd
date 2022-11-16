@@ -1160,11 +1160,11 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	var bootImage *types.Media
 	if bootImageIdSet || bootImageName {
 		var bootMediaIdentifier string
-		var obtainedMedia *govcd.Media
+		var mediaRecord *govcd.MediaRecord
 		var err error
 		if bootImageIdSet {
 			bootMediaIdentifier = d.Get("boot_image_id").(string)
-			obtainedMedia, err = vdc.GetMediaById(bootMediaIdentifier)
+			mediaRecord, err = vdc.QueryMediaById(bootMediaIdentifier)
 		} else {
 			bootMediaIdentifier = d.Get("boot_image").(string)
 			var catalogName interface{}
@@ -1176,13 +1176,19 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			if err != nil {
 				return nil, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
 			}
-			obtainedMedia, err = catalog.GetMediaByName(bootMediaIdentifier, false)
+			mediaRecord, err = catalog.QueryMedia(bootMediaIdentifier)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootMediaIdentifier, err)
+			return nil, fmt.Errorf("[VM creation] error getting boot image %s: %s", bootMediaIdentifier, err)
 		}
 
-		bootImage = &types.Media{HREF: obtainedMedia.Media.HREF, Name: obtainedMedia.Media.Name, ID: obtainedMedia.Media.ID}
+		// We check this flag that should be true if the Media file is synchronized in catalog, even if it isn't an iso
+		// file.
+		if !mediaRecord.MediaRecord.IsIso {
+			return nil, fmt.Errorf("[VM creation] error getting boot image %s: Media is not synchronized in the catalog", bootMediaIdentifier)
+		}
+
+		bootImage = &types.Media{HREF: mediaRecord.MediaRecord.HREF, Name: mediaRecord.MediaRecord.Name, ID: mediaRecord.MediaRecord.ID}
 	}
 
 	storageProfilePtr, err := lookupStorageProfile(d, vdc)

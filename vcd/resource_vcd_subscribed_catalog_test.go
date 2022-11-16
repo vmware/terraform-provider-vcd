@@ -162,8 +162,10 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 							resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
 							resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
 
-							// If this VM exists, it means that the corresponding vApp template is fully functional
+							// If these VM exist, it means that the corresponding vApp template and Media items are fully functional
 							resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
+							resource.TestCheckResourceAttr("vcd_vm."+testVm+"2", "name", testVm+"2"),
+							resource.TestCheckResourceAttr("vcd_vm."+testVm+"3", "name", testVm+"3"),
 						),
 					},
 					{
@@ -391,5 +393,28 @@ resource "vcd_vm" "{{.VmName}}" {
   template_name = data.vcd_catalog_item.{{.VappTemplateBaseName}}-1.name
   description   = "test standalone VM"
   power_on      = false
+}
+
+resource "vcd_vm" "{{.VmName}}2" {
+  org           = "{{.SubscriberOrg}}"
+  vdc           = "{{.SubscriberVdc}}"
+  name          = "{{.VmName}}2"
+  template_id   = data.vcd_catalog_vapp_template.{{.VappTemplateBaseName}}-1.id
+  description   = "test standalone VM 2"
+  power_on      = false
+}
+
+resource "vcd_vm" "{{.VmName}}3" {
+  org              = "{{.SubscriberOrg}}"
+  vdc              = "{{.SubscriberVdc}}"
+  name             = "{{.VmName}}3"
+  boot_image_id    = data.vcd_catalog_media.{{.MediaItemBaseName}}-1.id
+  description      = "test standalone VM 3"
+  computer_name    = "standalone"
+  cpus             = 1
+  memory           = 1024
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  power_on         = false
 }
 `
