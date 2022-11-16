@@ -34,12 +34,22 @@ resource "vcd_vapp_org_network" "direct-network" {
   org_network_name = vcd_network_direct.direct-network.name
 }
 
+data "vcd_catalog" "my-catalog" {
+  org  = "test"
+  name = "my-catalog"
+}
+
+data "vcd_catalog_vapp_template" "photon-os" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "photon-os"
+}
+
 resource "vcd_vapp_vm" "web1" {
   vapp_name = vcd_vapp.web.name
   name      = "web1"
 
-  catalog_name  = "my-catalog"
-  template_name = "photon-os"
+  template_id = data.vcd_catalog_vapp_template.photon-os.id
 
   memory = 2048
   cpus   = 1
@@ -65,8 +75,7 @@ resource "vcd_vapp_vm" "web2" {
   vapp_name = vcd_vapp.web.name
   name      = "web2"
 
-  catalog_name  = "my-catalog"
-  template_name = "photon-os"
+  template_id = data.vcd_catalog_vapp_template.photon-os.id
 
   memory = 2048
   cpus   = 1
