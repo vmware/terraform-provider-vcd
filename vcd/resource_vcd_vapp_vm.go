@@ -1188,7 +1188,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 			return nil, fmt.Errorf("[VM creation] error getting boot image %s: Media is not synchronized in the catalog", bootMediaIdentifier)
 		}
 
-		bootImage = &types.Media{HREF: mediaRecord.MediaRecord.HREF, Name: mediaRecord.MediaRecord.Name, ID: mediaRecord.MediaRecord.ID}
+		bootImage = &types.Media{HREF: mediaRecord.MediaRecord.HREF}
 	}
 
 	storageProfilePtr, err := lookupStorageProfile(d, vdc)
