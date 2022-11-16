@@ -258,9 +258,9 @@ data "vcd_catalog" "my-catalog" {
 }
 
 data "vcd_catalog_media" "myMedia" {
-  org        = "test"
-  catalog    = data.vcd_catalog.my-catalog.name
-  name       = "myMedia"
+  org     = "test"
+  catalog = data.vcd_catalog.my-catalog.name
+  name    = "myMedia"
 }
 
 resource "vcd_vapp_vm" "emptyVM" {
@@ -383,9 +383,9 @@ data "vcd_catalog" "my-catalog" {
 }
 
 data "vcd_catalog_media" "myMedia" {
-  org        = "test"
-  catalog    = data.vcd_catalog.my-catalog.name
-  name       = "myMedia"
+  org     = "test"
+  catalog = data.vcd_catalog.my-catalog.name
+  name    = "myMedia"
 }
 
 resource "vcd_vapp_vm" "advancedVM" {
