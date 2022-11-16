@@ -807,7 +807,6 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
 	  name        = "rule1"
 	  action      = "REJECT"
 	  description = "description"
-	  comment     = "longer text comment field filled"
   
 	  source_ids = [vcd_nsxt_dynamic_security_group.group1.id]
 	}
