@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -92,34 +91,25 @@ func lookupStorageProfile(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Refere
 
 }
 
-// lookupComputePolicy returns two types of compute policy structures:
-// * types.VdcComputePolicy contains ID and all technical configuration which that policy provides
-// * types.ComputePolicy structure is used in VM creation structure to assign a Compute Policy (and
-// does not hold technical details, only references)
-func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcComputePolicy, *types.ComputePolicy, error) {
-	var sizingPolicy *types.VdcComputePolicy
-	var vmComputePolicy *types.ComputePolicy
-	if value, ok := d.GetOk("sizing_policy_id"); ok {
-		vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
+// lookupComputePolicy returns the Compute Policy associated to the value of the given Compute Policy attribute. If the
+// attribute is not set, the returned policy will be nil. If the obtained policy is incorrect, it will return an error.
+func lookupComputePolicy(d *schema.ResourceData, vcdClient *VCDClient, computePolicyAttribute string) (*govcd.VdcComputePolicyV2, error) {
+	if value, ok := d.GetOk(computePolicyAttribute); ok {
+		computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(value.(string))
 		if err != nil {
-			return nil, nil, fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+			return nil, fmt.Errorf("error getting compute policy %s: %s", value.(string), err)
 		}
-		sizingPolicy = vdcComputePolicy.VdcComputePolicy
-		if vdcComputePolicy.Href == "" {
-			return nil, nil, fmt.Errorf("empty sizing policy HREF detected")
+		if computePolicy.Href == "" {
+			return nil, fmt.Errorf("empty compute policy HREF detected")
 		}
-		vmComputePolicy = &types.ComputePolicy{
-			VmSizingPolicy: &types.Reference{HREF: vdcComputePolicy.Href},
-		}
-		util.Logger.Printf("[VM create] sizingPolicy (%s) %# v", vdcComputePolicy.Href, pretty.Formatter(sizingPolicy))
+		return computePolicy, nil
 	}
-
-	return sizingPolicy, vmComputePolicy, nil
+	return nil, nil
 }
 
 // getCpuMemoryValues returns CPU, CPU core count and Memory variables. Priority comes from HCL
 // schema configuration and then whatever is present in compute policy (if it was specified at all)
-func getCpuMemoryValues(d *schema.ResourceData, vdcComputePolicy *types.VdcComputePolicy) (*int, *int, *int64, error) {
+func getCpuMemoryValues(d *schema.ResourceData, vdcComputePolicy *types.VdcComputePolicyV2) (*int, *int, *int64, error) {
 
 	var (
 		setCpu    *int

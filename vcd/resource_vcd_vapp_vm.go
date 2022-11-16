@@ -589,8 +589,14 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"sizing_policy_id": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
+			Computed:    true, // As it can get populated automatically by VDC default policy
 			Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
+		},
+		"placement_policy_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true, // As it can get populated automatically by VDC default policy
+			Description: "VM placement policy ID. Has to be assigned to Org VDC.",
 		},
 		"status": {
 			Type:        schema.TypeInt,
@@ -862,10 +868,24 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error finding storage profile: %s", err)
 	}
 
-	// Look up compute policy
-	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	// Look up compute policies
+	sizingPolicy, err := lookupComputePolicy(d, vcdClient, "sizing_policy_id")
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
+	}
+	placementPolicy, err := lookupComputePolicy(d, vcdClient, "placement_policy_id")
+	if err != nil {
+		return nil, fmt.Errorf("error finding placement policy: %s", err)
+	}
+	var vmComputePolicy *types.ComputePolicy
+	if sizingPolicy != nil || placementPolicy != nil {
+		vmComputePolicy = &types.ComputePolicy{}
+		if sizingPolicy != nil {
+			vmComputePolicy.VmSizingPolicy = &types.Reference{HREF: sizingPolicy.Href}
+		}
+		if placementPolicy != nil {
+			vmComputePolicy.VmPlacementPolicy = &types.Reference{HREF: placementPolicy.Href}
+		}
 	}
 
 	var vm *govcd.VM
@@ -1026,7 +1046,13 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	// Template VMs require CPU/Memory seting
 	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
 	// inherited from template
-	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
+	var cpuCores, cpuCoresPerSocket *int
+	var memory *int64
+	if sizingPolicy != nil {
+		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, sizingPolicy.VdcComputePolicyV2)
+	} else {
+		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, nil)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
@@ -1092,7 +1118,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		vappName := d.Get("vapp_name").(string)
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
-			return nil, fmt.Errorf("[VM create] error finding vApp for empty VM%s: %s", vappName, err)
+			return nil, fmt.Errorf("[VM create] error finding vApp for empty VM %s: %s", vappName, err)
 		}
 	}
 
@@ -1148,14 +1174,34 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		virtualCpuType = "VM64"
 	}
 
-	// Lookup compute policy
-	vdcComputePolicy, vmComputePolicy, err := lookupComputePolicy(d, vcdClient)
+	// Look up compute policies
+	sizingPolicy, err := lookupComputePolicy(d, vcdClient, "sizing_policy_id")
 	if err != nil {
 		return nil, fmt.Errorf("error finding sizing policy: %s", err)
 	}
+	placementPolicy, err := lookupComputePolicy(d, vcdClient, "placement_policy_id")
+	if err != nil {
+		return nil, fmt.Errorf("error finding placement policy: %s", err)
+	}
+	var vmComputePolicy *types.ComputePolicy
+	if sizingPolicy != nil || placementPolicy != nil {
+		vmComputePolicy = &types.ComputePolicy{}
+		if sizingPolicy != nil {
+			vmComputePolicy.VmSizingPolicy = &types.Reference{HREF: sizingPolicy.Href}
+		}
+		if placementPolicy != nil {
+			vmComputePolicy.VmPlacementPolicy = &types.Reference{HREF: placementPolicy.Href}
+		}
+	}
 
 	// Lookup CPU/Memory parameters
-	cpuCores, cpuCoresPerSocket, memory, err := getCpuMemoryValues(d, vdcComputePolicy)
+	var cpuCores, cpuCoresPerSocket *int
+	var memory *int64
+	if sizingPolicy != nil {
+		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, sizingPolicy.VdcComputePolicyV2)
+	} else {
+		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, nil)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
 	}
@@ -1352,7 +1398,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 }
 
 func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
-	vcdClient, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
+	_, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1392,17 +1438,43 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		return diag.FromErr(err)
 	}
 
-	if d.HasChange("sizing_policy_id") {
-		var sizingPolicy *types.VdcComputePolicy
-		value := d.Get("sizing_policy_id")
-		vdcComputePolicy, err := vcdClient.Client.GetVdcComputePolicyById(value.(string))
-		if err != nil {
-			return diag.Errorf("error getting sizing policy %s: %s", value.(string), err)
+	sizingId, newSizingId := d.GetChange("sizing_policy_id")
+	placementId, newPlacementId := d.GetChange("placement_policy_id")
+
+	sizingPolicyChanged := d.HasChange("sizing_policy_id")
+	placementPolicyChanged := d.HasChange("placement_policy_id")
+	if !sizingPolicyChanged {
+		// As sizing_policy_id is Computed+Optional, the only way to unset it should be to write `sizing_policy_id = ""`
+		// in the HCL. However, when this is done, Terraform SDK (terraform-plugin-sdk v2.24.0) doesn't detect this change:
+		// d.HasChange() returns false, d.GetChange returns both old values and d.Get returns old value,
+		// hence `sizingPolicyChanged` will be always false.
+		// We need to inspect the raw HCL to get the correct value.
+		hclMap := d.GetRawConfig().AsValueMap()
+		if hclValue, ok := hclMap["sizing_policy_id"]; ok && !hclValue.IsNull() && strings.TrimSpace(hclValue.AsString()) == "" {
+			sizingId = ""
 		}
-		sizingPolicy = vdcComputePolicy.VdcComputePolicy
-		_, err = vm.UpdateComputePolicy(sizingPolicy)
+	}
+	if !placementPolicyChanged {
+		// Same as above
+		hclMap := d.GetRawConfig().AsValueMap()
+		if hclValue, ok := hclMap["placement_policy_id"]; ok && !hclValue.IsNull() && strings.TrimSpace(hclValue.AsString()) == "" {
+			placementId = ""
+		}
+	}
+
+	if sizingPolicyChanged || placementPolicyChanged {
+		// This is done because we need to update both policies at the same time, as not populating one of them will make
+		// that policy to be unassigned from the VM.
+		// Therefore, we need to use the old value if the policy didn't change to preserve it, or update to the new if it changed.
+		if placementPolicyChanged {
+			placementId = newPlacementId
+		}
+		if sizingPolicyChanged {
+			sizingId = newSizingId
+		}
+		_, err = vm.UpdateComputePolicyV2(sizingId.(string), placementId.(string), "")
 		if err != nil {
-			return diag.Errorf("error updating sizing policy %s: %s", value.(string), err)
+			return diag.Errorf("error updating compute policy: %s", err)
 		}
 	}
 
@@ -1842,7 +1914,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	}
 
 	if err := setGuestCustomizationData(d, vm); err != nil {
-		return diag.Errorf("error storing customzation block: %s", err)
+		return diag.Errorf("error storing customization block: %s", err)
 	}
 
 	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil && vm.VM.VmSpecSection.HardwareVersion.Value != "" {
@@ -1852,8 +1924,15 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "os_type", vm.VM.VmSpecSection.OsType)
 	}
 
-	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
-		dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+	if vm.VM.ComputePolicy != nil {
+		dSet(d, "sizing_policy_id", "")
+		if vm.VM.ComputePolicy.VmSizingPolicy != nil {
+			dSet(d, "sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+		}
+		dSet(d, "placement_policy_id", "")
+		if vm.VM.ComputePolicy.VmPlacementPolicy != nil {
+			dSet(d, "placement_policy_id", vm.VM.ComputePolicy.VmPlacementPolicy.ID)
+		}
 	}
 
 	statusText, err := vm.GetStatus()
