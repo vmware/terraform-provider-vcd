@@ -380,7 +380,7 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 			// This checks that the vApp Template is synchronized in the catalog
 			_, err = vcdClient.QueryVAppTemplateById(vAppTemplate.VAppTemplate.ID)
 			if err != nil {
-				return nil, fmt.Errorf("the found vApp Template %s is not usable: %s", vAppTemplate.VAppTemplate.ID, err)
+				return nil, fmt.Errorf("the found vApp Template %s is not synchronized in the catalog", vAppTemplate.VAppTemplate.ID)
 			}
 			d.SetId(vAppTemplate.VAppTemplate.ID)
 			return vAppTemplate, nil
@@ -408,7 +408,7 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 		// This checks that the vApp Template is synchronized in the catalog
 		_, err = vcdClient.QueryVAppTemplateById(vAppTemplate.VAppTemplate.ID)
 		if err != nil {
-			return nil, fmt.Errorf("the found vApp Template %s is not usable: %s", vAppTemplate.VAppTemplate.ID, err)
+			return nil, fmt.Errorf("the found vApp Template %s is not synchronized in the catalog", vAppTemplate.VAppTemplate.ID)
 		}
 	}
 	d.SetId(vAppTemplate.VAppTemplate.ID)

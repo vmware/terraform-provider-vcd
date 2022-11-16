@@ -139,7 +139,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"catalog_name": {
 			Type:          schema.TypeString,
 			Optional:      true,
-			Deprecated:    "You should use `template_id` without the need of a catalog name",
+			Deprecated:    "You should use `template_id` or `boot_image_id` without the need of a catalog name",
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
 			ConflictsWith: []string{"template_id", "boot_image_id"},
 		},
