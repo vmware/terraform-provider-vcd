@@ -128,7 +128,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:      true,
 			ForceNew:      true,
 			Description:   "The URN of the vApp Template to use",
-			ConflictsWith: []string{"template_name"},
+			ConflictsWith: []string{"template_name", "catalog_name"},
 		},
 		"vm_name_in_template": {
 			Type:        schema.TypeString,
@@ -274,7 +274,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:          schema.TypeString,
 			Optional:      true,
 			Description:   "The URN of the media to use as boot image.",
-			ConflictsWith: []string{"boot_image"},
+			ConflictsWith: []string{"boot_image", "catalog_name"},
 		},
 		"network_dhcp_wait_seconds": {
 			Optional:     true,
