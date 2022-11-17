@@ -371,6 +371,9 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 		if hasFilter {
 			if isSearchedByCatalog {
 				vAppTemplate, err = getVappTemplateByCatalogAndFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+				// A race condition can happen between this call and QuerySynchronizedVAppTemplateById below.
+				// as we can have a vApp template that is not synchronized. The sync can happen by the time we
+				// call QuerySynchronizedVAppTemplateById, but the ID will have changed and it will fail.
 			} else {
 				vAppTemplate, err = getVappTemplateByVdcAndFilter(vdc, filter, vcdClient.Client.IsSysAdmin)
 			}
@@ -391,6 +394,9 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	if isSearchedByCatalog {
 		// In a resource, this is the only possibility
 		vAppTemplate, err = catalog.GetVAppTemplateByNameOrId(identifier, false)
+		// A race condition can happen between this call and QuerySynchronizedVAppTemplateById below.
+		// as we can have a vApp template that is not synchronized. The sync can happen by the time we
+		// call QuerySynchronizedVAppTemplateById, but the ID will have changed and it will fail.
 	} else {
 		vAppTemplate, err = vdc.GetVAppTemplateByNameOrId(identifier, false)
 	}
