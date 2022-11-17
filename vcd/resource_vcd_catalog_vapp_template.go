@@ -374,7 +374,7 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 			} else {
 				vAppTemplate, err = getVappTemplateByVdcAndFilter(vdc, filter, vcdClient.Client.IsSysAdmin)
 			}
-			// A race condition can happen between the GetVAppTemplate call above and QuerySynchronizedVAppTemplateById below.
+			// A race condition can happen between the getVAppTemplate call above and QuerySynchronizedVAppTemplateById below.
 			// as we can have a vApp template that is not synchronized. The sync can happen by the time we
 			// call QuerySynchronizedVAppTemplateById, but the ID will have changed, hence it will fail with a NotFoundError.
 			if err != nil {
