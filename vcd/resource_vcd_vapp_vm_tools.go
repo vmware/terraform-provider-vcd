@@ -43,7 +43,7 @@ func lookupvAppTemplateforVm(d *schema.ResourceData, vcdClient *VCDClient, org *
 		}
 
 		if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok { // specific VM name in template is given
-			vmInTemplateRecord, err := vcdClient.QueryVmInVAppTemplateByHref(vAppTemplate.VAppTemplate.HREF, vmNameInTemplate.(string))
+			vmInTemplateRecord, err := vcdClient.QuerySynchronizedVmInVAppTemplateByHref(vAppTemplate.VAppTemplate.HREF, vmNameInTemplate.(string))
 			if err != nil {
 				return govcd.VAppTemplate{}, fmt.Errorf("error obtaining VM '%s' inside vApp Template: %s", vmNameInTemplate, err)
 			}
@@ -72,9 +72,9 @@ func lookupvAppTemplateforVm(d *schema.ResourceData, vcdClient *VCDClient, org *
 
 		var vappTemplateHref string
 		if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok { // specific VM name in template is given
-			vmInTemplateRecord, err := vdc.QueryVappVmTemplate(catalogName, templateName, vmNameInTemplate.(string))
+			vmInTemplateRecord, err := vdc.QueryVappSynchronizedVmTemplate(catalogName, templateName, vmNameInTemplate.(string))
 			if err != nil {
-				return govcd.VAppTemplate{}, fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
+				return govcd.VAppTemplate{}, fmt.Errorf("error querying VM template %s: %s", vmNameInTemplate, err)
 			}
 
 			vappTemplateHref = vmInTemplateRecord.HREF
