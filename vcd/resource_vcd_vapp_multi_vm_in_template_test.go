@@ -48,16 +48,28 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		"VmName":             vmName,
 		"VmName2":            vmName2,
 		"ComputerName":       vmName + "-unique",
+		"PowerOn":            "true",
 		"Tags":               "vapp vm",
 		"OvaPath":            testConfig.Ova.OvaVappMultiVmsPath,
 	}
 	testParamsNotEmpty(t, params)
 
+	params["SkipNotice"] = "# skip-binary-test: removing networks from powered on vApp fail"
 	var configText string
 	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
 		configText = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
 	} else {
 		configText = templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	}
+
+	var configText2 string
+	params["PowerOn"] = false
+	params["SkipNotice"] = ""
+	params["FuncName"] = t.Name() + "-step2"
+	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
+		configText2 = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	} else {
+		configText2 = templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
 	}
 
 	if vcdShortTest {
@@ -96,6 +108,10 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 						"vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
 				),
 			},
+			{
+				// Ensures the vApp is powered off
+				Config: configText2,
+			},
 		},
 	})
 	postTestChecks(t)
@@ -112,6 +128,7 @@ resource "vcd_catalog_item" "defaultOva" {
 `
 
 const testAccCheckVcdVAppVmMultiVmInTemplate = `
+{{.SkipNotice}}
 resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
@@ -129,6 +146,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
+
+  power_on = {{.PowerOn}}
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
