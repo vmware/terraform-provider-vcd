@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"golang.org/x/exp/slices"
 )
 
 // Terraform codebase for VM management is very complicated and is backed by 4 types of VM:
@@ -81,14 +82,14 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "power_on", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status", "1"), // 1 - means RESOLVED
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status_text", "RESOLVED"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "POWERED_OFF"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", []string{"POWERED_OFF"}),
 
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "power_on", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status", "1"), // 1 - means RESOLVED
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status_text", "RESOLVED"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "POWERED_OFF"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", []string{"POWERED_OFF"}),
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
@@ -462,11 +463,11 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "POWERED_ON"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", []string{"POWERED_ON"}),
 
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "POWERED_ON"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", []string{"POWERED_ON"}),
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
@@ -1616,7 +1617,8 @@ func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
 					//
 					// resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status", "10"), // 10 - means MIXED
 					// resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status_text", "MIXED"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "MIXED"),
+					// VCD 10.3.0 report "POWERED_OFF" instead of "MIXED" state
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", []string{"MIXED", "POWERED_OFF"}),
 
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
@@ -1627,7 +1629,8 @@ func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
 					//
 					// resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status", "10"), // 10 - means MIXED
 					// resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status_text", "MIXED"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "MIXED"),
+					// VCD 10.3.0 report "POWERED_OFF" instead of "MIXED" state
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", []string{"MIXED", "POWERED_OFF"}),
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
@@ -1681,7 +1684,7 @@ func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
 					//
 					// resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status", "10"), // 10 - means MIXED
 					// resource.TestCheckResourceAttr("vcd_vapp.template-vm", "status_text", "MIXED"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", "MIXED"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", []string{"MIXED"}),
 
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "name", t.Name()+"-empty-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "description", "vApp for Empty VM description"),
@@ -1692,7 +1695,7 @@ func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
 					//
 					// resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status", "10"), // 10 - means MIXED
 					// resource.TestCheckResourceAttr("vcd_vapp.empty-vm", "status_text", "MIXED"),
-					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", "MIXED"),
+					testAccCheckVcdVappPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-empty-vm", []string{"MIXED"}),
 
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
@@ -1914,7 +1917,7 @@ func testAccCheckVcdVMPowerState(orgName, vdcName string, vappName, vmName, expe
 
 // testAccCheckVcdVappPowerState checks if given vApp has expected status
 // `expectedStatus` comes from types.VAppStatuses
-func testAccCheckVcdVappPowerState(orgName, vdcName string, vappName, expectedStatus string) resource.TestCheckFunc {
+func testAccCheckVcdVappPowerState(orgName, vdcName string, vappName string, expectedStatuses []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
 		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
@@ -1933,11 +1936,11 @@ func testAccCheckVcdVappPowerState(orgName, vdcName string, vappName, expectedSt
 		}
 
 		if vcdTestVerbose {
-			fmt.Printf("vApp '%s' status expected '%s', got '%s'\n", vapp.VApp.Name, expectedStatus, vappStatus)
+			fmt.Printf("vApp '%s' status expected '%s', got '%s'\n", vapp.VApp.Name, expectedStatuses, vappStatus)
 		}
 
-		if vappStatus != expectedStatus {
-			return fmt.Errorf("expected vApp '%s' to have status '%s', got '%s'", vapp.VApp.Name, expectedStatus, vappStatus)
+		if !slices.Contains(expectedStatuses, vappStatus) {
+			return fmt.Errorf("expected vApp '%s' to have status '%s', got '%s'", vapp.VApp.Name, expectedStatuses, vappStatus)
 		}
 
 		return nil
