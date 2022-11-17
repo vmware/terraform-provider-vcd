@@ -376,7 +376,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.FromErr(err)
 	}
 
-	err = setEdgeClusterData(d, adminVdc)
+	err = setEdgeClusterData(d, adminVdc, "vdc_org_vdc")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1384,10 +1384,18 @@ func setVdcEdgeCluster(d *schema.ResourceData, vdc *govcd.Vdc) error {
 	return nil
 }
 
-func setEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminVdc) error {
+// setDataSourceEdgeClusterData is like setEdgeClusterData however it must handle the case where
+// user has insufficient rights to retrieve VDC Network Profile. Resource itself is not affected
+// by this problem because it requires provider user to create VDC.
+func setEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminVdc, source string) error {
 	vdcNetworkProfile, err := adminVdc.GetVdcNetworkProfile()
 	if err != nil {
-		return fmt.Errorf("error retrieving VDC Network Profile: %s", err)
+		// Conciously ignoring this error and logging it to output as it will most probably be
+		// insufficient rights that the user has. It will work with System user but might not work
+		// for users that got lower privileges.
+		logForScreen(source, fmt.Sprintf("got error while attempting to retrieve Edge Cluster ID: %s", err))
+		dSet(d, "edge_cluster_id", "")
+		return nil
 	}
 
 	if vdcNetworkProfile != nil && vdcNetworkProfile.ServicesEdgeCluster != nil {
