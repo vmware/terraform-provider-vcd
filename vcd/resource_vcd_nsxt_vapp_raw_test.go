@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -41,14 +40,22 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		"VmName2":       "TestAccVcdNsxtVAppRawVm2",
 		"NsxtCatalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"Media":         testConfig.Media.NsxtBackedMediaName,
+		"VappPowerOn":   true,
 		"Tags":          "vapp vm nsxt",
 	}
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
+
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(testAccCheckVcdNsxtVAppRaw_basicCleanup, params)
+	params["VappPowerOn"] = "false"
+	configText2 := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
+
+	// params["FuncName"] = t.Name() + "-step3"
+	// configText3 := templateFill(testAccCheckVcdNsxtVAppRaw_basicCleanup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText2)
+	// debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText3)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -69,14 +76,8 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.2.ip", regexp.MustCompile(`^12\.12\.2\.`)),
 				),
 			},
-			// This step ensures that VM and disk are removed, but networks are left
-			{
+			{ // Power off the vApp so that networks can be removed afterwards
 				Config: configText2,
-			},
-			// This step gives 10-second sleep timer so that cleanup bug is not hit in VCD 10.3
-			{
-				Config:    configText2,
-				PreConfig: func() { time.Sleep(10 * time.Second) },
 			},
 		},
 	})
@@ -207,6 +208,9 @@ resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.VappName}}"
+
+  power_on = {{.VappPowerOn}}
+
   depends_on   = [vcd_network_routed_v2.{{.NetworkName}}]
 }
 
@@ -313,73 +317,5 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   }
 
   depends_on = [vcd_vapp_org_network.routed, vcd_vapp_org_network.isolated]
-}
-`
-
-const testAccCheckVcdNsxtVAppRaw_basicCleanup = `
-data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  name = "{{.EdgeGateway}}"
-}
-
-resource "vcd_network_routed_v2" "{{.NetworkName}}" {
-  name            = "{{.NetworkName}}"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-  gateway         = "10.10.102.1"
-  prefix_length   = 24
-
-  static_ip_pool {
-    start_address = "10.10.102.2"
-    end_address   = "10.10.102.199"
-  }
-}
-
-resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  
-  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
-
-  pool {
-    start_address = "10.10.102.210"
-    end_address   = "10.10.102.220"
-  }
-
-  pool {
-    start_address = "10.10.102.230"
-    end_address   = "10.10.102.240"
-  }
-}
-
-
-resource "vcd_network_isolated_v2" "isolated-test" {
-  name            = "{{.NetworkName}}-isolated"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  gateway         = "130.10.102.1"
-  prefix_length   = 24
-
-  static_ip_pool {
-    start_address = "130.10.102.2"
-    end_address   = "130.10.102.254"
-  }
-}
-
-resource "vcd_nsxt_network_imported" "imported-test" {
-  name            = "{{.NetworkName}}-imported"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  gateway         = "12.12.2.1"
-  prefix_length   = 24
-
-  nsxt_logical_switch_name = "{{.ImportSegment}}"
-
-  static_ip_pool {
-    start_address = "12.12.2.10"
-    end_address   = "12.12.2.15"
-  }
 }
 `

@@ -426,6 +426,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
+  power_on = false
+
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
   memory        = 512
