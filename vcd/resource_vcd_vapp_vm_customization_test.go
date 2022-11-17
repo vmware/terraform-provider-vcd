@@ -35,16 +35,24 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VAppName":    netVappName,
 		"VMName":      netVmName1,
+		"VappPowerOn": "false",
 		"Tags":        "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomization, params)
 
-	params["FuncName"] = t.Name() + "-step1"
+	params["FuncName"] = t.Name() + "-step2"
 	params["Customization"] = "true"
+	params["VappPowerOn"] = "true"
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
 	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
+
+	params["FuncName"] = t.Name() + "-step3"
+	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
+	params["Customization"] = "false"
+	params["VappPowerOn"] = "false"
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomizationPowerOff, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -83,6 +91,9 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "false"),
 				),
 			},
+			{
+				Config: configTextVMUpdateStep2,
+			},
 		},
 	})
 	postTestChecks(t)
@@ -110,12 +121,18 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 		"CatalogItem":   testSuiteCatalogOVAItem,
 		"VAppName":      netVappName,
 		"VMName":        netVmName1,
+		"VappPowerOn":   "true",
 		"Tags":          "vapp vm",
 		"Customization": "true",
 	}
 	testParamsNotEmpty(t, params)
 
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
+	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	params["Customization"] = false
+	params["VappPowerOn"] = false
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
 	if vcdShortTest {
@@ -129,7 +146,7 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and force customization initially
 			{
-				Config: configTextVMUpdateStep2,
+				Config: configTextVMUpdateStep1,
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -141,6 +158,9 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 					// Always store 'customization.0.force=false' in statefile so that a diff is always triggered
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "false"),
 				),
+			},
+			{ // Power off vApp
+				Config: configTextVMUpdateStep2,
 			},
 		},
 	})
@@ -227,6 +247,8 @@ resource "vcd_vapp" "test-vapp" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
+  power_on = {{.VappPowerOn}}
+
   name       = "{{.VAppName}}"
 }
 
@@ -291,6 +313,30 @@ resource "vcd_vapp_vm" "test-vm" {
 }
 `
 
+const testAccCheckVcdVAppVmCreateCustomizationPowerOff = testAccCheckVcdVAppVmCustomizationShared + `
+{{.SkipTest}}
+resource "vcd_vapp_vm" "test-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = false
+
+  vapp_name     = vcd_vapp.test-vapp.name
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.vappNet.name
+    ip_allocation_mode = "POOL"
+  }
+}
+`
+
 // TestAccVcdVAppVmCreateCustomizationFalse checks if VM is booted up successfully when  customization.force=true.
 // This test covers a previous bug.
 func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
@@ -310,6 +356,7 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 		"CatalogItem":   testSuiteCatalogOVAItem,
 		"VAppName":      netVappName,
 		"VMName":        netVmName1,
+		"VappPowerOn":   "true",
 		"Tags":          "vapp vm",
 		"Customization": "false",
 		"SkipTest":      " ",
@@ -317,6 +364,11 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
+
+	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
+	params["VappPowerOn"] = false
+	params["FuncName"] = t.Name() + "-step2"
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -334,6 +386,9 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
 				),
+			},
+			{
+				Config: configTextVMUpdateStep2,
 			},
 		},
 	})
@@ -357,6 +412,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VAppName":    netVappName,
+		"VappPowerOn": "true",
 		"VMName":      netVmName1,
 		"Tags":        "vapp vm",
 	}
@@ -368,6 +424,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 	configTextVMStep1 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettingsStep1, params)
 
 	params["FuncName"] = t.Name() + "-step2"
+	params["VappPowerOn"] = "false"
 	configTextVMStep2 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettingsStep2, params)
 
 	if vcdShortTest {
