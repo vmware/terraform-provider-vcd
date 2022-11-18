@@ -3,10 +3,11 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"regexp"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -221,14 +222,29 @@ func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	if d.HasChange("power_on") && d.Get("power_on").(bool) {
-		task, err := vapp.PowerOn()
-		if err != nil {
-			return diag.Errorf("error Powering Up: %#v", err)
+	if d.HasChange("power_on") {
+		shouldBePoweredOn := d.Get("power_on").(bool)
+		shouldBePoweredOff := !shouldBePoweredOn
+		if shouldBePoweredOn {
+			task, err := vapp.PowerOn()
+			if err != nil {
+				return diag.Errorf("error Powering On: %s", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return diag.Errorf("error completing tasks: %s", err)
+			}
 		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return diag.Errorf("error completing tasks: %#v", err)
+
+		if shouldBePoweredOff {
+			task, err := vapp.Undeploy() // UI Button "Power Off" calls undeploy API endpoint
+			if err != nil {
+				return diag.Errorf("error Powering Off: %s", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return diag.Errorf("error completing tasks: %s", err)
+			}
 		}
 	}
 

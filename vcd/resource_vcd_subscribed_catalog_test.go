@@ -14,6 +14,10 @@ import (
 
 func TestAccVcdSubscribedCatalog(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skipf("%s requires system admin privileges", t.Name())
+		return
+	}
 
 	var (
 		publisherDescription  = "test publisher catalog"

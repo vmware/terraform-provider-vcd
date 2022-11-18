@@ -32,8 +32,9 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VAppName":    netVappName,
 		"VMName":      netVmName1,
-		"Tags":        "vapp vm",
 		"Media":       testConfig.Media.MediaName,
+		"VAppPower":   "true",
+		"Tags":        "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -44,8 +45,9 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 
 	configTextVM := templateFill(testAccCheckVcdVAppEmptyVm, params)
 
-	params["FuncName"] = t.Name() + "-step1"
-	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppEmptyVmStep1, params)
+	params["FuncName"] = t.Name() + "-step2"
+	params["VAppPower"] = "false"
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppEmptyVmStep1, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -57,7 +59,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
-			// Step 0 - Create with variations of all possible NICs
+			// Step 1 - Create with variations of all possible NICs
 			{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -160,9 +162,9 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory_hot_add_enabled", "true"),
 				),
 			},
-			// Step 1 - update
+			// Step 2 - update
 			{
-				Config: configTextVMUpdateStep1,
+				Config: configTextVMUpdateStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
@@ -228,6 +230,8 @@ const testAccCheckVcdVAppEmpty = `
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
+
+  power_on = {{.VAppPower}}
 
   name       = "{{.VAppName}}"
   depends_on = ["vcd_network_routed.net", "vcd_network_routed.net2"]
@@ -416,19 +420,13 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
  }
 `
 
-const testAccCheckVcdVAppEmptyVmStep1 = testAccCheckVcdVAppEmptyVmNetworkShared + `
+const testAccCheckVcdVAppEmptyVmStep1 = testAccCheckVcdVAppEmpty + testAccCheckVcdVAppEmptyVmNetworkShared + `
 # skip-binary-test: only for updates
-resource "vcd_vapp" "{{.VAppName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-
-	name       = "{{.VAppName}}"
-	depends_on = ["vcd_network_routed.net", "vcd_network_routed.net2"]
-}
-
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
+
+  power_on = false
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
@@ -489,7 +487,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name              = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
+    name               = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
   } 
 }

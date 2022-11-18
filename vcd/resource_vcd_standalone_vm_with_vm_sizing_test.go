@@ -15,6 +15,11 @@ import (
 
 func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skipf("%s requires system admin privileges", t.Name())
+		return
+	}
+
 	var (
 		standaloneVmName        = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 		netVmName1              = standaloneVmName + "-1"

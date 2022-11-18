@@ -1131,7 +1131,6 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 					}),
 				),
 			},
-
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -1190,7 +1189,8 @@ resource "vcd_vapp" "fw-test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
 
-  name = "fw-test"
+  name     = "fw-test"
+  power_on = false
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
@@ -1205,6 +1205,7 @@ resource "vcd_vapp_vm" "fw-vm" {
   vdc           = "{{.Vdc}}"
   vapp_name     = vcd_vapp.fw-test.name
   name          = "fw-test"
+  power_on      = false
   computer_name = "fw-test"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"

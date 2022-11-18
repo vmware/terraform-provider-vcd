@@ -47,6 +47,9 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step3"
 	configTextVMUpdateStep3 := templateFill(testAccCheckVcdVAppVmNetworkVmStep3, params)
 
+	params["FuncName"] = t.Name() + "-step4"
+	configTextVMUpdateStep4 := templateFill(testAccCheckVcdVAppVmNetworkVmStep4PowerOff, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -244,6 +247,9 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.adapter_type", "VMXNET2"),
 				),
 			},
+			{
+				Config: configTextVMUpdateStep4,
+			},
 		},
 	})
 	postTestChecks(t)
@@ -255,6 +261,7 @@ resource "vcd_vapp" "{{.VAppName}}" {
   vdc = "{{.Vdc}}"
 
   name       = "{{.VAppName}}"
+  power_on   = true
   depends_on = [vcd_network_routed.net, vcd_network_routed.net2]
 }
 
@@ -518,6 +525,132 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = false
+  }
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.vappIsolatedNet.name
+    ip_allocation_mode = "POOL"
+    is_primary         = true
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappAttachedNet.org_network_name
+    ip_allocation_mode = "POOL"
+    adapter_type       = "vmxnet2"
+  }
+}
+`
+
+const testAccCheckVcdVAppVmNetworkVmStep4PowerOff = `
+# skip-binary-test: only for updates
+resource "vcd_vapp" "{{.VAppName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = "{{.VAppName}}"
+  power_on   = false
+  depends_on = [vcd_network_routed.net, vcd_network_routed.net2]
+}
+
+resource "vcd_vapp_network" "vappIsolatedNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = "vapp-net"
+  vapp_name  = vcd_vapp.{{.VAppName}}.name
+  gateway    = "192.168.2.1"
+  netmask    = "255.255.255.0"
+  dns1       = "192.168.2.1"
+  dns2       = "192.168.2.2"
+  dns_suffix = "mybiz.biz"
+
+  static_ip_pool {
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
+  }
+}
+
+resource "vcd_network_routed" "net" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name         = "multinic-net"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "11.10.0.1"
+
+  dhcp_pool {
+    start_address = "11.10.0.2"
+    end_address   = "11.10.0.100"
+  }
+
+  static_ip_pool {
+    start_address = "11.10.0.152"
+    end_address   = "11.10.0.254"
+  }
+}
+
+resource "vcd_vapp_org_network" "vappAttachedNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
+  org_network_name = vcd_network_routed.net.name
+}
+
+resource "vcd_vapp_org_network" "vappAttachedRoutedNet2" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
+  org_network_name = vcd_network_routed.net2.name
+  is_fenced        = true
+}
+
+resource "vcd_vapp_network" "vappRoutedNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name             = "vapp-routed-net"
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
+  gateway          = "192.168.2.1"
+  netmask          = "255.255.255.0"
+  org_network_name = vcd_network_routed.net.name
+}
+
+
+resource "vcd_network_routed" "net2" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name         = "multinic-net2"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "12.10.0.1"
+
+  static_ip_pool {
+    start_address = "12.10.0.152"
+    end_address   = "12.10.0.254"
+  }
+}
+
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  name          = "{{.VMName}}"
+  power_on      = false
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 512
