@@ -262,7 +262,9 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}" 
+  vdc  = "{{.Vdc}}"
+
+  power_on = false
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
@@ -302,6 +304,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   vdc           = "{{.Vdc}}"
   vapp_name     = vcd_vapp_vm.{{.VmName}}.vapp_name
   name          = "{{.VmName2}}"
+  power_on      = false
   computer_name = vcd_vapp_vm.{{.VmName}}.computer_name
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
