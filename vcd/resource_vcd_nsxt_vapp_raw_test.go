@@ -51,11 +51,8 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 	params["VappPowerOn"] = "false"
 	configText2 := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
 
-	// params["FuncName"] = t.Name() + "-step3"
-	// configText3 := templateFill(testAccCheckVcdNsxtVAppRaw_basicCleanup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText2)
-	// debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText3)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
