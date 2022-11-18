@@ -146,6 +146,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   name          = "{{.VmName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
+  power_on      = false
   memory        = 1024
   cpus          = 1
 
