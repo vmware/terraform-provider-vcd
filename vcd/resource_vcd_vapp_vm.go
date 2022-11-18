@@ -116,10 +116,19 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "The name of VDC to use, optional if defined at provider level",
 		},
 		"template_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The name of the vApp Template to use",
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			Deprecated:    "Use `vapp_template_id` instead",
+			Description:   "The name of the vApp Template to use",
+			ConflictsWith: []string{"vapp_template_id"},
+		},
+		"vapp_template_id": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			Description:   "The URN of the vApp Template to use",
+			ConflictsWith: []string{"template_name", "catalog_name"},
 		},
 		"vm_name_in_template": {
 			Type:        schema.TypeString,
@@ -128,9 +137,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
 		},
 		"catalog_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "The catalog name in which to find the given vApp Template or media for boot_image",
+			Type:          schema.TypeString,
+			Optional:      true,
+			Deprecated:    "You should use `vapp_template_id` or `boot_image_id` without the need of a catalog name",
+			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
+			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
 		},
 		"description": {
 			Type:        schema.TypeString,
@@ -253,9 +264,17 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.)",
 		},
 		"boot_image": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "Media name to add as boot image.",
+			Type:          schema.TypeString,
+			Optional:      true,
+			Deprecated:    "Use `boot_image_id` instead",
+			Description:   "Media name to add as boot image.",
+			ConflictsWith: []string{"boot_image_id"},
+		},
+		"boot_image_id": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			Description:   "The URN of the media to use as boot image.",
+			ConflictsWith: []string{"boot_image", "catalog_name"},
 		},
 		"network_dhcp_wait_seconds": {
 			Optional:     true,
@@ -644,9 +663,11 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// If at least Catalog Name and Template name are set - a VM from vApp template is being created
-	isVmFromTemplate := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
-	isEmptyVm := !isVmFromTemplate
+	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
+	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
+
+	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
+	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code conditionally calls functions for VM creation from template and empty VMs
@@ -656,7 +677,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	var err error
 	var vm *govcd.VM
 	switch {
-	case isVmFromTemplate:
+	case isVmFromTemplateDeprecated || isVmFromTemplate:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM from template")
 		vm, err = createVmFromTemplate(d, meta, vmType)
 		if err != nil {
@@ -837,7 +858,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 
 	// Look up VM template inside vApp template - either specified by `vm_name_in_template` or the
 	// first one in vApp
-	vmTemplate, err := lookupvAppTemplateforVm(d, org, vdc)
+	vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("error finding vApp template: %s", err)
 	}
@@ -1043,7 +1064,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
-	// Template VMs require CPU/Memory seting
+	// Template VMs require CPU/Memory setting
 	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
 	// inherited from template
 	var cpuCores, cpuCoresPerSocket *int
@@ -1139,22 +1160,41 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("`computer_name` is required when creating empty VM")
 	}
 
+	_, bootImageIdSet := d.GetOk("boot_image_id")
+	_, bootImageName := d.GetOk("boot_image")
 	var bootImage *types.Media
-	if bootImageName, ok := d.GetOk("boot_image"); ok {
-		var catalogName interface{}
-		if catalogName, ok = d.GetOk("catalog_name"); !ok {
-			return nil, fmt.Errorf("`catalog_name` is required when creating empty VM with boot_image")
+	if bootImageIdSet || bootImageName {
+		var bootMediaIdentifier string
+		var mediaRecord *govcd.MediaRecord
+		var err error
+		if bootImageIdSet {
+			bootMediaIdentifier = d.Get("boot_image_id").(string)
+			mediaRecord, err = vcdClient.QueryMediaById(bootMediaIdentifier)
+		} else {
+			// Deprecated way of using media item
+			bootMediaIdentifier = d.Get("boot_image").(string)
+			var catalogName interface{}
+			if catalogName, ok = d.GetOk("catalog_name"); !ok {
+				return nil, fmt.Errorf("`catalog_name` is required when creating empty VM with boot_image")
+			}
+			var catalog *govcd.Catalog
+			catalog, err = org.GetCatalogByName(catalogName.(string), false)
+			if err != nil {
+				return nil, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
+			}
+			mediaRecord, err = catalog.QueryMedia(bootMediaIdentifier)
 		}
-		catalog, err := org.GetCatalogByName(catalogName.(string), false)
 		if err != nil {
-			return nil, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
-		}
-		result, err := catalog.GetMediaByName(bootImageName.(string), false)
-		if err != nil {
-			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootImageName, err)
+			return nil, fmt.Errorf("[VM creation] error getting boot image %s: %s", bootMediaIdentifier, err)
 		}
 
-		bootImage = &types.Media{HREF: result.Media.HREF, Name: result.Media.Name, ID: result.Media.ID}
+		// This workaround is to check that the Media file is synchronized in catalog, even if it isn't an iso
+		// file. It's not officially documented that IsIso==true means that, but it's the only way we have at the moment.
+		if !mediaRecord.MediaRecord.IsIso {
+			return nil, fmt.Errorf("[VM creation] error getting boot image %s: Media is not synchronized in the catalog", bootMediaIdentifier)
+		}
+
+		bootImage = &types.Media{HREF: mediaRecord.MediaRecord.HREF}
 	}
 
 	storageProfilePtr, err := lookupStorageProfile(d, vdc)

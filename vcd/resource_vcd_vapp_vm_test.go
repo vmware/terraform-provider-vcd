@@ -317,6 +317,147 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 }
 `
 
+// TestAccVcdVmAndVAppVmWithIds tests that vApp VMs and standalone VMs can be created using the
+// `vapp_template_id` and `boot_image_id` attributes.
+// TODO: Ideally, we should refactor all tests to use `vapp_template_id` and `boot_image_id` and create a test
+// for the deprecated fields to avoid regressions.
+func TestAccVcdVmAndVAppVmWithIds(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"TestName":     t.Name(),
+		"Org":          testConfig.VCD.Org,
+		"Catalog":      testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"VAppTemplate": testConfig.VCD.Catalog.NsxtCatalogItem,
+		"MediaItem":    testConfig.Media.NsxtBackedMediaName,
+		"Vdc":          testConfig.Nsxt.Vdc,
+		"FuncName":     t.Name(),
+		"Tags":         "vapp standaloneVm vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configTextStep1 := templateFill(testAccVcdVmAndVappVmWithIds, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-boot-image-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-boot-image-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configTextStep1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// The checks here are pretty basic as we just want to check that VMs get correctly created
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.boot-image-vm", "name", t.Name()+"-boot-image-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.boot-image-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.boot-image-vm", "vm_type", "vcd_vm"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVmAndVappVmWithIds = `
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.VAppTemplate}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+  name       = "{{.VAppTemplate}}"
+}
+
+data "vcd_catalog_media" "{{.MediaItem}}" {
+  org        = "{{.Org}}"
+  catalog    = data.vcd_catalog.{{.Catalog}}.name
+  name       = "{{.MediaItem}}"
+}
+
+resource "vcd_vapp" "template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-template-vm"
+  description = "vApp for Template VM description"
+}
+
+resource "vcd_vapp" "boot-image-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-boot-image-vm"
+  description = "vApp for Boot Image VM description"
+}
+
+resource "vcd_vapp_vm" "template-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_template_id  = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
+  
+  vapp_name   = vcd_vapp.template-vm.name
+  name        = "{{.TestName}}-template-vapp-vm"
+  description = "{{.TestName}}-template-vapp-vm"
+}
+
+resource "vcd_vapp_vm" "boot-image-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.boot-image-vm.name
+  name          = "{{.TestName}}-boot-image-vapp-vm"
+  description   = "{{.TestName}}-boot-image-vapp-vm"
+  computer_name = "vapp-vm"
+
+  boot_image_id = data.vcd_catalog_media.{{.MediaItem}}.id
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_vm" "template-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_template_id  = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
+  
+  name        = "{{.TestName}}-template-standalone-vm"
+  description = "{{.TestName}}-template-standalone-vm"
+}
+
+resource "vcd_vm" "boot-image-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name          = "{{.TestName}}-boot-image-standalone-vm"
+  description   = "{{.TestName}}-boot-image-standalone-vm"
+  computer_name = "standalone"
+
+  boot_image_id = data.vcd_catalog_media.{{.MediaItem}}.id
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+`
+
 // TestAccVcdVAppVmMetadata tests metadata CRUD on vApp VMs
 func TestAccVcdVAppVmMetadata(t *testing.T) {
 	testMetadataEntryCRUD(t,
