@@ -198,6 +198,7 @@ data "vcd_vapp_vm" "ds" {
 }
 `
 
+// #nosec G101 -- This doesn't contain any credential
 const testAccCheckVcdVAppVmDhcpWaitStep3 = `
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
