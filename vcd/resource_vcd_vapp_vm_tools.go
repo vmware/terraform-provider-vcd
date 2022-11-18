@@ -34,12 +34,12 @@ import (
 // * It will look up vApp template with ID `vapp_template_id` (or deprecated `template_name` in catalog `catalog_name`)
 // * After it is found - it will pick the first child VM template
 func lookupvAppTemplateforVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc) (govcd.VAppTemplate, error) {
-	templateId, templateIdSet := d.GetOk("vapp_template_id")
-	if templateIdSet {
+	vAppTemplateId, vAppTemplateIdSet := d.GetOk("vapp_template_id")
+	if vAppTemplateIdSet {
 		// Lookup of vApp Template using URN
-		vAppTemplate, err := vcdClient.GetVAppTemplateById(templateId.(string))
+		vAppTemplate, err := vcdClient.GetVAppTemplateById(vAppTemplateId.(string))
 		if err != nil {
-			return govcd.VAppTemplate{}, fmt.Errorf("error finding vApp Template with URN %s: %s", templateId.(string), err)
+			return govcd.VAppTemplate{}, fmt.Errorf("error finding vApp Template with URN %s: %s", vAppTemplateId.(string), err)
 		}
 
 		if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok { // specific VM name in template is given
@@ -54,7 +54,7 @@ func lookupvAppTemplateforVm(d *schema.ResourceData, vcdClient *VCDClient, org *
 			return *returnedVAppTemplate, err
 		} else {
 			if vAppTemplate.VAppTemplate == nil || vAppTemplate.VAppTemplate.Children == nil || len(vAppTemplate.VAppTemplate.Children.VM) == 0 {
-				return govcd.VAppTemplate{}, fmt.Errorf("the vApp Template %s doesn't contain any usable VM inside", templateId)
+				return govcd.VAppTemplate{}, fmt.Errorf("the vApp Template %s doesn't contain any usable VM inside", vAppTemplateId)
 			}
 			returnedVAppTemplate := govcd.NewVAppTemplate(&vcdClient.Client)
 			returnedVAppTemplate.VAppTemplate = vAppTemplate.VAppTemplate.Children.VM[0]
