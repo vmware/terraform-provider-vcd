@@ -29,9 +29,9 @@ data "vcd_catalog_vapp_template" "photon-hw11" {
 resource "vcd_vm" "TestVm" {
   name = "TestVm"
 
-  template_id = data.vcd_catalog_vapp_template.photon-hw11.id
-  cpus        = 2
-  memory      = 2048
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-hw11.id
+  cpus             = 2
+  memory           = 2048
 
   network {
     name               = "net-datacloud-r"

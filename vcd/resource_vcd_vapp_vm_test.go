@@ -318,8 +318,8 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 `
 
 // TestAccVcdVmAndVAppVmWithIds tests that vApp VMs and standalone VMs can be created using the
-// `template_id` and `boot_image_id` attributes.
-// TODO: Ideally, we should refactor all tests to use `template_id` and `boot_image_id` and create a test
+// `vapp_template_id` and `boot_image_id` attributes.
+// TODO: Ideally, we should refactor all tests to use `vapp_template_id` and `boot_image_id` and create a test
 // for the deprecated fields to avoid regressions.
 func TestAccVcdVmAndVAppVmWithIds(t *testing.T) {
 	preTestChecks(t)
@@ -405,7 +405,7 @@ resource "vcd_vapp_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  template_id  = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
+  vapp_template_id  = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -434,7 +434,7 @@ resource "vcd_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  template_id  = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
+  vapp_template_id  = data.vcd_catalog_vapp_template.{{.VAppTemplate}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"

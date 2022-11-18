@@ -27,14 +27,14 @@ import (
 // evaluate if optional parameter `vm_name_in_template` was specified.
 //
 // If `vm_name_in_template` was specified
-// * It will look up the exact VM with given `vm_name_in_template` inside `template_id` (or deprecated `template_name` and catalog
+// * It will look up the exact VM with given `vm_name_in_template` inside `vapp_template_id` (or deprecated `template_name` and catalog
 // `catalog_name`)
 //
 // If `vm_name_in_template` was not specified:
-// * It will look up vApp template with ID `template_id` (or deprecated `template_name` in catalog `catalog_name`)
+// * It will look up vApp template with ID `vapp_template_id` (or deprecated `template_name` in catalog `catalog_name`)
 // * After it is found - it will pick the first child VM template
 func lookupvAppTemplateforVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc) (govcd.VAppTemplate, error) {
-	templateId, templateIdSet := d.GetOk("template_id")
+	templateId, templateIdSet := d.GetOk("vapp_template_id")
 	if templateIdSet {
 		// Lookup of vApp Template using URN
 		vAppTemplate, err := vcdClient.GetVAppTemplateById(templateId.(string))

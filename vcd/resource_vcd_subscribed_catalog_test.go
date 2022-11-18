@@ -396,12 +396,12 @@ resource "vcd_vm" "{{.VmName}}" {
 }
 
 resource "vcd_vm" "{{.VmName}}2" {
-  org           = "{{.SubscriberOrg}}"
-  vdc           = "{{.SubscriberVdc}}"
-  name          = "{{.VmName}}2"
-  template_id   = data.vcd_catalog_vapp_template.{{.VappTemplateBaseName}}-1.id
-  description   = "test standalone VM 2"
-  power_on      = false
+  org              = "{{.SubscriberOrg}}"
+  vdc              = "{{.SubscriberVdc}}"
+  name             = "{{.VmName}}2"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateBaseName}}-1.id
+  description      = "test standalone VM 2"
+  power_on         = false
 }
 
 resource "vcd_vm" "{{.VmName}}3" {

@@ -119,11 +119,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:          schema.TypeString,
 			Optional:      true,
 			ForceNew:      true,
-			Deprecated:    "Use `template_id` instead",
+			Deprecated:    "Use `vapp_template_id` instead",
 			Description:   "The name of the vApp Template to use",
-			ConflictsWith: []string{"template_id"},
+			ConflictsWith: []string{"vapp_template_id"},
 		},
-		"template_id": {
+		"vapp_template_id": {
 			Type:          schema.TypeString,
 			Optional:      true,
 			ForceNew:      true,
@@ -139,9 +139,9 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"catalog_name": {
 			Type:          schema.TypeString,
 			Optional:      true,
-			Deprecated:    "You should use `template_id` or `boot_image_id` without the need of a catalog name",
+			Deprecated:    "You should use `vapp_template_id` or `boot_image_id` without the need of a catalog name",
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
-			ConflictsWith: []string{"template_id", "boot_image_id"},
+			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
 		},
 		"description": {
 			Type:        schema.TypeString,
@@ -666,7 +666,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
 
-	isVmFromTemplate := d.Get("template_id").(string) != ""
+	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
 	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated
 
 	////////////////////////////////////////////////////////////////////////////////////////////////

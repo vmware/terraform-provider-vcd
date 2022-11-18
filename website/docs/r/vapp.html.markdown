@@ -49,7 +49,7 @@ resource "vcd_vapp_vm" "web1" {
   vapp_name = vcd_vapp.web.name
   name      = "web1"
 
-  template_id = data.vcd_catalog_vapp_template.photon-os.id
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-os.id
 
   memory = 2048
   cpus   = 1
@@ -75,7 +75,7 @@ resource "vcd_vapp_vm" "web2" {
   vapp_name = vcd_vapp.web.name
   name      = "web2"
 
-  template_id = data.vcd_catalog_vapp_template.photon-os.id
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-os.id
 
   memory = 2048
   cpus   = 1
