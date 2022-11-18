@@ -35,9 +35,13 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
 
-	params["FuncName"] = t.Name() + "-step1"
+	params["FuncName"] = t.Name() + "-step2"
 	params["DhcpWaitSeconds"] = 310
-	configTextVMDhcpWaitUpdateStep1 := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
+	configTextVMDhcpWaitUpdateStep2 := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
+
+	// A step to Power off vApp and VM
+	params["FuncName"] = t.Name() + "-step3"
+	configTextVMDhcpWaitUpdateStep3 := templateFill(testAccCheckVcdVAppVmDhcpWaitStep3, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -82,7 +86,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 				),
 			},
 			{
-				Config: configTextVMDhcpWaitUpdateStep1,
+				Config: configTextVMDhcpWaitUpdateStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
@@ -108,6 +112,9 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_vapp_vm.ds", "network_dhcp_wait_seconds", "310"),
 				),
 			},
+			{
+				Config: configTextVMDhcpWaitUpdateStep3,
+			},
 		},
 	})
 	postTestChecks(t)
@@ -115,11 +122,13 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 
 // #nosec G101 -- This doesn't contain any credential
 const testAccCheckVcdVAppVmDhcpWaitShared = `
+# skip-binary-test: vApp networks cannot be removed in a powered on vApp 
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name       = "{{.VAppName}}" 
+  name     = "{{.VAppName}}" 
+  power_on = true
 }
 
 resource "vcd_network_routed" "net" {
@@ -147,7 +156,6 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
   vapp_name          = vcd_vapp.{{.VAppName}}.name
   org_network_name   = vcd_network_routed.net.name 
 }
-
 `
 
 const testAccCheckVcdVAppVmDhcpWait = testAccCheckVcdVAppVmDhcpWaitShared + `
@@ -187,5 +195,56 @@ data "vcd_vapp_vm" "ds" {
   name                      = vcd_vapp_vm.{{.VMName}}.name
   network_dhcp_wait_seconds = {{.DhcpWaitSeconds}}
   depends_on                = [vcd_vapp_vm.{{.VMName}}]
+}
+`
+
+const testAccCheckVcdVAppVmDhcpWaitStep3 = `
+resource "vcd_vapp" "{{.VAppName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name     = "{{.VAppName}}"
+  power_on = false
+}
+
+resource "vcd_network_routed" "net" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name         = "multinic-net"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "11.10.0.1"
+
+  dhcp_pool {
+    start_address = "11.10.0.2"
+    end_address   = "11.10.0.100"
+  }
+
+  static_ip_pool {
+    start_address = "11.10.0.152"
+    end_address   = "11.10.0.254"
+  }
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
+  org_network_name = vcd_network_routed.net.name 
+}
+
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  name          = "{{.VMName}}"
+  power_on      = false
+  computer_name = "dhcp-vm"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
 }
 `
