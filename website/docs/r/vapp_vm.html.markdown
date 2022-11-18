@@ -48,17 +48,26 @@ resource "vcd_vapp_network" "vapp-net" {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
   }
+}
 
+data "vcd_catalog" "my-catalog" {
+  org  = "test"
+  name = "my-catalog"
+}
+
+data "vcd_catalog_vapp_template" "photon-os" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "photon-os"
 }
 
 resource "vcd_vapp_vm" "web1" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "web1"
-  catalog_name  = "my-catalog"
-  template_name = "photon-os"
-  memory        = 1024
-  cpus          = 2
-  cpu_cores     = 1
+  vapp_name        = vcd_vapp.web.name
+  name             = "web1"
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-os.id
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
 
   metadata_entry {
     key   = "role"
@@ -101,12 +110,11 @@ resource "vcd_independent_disk" "disk1" {
 }
 
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "web2"
-  catalog_name  = "my-catalog"
-  template_name = "photon-os"
-  memory        = 1024
-  cpus          = 1
+  vapp_name        = vcd_vapp.web.name
+  name             = "web2"
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-os.id
+  memory           = 1024
+  cpus             = 1
 
   metadata_entry {
     key   = "role"
@@ -170,14 +178,24 @@ resource "vcd_vapp_vm" "web2" {
 This example shows how to [change VM template's disk properties](#override-template-disk) when the VM is created.
 
 ```hcl
+data "vcd_catalog" "boxes" {
+  org  = "test"
+  name = "Boxes"
+}
+
+data "vcd_catalog_vapp_template" "lampstack" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.boxes.id
+  name       = "lampstack-1.10.1-ubuntu-10.04"
+}
+
 resource "vcd_vapp_vm" "internalDiskOverride" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "internalDiskOverride"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
-  memory        = 2048
-  cpus          = 2
-  cpu_cores     = 1
+  vapp_name        = vcd_vapp.web.name
+  name             = "internalDiskOverride"
+  vapp_template_id = data.vcd_catalog_vapp_template.lampstack.id
+  memory           = 2048
+  cpus             = 2
+  cpu_cores        = 1
 
   override_template_disk {
     bus_type        = "paravirtual"
@@ -195,15 +213,25 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
 This example shows how to use [`network_dhcp_wait_seconds`](#network_dhcp_wait_seconds) with DHCP.
 
 ```hcl
+data "vcd_catalog" "cat-dserplis" {
+  org  = "test"
+  name = "cat-dserplis"
+}
+
+data "vcd_catalog_vapp_template" "photon-rev2" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.cat-dserplis.id
+  name       = "photon-rev2"
+}
+
 resource "vcd_vapp_vm" "TestAccVcdVAppVmDhcpWaitVM" {
-  vapp_name     = vcd_vapp.TestAccVcdVAppVmDhcpWait.name
-  name          = "brr"
-  computer_name = "dhcp-vm"
-  catalog_name  = "cat-dserplis"
-  template_name = "photon-rev2"
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1
+  vapp_name        = vcd_vapp.TestAccVcdVAppVmDhcpWait.name
+  name             = "brr"
+  computer_name    = "dhcp-vm"
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-rev2.id
+  memory           = 512
+  cpus             = 2
+  cpu_cores        = 1
 
   network_dhcp_wait_seconds = 300 # 5 minutes
   network {
@@ -224,6 +252,17 @@ resource "vcd_nsxv_ip_set" "test-ipset" {
 This example shows how to create an empty VM.
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "test"
+  name = "my-catalog"
+}
+
+data "vcd_catalog_media" "myMedia" {
+  org     = "test"
+  catalog = data.vcd_catalog.my-catalog.name
+  name    = "myMedia"
+}
+
 resource "vcd_vapp_vm" "emptyVM" {
   vapp_name     = vcd_vapp.web.name
   name          = "VmWithoutTemplate"
@@ -234,8 +273,7 @@ resource "vcd_vapp_vm" "emptyVM" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  catalog_name     = "my-catalog"
-  boot_image       = "myMedia"
+  boot_image_id    = data.vcd_catalog_media.myMedia.id
 }
 
 ```
@@ -244,12 +282,22 @@ resource "vcd_vapp_vm" "emptyVM" {
 This example shows how to create a VM from a vApp template with multiple VMs by specifying which VM to use.
 
 ```hcl
+data "vcd_catalog" "cat-where-is-template" {
+  org  = "test"
+  name = "cat-where-is-template"
+}
+
+data "vcd_catalog_vapp_template" "vappWithMultiVm" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.cat-where-is-template.id
+  name       = "vappWithMultiVm"
+}
+
 resource "vcd_vapp_vm" "secondVM" {
   vapp_name           = vcd_vapp.web.name
   name                = "secondVM"
   computer_name       = "db-vm"
-  catalog_name        = "cat-where-is-template"
-  template_name       = "vappWithMultiVm"
+  vapp_template_id    = data.vcd_catalog_vapp_template.vappWithMultiVm.id
   vm_name_in_template = "secondVM" # Specifies which VM to use from the template
   memory              = 512
   cpus                = 2
@@ -262,6 +310,17 @@ resource "vcd_vapp_vm" "secondVM" {
 This example shows how to create a VM using VM sizing policy.
 
 ```hcl
+data "vcd_catalog" "cat-where-is-template" {
+  org  = "test"
+  name = "cat-where-is-template"
+}
+
+data "vcd_catalog_vapp_template" "vappWithMultiVm" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.cat-where-is-template.id
+  name       = "vappWithMultiVm"
+}
+
 data "vcd_vm_sizing_policy" "minSize" {
   name = "minimum size"
 }
@@ -270,11 +329,48 @@ resource "vcd_vapp_vm" "secondVM" {
   vapp_name        = vcd_vapp.web.name
   name             = "secondVM"
   computer_name    = "db-vm"
-  catalog_name     = "cat-where-is-template"
-  template_name    = "vappWithMultiVm"
+  vapp_template_id = data.vcd_catalog_vapp_template.vappWithMultiVm.id
   sizing_policy_id = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
 }
 
+```
+
+## Example Usage (VM with sizing policy and VM placement policy)
+This example shows how to create a VM using a VM sizing policy and a VM placement policy.
+
+```hcl
+data "vcd_catalog" "cat-where-is-template" {
+  org  = "test"
+  name = "cat-where-is-template"
+}
+
+data "vcd_catalog_vapp_template" "vappWithMultiVm" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.cat-where-is-template.id
+  name       = "vappWithMultiVm"
+}
+
+data "vcd_vm_sizing_policy" "minSize" {
+  name = "minimum size"
+}
+
+data "vcd_provider_vdc" "myPvdc" {
+  name = "nsxt-Pvdc"
+}
+
+data "vcd_vm_placement_policy" "placementPolicy" {
+  name        = "vmware"
+  provider_id = data.vcd_provider_vdc.myPvdc.id
+}
+
+resource "vcd_vapp_vm" "secondVM" {
+  vapp_name           = vcd_vapp.web.name
+  name                = "secondVM"
+  computer_name       = "db-vm"
+  vapp_template_id    = data.vcd_catalog_vapp_template.vappWithMultiVm.id
+  sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
+  placement_policy_id = data.vcd_vm_placement_policy.placementPolicy.id
+}
 ```
 
 ## Example Usage (VM with sizing policy and VM placement policy)
@@ -309,6 +405,17 @@ resource "vcd_vapp_vm" "secondVM" {
 This example shows how to create an empty VM with advanced compute settings.
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "test"
+  name = "my-catalog"
+}
+
+data "vcd_catalog_media" "myMedia" {
+  org     = "test"
+  catalog = data.vcd_catalog.my-catalog.name
+  name    = "myMedia"
+}
+
 resource "vcd_vapp_vm" "advancedVM" {
   vapp_name     = vcd_vapp.web.name
   name          = "advancedVM"
@@ -319,8 +426,7 @@ resource "vcd_vapp_vm" "advancedVM" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  catalog_name     = "my-catalog"
-  boot_image       = "myMedia"
+  boot_image_id    = data.vcd_catalog_media.myMedia.id
 
   memory_priority    = "CUSTOM"
   memory_shares      = "480"
@@ -343,9 +449,8 @@ The following arguments are supported:
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `vapp_name` - (Required) The vApp this VM belongs to.
 * `name` - (Required) A name for the VM, unique within the vApp 
-* `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine. 
-* `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template or media for `boot_image`.
-* `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
+* `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine.
+* `vapp_template_id` - (Optional; *v3.8+*) The URN of the vApp Template to use. You can fetch it using a [`vcd_catalog_vapp_template`](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template) data source.
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off
 * `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
@@ -385,7 +490,8 @@ example for usage details.
   Tools are not present on the VM.
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
-* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media).  
+* `boot_image_id` - (Optional; *v3.8+*) Media URN to mount as boot image. You can fetch it using a [`vcd_catalog_media`](/providers/vmware/vcd/latest/docs/data-sources/catalog_media) data source.
+  Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media). 
 * `cpu_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
@@ -397,6 +503,9 @@ example for usage details.
   using `vcd_org_vdc.vm_placement_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default).
   In this case, if the placement policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
+* `catalog_name` - (Deprecated; *v2.9+*) Use a [`vcd_catalog`](/providers/vmware/vcd/latest/docs/data-sources/catalog) data source along with `vapp_template_id` or `boot_image_id` instead. The catalog name in which to find the given vApp Template or media for `boot_image`.
+* `template_name` - (Deprecated; *v2.9+*) Use `vapp_template_id` instead. The name of the vApp Template to use
+* `boot_image` - (Deprecated; *v2.9+*) Use `boot_image_id` instead. Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media).
 
 ## Attribute reference
 
@@ -520,13 +629,23 @@ This option should be selected for **Power on and Force re-customization to work
 Step 1 - Setup VM:
 
 ```hcl
+data "vcd_catalog" "boxes" {
+  org  = "test"
+  name = "Boxes"
+}
+
+data "vcd_catalog_vapp_template" "windows" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.boxes.id
+  name       = "windows"
+}
+
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "web2"
-  catalog_name  = "Boxes"
-  template_name = "windows"
-  memory        = 2048
-  cpus          = 1
+  vapp_name        = vcd_vapp.web.name
+  name             = "web2"
+  vapp_template_id = data.vcd_catalog_vapp_template.windows.id
+  memory           = 2048
+  cpus             = 1
 
   network {
     type               = "org"

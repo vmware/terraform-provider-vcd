@@ -374,8 +374,16 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 			} else {
 				vAppTemplate, err = getVappTemplateByVdcAndFilter(vdc, filter, vcdClient.Client.IsSysAdmin)
 			}
+			// A race condition can happen between the getVAppTemplate call above and QuerySynchronizedVAppTemplateById below.
+			// as we can have a vApp template that is not synchronized. The sync can happen by the time we
+			// call QuerySynchronizedVAppTemplateById, but the ID will have changed, hence it will fail with a NotFoundError.
 			if err != nil {
 				return nil, err
+			}
+			// This checks that the vApp Template is synchronized in the catalog
+			_, err = vcdClient.QuerySynchronizedVAppTemplateById(vAppTemplate.VAppTemplate.ID)
+			if err != nil {
+				return nil, fmt.Errorf("the found vApp Template %s is not usable: %s", vAppTemplate.VAppTemplate.ID, err)
 			}
 			d.SetId(vAppTemplate.VAppTemplate.ID)
 			return vAppTemplate, nil
@@ -389,6 +397,9 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	} else {
 		vAppTemplate, err = vdc.GetVAppTemplateByNameOrId(identifier, false)
 	}
+	// A race condition can happen between the GetVAppTemplate call above and QuerySynchronizedVAppTemplateById below.
+	// as we can have a vApp template that is not synchronized. The sync can happen by the time we
+	// call QuerySynchronizedVAppTemplateById, but the ID will have changed, hence it will fail with a NotFoundError.
 
 	if govcd.IsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] Unable to find vApp Template %s. Removing from tfstate", identifier)
@@ -399,7 +410,13 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	if err != nil {
 		return nil, fmt.Errorf("unable to find vApp Template %s: %s", identifier, err)
 	}
-
+	if origin == "datasource" {
+		// This checks that the vApp Template is synchronized in the catalog
+		_, err = vcdClient.QuerySynchronizedVAppTemplateById(vAppTemplate.VAppTemplate.ID)
+		if err != nil {
+			return nil, fmt.Errorf("the found vApp Template %s is not usable: %s", vAppTemplate.VAppTemplate.ID, err)
+		}
+	}
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 	log.Printf("[TRACE] vApp Template read completed: %#v", vAppTemplate.VAppTemplate)
 	return vAppTemplate, nil

@@ -15,13 +15,23 @@ Supported in provider *v3.2+*
 ## Example Usage
 
 ```hcl
+data "vcd_catalog" "cat-datacloud" {
+  org  = "test"
+  name = "cat-datacloud"
+}
+
+data "vcd_catalog_vapp_template" "photon-hw11" {
+  org        = "test"
+  catalog_id = data.vcd_catalog.cat-datacloud.id
+  name       = "photon-hw11"
+}
+
 resource "vcd_vm" "TestVm" {
   name = "TestVm"
 
-  catalog_name  = "cat-datacloud"
-  template_name = "photon-hw11"
-  cpus          = 2
-  memory        = 2048
+  vapp_template_id = data.vcd_catalog_vapp_template.photon-hw11.id
+  cpus             = 2
+  memory           = 2048
 
   network {
     name               = "net-datacloud-r"
