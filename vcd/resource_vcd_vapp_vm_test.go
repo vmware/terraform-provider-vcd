@@ -67,7 +67,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "network.0.ip", "10.10.102.161"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "power_on", "true"),
+						"vcd_vapp_vm."+vmName, "power_on", "false"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
 					resource.TestCheckOutput("disk", diskName),
@@ -142,7 +142,7 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						vm1, "network.0.ip", params["IP"].(string)),
 					resource.TestCheckResourceAttr(
-						vm1, "power_on", "true"),
+						vm1, "power_on", "false"),
 					resource.TestCheckResourceAttr(
 						vm1, "metadata.vm_metadata", "VM Metadata."),
 					resource.TestCheckResourceAttr(
@@ -189,9 +189,10 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
-  name = "{{.VappName}}"
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
+  name     = "{{.VappName}}"
+  org      = "{{.Org}}"
+  vdc      = "{{.Vdc}}"
+  power_on = false
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
@@ -209,6 +210,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
+  power_on      = false
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
@@ -274,6 +276,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
+  power_on      = false
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
