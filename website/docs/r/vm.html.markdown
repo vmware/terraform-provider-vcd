@@ -33,8 +33,8 @@ resource "vcd_vm" "TestVm" {
 
 ## Arguments and attributes reference
 
-This resource provides all arguments and attributes available for `vcd_vapp_vm`, with the only difference that the
-`vapp_name` should be left empty.
+This resource provides all arguments and attributes available for [`vcd_vapp_vm`](/providers/vmware/vcd/latest/docs/resources/vapp_vm),
+with the only difference that the `vapp_name` should be left empty.
 
 General notes:
 
