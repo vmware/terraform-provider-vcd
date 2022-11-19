@@ -125,10 +125,7 @@ func getRightsContainerInfo() (map[string]containerInfo, error) {
 func TestAccVcdRightsContainers(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdRightsContainers requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test

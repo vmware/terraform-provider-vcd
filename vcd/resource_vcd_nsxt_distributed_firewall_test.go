@@ -15,10 +15,7 @@ import (
 // explicitly check new features introduced in newer VCD versions having versions in their names.
 func TestAccVcdDistributedFirewall(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -391,10 +388,7 @@ data "vcd_nsxt_distributed_firewall" "t1" {
 // * Firewall rule 'action' REJECT
 func TestAccVcdDistributedFirewallVCD10_2_2(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -470,10 +464,7 @@ resource "vcd_nsxt_distributed_firewall" "t1" {
 // * destination_groups_excluded (negates the values specified in destinations_ids)
 func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.2") {

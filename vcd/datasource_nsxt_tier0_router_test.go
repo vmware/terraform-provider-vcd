@@ -28,10 +28,7 @@ func TestAccVcdDatasourceNsxtTier0RouterVrf(t *testing.T) {
 
 func testAccVcdDatasourceNsxtTier0Router(t *testing.T, tier0RouterName string) {
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"FuncName":        t.Name(),

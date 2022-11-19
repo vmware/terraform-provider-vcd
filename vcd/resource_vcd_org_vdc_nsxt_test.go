@@ -7,9 +7,7 @@ import "testing"
 
 func TestAccVcdOrgVdcNsxt(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{

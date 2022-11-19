@@ -12,9 +12,7 @@ import (
 
 func TestAccVcdVmPlacementPolicy(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 	if testConfig.VCD.ProviderVdc.Name == "" {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}
@@ -136,9 +134,7 @@ data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
 // corresponds to a VM Placement Policy with an empty description in VCD.
 func TestAccVcdVmPlacementPolicyWithoutDescription(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 	if testConfig.VCD.ProviderVdc.Name == "" {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}

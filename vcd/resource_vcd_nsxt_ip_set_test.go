@@ -295,9 +295,7 @@ data "vcd_nsxt_ip_set" "ds" {
 // TestAccVcdNsxtIpSetOwnerVdcGroup starts with creating an IP Set with IP addresses defined in VDC Group and later on removes them all
 func TestAccVcdNsxtIpSetOwnerVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("this test requires Sysadmin user to create prerequisites")
-	}
+	skipIfNotSysAdmin(t) //This test requires Sysadmin user to create prerequisites
 
 	// String map to fill the template
 	var params = StringMap{
@@ -437,10 +435,7 @@ resource "vcd_nsxt_ip_set" "set1" {
 // together and reflects it
 func TestAccVcdNsxtIpSetMigration(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
-		return
-	}
+	skipIfNotSysAdmin(t) // requires system admin privileges to create VDCs
 
 	// String map to fill the template
 	var params = StringMap{
@@ -699,10 +694,7 @@ resource "vcd_nsxt_ip_set" "set1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNsxtIpSetInheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{

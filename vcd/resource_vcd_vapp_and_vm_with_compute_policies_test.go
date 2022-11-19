@@ -12,10 +12,7 @@ import (
 
 func TestAccVcdVAppAndVmWithComputePolicies(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("%s requires system admin privileges", t.Name())
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Name":                      t.Name(),

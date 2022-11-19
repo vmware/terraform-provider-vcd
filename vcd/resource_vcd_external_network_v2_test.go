@@ -34,10 +34,7 @@ func TestAccVcdExternalNetworkV2NsxtT0Router(t *testing.T) {
 
 func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"
@@ -245,10 +242,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	description := "Test External Network"
 	var params = StringMap{
@@ -449,10 +443,7 @@ output "portgroup-id" {
 
 func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"
@@ -634,10 +625,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 
 func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"
@@ -748,10 +736,7 @@ func testAccCheckExternalNetworkDestroyV2(name string) resource.TestCheckFunc {
 // Org direct network resource (the only possible while implementing this feature)
 func TestAccVcdExternalNetworkV2NsxtSegmentIntegration(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"

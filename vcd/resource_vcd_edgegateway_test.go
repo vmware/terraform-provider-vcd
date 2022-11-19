@@ -52,10 +52,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if !usingSysAdmin() {
-		t.Skip("Edge Gateway tests require system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -109,10 +106,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if !usingSysAdmin() {
-		t.Skip("Edge gateway tests requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -201,10 +195,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("Edge gateway tests requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -416,10 +407,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("Edge gateway tests requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -531,10 +519,7 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("Edge gateway tests requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,

@@ -20,10 +20,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 	defer restoreDefaultVdcFunc()
 
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	skipNoNsxtAlbConfiguration(t)
 
@@ -101,10 +98,7 @@ func TestAccVcdNsxtAlbVdcGroupIntegrationWithoutVdcField(t *testing.T) {
 
 func TestAccVcdNsxtAlbVdcGroupIntegration(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	skipNoNsxtAlbConfiguration(t)
 

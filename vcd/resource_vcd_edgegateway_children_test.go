@@ -16,10 +16,7 @@ import (
 // * vcd_nsxv_dhcp_relay
 func TestAccVcdEdgeGatewayChildrenResourceNotFound(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("Edge Gateway tests require system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	// This test invokes go-vcloud-director SDK directly
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

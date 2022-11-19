@@ -12,10 +12,7 @@ import (
 
 func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"ExistingExternalNetwork": testConfig.Nsxt.ExternalNetwork,

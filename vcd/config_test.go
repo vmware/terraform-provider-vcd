@@ -321,9 +321,16 @@ func testDistributedNetworksEnabled() bool {
 	return testDistributedNetworks || os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
 }
 
-// Returns true if the current configuration uses a system administrator for connections
+// usingSysAdmin returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
 	return strings.ToLower(testConfig.Provider.SysOrg) == "system"
+}
+
+// skipIfNotSysAdmin skips the calling test if the client is not a system administrator
+func skipIfNotSysAdmin(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+	}
 }
 
 // Gets a list of all variables mentioned in a template

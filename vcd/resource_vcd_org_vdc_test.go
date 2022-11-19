@@ -15,9 +15,7 @@ func init() {
 
 func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	allocationModel := "ReservationPool"
 
@@ -60,9 +58,7 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 
 func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	allocationModel := "AllocationPool"
 
@@ -104,9 +100,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 
 func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	allocationModel := "AllocationVApp"
 
@@ -148,9 +142,7 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 
 func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	allocationModel := "Flex"
 
@@ -194,9 +186,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 // control.
 func TestAccVcdOrgVdcResourceNotFound(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	// This test invokes go-vcloud-director SDK directly
 	if vcdShortTest {

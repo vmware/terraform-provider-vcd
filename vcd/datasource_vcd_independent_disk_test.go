@@ -17,9 +17,7 @@ import (
 // Using a disk data source we reference a disk data source
 func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdDataSourceIndependentDisk requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 	resourceName := "TestAccVcdDataSourceIndependentDisk_1"
 	datasourceName := "TestAccVcdDataSourceIndependentDisk_Data"
 	datasourceNameWithId := "TestAccVcdDataSourceIndependentDiskWithId_Data"

@@ -15,10 +15,7 @@ import (
 
 func TestAccVcdNsxtAlbController(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	skipNoNsxtAlbConfiguration(t)
 

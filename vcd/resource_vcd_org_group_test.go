@@ -20,10 +20,7 @@ import (
 // Note: This test requires an existing LDAP server and its IP set in testConfig.Networking.LdapServer
 func TestAccVcdOrgGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdOrgGroup requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	skipTestForApiToken(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

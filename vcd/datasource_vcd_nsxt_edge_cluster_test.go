@@ -13,10 +13,7 @@ import (
 func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"NsxtVdc":             testConfig.Nsxt.Vdc,
@@ -64,10 +61,7 @@ data "vcd_nsxt_edge_cluster" "ec" {
 func TestAccVcdNsxtEdgeClusterVdcId(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
@@ -121,10 +115,7 @@ data "vcd_nsxt_edge_cluster" "ec" {
 func TestAccVcdNsxtEdgeClusterVdcGroupId(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
@@ -178,10 +169,7 @@ data "vcd_nsxt_edge_cluster" "ec" {
 func TestAccVcdNsxtEdgeClusterProviderVdcId(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"ProviderVdc":         testConfig.VCD.NsxtProviderVdc.Name,

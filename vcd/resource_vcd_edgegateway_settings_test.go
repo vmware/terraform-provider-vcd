@@ -16,10 +16,7 @@ import (
 // NSX-V based test
 func TestAccVcdEdgeGatewaySettingsFull(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("Edge Gateway resource tests require system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	fmt.Println("*** This test doesn't run anything directly, but it creates an HCL script")
 	fmt.Println("*** (vcd.TestAccVcdEdgeGatewaySettingsFull.tf) that will then run with the binary tests.")

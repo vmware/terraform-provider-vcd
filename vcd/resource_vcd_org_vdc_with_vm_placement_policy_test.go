@@ -11,9 +11,7 @@ import (
 
 func TestAccVcdOrgVdcWithVmPlacementPolicy(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 	if testConfig.VCD.NsxtProviderVdc.Name == "" {
 		t.Skip("Variable nsxtProviderVdc.Name must be set to run VDC tests")
 	}
