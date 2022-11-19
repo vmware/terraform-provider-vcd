@@ -5,12 +5,13 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"strconv"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func init() {
@@ -574,10 +575,7 @@ func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
 // NSX-V based test
 func TestAccVcdNetworkDirect(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdNetworkDirect requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var def = networkDef{
 		name:                  directNetwork,
@@ -1340,6 +1338,7 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
 
 // TestAccVcdDirectNetworkMetadata tests metadata CRUD on a NSX-V direct network
 func TestAccVcdDirectNetworkMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdDirectNetworkMetadata, "vcd_network_direct.test-network-direct",
 		testAccCheckVcdDirectNetworkMetadataDatasource, "data.vcd_network_direct.test-network-direct-ds",
