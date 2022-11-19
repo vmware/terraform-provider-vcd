@@ -36,25 +36,45 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
-
 		// Skip sub-test if conditions are not met
+		dataSourcesRequiringSysAdmin := []string{
+			"vcd_external_network",
+			"vcd_global_role",
+			"vcd_nsxt_edgegateway_bgp_ip_prefix_list",
+			"vcd_nsxt_edgegateway_bgp_neighbor",
+			"vcd_org_ldap",
+			"vcd_portgroup",
+			"vcd_provider_vdc",
+			"vcd_rights_bundle",
+			"vcd_vcenter",
+			"vcd_vdc_group",
+			"vcd_vm_group",
+		}
+		dataSourcesRequiringAlbConfig := []string{
+			"vcd_nsxt_alb_cloud",
+			"vcd_nsxt_alb_controller",
+			"vcd_nsxt_alb_edgegateway_service_engine_group",
+			"vcd_nsxt_alb_importable_cloud",
+			"vcd_nsxt_alb_pool",
+			"vcd_nsxt_alb_service_engine_group",
+			"vcd_nsxt_alb_settings",
+			"vcd_nsxt_alb_virtual_service",
+			"vcd_nsxt_distributed_firewall",
+		}
+		dataSourcesRequiringNsxtConfig := []string{
+			"vcd_external_network_v2",
+			"vcd_nsxt_edge_cluster",
+			"vcd_nsxt_manager",
+			"vcd_nsxt_tier0_router",
+		}
+
 		switch {
-		case (dataSourceName == "vcd_external_network" || dataSourceName == "vcd_vcenter" ||
-			dataSourceName == "vcd_portgroup" || dataSourceName == "vcd_global_role" ||
-			dataSourceName == "vcd_rights_bundle" || dataSourceName == "vcd_vdc_group") &&
-			!usingSysAdmin():
+		case contains(dataSourcesRequiringSysAdmin, dataSourceName) && !usingSysAdmin():
 			t.Skip(`Works only with system admin privileges`)
-		case (dataSourceName == "vcd_nsxt_edgegateway_bgp_ip_prefix_list" || dataSourceName == "vcd_nsxt_edgegateway_bgp_neighbor") && !usingSysAdmin():
-			t.Skip(`Works only with system admin privileges`)
-		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
-			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_nsxt_edge_cluster") &&
+		case contains(dataSourcesRequiringNsxtConfig, dataSourceName) &&
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "" || !usingSysAdmin()):
 			t.Skip(`Nsxt.Manager, Nsxt.Tier0route is missing in configuration or not running as System user`)
-		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
-			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group" ||
-			dataSourceName == "vcd_nsxt_alb_settings" || dataSourceName == "vcd_nsxt_alb_edgegateway_service_engine_group" ||
-			dataSourceName == "vcd_nsxt_alb_pool" || dataSourceName == "vcd_nsxt_alb_virtual_service" ||
-			dataSourceName == "vcd_nsxt_distributed_firewall":
+		case contains(dataSourcesRequiringAlbConfig, dataSourceName):
 			skipNoNsxtAlbConfiguration(t)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
