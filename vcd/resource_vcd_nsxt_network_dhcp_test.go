@@ -205,6 +205,8 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 func TestAccVcdOpenApiDhcpNsxtIsolated(t *testing.T) {
 	preTestChecks(t)
 
+	skipIfNotSysAdmin(t) // creates its own VDC
+
 	// Requires VCD 10.3.1+
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient == nil || vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
