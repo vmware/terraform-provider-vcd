@@ -316,6 +316,7 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
 `
 
 const testAccCheckVcdVAppHotUpdateVm = testSharedHotUpdate + `
+# skip-binary-test: cannot remove vApp network from a powered on vApp
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -568,7 +569,6 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 `
 
 const testAccCheckVcdVAppHotUpdateVmStep6PowerOff = `
-# skip-binary-test: only for updates
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"

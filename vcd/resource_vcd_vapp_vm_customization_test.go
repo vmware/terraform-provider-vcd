@@ -272,6 +272,7 @@ resource "vcd_vapp_network" "vappNet" {
 `
 
 const testAccCheckVcdVAppVmUpdateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
+# skip-binary-test: vApp network removal from powered on vApp fails
 resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -363,6 +364,7 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
+	params["SkipTest"] = "# skip-binary-test: vApp network removal from powered on vApp fails"
 	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
@@ -500,6 +502,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 }
 
 const testAccCheckVcdVAppVmUpdateCustomizationSettings = testAccCheckVcdVAppVmCustomizationShared + `
+# skip-binary-test: vApp network removal from powered on vApp fails
 resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
