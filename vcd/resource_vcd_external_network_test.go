@@ -23,10 +23,7 @@ var externalNetwork govcd.ExternalNetwork
 func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"
@@ -179,10 +176,7 @@ func TestAccVcdExternalNetworkResourceNotFound(t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"

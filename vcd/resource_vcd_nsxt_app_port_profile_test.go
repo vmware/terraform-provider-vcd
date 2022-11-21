@@ -526,9 +526,7 @@ func TestAccVcdNsxtAppPortProfileTenantContextVdcGroup(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if !usingSysAdmin() {
-		t.Skip("this test must pre-create VDC Group and cannot run in Org user mode")
-	}
+	skipIfNotSysAdmin(t) // this test must pre-create VDC Group and cannot run in Org user mode
 
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -621,9 +619,7 @@ func TestAccVcdNsxtAppPortProfileConfigurationMigration(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if !usingSysAdmin() {
-		t.Skip("this test must pre-create VDC Group and cannot run in Org user mode")
-	}
+	skipIfNotSysAdmin(t) // This test must pre-create VDC Group and cannot run in Org user mode
 
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,

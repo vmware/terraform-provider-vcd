@@ -16,10 +16,7 @@ import (
 // Tier-0 gateway
 func TestAccVcdNsxtEdgeBgpConfigTier0(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// Binary tests cannot be run for this test because it requires dedicated Tier-0 gateway which
 	// is enabled using custom SDK functions
@@ -306,10 +303,7 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
 // fields are filled in with some values.
 func TestAccVcdNsxtEdgeBgpConfigVrf(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -529,10 +523,7 @@ func testAccCheckNsxtBgpConfigurationDisabled(edgeGatewayName string) resource.T
 // part of VDC Group
 func TestAccVcdNsxtEdgeBgpConfigVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -644,10 +635,7 @@ resource "vcd_nsxt_edgegateway_bgp_configuration" "testing" {
 // would do to achieve complete BGP configuration.
 func TestAccVcdNsxtEdgeBgpConfigIntegrationVdc(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// Binary tests cannot be run for this test because it requires dedicated Tier-0 gateway which
 	// is enabled using custom SDK functions
@@ -782,10 +770,7 @@ resource "vcd_nsxt_edgegateway_bgp_neighbor" "testing" {
 // would do to achieve complete BGP configuration.
 func TestAccVcdNsxtEdgeBgpConfigIntegrationVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{

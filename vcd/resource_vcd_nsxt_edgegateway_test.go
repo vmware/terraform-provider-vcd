@@ -19,10 +19,7 @@ import (
 // testConfig.Nsxt.ExternalNetwork which is expected to be correctly configured.
 func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	skipNoConfiguration(t, StringMap{"Nsxt.ExternalNetwork": testConfig.Nsxt.ExternalNetwork})
 	vcdClient := createTemporaryVCDConnection(false)
@@ -212,10 +209,7 @@ func testAccCheckVcdNsxtEdgeGatewayDestroy(edgeName string) resource.TestCheckFu
 
 func TestAccVcdNsxtEdgeGatewayVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -368,10 +362,7 @@ data "vcd_nsxt_edgegateway" "ds" {
 // Step 5 - migrates the Edge Gateway to a different VDC than the starting one
 func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	vcdClient := createTemporaryVCDConnection(false)
 
@@ -576,10 +567,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 // After an expected failure it will just use the same VDC using `owner_id` instead of `vdc` field.
 func TestAccVcdNsxtEdgeGatewayVdcUpdateFails(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,
@@ -746,10 +734,7 @@ func lookupAvailableEdgeClusterId(t *testing.T, vcdClient *VCDClient) (string, e
 
 func TestAccVcdNsxtEdgeGatewayCreateInVdc(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{

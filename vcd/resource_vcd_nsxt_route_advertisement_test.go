@@ -15,10 +15,7 @@ import (
 
 func TestAccVcdNsxtRouteAdvertisement(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	isRouteAdvertisementEnable := true
 	subnet1 := "192.168.1.0/24"
@@ -184,10 +181,7 @@ resource "vcd_nsxt_route_advertisement" "testing" {
 
 func TestAccVcdNsxtRouteAdvertisementVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	isRouteAdvertisementEnable := true
 	subnet1 := "192.168.1.0/24"

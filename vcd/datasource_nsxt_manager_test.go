@@ -13,10 +13,7 @@ import (
 func TestAccVcdDatasourceNsxtManager(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"FuncName":    t.Name(),

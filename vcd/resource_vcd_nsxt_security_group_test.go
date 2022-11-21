@@ -491,9 +491,7 @@ func testAccCheckNsxtFirewallGroupDestroy(vdcName, firewalGroupName, firewallGro
 // TestAccVcdNsxtSecurityGroupOwnerVdcGroup starts with creating the Security group with defined in VDC Group and later on removes them all
 func TestAccVcdNsxtSecurityGroupOwnerVdcGroup(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("this test requires Sysadmin user to create VDC Group")
-	}
+	skipIfNotSysAdmin(t) // requires SysAdmin user to create VDC Group
 
 	// String map to fill the template
 	var params = StringMap{
@@ -720,10 +718,7 @@ resource "vcd_nsxt_security_group" "group1" {
 // Note. It does not test `org` field inheritance because our import sets it by default.
 func TestAccVcdNsxtSecurityGroupInheritedVdc(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{

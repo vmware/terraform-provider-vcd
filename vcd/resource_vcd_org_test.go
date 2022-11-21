@@ -27,10 +27,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdOrgBasic requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	configText := templateFill(testAccCheckVcdOrgBasic, params)
 	if vcdShortTest {
@@ -67,10 +64,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 func TestAccVcdOrgFull(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdOrgFull requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	type testOrgData struct {
 		name                         string
 		enabled                      bool
@@ -414,6 +408,7 @@ resource "vcd_org" "{{.OrgName}}" {
 
 // TestAccVcdOrgMetadata tests metadata CRUD on organizations
 func TestAccVcdOrgMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
 		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",

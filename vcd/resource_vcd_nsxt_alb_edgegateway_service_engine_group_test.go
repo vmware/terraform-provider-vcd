@@ -12,10 +12,7 @@ import (
 
 func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	skipNoNsxtAlbConfiguration(t)
 
@@ -114,10 +111,7 @@ data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 
 func TestAccVcdNsxtEdgeGatewayServiceEngineGroupShared(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	skipNoNsxtAlbConfiguration(t)
 
@@ -275,10 +269,7 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 // d.SetId("") instead of throwing error) outside of Terraform control.
 func TestAccVcdNsxtEdgeGatewayServiceEngineGroupResourceNotFound(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	// This test invokes go-vcloud-director SDK directly
 	if vcdShortTest {

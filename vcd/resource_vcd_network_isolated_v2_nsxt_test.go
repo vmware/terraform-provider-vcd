@@ -186,10 +186,7 @@ resource "vcd_network_isolated_v2" "net1" {
 // * Step 7 - checks out that import of network being in different VDC still works
 func TestAccVcdNetworkIsolatedV2NsxtMigration(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges to create VDCs")
-		return
-	}
+	skipIfNotSysAdmin(t) // requires system admin privileges to create VDCs
 
 	// String map to fill the template
 	var params = StringMap{

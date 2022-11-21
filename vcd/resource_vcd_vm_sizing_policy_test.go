@@ -15,9 +15,7 @@ var TestVmPolicy = "TestVmPolicyBasic"
 
 func TestAccVcdVmSizingPolicy(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVmSizingPolicy requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	if testConfig.VCD.ProviderVdc.Name == "" {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")

@@ -11,9 +11,7 @@ import (
 
 func TestAccVcdOrgVdcNsxtEdgeCluster(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"VdcName":                   t.Name(),

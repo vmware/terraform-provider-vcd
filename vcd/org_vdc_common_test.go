@@ -19,10 +19,7 @@ var TestAccVcdVdc = "TestAccVcdVdcBasic"
 
 func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCheckVcdVdc_basic, params)
@@ -420,6 +417,7 @@ const additionalStorageProfile = `
 
 // TestAccVcdVdcMetadata tests metadata CRUD on VDCs
 func TestAccVcdVdcMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdVdcMetadata, "vcd_org_vdc.test-vdc",
 		testAccCheckVcdVdcMetadataDatasource, "data.vcd_org_vdc.test-vdc-ds",

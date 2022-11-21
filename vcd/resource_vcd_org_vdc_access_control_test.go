@@ -16,9 +16,7 @@ import (
 
 func TestAccVcdOrgVdcAccessControl(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	userName1 := strings.ToLower(t.Name())
 	userName2 := strings.ToLower(t.Name()) + "2"

@@ -13,10 +13,7 @@ import (
 
 func TestAccVcdRightsBundle(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdRightsBundle requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	skipTestForApiToken(t)
 	var rightsBundleName = t.Name()
 	var rightsBundleUpdateName = t.Name() + "-update"

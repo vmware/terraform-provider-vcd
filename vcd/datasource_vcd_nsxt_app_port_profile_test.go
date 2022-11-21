@@ -134,9 +134,7 @@ data "vcd_nsxt_app_port_profile" "custom" {
 // This test is done to replicate and fix https://github.com/vmware/terraform-provider-vcd/issues/778
 func TestAccVcdNsxtAppPortProfileMultiOrg(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("this test requires Sysadmin user to create Org")
-	}
+	skipIfNotSysAdmin(t)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

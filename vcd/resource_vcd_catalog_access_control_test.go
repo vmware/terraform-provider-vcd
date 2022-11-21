@@ -18,10 +18,7 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 
 	skipTestForApiToken(t)
 
-	if !usingSysAdmin() {
-		t.Skipf("%s requires system admin privileges", t.Name())
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,

@@ -13,10 +13,7 @@ import (
 func TestAccVcdDatasourceOrg(t *testing.T) {
 	preTestChecks(t)
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdDatasourceOrg requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	orgName1 := testConfig.VCD.Org
 	orgName2 := orgName1 + "-clone"

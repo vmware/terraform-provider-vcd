@@ -13,10 +13,7 @@ import (
 
 func TestAccVcdGlobalRole(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdGlobalRole requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	skipTestForApiToken(t)
 	var globalRoleName = t.Name()
 	var globalRoleUpdateName = t.Name() + "-update"

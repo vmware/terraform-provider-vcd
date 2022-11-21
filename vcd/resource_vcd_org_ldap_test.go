@@ -17,10 +17,7 @@ func init() {
 
 func TestAccVcdOrgLdap(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdOrgLdap requires system admin privileges")
-		return
-	}
+	skipIfNotSysAdmin(t)
 	if testConfig.Networking.LdapServer == "" {
 		t.Skip("TestAccVcdOrgLdap requires a working LDAP server (set the IP in testConfig.Networking.LdapServer)")
 		return

@@ -690,10 +690,7 @@ resource "vcd_vm" "empty-vm" {
 // (without any CPU/Memory values)
 func TestAccVcdVAppVm_4types_sizing_min(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("%s requires system admin privileges", t.Name())
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"TestName":       t.Name(),
@@ -956,10 +953,7 @@ resource "vcd_vm" "empty-vm" {
 // sizing policy and no compute parameters specified in the VM resource itself
 func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("%s requires system admin privileges", t.Name())
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"TestName":       t.Name(),
@@ -1139,10 +1133,7 @@ resource "vcd_vm" "empty-vm" {
 // works but memory is still required for empty VMs
 func TestAccVcdVAppVm_4types_sizing_cpu_only(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skipf("%s requires system admin privileges", t.Name())
-		return
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"TestName":       t.Name(),

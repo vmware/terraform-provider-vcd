@@ -12,9 +12,7 @@ import (
 
 func TestAccVcdVcenter(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + "  requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Vcenter": testConfig.Networking.Vcenter,

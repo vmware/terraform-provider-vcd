@@ -21,9 +21,7 @@ var name = "TestAccVcdIndependentDiskBasic"
 
 func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdIndependentDiskBasic requires system admin privileges")
-	}
+	skipIfNotSysAdmin(t)
 
 	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" || testConfig.VCD.NsxtProviderVdc.StorageProfile2 == "" {
 		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
