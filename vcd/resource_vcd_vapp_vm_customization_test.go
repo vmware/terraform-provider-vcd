@@ -272,6 +272,7 @@ resource "vcd_vapp_network" "vappNet" {
 `
 
 const testAccCheckVcdVAppVmUpdateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
+# skip-binary-test: vApp network removal from powered on vApp fails
 resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
