@@ -347,6 +347,7 @@ resource "vcd_network_routed" "net2" {
 `
 
 const testAccCheckVcdVAppVmNetworkVm = testAccCheckVcdVAppVmNetworkShared + `
+# skip-binary-test: vApp network removal from powered on vApp fails
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
