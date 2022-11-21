@@ -64,7 +64,7 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 
 	var configText2 string
 	params["PowerOn"] = false
-	params["SkipNotice"] = ""
+	params["SkipNotice"] = "# skip-binary-test: removing networks from powered on vApp fail"
 	params["FuncName"] = t.Name() + "-step2"
 	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
 		configText2 = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
