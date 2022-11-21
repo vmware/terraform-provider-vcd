@@ -363,6 +363,7 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
+	params["SkipTest"] = "# skip-binary-test: vApp network removal from powered on vApp fails"
 	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
