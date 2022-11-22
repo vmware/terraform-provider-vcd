@@ -257,3 +257,4 @@ vcd.TestAccVcdVAppVmMultiNIC-step3.tf v3.7.0 "vApp network removal from powered 
 vcd.TestAccVcdVAppVm_Basic.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
 vcd.TestAccVcdVAppVm_Clone.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
 vcd.TestAccVcdVappFirewallRules-step2.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
+vcd.TestAccVcdVappFirewallRules.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
