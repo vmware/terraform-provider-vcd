@@ -50,6 +50,7 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 		"Vdc":             testConfig.Nsxt.Vdc,
 		"Catalog":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":     testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":           testConfig.Media.NsxtBackedMediaName,
 		"NsxtEdgeGateway": testConfig.Nsxt.EdgeGateway,
 
 		"Tags": "vapp vm",
@@ -202,6 +203,23 @@ data "vcd_nsxt_edgegateway" "t1" {
   name     = "{{.NsxtEdgeGateway}}"
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_network_routed_v2" "nsxt-backed" {
   org = "{{.Org}}"
 
@@ -288,8 +306,7 @@ resource "vcd_vapp_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -331,6 +348,7 @@ resource "vcd_vapp_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   network {
 	type               = "org"
@@ -356,8 +374,7 @@ resource "vcd_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
@@ -395,6 +412,7 @@ resource "vcd_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   network {
 	type               = "org"
@@ -434,6 +452,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
 		"Tags": "vapp vm",
@@ -569,13 +588,29 @@ resource "vcd_vapp" "empty-vm" {
   description = "vApp for Empty VM description"
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_vapp_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
-  computer_name = "comp-name"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
+  computer_name    = "comp-name"
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -632,9 +667,8 @@ resource "vcd_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
-  computer_name = "comp-name"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
+  computer_name    = "comp-name"
   
   name        = "{{.TestName}}-template-standalone-vm"
 
@@ -698,6 +732,7 @@ func TestAccVcdVAppVm_4types_sizing_min(t *testing.T) {
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
 		"ProviderVdc": testConfig.VCD.NsxtProviderVdc.Name,
@@ -878,12 +913,28 @@ resource "vcd_vapp" "empty-vm" {
   description = "vApp for Empty VM description"
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_vapp_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -908,6 +959,7 @@ resource "vcd_vapp_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   prevent_update_power_off = true
 
@@ -918,8 +970,7 @@ resource "vcd_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
@@ -942,6 +993,7 @@ resource "vcd_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   prevent_update_power_off = true
 
@@ -961,6 +1013,7 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
 		"ProviderVdc": testConfig.VCD.NsxtProviderVdc.Name,
@@ -1064,12 +1117,28 @@ resource "vcd_vapp" "empty-vm" {
   description = "vApp for Empty VM description"
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_vapp_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -1091,6 +1160,7 @@ resource "vcd_vapp_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   prevent_update_power_off = true
 
@@ -1101,8 +1171,7 @@ resource "vcd_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
@@ -1122,6 +1191,7 @@ resource "vcd_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   prevent_update_power_off = true
 
@@ -1141,6 +1211,7 @@ func TestAccVcdVAppVm_4types_sizing_cpu_only(t *testing.T) {
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
 		"ProviderVdc": testConfig.VCD.NsxtProviderVdc.Name,
@@ -1244,12 +1315,28 @@ resource "vcd_vapp" "empty-vm" {
   description = "vApp for Empty VM description"
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_vapp_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -1275,6 +1362,7 @@ resource "vcd_vapp_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   prevent_update_power_off = true
 
@@ -1285,8 +1373,7 @@ resource "vcd_vm" "template-vm" {
   org = "{{.Org}}"
   vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
@@ -1310,6 +1397,7 @@ resource "vcd_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   prevent_update_power_off = true
 
@@ -1326,6 +1414,7 @@ func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
 		"Vdc":         testConfig.Nsxt.Vdc,
 		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem": testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":       testConfig.Media.NsxtBackedMediaName,
 
 		"Tags": "vapp vm",
 	}
@@ -1465,12 +1554,28 @@ resource "vcd_vapp" "empty-vm" {
   description = "vApp for Empty VM description"
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_vapp_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -1499,6 +1604,7 @@ resource "vcd_vapp_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   cpus   = 1
   memory = 1024
@@ -1518,8 +1624,7 @@ resource "vcd_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
 
@@ -1546,6 +1651,7 @@ resource "vcd_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 
   cpus   = 1
   memory = 1024
@@ -1579,6 +1685,7 @@ func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
 		"Vdc":             testConfig.Nsxt.Vdc,
 		"Catalog":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":     testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Media":           testConfig.Media.NsxtBackedMediaName,
 		"NsxtEdgeGateway": testConfig.Nsxt.EdgeGateway,
 
 		"Tags": "vapp vm",
@@ -1779,12 +1886,28 @@ resource "vcd_vapp" "empty-vm" {
   power_on    = true
 }
 
+data "vcd_catalog" "{{.Catalog}}" {
+	org  = "{{.Org}}"
+	name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
+	org         = "{{.Org}}"
+	catalog_id = data.vcd_catalog.{{.Catalog}}.id
+	name       = "{{.CatalogItem}}"
+}
+
+data "vcd_catalog_media" "{{.Media}}" {
+	org     = "{{.Org}}"
+	catalog = data.vcd_catalog.{{.Catalog}}.name
+	name    = "{{.Media}}"
+}
+
 resource "vcd_vapp_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm"
@@ -1807,14 +1930,14 @@ resource "vcd_vapp_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 }
 
 resource "vcd_vm" "template-vm" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   name        = "{{.TestName}}-template-standalone-vm"
   description = "{{.TestName}}-template-standalone-vm"
@@ -1835,6 +1958,7 @@ resource "vcd_vm" "empty-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 }
 `
 
@@ -1843,8 +1967,7 @@ resource "vcd_vapp_vm" "template-vm2" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
   
   vapp_name   = vcd_vapp.template-vm.name
   name        = "{{.TestName}}-template-vapp-vm-2"
@@ -1867,6 +1990,7 @@ resource "vcd_vapp_vm" "empty-vm2" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
 }
 `
 
