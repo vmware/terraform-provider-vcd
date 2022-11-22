@@ -259,3 +259,4 @@ vcd.TestAccVcdVAppVm_Clone.tf v3.7.0 "vApp network removal from powered on vApp 
 vcd.TestAccVcdVappFirewallRules-step2.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
 vcd.TestAccVcdVappFirewallRules.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
 vcd.TestAccVcdVAppVmCustomizationSettings.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
+vcd.TestAccVcdVAppVmMulti.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
