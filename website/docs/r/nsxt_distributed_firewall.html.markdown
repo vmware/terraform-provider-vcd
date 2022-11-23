@@ -87,7 +87,7 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations.
 * `vdc_group_id` - (Required) The ID of VDC Group to manage Distributed Firewall in. Can be looked
   up using `vcd_vdc_group` resource or data source.
-* `rule` (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order**
+* `rule` - (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order**
   defines firewall rule precedence
 
 <a id="firewall-rule"></a>
@@ -113,9 +113,9 @@ groups`). Leaving it empty matches `Any` (all)
 * `app_port_profile_ids` - (Optional) An optional set of Application Port Profiles.
 * `network_context_profile_ids` - (Optional) An optional set of Network Context Profiles. Can be
   looked up using `vcd_nsxt_network_context_profile` data source.
-* `source_groups_excluded` (Optional; VCD 10.3.2+) - reverses value of `source_ids` for the rule to
+* `source_groups_excluded` - (Optional; VCD 10.3.2+) - reverses value of `source_ids` for the rule to
   match everything except specified IDs.
-* `destination_groups_excluded` (Optional; VCD 10.3.2+) - reverses value of `destination_ids` for
+* `destination_groups_excluded` - (Optional; VCD 10.3.2+) - reverses value of `destination_ids` for
   the rule to match everything except specified IDs.
 
 ## Importing

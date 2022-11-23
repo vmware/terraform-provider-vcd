@@ -102,7 +102,7 @@ The following arguments are supported:
 * `password` - (Optional, but required if `password_file` was not given and `is_external` is `false`) The user password. This value is never returned 
   on read. It is inspected on create and modify. To modify, fill with a different value. Note that if you remove the 
   password *on update*, Terraform will indicate that a change was occurring, but the empty password will be ignored by vCD.
-* `password_file` (Optional, but required if `password` was not given and `is_external` is `false`). A text file containing the password. Recommended
+* `password_file` - (Optional, but required if `password` was not given and `is_external` is `false`). A text file containing the password. Recommended
   usage: after changing the password, run an apply again with the password blank.
   Using this property instead of `password` has the advantage that the sensitive data is not saved into Terraform state 
   file. The disadvantage is that a password change requires also changing the file name.

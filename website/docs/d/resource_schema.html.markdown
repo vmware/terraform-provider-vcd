@@ -338,7 +338,7 @@ struct_network_isolated = {
 The following arguments are supported:
 
 * `name` - (Required) An unique name to identify the data source
-* `resource_type` (Required) Which resource we want to list. It needs to use the full name of the resource (i.e. "vcd_org",
+* `resource_type` - (Required) Which resource we want to list. It needs to use the full name of the resource (i.e. "vcd_org",
 not simply "org")
 
 ## Attribute Reference

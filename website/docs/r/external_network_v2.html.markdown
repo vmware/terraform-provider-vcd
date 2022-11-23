@@ -181,7 +181,7 @@ The following arguments are supported:
 * `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pool](#ip-pool) below for details.
 * `dns1` - (Optional) Primary DNS server. **Only valid** for NSX-V networks.
 * `dns2` - (Optional) Secondary DNS server. **Only valid** for NSX-V networks.
-* `dns_suffix` (Optional) A FQDN for the virtual machines on this network. **Only valid** for NSX-V networks.
+* `dns_suffix` - (Optional) A FQDN for the virtual machines on this network. **Only valid** for NSX-V networks.
 * `enabled` - (Optional) Default is `true`.
 
 <a id="ip-pool"></a>

@@ -230,9 +230,9 @@ can be used to lookup ID by name.
 <a id="edgegateway-subnet"></a>
 ## Edge Gateway Subnet
 
-* `gateway` (Required) - Gateway for a subnet in external network
-* `prefix_length` (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
-* `primary_ip` (Optional) - Primary IP address for edge gateway. **Note:** `primary_ip` must fall into `allocated_ips`
+* `gateway` - (Required) - Gateway for a subnet in external network
+* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `primary_ip` - (Optional) - Primary IP address for edge gateway. **Note:** `primary_ip` must fall into `allocated_ips`
 block range as otherwise `plan` will not be clean with a new range defined for that particular block. There __can only
 be one__ `primary_ip` defined for edge gateway.
 * `allocated_ips` (Required) - One or more blocks of [ip ranges](#edgegateway-subnet-ip-allocation) in the subnet to be
@@ -241,8 +241,8 @@ allocated
 <a id="edgegateway-subnet-ip-allocation"></a>
 ## Edge Gateway Subnet IP Allocation
 
-* `start_address` (Required) - Start IP address of a range
-* `end_address` (Required) - End IP address of a range
+* `start_address` - (Required) - Start IP address of a range
+* `end_address` - (Required) - End IP address of a range
 
 
 ## Attribute Reference

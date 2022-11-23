@@ -52,8 +52,8 @@ The following arguments are supported:
 * `owner_name` - (*v3.6+*) Owner of the catalog.
 * `number_of_vapp_templates` - (*v3.6+*) Number of vApp templates available in this catalog.
 * `number_of_media` - (*v3.6+*) Number of media items available in this catalog.
-* `vapp_template_list` (*v3.8+*) List of vApp template names in this catalog, in alphabetical order.
-* `media_item_list` (*v3.8+*) List of media item names in this catalog, in alphabetical order.
+* `vapp_template_list` - (*v3.8+*) List of vApp template names in this catalog, in alphabetical order.
+* `media_item_list` - (*v3.8+*) List of media item names in this catalog, in alphabetical order.
 * `is_shared` - (*v3.6+*) Indicates if the catalog is shared.
 * `is_published` - (*v3.6+*) Indicates if this catalog is shared to all organizations.
 * `created` - (*v3.6+*) Date and time of catalog creation

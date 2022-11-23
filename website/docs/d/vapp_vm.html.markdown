@@ -88,7 +88,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `vm_type` (*3.2+*) - type of the VM (either `vcd_vapp_vm` or `vcd_vm`)
+* `vm_type` - (*3.2+*) - type of the VM (either `vcd_vapp_vm` or `vcd_vm`)
 * `computer_name` -  Computer name to assign to this virtual machine. 
 * `catalog_name` -  The catalog name in which to find the given vApp Template
 * `template_name` -  The name of the vApp Template to use
@@ -114,8 +114,8 @@ The following arguments are supported:
 * `internal_disk` - (*v2.7+*) A block providing internal disk of VM details
 * `os_type` - (*v2.9+*) Operating System type.
 * `hardware_version` - (*v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.).
-* `sizing_policy_id` (*v3.0+*, *vCD 10.0+*) VM sizing policy ID.
-* `placement_policy_id` (*v3.8+*) VM placement policy ID.
+* `sizing_policy_id` - (*v3.0+*, *vCD 10.0+*) VM sizing policy ID.
+* `placement_policy_id` - (*v3.8+*) VM placement policy ID.
 * `status` - (*v3.8+*) The vApp status as a numeric code.
 * `status_text` - (*v3.8+*) The vApp status as text.
 
