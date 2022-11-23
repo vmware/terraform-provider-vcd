@@ -366,27 +366,65 @@ resource "vcd_catalog" "cat-cse" {
   delete_recursive = "true"
 }
 
-# TKGm OVA upload. The `catalog_item_metadata` is required for CSE to detect the OVAs.
+# TKGm OVA upload. The metadata entries are required for CSE to detect the OVAs.
 
-resource "vcd_catalog_item" "tkgm_ova" {
+resource "vcd_catalog_vapp_template" "tkgm_ova" {
   provider = vcd.cse-service-account # Using CSE Service Account for this resource
 
-  org     = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
-  catalog = vcd_catalog.cat-cse.name
+  org        = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
+  catalog_id = vcd_catalog.cat-cse.id
 
-  name                 = replace(var.tkgm-ova-name, ".ova", "")
-  description          = replace(var.tkgm-ova-name, ".ova", "")
-  ova_path             = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
-  upload_piece_size    = 100
-  show_upload_progress = true
+  name              = replace(var.tkgm-ova-name, ".ova", "")
+  description       = replace(var.tkgm-ova-name, ".ova", "")
+  ova_path          = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
+  upload_piece_size = 100
 
-  catalog_item_metadata = {
-    "kind"               = "TKGm"                                 # This value is always the same
-    "kubernetes"         = "TKGm"                                 # This value is always the same
-    "kubernetes_version" = split("-", var.tkgm-ova-name)[3]       # The version comes in the OVA name downloaded from Customer Connect
-    "name"               = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
-    "os"                 = split("-", var.tkgm-ova-name)[0]       # The OS comes in the OVA name downloaded from Customer Connect
-    "revision"           = "1"                                    # This value is always the same
+  metadata_entry {
+    key         = "kind"
+    value       = "TKGm" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "kubernetes"
+    value       = "TKGm" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "kubernetes_version"
+    value       = split("-", var.tkgm-ova-name)[3] # The version comes in the OVA name downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "name"
+    value       = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "os"
+    value       = split("-", var.tkgm-ova-name)[0] # The OS comes in the OVA name downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "revision"
+    value       = "1" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
   }
 }
 

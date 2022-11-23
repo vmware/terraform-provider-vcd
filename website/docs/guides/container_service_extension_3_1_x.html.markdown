@@ -395,34 +395,73 @@ resource "vcd_catalog" "cat-cse" {
 ```
 
 Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
-To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource with
-`catalog_item_metadata`.
+To upload them, use the [Catalog vApp Template](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template) resource with
+`metadata_entry`.
 
 ~> Only TKGm OVAs are supported. CSE is **not compatible** yet with PhotonOS
 
 In the example below, the downloaded OVA corresponds to **TKGm v1.4.0** and uses Kubernetes v1.21.2. 
 
 ```hcl
-resource "vcd_catalog_item" "tkgm_ova" {
+resource "vcd_catalog_vapp_template" "tkgm_ova" {
   provider = vcd.cse-service-account # Using CSE Service Account for this resource
 
-  org     = vcd_org.cse_org.name
-  catalog = vcd_catalog.cat-cse.name
+  org        = vcd_org.cse_org.name
+  catalog_id = vcd_catalog.cat-cse.id
 
   name                 = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
   description          = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
   ova_path             = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
   upload_piece_size    = 100
-  show_upload_progress = true
-
-  catalog_item_metadata = {
-    "kind"               = "TKGm"
-    "kubernetes"         = "TKGm"
-    "kubernetes_version" = "v1.21.2+vmware.1"
-    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-    "os"                 = "ubuntu"
-    "revision"           = "1"
+  
+  metadata_entry {
+    key         = "kind"
+    value       = "TKGm"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
   }
+
+  metadata_entry {
+    key         = "kubernetes"
+    value       = "TKGm"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "kubernetes_version"
+    value       = "v1.21.2+vmware.1"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "name"
+    value       = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "os"
+    value       = "ubuntu"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "revision"
+    value       = "1"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
 }
 ```
 
