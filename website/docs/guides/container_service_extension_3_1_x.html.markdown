@@ -409,10 +409,10 @@ resource "vcd_catalog_vapp_template" "tkgm_ova" {
   org        = vcd_org.cse_org.name
   catalog_id = vcd_catalog.cat-cse.id
 
-  name                 = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  description          = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  ova_path             = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
-  upload_piece_size    = 100
+  name              = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+  description       = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+  ova_path          = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
+  upload_piece_size = 100
   
   metadata_entry {
     key         = "kind"
