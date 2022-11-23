@@ -69,7 +69,7 @@ The following arguments are supported:
   Passing in an empty string indicates to remove password.
 * `subscription_url` - (Required) The URL to subscribe to the external catalog.
 * `make_local_copy` - (Optional) If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalog items unless a sync operation is performed.
-  It can only be true if the user configured in the provider is the System administrator.
+  It can only be false if the user configured in the provider is the System administrator.
 * `sync_on_refresh` - (Optional) Boolean value that shows if sync should be performed on every refresh.
 * `cancel_failed_tasks` - (Optional) When true, the subscribed catalog will attempt canceling failed tasks.
 * `sync_all` - (Optional) If true, synchronise this catalog and all items. 
