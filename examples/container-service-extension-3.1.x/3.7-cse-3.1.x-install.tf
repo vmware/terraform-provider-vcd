@@ -126,11 +126,12 @@ resource "vcd_role" "cse-service-role" {
     "vmware:tkgcluster: Full Access",
     "vmware:tkgcluster: Modify",
     "vmware:tkgcluster: View",
-    "cse:nativeCluster: Administrator Full access",
-    "cse:nativeCluster: Administrator View",
-    "cse:nativeCluster: Full Access",
-    "cse:nativeCluster: Modify",
-    "cse:nativeCluster: View"
+    # These rights are only needed after CSE is completely installed
+    # "cse:nativeCluster: Administrator Full access",
+    # "cse:nativeCluster: Administrator View",
+    # "cse:nativeCluster: Full Access",
+    # "cse:nativeCluster: Modify",
+    # "cse:nativeCluster: View"
   ]
 }
 
