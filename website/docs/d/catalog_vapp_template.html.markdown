@@ -42,7 +42,17 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   description       = "Belongs to ${data.vcd_catalog.my-catalog.name}"
   ova_path          = "/path/to/test_vapp_template.ova"
   upload_piece_size = 5
-  metadata          = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
+  
+  dynamic "metadata_entry" {
+    for_each = data.vcd_catalog_vapp_template.photon.metadata_entry
+    content {
+      key         = metadata_entry.value["key"]
+      value       = metadata_entry.value["value"]
+      type        = metadata_entry.value["type"]
+      is_system   = metadata_entry.value["is_system"]
+      user_access = metadata_entry.value["user_access"]
+    }
+  }
 }
 ```
 
@@ -75,7 +85,17 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   description       = "Belongs to ${data.vcd_org_vdc.my-vdc.name}"
   ova_path          = "/path/to/test_vapp_template.ova"
   upload_piece_size = 5
-  metadata          = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
+  
+  dynamic "metadata_entry" {
+    for_each = data.vcd_catalog_vapp_template.photon.metadata_entry
+    content {
+      key         = metadata_entry.value["key"]
+      value       = metadata_entry.value["value"]
+      type        = metadata_entry.value["type"]
+      is_system   = metadata_entry.value["is_system"]
+      user_access = metadata_entry.value["user_access"]
+    }
+  }
 }
 ```
 
