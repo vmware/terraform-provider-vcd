@@ -14,11 +14,10 @@ import (
 
 func resourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "Please use resource vcd_catalog_vapp_template instead",
-		CreateContext:      resourceVcdCatalogItemCreate,
-		DeleteContext:      resourceVcdCatalogItemDelete,
-		ReadContext:        resourceVcdCatalogItemRead,
-		UpdateContext:      resourceVcdCatalogItemUpdate,
+		CreateContext: resourceVcdCatalogItemCreate,
+		DeleteContext: resourceVcdCatalogItemDelete,
+		ReadContext:   resourceVcdCatalogItemRead,
+		UpdateContext: resourceVcdCatalogItemUpdate,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdCatalogItemImport,
 		},
