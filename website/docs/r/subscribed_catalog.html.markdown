@@ -62,8 +62,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level.
 * `name` - (Required) Catalog name
 * `storage_profile_id` - (Optional) Allows to set specific storage profile to be used for catalog.
-* `delete_recursive` - (Optional) When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.
-* `delete_force` -(Optional) When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.
+* `delete_recursive` - (Optional) When destroying use `delete_recursive=true` to remove the catalog and any objects it contains that are in a state that normally allows removal.
+* `delete_force` -(Optional) When destroying use `delete_force=true` with `delete_recursive=true` to remove a catalog and any objects it contains, regardless of their state.
 * `subscription_password` - (Optional) An optional password to access the catalog. Only ASCII characters are allowed in a valid password. 
   The password is only required when set by the publishing catalog. Passing in six asterisks '******' indicates to keep current password. 
   Passing in an empty string indicates to remove password.
@@ -71,14 +71,14 @@ The following arguments are supported:
 * `make_local_copy` - (Optional) If `true`, subscription to a catalog creates a local copy of all items. Defaults to `false`, which does not create a local copy of catalog items unless a sync operation is performed.
   It can only be `false` if the user configured in the provider is the System administrator.
 * `sync_on_refresh` - (Optional) Boolean value that shows if sync should be performed on every refresh.
-* `cancel_failed_tasks` - (Optional) When true, the subscribed catalog will attempt canceling failed tasks.
-* `sync_all` - (Optional) If true, synchronise this catalog and all items. 
-* `sync_catalog` (Optional) If true, synchronise this catalog. Not to be used when `sync_all` is set. This operation fetches the list of items. If `make_local_copy` is set, it also synchronises all the items.
-* `sync_all_vapp_templates` (Optional) If true, synchronise all vApp templates. Not to be used when `sync_all` is set.
-* `sync_all_media_items` (Optional) If true, synchronise all media items. Not to be used when `sync_all` is set.
+* `cancel_failed_tasks` - (Optional) When `true`, the subscribed catalog will attempt canceling failed tasks.
+* `sync_all` - (Optional) If `true`, synchronise this catalog and all items. 
+* `sync_catalog` (Optional) If `true`, synchronise this catalog. Not to be used when `sync_all` is set. This operation fetches the list of items. If `make_local_copy` is set, it also synchronises all the items.
+* `sync_all_vapp_templates` (Optional) If `true`, synchronise all vApp templates. Not to be used when `sync_all` is set.
+* `sync_all_media_items` (Optional) If `true`, synchronise all media items. Not to be used when `sync_all` is set.
 * `sync_vapp_templates` (Optional) Synchronise a list of vApp templates. Not to be used when `sync_all` or `sync_all_vapp_templates` are set.
 * `sync_media_items` (Optional) Synchronise a list of media items. Not to be used when `sync_all` or `sync_all_media_items` are set.
-* `store_tasks` - (Optional) if true, saves the list of tasks to a file for later update.
+* `store_tasks` - (Optional) if `true`, saves the list of tasks to a file for later update.
  
 ## Attribute Reference
 
