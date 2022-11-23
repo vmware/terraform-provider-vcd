@@ -359,8 +359,8 @@ data "vcd_provider_vdc" "myPvdc" {
 }
 
 data "vcd_vm_placement_policy" "placementPolicy" {
-  name        = "vmware"
-  provider_id = data.vcd_provider_vdc.myPvdc.id
+  name            = "vmware"
+  provider_vdc_id = data.vcd_provider_vdc.myPvdc.id
 }
 
 resource "vcd_vapp_vm" "secondVM" {
@@ -386,8 +386,8 @@ data "vcd_provider_vdc" "myPvdc" {
 }
 
 data "vcd_vm_placement_policy" "placementPolicy" {
-  name        = "vmware"
-  provider_id = data.vcd_provider_vdc.myPvdc.id
+  name            = "vmware"
+  provider_vdc_id = data.vcd_provider_vdc.myPvdc.id
 }
 
 resource "vcd_vapp_vm" "secondVM" {
