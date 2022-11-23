@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_provider\_vdc
 
-Provides a VMware Cloud Director Provider VDC data source. A Provider VDC can be used to reference a Provider VDC and use its 
+Gives a VMware Cloud Director Provider VDC data source. This data source can be used to reference a Provider VDC and use its 
 data within other resources or data sources.
 
 Supported in provider *v3.8+*
@@ -51,7 +51,7 @@ The following arguments are supported:
 * `host_ids` - Set with all the hosts which are connected to VC server.
 * `vcenter_id` - ID of the vCenter Server that provides the Resource Pools and Datastores.
 * `metadata` - (Deprecated) Use `metadata_entry` instead. Key and value pairs for Provider VDC Metadata.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to the Provider VDC. See [Metadata](#metadata) section for details.
+* `metadata_entry` - A set of metadata entries assigned to the Provider VDC. See [Metadata](#metadata) section for details.
 
 <a id="compute-capacity"></a>
 ## Compute Capacity

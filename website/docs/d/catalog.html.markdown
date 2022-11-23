@@ -47,7 +47,7 @@ The following arguments are supported:
 * `cache_enabled` - (*v3.6+*) Enable early catalog export to optimize synchronization. Default is `false`.
 * `preserve_identity_information` - (*v3.6+*) Enable include BIOS UUIDs and MAC addresses in the downloaded OVF package. Preserving the identity information limits the portability of the package and you should use it only when necessary. Default is `false`.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to this Catalog. See [Metadata](#metadata) section for details.
+* `metadata_entry` - A set of metadata entries assigned to this Catalog. See [Metadata](#metadata) section for details.
 * `catalog_version` - (*v3.6+*) Version number from this catalog.
 * `owner_name` - (*v3.6+*) Owner of the catalog.
 * `number_of_vapp_templates` - (*v3.6+*) Number of vApp templates available in this catalog.

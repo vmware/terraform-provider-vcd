@@ -58,7 +58,7 @@ The following arguments are supported:
 * `description` - Catalog item description.
 * `metadata` - Key value map of metadata assigned to the associated vApp template.
 * `catalog_item_metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata assigned to the catalog item.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to the catalog item. See [Metadata](#metadata) section for details.
+* `metadata_entry` - A set of metadata entries assigned to the catalog item. See [Metadata](#metadata) section for details.
 
 <a id="metadata"></a>
 ## Metadata

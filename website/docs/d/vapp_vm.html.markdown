@@ -104,7 +104,7 @@ The following arguments are supported:
 * `cpu_shares` - Custom priority for the resource in MHz
 * `cpu_limit` - The limit (in MHz) for how much of CPU can be consumed on the underlying virtualization infrastructure. `-1` value for unlimited.
 * `metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata assigned to this VM
-* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to this VM. See [Metadata](#metadata) section for details
+* `metadata_entry` - A set of metadata entries assigned to this VM. See [Metadata](#metadata) section for details
 * `disk` -  Independent disk attachment configuration.
 * `network` -  A block defining a network interface. Multiple can be used.
 * `guest_properties` -  Key value map of guest properties
