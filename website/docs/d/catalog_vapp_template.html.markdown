@@ -42,7 +42,8 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   description       = "Belongs to ${data.vcd_catalog.my-catalog.name}"
   ova_path          = "/path/to/test_vapp_template.ova"
   upload_piece_size = 5
-  
+
+  # Assign all the metadata from the vApp template to this new one.
   dynamic "metadata_entry" {
     for_each = data.vcd_catalog_vapp_template.photon.metadata_entry
     content {
@@ -86,6 +87,7 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   ova_path          = "/path/to/test_vapp_template.ova"
   upload_piece_size = 5
   
+  # Assign all the metadata from the vApp template to this new one.
   dynamic "metadata_entry" {
     for_each = data.vcd_catalog_vapp_template.photon.metadata_entry
     content {
