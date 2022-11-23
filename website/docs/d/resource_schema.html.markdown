@@ -31,7 +31,7 @@ output:
 org_struct = [
   {
     "computed" = false
-    "description" = "When destroying use delete_force=True with delete_recursive=True to remove an org and any objects it contains, regardless of their state."
+    "description" = "When destroying use delete_force=true with delete_recursive=true to remove an org and any objects it contains, regardless of their state."
     "name" = "delete_force"
     "optional" = false
     "required" = true
