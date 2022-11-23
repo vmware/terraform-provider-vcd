@@ -31,7 +31,7 @@ output:
 org_struct = [
   {
     "computed" = false
-    "description" = "When destroying use delete_force=True with delete_recursive=True to remove an org and any objects it contains, regardless of their state."
+    "description" = "When destroying use delete_force=true with delete_recursive=true to remove an org and any objects it contains, regardless of their state."
     "name" = "delete_force"
     "optional" = false
     "required" = true
@@ -338,7 +338,7 @@ struct_network_isolated = {
 The following arguments are supported:
 
 * `name` - (Required) An unique name to identify the data source
-* `resource_type` (Required) Which resource we want to list. It needs to use the full name of the resource (i.e. "vcd_org",
+* `resource_type` - (Required) Which resource we want to list. It needs to use the full name of the resource (i.e. "vcd_org",
 not simply "org")
 
 ## Attribute Reference

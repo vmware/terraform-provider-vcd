@@ -194,6 +194,8 @@ In **scenario 3**, the subscribing catalog will access all items immediately, al
 
 ### Subscription without automatic download 
 
+~> This option is only available to System administrators.
+
 If we subscribe the catalog without automatic downloads (`make_local_copy = false`) there will be no immediate access to
 the catalog resources. The catalog and its items will need to be synchronised explicitly.
 When we are in this situation, adding `sync_catalog=true` to the creation script will only get general information about the

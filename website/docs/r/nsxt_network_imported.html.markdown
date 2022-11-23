@@ -59,7 +59,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when
   connected as sysadmin working across different organisations
-* `owner_id` (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
+* `owner_id` - (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
 and inherited from provider configuration)
 * `vdc` - (Deprecated; Optional) The name of VDC to use. **Deprecated**  in favor of new field
   `owner_id` which supports VDC and VDC Group IDs.
@@ -71,7 +71,7 @@ and inherited from provider configuration)
   This resource **will fail** if multiple segments with the same name are available. One can rename 
   them in NSX-T manager to make them unique.
 * `description` - (Optional) An optional description of the network
-* `gateway` (Required) The gateway for this network (e.g. 192.168.1.1)
+* `gateway` - (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.

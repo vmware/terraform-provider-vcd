@@ -58,7 +58,7 @@ The following arguments are supported:
 * `description` - Catalog item description.
 * `metadata` - Key value map of metadata assigned to the associated vApp template.
 * `catalog_item_metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata assigned to the catalog item.
-* `metadata_entry` - (*v3.8+*) A set of metadata entries assigned to the catalog item. See [Metadata](#metadata) section for details.
+* `metadata_entry` - A set of metadata entries assigned to the catalog item. See [Metadata](#metadata) section for details.
 
 <a id="metadata"></a>
 ## Metadata
@@ -75,17 +75,17 @@ The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the follow
 
 (Supported in provider *v2.9+*)
 
-* `name_regex` (Optional) matches the name using a regular expression.
-* `date` (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
+* `name_regex` - (Optional) matches the name using a regular expression.
+* `date` - (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
   optional spaces in between. For example: `> 2020-02-01 12:35:00.523Z`
   The filter recognizes several formats, but one of `yyyy-mm-dd [hh:mm[:ss[.nnnZ]]]` or `dd-MMM-yyyy [hh:mm[:ss[.nnnZ]]]`
   is recommended.
   Comparison with equality operator (`==`) need to define the date to the microseconds.
-* `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
+* `latest` - (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the newest item.
-* `earliest` (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
+* `earliest` - (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the oldest item.
-* `metadata` (Optional) One or more parameters that will match metadata contents.
+* `metadata` - (Optional) One or more parameters that will match metadata contents.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
 

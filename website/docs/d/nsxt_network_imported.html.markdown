@@ -51,7 +51,7 @@ data "vcd_nsxt_network_imported" "net" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
-* `owner_id` (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
+* `owner_id` - (Optional) VDC or VDC Group ID. Always takes precedence over `vdc` fields (in resource
 and inherited from provider configuration)
 * `vdc` - (Deprecated; Optional) The name of VDC to use. **Deprecated**  in favor of new field
   `owner_id` which supports VDC and VDC Group IDs.
@@ -64,7 +64,7 @@ All attributes defined in [imported network resource](/providers/vmware/vcd/late
 
 ## Filter arguments
 
-* `name_regex` (Optional) matches the name using a regular expression.
-* `ip` (Optional) matches the IP of the resource using a regular expression.
+* `name_regex` - (Optional) matches the name using a regular expression.
+* `ip` - (Optional) matches the IP of the resource using a regular expression.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.

@@ -34,7 +34,7 @@ data "vcd_nsxt_alb_service_engine_group" "demo" {
 The following arguments are supported:
 
 * `name` - (Required)  - Name of Service Engine Group.
-* `sync_on_refresh` (Optional) - A special argument that is not passed to VCD, but alters behaviour of this resource so
+* `sync_on_refresh` - (Optional) - A special argument that is not passed to VCD, but alters behaviour of this resource so
   that it performs a Sync operation on every Terraform refresh. *Note* this may impact refresh performance, but should
   ensure up-to-date information is read. Default is **false**.
 

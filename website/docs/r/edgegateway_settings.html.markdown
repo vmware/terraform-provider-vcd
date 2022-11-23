@@ -66,7 +66,7 @@ The following arguments are supported:
 Default is `false`. Note: **only System administrators can change this property**. It is ignored by API for Org users.
 * `lb_loglevel` - (Optional) Choose the severity of events to be logged. One of `emergency`,
 `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`. Note: **only System administrators can change this property**. It is ignored by API for Org users.
-* `fw_enabled` (Optional) Enable firewall. Default `true`.
+* `fw_enabled` - (Optional) Enable firewall. Default `true`.
 * `fw_default_rule_logging_enabled` (Optional) Enable default firewall rule (last in the processing 
 order) logging. Default `false`.
 * `fw_default_rule_action` (Optional) Default firewall rule (last in the processing order) action.

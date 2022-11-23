@@ -79,7 +79,7 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations.
 * `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` datasource
-* `rule` (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions
+* `rule` - (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions
 
 <a id="firewall-rule"></a>
 ## Firewall Rule

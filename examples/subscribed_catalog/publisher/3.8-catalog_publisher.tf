@@ -41,11 +41,30 @@ resource "vcd_catalog" "test-publisher" {
   delete_force     = "true"
   delete_recursive = "true"
 
-  metadata = {
-    identity     = "published catalog"
-    origin       = var.org
-    host_version = "10.4.1"
+  metadata_entry {
+    key         = "identity"
+    value       = "published catalog"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
   }
+
+  metadata_entry {
+    key         = "origin"
+    value       = var.org
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "host_version"
+    value       = "10.4.1"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
   publish_enabled               = "true"
   cache_enabled                 = "true"
   preserve_identity_information = "false"
@@ -62,12 +81,44 @@ resource "vcd_catalog_vapp_template" "test_vt" {
   ova_path          = "${var.ova_path}/test_vapp_template.ova"
   upload_piece_size = 5
 
-  metadata = {
-    identity       = "published catalog item"
-    origin         = var.org
-    parent         = vcd_catalog.test-publisher.name
-    parent_created = vcd_catalog.test-publisher.created
-    host_version   = "10.4.1"
+  metadata_entry {
+    key         = "identity"
+    value       = "published catalog item"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "origin"
+    value       = var.org
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "parent"
+    value       = vcd_catalog.test-publisher.name
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "parent_created"
+    value       = vcd_catalog.test-publisher.created
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "host_version"
+    value       = "10.4.1"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
   }
 }
 
@@ -80,12 +131,45 @@ resource "vcd_catalog_media" "test_media" {
   description       = "test media item test-media-${count.index}"
   media_path        = "${var.ova_path}/test.iso"
   upload_piece_size = 5
-  metadata = {
-    identity       = "published catalog item"
-    origin         = var.org
-    parent         = vcd_catalog.test-publisher.name
-    parent_created = vcd_catalog.test-publisher.created
-    host_version   = "10.4.1"
+
+  metadata_entry {
+    key         = "identity"
+    value       = "published catalog item"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "origin"
+    value       = var.org
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "parent"
+    value       = vcd_catalog.test-publisher.name
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "parent_created"
+    value       = vcd_catalog.test-publisher.created
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+
+  metadata_entry {
+    key         = "host_version"
+    value       = "10.4.1"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
   }
 }
 

@@ -72,7 +72,7 @@ The following arguments are supported:
 * `description` - (Optional) An optional description of the Security Group
 * `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` data source
-* `member_org_network_ids` (Optional) A set of Org Network IDs
+* `member_org_network_ids` - (Optional) A set of Org Network IDs
 
 ## Attribute Reference
 * `member_vms` A set of member VMs (if exist). see [Member VMs](#member-vms) below for details.

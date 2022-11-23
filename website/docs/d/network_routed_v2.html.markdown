@@ -52,7 +52,7 @@ supported.
 
 ## Filter arguments
 
-* `name_regex` (Optional) matches the name using a regular expression.
-* `ip` (Optional) matches the IP of the resource using a regular expression.
+* `name_regex` - (Optional) matches the name using a regular expression.
+* `ip` - (Optional) matches the IP of the resource using a regular expression.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.

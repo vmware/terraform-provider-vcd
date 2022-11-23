@@ -70,8 +70,8 @@ All attributes defined in [isolated network resource](/providers/vmware/vcd/late
 
 (Supported in provider *v2.9+*)
 
-* `name_regex` (Optional) matches the name using a regular expression.
-* `ip` (Optional) matches the IP of the resource using a regular expression.
-* `metadata` (Optional) One or more parameters that will match metadata contents.
+* `name_regex` - (Optional) matches the name using a regular expression.
+* `ip` - (Optional) matches the IP of the resource using a regular expression.
+* `metadata` - (Optional) One or more parameters that will match metadata contents.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.

@@ -42,7 +42,18 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   description       = "Belongs to ${data.vcd_catalog.my-catalog.name}"
   ova_path          = "/path/to/test_vapp_template.ova"
   upload_piece_size = 5
-  metadata          = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
+
+  # Assign all the metadata from the vApp template to this new one.
+  dynamic "metadata_entry" {
+    for_each = data.vcd_catalog_vapp_template.photon.metadata_entry
+    content {
+      key         = metadata_entry.value["key"]
+      value       = metadata_entry.value["value"]
+      type        = metadata_entry.value["type"]
+      is_system   = metadata_entry.value["is_system"]
+      user_access = metadata_entry.value["user_access"]
+    }
+  }
 }
 ```
 
@@ -75,7 +86,18 @@ resource "vcd_catalog_vapp_template" "my-second-vapp_template" {
   description       = "Belongs to ${data.vcd_org_vdc.my-vdc.name}"
   ova_path          = "/path/to/test_vapp_template.ova"
   upload_piece_size = 5
-  metadata          = data.vcd_catalog_vapp_template.my-first-vapp-template.metadata
+  
+  # Assign all the metadata from the vApp template to this new one.
+  dynamic "metadata_entry" {
+    for_each = data.vcd_catalog_vapp_template.photon.metadata_entry
+    content {
+      key         = metadata_entry.value["key"]
+      value       = metadata_entry.value["value"]
+      type        = metadata_entry.value["type"]
+      is_system   = metadata_entry.value["is_system"]
+      user_access = metadata_entry.value["user_access"]
+    }
+  }
 }
 ```
 
@@ -98,16 +120,16 @@ The following arguments are supported:
 
 ## Filter arguments
 
-* `name_regex` (Optional) matches the name using a regular expression.
-* `date` (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
+* `name_regex` - (Optional) matches the name using a regular expression.
+* `date` - (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
   optional spaces in between. For example: `> 2020-02-01 12:35:00.523Z`
   The filter recognizes several formats, but one of `yyyy-mm-dd [hh:mm[:ss[.nnnZ]]]` or `dd-MMM-yyyy [hh:mm[:ss[.nnnZ]]]`
   is recommended.
   Comparison with equality operator (`==`) need to define the date to the microseconds.
-* `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
+* `latest` - (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the newest item.
-* `earliest` (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
+* `earliest` - (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the oldest item.
-* `metadata` (Optional) One or more parameters that will match metadata contents.
+* `metadata` - (Optional) One or more parameters that will match metadata contents.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.

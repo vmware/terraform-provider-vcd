@@ -64,7 +64,7 @@ All attributes defined in [edge gateway resource](/providers/vmware/vcd/latest/d
 
 (Supported in provider *v2.9+*)
 
-* `name_regex` (Optional) matches the name using a regular expression.
+* `name_regex` - (Optional) matches the name using a regular expression.
 
 See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
 

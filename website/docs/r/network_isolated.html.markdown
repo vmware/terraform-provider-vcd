@@ -50,7 +50,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `description` - (Optional *v2.6+*) An optional description of the network
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
-* `gateway` (Required) The gateway for this network
+* `gateway` - (Required) The gateway for this network
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network

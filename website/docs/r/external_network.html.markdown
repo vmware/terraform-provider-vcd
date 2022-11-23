@@ -102,7 +102,7 @@ The following arguments are supported:
 * `netmask` - (Required) Network mask
 * `dns1` - (Optional) Primary DNS server
 * `dns2` - (Optional) Secondary DNS server
-* `dns_suffix` (Optional) A FQDN for the virtual machines on this network.
+* `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.
 * `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pool](#ip-pool) below for details.
 
 <a id="ip-pool"></a>

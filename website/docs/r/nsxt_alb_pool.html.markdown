@@ -127,9 +127,9 @@ The following arguments are supported:
 <a id="member-block"></a>
 ## Member
 
-* `ip_address` (Required) IP address of pool member. 
-* `enabled` (Optional) Defines if the pool member is enabled to receive traffic (default `true`)
-* `port` (Optional) Port for receiving traffic - overrides the root value `default_port` for individual members
+* `ip_address` - (Required) IP address of pool member. 
+* `enabled` - (Optional) Defines if the pool member is enabled to receive traffic (default `true`)
+* `port` - (Optional) Port for receiving traffic - overrides the root value `default_port` for individual members
 * `ratio` (Optional) Ratio of selecting eligible servers in the pool (default `1`)
 
 ### Attributes of members

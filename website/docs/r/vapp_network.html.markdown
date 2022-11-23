@@ -51,11 +51,11 @@ The following arguments are supported:
 * `description` - (Optional; *v2.7+*, *vCD 9.5+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this network belongs to.
 * `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
-* `gateway` (Required) The gateway for this network.
+* `gateway` - (Required) The gateway for this network.
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.
-* `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging.
+* `guest_vlan_allowed` - (Optional) True if Network allows guest VLAN tagging.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
 * `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected. If not configured, then an isolated network is created.

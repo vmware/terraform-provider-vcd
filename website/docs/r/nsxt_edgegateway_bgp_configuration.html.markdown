@@ -58,7 +58,7 @@ The following arguments are supported:
 * `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` datasource
 * `enabled` - (Required) Defines if BGP service is enabled or not
-* `ecmp_enabled` (Optional) - A flag indicating whether ECMP is enabled or not
+* `ecmp_enabled` - (Optional) - A flag indicating whether ECMP is enabled or not
 * `local_as_number` - (Optional) BGP autonomous systems (AS) number to advertise to BGP peers. BGP
   AS number can be specified in either ASPLAIN or ASDOT formats, like ASPLAIN format : '65546',
   ASDOT format : '1.10'. **Read only** for VRF backed Edge Gateways
@@ -68,10 +68,10 @@ The following arguments are supported:
  * `HELPER_ONLY` - The ability for a BGP speaker to indicate its ability to preserve forwarding
    state during BGP restart
  * `GRACEFUL_AND_HELPER` - The ability of a BGP speaker to advertise its restart to its peers
-* `graceful_restart_timer` (Optional) Maximum time taken (in seconds) for a BGP session to be
+* `graceful_restart_timer` - (Optional) Maximum time taken (in seconds) for a BGP session to be
   established after a restart. If the session is not re-established within this timer, the receiving
   speaker will delete all the stale routes from that peer. **Read only** for VRF backed Edge Gateways.
-* `stale_route_timer` (Optional) - Maximum time (in seconds) before stale routes are removed when
+* `stale_route_timer` - (Optional) - Maximum time (in seconds) before stale routes are removed when
   BGP restarts. **Read only** for VRF backed Edge Gateways
 
 More information about settings can be found in VMware Cloud Director [BGP Configuration
