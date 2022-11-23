@@ -68,8 +68,8 @@ The following arguments are supported:
   The password is only required when set by the publishing catalog. Passing in six asterisks '******' indicates to keep current password. 
   Passing in an empty string indicates to remove password.
 * `subscription_url` - (Required) The URL to subscribe to the external catalog.
-* `make_local_copy` - (Optional) If true, subscription to a catalog creates a local copy of all items. Defaults to false, which does not create a local copy of catalog items unless a sync operation is performed.
-  It can only be false if the user configured in the provider is the System administrator.
+* `make_local_copy` - (Optional) If `true`, subscription to a catalog creates a local copy of all items. Defaults to `false`, which does not create a local copy of catalog items unless a sync operation is performed.
+  It can only be `false` if the user configured in the provider is the System administrator.
 * `sync_on_refresh` - (Optional) Boolean value that shows if sync should be performed on every refresh.
 * `cancel_failed_tasks` - (Optional) When true, the subscribed catalog will attempt canceling failed tasks.
 * `sync_all` - (Optional) If true, synchronise this catalog and all items. 
