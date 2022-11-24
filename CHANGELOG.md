@@ -13,6 +13,8 @@
 * **New Resource**: `vcd_subscribed_catalog` that allows subscribing to a published catalog ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * **New Data Source**: `vcd_subscribed_catalog` that allows reading a subscribed catalog ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * **New Data Source**: `vcd_task` that allows reading a VCD task ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
+
+## IMPROVEMENTS
 * Add attribute `metadata_entry` to the following data sources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_independent_disk`, `vcd_network_direct`, `vcd_network_isolated`,
   `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`, `vcd_org_vdc`, `vcd_provider_vdc`,
@@ -26,8 +28,6 @@
   all the available types and domains for every metadata entry. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
 * Add `placement_policy_id` attribute to `vcd_vapp_vm` and `vcd_vm` resource and data source,
   to support the usage of VM Placement Policies in VMs ([#922](https://github.com/vmware/terraform-provider-vcd/pull/922))
-
-## IMPROVEMENTS
 * Resources and data sources `vcd_vapp_vm` and `vcd_vm` have new computed fields `status` and
   `status_text` ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
 * Add `vm_placement_policy_ids` attribute to `vcd_org_vdc` resource and data source to assign existing
@@ -37,9 +37,7 @@
 * Add attributes `href`, `vapp_template_list`, `media_item_list`, and `publishing_url` to `vcd_catalog` resource and data source to show published items ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * Add `subscribed_catalog` to examples ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * Upgrade Terraform SDK dependency to v2.24.1 ([#920](https://github.com/vmware/terraform-provider-vcd/pull/920), [#930](https://github.com/vmware/terraform-provider-vcd/pull/930))
-* Data source `vcd_nsxt_edge_cluster` deprecated `vdc` field in favor of 3 new fields to define
-  NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
-* Resource and data source `vcd_org_vdc` introduced new field `edge_cluster_id` to specify NSX-T
+* Resource and data source `vcd_org_vdc` introduce new field `edge_cluster_id` to specify NSX-T
   Edge Cluster for VDC ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 * Resources, that are removed outside of Terraform control are removed from state and recreated
   instead of returning error ([#925](https://github.com/vmware/terraform-provider-vcd/pull/925))
@@ -70,29 +68,31 @@
   `power_on=true` ([#932](https://github.com/vmware/terraform-provider-vcd/pull/932))
 
 ## DEPRECATIONS
-Deprecate `vcd_external_network` in favor of `vcd_external_network_v2` ([#903](https://github.com/vmware/terraform-provider-vcd/pull/903))
-* Deprecated `default_vm_sizing_policy_id` field in `vcd_org_vdc` resource and data source. This field is misleading as it
+* Deprecate `vcd_external_network` in favor of `vcd_external_network_v2` ([#903](https://github.com/vmware/terraform-provider-vcd/pull/903))
+* Deprecate `default_vm_sizing_policy_id` field in `vcd_org_vdc` resource and data source. This field is misleading as it
   can contain not only VM Sizing Policies but also VM Placement Policies or vGPU Policies.
   Its replacement is the `default_compute_policy_id` attribute ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904))
-* Deprecated attribute `metadata` in favor of `metadata_entry` in the following data sources:
+* Deprecate attribute `metadata` in favor of `metadata_entry` in the following data sources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_catalog_vapp_template`, `vcd_independent_disk`, `vcd_network_direct`,
   `vcd_network_isolated`, `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`,
   `vcd_org_vdc`, `vcd_provider_vdc`, `vcd_storage_profile`, `vcd_vapp`, `vcd_vapp_vm`. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
-* Deprecated attribute `metadata` in favor of `metadata_entry` in the following resources:
+* Deprecate attribute `metadata` in favor of `metadata_entry` in the following resources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_catalog_vapp_template`, `vcd_independent_disk`, `vcd_network_direct`,
   `vcd_network_isolated`, `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`,
   `vcd_org_vdc`, `vcd_vapp`, `vcd_vapp_vm`. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
-* Deprecated attribute `catalog_item_metadata` in favor of `metadata_entry` in the `vcd_catalog_item` resource
+* Deprecate attribute `catalog_item_metadata` in favor of `metadata_entry` in the `vcd_catalog_item` resource
   and data source. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
-* Deprecated `template_name` in favor of `vapp_template_id` in `vcd_vapp_vm` and `vcd_vm` to be able to use unique URNs instead
+* Deprecate `template_name` in favor of `vapp_template_id` in `vcd_vapp_vm` and `vcd_vm` to be able to use unique URNs instead
   of catalog dependent names ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
-* Deprecated `boot_image` in favor of `boot_image_id` in `vcd_vapp_vm` and `vcd_vm` to be able to use URNs instead
+* Deprecate `boot_image` in favor of `boot_image_id` in `vcd_vapp_vm` and `vcd_vm` to be able to use URNs instead
   of catalog dependent names ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
-* Deprecated `catalog_name` in favor of `vapp_template_id` or `boot_image_id`, which don't require a catalog name anymore ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
+* Deprecate `catalog_name` in favor of `vapp_template_id` or `boot_image_id`, which don't require a catalog name anymore ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
+* Data source `vcd_nsxt_edge_cluster` deprecates `vdc` field in favor of 3 new fields to define
+  NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
 ## NOTES
 * All non-NSX-V resources and data sources use the new SDK signatures with Context and Diagnostics ([#895](https://github.com/vmware/terraform-provider-vcd/pull/895))
-* VM Creation code refactored which should result in identifiable parts creation for all types of
+* Refactor VM Creation code, which should result in identifiable parts creation for all types of
   VMs. Behind the scenes, there are 4 different types of VMs with respective different API calls as
   listed below ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
   * `vcd_vapp_vm` built from vApp template
