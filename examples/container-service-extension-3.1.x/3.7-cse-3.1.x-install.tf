@@ -21,7 +21,7 @@ terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.7.0"
+      version = ">= 3.8.0"
     }
   }
 }
@@ -381,14 +381,54 @@ resource "vcd_catalog_item" "tkgm_ova" {
   upload_piece_size    = 100
   show_upload_progress = true
 
-  catalog_item_metadata = {
-    "kind"               = "TKGm"                                 # This value is always the same
-    "kubernetes"         = "TKGm"                                 # This value is always the same
-    "kubernetes_version" = split("-", var.tkgm-ova-name)[3]       # The version comes in the OVA name downloaded from Customer Connect
-    "name"               = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
-    "os"                 = split("-", var.tkgm-ova-name)[0]       # The OS comes in the OVA name downloaded from Customer Connect
-    "revision"           = "1"                                    # This value is always the same
+  metadata_entry {
+    key         = "kind"
+    value       = "TKGm" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
   }
+
+  metadata_entry {
+    key         = "kubernetes"
+    value       = "TKGm" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "kubernetes_version"
+    value       = split("-", var.tkgm-ova-name)[3] # The version comes in the OVA name downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "name"
+    value       = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "os"
+    value       = split("-", var.tkgm-ova-name)[0] # The OS comes in the OVA name downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "revision"
+    value       = "1" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
 }
 
 # AVI configuration for Kubernetes services, this allows the cluster to create Kubernetes services of type Load Balancer.
