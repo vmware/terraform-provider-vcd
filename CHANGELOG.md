@@ -91,6 +91,7 @@
   NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
 ## NOTES
+* Add a guide and examples on **Catalog subscribing and sharing** to the documentation ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * All non-NSX-V resources and data sources use the new SDK signatures with Context and Diagnostics ([#895](https://github.com/vmware/terraform-provider-vcd/pull/895))
 * Refactor VM Creation code, which should result in identifiable parts creation for all types of
   VMs. Behind the scenes, there are 4 different types of VMs with respective different API calls as
@@ -142,7 +143,6 @@
 * Add VDC Group compatibility for `resource/vcd_nsxt_alb_pool` and `datasource/vcd_nsxt_alb_pool` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841))
 * `resource/vcd_vm_sizing_policy`: remove (deprecate) unneeded `org` property ([#843](https://github.com/vmware/terraform-provider-vcd/pull/843))
 * `datasource/vcd_vm_sizing_policy`: remove (deprecate) unneeded `org` property ([#843](https://github.com/vmware/terraform-provider-vcd/pull/843))
-* Upgrade Terraform SDK dependency to v2.17.0 [#844, #853]
 * Add changes to allow running tests on CDS and make NSX-V configuration optional ([#848](https://github.com/vmware/terraform-provider-vcd/pull/848))
 * `resource/vcd_catalog_item` and `datasource/vcd_catalog_item` now support metadata for the CatalogItem entity with `catalog_item_metadata` attribute ([#851](https://github.com/vmware/terraform-provider-vcd/pull/851))
 * `metadata` attribute on every compatible resource and data source is now more performant when adding and updating metadata ([#853](https://github.com/vmware/terraform-provider-vcd/pull/853))
@@ -177,6 +177,7 @@ Sizing Policy with CPU or memory defined, `template_name` is used and `power_on`
 * Adjust `role` data source and resource documentation for `rights` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
 * Adjust `rights_bundle` data source and resource documentation for `rights` and `tenants` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
 * Add an example about using CloudInit to Guest Customization guides page ([#852](https://github.com/vmware/terraform-provider-vcd/pull/852))
+* Upgrade Terraform SDK dependency to v2.17.0 [#844, #853]
 * Testing infrastructure: make NSX-T VDC primary for tests instead of NSX-V one (required for CDS
   certification) ([#886](https://github.com/vmware/terraform-provider-vcd/pull/886))
 * Add Cloud Director Service (CDS) as supported ([#890](https://github.com/vmware/terraform-provider-vcd/pull/890))
