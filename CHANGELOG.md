@@ -91,7 +91,7 @@
   NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
 ### NOTES
-* Add a guide and examples on **Catalog subscribing and sharing** to the documentation ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
+* Add a guide and examples on [Catalog subscribing and sharing](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/catalog_subscription_and_sharing) to the documentation ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * All non-NSX-V resources and data sources use the new SDK signatures with Context and Diagnostics ([#895](https://github.com/vmware/terraform-provider-vcd/pull/895))
 * Refactor VM Creation code, which should result in identifiable parts creation for all types of
   VMs. Behind the scenes, there are 4 different types of VMs with respective different API calls as
