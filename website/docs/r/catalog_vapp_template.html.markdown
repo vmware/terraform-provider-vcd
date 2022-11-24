@@ -30,9 +30,20 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
   upload_piece_size    = 10
   show_upload_progress = true
 
-  metadata = {
-    license = "public"
-    version = "v1"
+  metadata_entry {
+    key         = "license"
+    value       = "public"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "version"
+    value       = "v1"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
   }
 }
 ```

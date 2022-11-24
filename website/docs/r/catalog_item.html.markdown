@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_catalog\_item
 
-~> This resource is deprecated. Please use [`vcd_catalog_vapp_template`](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template) instead.
+-> If you only need vApp Template features, you may use [`vcd_catalog_vapp_template`](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template) instead.
 
 Provides a VMware Cloud Director catalog item resource. This can be used to upload OVA to catalog and delete it.
 
