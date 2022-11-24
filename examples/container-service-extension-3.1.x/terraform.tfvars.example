@@ -17,7 +17,7 @@ service-account-password = "set-me-up"
 # CSE installation config
 # ------------------------------------------------
 
-# Org and VDC can be created or fetched. See 3.7-cse-install.tf for details
+# Org and VDC can be created or fetched. See 3.8-cse-install.tf for details
 org-name = "cse_org"
 vdc-name = "cse_vdc"
 

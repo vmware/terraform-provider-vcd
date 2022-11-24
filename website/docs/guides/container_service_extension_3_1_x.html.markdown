@@ -21,7 +21,7 @@ To know more about CSE v3.1.x, you can explore [the official website](https://vm
 In order to complete the steps described in this guide, please be aware:
 
 * CSE v3.1.x is supported from VCD v10.3.1 or above, make sure your VCD appliance matches the criteria.
-* Terraform provider needs to be v3.7.0 or above.
+* Terraform provider needs to be v3.8.0 or above.
 * All CSE elements use NSX-T backed resources, NSX-V **is not** is supported.
 * Some steps require the usage of `cse` extension for `vcd` CLI. Make sure you have them installed and working.
   Go [here](http://vmware.github.io/vcd-cli/install.html) for `vcd` CLI installation,
@@ -402,7 +402,7 @@ resource "vcd_catalog" "cat-cse" {
 
 Then you can upload TKGm OVAs to this catalog. These can be downloaded from **VMware Customer Connect**.
 To upload them, use the [Catalog Item](/providers/vmware/vcd/latest/docs/resources/catalog_item) resource with
-`catalog_item_metadata`.
+`metadata_entry`.
 
 ~> Only TKGm OVAs are supported. CSE is **not compatible** yet with PhotonOS
 
@@ -421,18 +421,57 @@ resource "vcd_catalog_item" "tkgm_ova" {
   upload_piece_size    = 100
   show_upload_progress = true
 
-  catalog_item_metadata = {
-    "kind"               = "TKGm"
-    "kubernetes"         = "TKGm"
-    "kubernetes_version" = "v1.21.2+vmware.1"
-    "name"               = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-    "os"                 = "ubuntu"
-    "revision"           = "1"
+  metadata_entry {
+    key         = "kind"
+    value       = "TKGm" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "kubernetes"
+    value       = "TKGm" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "kubernetes_version"
+    value       = split("-", var.tkgm-ova-name)[3] # The version comes in the OVA name downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "name"
+    value       = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "os"
+    value       = split("-", var.tkgm-ova-name)[0] # The OS comes in the OVA name downloaded from Customer Connect
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
+  }
+
+  metadata_entry {
+    key         = "revision"
+    value       = "1" # This value is always the same
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = "false"
   }
 }
 ```
 
-Notice that all the metadata entries from `catalog_item_metadata` are required for CSE to fetch the OVA file:
+Notice that all the metadata entries from the set of `metadata_entry` are required for CSE to fetch the OVA file:
 * `kind`: Needs to be set to `TKGm` in all cases, as *Native* is not supported yet.
 * `kubernetes`: Same as above.
 * `kubernetes_version`: When the OVA is downloaded from VMware Customer Connect, the version appears as part of the file name.
