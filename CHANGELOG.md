@@ -3,8 +3,8 @@
 ## FEATURES
 * **New Resource:** `vcd_catalog_vapp_template` to manage the upload and usage of vApp Templates ([#899](https://github.com/vmware/terraform-provider-vcd/pull/899))
 * **New Data Source:** `vcd_catalog_vapp_template` to fetch existing vApp Templates ([#899](https://github.com/vmware/terraform-provider-vcd/pull/899))
-* **New Resource:** `vcd_vm_placement_policy` that allows creating VM Placement Policies ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904)], [[#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
-* **New Data Source:** `vcd_vm_placement_policy` that allows fetching existing VM Placement Policies ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904)], [[#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
+* **New Resource:** `vcd_vm_placement_policy` that allows creating VM Placement Policies ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904), [#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
+* **New Data Source:** `vcd_vm_placement_policy` that allows fetching existing VM Placement Policies ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904), [#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
 * **New Data Source:** `vcd_provider_vdc` that allows fetching existing Provider VDCs ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904))
 * **New Data Source:** `vcd_vm_group` that allows fetching existing VM Groups, to be able to create VM Placement Policies ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904))
 * **New Resource**: `vcd_org_ldap` that allows configuring LDAP settings for an organization ([#909](https://github.com/vmware/terraform-provider-vcd/pull/909))
@@ -31,12 +31,12 @@
 * Resources and data sources `vcd_vapp_vm` and `vcd_vm` have new computed fields `status` and
   `status_text` ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
 * Add `vm_placement_policy_ids` attribute to `vcd_org_vdc` resource and data source to assign existing
-  VM Placement Policies to VDCs ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904)], [[#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
+  VM Placement Policies to VDCs ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904), [#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
 * Add `default_compute_policy_id` attribute to `vcd_org_vdc` resource and data source to specify a default
-  VM Sizing Policy, VM Placement Policy or vGPU Policy for the VDC ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904)], [[#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
+  VM Sizing Policy, VM Placement Policy or vGPU Policy for the VDC ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904), [#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
 * Add attributes `href`, `vapp_template_list`, `media_item_list`, and `publishing_url` to `vcd_catalog` resource and data source to show published items ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * Add `subscribed_catalog` to examples ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
-* Upgrade Terraform SDK dependency to v2.24.1 ([#920](https://github.com/vmware/terraform-provider-vcd/pull/920)] [[#930](https://github.com/vmware/terraform-provider-vcd/pull/930))
+* Upgrade Terraform SDK dependency to v2.24.1 ([#920](https://github.com/vmware/terraform-provider-vcd/pull/920), [#930](https://github.com/vmware/terraform-provider-vcd/pull/930))
 * Data source `vcd_nsxt_edge_cluster` deprecated `vdc` field in favor of 3 new fields to define
   NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 * Resource and data source `vcd_org_vdc` introduced new field `edge_cluster_id` to specify NSX-T
