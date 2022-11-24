@@ -46,7 +46,7 @@ do
     fi
 
     # Generate the header
-    echo "## $(echo $section | tr 'a-z' 'A-Z' | tr '-' ' ')"
+    echo "### $(echo $section | tr 'a-z' 'A-Z' | tr '-' ' ')"
 
     # Print the changes files, sorted by PR number
     for f in $(ls *${section}.md | sort -n)

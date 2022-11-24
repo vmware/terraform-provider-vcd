@@ -1,6 +1,6 @@
 ## 3.8.0 (November 25, 2022)
 
-## FEATURES
+### FEATURES
 * **New Resource:** `vcd_catalog_vapp_template` to manage the upload and usage of vApp Templates ([#899](https://github.com/vmware/terraform-provider-vcd/pull/899))
 * **New Data Source:** `vcd_catalog_vapp_template` to fetch existing vApp Templates ([#899](https://github.com/vmware/terraform-provider-vcd/pull/899))
 * **New Resource:** `vcd_vm_placement_policy` that allows creating VM Placement Policies ([#904](https://github.com/vmware/terraform-provider-vcd/pull/904), [#911](https://github.com/vmware/terraform-provider-vcd/pull/911))
@@ -14,7 +14,7 @@
 * **New Data Source**: `vcd_subscribed_catalog` that allows reading a subscribed catalog ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * **New Data Source**: `vcd_task` that allows reading a VCD task ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * Add attribute `metadata_entry` to the following data sources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_independent_disk`, `vcd_network_direct`, `vcd_network_isolated`,
   `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`, `vcd_org_vdc`, `vcd_provider_vdc`,
@@ -59,7 +59,7 @@
   to use unique URNs to reference vApp Templates and Media items through data sources, to build strong dependencies
   in Terraform configuration. ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
 
-## BUG FIXES
+### BUG FIXES
 * Fix bug where VM was power cycled multiple times during creation ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
 * Fix bug where storage_profile is ignored for empty (non template) VM ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
 * `resource/vcd_nsxt_alb_edgegateway_service_engine_group` field `reserved_virtual_services` accepts
@@ -67,7 +67,7 @@
 * Fixed a bug in `resource/vcd_vapp` that would prevent to Power off vApp when previous state was
   `power_on=true` ([#932](https://github.com/vmware/terraform-provider-vcd/pull/932))
 
-## DEPRECATIONS
+### DEPRECATIONS
 * Deprecate `vcd_external_network` in favor of `vcd_external_network_v2` ([#903](https://github.com/vmware/terraform-provider-vcd/pull/903))
 * Deprecate `default_vm_sizing_policy_id` field in `vcd_org_vdc` resource and data source. This field is misleading as it
   can contain not only VM Sizing Policies but also VM Placement Policies or vGPU Policies.
@@ -90,7 +90,7 @@
 * Data source `vcd_nsxt_edge_cluster` deprecates `vdc` field in favor of 3 new fields to define
   NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
-## NOTES
+### NOTES
 * Add a guide and examples on **Catalog subscribing and sharing** to the documentation ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * All non-NSX-V resources and data sources use the new SDK signatures with Context and Diagnostics ([#895](https://github.com/vmware/terraform-provider-vcd/pull/895))
 * Refactor VM Creation code, which should result in identifiable parts creation for all types of
@@ -114,7 +114,7 @@
 
 ## 3.7.0 (August 2, 2022)
 
-## FEATURES
+### FEATURES
 * Add a guide and examples to configure and install **Container Service Extension (CSE)** 3.1.x using Terraform ([#856](https://github.com/vmware/terraform-provider-vcd/pull/856), [#882](https://github.com/vmware/terraform-provider-vcd/pull/882), [#876](https://github.com/vmware/terraform-provider-vcd/pull/876))
 * **New Resource:** `vcd_security_tag` that allows creating security tags ([#845](https://github.com/vmware/terraform-provider-vcd/pull/845))
 * **New Resource:** `vcd_org_vdc_access_control` to manage VDC access control ([#850](https://github.com/vmware/terraform-provider-vcd/pull/850))
@@ -132,7 +132,7 @@
 * **New Resource:** `vcd_nsxt_edgegateway_bgp_neighbor` allows users to configure NSX-T Edge Gateway BGP Neighbors ([#879](https://github.com/vmware/terraform-provider-vcd/pull/879), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
 * **New Data Source:** `vcd_nsxt_edgegateway_bgp_neighbor` allows users to read NSX-T Edge Gateway BGP Neighbors ([#879](https://github.com/vmware/terraform-provider-vcd/pull/879), [#887](https://github.com/vmware/terraform-provider-vcd/pull/887), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * `resource/vcd_nsxt_network_dhcp` and `datasource/vcd_nsxt_firewall` now support `dns_servers` ([#830](https://github.com/vmware/terraform-provider-vcd/pull/830))
 * Add VDC Group compatibility for `resource/vcd_nsxt_firewall` and `datasource/vcd_nsxt_firewall` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
 * Add VDC Group compatibility for `resource/vcd_nsxt_nat_rule` and `datasource/vcd_nsxt_nat_rule` ([#841](https://github.com/vmware/terraform-provider-vcd/pull/841), [#888](https://github.com/vmware/terraform-provider-vcd/pull/888))
@@ -150,7 +150,7 @@
 * Add `supported_feature_set` to **vcd_nsxt_alb_service_engine_group** resource and data source to be compatible with VCD v10.4, which replaces the **vcd_nsxt_alb_controller** `license_type` ([#878](https://github.com/vmware/terraform-provider-vcd/pull/878))
 * Add `supported_feature_set` to **vcd_nsxt_alb_settings** resource and data source to be compatible with VCD v10.4, which replaces the **vcd_nsxt_alb_controller** `license_type` ([#878](https://github.com/vmware/terraform-provider-vcd/pull/878))
 
-## BUG FIXES
+### BUG FIXES
 * Fix typo in documentation for `resource/vcd_vapp_vm` to fix broken attribute rendering ([#828](https://github.com/vmware/terraform-provider-vcd/pull/828))
 * Skip binary and upgrade tests for NVMe in VCD < 10.2.2 ([#838](https://github.com/vmware/terraform-provider-vcd/pull/838))
 * Network lookup could return incorrect ID for `vcd_vapp_network` and `vcd_vapp_org_network` ([#838](https://github.com/vmware/terraform-provider-vcd/pull/838))
@@ -161,7 +161,7 @@
 * Fix a bug that causes `vcd_vapp_vm` to fail on creation if attribute `sizing_policy_id` is set and corresponds to a
 Sizing Policy with CPU or memory defined, `template_name` is used and `power_on` is `true` ([#883](https://github.com/vmware/terraform-provider-vcd/pull/883))
 
-## DEPRECATIONS
+### DEPRECATIONS
 * Deprecate `vdc` field in NSX-T Edge Gateway child entities. This field is no longer precise as
   with introduction of VDC Group support an Edge Gateway can be bound either to a VDC, either to a
   VDC Group. Parent VDC or VDC Group is now inherited from `edge_gateway_id` field. Impacted
@@ -172,7 +172,7 @@ Sizing Policy with CPU or memory defined, `template_name` is used and `power_on`
 * `resource/vcd_nsxt_network_dhcp` and `datasource/vcd_nsxt_network_dhcp` deprecate `vdc` field to
   make consumption more friendly with VDC Groups ([#846](https://github.com/vmware/terraform-provider-vcd/pull/846))
 
-## NOTES
+### NOTES
 * Apply `gofmt -s -w .` to cleanup code ([#833](https://github.com/vmware/terraform-provider-vcd/pull/833))
 * Adjust `role` data source and resource documentation for `rights` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
 * Adjust `rights_bundle` data source and resource documentation for `rights` and `tenants` attribute to reflect its *Set* nature ([#834](https://github.com/vmware/terraform-provider-vcd/pull/834))
@@ -185,7 +185,7 @@ Sizing Policy with CPU or memory defined, `template_name` is used and `power_on`
 
 ## 3.6.0 (April 14, 2022)
 
-## FEATURES
+### FEATURES
 * **New Data Source:** `vcd_org_group` allows to fetch an Organization Group to use it with other resources ([#798](https://github.com/vmware/terraform-provider-vcd/pull/798))
 * Add `catalog_version`, `number_of_vapp_templates`, `number_of_media`, `is_shared`, `is_published`, `publish_subscription_type` computed fields to catalog resource and datasource  ([#800](https://github.com/vmware/terraform-provider-vcd/pull/800))
 * Update `vcd_catalog` datasource so now it can take org from provider level or datasource level like modern resources/datasources ([#800](https://github.com/vmware/terraform-provider-vcd/pull/800))
@@ -197,7 +197,7 @@ Sizing Policy with CPU or memory defined, `template_name` is used and `power_on`
   Profile ID for usage in `vcd_nsxt_distributed_firewall` ([#810](https://github.com/vmware/terraform-provider-vcd/pull/810))
 
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * `resource/vcd_catalog` add support for `metadata` so this field can be set when creating/updating catalogs. ([#780](https://github.com/vmware/terraform-provider-vcd/pull/780))
 * `datasource/vcd_catalog` add support for `metadata` so this field can be retrieved when reading from catalogs. ([#780](https://github.com/vmware/terraform-provider-vcd/pull/780))
 * `data/vcd_storage_profile` add IOPS settings properties `iops_limiting_enabled`, `maximum_disk_iops`, `default_disk_iops`, `disk_iops_per_gb_max`, `iops_limit` and other data attributes `limit`, `units`, `used_storage`, `default`, `enabled`, `iops_allocated` to the state ([#782](https://github.com/vmware/terraform-provider-vcd/pull/782))
@@ -242,14 +242,14 @@ or VDC Group from Edge Gateway  ([#814](https://github.com/vmware/terraform-prov
 * `vcd_vapp_vm`, `vcd_vm` allows configuring advanced compute settings (shares and reservations) for VM ([#779](https://github.com/vmware/terraform-provider-vcd/pull/779))
 * `vcd_independent_disk` allows creating additionally shared disks types by configuring `sharing_type` (VCD 10.3+). Also, add update support. Add new disk type `NVME` and new attributes `encrypted` and `uuid`. Import now allows listing all independent disks in VDC ([#789](https://github.com/vmware/terraform-provider-vcd/pull/789), [#810](https://github.com/vmware/terraform-provider-vcd/pull/810))
 
-## BUG FIXES
+### BUG FIXES
 * Fixes Issue #754 where VDC creation with storage profile `enabled=false` wasn't working ([#781](https://github.com/vmware/terraform-provider-vcd/pull/781))
 * Fix Issue #611 when read of `vcd_vapp_vm` and `vcd_vm` resource failed when VM isn't found. Now allows Terraform to recreate resource when it isn't found. ([#783](https://github.com/vmware/terraform-provider-vcd/pull/783))
 * Fix Issue #759 where enable_ip_masquerade handling in vcd_vapp_nat_rules resource wasn't correct ([#784](https://github.com/vmware/terraform-provider-vcd/pull/784))
 * Fix bug in `datasource/vcd_nsxt_app_port_profile` where a lookup of a TENANT scope profile could
   fail finding exact Application Port Profile in case Org has multiple VDCs ([#812](https://github.com/vmware/terraform-provider-vcd/pull/812))
 
-## NOTES
+### NOTES
 * Default values for `deployed_vm_quota` and `stored_vm_quota` for `org_user` have changed from 10 to 0 (unlimited) ([#798](https://github.com/vmware/terraform-provider-vcd/pull/798))
 * Internal functions `lockParentEdgeGtw`, `unLockParentEdgeGtw`, `lockEdgeGateway`,
   `unlockEdgeGateway` were converted to use just their ID for lock key instead of full path
@@ -263,7 +263,7 @@ or VDC Group from Edge Gateway  ([#814](https://github.com/vmware/terraform-prov
 
 ## 3.5.1 (January 13, 2022)
 
-## BUG FIXES
+### BUG FIXES
 Fix Issue #769 "Plugin did not respond: terraform-provider-vcd may crash with Terraform 1.1+ on some OSes".
 
 The consequences of this fix are that some messages that were directed at the standard output (such as
@@ -272,7 +272,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 
 ## 3.5.0 (January 7, 2022)
 
-## FEATURES
+### FEATURES
 * **New Resource:** `vcd_nsxt_alb_settings` for managing NSX-T ALB on NSX-T Edge Gateways ([#726](https://github.com/vmware/terraform-provider-vcd/pull/726))
 * **New Data source:** `vcd_nsxt_alb_settings` for reading NSX-T ALB on NSX-T Edge Gateways  ([#726](https://github.com/vmware/terraform-provider-vcd/pull/726))
 * **New Resource:** `vcd_library_certificate` for managing certificates in library (provider configuration) ([#733](https://github.com/vmware/terraform-provider-vcd/pull/733))
@@ -290,7 +290,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * **New Data source:** `vcd_nsxt_alb_virtual_service` for reading NSX-T ALB Virtual Service on NSX-T Edge Gateways
   ([#757](https://github.com/vmware/terraform-provider-vcd/pull/757), [#764](https://github.com/vmware/terraform-provider-vcd/pull/764))
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * Remove Coverity warnings from code ([#734](https://github.com/vmware/terraform-provider-vcd/pull/734))
 * `resource/vcd_vapp_vm`, `resource/vcd_vm_internal_disk` add support for disk controller type nvme 
   ([#680](https://github.com/vmware/terraform-provider-vcd/pull/680),[#739](https://github.com/vmware/terraform-provider-vcd/pull/739))
@@ -299,14 +299,14 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * `resource/vcd_vapp` add support for `lease` settings management. [[#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
 * `datasource/vcd_vapp` add support for `lease` settings visualization. ([#762](https://github.com/vmware/terraform-provider-vcd/pull/762))
 
-## BUG FIXES
+### BUG FIXES
 * Fix bootable media connection in `vcd_vm` by sending media reference in `CreateVM` ([#714](https://github.com/vmware/terraform-provider-vcd/pull/714))
 * Fix broken documentation links ([#721](https://github.com/vmware/terraform-provider-vcd/pull/721))
 * Fix bug where using `vcd_vm_internal_disk` could remove `description` field in `vcd_vapp_vm` and `vcd_vm` ([#758](https://github.com/vmware/terraform-provider-vcd/pull/758))
 * Skip tests for resources not available in 10.1 ([#761](https://github.com/vmware/terraform-provider-vcd/pull/761))
 * Fix wrong references in `TestAccVcdVAppVmMultiNIC` ([#761](https://github.com/vmware/terraform-provider-vcd/pull/761))
 
-## NOTES
+### NOTES
 * Add Guest Customization docs with examples to "guides" section ([#729](https://github.com/vmware/terraform-provider-vcd/pull/729))
 * Improve HCL samples in documentation to only contain single newline spaces and adjust automated check to catch it
   ([#747](https://github.com/vmware/terraform-provider-vcd/pull/747))
@@ -315,7 +315,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 
 ## 3.4.0 (September 30, 2021)
 
-## FEATURES
+### FEATURES
 * **New Resource:** `vcd_nsxt_alb_controller` for managing NSX-T ALB Controllers (provider configuration) ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
 * **New Data source:** `vcd_nsxt_alb_controller` for reading NSX-T ALB Controllers (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709),[#718](https://github.com/vmware/terraform-provider-vcd/pull/718))
 * **New Resource:** `vcd_nsxt_alb_cloud` for managing NSX-T ALB Clouds (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
@@ -324,7 +324,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * **New Resource:** `vcd_nsxt_alb_service_engine_group` for managing NSX-T ALB Service Engine Groups (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
 * **New Data source:** `vcd_nsxt_alb_service_engine_group` for reading NSX-T ALB Service Engine Groups (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709),[#718](https://github.com/vmware/terraform-provider-vcd/pull/718))
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * **Resource** and **Data source** `vcd_external_network_v2` support NSX-T Segment backed network ([#711](https://github.com/vmware/terraform-provider-vcd/pull/711))
 * `vcd_org_vdc`: it is now possible adding and removing storage profiles ([#698](https://github.com/vmware/terraform-provider-vcd/pull/698))
 * `data/vcd_nsxt_edge_cluster` add documentation for missing fields ([#700](https://github.com/vmware/terraform-provider-vcd/pull/700))
@@ -335,24 +335,24 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * Improve `test-tags.sh` script to handle new build tag format ([#707](https://github.com/vmware/terraform-provider-vcd/pull/707))
 * Prevent invalid space in the base64 encoded authentication string in the token scripts specific for Linux ([#708](https://github.com/vmware/terraform-provider-vcd/pull/708))
 
-## BUG FIXES
+### BUG FIXES
 * Fix Issue #696: Catalog deletion failure returns as success ([#698](https://github.com/vmware/terraform-provider-vcd/pull/698))
 * Fix Issue #648 `vcd_org_vdc`: adding a storage profile requires the vdc to be replaced ([#698](https://github.com/vmware/terraform-provider-vcd/pull/698))
 * Primary NIC removal for `vcd_vapp_vm` and `vcd_vapp` is done in cold fashion ([#716](https://github.com/vmware/terraform-provider-vcd/pull/716))
 * Change broken docs reference links with final docs format
 
-## NOTES
+### NOTES
 * Drop support for VCD 10.0 ([#704](https://github.com/vmware/terraform-provider-vcd/pull/704))
 
 ## 3.3.1 (July 5, 2021)
 
-## BUG FIXES
+### BUG FIXES
 * (Issue #689) `resource/vcd_vm` and `resource/vcd_vapp_vm` cannot find templates in shared catalogs from other Orgs 
   ([#691](https://github.com/vmware/terraform-provider-vcd/pull/691))
 
 ## 3.3.0 (June 30, 2021)
 
-## FEATURES
+### FEATURES
 * **New Resource:** `vcd_nsxt_security_group` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
 * **New Data source:** `vcd_nsxt_security_group` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
 * **New Resource:** `vcd_nsxt_ip_set` for NSX-T IP Set management ([#668](https://github.com/vmware/terraform-provider-vcd/pull/668))
@@ -373,7 +373,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * **New Resource:** `vcd_nsxt_ipsec_vpn_tunnel` for NSX-T IPsec VPN Tunnel management ([#678](https://github.com/vmware/terraform-provider-vcd/pull/678))
 * **New Data source:** `vcd_nsxt_ipsec_vpn_tunnel` for NSX-T IPsec VPN Tunnel management ([#678](https://github.com/vmware/terraform-provider-vcd/pull/678))
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * Fix a few typos and add example in Routed Network V2 docs ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
 * Add compatibility with Terraform 0.15.0 for `TestAccVcdNsxtStandaloneVmTemplate` and
   `TestAccVcdStandaloneVmTemplate` ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
@@ -384,14 +384,14 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * Change "vCloud Director" or "vCloudDirector" to "VMware Cloud Director" in all docs. ([#682](https://github.com/vmware/terraform-provider-vcd/pull/682))
 * Update `org_user` docs to include creation of system users. ([#682](https://github.com/vmware/terraform-provider-vcd/pull/682))
 
-## BUG FIXES
+### BUG FIXES
 * `resource/vcd_edgegateway` not retrieved when there are more than 25 items ([#660](https://github.com/vmware/terraform-provider-vcd/pull/660))
 * (Issue #633) vApp description was ignored in creation and update. ([#664](https://github.com/vmware/terraform-provider-vcd/pull/664))
 * (Issue #634) Setting CPU count to less than what the template has throws error. ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
 * Tests: LDAP related tests had incorrect port mapping after image update ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
 * `resource/vcd_org_vdc` complained about storage profile name update from empty to specified on some VCD versions ([#676](https://github.com/vmware/terraform-provider-vcd/pull/676))
 
-## NOTES
+### NOTES
 * Bump terraform-plugin-sdk to 2.4.4 ([#657](https://github.com/vmware/terraform-provider-vcd/pull/657))
 * Add VCDClient.GetNsxtEdgeGateway, VCDClient.GetNsxtEdgeGatewayById, and
   GetNsxtEdgeGatewayFromResourceById convenience functions ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
@@ -400,7 +400,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 
 ## 3.2.0 (March 11, 2021)
 
-## FEATURES
+### FEATURES
 * **New Resource:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
 * **New Data source:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
 * **New Resource:** `vcd_network_isolated_v2` for NSX-T and NSX-V isolated networks ([#636](https://github.com/vmware/terraform-provider-vcd/issues/636))
@@ -412,7 +412,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * **New Resource:** `vcd_nsxt_network_dhcp` for NSX-T routed network DHCP configuration ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
 * **New Data source:** `vcd_nsxt_network_dhcp` for NSX-T routed network DHCP configuration ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
 
-## IMPROVEMENTS
+### IMPROVEMENTS
 * `make install` will use lightweight tags for build version injection ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
 * `datasource/vcd_resource_list` adds `vcd_vm` to the supported resource types ([#638](https://github.com/vmware/terraform-provider-vcd/issues/638))
 * `datasource/vcd_resource_list` adds `vcd_network_routed_v2` to the supported resource types ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
@@ -422,7 +422,7 @@ log file (`go-vcloud-director.log`) using the special tag `[SCREEN]` for easy fi
 * `vcd_network_isolated`and `vcd_network_routed` throw warnings on create and errors on import by referring to `vcd_network_isolated_v2`and `vcd_network_routed_v2` for NSX VDCs ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
 * `vcd_vapp_network` throws error when `org_network_name` is specified for NSX-T VDC (because NSX-T networks cannot be attached to vApp networks) ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
 
-## NOTES
+### NOTES
 * Internal functions `lockParentEdgeGtw` and `unLockParentEdgeGtw` will handle Edge Gateway locks when `name` or `id` reference is used ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
 
 ## 3.1.0 (December 18, 2020)
