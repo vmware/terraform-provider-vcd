@@ -20,12 +20,12 @@
   `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`, `vcd_org_vdc`, `vcd_provider_vdc`,
   `vcd_storage_profile`, `vcd_vapp`, `vcd_vapp_vm`. This new attribute replaces `metadata`
   to add support of metadata visibility (user access levels), all the available types and domains for every metadata
-  entry. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
+  entry ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
 * Add attribute `metadata_entry` to the following resources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_independent_disk`, `vcd_network_direct`, `vcd_network_isolated`,
   `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`, `vcd_org_vdc`, `vcd_vapp`,
   `vcd_vapp_vm`. This new attribute replaces `metadata` to add support of metadata visibility (user access levels),
-  all the available types and domains for every metadata entry. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
+  all the available types and domains for every metadata entry ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
 * Add `placement_policy_id` attribute to `vcd_vapp_vm` and `vcd_vm` resource and data source,
   to support the usage of VM Placement Policies in VMs ([#922](https://github.com/vmware/terraform-provider-vcd/pull/922))
 * Resources and data sources `vcd_vapp_vm` and `vcd_vm` have new computed fields `status` and
@@ -57,14 +57,16 @@
   ('EDGE', 'NETWORK', 'RELAY') and lease time ([#929](https://github.com/vmware/terraform-provider-vcd/pull/929))
 * Add the new attributes `vapp_template_id`, `boot_image_id` to the resources `vcd_vapp_vm` and `vcd_vm` to be able
   to use unique URNs to reference vApp Templates and Media items through data sources, to build strong dependencies
-  in Terraform configuration. ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
+  in Terraform configuration ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
+* Data source `vcd_nsxt_edge_cluster` supports NSX-T Edge Cluster filtering by `vdc_id`, `vdc_group_id`, 
+  and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
 ### BUG FIXES
 * Fix bug where VM was power cycled multiple times during creation ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
 * Fix bug where storage_profile is ignored for empty (non template) VM ([#901](https://github.com/vmware/terraform-provider-vcd/pull/901))
 * `resource/vcd_nsxt_alb_edgegateway_service_engine_group` field `reserved_virtual_services` accepts
   "0" as value ([#923](https://github.com/vmware/terraform-provider-vcd/pull/923))
-* Fixed a bug in `resource/vcd_vapp` that would prevent to Power off vApp when previous state was
+* Fix a bug in `resource/vcd_vapp` that would prevent to Power off vApp when previous state was
   `power_on=true` ([#932](https://github.com/vmware/terraform-provider-vcd/pull/932))
 
 ### DEPRECATIONS
@@ -75,11 +77,11 @@
 * Deprecate attribute `metadata` in favor of `metadata_entry` in the following data sources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_catalog_vapp_template`, `vcd_independent_disk`, `vcd_network_direct`,
   `vcd_network_isolated`, `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`,
-  `vcd_org_vdc`, `vcd_provider_vdc`, `vcd_storage_profile`, `vcd_vapp`, `vcd_vapp_vm`. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
+  `vcd_org_vdc`, `vcd_provider_vdc`, `vcd_storage_profile`, `vcd_vapp`, `vcd_vapp_vm` ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
 * Deprecate attribute `metadata` in favor of `metadata_entry` in the following resources:
   `vcd_catalog`, `vcd_catalog_media`, `vcd_catalog_vapp_template`, `vcd_independent_disk`, `vcd_network_direct`,
   `vcd_network_isolated`, `vcd_network_isolated_v2`, `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_org`,
-  `vcd_org_vdc`, `vcd_vapp`, `vcd_vapp_vm`. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
+  `vcd_org_vdc`, `vcd_vapp`, `vcd_vapp_vm` ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
 * Deprecate attribute `catalog_item_metadata` in favor of `metadata_entry` in the `vcd_catalog_item` resource
   and data source. ([#917](https://github.com/vmware/terraform-provider-vcd/pull/917))
 * Deprecate `template_name` in favor of `vapp_template_id` in `vcd_vapp_vm` and `vcd_vm` to be able to use unique URNs instead
@@ -87,7 +89,7 @@
 * Deprecate `boot_image` in favor of `boot_image_id` in `vcd_vapp_vm` and `vcd_vm` to be able to use URNs instead
   of catalog dependent names ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
 * Deprecate `catalog_name` in favor of `vapp_template_id` or `boot_image_id`, which don't require a catalog name anymore ([#931](https://github.com/vmware/terraform-provider-vcd/pull/931))
-* Data source `vcd_nsxt_edge_cluster` deprecates `vdc` field in favor of 3 new fields to define
+* Data source `vcd_nsxt_edge_cluster` deprecates `vdc` field in favor of three new fields to define
   NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
 ### NOTES
@@ -105,7 +107,7 @@
 * Code documentation formatting is adjusted using Go 1.19 (`make fmt`) ([#902](https://github.com/vmware/terraform-provider-vcd/pull/902))
 * Adjust GitHub actions in pipeline to use the latest code ([#902](https://github.com/vmware/terraform-provider-vcd/pull/902))
 * `staticcheck` switched version naming from `2021.1.2` to `v0.3.3` in downloads section. This PR
-  also updates the code to fetch correct staticcheck. ([#902](https://github.com/vmware/terraform-provider-vcd/pull/902))
+  also updates the code to fetch correct staticcheck ([#902](https://github.com/vmware/terraform-provider-vcd/pull/902))
 * package `io/ioutil` is deprecated as of Go 1.16. `staticcheck` started complaining about usage of
   deprecated packages. As a result this PR switches packages to either `io` or `os` (still the same
   functions are used) ([#902](https://github.com/vmware/terraform-provider-vcd/pull/902))
