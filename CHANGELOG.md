@@ -91,6 +91,7 @@
   NSX-T Edge Cluster lookup scope - `vdc_id`, `vdc_group_id`, and `provider_vdc_id` ([#921](https://github.com/vmware/terraform-provider-vcd/pull/921))
 
 ### NOTES
+* Drop support for EOL VCD 10.2.x ([#903](https://github.com/vmware/terraform-provider-vcd/pull/903))
 * Add a guide and examples on [Catalog subscribing and sharing](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/catalog_subscription_and_sharing) to the documentation ([#916](https://github.com/vmware/terraform-provider-vcd/pull/916))
 * All non-NSX-V resources and data sources use the new SDK signatures with Context and Diagnostics ([#895](https://github.com/vmware/terraform-provider-vcd/pull/895))
 * Refactor VM Creation code, which should result in identifiable parts creation for all types of
@@ -108,7 +109,6 @@
 * package `io/ioutil` is deprecated as of Go 1.16. `staticcheck` started complaining about usage of
   deprecated packages. As a result this PR switches packages to either `io` or `os` (still the same
   functions are used) ([#902](https://github.com/vmware/terraform-provider-vcd/pull/902))
-* Drop support for EOL VCD 10.2.x ([#903](https://github.com/vmware/terraform-provider-vcd/pull/903))
 * Add a new GitHub Action to run `gosec` on every push and pull request ([#928](https://github.com/vmware/terraform-provider-vcd/pull/928))
 
 
