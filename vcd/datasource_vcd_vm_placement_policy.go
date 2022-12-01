@@ -17,9 +17,16 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 				Description: "Name of the VM Placement Policy",
 			},
 			"provider_vdc_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "ID of the Provider VDC to which the VM Placement Policy belongs",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"vdc_id"},
+				Description:   "ID of the Provider VDC to which the VM Placement Policy belongs. To be used by System administrators instead of `vdc_id`",
+			},
+			"vdc_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"provider_vdc_id"},
+				Description:   "ID of the Provider VDC to which the VM Placement Policy belongs. To be used by tenants instead of `provider_vdc_id`",
 			},
 			"description": {
 				Type:        schema.TypeString,

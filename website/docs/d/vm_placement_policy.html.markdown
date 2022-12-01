@@ -14,11 +14,19 @@ used to read a VM Placement Policy.
 
 Supported in provider *v3.8+* and requires VCD 10.2+
 
-## Example Usage
+## Example Usage for System administrators
+
+System administrators have full privileges to retrieve information of the Provider VDC to which the VM Placement Policy
+belongs. The way to fetch a VM Placement Policy in this case would be:
 
 ```hcl
+data "vcd_org_vdc" "my-vdc" {
+  org  = "test"
+  name = "vdc-test"
+}
+
 data "vcd_provider_vdc" "my-pvdc" {
-  name = "my-pVDC"
+  name = data.vcd_org_vdc.my-vdc.provider_vdc_name
 }
 
 data "vcd_vm_placement_policy" "tf-policy-name" {
@@ -30,13 +38,37 @@ output "policyId" {
   value = data.vcd_vm_placement_policy.tf-policy-name.id
 }
 ```
+
+## Example Usage for tenant users
+
+Tenant users don't have access to Provider VDC information so the only way to retrieve VM Placement Policies is to
+fetch them using the VDC information. The only constraint is that the desired VM Placement Policy **must be assigned
+to the VDC**.
+
+```hcl
+data "vcd_org_vdc" "my-vdc" {
+  org  = "test"
+  name = "vdc-test"
+}
+
+data "vcd_vm_placement_policy" "tf-policy-name" {
+  name   = "my-policy"
+  vdc_id = data.vcd_org_vdc.my-vdc.id
+}
+
+output "policyId" {
+  value = data.vcd_vm_placement_policy.tf-policy-name.id
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `name` - (Required) The name VM Placement Policy.
-* `provider_vdc_id` - (Required) The ID of the [Provider VDC](/providers/vmware/vcd/latest/docs/data-sources/vcd_provider_vdc) to which the VM Placement Policy belongs.
+* `provider_vdc_id` - (Required for System admins) The ID of the [Provider VDC](/providers/vmware/vcd/latest/docs/data-sources/provider_vdc) to which the VM Placement Policy belongs.
+* `vdc_id` - (Required for tenant users) The ID of the [VDC](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) to which the VM Placement Policy is assigned.
 
 ## Attribute Reference
 
-All attributes defined in [`vcd_vm_placement_policy`](/providers/vmware/vcd/latest/docs/resources/vcd_vm_placement_policy#attribute-reference) resource are supported.
+All attributes defined in [`vcd_vm_placement_policy`](/providers/vmware/vcd/latest/docs/resources/vm_placement_policy#attribute-reference) resource are supported.
