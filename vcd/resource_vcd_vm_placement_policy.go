@@ -133,8 +133,11 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 		log.Printf("[TRACE] VM Placement Policy read initiated: %s in Provider VDC with ID %s", policyName, pVdcId)
 	}
 
-	vcdClient := meta.(*VCDClient)
+	if pVdcId == "" && vdcId == "" {
+		return diag.Errorf("either `provider_vdc_id` or `vdc_id` needs to be set")
+	}
 
+	vcdClient := meta.(*VCDClient)
 	// The method variable stores the information about how we found the rule, for logging purposes
 	method := "id"
 
@@ -163,7 +166,7 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 		var err error
 		// Fetches the VM Placement Policy with Provider VDC information, intended for System admins
 		if vdcId == "" {
-			queryParams.Add("filter", fmt.Sprintf("policyType==VdcVmPolicy;isSizingOnly==false;name==%s;pvdcId==%s", policyName, pVdcId))
+			queryParams.Add("filter", fmt.Sprintf("%spolicyType==VdcVmPolicy;isSizingOnly==false;name==%s;pvdcId==%s", getVgpuFilterToPrepend(vcdClient, false), policyName, pVdcId))
 			foundPolicies, err = vcdClient.GetAllVdcComputePoliciesV2(queryParams)
 		} else {
 			var adminOrg *govcd.AdminOrg
