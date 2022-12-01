@@ -169,14 +169,20 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 		return nil, fmt.Errorf("[getCatalogFromResource] error retrieving catalog records for catalog %s: %s", catalogName, err)
 	}
 	var catalogRecord *types.CatalogRecord
+	var orgNames []string
 	for _, cr := range catalogRecords {
+		orgNames = append(orgNames, cr.OrgName)
 		if cr.OrgName == orgName {
 			catalogRecord = cr
 			break
 		}
 	}
 	if catalogRecord == nil {
-		return nil, fmt.Errorf("no records found for catalog '%s' from org '%s'", catalogName, orgName)
+		message := fmt.Sprintf("no records found for catalog '%s' from org '%s'", catalogName, orgName)
+		if len(orgNames) > 0 {
+			message = fmt.Sprintf("%s\nThere are catalogs with the same name from other orgs: %v", message, orgNames)
+		}
+		return nil, fmt.Errorf(message)
 	}
 	return vcdClient.VCDClient.Client.GetCatalogByHref(catalogRecord.HREF)
 }
