@@ -4,21 +4,20 @@
 package vcd
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdVmPlacementPolicy(t *testing.T) {
+func TestAccVcdVmPlacementPolicySystemAdmin(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
-	if testConfig.VCD.ProviderVdc.Name == "" {
-		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
-	}
 
 	var params = StringMap{
-		"PvdcName":    testConfig.VCD.NsxtProviderVdc.Name,
+		"Vdc":         testConfig.Nsxt.Vdc,
 		"PolicyName":  t.Name(),
 		"VmGroup":     testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
 		"Description": t.Name() + "_description",
@@ -50,7 +49,8 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
 					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resourceFieldsEqual(policyName, datasourcePolicyName, nil),
+					stateDumper(),
+					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"vdc_id"}),
 				),
 			},
 			{
@@ -62,7 +62,7 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
 					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resourceFieldsEqual(policyName, datasourcePolicyName, nil),
+					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"vdc_id"}),
 				),
 			},
 			// Tests import by id
@@ -84,9 +84,20 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 	postTestChecks(t)
 }
 
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
+
 const testAccCheckVmPlacementPolicy_create = `
+data "vcd_org_vdc" "vdc" {
+  name = "{{.Vdc}}"
+}
+
 data "vcd_provider_vdc" "pvdc" {
-  name = "{{.PvdcName}}"
+  name = data.vcd_org_vdc.vdc.provider_vdc_name
 }
 
 data "vcd_vm_group" "vm-group" {
