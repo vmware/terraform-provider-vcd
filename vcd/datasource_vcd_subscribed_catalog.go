@@ -90,6 +90,11 @@ func datasourceVcdSubscribedCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "True if this catalog is shared.",
 			},
+			"is_local": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog belongs to the current organization.",
+			},
 			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -180,7 +185,7 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 
 	dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
 	dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
-	err = setCatalogData(d, adminOrg, adminCatalog, "vcd_subscribed_catalog")
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminCatalog, "vcd_subscribed_catalog")
 	if err != nil {
 		return diag.Errorf("%v", err)
 	}
