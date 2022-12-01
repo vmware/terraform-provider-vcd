@@ -9,10 +9,11 @@ description: |-
 
 # vcd\_vm\_placement\_policy
 
-Provides a VMware Cloud Director VM Placement Policy data source. This can be
-used to read a VM Placement Policy.
+Provides a VMware Cloud Director VM Placement Policy data source. This can be used to read a VM Placement Policy.
 
 Supported in provider *v3.8+* and requires VCD 10.2+
+
+-> **Note:** This resource can be used by both system administrators and tenant users.
 
 ## Example Usage for System administrators
 
@@ -71,4 +72,8 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All attributes defined in [`vcd_vm_placement_policy`](/providers/vmware/vcd/latest/docs/resources/vm_placement_policy#attribute-reference) resource are supported.
+All attributes defined in [`vcd_vm_placement_policy`](/providers/vmware/vcd/latest/docs/resources/vm_placement_policy#attribute-reference) resource are supported,
+with a special casuistic to take into account:
+
+* `vm_group_ids` - This attribute can't be retrieved if the data source is used by a tenant user by fetching by `vdc_id`.
+* `logical_vm_group_ids` - This attribute can't be retrieved if the data source is used by a tenant user by fetching by `vdc_id`.

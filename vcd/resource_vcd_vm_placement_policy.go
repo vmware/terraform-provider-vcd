@@ -194,7 +194,6 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 			return diag.Errorf("found %d VM Placement Policies with name %s", len(foundPolicies), policyName)
 		}
 		policy = foundPolicies[0]
-		d.SetId(policy.VdcComputePolicyV2.ID)
 	}
 
 	if policy == nil {
@@ -391,7 +390,7 @@ func getVmPlacementPolicy(d *schema.ResourceData, meta interface{}, policyId str
 	computePolicy, err = vcdClient.GetVdcComputePolicyV2ById(policyId)
 	if err != nil {
 		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("%sname==%s;isSizingOnly==false", getVgpuFilterToPrepend(vcdClient, false), policyId))
+		queryParams.Add("filter", fmt.Sprintf("%sname==%s;isSizingOnly==false;policyType==VdcVmPolicy", getVgpuFilterToPrepend(vcdClient, false), policyId))
 		computePolicies, err := vcdClient.GetAllVdcComputePoliciesV2(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM Placement Policy %s", policyId)
@@ -440,27 +439,33 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 
 	var vmGroupIds []string
 
-	for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
-		for _, namedVmGroup := range namedVmGroupPerPvdc {
-			// The Policy has "Named VM Group IDs" in its attributes, but we need "VM Group IDs" which are unique
-			vmGroup, err := vcdClient.VCDClient.GetVmGroupByNamedVmGroupIdAndProviderVdcUrn(namedVmGroup.ID, policy.PvdcID)
-			if err != nil {
-				return diag.Errorf("could not get VM Group associated to Named VM Group ID %s", namedVmGroup.ID)
+	if vcdClient.Client.IsSysAdmin {
+		// Only System administrators can get VM Group information. This is because tenant users can use data sources.
+		// A tenant user can fetch VM Placement Policies using only VDC. This information then is obscured for them.
+		for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
+			for _, namedVmGroup := range namedVmGroupPerPvdc {
+				// The Policy has "Named VM Group IDs" in its attributes, but we need "VM Group IDs" which are unique
+				vmGroup, err := vcdClient.VCDClient.GetVmGroupByNamedVmGroupIdAndProviderVdcUrn(namedVmGroup.ID, policy.PvdcID)
+				if err != nil {
+					return diag.Errorf("could not get VM Group associated to Named VM Group ID %s", namedVmGroup.ID)
+				}
+				vmGroupIds = append(vmGroupIds, vmGroup.VmGroup.ID)
 			}
-			vmGroupIds = append(vmGroupIds, vmGroup.VmGroup.ID)
+		}
+		if err := d.Set("vm_group_ids", vmGroupIds); err != nil {
+			return diag.Errorf("error setting vm_group_ids: %s", err)
+		}
+
+		vmGroupIds = []string{}
+		for _, namedVmGroup := range policy.LogicalVMGroupReferences {
+			vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
+		}
+		if err := d.Set("logical_vm_group_ids", vmGroupIds); err != nil {
+			return diag.Errorf("error setting logical_vm_group_ids: %s", err)
 		}
 	}
-	if err := d.Set("vm_group_ids", vmGroupIds); err != nil {
-		return diag.Errorf("error setting vm_group_ids: %s", err)
-	}
 
-	vmGroupIds = []string{}
-	for _, namedVmGroup := range policy.LogicalVMGroupReferences {
-		vmGroupIds = append(vmGroupIds, namedVmGroup.ID)
-	}
-	if err := d.Set("logical_vm_group_ids", vmGroupIds); err != nil {
-		return diag.Errorf("error setting logical_vm_group_ids: %s", err)
-	}
+	d.SetId(policy.ID)
 
 	log.Printf("[TRACE] VM Placement Policy read completed: %s", policy.Name)
 	return nil
