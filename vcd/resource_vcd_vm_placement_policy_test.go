@@ -4,20 +4,18 @@
 package vcd
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdVmPlacementPolicySystemAdmin(t *testing.T) {
+func TestAccVcdVmPlacementPolicy(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Vdc":         testConfig.Nsxt.Vdc,
+		"VdcName":     testConfig.Nsxt.Vdc,
 		"PolicyName":  t.Name(),
 		"VmGroup":     testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
 		"Description": t.Name() + "_description",
@@ -48,9 +46,10 @@ func TestAccVcdVmPlacementPolicySystemAdmin(t *testing.T) {
 					resource.TestCheckResourceAttr(policyName, "description", params["Description"].(string)),
 					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(policyName, "logical_vm_group_ids.#", "0"),
 					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					stateDumper(),
-					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"vdc_id"}),
+					resource.TestCheckNoResourceAttr(policyName, "vdc_id"),
+					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
 				),
 			},
 			{
@@ -61,8 +60,10 @@ func TestAccVcdVmPlacementPolicySystemAdmin(t *testing.T) {
 					resource.TestCheckResourceAttr(policyName, "description", params["Description"].(string)+"-update"),
 					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(policyName, "logical_vm_group_ids.#", "0"),
 					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"vdc_id"}),
+					resource.TestCheckNoResourceAttr(policyName, "vdc_id"),
+					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
 				),
 			},
 			// Tests import by id
@@ -84,16 +85,9 @@ func TestAccVcdVmPlacementPolicySystemAdmin(t *testing.T) {
 	postTestChecks(t)
 }
 
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
-
 const testAccCheckVmPlacementPolicy_create = `
 data "vcd_org_vdc" "vdc" {
-  name = "{{.Vdc}}"
+  name = "{{.VdcName}}"
 }
 
 data "vcd_provider_vdc" "pvdc" {
@@ -119,8 +113,12 @@ data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
 `
 
 const testAccCheckVmPlacementPolicy_update = `
+data "vcd_org_vdc" "vdc" {
+  name = "{{.VdcName}}"
+}
+
 data "vcd_provider_vdc" "pvdc" {
-  name = "{{.PvdcName}}"
+  name = data.vcd_org_vdc.vdc.provider_vdc_name
 }
 
 data "vcd_vm_group" "vm-group" {
@@ -138,6 +136,117 @@ resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
   name            = vcd_vm_placement_policy.{{.PolicyName}}.name
   provider_vdc_id = vcd_vm_placement_policy.{{.PolicyName}}.provider_vdc_id
+}
+`
+
+// TestAccVcdVmPlacementPolicyInVdc tests fetching a VM Placement Policy using the `vdc_id` instead of Provider VDC.
+// This should be tested as tenant user, but due to limitations this must be done manually as we need Sysadmin to create
+// the VDC and assign the policies first.
+func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"VdcName":     testConfig.Nsxt.Vdc,
+		"PolicyName":  t.Name(),
+		"ProviderVdc": testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool": testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"VmGroup":     testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
+	}
+	testParamsNotEmpty(t, params)
+	policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
+	datasourcePolicyName := "data.vcd_vm_placement_policy.data-" + params["PolicyName"].(string)
+	configText := templateFill(testAccCheckVmPlacementPolicyFromVdcId, params)
+
+	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckComputePolicyDestroyed(t.Name(), "placement"),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(policyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttr(policyName, "name", params["PolicyName"].(string)),
+					resource.TestCheckResourceAttr(policyName, "description", "foo"),
+					resource.TestMatchResourceAttr(policyName, "vdc_id", regexp.MustCompile(`urn:vcloud:vdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(policyName, "logical_vm_group_ids.#", "0"),
+					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckNoResourceAttr(policyName, "provider_vdc_id"),
+					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVmPlacementPolicyFromVdcId_prereqs = `
+data "vcd_provider_vdc" "pvdc" {
+  name = "{{.ProviderVdc}}"
+}
+
+data "vcd_vm_group" "vm-group" {
+  name            = "{{.VmGroup}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+}
+
+resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
+  name            = "{{.PolicyName}}"
+  description     = "foo"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+  vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
+}
+
+resource "vcd_org_vdc" "{{.VdcName}}" {
+  name = "{{.VdcName}}"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = "ReservationPool"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = data.vcd_provider_vdc.pvdc.name
+
+  compute_capacity {
+    cpu {
+      allocated = 1024
+      limit     = 1024
+    }
+
+    memory {
+      allocated = 1024
+      limit     = 1024
+    }
+  }
+
+  storage_profile {
+    name     = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+
+  default_compute_policy_id = vcd_vm_placement_policy.{{.PolicyName}}.id
+  vm_placement_policy_ids   = [vcd_vm_placement_policy.{{.PolicyName}}.id]
+}
+`
+
+const testAccCheckVmPlacementPolicyFromVdcId = testAccCheckVmPlacementPolicyFromVdcId_prereqs + `
+data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
+  name   = vcd_vm_placement_policy.{{.PolicyName}}.name
+  vdc_id = vcd_org_vdc.{{.VdcName}}.id
 }
 `
 
