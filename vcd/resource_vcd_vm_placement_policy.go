@@ -128,10 +128,8 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 	vdcId := ""
 	if !isResource {
 		vdcId = d.Get("vdc_id").(string)
-		log.Printf("[TRACE] VM Placement Policy read initiated: %s in VDC with ID %s", policyName, vdcId)
-	} else {
-		log.Printf("[TRACE] VM Placement Policy read initiated: %s in Provider VDC with ID %s", policyName, pVdcId)
 	}
+	log.Printf("[TRACE] VM Placement Policy '%s' read initiated", policyName)
 
 	if pVdcId == "" && vdcId == "" {
 		return diag.Errorf("either `provider_vdc_id` or `vdc_id` needs to be set")
