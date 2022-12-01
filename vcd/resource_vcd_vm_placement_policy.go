@@ -438,8 +438,8 @@ func setVmPlacementPolicy(_ context.Context, d *schema.ResourceData, vcdClient *
 	var vmGroupIds []string
 
 	if vcdClient.Client.IsSysAdmin {
-		// Only System administrators can get VM Group information. This is because tenant users can use data sources.
-		// A tenant user can fetch VM Placement Policies using only VDC. This information then is obscured for them.
+		// Only System administrators can get VM Group information. The opposite would happen if a tenant user uses
+		// a data source, in this case it shouldn't retrieve VM Groups, as the info is obscured for them.
 		for _, namedVmGroupPerPvdc := range policy.NamedVMGroups {
 			for _, namedVmGroup := range namedVmGroupPerPvdc {
 				// The Policy has "Named VM Group IDs" in its attributes, but we need "VM Group IDs" which are unique
