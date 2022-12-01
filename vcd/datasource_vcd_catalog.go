@@ -3,7 +3,6 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -167,7 +166,7 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 
 	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(catalogName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving catalog records for catalog %s", catalogName)
+		return nil, fmt.Errorf("[getCatalogFromResource] error retrieving catalog records for catalog %s: %s", catalogName, err)
 	}
 	var catalogRecord *types.CatalogRecord
 	for _, cr := range catalogRecords {
@@ -206,7 +205,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		catalogOrgIsAvailable = false
 		orgFound = "NOT"
 	}
-	log.Printf("[TRACE] Org '%s' %s found", orgName, orgFound)
+	util.Logger.Printf("[TRACE] Org '%s' %s found", orgName, orgFound)
 
 	identifier := d.Get("name").(string)
 
@@ -222,8 +221,8 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		catalog, err = getCatalogFromResource(identifier, d, meta)
 	}
 	if err != nil {
-		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
-		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
+		util.Logger.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
+		return diag.Errorf("[catalog read DS] error retrieving catalog %s: %s", identifier, err)
 	}
 
 	dSet(d, "description", catalog.AdminCatalog.Description)
