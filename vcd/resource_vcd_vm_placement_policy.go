@@ -171,7 +171,7 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 		} else {
 			var adminOrg *govcd.AdminOrg
 			// Fetches the VM Placement Policy with VDC information, intended for tenants
-			adminOrg, err = vcdClient.GetAdminOrgFromResource(d)
+			adminOrg, err = vcdClient.GetAdminOrg("") // Gets the Org from Provider config
 			if err != nil {
 				return diag.Errorf("error retrieving Org: %s", err)
 			}

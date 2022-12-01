@@ -147,11 +147,13 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"VdcName":     testConfig.Nsxt.Vdc,
-		"PolicyName":  t.Name(),
-		"ProviderVdc": testConfig.VCD.NsxtProviderVdc.Name,
-		"NetworkPool": testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"VmGroup":     testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
+		"OrgName":                   testConfig.VCD.Org,
+		"VdcName":                   t.Name(),
+		"PolicyName":                t.Name(),
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"VmGroup":                   testConfig.VCD.NsxtProviderVdc.PlacementPolicyVmGroup,
 	}
 	testParamsNotEmpty(t, params)
 	policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
@@ -172,15 +174,15 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(policyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestCheckResourceAttr(policyName, "name", params["PolicyName"].(string)),
-					resource.TestCheckResourceAttr(policyName, "description", "foo"),
-					resource.TestMatchResourceAttr(policyName, "vdc_id", regexp.MustCompile(`urn:vcloud:vdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
-					resource.TestCheckResourceAttr(policyName, "logical_vm_group_ids.#", "0"),
-					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestCheckNoResourceAttr(policyName, "provider_vdc_id"),
-					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
+					resource.TestMatchResourceAttr(datasourcePolicyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttr(datasourcePolicyName, "name", params["PolicyName"].(string)),
+					resource.TestCheckResourceAttr(datasourcePolicyName, "description", "foo"),
+					resource.TestMatchResourceAttr(datasourcePolicyName, "vdc_id", regexp.MustCompile(`urn:vcloud:vdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttr(datasourcePolicyName, "vm_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(datasourcePolicyName, "logical_vm_group_ids.#", "0"),
+					resource.TestMatchResourceAttr(datasourcePolicyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckNoResourceAttr(datasourcePolicyName, "provider_vdc_id"),
+					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%", "provider_vdc_id"}), // Resource doesn't have attribute `vdc_id` and we didn't use `provider_vdc_id` in data source
 				),
 			},
 		},
