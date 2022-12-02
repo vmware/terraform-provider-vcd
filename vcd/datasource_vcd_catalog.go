@@ -148,20 +148,12 @@ func datasourceVcdCatalog() *schema.Resource {
 	}
 }
 
-func getOrgName(vcdClient *VCDClient, d *schema.ResourceData) string {
-	orgName := d.Get("org").(string)
-	if orgName == "" {
-		orgName = vcdClient.Org
-	}
-	return orgName
-}
-
 func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta interface{}) (*govcd.AdminCatalog, error) {
 	vcdClient := meta.(*VCDClient)
 
-	orgName := getOrgName(vcdClient, d)
-	if orgName == "" {
-		return nil, fmt.Errorf("'org' property not supplied in the resource or in provider")
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("'org' property not supplied in the resource or in provider: %s", err)
 	}
 
 	tenantContext := govcd.TenantContext{}
@@ -208,9 +200,9 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf(noNameOrFilterError, "vcd_catalog")
 	}
 
-	orgName := getOrgName(vcdClient, d)
-	if orgName == "" {
-		return diag.Errorf("'org' property not supplied in the resource or in provider")
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
+	if err != nil {
+		return diag.Errorf("'org' property not supplied in the resource or in provider: %s", err)
 	}
 
 	adminOrg, orgErr := vcdClient.GetAdminOrgFromResource(d)
