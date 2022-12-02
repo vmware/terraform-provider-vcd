@@ -164,7 +164,16 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 		return nil, fmt.Errorf("'org' property not supplied in the resource or in provider")
 	}
 
-	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(catalogName, govcd.TenantContext{})
+	tenantContext := govcd.TenantContext{}
+	if vcdClient.Client.IsSysAdmin {
+		org, err := vcdClient.GetAdminOrgByName(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("[getCatalogFromResource] error retrieving org %s: %s", orgName, err)
+		}
+		tenantContext.OrgId = org.AdminOrg.ID
+		tenantContext.OrgName = orgName
+	}
+	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(catalogName, tenantContext)
 	if err != nil {
 		return nil, fmt.Errorf("[getCatalogFromResource] error retrieving catalog records for catalog %s: %s", catalogName, err)
 	}
