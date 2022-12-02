@@ -68,7 +68,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name VM Placement Policy.
 * `provider_vdc_id` - (Required for System admins) The ID of the [Provider VDC](/providers/vmware/vcd/latest/docs/data-sources/provider_vdc) to which the VM Placement Policy belongs.
-* `vdc_id` - (Required for tenant users) The ID of the [VDC](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) to which the VM Placement Policy is assigned.
+* `vdc_id` - (Required for tenant users; *v3.8.1+*) The ID of the [VDC](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) to which the VM Placement Policy is assigned.
 
 ## Attribute Reference
 
