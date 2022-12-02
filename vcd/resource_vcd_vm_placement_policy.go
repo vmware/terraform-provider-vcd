@@ -163,20 +163,8 @@ func sharedVcdVmPlacementPolicyRead(ctx context.Context, d *schema.ResourceData,
 			queryParams.Add("filter", fmt.Sprintf("%spolicyType==VdcVmPolicy;isSizingOnly==false;name==%s;pvdcId==%s", getVgpuFilterToPrepend(vcdClient, false), policyName, pVdcId))
 			foundPolicies, err = vcdClient.GetAllVdcComputePoliciesV2(queryParams)
 		} else {
-			var adminOrg *govcd.AdminOrg
-			// Fetches the VM Placement Policy with VDC information, intended for tenants
-			adminOrg, err = vcdClient.GetAdminOrg("") // Gets the Org from Provider config
-			if err != nil {
-				return diag.Errorf("error retrieving Org: %s", err)
-			}
-
-			var adminVdc *govcd.AdminVdc
-			adminVdc, err = adminOrg.GetAdminVDCById(vdcId, false)
-			if err != nil {
-				return diag.Errorf("unable to get the VDC with ID %s: %s", vdcId, err)
-			}
 			queryParams.Add("filter", fmt.Sprintf("%spolicyType==VdcVmPolicy;isSizingOnly==false;name==%s", getVgpuFilterToPrepend(vcdClient, false), policyName))
-			foundPolicies, err = adminVdc.GetAllAssignedVdcComputePoliciesV2(queryParams)
+			foundPolicies, err = vcdClient.GetAllAssignedVdcComputePoliciesV2(vdcId, queryParams)
 		}
 		if err != nil {
 			return diag.Errorf("error getting VM Placement Policy %s: %s. Removing from tfstate", policyName, err)

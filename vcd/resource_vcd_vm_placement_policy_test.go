@@ -139,15 +139,17 @@ data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
 }
 `
 
-// TestAccVcdVmPlacementPolicyInVdc tests fetching a VM Placement Policy using the `vdc_id` instead of Provider VDC.
-// This should be tested as tenant user, but due to limitations this must be done manually as we need Sysadmin to create
-// the VDC and assign the policies first.
+// TestAccVcdVmPlacementPolicyInVdc tests fetching a VM Placement Policy using the `vdc_id` instead of Provider VDC,
+// both with System Administrator and a tenant/org user.
 func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"OrgName":                   testConfig.VCD.Org,
+		"VcdUrl":                    testConfig.Provider.Url,
+		"OrgUser":                   testConfig.TestEnvBuild.OrgUser,
+		"OrgUserPassword":           testConfig.TestEnvBuild.OrgUserPassword,
 		"VdcName":                   t.Name(),
 		"PolicyName":                t.Name(),
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
@@ -158,6 +160,7 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 	testParamsNotEmpty(t, params)
 	policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
 	datasourcePolicyName := "data.vcd_vm_placement_policy.data-" + params["PolicyName"].(string)
+	datasourcePolicyNameTenantUser := datasourcePolicyName + "-tenant"
 	configText := templateFill(testAccCheckVmPlacementPolicyFromVdcId, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
@@ -174,6 +177,7 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
+					// System administrator
 					resource.TestMatchResourceAttr(datasourcePolicyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(datasourcePolicyName, "name", params["PolicyName"].(string)),
 					resource.TestCheckResourceAttr(datasourcePolicyName, "description", "foo"),
@@ -183,6 +187,15 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 					resource.TestMatchResourceAttr(datasourcePolicyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckNoResourceAttr(datasourcePolicyName, "provider_vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%", "provider_vdc_id"}), // Resource doesn't have attribute `vdc_id` and we didn't use `provider_vdc_id` in data source
+
+					// Tenant user
+					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "id", datasourcePolicyName, "id"),
+					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "name", datasourcePolicyName, "name"),
+					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "description", datasourcePolicyName, "description"),
+					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "vdc_id", datasourcePolicyName, "vdc_id"),
+					resource.TestCheckResourceAttr(datasourcePolicyNameTenantUser, "vm_group_ids.#", "0"),
+					resource.TestCheckResourceAttr(datasourcePolicyNameTenantUser, "logical_vm_group_ids.#", "0"),
+					resource.TestCheckNoResourceAttr(datasourcePolicyNameTenantUser, "provider_vdc_id"),
 				),
 			},
 		},
@@ -246,9 +259,31 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 `
 
 const testAccCheckVmPlacementPolicyFromVdcId = testAccCheckVmPlacementPolicyFromVdcId_prereqs + `
+provider "vcd" {
+  alias                = "orguser"
+  user                 = "{{.OrgUser}}"
+  password             = "{{.OrgUserPassword}}"
+  auth_type            = "integrated"
+  url                  = "{{.VcdUrl}}"
+  sysorg               = vcd_org_vdc.{{.VdcName}}.org
+  org                  = vcd_org_vdc.{{.VdcName}}.org
+  vdc                  = vcd_org_vdc.{{.VdcName}}.name
+  allow_unverified_ssl = "true"
+  max_retry_timeout    = 600
+  logging              = true
+  logging_file         = "go-vcloud-director-org.log"
+}
+
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
   name   = vcd_vm_placement_policy.{{.PolicyName}}.name
   vdc_id = vcd_org_vdc.{{.VdcName}}.id
+}
+
+data "vcd_vm_placement_policy" "data-{{.PolicyName}}-tenant" {
+  provider = vcd.orguser # Using tenant user
+
+  name     = vcd_vm_placement_policy.{{.PolicyName}}.name
+  vdc_id   = vcd_org_vdc.{{.VdcName}}.id
 }
 `
 
