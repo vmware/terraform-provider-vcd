@@ -46,6 +46,7 @@ The following arguments are supported:
 * `media_item_list` List of media item names in this catalog, in alphabetical order.
 * `is_shared` - Indicates if the catalog is shared (`true` or `false`).
 * `is_published` - Indicates if this catalog is available for subscription. (Always return `false` for this data source)
+* `is_local` - (*v3.8.1+*) Indicates if this catalog was created in the current organization.
 * `publish_subscription_type` - Shows if the catalog is published, if it is a subscription from another one or none of those. (Always returns `SUBSCRIBED` for this data source)
 * `href` - the catalog's Hyper reference.
 * `created` - Date and time of catalog creation.

@@ -75,6 +75,7 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 * `number_of_media` - (*v3.6+*) Number of media items available in this catalog.
 * `is_shared` - (*v3.6+*) Indicates if the catalog is shared.
 * `is_published` - (*v3.6+*) Indicates if this catalog is shared to all organizations.
+* `is_local` - (*v3.8.1+*) Indicates if this catalog was created in the current organization.
 * `created` - (*v3.6+*) Date and time of catalog creation
 * `publish_subscription_type` - (*v3.6+*) Shows if the catalog is `PUBLISHED`, if it is a subscription from another one (`SUBSCRIBED`), or none of those (`UNPUBLISHED`).
 * `publish_subscription_url` - (*v3.8+*) URL to which other catalogs can subscribe.
