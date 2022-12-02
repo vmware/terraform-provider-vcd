@@ -22,8 +22,8 @@ github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkY
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221201211517-6f7a2228fc89 h1:2NZ2PQyQq7wXW4WjEsXL78D5ZCs6JNLCuT5UaDGi/ik=
-github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221201211517-6f7a2228fc89/go.mod h1:KjnB8t5l1bRrc+jLKDJbx0vZLRzz2RPzNQ7xzg7yI3o=
+github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221202070623-3d1e5ac6ea20 h1:9q8DQBPyXQkgWEjuLBMP/rbovqhHuV1mrMcKVbLHODI=
+github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20221202070623-3d1e5ac6ea20/go.mod h1:KjnB8t5l1bRrc+jLKDJbx0vZLRzz2RPzNQ7xzg7yI3o=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

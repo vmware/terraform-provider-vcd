@@ -164,7 +164,7 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 		return nil, fmt.Errorf("'org' property not supplied in the resource or in provider")
 	}
 
-	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(catalogName)
+	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(catalogName, govcd.TenantContext{})
 	if err != nil {
 		return nil, fmt.Errorf("[getCatalogFromResource] error retrieving catalog records for catalog %s: %s", catalogName, err)
 	}
@@ -253,7 +253,11 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	err = setCatalogData(d, vcdClient, orgName, catalog, "vcd_catalog")
+	orgId := ""
+	if adminOrg != nil {
+		orgId = adminOrg.AdminOrg.ID
+	}
+	err = setCatalogData(d, vcdClient, orgName, orgId, catalog, "vcd_catalog")
 	if err != nil {
 		return diag.FromErr(err)
 	}

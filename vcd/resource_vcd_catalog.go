@@ -7,7 +7,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -294,7 +296,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminCatalog, "vcd_catalog")
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_catalog")
 	if err != nil {
 		return err
 	}
@@ -467,12 +469,12 @@ func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
+func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
-	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name)
+	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name, govcd.TenantContext{OrgName: orgName, OrgId: orgId})
 	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve catalog records: %s", err)
-		return fmt.Errorf("unable to retrieve catalog records - %s", err)
+		log.Printf("[DEBUG] [setCatalogData] Unable to retrieve catalog records: %s", err)
+		return fmt.Errorf("[setCatalogData] unable to retrieve catalog records - %s", err)
 	}
 	var catalogRecord *types.CatalogRecord
 
@@ -483,9 +485,10 @@ func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName string
 		}
 	}
 	if catalogRecord == nil {
-		return fmt.Errorf("error retrieving catalog record for catalog '%s' from org '%s'", adminCatalog.AdminCatalog.Name, orgName)
+		return fmt.Errorf("[setCatalogData] error retrieving catalog record for catalog '%s' from org '%s'", adminCatalog.AdminCatalog.Name, orgName)
 	}
 
+	util.Logger.Printf("[setCatalogData] catalogRecord %# v\n", pretty.Formatter(catalogRecord))
 	dSet(d, "catalog_version", catalogRecord.Version)
 	dSet(d, "owner_name", catalogRecord.OwnerName)
 	dSet(d, "is_published", catalogRecord.IsPublished)
