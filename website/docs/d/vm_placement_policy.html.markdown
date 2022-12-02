@@ -75,5 +75,5 @@ The following arguments are supported:
 All attributes defined in [`vcd_vm_placement_policy`](/providers/vmware/vcd/latest/docs/resources/vm_placement_policy#attribute-reference) resource are supported,
 with a special casuistic to take into account:
 
-* `vm_group_ids` - This attribute can't be retrieved if the data source is used by a tenant user by fetching by `vdc_id`.
-* `logical_vm_group_ids` - This attribute can't be retrieved if the data source is used by a tenant user by fetching by `vdc_id`.
+* `vm_group_ids` - This attribute can't be retrieved if the data source is used by a tenant user when fetching by `vdc_id`.
+* `logical_vm_group_ids` - This attribute can't be retrieved if the data source is used by a tenant user when fetching by `vdc_id`.
