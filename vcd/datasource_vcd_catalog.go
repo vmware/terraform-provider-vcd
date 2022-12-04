@@ -228,8 +228,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		catalog, err = getCatalogFromResource(identifier, d, meta)
 	}
 	if err != nil {
-		util.Logger.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
-		return diag.Errorf("[catalog read DS] error retrieving catalog %s: %s", identifier, err)
+		return diag.Errorf("[catalog read DS] error retrieving catalog %s: %s - %s", identifier, govcd.ErrorEntityNotFound, err)
 	}
 
 	dSet(d, "description", catalog.AdminCatalog.Description)
