@@ -2,9 +2,11 @@ package vcd
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -106,6 +108,11 @@ func datasourceVcdCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "True if this catalog is shared.",
 			},
+			"is_local": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog belongs to the current organization.",
+			},
 			"is_published": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -141,34 +148,87 @@ func datasourceVcdCatalog() *schema.Resource {
 	}
 }
 
+func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta interface{}) (*govcd.AdminCatalog, error) {
+	vcdClient := meta.(*VCDClient)
+
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("'org' property not supplied in the resource or in provider: %s", err)
+	}
+
+	tenantContext := govcd.TenantContext{}
+	if vcdClient.Client.IsSysAdmin {
+		org, err := vcdClient.GetAdminOrgByName(orgName)
+		if err != nil {
+			return nil, fmt.Errorf("[getCatalogFromResource] error retrieving org %s: %s", orgName, err)
+		}
+		tenantContext.OrgId = org.AdminOrg.ID
+		tenantContext.OrgName = orgName
+	}
+	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(catalogName, tenantContext)
+	if err != nil {
+		return nil, fmt.Errorf("[getCatalogFromResource] error retrieving catalog records for catalog %s: %s", catalogName, err)
+	}
+	var catalogRecord *types.CatalogRecord
+	var orgNames []string
+	for _, cr := range catalogRecords {
+		orgNames = append(orgNames, cr.OrgName)
+		if cr.OrgName == orgName {
+			catalogRecord = cr
+			break
+		}
+	}
+	if catalogRecord == nil {
+		message := fmt.Sprintf("no records found for catalog '%s' in org '%s'", catalogName, orgName)
+		if len(orgNames) > 0 {
+			message = fmt.Sprintf("%s\nThere are catalogs with the same name in other orgs: %v", message, orgNames)
+		}
+		return nil, fmt.Errorf(message)
+	}
+	return vcdClient.VCDClient.Client.GetCatalogByHref(catalogRecord.HREF)
+}
+
 func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
-		vcdClient = meta.(*VCDClient)
-		catalog   *govcd.AdminCatalog
+		vcdClient             = meta.(*VCDClient)
+		catalog               *govcd.AdminCatalog
+		err                   error
+		catalogOrgIsAvailable bool = true
 	)
 
 	if !nameOrFilterIsSet(d) {
 		return diag.Errorf(noNameOrFilterError, "vcd_catalog")
 	}
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("'org' property not supplied in the resource or in provider: %s", err)
 	}
-	log.Printf("[TRACE] Org %s found", adminOrg.AdminOrg.Name)
+
+	adminOrg, orgErr := vcdClient.GetAdminOrgFromResource(d)
+	orgFound := ""
+	if orgErr != nil {
+		util.Logger.Printf("[TRACE] error retrieving org: %s", orgErr)
+		catalogOrgIsAvailable = false
+		orgFound = "NOT"
+	}
+	util.Logger.Printf("[TRACE] Org '%s' %s found", orgName, orgFound)
 
 	identifier := d.Get("name").(string)
 
 	filter, hasFilter := d.GetOk("filter")
 
 	if hasFilter {
+		if !catalogOrgIsAvailable {
+			return diag.Errorf("cannot search by filter when org is not reachable by the current user. "+
+				"If the catalog is shared, it will be retrieved only by name: %s", orgErr)
+		}
 		catalog, err = getCatalogByFilter(adminOrg, filter, vcdClient.Client.IsSysAdmin)
 	} else {
-		catalog, err = adminOrg.GetAdminCatalogByNameOrId(identifier, false)
+		catalog, err = getCatalogFromResource(identifier, d, meta)
 	}
 	if err != nil {
-		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
-		return diag.Errorf("error retrieving catalog %s: %s", identifier, err)
+		return diag.Errorf("[catalog read DS] error retrieving catalog %s: %s - %s", identifier, govcd.ErrorEntityNotFound, err)
 	}
 
 	dSet(d, "description", catalog.AdminCatalog.Description)
@@ -193,7 +253,11 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
 	}
 
-	err = setCatalogData(d, adminOrg, catalog, "vcd_catalog")
+	orgId := ""
+	if adminOrg != nil {
+		orgId = adminOrg.AdminOrg.ID
+	}
+	err = setCatalogData(d, vcdClient, orgName, orgId, catalog, "vcd_catalog")
 	if err != nil {
 		return diag.FromErr(err)
 	}

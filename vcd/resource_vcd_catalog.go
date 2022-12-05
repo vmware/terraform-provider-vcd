@@ -7,7 +7,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -141,6 +143,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this catalog is shared.",
+			},
+			"is_local": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this catalog belongs to the current organization.",
 			},
 			"is_published": {
 				Type:        schema.TypeBool,
@@ -289,7 +296,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	err = setCatalogData(d, adminOrg, adminCatalog, "vcd_catalog")
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_catalog")
 	if err != nil {
 		return err
 	}
@@ -462,19 +469,32 @@ func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, adminOrg *govcd.AdminOrg, adminCatalog *govcd.AdminCatalog, resourceType string) error {
+func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
-	catalogRecords, err := adminOrg.FindCatalogRecords(adminCatalog.AdminCatalog.Name)
+	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name, govcd.TenantContext{OrgName: orgName, OrgId: orgId})
 	if err != nil {
-		log.Printf("[DEBUG] Unable to retrieve catalog record: %s", err)
-		return fmt.Errorf("unable to retrieve catalog record - %s", err)
+		log.Printf("[DEBUG] [setCatalogData] Unable to retrieve catalog records: %s", err)
+		return fmt.Errorf("[setCatalogData] unable to retrieve catalog records - %s", err)
+	}
+	var catalogRecord *types.CatalogRecord
+
+	for _, cr := range catalogRecords {
+		if cr.OrgName == orgName {
+			catalogRecord = cr
+			break
+		}
+	}
+	if catalogRecord == nil {
+		return fmt.Errorf("[setCatalogData] error retrieving catalog record for catalog '%s' from org '%s'", adminCatalog.AdminCatalog.Name, orgName)
 	}
 
-	dSet(d, "catalog_version", catalogRecords[0].Version)
-	dSet(d, "owner_name", catalogRecords[0].OwnerName)
-	dSet(d, "is_published", catalogRecords[0].IsPublished)
-	dSet(d, "is_shared", catalogRecords[0].IsShared)
-	dSet(d, "publish_subscription_type", catalogRecords[0].PublishSubscriptionType)
+	util.Logger.Printf("[setCatalogData] catalogRecord %# v\n", pretty.Formatter(catalogRecord))
+	dSet(d, "catalog_version", catalogRecord.Version)
+	dSet(d, "owner_name", catalogRecord.OwnerName)
+	dSet(d, "is_published", catalogRecord.IsPublished)
+	dSet(d, "is_shared", catalogRecord.IsShared)
+	dSet(d, "is_local", catalogRecord.IsLocal)
+	dSet(d, "publish_subscription_type", catalogRecord.PublishSubscriptionType)
 
 	var rawMediaItemsList []interface{}
 	var rawVappTemplatesList []interface{}
