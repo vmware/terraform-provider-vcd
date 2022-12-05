@@ -179,9 +179,9 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 		}
 	}
 	if catalogRecord == nil {
-		message := fmt.Sprintf("no records found for catalog '%s' from org '%s'", catalogName, orgName)
+		message := fmt.Sprintf("no records found for catalog '%s' in org '%s'", catalogName, orgName)
 		if len(orgNames) > 0 {
-			message = fmt.Sprintf("%s\nThere are catalogs with the same name from other orgs: %v", message, orgNames)
+			message = fmt.Sprintf("%s\nThere are catalogs with the same name in other orgs: %v", message, orgNames)
 		}
 		return nil, fmt.Errorf(message)
 	}
