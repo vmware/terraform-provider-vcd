@@ -1,1 +1,1 @@
-* Fix issue #944 shared catalog datasource not working [GH-949]
+* Fix issue #944 shared catalog datasource not accessible to org users [GH-949]
