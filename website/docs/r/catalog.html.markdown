@@ -51,7 +51,9 @@ resource "vcd_catalog" "myNewCatalog" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations. 
+   When using a catalog shared from another organization, this field must have the name of that one, not the current one.
+   If you don't know the name of the sharing org, and put the current one, an error message will list the possible names.
 * `name` - (Required) Catalog name
 * `description` - (Optional) Description of catalog
 * `storage_profile_id` - (Optional, *v3.1+*) Allows to set specific storage profile to be used for catalog. **Note.** Data
