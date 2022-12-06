@@ -9,13 +9,14 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"time"
 )
 
 // Organization resource definition
@@ -374,6 +375,19 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
 
 	log.Printf("[TRACE] Org with id %s found", orgName)
+	// Check if the LDAP settings are correct.
+	// If the hostname or other required elements are missing, then invalidate the whole LDAP settings
+	// See issue 672. Trying to update with incorrect LDAP settings will result in an API 400 error
+	ldapSettings := adminOrg.AdminOrg.OrgSettings.OrgLdapSettings
+	if ldapSettings.CustomOrgLdapSettings != nil {
+		if ldapSettings.CustomOrgLdapSettings.HostName == "" ||
+			ldapSettings.CustomOrgLdapSettings.Port == 0 ||
+			ldapSettings.CustomOrgLdapSettings.ConnectorType == "" ||
+			ldapSettings.CustomOrgLdapSettings.SearchBase == "" ||
+			ldapSettings.CustomOrgLdapSettings.AuthenticationMechanism == "" {
+			adminOrg.AdminOrg.OrgSettings.OrgLdapSettings = nil
+		}
+	}
 	task, err := adminOrg.Update()
 
 	if err != nil {
