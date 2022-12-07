@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: catalog-subscription-and-sharing"
+page_title: "VMware Cloud Director: Catalog subscription and sharing"
 sidebar_current: "docs-vcd-guides-catalog-subscription-and-sharing"
 description: |-
  Provides guidance to VMware Cloud catalog publishing, subscribing, and sharing
