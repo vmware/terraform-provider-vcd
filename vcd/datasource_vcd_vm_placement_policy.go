@@ -17,9 +17,16 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 				Description: "Name of the VM Placement Policy",
 			},
 			"provider_vdc_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "ID of the Provider VDC to which the VM Placement Policy belongs",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"provider_vdc_id", "vdc_id"},
+				Description:  "ID of the Provider VDC to which the VM Placement Policy belongs. To be used by System administrators instead of `vdc_id`",
+			},
+			"vdc_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"provider_vdc_id", "vdc_id"},
+				Description:  "ID of the VDC to which the VM Placement Policy is assigned. To be used by tenants instead of `provider_vdc_id`",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -32,7 +39,7 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "IDs of the collection of VMs with similar host requirements",
+				Description: "IDs of the collection of VMs with similar host requirements. These are not populated if the provider is configured with a tenant user",
 			},
 			"logical_vm_group_ids": {
 				Type: schema.TypeSet,
@@ -40,7 +47,7 @@ func datasourceVcdVmPlacementPolicy() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "IDs of one or more Logical VM Groups defined in this VM Placement policy. There is an AND relationship among all the entries fetched to this attribute",
+				Description: "IDs of one or more Logical VM Groups defined in this VM Placement policy. There is an AND relationship among all the entries fetched to this attribute. These are not populated if the provider is configured with a tenant user",
 			},
 		},
 	}

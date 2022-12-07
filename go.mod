@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/kr/pretty v0.2.1
-	github.com/vmware/go-vcloud-director/v2 v2.17.1-0.20221205101510-d9d568efdf11
+	github.com/vmware/go-vcloud-director/v2 v2.18.0-alpha.1
 )
 
 require (

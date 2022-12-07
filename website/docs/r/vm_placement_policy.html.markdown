@@ -9,8 +9,7 @@ description: |-
 
 # vcd\_vm\_placement\_policy
 
-Provides a VMware Cloud Director VM Placement Policy resource. This can be
-used to create, modify, and delete VM Placement Policy.
+Provides a VMware Cloud Director VM Placement Policy resource. This can be used to create, modify, and delete VM Placement Policy.
 
 Supported in provider *v3.8+* and requires VCD 10.2+
 

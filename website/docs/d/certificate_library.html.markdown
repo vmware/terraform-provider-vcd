@@ -34,4 +34,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_library_certificate`](/providers/vmware/vcd/latest/docs/resources/vcd_library_certificate) resource are available.
+[`vcd_library_certificate`](/providers/vmware/vcd/latest/docs/resources/certificate_library) resource are available.

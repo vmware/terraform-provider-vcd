@@ -34,4 +34,4 @@ Either `name` or `id` must be used. If both are missing, an error arises.
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vcd_vdc_group) resource are available.
+[`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group) resource are available.
