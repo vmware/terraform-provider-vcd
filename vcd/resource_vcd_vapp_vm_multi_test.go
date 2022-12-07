@@ -79,7 +79,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, vappName2, vmName1),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "name", vmName1),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "network.0.ip", "10.10.102.161"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "power_on", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName2, "power_on", "false"),
 				),
 			},
 		},
