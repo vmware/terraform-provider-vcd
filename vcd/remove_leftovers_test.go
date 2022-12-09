@@ -23,6 +23,15 @@ type entityList []entityDef
 
 // doNotDelete contains a list of entities that should not be deleted,
 // despite having a name that starts with `Test` or `test`
+// Use only one of the following type identifiers:
+// vcd_org
+// vcd_org_vdc
+// vcd_catalog
+// vcd_catalog_media
+// vcd_catalog_vapp_template
+// vcd_vapp
+// vcd_vm
+// vcd_network (for any kind of org network)
 var doNotDelete = entityList{
 	{Type: "vcd_catalog_media", Name: "test_media", Comment: "loaded with provisioning"},
 	{Type: "vcd_catalog_media", Name: "test_media_nsxt", Comment: "loaded with provisioning"},
@@ -37,8 +46,8 @@ var doNotDelete = entityList{
 // Add to this list if you ever get an entity left behind by a test
 var alsoDelete = entityList{
 	{Type: "vcd_org_vdc", Name: "newVdc"},
-	{Type: "network", Name: "multinic-net"},
-	{Type: "network", Name: "multinic-net2"},
+	{Type: "vcd_network", Name: "multinic-net"},
+	{Type: "vcd_network", Name: "multinic-net2"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -60,18 +69,18 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 	for _, orgRef := range orgs.Org {
 		org, err := govcdClient.GetOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
 		if err != nil {
-			return fmt.Errorf(" error retrieving org %s: %s", orgRef.Name, err)
+			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, orgRef.Name, "org", 0)
 		if toBeDeleted {
 			fmt.Printf("\t REMOVING org %s\n", org.Org.Name)
 			adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
 			if err != nil {
-				return fmt.Errorf(" error retrieving org %s: %s", orgRef.Name, err)
+				return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 			}
 			err = adminOrg.Delete(true, true)
 			if err != nil {
-				return fmt.Errorf(" error removing org %s: %s", orgRef.Name, err)
+				return fmt.Errorf("error removing org %s: %s", orgRef.Name, err)
 			}
 			continue
 		}
@@ -87,13 +96,13 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1)
 			catalog, err := org.GetCatalogByHref(catRec.HREF)
 			if err != nil {
-				return fmt.Errorf(" error retrieving catalog '%s': %s", catRec.Name, err)
+				return fmt.Errorf("error retrieving catalog '%s': %s", catRec.Name, err)
 			}
 			if toBeDeleted {
 				fmt.Printf("\t\t REMOVING catalog %s/%s\n", org.Org.Name, catalog.Catalog.Name)
 				err = catalog.Delete(true, true)
 				if err != nil {
-					return fmt.Errorf(" error deleting catalog '%s': %s", catRec.Name, err)
+					return fmt.Errorf("error deleting catalog '%s': %s", catRec.Name, err)
 				}
 				continue
 			}
@@ -102,7 +111,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			// --------------------------------------------------------------
 			templates, err := catalog.QueryVappTemplateList()
 			if err != nil {
-				return fmt.Errorf(" error retrieving catalog '%s' vApp template list: %s", catalog.Catalog.Name, err)
+				return fmt.Errorf("error retrieving catalog '%s' vApp template list: %s", catalog.Catalog.Name, err)
 			}
 			for _, templateRec := range templates {
 				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, templateRec.Name, "vcd_catalog_vapp_template", 2)
@@ -123,7 +132,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			// --------------------------------------------------------------
 			mediaItems, err := catalog.QueryMediaList()
 			if err != nil {
-				return fmt.Errorf(" error retrieving catalog '%s' media items list: %s", catalog.Catalog.Name, err)
+				return fmt.Errorf("error retrieving catalog '%s' media items list: %s", catalog.Catalog.Name, err)
 			}
 			for _, mediaRec := range mediaItems {
 				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, mediaRec.Name, "vcd_catalog_media", 2)
@@ -145,7 +154,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 		for _, vdcRec := range vdcs {
 			vdc, err := org.GetVDCByName(vdcRec.Name, false)
 			if err != nil {
-				return fmt.Errorf(" error retrieving VDC %s: %s", vdcRec.Name, err)
+				return fmt.Errorf("error retrieving VDC %s: %s", vdcRec.Name, err)
 			}
 			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vdc.Vdc.Name, "vcd_org_vdc", 1)
 			if toBeDeleted {
@@ -173,14 +182,14 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			// --------------------------------------------------------------
 			vms, err := vdc.QueryVmList(types.VmQueryFilterOnlyDeployed)
 			if err != nil {
-				return fmt.Errorf(" error retrieving VM list: %s", err)
+				return fmt.Errorf("error retrieving VM list: %s", err)
 			}
 			for _, vmRec := range vms {
 				// If not a standalone VM, we'll skip it, as it should be handled (or skipped) by vApp deletion
 				if !vmRec.AutoNature {
 					continue
 				}
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vmRec.Name, "vm", 2)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vmRec.Name, "vcd_vm", 2)
 				if toBeDeleted {
 					vm, err := govcdClient.Client.GetVMByHref(vmRec.HREF)
 					if err != nil {
@@ -199,10 +208,10 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			// --------------------------------------------------------------
 			networks, err := vdc.GetNetworkList()
 			if err != nil {
-				return fmt.Errorf(" error retrieving network list: %s", err)
+				return fmt.Errorf("error retrieving network list: %s", err)
 			}
 			for _, netRef := range networks {
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.Name, "network", 2)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.Name, "vcd_network", 2)
 				if toBeDeleted {
 					err = deleteNetwork(org, vdc, netRef)
 					if err != nil {
