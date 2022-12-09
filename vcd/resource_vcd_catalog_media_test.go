@@ -1,5 +1,4 @@
 //go:build catalog || ALL || functional
-// +build catalog ALL functional
 
 package vcd
 

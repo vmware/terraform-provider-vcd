@@ -1,5 +1,4 @@
 //go:build gateway || nat || ALL || functional
-// +build gateway nat ALL functional
 
 package vcd
 
