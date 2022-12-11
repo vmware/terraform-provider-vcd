@@ -54,10 +54,12 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown, even when `hide-keep` is set
-var alwaysShow = []string{"vcd_catalog", "vcd_org_vdc"}
+var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc"}
 
-func removeLeftovers(govcdClient *govcd.VCDClient) error {
-	debugPrintf("Start leftover removal\n")
+func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
+	if verbose {
+		fmt.Printf("Start leftover removal\n")
+	}
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
 	if err != nil {
@@ -71,7 +73,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 		if err != nil {
 			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}
-		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, orgRef.Name, "org", 0)
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, orgRef.Name, "vcd_org", 0, verbose)
 		if toBeDeleted {
 			fmt.Printf("\t REMOVING org %s\n", org.Org.Name)
 			adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
@@ -93,7 +95,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			return fmt.Errorf("error retrieving catalog list: %s", err)
 		}
 		for _, catRec := range catalogs {
-			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1)
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
 			catalog, err := org.GetCatalogByHref(catRec.HREF)
 			if err != nil {
 				return fmt.Errorf("error retrieving catalog '%s': %s", catRec.Name, err)
@@ -114,7 +116,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 				return fmt.Errorf("error retrieving catalog '%s' vApp template list: %s", catalog.Catalog.Name, err)
 			}
 			for _, templateRec := range templates {
-				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, templateRec.Name, "vcd_catalog_vapp_template", 2)
+				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, templateRec.Name, "vcd_catalog_vapp_template", 2, verbose)
 				if toBeDeleted {
 					template, err := catalog.GetVappTemplateByHref(templateRec.HREF)
 					if err != nil {
@@ -135,7 +137,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 				return fmt.Errorf("error retrieving catalog '%s' media items list: %s", catalog.Catalog.Name, err)
 			}
 			for _, mediaRec := range mediaItems {
-				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, mediaRec.Name, "vcd_catalog_media", 2)
+				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, mediaRec.Name, "vcd_catalog_media", 2, verbose)
 				if toBeDeleted {
 					err = deleteMediaItem(catalog, mediaRec)
 					if err != nil {
@@ -156,7 +158,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			if err != nil {
 				return fmt.Errorf("error retrieving VDC %s: %s", vdcRec.Name, err)
 			}
-			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vdc.Vdc.Name, "vcd_org_vdc", 1)
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vdc.Vdc.Name, "vcd_org_vdc", 1, verbose)
 			if toBeDeleted {
 				err = deleteVdc(org, vdc)
 				if err != nil {
@@ -169,7 +171,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 			// --------------------------------------------------------------
 			vapps := vdc.GetVappList()
 			for _, vappRef := range vapps {
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vappRef.Name, "vcd_vapp", 2)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vappRef.Name, "vcd_vapp", 2, verbose)
 				if toBeDeleted {
 					err = deleteVapp(vdc, vappRef)
 					if err != nil {
@@ -189,7 +191,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 				if !vmRec.AutoNature {
 					continue
 				}
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vmRec.Name, "vcd_vm", 2)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vmRec.Name, "vcd_vm", 2, verbose)
 				if toBeDeleted {
 					vm, err := govcdClient.Client.GetVMByHref(vmRec.HREF)
 					if err != nil {
@@ -211,7 +213,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 				return fmt.Errorf("error retrieving network list: %s", err)
 			}
 			for _, netRef := range networks {
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.Name, "vcd_network", 2)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.Name, "vcd_network", 2, verbose)
 				if toBeDeleted {
 					err = deleteNetwork(org, vdc, netRef)
 					if err != nil {
@@ -226,7 +228,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient) error {
 
 // shouldDeleteEntity checks whether a given entity is to be deleted, either by its name
 // or by its inclusion in one of the entity lists
-func shouldDeleteEntity(alsoDelete, doNotDelete entityList, name, entityType string, level int) bool {
+func shouldDeleteEntity(alsoDelete, doNotDelete entityList, name, entityType string, level int, verbose bool) bool {
 	inclusion := ""
 	exclusion := ""
 	// 1. First requirement to be deleted: the entity name starts with 'Test' or 'test'
@@ -254,7 +256,9 @@ func shouldDeleteEntity(alsoDelete, doNotDelete entityList, name, entityType str
 
 	// 4. Show the entity. If it is to be deleted, it will always be shown
 	if toBeDeleted || contains(alwaysShow, entityType) {
-		debugPrintf(format, entityType, name, deletionText, inclusion, exclusion)
+		if verbose {
+			fmt.Printf(format, entityType, name, deletionText, inclusion, exclusion)
+		}
 	}
 	return toBeDeleted
 }

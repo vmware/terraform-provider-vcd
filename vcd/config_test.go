@@ -51,6 +51,8 @@ func init() {
 	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
 	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
 	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
+	setBoolFlag(&skipLeftoverRemoval, "vcd-skip-leftover-removal", "VCD_SKIP_LEFTOVER_REMOVAL", "Do not attempt removal of leftovers at the end of the test suite")
+	setBoolFlag(&verboseLeftoverRemoval, "vcd-verbose-leftover-removal", "VCD_VERBOSE_LEFTOVER_REMOVAL", "Show details during removal of leftovers")
 
 }
 
@@ -260,6 +262,12 @@ var (
 
 	// runTestRunListFileLock regulates access to the list of run tests
 	runTestRunListFileLock = newMutexKVSilent()
+
+	// skipLeftoverRemoval skips the removal of leftovers at the end of the test suite
+	skipLeftoverRemoval = false
+
+	// verboseLeftoverRemoval prints every phase of leftover removal
+	verboseLeftoverRemoval = false
 )
 
 const (
@@ -816,12 +824,20 @@ func TestMain(m *testing.M) {
 		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
 	}
 
+	if skipLeftoverRemoval {
+		os.Exit(exitCode)
+	}
 	govcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
 		fmt.Printf("error getting a govcd client: %s\n", err)
 		exitCode = 1
 	} else {
-		err := removeLeftovers(govcdClient)
+		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
+		if err != nil {
+			fmt.Printf("error authenticating provider: %s\n", err)
+			exitCode = 1
+		}
+		err := removeLeftovers(govcdClient, verboseLeftoverRemoval)
 		if err != nil {
 			fmt.Printf("error during leftover removal: %s\n", err)
 			exitCode = 1
