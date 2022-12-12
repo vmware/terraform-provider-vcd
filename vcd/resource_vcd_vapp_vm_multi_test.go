@@ -192,6 +192,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
+  power_on      = {{.PowerOn}}
 
   network {
     type               = "org"
@@ -218,7 +219,8 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
-  cpu_cores     = 1 
+  cpu_cores     = 1
+  power_on      = {{.PowerOn}}
 
   network {
     type               = "org"
@@ -238,6 +240,7 @@ resource "vcd_vapp_vm" "{{.VmName3}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
+  power_on      = {{.PowerOn}}
   
   network {
     type               = "org"
@@ -245,6 +248,5 @@ resource "vcd_vapp_vm" "{{.VmName3}}" {
     ip_allocation_mode = "MANUAL"
     ip            = "10.10.102.163"
   }
-
 }
 `
