@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: nsxt alb"
+page_title: "VMware Cloud Director: NSX-T Advanced Load Balancer"
 sidebar_current: "docs-vcd-guides-nsxt-alb"
 description: |-
   Provides guidance to VMware NSX Advanced Load Balancer (Avi)

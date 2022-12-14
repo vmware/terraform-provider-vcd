@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: roles management"
+page_title: "VMware Cloud Director: Roles Management"
 sidebar_current: "docs-vcd-guides-roles"
 description: |-
  Provides guidance to VMware Cloud roles management
 ---
 
-# Roles management
+# Roles Management
 
 Supported in provider *v3.3+*.
 

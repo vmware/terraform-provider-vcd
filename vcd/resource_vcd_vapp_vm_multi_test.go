@@ -41,30 +41,44 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceNameM,
+		"PowerOn":            "true",
 		"Tags":               "multivm",
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccCheckVcdVAppVmMulti, params)
+	params["SkipBinary"] = "# skip-binary-test: Cannot remove Org network from powered on vApp"
+	configText1 := templateFill(testAccCheckVcdVAppVmMulti, params)
+
+	params["SkipBinary"] = ""
+	params["PowerOn"] = "false"
+	params["FuncName"] = t.Name() + "-step-2"
+	configText2 := templateFill(testAccCheckVcdVAppVmMulti, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmMultiDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, vappName2, vmName1),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName1, "name", vmName1),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName1, "network.0.ip", "10.10.102.161"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName1, "power_on", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "name", vmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "network.0.ip", "10.10.102.161"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "power_on", "true"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, vappName2, vmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "name", vmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName1, "network.0.ip", "10.10.102.161"),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName2, "power_on", "false"),
 				),
 			},
 		},
@@ -128,6 +142,7 @@ func testAccCheckVcdVAppVmMultiDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVAppVmMulti = `
+{{.SkipBinary}}
 resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
@@ -155,6 +170,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
+
+  power_on = {{.PowerOn}}
 }
 
 resource "vcd_vapp_org_network" "vappNetwork1" {
@@ -174,6 +191,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
+  power_on      = {{.PowerOn}}
 
   network {
     type               = "org"
@@ -200,7 +218,8 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
-  cpu_cores     = 1 
+  cpu_cores     = 1
+  power_on      = {{.PowerOn}}
 
   network {
     type               = "org"
@@ -208,7 +227,6 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     ip_allocation_mode = "MANUAL"
     ip            = "10.10.102.162"
   }
-
 }
 
 resource "vcd_vapp_vm" "{{.VmName3}}" {
@@ -221,6 +239,7 @@ resource "vcd_vapp_vm" "{{.VmName3}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
+  power_on      = {{.PowerOn}}
   
   network {
     type               = "org"
@@ -228,7 +247,5 @@ resource "vcd_vapp_vm" "{{.VmName3}}" {
     ip_allocation_mode = "MANUAL"
     ip            = "10.10.102.163"
   }
-
 }
-
 `
