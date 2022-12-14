@@ -56,6 +56,7 @@ The following arguments are supported:
 * `media_item_list` - (*v3.8+*) List of media item names in this catalog, in alphabetical order.
 * `is_shared` - (*v3.6+*) Indicates if the catalog is shared.
 * `is_published` - (*v3.6+*) Indicates if this catalog is shared to all organizations.
+* `is_local` - (*v3.8.1+*) Indicates if this catalog was created in the current organization.
 * `created` - (*v3.6+*) Date and time of catalog creation
 * `publish_subscription_type` - (*v3.6+*) Shows if the catalog is `PUBLISHED`, if it is a subscription from another one (`SUBSCRIBED`), or none of those (`UNPUBLISHED`).
 * `publish_subscription_url` - (*v3.8+*) URL to which other catalogs can subscribe.

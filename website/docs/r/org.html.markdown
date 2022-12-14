@@ -145,6 +145,9 @@ Supported in provider *v2.5+*
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
+~> NOTE: when importing and then updating an organization that has LDAP settings, we must import both `vcd_org` and
+`vcd_org_ldap` resources. Setting LDAP outside of Terraform may result in incomplete settings.
+
 An existing Org can be [imported][docs-import] into this resource via supplying the path for an Org. Since the Org is
 at the top of the vCD hierarchy, the path corresponds to the Org name.
 For example, using this structure, representing an existing Org that was **not** created using Terraform:
