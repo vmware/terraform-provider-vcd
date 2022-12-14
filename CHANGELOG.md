@@ -9,8 +9,8 @@
 
 ### BUG FIXES
 * Fix a bug that caused `vcd_vm_group` data source to fail when the backing Provider VDC had multiple resource pools ([#948](https://github.com/vmware/terraform-provider-vcd/pull/948))
-* Fix issue #944 shared catalog datasource not accessible to Org users ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
-* Fix issue #672 - Update Org with invalid or extended LDAP settings ([#952](https://github.com/vmware/terraform-provider-vcd/pull/952) [#955](https://github.com/vmware/terraform-provider-vcd/pull/955))
+* Fix issue #944 - shared catalog datasource not accessible to Org users ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
+* Fix issue #672 - Update Org with invalid or extended LDAP settings ([#952](https://github.com/vmware/terraform-provider-vcd/pull/952), [#955](https://github.com/vmware/terraform-provider-vcd/pull/955))
 
 ## 3.8.0 (November 25, 2022)
 
