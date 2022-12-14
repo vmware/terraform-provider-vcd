@@ -5,6 +5,7 @@
   the ones assigned to VDCs ([#948](https://github.com/vmware/terraform-provider-vcd/pull/948))
 * Resource and data source `vcd_catalog` and `vcd_subscribed_catalog` introduce new computed field `is_local` to specify
   whether the catalog originated from the current org ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
+* Improve usage of `org` field in `vcd_catalog` to accept sharing Org name for shared catalogs and improve error messages ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
 
 ### BUG FIXES
 * Fix a bug that caused `vcd_vm_group` data source to fail when the backing Provider VDC had multiple resource pools ([#948](https://github.com/vmware/terraform-provider-vcd/pull/948))
