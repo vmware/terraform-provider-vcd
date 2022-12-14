@@ -52,7 +52,7 @@ func init() {
 	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
 	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
 	setBoolFlag(&skipLeftoverRemoval, "vcd-skip-leftover-removal", "VCD_SKIP_LEFTOVER_REMOVAL", "Do not attempt removal of leftovers at the end of the test suite")
-	setBoolFlag(&verboseLeftoverRemoval, "vcd-verbose-leftover-removal", "VCD_VERBOSE_LEFTOVER_REMOVAL", "Show details during removal of leftovers")
+	setBoolFlag(&silentLeftoverRemoval, "vcd-silent-leftover-removal", "VCD_SILENT_LEFTOVER_REMOVAL", "Omit details during removal of leftovers")
 
 }
 
@@ -266,8 +266,8 @@ var (
 	// skipLeftoverRemoval skips the removal of leftovers at the end of the test suite
 	skipLeftoverRemoval = false
 
-	// verboseLeftoverRemoval prints every phase of leftover removal
-	verboseLeftoverRemoval = false
+	// silentLeftoverRemoval omits details while removing leftovers
+	silentLeftoverRemoval = false
 )
 
 const (
@@ -837,7 +837,7 @@ func TestMain(m *testing.M) {
 			fmt.Printf("error authenticating provider: %s\n", err)
 			exitCode = 1
 		}
-		err := removeLeftovers(govcdClient, verboseLeftoverRemoval)
+		err := removeLeftovers(govcdClient, !silentLeftoverRemoval)
 		if err != nil {
 			fmt.Printf("error during leftover removal: %s\n", err)
 			exitCode = 1

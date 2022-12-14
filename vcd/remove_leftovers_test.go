@@ -44,6 +44,7 @@ var doNotDelete = entityList{
 // alsoDelete contains a list of entities that should be removed , in addition to the ones
 // found by name matching
 // Add to this list if you ever get an entity left behind by a test
+// Note: these names were captured running 'go run get_resource_names.go' in ./vcd/test-artifacts
 var alsoDelete = entityList{
 	{Type: "vcd_catalog", Name: "Catalog-AC-0", Comment: "from vcd.TestAccVcdCatalogAccessControl-update.tf: Catalog-AC-0"},
 	{Type: "vcd_catalog", Name: "Catalog-AC-1", Comment: "from vcd.TestAccVcdCatalogAccessControl-update.tf: Catalog-AC-1"},
@@ -85,7 +86,7 @@ var alsoDelete = entityList{
 // isTest is a regular expression that tells if an entity needs to be deleted
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
-// alwaysShow lists the resources that will always be shown, even when `hide-keep` is set
+// alwaysShow lists the resources that will always be shown
 var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
