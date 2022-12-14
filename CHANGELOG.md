@@ -1,6 +1,16 @@
-## 3.8.1 (TBC)
-			
-Changes in progress for v3.8.1 are available at [.changes/v3.8.1](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.8.1) until the release.
+## 3.8.1 (December 14, 2022)
+
+### IMPROVEMENTS
+* Add `vdc_id` to data source `vcd_vm_placement_policy` to allow tenant users to fetch VM Placement Policies from
+  the ones assigned to VDCs ([#948](https://github.com/vmware/terraform-provider-vcd/pull/948))
+* Resource and data source `vcd_catalog` and `vcd_subscribed_catalog` introduce new computed field `is_local` to specify
+  whether the catalog originated from the current org ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
+* Improve usage of `org` field in `vcd_catalog` to accept sharing Org name for shared catalogs and improve error messages ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
+
+### BUG FIXES
+* Fix a bug that caused `vcd_vm_group` data source to fail when the backing Provider VDC had multiple resource pools ([#948](https://github.com/vmware/terraform-provider-vcd/pull/948))
+* Fix issue #944 - shared catalog datasource not accessible to Org users ([#949](https://github.com/vmware/terraform-provider-vcd/pull/949))
+* Fix issue #672 - update Org with invalid or extended LDAP settings ([#952](https://github.com/vmware/terraform-provider-vcd/pull/952), [#955](https://github.com/vmware/terraform-provider-vcd/pull/955))
 
 ## 3.8.0 (November 25, 2022)
 
