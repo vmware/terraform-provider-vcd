@@ -126,13 +126,31 @@ func TestAccAuth(t *testing.T) {
 	  `,
 	})
 	testCases = append(testCases, authTestCase{
-		name:        "InvalidSystemUserAndPassword,AuthType=integrated",
+		name:        "InvalidPassword,AuthType=integrated",
 		skip:        testConfig.Provider.UseSamlAdfs,
 		skipReason:  "testConfig.Provider.UseSamlAdfs must be false",
 		expectError: regexp.MustCompile("401"),
 		configText: `
 			provider "vcd" {
 				user                 = "` + testConfig.Provider.User + `"
+				password             = "INVALID-PASSWORD"
+				auth_type            = "integrated"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				url                  = "` + testConfig.Provider.Url + `"
+				allow_unverified_ssl = true
+			}
+	  `,
+	})
+
+	testCases = append(testCases, authTestCase{
+		name:        "InvalidSystemUserAndPassword,AuthType=integrated",
+		skip:        testConfig.Provider.UseSamlAdfs,
+		skipReason:  "testConfig.Provider.UseSamlAdfs must be false",
+		expectError: regexp.MustCompile("401"),
+		configText: `
+			provider "vcd" {
+				user                 = "INVALID-USER"
 				password             = "INVALID-PASSWORD"
 				auth_type            = "integrated"
 				sysorg               = "` + testConfig.Provider.SysOrg + `" 
