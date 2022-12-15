@@ -74,6 +74,23 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	testCases = append(testCases, authTestCase{
+		name:       "InvalidSystemUserAndPasswordWithDefaultOrgAndVdc",
+		skip:       testConfig.Provider.UseSamlAdfs,
+		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
+		configText: `
+			provider "vcd" {
+				user                 = "` + testConfig.Provider.User + `"
+				password             = "INVALID-PASSWORD"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				vdc                  = "` + testConfig.VCD.Vdc + `"
+				url                  = "` + testConfig.Provider.Url + `"
+				allow_unverified_ssl = true
+			}
+	  `,
+	})
+
+	testCases = append(testCases, authTestCase{
 		name:       "SystemUserAndPasswordWithDefaultOrg",
 		skip:       testConfig.Provider.UseSamlAdfs,
 		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
@@ -97,6 +114,22 @@ func TestAccAuth(t *testing.T) {
 			provider "vcd" {
 				user                 = "` + testConfig.Provider.User + `"
 				password             = "` + testConfig.Provider.Password + `"
+				auth_type            = "integrated"
+				sysorg               = "` + testConfig.Provider.SysOrg + `" 
+				org                  = "` + testConfig.VCD.Org + `"
+				url                  = "` + testConfig.Provider.Url + `"
+				allow_unverified_ssl = true
+			}
+	  `,
+	})
+	testCases = append(testCases, authTestCase{
+		name:       "InvalidSystemUserAndPassword,AuthType=integrated",
+		skip:       testConfig.Provider.UseSamlAdfs,
+		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
+		configText: `
+			provider "vcd" {
+				user                 = "` + testConfig.Provider.User + `"
+				password             = "INVALID-PASSWORD"
 				auth_type            = "integrated"
 				sysorg               = "` + testConfig.Provider.SysOrg + `" 
 				org                  = "` + testConfig.VCD.Org + `"
