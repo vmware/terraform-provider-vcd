@@ -5,6 +5,7 @@ package vcd
 
 import (
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -47,10 +48,11 @@ func TestAccAuth(t *testing.T) {
 	}()
 
 	type authTestCase struct {
-		name       string
-		configText string
-		skip       bool // To make subtests always show names
-		skipReason string
+		name        string
+		configText  string
+		skip        bool // To make subtests always show names
+		skipReason  string
+		expectError *regexp.Regexp
 	}
 	type authTests []authTestCase
 
@@ -74,9 +76,10 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	testCases = append(testCases, authTestCase{
-		name:       "InvalidSystemUserAndPasswordWithDefaultOrgAndVdc",
-		skip:       testConfig.Provider.UseSamlAdfs,
-		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
+		name:        "InvalidSystemUserAndPasswordWithDefaultOrgAndVdc",
+		skip:        testConfig.Provider.UseSamlAdfs,
+		skipReason:  "testConfig.Provider.UseSamlAdfs must be false",
+		expectError: regexp.MustCompile("401"),
 		configText: `
 			provider "vcd" {
 				user                 = "` + testConfig.Provider.User + `"
@@ -123,9 +126,10 @@ func TestAccAuth(t *testing.T) {
 	  `,
 	})
 	testCases = append(testCases, authTestCase{
-		name:       "InvalidSystemUserAndPassword,AuthType=integrated",
-		skip:       testConfig.Provider.UseSamlAdfs,
-		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
+		name:        "InvalidSystemUserAndPassword,AuthType=integrated",
+		skip:        testConfig.Provider.UseSamlAdfs,
+		skipReason:  "testConfig.Provider.UseSamlAdfs must be false",
+		expectError: regexp.MustCompile("401"),
 		configText: `
 			provider "vcd" {
 				user                 = "` + testConfig.Provider.User + `"
@@ -290,7 +294,7 @@ func TestAccAuth(t *testing.T) {
 			if test.skip {
 				t.Skip("Skipping: " + test.skipReason)
 			}
-			runAuthTest(t, test.configText)
+			runAuthTest(t, test.configText, test.expectError)
 		})
 	}
 
@@ -299,7 +303,7 @@ func TestAccAuth(t *testing.T) {
 	postTestChecks(t)
 }
 
-func runAuthTest(t *testing.T, configText string) {
+func runAuthTest(t *testing.T, configText string, expectError *regexp.Regexp) {
 
 	dataSource := `
 	data "vcd_org" "auth" {
@@ -311,7 +315,8 @@ func runAuthTest(t *testing.T, configText string) {
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: configText + dataSource,
+				ExpectError: expectError,
+				Config:      configText + dataSource,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_org.auth", "id"),
 				),
