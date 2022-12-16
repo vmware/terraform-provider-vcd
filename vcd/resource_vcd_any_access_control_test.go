@@ -42,7 +42,6 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckVDCControlAccessDestroy(),
 			testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.Nsxt.Vdc, []string{t.Name()}),
-			testAccCheckCatalogAccessControlDestroy(testConfig.VCD.Org, []string{testConfig.VCD.Catalog.NsxtBackedCatalogName}),
 		),
 		Steps: []resource.TestStep{
 			{
