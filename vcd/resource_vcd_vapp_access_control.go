@@ -302,7 +302,7 @@ func accessControlListToSharedSet(input []*types.AccessSetting) ([]map[string]in
 		case types.MimeAdminUser:
 			setting["user_id"] = "urn:vcloud:user:" + extractUuid(item.Subject.HREF)
 		case types.MimeAdminGroup:
-			setting["group_id"] = extractUuid(item.Subject.HREF)
+			setting["group_id"] = "urn:vcloud:group:" + extractUuid(item.Subject.HREF)
 		case types.MimeOrg, types.MimeAdminOrg:
 			setting["org_id"] = "urn:vcloud:org:" + extractUuid(item.Subject.HREF)
 		default:
