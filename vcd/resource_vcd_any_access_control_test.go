@@ -1,12 +1,16 @@
-//go:build vdc || catalog || vapp || ALL || functional
-// +build vdc catalog vapp ALL functional
+//go:build access_control || vdc || catalog || vapp || ALL || functional
+// +build access_control vdc catalog vapp ALL functional
 
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 // TestAccVcdAnyAccessControlGroups checks that vcd_org_vdc_access_control resource is capable of
@@ -35,7 +39,11 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVDCControlAccessDestroy(),
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckVDCControlAccessDestroy(),
+			testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.Nsxt.Vdc, []string{t.Name()}),
+			testAccCheckCatalogAccessControlDestroy(testConfig.VCD.Org, []string{testConfig.VCD.Catalog.NsxtBackedCatalogName}),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -170,3 +178,87 @@ resource "vcd_vapp_access_control" "test" {
   }
 }
 `
+
+func testAccCheckVDCControlAccessDestroy() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
+		if err != nil {
+			return fmt.Errorf("error retrieving Org %s - %s", testConfig.VCD.Org, err)
+		}
+
+		controlAccessParams, err := vdc.GetControlAccess(true)
+		if err != nil {
+			return fmt.Errorf("error retrieving VDC controll access parameters - %s", err)
+		}
+
+		if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
+			spew.Dump(controlAccessParams)
+			return fmt.Errorf("expected to have VDC sharing settings set to none and got something else: %v", controlAccessParams)
+		}
+		return nil
+	}
+}
+
+func testAccCheckVappAccessControlDestroy(orgName, vdcName string, vappNames []string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
+		if err != nil {
+			return fmt.Errorf("error: could not find Org: %s", err)
+		}
+		vdc, err := org.GetVDCByName(vdcName, false)
+		if err != nil {
+			return fmt.Errorf("error: could not find VDC: %s", err)
+		}
+		var destroyed int
+		var existing []string
+		for _, vappName := range vappNames {
+
+			_, err = vdc.GetVAppByName(vappName, false)
+			if err != nil && govcd.IsNotFound(err) {
+				// The vApp was removed
+				destroyed++
+			}
+			if err == nil {
+				existing = append(existing, vappName)
+			}
+		}
+
+		if destroyed == len(vappNames) {
+			return nil
+		}
+		return fmt.Errorf("vapps %v not deleted yet", existing)
+	}
+}
+
+func testAccCheckCatalogAccessControlDestroy(orgName string, catalogNames []string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
+		if err != nil {
+			return fmt.Errorf("error: could not find Org: %s", err)
+		}
+		var destroyed int
+		var existing []string
+		for _, catalogName := range catalogNames {
+
+			_, err = org.GetCatalogByName(catalogName, false)
+			if err != nil && govcd.IsNotFound(err) {
+				// The catalog was removed
+				destroyed++
+			}
+			if err == nil {
+				existing = append(existing, catalogName)
+			}
+		}
+
+		if destroyed == len(catalogNames) {
+			return nil
+		}
+		return fmt.Errorf("catalogs %v not deleted yet", existing)
+	}
+}
