@@ -91,6 +91,7 @@ resource "vcd_org_user" "{{.UserName}}" {
   role           = "{{.RoleName}}"
   take_ownership = true
 }
+
 resource "vcd_org_user" "{{.UserName2}}" {
   org            = "{{.Org}}"
   name           = "{{.UserName2}}"
@@ -98,6 +99,7 @@ resource "vcd_org_user" "{{.UserName2}}" {
   role           = "{{.RoleName}}"
   take_ownership = true
 }
+
 resource "vcd_org_vdc_access_control" "{{.AccessControlName}}" {
   org                   = "{{.Org}}"
   vdc                   = "{{.Vdc}}"
