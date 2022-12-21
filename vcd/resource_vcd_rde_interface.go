@@ -14,21 +14,25 @@ func resourceVcdRdeInterface() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdRdeInterfaceCreate,
 		ReadContext:   resourceVcdRdeInterfaceRead,
+		UpdateContext: resourceVcdRdeInterfaceUpdate,
 		DeleteContext: resourceVcdRdeInterfaceDelete,
 		Schema: map[string]*schema.Schema{
 			"namespace": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "A unique namespace associated with the interface",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true, // Can't update version
 				Description: "The interface's version. The version should follow semantic versioning rules",
 			},
 			"vendor": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The vendor name",
 			},
 			"name": {
@@ -41,6 +45,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
+				ForceNew:    true,
 				Description: "True if the entity type cannot be modified. Defaults to false",
 			},
 		},
@@ -106,6 +111,28 @@ func getDefinedInterface(d *schema.ResourceData, meta interface{}) (*govcd.Defin
 		return nil, fmt.Errorf("could not get any Defined Interface with vendor %s, namespace %s and version %s: %s", vendor, nss, version, err)
 	}
 	return di, nil
+}
+
+func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	di, err := getDefinedInterface(d, meta)
+	if govcd.ContainsNotFound(err) {
+		log.Printf("[DEBUG] Defined Interface no longer exists. Removing from tfstate")
+		return nil
+	}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = di.Update(types.DefinedInterface{
+		Name:       d.Get("name").(string),
+		Namespace:  d.Get("namespace").(string),
+		Version:    d.Get("version").(string),
+		Vendor:     d.Get("vendor").(string),
+		IsReadOnly: d.Get("readonly").(bool),
+	})
+	if err != nil {
+		return diag.Errorf("could not update the Defined Interface: %s", err)
+	}
+	return resourceVcdRdeInterfaceRead(ctx, d, meta)
 }
 
 func resourceVcdRdeInterfaceDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
