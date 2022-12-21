@@ -23,7 +23,7 @@ func datasourceVcdRdeInterface() *schema.Resource {
 			"vendor": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The interface's version. The version should follow semantic versioning rules",
+				Description: "The vendor name",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -39,17 +39,6 @@ func datasourceVcdRdeInterface() *schema.Resource {
 	}
 }
 
-func datasourceVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-	vendor := d.Get("vendor").(string)
-	nss := d.Get("namespace").(string)
-	version := d.Get("version").(string)
-	di, err := vcdClient.VCDClient.GetDefinedInterface(vendor, nss, version)
-	if err != nil {
-		return diag.Errorf("could not get any Defined Interface with vendor %s, namespace %s and version %s: %s", vendor, nss, version, err)
-	}
-	d.SetId(di.DefinedInterface.ID)
-	dSet(d, "name", di.DefinedInterface.Name)
-	dSet(d, "readonly", di.DefinedInterface.IsReadOnly)
-	return nil
+func datasourceVcdRdeInterfaceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdRdeInterfaceRead(ctx, d, meta, "datasource")
 }
