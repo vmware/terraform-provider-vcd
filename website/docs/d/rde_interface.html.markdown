@@ -22,11 +22,11 @@ data "vcd_rde_interface" "my-interface" {
 }
 
 output "interface-name" {
-   value = data.vcd_rde_interface.my-interface.name
+  value = data.vcd_rde_interface.my-interface.name
 }
 
 output "interface-id" {
-   value = data.vcd_rde_interface.my-interface.id
+  value = data.vcd_rde_interface.my-interface.id
 }
 ```
 
