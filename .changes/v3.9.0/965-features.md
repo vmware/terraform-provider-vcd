@@ -1,6 +1,2 @@
 * **New Resource:** `vcd_rde_interface` to manage the Defined Interfaces required to use RDE types [GH-965]
-* **New Resource:** `vcd_rde_type` to manage the Runtime Defined Entity types required to use RDEs [GH-965]
-* **New Resource:** `vcd_rde` to manage the Runtime Defined Entities created with a specific type [GH-965]
 * **New Data Source:** `vcd_rde_interface` to fetch existing Defined Interfaces [GH-965]
-* **New Data Source:** `vcd_rde_type` to fetch existing Runtime Defined Entity (RDE) types [GH-965]
-* **New Data Source:** `vcd_rde` to fetch existing Runtime Defined Entities (RDEs) [GH-965]
