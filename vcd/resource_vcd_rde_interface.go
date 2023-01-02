@@ -123,11 +123,7 @@ func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	err = di.Update(types.DefinedInterface{
-		Name:       d.Get("name").(string),
-		Namespace:  d.Get("namespace").(string),
-		Version:    d.Get("version").(string),
-		Vendor:     d.Get("vendor").(string),
-		IsReadOnly: d.Get("readonly").(bool),
+		Name: d.Get("name").(string), // Only name can be updated
 	})
 	if err != nil {
 		return diag.Errorf("could not update the Defined Interface: %s", err)
