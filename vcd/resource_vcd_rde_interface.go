@@ -49,7 +49,8 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true, // Can't update readonly
+				Computed:    true, // As recommended by Terraform SDK docs
+				ForceNew:    true, // Can't update readonly (see FIXME comment)
 				Description: "True if the entity type cannot be modified. Defaults to false",
 			},
 		},
