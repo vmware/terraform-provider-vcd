@@ -8,6 +8,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
+	"strings"
 )
 
 func resourceVcdRdeInterface() *schema.Resource {
@@ -16,6 +17,9 @@ func resourceVcdRdeInterface() *schema.Resource {
 		ReadContext:   resourceVcdRdeInterfaceRead,
 		UpdateContext: resourceVcdRdeInterfaceUpdate,
 		DeleteContext: resourceVcdRdeInterfaceDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdRdeInterfaceImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"namespace": {
 				Type:        schema.TypeString,
@@ -92,9 +96,13 @@ func genericVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(di.DefinedInterface.ID)
-	dSet(d, "name", di.DefinedInterface.Name) // Although name is required in Create, we always "compute" it on Read
+	dSet(d, "vendor", di.DefinedInterface.Vendor)
+	dSet(d, "namespace", di.DefinedInterface.Namespace)
+	dSet(d, "version", di.DefinedInterface.Version)
+	dSet(d, "name", di.DefinedInterface.Name)
 	dSet(d, "readonly", di.DefinedInterface.IsReadOnly)
+	d.SetId(di.DefinedInterface.ID)
+
 	return nil
 }
 
@@ -102,15 +110,15 @@ func genericVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta 
 func getDefinedInterface(d *schema.ResourceData, meta interface{}) (*govcd.DefinedInterface, error) {
 	vcdClient := meta.(*VCDClient)
 
+	if d.Id() != "" {
+		return vcdClient.VCDClient.GetDefinedInterfaceById(d.Id())
+	}
+
 	vendor := d.Get("vendor").(string)
 	nss := d.Get("namespace").(string)
 	version := d.Get("version").(string)
 
-	di, err := vcdClient.VCDClient.GetDefinedInterface(vendor, nss, version)
-	if err != nil {
-		return nil, fmt.Errorf("could not get any Defined Interface with vendor %s, namespace %s and version %s: %s", vendor, nss, version, err)
-	}
-	return di, nil
+	return vcdClient.VCDClient.GetDefinedInterface(vendor, nss, version)
 }
 
 func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -145,4 +153,34 @@ func resourceVcdRdeInterfaceDelete(_ context.Context, d *schema.ResourceData, me
 		return diag.Errorf("could not delete the Defined Interface: %s", err)
 	}
 	return nil
+}
+
+// resourceVcdRdeInterfaceImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in state file
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_rde_interface.outer-interface
+// Example import path (_the_id_string_): vmware.kubernetes.1.0.0
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+func resourceVcdRdeInterfaceImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) < 3 {
+		return nil, fmt.Errorf("resource identifier must be specified as vendor.namespace.version")
+	}
+	vendor, namespace, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
+
+	vcdClient := meta.(*VCDClient)
+	di, err := vcdClient.GetDefinedInterface(vendor, namespace, version)
+	if err != nil {
+		return nil, fmt.Errorf("error finding Defined Interface with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
+	}
+
+	d.SetId(di.DefinedInterface.ID)
+	return []*schema.ResourceData{d}, nil
 }

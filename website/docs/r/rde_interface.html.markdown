@@ -46,15 +46,15 @@ For example, using this structure, representing an existing Defined Interface th
 ```hcl
 resource "vcd_rde_interface" "outer-interface" {
   vendor    = "bigcorp"
-  namespace = "tech1"
-  version   = "1.2.3"
+  namespace = "tech"
+  version   = "4.5.6"
 }
 ```
 
 You can import such Defined Interface into Terraform state using this command
 
 ```
-terraform import vcd_rde_interface.outer-interface bigcorp.tech1.1.2.3
+terraform import vcd_rde_interface.outer-interface bigcorp.tech.4.5.6
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR

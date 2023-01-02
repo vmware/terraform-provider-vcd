@@ -61,12 +61,12 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(interfaceName, "readonly", params["Readonly"].(string)),
 				),
 			},
-			// TODO
-			//{
-			//	ResourceName:      interfaceName,
-			//	ImportState:       true,
-			//	ImportStateVerify: true,
-			//},
+			{
+				ResourceName:      interfaceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -104,5 +104,15 @@ func testAccCheckRdeInterfaceDestroy(identifier string) resource.TestCheckFunc {
 		}
 		return nil
 
+	}
+}
+
+func importStateIdDefinedInterface(vendor, namespace, version string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return vendor +
+			ImportSeparator +
+			namespace +
+			ImportSeparator +
+			version, nil
 	}
 }
