@@ -20,7 +20,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 			"namespace": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
+				ForceNew:    true, // Can't update namespace
 				Description: "A unique namespace associated with the interface",
 			},
 			"version": {
@@ -32,7 +32,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 			"vendor": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
+				ForceNew:    true, // Can't update vendor
 				Description: "The vendor name",
 			},
 			"name": {
@@ -45,7 +45,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true,
+				ForceNew:    true, // Can't update readonly
 				Description: "True if the entity type cannot be modified. Defaults to false",
 			},
 		},
