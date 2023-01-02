@@ -135,10 +135,11 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	catalogName := d.Get("catalog").(string)
 	catalogId := d.Get("catalog_id").(string)
 	if catalogId == "" {
+		var adminOrg *govcd.AdminOrg
 		if catalogName == "" {
 			return diag.Errorf("[vcd_catalog_media CREATE] neither catalog name or ID provided")
 		}
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		adminOrg, err = vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
 			return diag.Errorf(errorRetrievingOrg, err)
 		}
