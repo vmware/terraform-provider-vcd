@@ -15,9 +15,14 @@ Supported in provider *v2.0+*
 ## Example Usage
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "my-org"
+  name = "my-catalog"
+}
+
 resource "vcd_catalog_media" "myNewMedia" {
-  org     = "my-org"
-  catalog = "my-catalog"
+  org        = "my-org"
+  catalog_id = data.vcd_catalog.my-catalog.id
 
   name                 = "my iso"
   description          = "new os versions"
@@ -42,7 +47,8 @@ resource "vcd_catalog_media" "myNewMedia" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `catalog` - (Required) The name of the catalog where to upload media file
+* `catalog` - (Optional; Deprecated) The name of the catalog where to upload media file
+* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog where to upload media file
 * `name` - (Required) Media file name in catalog
 * `description` - (Optional) - Description of media file
 * `media_path` - (Required) - Absolute or relative path to file to upload
