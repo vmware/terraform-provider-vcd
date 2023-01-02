@@ -24,7 +24,72 @@ func resourceVcdRdeType() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the defined interface",
+				Description: "The name of the Runtime Defined Entity type",
+			},
+			"vendor": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The vendor name for the Runtime Defined Entity type",
+			},
+			"namespace": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A unique namespace associated with the Runtime Defined Entity type",
+			},
+			"version": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The version of the Runtime Defined Entity type. The version string must follow semantic versioning rules",
+			},
+			"interface_ids": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Required:    true,
+				Description: "Set of Defined Interface URNs that this defined entity type is referenced by",
+			},
+			"schema_url": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "URL that should point to a JSON-Schema valid definition file of the Runtime Defined Entity type",
+				AtLeastOneOf: []string{"schema_url", "schema"},
+			},
+			"schema": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "The JSON-Schema valid definition of the Runtime Defined Entity type",
+				AtLeastOneOf: []string{"schema_url", "schema"},
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The description of the Runtime Defined Entity type",
+			},
+			"external_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "An external entity's id that this definition may apply to",
+			},
+			"hooks": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Description: "A mapping defining which behaviors should be invoked upon specific lifecycle events, like PostCreate, PostUpdate or PreDelete",
+			},
+			"inherited_version": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "To be used when creating a new version of a defined entity type. Specifies the version of the type that will be the template for the authorization configuration of the new version. The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version. If the value of this property is ‘0’, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type",
+			},
+			"readonly": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "True if the entity type cannot be modified",
 			},
 		},
 	}
