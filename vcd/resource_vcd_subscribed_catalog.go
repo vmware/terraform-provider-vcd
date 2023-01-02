@@ -677,7 +677,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 	var err error
 	collection, err = readTaskIdCollection(vcdClient, catalogId, d)
 	if err != nil {
-		return fmt.Errorf("error reading catalog task IDs")
+		return fmt.Errorf("error reading catalog task IDs: %s", err)
 	}
 	taskList = collection.Running
 

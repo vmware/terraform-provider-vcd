@@ -129,6 +129,9 @@ func getMandatoryDataSourceSchemaFields(dataSourceName string) []string {
 			mandatoryFields = append(mandatoryFields, fieldName)
 		}
 	}
+	if dataSourceName == "vcd_catalog_media" {
+		mandatoryFields = append(mandatoryFields, "catalog_id")
+	}
 	return mandatoryFields
 }
 
@@ -144,6 +147,7 @@ func getMandatoryDataSourceRuntimeFields(dataSourceName string) []string {
 
 func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *testing.T, vcdClient *VCDClient) string {
 	var templateFields string
+
 	for fieldIndex := range mandatoryFields {
 
 		// validate that on provider config VDC added

@@ -41,6 +41,9 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		}
 		t.Run(fmt.Sprintf("make_local_copy=%v", makeLocalCopy), func(t *testing.T) {
 			var params = StringMap{
+				"ProviderVcdSystem":       providerVcdSystem,
+				"ProviderVcdOrg1":         providerVcdOrg1,
+				"ProviderVcdOrg2":         providerVcdOrg2,
 				"SkipMessage":             skipMessage,
 				"PublisherOrg":            publisherOrg,
 				"PublisherVdc":            testConfig.Nsxt.Vdc,
@@ -99,7 +102,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 			resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
 			resource.Test(t, resource.TestCase{
 				PreCheck:          func() { preRunChecks(t) },
-				ProviderFactories: testAccProviders,
+				ProviderFactories: buildMultipleProviders(),
 				CheckDestroy: resource.ComposeTestCheckFunc(
 					testCheckCatalogDestroy(publisherOrg, publisherCatalog),
 					testCheckCatalogDestroy(subscriberOrg, subscriberCatalog),
@@ -196,14 +199,13 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 // expectedMedia is the number of Media
 func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
-		if err != nil {
-			return err
+		if testAccProvider == nil || testAccProvider.Meta() == nil {
+			return fmt.Errorf("testAccProvider is not initialized")
 		}
-		catalog, err := org.GetAdminCatalogByName(catalogName, false)
+		conn := testAccProvider.Meta().(*VCDClient)
+		catalog, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving catalog %s/%s: %s", orgName, catalogName, err)
 		}
 		if !checkItems {
 			return nil
@@ -218,15 +220,15 @@ func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool,
 
 		items, err := catalog.QueryCatalogItemList()
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving catalog item list: %s", err)
 		}
 		vappTemplates, err := catalog.QueryVappTemplateList()
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving vApp templates list: %s", err)
 		}
 		mediaItems, err := catalog.QueryMediaList()
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving media items list: %s", err)
 		}
 		if len(items) != expectedItems {
 			return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
@@ -270,12 +272,16 @@ func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc
 const testAccVcdPublisherCatalogCreation = `
 {{.SkipMessage}}
 data "vcd_storage_profile" "storage_profile" {
+  provider = {{.ProviderVcdSystem}}
+
   org  = "{{.PublisherOrg}}"
   vdc  = "{{.PublisherVdc}}"
   name = "{{.PublisherStorageProfile}}"
 }
 
 resource "vcd_catalog" "{{.PublisherCatalog}}" {
+  provider = {{.ProviderVcdOrg1}}
+
   org                = "{{.PublisherOrg}}"
   name               = "{{.PublisherCatalog}}"
   description        = "{{.PublisherDescription}}"
@@ -298,6 +304,8 @@ resource "vcd_catalog" "{{.PublisherCatalog}}" {
 // testAccVcdPublisherCatalogItems creates all items that depend on the publishing catalog
 const testAccVcdPublisherCatalogItems = `
 resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
+  provider = {{.ProviderVcdOrg1}}
+
   count      = {{.NumberOfVappTemplates}}
   org        = "{{.PublisherOrg}}"
   catalog_id = vcd_catalog.{{.PublisherCatalog}}.id
@@ -314,6 +322,8 @@ resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
 }
 
 resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
+  provider = {{.ProviderVcdOrg1}}
+
   count   = {{.NumberOfMediaItems}}
   org     = "{{.PublisherOrg}}"
   catalog = vcd_catalog.{{.PublisherCatalog}}.name
@@ -333,6 +343,8 @@ resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
 // testAccSubscribedCatalogCreation creates the subscribed catalog (in a different Org)
 const testAccSubscribedCatalogCreation = `
 resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
+  provider = {{.ProviderVcdOrg2}}
+
   org  = "{{.SubscriberOrg}}"
   name = "{{.SubscriberCatalog}}"
 
@@ -350,6 +362,8 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 // testAccSubscribedCatalogUpdate adds parameters to the subscribed catalog to handle synchronisation
 const testAccSubscribedCatalogUpdate = `
 resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
+  provider = {{.ProviderVcdOrg2}}
+
   org  = "{{.SubscriberOrg}}"
   name = "{{.SubscriberCatalog}}"
 
@@ -369,24 +383,32 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 // and a VM that uses one of the subscribed items
 const testAccSubscribedCatalogSync = `
 data "vcd_catalog_item" "{{.VappTemplateBaseName}}-1" {
+  provider = {{.ProviderVcdOrg2}}
+
   org     = "{{.SubscriberOrg}}"
   catalog = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
   name    = "{{.VappTemplateBaseName}}-1"
 }
 
 data "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}-1" {
+  provider = {{.ProviderVcdOrg2}}
+
   org        = "{{.SubscriberOrg}}"
   catalog_id = vcd_subscribed_catalog.{{.SubscriberCatalog}}.id
   name       = "{{.VappTemplateBaseName}}-1"
 }
 
 data "vcd_catalog_media" "{{.MediaItemBaseName}}-1" {
+  provider = {{.ProviderVcdOrg2}}
+
   org     = "{{.SubscriberOrg}}"
   catalog = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
   name    = "{{.MediaItemBaseName}}-1"
 }
 
 resource "vcd_vm" "{{.VmName}}" {
+  provider = {{.ProviderVcdOrg2}}
+
   org           = "{{.SubscriberOrg}}"
   vdc           = "{{.SubscriberVdc}}"
   name          = "{{.VmName}}"
@@ -397,6 +419,8 @@ resource "vcd_vm" "{{.VmName}}" {
 }
 
 resource "vcd_vm" "{{.VmName}}2" {
+  provider = {{.ProviderVcdOrg2}}
+
   org              = "{{.SubscriberOrg}}"
   vdc              = "{{.SubscriberVdc}}"
   name             = "{{.VmName}}2"
@@ -406,6 +430,8 @@ resource "vcd_vm" "{{.VmName}}2" {
 }
 
 resource "vcd_vm" "{{.VmName}}3" {
+  provider = {{.ProviderVcdOrg2}}
+
   org              = "{{.SubscriberOrg}}"
   vdc              = "{{.SubscriberVdc}}"
   name             = "{{.VmName}}3"

@@ -27,15 +27,25 @@ func resourceVcdCatalogMedia() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"catalog": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				ForceNew:    true,
 				Description: "catalog name where upload the Media file",
+				Deprecated:  "Use catalog_id instead",
+			},
+			"catalog_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "ID of the catalog where to upload the Media file",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -120,13 +130,22 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
-	}
-
+	var catalog *govcd.Catalog
+	var err error
 	catalogName := d.Get("catalog").(string)
-	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	catalogId := d.Get("catalog_id").(string)
+	if catalogId == "" {
+		if catalogName == "" {
+			return diag.Errorf("[vcd_catalog_media CREATE] neither catalog name or ID provided")
+		}
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrg, err)
+		}
+		catalog, err = adminOrg.GetCatalogByName(catalogName, false)
+	} else {
+		catalog, err = vcdClient.Client.GetCatalogById(catalogId)
+	}
 	if err != nil {
 		log.Printf("Error finding Catalog: %s", err)
 		return diag.Errorf("error finding Catalog: %s", err)
@@ -181,6 +200,8 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error adding media item metadata: %s", err)
 	}
 
+	//dSet(d, "catalog_id", catalog.Catalog.ID)
+	//dSet(d, "catalog", catalog.Catalog.Name)
 	return resourceVcdMediaRead(ctx, d, meta)
 }
 
@@ -191,12 +212,24 @@ func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interf
 func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
-	}
+	var catalog *govcd.Catalog
+	var err error
+	var orgName string
+	catalogName := d.Get("catalog").(string)
+	catalogId := d.Get("catalog_id").(string)
 
-	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
+	if catalogId == "" {
+		if catalogName == "" {
+			return diag.Errorf("[vcd_catalog_media READ] neither catalog name or ID provided")
+		}
+		orgName, err = vcdClient.GetOrgNameFromResource(d)
+		if err != nil {
+			return diag.Errorf("error getting the Org name for vcd_catalog_media: %s", err)
+		}
+		catalog, err = vcdClient.Client.GetCatalogByName(orgName, catalogName)
+	} else {
+		catalog, err = vcdClient.Client.GetCatalogById(catalogId)
+	}
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog.")
 		return diag.Errorf("unable to find catalog: %s", err)
@@ -246,6 +279,8 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 		return diag.FromErr(err)
 	}
 
+	dSet(d, "catalog", catalog.Catalog.Name)
+	dSet(d, "catalog_id", catalog.Catalog.ID)
 	dSet(d, "name", media.Media.Name)
 	dSet(d, "description", media.Media.Description)
 	dSet(d, "is_iso", mediaRecord.MediaRecord.IsIso)
@@ -283,12 +318,20 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+	var catalog *govcd.Catalog
+	var err error
+	var orgName string
+	catalogName := d.Get("catalog").(string)
+	catalogId := d.Get("catalog_id").(string)
+	if catalogId == "" {
+		orgName, err = vcdClient.GetOrgNameFromResource(d)
+		if err != nil {
+			return fmt.Errorf("error retrieving Org name for vcd_catalog_media: %s", err)
+		}
+		catalog, err = vcdClient.Client.GetCatalogByName(orgName, catalogName)
+	} else {
+		catalog, err = vcdClient.Client.GetCatalogById(catalogId)
 	}
-
-	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog.")
 		return fmt.Errorf("unable to find catalog: %s", err)
@@ -333,12 +376,8 @@ func resourceVcdCatalogMediaImport(_ context.Context, d *schema.ResourceData, me
 	}
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
-	}
 
-	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	catalog, err := vcdClient.Client.GetCatalogByName(orgName, catalogName)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
