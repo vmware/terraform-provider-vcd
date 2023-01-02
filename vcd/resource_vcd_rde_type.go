@@ -80,7 +80,6 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-
 func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	di, err := getDefinedInterface(d, meta)
 	if govcd.ContainsNotFound(err) {
