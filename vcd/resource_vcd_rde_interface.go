@@ -75,7 +75,7 @@ func resourceVcdRdeInterfaceCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("could not create the Defined Interface with name %s, vendor %s, namespace %s and version %s: %s", name, vendor, nss, version, err)
 	}
-	return genericVcdRdeInterfaceRead(ctx, d, meta, "resource")
+	return resourceVcdRdeInterfaceRead(ctx, d, meta)
 }
 
 func resourceVcdRdeInterfaceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
