@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -198,6 +200,20 @@ func contains(sliceToSearch []string, searched string) bool {
 		}
 	}
 	return found
+}
+
+// jsonToCompactString transforms an unmarshalled JSON in form of a map of string->any to a plain string without any spacing.
+func jsonToCompactString(inputJson map[string]interface{}) (string, error) {
+	rawJson, err := json.Marshal(inputJson)
+	if err != nil {
+		return "", err
+	}
+	compactedJson := new(bytes.Buffer)
+	err = json.Compact(compactedJson, rawJson)
+	if err != nil {
+		return "", err
+	}
+	return compactedJson.String(), nil
 }
 
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name

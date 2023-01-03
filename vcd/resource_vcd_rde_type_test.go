@@ -61,14 +61,14 @@ func TestAccVcdRdeType(t *testing.T) {
 const testAccVcdRdeType = `
 resource "vcd_rde_interface" "rde-interface1" {
   namespace = "{{.Namespace}}1"
-  version   = "{{.Version}}1"
+  version   = "{{.Version}}"
   vendor    = "{{.Vendor}}1"
   name      = "{{.Name}}1"
 }
 
 resource "vcd_rde_interface" "rde-interface2" {
   namespace   = "{{.Namespace}}2"
-  version     = "{{.Version}}2"
+  version     = "{{.Version}}"
   vendor      = "{{.Vendor}}2"
   name        = "{{.Name}}2"
 }

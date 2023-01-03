@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -86,10 +87,10 @@ func resourceVcdRdeType() *schema.Resource {
 					"The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version." +
 					"If not set, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type",
 			},
+			// FIXME: It seems only accepts false???? Doesnt support Update neither
 			"readonly": {
 				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false, // FIXME: It seems only accepts false???? Doesnt support Update neither
+				Computed:    true,
 				Description: "True if the Runtime Defined Entity type cannot be modified",
 			},
 		},
@@ -123,18 +124,25 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 // getRdeTypeSchema gets the schema as string from the Terraform configuration
-func getRdeTypeSchema(d *schema.ResourceData) (string, error) {
+func getRdeTypeSchema(d *schema.ResourceData) (map[string]interface{}, error) {
 	var jsonSchema string
 	var err error
 	if url, isUrlSet := d.GetOk("schema_url"); isUrlSet {
 		jsonSchema, err = fileFromUrlToString(url.(string), ".json")
 		if err != nil {
-			return "", fmt.Errorf("could not download JSON schema from url %s: %s", url, err)
+			return nil, fmt.Errorf("could not download JSON schema from url %s: %s", url, err)
 		}
 	} else {
 		jsonSchema = d.Get("schema").(string)
 	}
-	return jsonSchema, err
+
+	var unmarshalledJson map[string]interface{}
+	err = json.Unmarshal([]byte(jsonSchema), &unmarshalledJson)
+	if err != nil {
+		return nil, err
+	}
+
+	return unmarshalledJson, err
 }
 
 // fileFromUrlToString checks that the given url is correct and points to a given file type,
@@ -159,6 +167,7 @@ func fileFromUrlToString(url, fileType string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
@@ -192,7 +201,11 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = d.Set("schema", rdeType.DefinedEntityType.Schema)
+	jsonSchema, err := jsonToCompactString(rdeType.DefinedEntityType.Schema)
+	if err != nil {
+		return diag.Errorf("could not save the Runtime Defined Entity type schema into state: %s", err)
+	}
+	err = d.Set("schema", jsonSchema)
 	if err != nil {
 		return diag.FromErr(err)
 	}
