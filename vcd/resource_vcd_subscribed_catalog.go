@@ -553,7 +553,9 @@ func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.Reso
 			collection.Failed = append(collection.Failed, item.(string))
 		}
 	}
-	if !d.Get("store_tasks").(bool) {
+	rawStoreTasks := d.Get("store_tasks")
+	storeTasks := rawStoreTasks != nil && rawStoreTasks.(bool)
+	if !storeTasks {
 		return collection, nil
 	}
 	fileName, err := getTaskListFileName(catalogId, d)

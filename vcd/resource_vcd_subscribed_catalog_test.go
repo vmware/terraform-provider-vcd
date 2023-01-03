@@ -12,6 +12,53 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+func TestAccVcdVsphereSubscriber(t *testing.T) {
+	preTestChecks(t)
+
+	if testConfig.VCD.Catalog.VSphereSubscribedCatalog == "" {
+		t.Skip("vSphereSubscribedCatalog was not defined")
+	}
+	subscriberCatalog := t.Name()
+	subscriberOrg := testConfig.VCD.Org
+	var params = StringMap{
+		"SubscriberOrg":            subscriberOrg,
+		"VsphereSubscriberCatalog": testConfig.VCD.Catalog.VSphereSubscribedCatalog,
+		"SubscriberCatalog":        subscriberCatalog,
+		"Tags":                     "catalog subscribe",
+		"FuncName":                 t.Name(),
+	}
+	configText := templateFill(testAccSubscribedCatalogVSphere, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION subscriber: %s", configText)
+
+	dataSourceVsphereSubscriber := "data.vcd_subscribed_catalog." + testConfig.VCD.Catalog.VSphereSubscribedCatalog
+	resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testCheckCatalogDestroy(subscriberOrg, subscriberCatalog),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceSubscriber),
+					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, 0, 0, 0),
+					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+					resource.TestCheckResourceAttrPair(resourceSubscriber, "description", dataSourceVsphereSubscriber, "description"),
+					resource.TestCheckResourceAttrPair(resourceSubscriber, "subscription_url", dataSourceVsphereSubscriber, "subscription_url"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
 func TestAccVcdSubscribedCatalog(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
@@ -246,23 +293,9 @@ func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool,
 func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
-		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "vcd_catalog" &&
-				rs.Primary.Attributes["org"] != orgName &&
-				rs.Primary.Attributes["name"] != catalogName {
-				continue
-			}
-
-			adminOrg, err := conn.GetAdminOrg(orgName)
-			if err != nil {
-				return fmt.Errorf(errorRetrievingOrg, orgName+" and error: "+err.Error())
-			}
-
-			_, err = adminOrg.GetCatalogById(rs.Primary.ID, false)
-
-			if err == nil {
-				return fmt.Errorf("catalog %s still exists", catalogName)
-			}
+		_, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
+		if err == nil {
+			return fmt.Errorf("catalog %s still exists", catalogName)
 		}
 		return nil
 	}
@@ -443,5 +476,24 @@ resource "vcd_vm" "{{.VmName}}3" {
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
   power_on         = false
+}
+`
+
+const testAccSubscribedCatalogVSphere = `
+data "vcd_subscribed_catalog" "{{.VsphereSubscriberCatalog}}" {
+  org  = "{{.SubscriberOrg}}"
+  name = "{{.VsphereSubscriberCatalog}}"
+}
+
+resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
+  org  = "{{.SubscriberOrg}}"
+  name = "{{.SubscriberCatalog}}"
+
+  delete_force     = true
+  delete_recursive = true
+
+  subscription_url = data.vcd_subscribed_catalog.{{.VsphereSubscriberCatalog}}.subscription_url
+  make_local_copy  = true
+  sync_on_refresh  = true
 }
 `
