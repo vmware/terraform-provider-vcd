@@ -47,10 +47,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 			// FIXME: It seems this field is always false??????
 			"readonly": {
 				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Computed:    true, // As recommended by Terraform SDK docs
-				ForceNew:    true, // Can't update readonly (see FIXME comment)
+				Computed:    true,
 				Description: "True if the entity type cannot be modified. Defaults to false",
 			},
 		},
