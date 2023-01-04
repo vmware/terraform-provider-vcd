@@ -20,6 +20,7 @@ func TestAccVcdRdeType(t *testing.T) {
 		"Version":             "1.0.0",
 		"Vendor":              "vendor",
 		"Name":                t.Name(),
+		"Description":         "Created by" + t.Name(),
 		"InterfaceReferences": "vcd_rde_interface.rde-interface1.id",
 		"ExternalId":          "externalId",
 		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json", // TODO: Parameterize this value???
@@ -29,6 +30,7 @@ func TestAccVcdRdeType(t *testing.T) {
 	configTextCreate := templateFill(testAccVcdRdeType, params)
 	params["FuncName"] = t.Name() + "-Update"
 	params["Name"] = params["FuncName"]
+	params["Description"] = "Created by" + params["FuncName"].(string)
 	params["InterfaceReferences"] = "vcd_rde_interface.rde-interface1.id, vcd_rde_interface.rde-interface2.id"
 	configTextUpdate := templateFill(testAccVcdRdeType, params)
 
@@ -51,7 +53,28 @@ func TestAccVcdRdeType(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeTypeName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeName, "name", t.Name()),
+					resource.TestCheckResourceAttr(rdeTypeName, "description", "Created by"+t.Name()),
+					resource.TestCheckResourceAttr(rdeTypeName, "external_id", params["ExternalId"].(string)),
+					resource.TestCheckResourceAttrPair(rdeTypeName, "interface_ids.0", "vcd_rde_interface.rde-interface1", "id"),
 				),
+			},
+			{
+				Config: configTextUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(rdeTypeName, "namespace", params["Namespace"].(string)),
+					resource.TestCheckResourceAttr(rdeTypeName, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(rdeTypeName, "vendor", params["Vendor"].(string)),
+					resource.TestCheckResourceAttr(rdeTypeName, "name", t.Name()+"-Update"),
+					resource.TestCheckResourceAttr(rdeTypeName, "description", "Created by"+t.Name()+"-Update"),
+					resource.TestCheckResourceAttr(rdeTypeName, "external_id", params["ExternalId"].(string)),
+					resource.TestCheckResourceAttr(rdeTypeName, "interface_ids.#", "2"),
+				),
+			},
+			{
+				ResourceName:      rdeTypeName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
 			},
 		},
 	})
@@ -60,17 +83,17 @@ func TestAccVcdRdeType(t *testing.T) {
 
 const testAccVcdRdeType = `
 resource "vcd_rde_interface" "rde-interface1" {
-  namespace = "{{.Namespace}}1"
-  version   = "{{.Version}}"
-  vendor    = "{{.Vendor}}1"
-  name      = "{{.Name}}1"
+  namespace = "namespace1"
+  version   = "1.0.0"
+  vendor    = "vendor1"
+  name      = "name1"
 }
 
 resource "vcd_rde_interface" "rde-interface2" {
-  namespace   = "{{.Namespace}}2"
-  version     = "{{.Version}}"
-  vendor      = "{{.Vendor}}2"
-  name        = "{{.Name}}2"
+  namespace   = "namespace2"
+  version     = "2.0.0"
+  vendor      = "vendor2"
+  name        = "name2"
 }
 
 resource "vcd_rde_type" "rde-type" {
@@ -78,7 +101,8 @@ resource "vcd_rde_type" "rde-type" {
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}"
   name          = "{{.Name}}"
-  interface_ids = [ {{ .InterfaceReferences }} ]
+  description   = "{{.Description}}"
+  interface_ids = [{{.InterfaceReferences}}]
   external_id   = "{{.ExternalId}}"
   schema        = file("{{.SchemaPath}}")
 }
