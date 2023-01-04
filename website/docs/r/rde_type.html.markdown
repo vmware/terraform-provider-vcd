@@ -27,7 +27,7 @@ resource "vcd_rde_type" "my-rde-type" {
   namespace     = "vcd"
   version       = "4.5.6"
   name          = "My VMware RDE Type"
-  interface_ids = [ data.vcd_rde_interface.my-interface.id ]
+  interface_ids = [data.vcd_rde_interface.my-interface.id]
   schema        = file("${path.module}/schemas/my-type-schema.json")
 }
 ```
@@ -46,7 +46,7 @@ resource "vcd_rde_type" "my-rde-type" {
   namespace     = "vcd"
   version       = "4.5.6"
   name          = "My VMware RDE Type"
-  interface_ids = [ data.vcd_rde_interface.my-interface.id ]
+  interface_ids = [data.vcd_rde_interface.my-interface.id]
   schema_url    = "https://just.an-example.com/schemas/my-type-schema.json"
 }
 ```
@@ -63,6 +63,7 @@ The following arguments are supported:
 * `interface_ids` - (Optional) The set of [Defined Interfaces](/providers/vmware/vcd/latest/docs/resources/rde_interface) that this Runtime Defined Entity type will use.
 * `schema` - (Optional) A string that specifies a valid JSON schema. It can be retrieved with functions such as `file`, `templatefile`... Either `schema` or `schema_url` is required.
 * `schema_url` - (Optional) The URL that points to a valid JSON schema. Either `schema` or `schema_url` is required.
+  If `schema_url` is used, the downloaded schema will be computed in the `schema` attribute.
 * `external_id` - (Optional) An external entity's id that this Runtime Defined Entity type may apply to.
 * `inherited_version` - (Optional) To be used when creating a new version of a Runtime Defined Entity type.
   Specifies the version of the type that will be the template for the authorization configuration of the new version.
