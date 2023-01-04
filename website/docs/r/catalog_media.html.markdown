@@ -47,8 +47,8 @@ resource "vcd_catalog_media" "myNewMedia" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `catalog` - (Optional; Deprecated) The name of the catalog where to upload media file
-* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog where to upload media file
+* `catalog` - (Optional; Deprecated) The name of the catalog where to upload media file. It's mandatory if `catalog_id` is not used.
+* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog where to upload media file. It's mandatory if `catalog` field is not used.
 * `name` - (Required) Media file name in catalog
 * `description` - (Optional) - Description of media file
 * `media_path` - (Required) - Absolute or relative path to file to upload

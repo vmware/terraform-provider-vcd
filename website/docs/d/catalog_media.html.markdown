@@ -43,8 +43,8 @@ output "type_is_iso" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
-* `catalog` - (Optional; Deprecated) The name of the catalog where to upload media file
-* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog where to upload media file
+* `catalog` - (Optional; Deprecated) The name of the catalog to which media file belongs. It's mandatory if `catalog_id` is not used.
+* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog to which the media file belongs. It's mandatory if `catalog` field is not used.
 * `name` - (Required) Media name in catalog (optional when `filter` is used)
 * `filter` - (Optional; *2.9+*) Retrieves the data source using one or more filter parameters
 
