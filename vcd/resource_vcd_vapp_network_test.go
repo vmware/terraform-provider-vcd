@@ -434,7 +434,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
-// TestAccVcdNsxtVappNetworks checks that Org networks can be attached to vApp
+// TestAccVcdNsxtVappNetworks checks that NSX-T Org networks can be attached to vApp, given that
+// NSX-T Edge Cluster is specified in NSX-T VDC
 func TestAccVcdNsxtVappNetworks(t *testing.T) {
 	preTestChecks(t)
 	// String map to fill the template
@@ -454,7 +455,11 @@ func TestAccVcdNsxtVappNetworks(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdNsxtVappNetwork, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	params["FuncName"] = t.Name() + "step-2"
+	configTextDS := templateFill(testAccVcdNsxtVappNetworkDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configTextDS)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -478,6 +483,16 @@ func TestAccVcdNsxtVappNetworks(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net2", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.nsxt-backed", "id"),
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.nsxt-backed2", "id"),
+				),
+			},
+			{
+				Config: configTextDS,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("vcd_vapp_network.routed-attached", "id", "data.vcd_vapp_network.routed-attached", "id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_network.isolated-attached", "id", "data.vcd_vapp_network.isolated-attached", "id"),
+
+					resource.TestCheckResourceAttrPair("vcd_vapp_org_network.with-isolated", "id", "data.vcd_vapp_org_network.with-isolated", "id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_org_network.with-routed", "id", "data.vcd_vapp_org_network.with-routed", "id"),
 				),
 			},
 		},
@@ -607,7 +622,6 @@ resource "vcd_vapp_org_network" "with-isolated" {
   ]
 }
 
-## Routed networks
 data "vcd_external_network_v2" "existing-extnet" {
 	name = "{{.ExternalNetwork}}"
 }
@@ -696,5 +710,39 @@ resource "vcd_vapp_org_network" "with-routed" {
 	vcd_vapp.test,
 	vcd_network_routed_v2.nsxt-backed2
   ]
+}
+`
+const testAccVcdNsxtVappNetworkDS = testAccVcdNsxtVappNetwork + `
+# skip-binary-test: Data Source test
+data "vcd_vapp_network" "routed-attached" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name = vcd_vapp.test.name
+  name      = vcd_vapp_network.routed-attached.name
+}
+
+data "vcd_vapp_network" "isolated-attached" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name = vcd_vapp.test.name
+  name      = vcd_vapp_network.isolated-attached.name
+}
+
+data "vcd_vapp_org_network" "with-isolated" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name        = vcd_vapp.test.name
+  org_network_name = vcd_vapp_org_network.with-isolated.org_network_name
+}
+
+data "vcd_vapp_org_network" "with-routed" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name        = vcd_vapp.test.name
+  org_network_name = vcd_vapp_org_network.with-routed.org_network_name
 }
 `
