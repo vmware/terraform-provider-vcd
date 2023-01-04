@@ -39,7 +39,6 @@ resource "vcd_catalog_item" "my-second-item" {
   description          = "Belongs to ${data.vcd_catalog_item.my-first-item.catalog}"
   ova_path             = "/path/to/test_vapp_template.ova"
   upload_piece_size    = 5
-  show_upload_progress = "true"
   metadata             = data.vcd_catalog_item.my-first-item.metadata
 }
 ```

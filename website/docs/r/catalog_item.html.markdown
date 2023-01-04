@@ -25,7 +25,6 @@ resource "vcd_catalog_item" "myNewCatalogItem" {
   description          = "new vapp template"
   ova_path             = "/home/user/file.ova"
   upload_piece_size    = 10
-  show_upload_progress = true
 
   metadata_entry {
     key   = "license"

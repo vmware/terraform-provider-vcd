@@ -28,7 +28,6 @@ resource "vcd_catalog_media" "myNewMedia" {
   description          = "new os versions"
   media_path           = "/home/user/file.iso"
   upload_piece_size    = 10
-  show_upload_progress = true
 
   metadata_entry {
     key   = "license"

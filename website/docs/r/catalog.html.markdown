@@ -20,8 +20,8 @@ resource "vcd_catalog" "myNewCatalog" {
 
   name             = "my-catalog"
   description      = "catalog for files"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
 }
 ```
 
@@ -42,8 +42,8 @@ resource "vcd_catalog" "myNewCatalog" {
   description        = "catalog for files"
   storage_profile_id = data.vcd_storage_profile.sp1.id
 
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
 }
 ```
 
