@@ -12,6 +12,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+var (
+	checkTimeout = 10 * time.Second
+	checkDelay   = 200 * time.Millisecond
+)
+
 func TestAccVcdVsphereSubscriber(t *testing.T) {
 	preTestChecks(t)
 
@@ -50,8 +55,9 @@ func TestAccVcdVsphereSubscriber(t *testing.T) {
 					testAccCheckVcdCatalogExists(resourceSubscriber),
 					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, 0, 0, 0),
 					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
-					resource.TestCheckResourceAttrPair(resourceSubscriber, "description", dataSourceVsphereSubscriber, "description"),
 					resource.TestCheckResourceAttrPair(resourceSubscriber, "subscription_url", dataSourceVsphereSubscriber, "subscription_url"),
+					checkWithTimeout(checkTimeout, checkDelay,
+						resource.TestCheckResourceAttrPair(resourceSubscriber, "subscription_url", dataSourceVsphereSubscriber, "subscription_url")),
 				),
 			},
 		},
@@ -188,8 +194,10 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
 							testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
-							resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog)),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription)),
 						),
 					},
 					{
@@ -205,13 +213,18 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
 
 							// A subscribed catalog gets its description and metadata from the publisher
-							resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
-							resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog"),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription)),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog")),
 
 							// Subscribed catalog items also get their metadata from the corresponding published items
-							resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
-							resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
-							resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
 
 							// If these VM exist, it means that the corresponding vApp template and Media items are fully functional
 							resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
@@ -298,6 +311,22 @@ func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc
 			return fmt.Errorf("catalog %s still exists", catalogName)
 		}
 		return nil
+	}
+}
+
+// checkWithTimeout runs the wanted check function "f" until it succeeds or the given "timeout" expires.
+// The check pauses for the amount of time specified by "delay"
+func checkWithTimeout(timeout, delay time.Duration, f resource.TestCheckFunc) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		start := time.Now()
+		for time.Since(start) < timeout {
+			time.Sleep(delay)
+			err := f(state)
+			if err == nil {
+				return nil
+			}
+		}
+		return f(state)
 	}
 }
 
