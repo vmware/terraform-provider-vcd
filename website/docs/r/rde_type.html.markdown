@@ -58,9 +58,9 @@ The following arguments are supported:
 * `vendor` - (Required) The vendor of the Runtime Defined Entity type.
 * `namespace` - (Required) A unique namespace associated with the Runtime Defined Entity type.
 * `version` - (Required) The version of the Runtime Defined Entity type. Must follow [semantic versioning](https://semver.org/) syntax.
-* `interface_ids` - (Required) The set of [Defined Interfaces](/providers/vmware/vcd/latest/docs/resources/rde_interface) that this Runtime Defined Entity type will use.
 * `name` - (Required) The name of the Runtime Defined Entity type.
 * `description` - (Optional) The description of the Runtime Defined Entity type.
+* `interface_ids` - (Optional) The set of [Defined Interfaces](/providers/vmware/vcd/latest/docs/resources/rde_interface) that this Runtime Defined Entity type will use.
 * `schema` - (Optional) A string that specifies a valid JSON schema. It can be retrieved with functions such as `file`, `templatefile`... Either `schema` or `schema_url` is required.
 * `schema_url` - (Optional) The URL that points to a valid JSON schema. Either `schema` or `schema_url` is required.
 * `external_id` - (Optional) An external entity's id that this Runtime Defined Entity type may apply to.

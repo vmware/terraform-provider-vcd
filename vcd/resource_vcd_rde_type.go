@@ -53,7 +53,7 @@ func resourceVcdRdeType() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Required:    true,
+				Optional:    true,
 				Description: "Set of Defined Interface URNs that this Runtime Defined Entity type is referenced by",
 			},
 			"schema_url": {
@@ -63,12 +63,13 @@ func resourceVcdRdeType() *schema.Resource {
 				AtLeastOneOf: []string{"schema_url", "schema"},
 			},
 			"schema": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				Computed:         true,
-				Description:      "The JSON-Schema valid definition of the Runtime Defined Entity type",
-				AtLeastOneOf:     []string{"schema_url", "schema"},
-				DiffSuppressFunc: hasJsonValueChanged,
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true,
+				Description:           "The JSON-Schema valid definition of the Runtime Defined Entity type",
+				AtLeastOneOf:          []string{"schema_url", "schema"},
+				DiffSuppressFunc:      hasJsonValueChanged,
+				DiffSuppressOnRefresh: true,
 			},
 			"description": {
 				Type:        schema.TypeString,
