@@ -216,6 +216,29 @@ func jsonToCompactString(inputJson map[string]interface{}) (string, error) {
 	return compactedJson.String(), nil
 }
 
+// areUnmarshaledJsonEqual compares that two unmarshaled JSON strings are equal or not. Returns an error if something
+// wrong happens when compacting both for comparison.
+func areUnmarshaledJsonEqual(json1, json2 []byte) (bool, error) {
+	if !json.Valid(json1) {
+		return false, fmt.Errorf("not a valid JSON: '%s'", json1)
+	}
+	if !json.Valid(json2) {
+		return false, fmt.Errorf("not a valid JSON: '%s'", json2)
+	}
+
+	compactedJson1 := new(bytes.Buffer)
+	compactedJson2 := new(bytes.Buffer)
+	err := json.Compact(compactedJson1, json1)
+	if err != nil {
+		return false, fmt.Errorf("could not compact JSON '%s': %s", json1, err)
+	}
+	err = json.Compact(compactedJson2, json2)
+	if err != nil {
+		return false, fmt.Errorf("could not compact JSON '%s': %s", json2, err)
+	}
+	return compactedJson1.String() == compactedJson2.String(), nil
+}
+
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 // TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataEntryInVcd`
 // once "metadata" field is removed.

@@ -63,11 +63,12 @@ func resourceVcdRdeType() *schema.Resource {
 				AtLeastOneOf: []string{"schema_url", "schema"},
 			},
 			"schema": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				Description:  "The JSON-Schema valid definition of the Runtime Defined Entity type",
-				AtLeastOneOf: []string{"schema_url", "schema"},
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "The JSON-Schema valid definition of the Runtime Defined Entity type",
+				AtLeastOneOf:     []string{"schema_url", "schema"},
+				DiffSuppressFunc: hasJsonValueChanged,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -95,6 +96,19 @@ func resourceVcdRdeType() *schema.Resource {
 			},
 		},
 	}
+}
+
+// hasJsonValueChanged tells Terraform whether the JSON schema set in HCL configuration (which can have whatever identation and other quirks)
+// matches the obtained JSON from VCD. For that we need to compare them in the same compacted format.
+func hasJsonValueChanged(key, oldValue, newValue string, _ *schema.ResourceData) bool {
+	areEqual, err := areUnmarshaledJsonEqual([]byte(oldValue), []byte(newValue))
+	if err != nil {
+		if strings.Contains(err.Error(), "could not compact") {
+			util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, err)
+		}
+		return false
+	}
+	return areEqual
 }
 
 func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
