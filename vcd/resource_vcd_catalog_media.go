@@ -33,19 +33,21 @@ func resourceVcdCatalogMedia() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"catalog": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "catalog name where upload the Media file",
-				Deprecated:  "Use catalog_id instead",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				Description:  "catalog name where upload the Media file",
+				Deprecated:   "Use catalog_id instead",
+				ExactlyOneOf: []string{"catalog", "catalog_id"},
 			},
 			"catalog_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "ID of the catalog where to upload the Media file",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				Description:  "ID of the catalog where to upload the Media file",
+				ExactlyOneOf: []string{"catalog", "catalog_id"},
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -201,8 +203,6 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error adding media item metadata: %s", err)
 	}
 
-	//dSet(d, "catalog_id", catalog.Catalog.ID)
-	//dSet(d, "catalog", catalog.Catalog.Name)
 	return resourceVcdMediaRead(ctx, d, meta)
 }
 
@@ -220,9 +220,6 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	catalogId := d.Get("catalog_id").(string)
 
 	if catalogId == "" {
-		if catalogName == "" {
-			return diag.Errorf("[vcd_catalog_media READ] neither catalog name or ID provided")
-		}
 		orgName, err = vcdClient.GetOrgNameFromResource(d)
 		if err != nil {
 			return diag.Errorf("error getting the Org name for vcd_catalog_media: %s", err)
