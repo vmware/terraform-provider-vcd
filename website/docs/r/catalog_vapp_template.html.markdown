@@ -24,10 +24,10 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
   org        = "my-org"
   catalog_id = data.vcd_catalog.my-catalog.id
 
-  name                 = "my ova"
-  description          = "new vapp template"
-  ova_path             = "/home/user/file.ova"
-  upload_piece_size    = 10
+  name              = "my ova"
+  description       = "new vapp template"
+  ova_path          = "/home/user/file.ova"
+  upload_piece_size = 10
 
   metadata_entry {
     key         = "license"

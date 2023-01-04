@@ -24,10 +24,10 @@ resource "vcd_catalog_media" "myNewMedia" {
   org        = "my-org"
   catalog_id = data.vcd_catalog.my-catalog.id
 
-  name                 = "my iso"
-  description          = "new os versions"
-  media_path           = "/home/user/file.iso"
-  upload_piece_size    = 10
+  name              = "my iso"
+  description       = "new os versions"
+  media_path        = "/home/user/file.iso"
+  upload_piece_size = 10
 
   metadata_entry {
     key   = "license"
