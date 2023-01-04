@@ -1,1 +1,1 @@
-* Add mini-framework for running tests with several Orgs [GH-972]
+* Add mini-framework for running tests with several Organizations [GH-972]
