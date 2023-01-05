@@ -104,11 +104,6 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	//org, err := vcdClient.GetOrgFromResource(d)
-	//if err != nil {
-	//	return diag.Errorf(errorRetrievingOrg, err)
-	//}
-
 	catalogId := d.Get("catalog_id").(string)
 	catalog, err := vcdClient.Client.GetCatalogById(catalogId)
 	if err != nil {
