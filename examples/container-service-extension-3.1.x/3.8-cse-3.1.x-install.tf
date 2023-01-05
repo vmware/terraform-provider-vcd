@@ -184,9 +184,9 @@ provider "vcd" {
 resource "vcd_org" "cse_org" {
   name             = var.org-name
   full_name        = var.org-name
-  is_enabled       = "true"
-  delete_force     = "true"
-  delete_recursive = "true"
+  is_enabled       = true
+  delete_force     = true
+  delete_recursive = true
 }
 
 # If you have already a VDC, remove the `vcd_org_vdc` resource from this HCL file and
@@ -363,8 +363,8 @@ resource "vcd_catalog" "cat-cse" {
 
   storage_profile_id = data.vcd_storage_profile.cse_sp.id
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 }
 
 # TKGm OVA upload. The `catalog_item_metadata` is required for CSE to detect the OVAs.
@@ -375,18 +375,17 @@ resource "vcd_catalog_item" "tkgm_ova" {
   org     = vcd_org.cse_org.name # Change this reference if you used a data source to fetch an already existent Org.
   catalog = vcd_catalog.cat-cse.name
 
-  name                 = replace(var.tkgm-ova-name, ".ova", "")
-  description          = replace(var.tkgm-ova-name, ".ova", "")
-  ova_path             = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
-  upload_piece_size    = 100
-  show_upload_progress = true
+  name              = replace(var.tkgm-ova-name, ".ova", "")
+  description       = replace(var.tkgm-ova-name, ".ova", "")
+  ova_path          = format("%s/%s", var.tkgm-ova-folder, var.tkgm-ova-name)
+  upload_piece_size = 100
 
   metadata_entry {
     key         = "kind"
     value       = "TKGm" # This value is always the same
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -394,7 +393,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = "TKGm" # This value is always the same
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -402,7 +401,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = split("-", var.tkgm-ova-name)[3] # The version comes in the OVA name downloaded from Customer Connect
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -410,7 +409,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -418,7 +417,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = split("-", var.tkgm-ova-name)[0] # The OS comes in the OVA name downloaded from Customer Connect
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -426,7 +425,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = "1" # This value is always the same
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
 }

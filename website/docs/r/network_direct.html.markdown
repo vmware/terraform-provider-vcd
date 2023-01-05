@@ -78,15 +78,15 @@ resource "vcd_network_direct" "example" {
     type        = "MetadataStringValue"
     value       = "bar"
     user_access = "PRIVATE"
-    is_system   = "true" # Requires System admin privileges
+    is_system   = true # Requires System admin privileges
   }
 
   metadata_entry {
     key         = "myBool"
     type        = "MetadataBooleanValue"
-    value       = "true"
+    value       = true
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```
