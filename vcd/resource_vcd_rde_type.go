@@ -120,7 +120,7 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	_, err = vcdClient.VCDClient.CreateRDEType(&types.DefinedEntityType{
+	_, err = vcdClient.VCDClient.CreateRdeType(&types.DefinedEntityType{
 		Name:             d.Get("name").(string),
 		Namespace:        d.Get("namespace").(string),
 		Version:          d.Get("version").(string),
@@ -194,7 +194,7 @@ func resourceVcdRdeTypeRead(ctx context.Context, d *schema.ResourceData, meta in
 // If origin == "datasource", if the referenced RDE type doesn't exist, it errors.
 // If origin == "resource", if the referenced RDE type doesn't exist, it removes it from tfstate and exits normally.
 func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	rdeType, err := getRDEType(d, meta)
+	rdeType, err := getRdeType(d, meta)
 	if origin == "resource" && govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity type no longer exists. Removing from tfstate")
 		d.SetId("")
@@ -229,23 +229,23 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-// getRDEType retrieves a Runtime Defined Entity type from VCD with the required attributes from the Terraform config.
-func getRDEType(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntityType, error) {
+// getRdeType retrieves a Runtime Defined Entity type from VCD with the required attributes from the Terraform config.
+func getRdeType(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntityType, error) {
 	vcdClient := meta.(*VCDClient)
 
 	if d.Id() != "" {
-		return vcdClient.VCDClient.GetRDETypeById(d.Id())
+		return vcdClient.VCDClient.GetRdeTypeById(d.Id())
 	}
 
 	vendor := d.Get("vendor").(string)
 	nss := d.Get("namespace").(string)
 	version := d.Get("version").(string)
 
-	return vcdClient.VCDClient.GetRDEType(vendor, nss, version)
+	return vcdClient.VCDClient.GetRdeType(vendor, nss, version)
 }
 
 func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rdeType, err := getRDEType(d, meta)
+	rdeType, err := getRdeType(d, meta)
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity type no longer exists. Removing from tfstate")
 		return nil
@@ -272,7 +272,7 @@ func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rdeType, err := getRDEType(d, meta)
+	rdeType, err := getRdeType(d, meta)
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity type no longer exists. Removing from tfstate")
 		return nil
@@ -308,7 +308,7 @@ func resourceVcdRdeTypeImport(_ context.Context, d *schema.ResourceData, meta in
 	vendor, namespace, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
 
 	vcdClient := meta.(*VCDClient)
-	rdeType, err := vcdClient.GetRDEType(vendor, namespace, version)
+	rdeType, err := vcdClient.GetRdeType(vendor, namespace, version)
 	if err != nil {
 		return nil, fmt.Errorf("error finding Runtime Defined Entity type with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
 	}

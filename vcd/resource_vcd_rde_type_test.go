@@ -123,7 +123,7 @@ func testAccCheckRdeTypeDestroy(identifier string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		_, err := conn.VCDClient.GetRDETypeById(rs.Primary.ID)
+		_, err := conn.VCDClient.GetRdeTypeById(rs.Primary.ID)
 
 		if err == nil || !govcd.ContainsNotFound(err) {
 			return fmt.Errorf("%s not deleted yet", identifier)
