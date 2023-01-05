@@ -138,7 +138,7 @@ resource "vcd_network_isolated_v2" "example" {
   metadata_entry {
     key         = "myBool"
     type        = "MetadataBooleanValue"
-    value       = true
+    value       = "true"
     user_access = "READWRITE"
     is_system   = false
   }
