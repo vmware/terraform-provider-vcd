@@ -112,6 +112,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_task":                                      datasourceVcdTask(),                             // 3.8
 	"vcd_rde_interface":                             datasourceVcdRdeInterface(),                     // 3.9
 	"vcd_rde_type":                                  datasourceVcdRdeType(),                          // 3.9
+	"vcd_rde":                                       datasourceVcdRde(),                              // 3.9
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -192,6 +193,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_rde_interface":                             resourceVcdRdeInterface(),                     // 3.9
 	"vcd_rde_type":                                  resourceVcdRdeType(),                          // 3.9
+	"vcd_rde":                                       resourceVcdRde(),                              // 3.9
 }
 
 // Provider returns a terraform.ResourceProvider.
