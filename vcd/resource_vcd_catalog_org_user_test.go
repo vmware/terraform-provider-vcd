@@ -5,10 +5,9 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccVcdCatalogOrgUser tests the following:
@@ -25,13 +24,16 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 	catalogName := t.Name() + "-cat"
 	catalogMediaName := t.Name() + "-media"
 	vappTemplateName := t.Name() + "-templ"
+	localVmName := t.Name() + "-vm"
 	org1Name := testConfig.VCD.Org
 	org2Name := testConfig.VCD.Org + "-1"
+	vdc2Name := testConfig.Nsxt.Vdc + "-1"
 	descriptionOrg1 := "Belongs to " + org1Name
 	descriptionOrg2 := "Belongs to " + org2Name
 	var params = StringMap{
 		"Org1":             org1Name,
 		"Org2":             org2Name,
+		"Vdc2":             vdc2Name,
 		"SharedToEveryone": "true",
 		"CatalogName":      catalogName,
 		"DescriptionOrg1":  descriptionOrg1,
@@ -42,6 +44,7 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 		"MediaPath":        testConfig.Media.MediaPath,
 		"OvaPath":          testConfig.Ova.OvaPath,
 		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
+		"VmName":           localVmName,
 		"SkipNotice":       "# skip-binary-test: temporary phase",
 		"ProviderSystem":   providerVcdSystem,
 		"ProviderOrg1":     providerVcdOrg1,
@@ -55,12 +58,17 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 	// Remove skip: the full script will run fine in binary tests
 	params["SkipNotice"] = " "
 	accessText := templateFill(testAccCatalogCreation+testAccCatalogAccessOrgUser, params)
+
+	params["SkipNotice"] = "# skip-binary-test: timing problems"
+	params["FuncName"] = t.Name() + "-vm-creation"
+	vmCreationText := templateFill(testAccCatalogCreation+testAccCatalogAccessOrgUser+testAccVMsFromSharedCatalogs, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] ACCESS CONFIGURATION: %s", accessText)
+	debugPrintf("#[DEBUG] VM CREATION CONFIGURATION: %s", vmCreationText)
 
 	resourceCatalogOrg1 := "vcd_catalog.catalog_org1"
 	resourceCatalogOrg2 := "vcd_catalog.catalog_org2"
@@ -123,6 +131,16 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test_vapp_template1", "description", descriptionOrg1),
 					resource.TestCheckResourceAttrPair("data.vcd_catalog_vapp_template.test_vapp_template1", "catalog_id", dataSourceCatalogOrg1, "id"),
 				)},
+			{
+				Config: vmCreationText,
+				Check: resource.ComposeTestCheckFunc(
+					logState("vm-creation"),
+					testAccCheckVcdStandaloneVmExists(localVmName+"-1", "vcd_vm."+localVmName+"-1", org2Name, vdc2Name),
+					testAccCheckVcdStandaloneVmExists(localVmName+"-2", "vcd_vm."+localVmName+"-2", org2Name, vdc2Name),
+					resource.TestCheckResourceAttr("vcd_vm."+localVmName+"-1", "name", localVmName+"-1"),
+					resource.TestCheckResourceAttr("vcd_vm."+localVmName+"-2", "name", localVmName+"-2"),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -297,5 +315,39 @@ data "vcd_catalog_item" "test_vapp_template1" {
   name       = "{{.VappTemplateName}}"
 
   depends_on = [vcd_catalog_access_control.catalog_org1]
+}
+`
+
+// testAccVMsFromSharedCatalogs shows how to build VMs with shared resources
+// NOTE: the depends_on clause is needed to guarantee the order of deletion
+const testAccVMsFromSharedCatalogs = `
+
+resource "vcd_vm" "{{.VmName}}-1" {
+  provider = {{.ProviderOrg2}}
+
+  org              = "{{.Org2}}"
+  vdc              = "{{.Vdc2}}"
+  name             = "{{.VmName}}-1"
+  vapp_template_id = data.vcd_catalog_vapp_template.test_vapp_template1.id
+  description      = "test standalone VM 1"
+  power_on         = false
+}
+
+resource "vcd_vm" "{{.VmName}}-2" {
+  provider = {{.ProviderOrg2}}
+
+  org              = "{{.Org2}}"
+  vdc              = "{{.Vdc2}}"
+  name             = "{{.VmName}}-2"
+  boot_image_id    = data.vcd_catalog_media.test_media_by_catalog_id.id
+  description      = "test standalone VM 2"
+  computer_name    = "standalone"
+  cpus             = 1
+  memory           = 1024
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  power_on         = false
+
+  depends_on = [vcd_catalog_media.test_media1]
 }
 `
