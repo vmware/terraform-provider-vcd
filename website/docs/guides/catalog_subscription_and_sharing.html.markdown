@@ -158,8 +158,8 @@ resource "vcd_subscribed_catalog" "test-subscriber" {
   org  = "another-org"
   name = "subscriber"
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 
   subscription_url      = var.subscription_url
   subscription_password = var.password

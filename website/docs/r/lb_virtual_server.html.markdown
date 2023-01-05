@@ -106,7 +106,7 @@ resource "vcd_lb_server_pool" "web-servers" {
   description          = "description"
   algorithm            = "httpheader"
   algorithm_parameters = "headerName=host"
-  enable_transparency  = "true"
+  enable_transparency  = true
 
   monitor_id = vcd_lb_service_monitor.monitor.id
 

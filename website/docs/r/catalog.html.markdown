@@ -20,8 +20,8 @@ resource "vcd_catalog" "myNewCatalog" {
 
   name             = "my-catalog"
   description      = "catalog for files"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
 }
 ```
 
@@ -42,8 +42,8 @@ resource "vcd_catalog" "myNewCatalog" {
   description        = "catalog for files"
   storage_profile_id = data.vcd_storage_profile.sp1.id
 
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
 }
 ```
 
@@ -106,7 +106,7 @@ resource "vcd_catalog" "example" {
     type        = "MetadataStringValue"
     value       = "bar"
     user_access = "PRIVATE"
-    is_system   = "true" # Requires System admin privileges
+    is_system   = true # Requires System admin privileges
   }
 
   metadata_entry {
@@ -114,7 +114,7 @@ resource "vcd_catalog" "example" {
     type        = "MetadataBooleanValue"
     value       = "true"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```
@@ -143,8 +143,8 @@ catalog. For example, using this structure, representing an existing catalog tha
 resource "vcd_catalog" "my-catalog" {
   org              = "my-org"
   name             = "my-catalog"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
 }
 ```
 
