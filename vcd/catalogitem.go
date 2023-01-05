@@ -35,7 +35,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) diag.Diagno
 	err = catalogItem.Delete()
 	if err != nil {
 		log.Printf("[DEBUG] Error removing catalog item %s", err)
-		return diag.Errorf("error removing catalog item %s", err)
+		return diag.Errorf("[deleteCatalogItem] error removing catalog item %s: %s", catalogItem.CatalogItem.Name, err)
 	}
 
 	_, err = catalog.GetCatalogItemByName(catalogItemName, true)

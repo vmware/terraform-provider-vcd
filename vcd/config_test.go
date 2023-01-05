@@ -1075,7 +1075,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		}
 		err = catalogItem.Delete()
 		if err != nil {
-			fmt.Printf("error removing catalog item %#v", err)
+			fmt.Printf("[destroySuiteCatalogAndItem] error removing catalog item %#v", err)
 			return
 		}
 		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
