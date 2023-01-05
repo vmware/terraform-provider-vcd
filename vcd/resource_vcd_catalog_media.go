@@ -37,7 +37,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ForceNew:     true,
-				Description:  "catalog name where upload the Media file",
+				Description:  "catalog name where to upload the Media file",
 				Deprecated:   "Use catalog_id instead",
 				ExactlyOneOf: []string{"catalog", "catalog_id"},
 			},
@@ -138,9 +138,6 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	catalogId := d.Get("catalog_id").(string)
 	if catalogId == "" {
 		var adminOrg *govcd.AdminOrg
-		if catalogName == "" {
-			return diag.Errorf("[vcd_catalog_media CREATE] neither catalog name or ID provided")
-		}
 		adminOrg, err = vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
 			return diag.Errorf(errorRetrievingOrg, err)
