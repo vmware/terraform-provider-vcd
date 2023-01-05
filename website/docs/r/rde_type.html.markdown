@@ -19,7 +19,7 @@ Supported in provider *v3.9+*
 data "vcd_rde_interface" "my-interface" {
   vendor    = "bigcorp"
   namespace = "tech1"
-  version   = "1.2.3"  
+  version   = "1.2.3"
 }
 
 resource "vcd_rde_type" "my-rde-type" {
@@ -38,7 +38,7 @@ resource "vcd_rde_type" "my-rde-type" {
 data "vcd_rde_interface" "my-interface" {
   vendor    = "bigcorp"
   namespace = "tech1"
-  version   = "1.2.3"  
+  version   = "1.2.3"
 }
 
 resource "vcd_rde_type" "my-rde-type" {
