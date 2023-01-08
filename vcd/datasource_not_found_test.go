@@ -129,9 +129,6 @@ func getMandatoryDataSourceSchemaFields(dataSourceName string) []string {
 			mandatoryFields = append(mandatoryFields, fieldName)
 		}
 	}
-	if dataSourceName == "vcd_catalog_media" {
-		mandatoryFields = append(mandatoryFields, "catalog_id")
-	}
 	return mandatoryFields
 }
 
