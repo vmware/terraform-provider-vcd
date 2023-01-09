@@ -74,7 +74,7 @@ resource "vcd_external_network" "net" {
     vcenter = "vcenter-name2"
   }
 
-  retain_net_info_across_deployments = "false"
+  retain_net_info_across_deployments = false
 }
 
 resource "vcd_network_direct" "net" {

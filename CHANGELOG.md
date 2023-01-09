@@ -1,3 +1,7 @@
+## 3.8.2 (TBC)
+
+Changes in progress for v3.8.2 are available at [.changes/v3.8.2](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.8.2) until the release.
+
 ## 3.8.1 (December 14, 2022)
 
 ### IMPROVEMENTS

@@ -16,10 +16,15 @@ Supported in provider *v2.5+*
 ## Example Usage
 
 ```hcl
+data "vcd_catalog" "my-catalog" {
+  org  = "my-org"
+  name = "my-catalog"
+}
+
 data "vcd_catalog_media" "existing-media" {
-  org     = "my-org"
-  catalog = "my-cat"
-  name    = "my-media"
+  org        = "my-org"
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "my-media"
 }
 
 output "media_size" {
@@ -38,7 +43,8 @@ output "type_is_iso" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
-* `catalog` - (Required) The name of the catalog where media file is
+* `catalog` - (Optional; Deprecated) The name of the catalog to which media file belongs. It's mandatory if `catalog_id` is not used.
+* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog to which the media file belongs. It's mandatory if `catalog` field is not used.
 * `name` - (Required) Media name in catalog (optional when `filter` is used)
 * `filter` - (Optional; *2.9+*) Retrieves the data source using one or more filter parameters
 

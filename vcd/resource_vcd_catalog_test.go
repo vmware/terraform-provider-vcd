@@ -362,6 +362,9 @@ func testAccCheckVcdCatalogExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("no Org ID is set")
 		}
 
+		if testAccProvider == nil || testAccProvider.Meta() == nil {
+			return fmt.Errorf("testAccProvider is not initialised")
+		}
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
