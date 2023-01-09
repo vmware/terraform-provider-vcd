@@ -158,8 +158,8 @@ resource "vcd_subscribed_catalog" "test-subscriber" {
   org  = "another-org"
   name = "subscriber"
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 
   subscription_url      = var.subscription_url
   subscription_password = var.password
@@ -194,7 +194,7 @@ In **scenario 3**, the subscribing catalog will access all items immediately, al
 
 ### Subscription without automatic download 
 
-~> This option is only available to System administrators.
+~> This option is only recommended to System administrators.
 
 If we subscribe the catalog without automatic downloads (`make_local_copy = false`) there will be no immediate access to
 the catalog resources. The catalog and its items will need to be synchronised explicitly.

@@ -102,7 +102,7 @@ resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   vdc          = "my-vdc"
   edge_gateway = "my-edge-gateway"
 
-  logging_enabled = "true"
+  logging_enabled = true
   action          = "deny"
 
   source {

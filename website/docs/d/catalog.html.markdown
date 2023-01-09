@@ -24,11 +24,10 @@ resource "vcd_catalog_item" "myItem" {
   org     = data.vcd_catalog.my-cat.org
   catalog = data.vcd_catalog.my-cat.name
 
-  name                 = "myItem"
-  description          = "Belongs to ${data.vcd_catalog.my-cat.id}"
-  ova_path             = "/path/to/test_vapp_template.ova"
-  upload_piece_size    = 5
-  show_upload_progress = "true"
+  name              = "myItem"
+  description       = "Belongs to ${data.vcd_catalog.my-cat.id}"
+  ova_path          = "/path/to/test_vapp_template.ova"
+  upload_piece_size = 5
 }
 ```
 

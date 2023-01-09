@@ -18,9 +18,18 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"catalog": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "catalog name where upload the Media file",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "catalog name where upload the Media file",
+				Deprecated:   "use catalog_id instead, especially if using a shared catalog",
+				ExactlyOneOf: []string{"catalog", "catalog_id"},
+			},
+			"catalog_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "ID of the catalog from where to retrieve the Media item",
+				ExactlyOneOf: []string{"catalog", "catalog_id"},
 			},
 			"name": {
 				Type:         schema.TypeString,
