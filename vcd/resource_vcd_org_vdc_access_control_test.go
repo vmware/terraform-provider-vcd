@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -91,6 +90,7 @@ resource "vcd_org_user" "{{.UserName}}" {
   role           = "{{.RoleName}}"
   take_ownership = true
 }
+
 resource "vcd_org_user" "{{.UserName2}}" {
   org            = "{{.Org}}"
   name           = "{{.UserName2}}"
@@ -98,6 +98,7 @@ resource "vcd_org_user" "{{.UserName2}}" {
   role           = "{{.RoleName}}"
   take_ownership = true
 }
+
 resource "vcd_org_vdc_access_control" "{{.AccessControlName}}" {
   org                   = "{{.Org}}"
   vdc                   = "{{.Vdc}}"
@@ -112,28 +113,6 @@ resource "vcd_org_vdc_access_control" "{{.AccessControlName}}" {
   }
 }
 `
-
-func testAccCheckVDCControlAccessDestroy() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
-		if err != nil {
-			return fmt.Errorf("error retrieving Org %s - %s", testConfig.VCD.Org, err)
-		}
-
-		controlAccessParams, err := vdc.GetControlAccess(true)
-		if err != nil {
-			return fmt.Errorf("error retrieving VDC controll access parameters - %s", err)
-		}
-
-		if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
-			spew.Dump(controlAccessParams)
-			return fmt.Errorf("expected to have VDC sharing settings set to none and got something else: %v", controlAccessParams)
-		}
-		return nil
-	}
-}
 
 func assertVdcAccessControlIsSharedWithEverybody(vdcName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

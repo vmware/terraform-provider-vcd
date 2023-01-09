@@ -203,35 +203,6 @@ func testAccCheckVcdCatalogAccessControlExists(resourceName string, orgName stri
 	}
 }
 
-func testAccCheckCatalogAccessControlDestroy(orgName string, catalogNames []string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
-		if err != nil {
-			return fmt.Errorf("error: could not find Org: %s", err)
-		}
-		var destroyed int
-		var existing []string
-		for _, catalogName := range catalogNames {
-
-			_, err = org.GetCatalogByName(catalogName, false)
-			if err != nil && govcd.IsNotFound(err) {
-				// The catalog was removed
-				destroyed++
-			}
-			if err == nil {
-				existing = append(existing, catalogName)
-			}
-		}
-
-		if destroyed == len(catalogNames) {
-			return nil
-		}
-		return fmt.Errorf("catalogs %v not deleted yet", existing)
-	}
-}
-
 const testAccCatalogAccessControl = `
 {{.SkipNotice}}
 resource "vcd_org_user" "{{.UserName1}}" {

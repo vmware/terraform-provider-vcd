@@ -15,15 +15,19 @@ Supported in provider *v2.0+*
 ## Example Usage
 
 ```hcl
-resource "vcd_catalog_media" "myNewMedia" {
-  org     = "my-org"
-  catalog = "my-catalog"
+data "vcd_catalog" "my-catalog" {
+  org  = "my-org"
+  name = "my-catalog"
+}
 
-  name                 = "my iso"
-  description          = "new os versions"
-  media_path           = "/home/user/file.iso"
-  upload_piece_size    = 10
-  show_upload_progress = true
+resource "vcd_catalog_media" "myNewMedia" {
+  org        = "my-org"
+  catalog_id = data.vcd_catalog.my-catalog.id
+
+  name              = "my iso"
+  description       = "new os versions"
+  media_path        = "/home/user/file.iso"
+  upload_piece_size = 10
 
   metadata_entry {
     key   = "license"
@@ -42,7 +46,8 @@ resource "vcd_catalog_media" "myNewMedia" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `catalog` - (Required) The name of the catalog where to upload media file
+* `catalog` - (Optional; Deprecated) The name of the catalog where to upload media file. It's mandatory if `catalog_id` is not used.
+* `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog where to upload media file. It's mandatory if `catalog` field is not used.
 * `name` - (Required) Media file name in catalog
 * `description` - (Optional) - Description of media file
 * `media_path` - (Required) - Absolute or relative path to file to upload
@@ -87,7 +92,7 @@ resource "vcd_catalog_media" "example" {
     type        = "MetadataStringValue"
     value       = "bar"
     user_access = "PRIVATE"
-    is_system   = "true" # Requires System admin privileges
+    is_system   = true # Requires System admin privileges
   }
 
   metadata_entry {
@@ -95,7 +100,7 @@ resource "vcd_catalog_media" "example" {
     type        = "MetadataBooleanValue"
     value       = "true"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```

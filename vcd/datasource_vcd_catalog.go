@@ -185,7 +185,7 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 		}
 		return nil, fmt.Errorf(message)
 	}
-	return vcdClient.VCDClient.Client.GetCatalogByHref(catalogRecord.HREF)
+	return vcdClient.Client.GetAdminCatalogByHref(catalogRecord.HREF)
 }
 
 func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

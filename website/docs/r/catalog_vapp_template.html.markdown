@@ -24,18 +24,17 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
   org        = "my-org"
   catalog_id = data.vcd_catalog.my-catalog.id
 
-  name                 = "my ova"
-  description          = "new vapp template"
-  ova_path             = "/home/user/file.ova"
-  upload_piece_size    = 10
-  show_upload_progress = true
+  name              = "my ova"
+  description       = "new vapp template"
+  ova_path          = "/home/user/file.ova"
+  upload_piece_size = 10
 
   metadata_entry {
     key         = "license"
     value       = "public"
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -43,7 +42,7 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
     value       = "v1"
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```
@@ -92,7 +91,7 @@ resource "vcd_catalog_vapp_template" "example" {
     type        = "MetadataStringValue"
     value       = "bar"
     user_access = "PRIVATE"
-    is_system   = "true" # Requires System admin privileges
+    is_system   = true # Requires System admin privileges
   }
 
   metadata_entry {
@@ -100,7 +99,7 @@ resource "vcd_catalog_vapp_template" "example" {
     type        = "MetadataBooleanValue"
     value       = "true"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```

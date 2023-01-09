@@ -12,6 +12,59 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+var (
+	checkTimeout = 10 * time.Second
+	checkDelay   = 200 * time.Millisecond
+)
+
+func TestAccVcdVsphereSubscriber(t *testing.T) {
+	preTestChecks(t)
+
+	if testConfig.VCD.Catalog.VSphereSubscribedCatalog == "" {
+		t.Skip("vSphereSubscribedCatalog was not defined")
+	}
+	subscriberCatalog := t.Name()
+	subscriberOrg := testConfig.VCD.Org
+	var params = StringMap{
+		"SubscriberOrg":            subscriberOrg,
+		"VsphereSubscriberCatalog": testConfig.VCD.Catalog.VSphereSubscribedCatalog,
+		"SubscriberCatalog":        subscriberCatalog,
+		"Tags":                     "catalog subscribe",
+		"FuncName":                 t.Name(),
+	}
+	configText := templateFill(testAccSubscribedCatalogVSphere, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION subscriber: %s", configText)
+
+	dataSourceVsphereSubscriber := "data.vcd_subscribed_catalog." + testConfig.VCD.Catalog.VSphereSubscribedCatalog
+	resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testCheckCatalogDestroy(subscriberOrg, subscriberCatalog),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceSubscriber),
+					testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, 0, 0, 0),
+					resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
+					resource.TestCheckResourceAttrPair(resourceSubscriber, "subscription_url", dataSourceVsphereSubscriber, "subscription_url"),
+					checkWithTimeout(checkTimeout, checkDelay,
+						resource.TestCheckResourceAttrPair(resourceSubscriber, "subscription_url", dataSourceVsphereSubscriber, "subscription_url")),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
 func TestAccVcdSubscribedCatalog(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
@@ -41,6 +94,9 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		}
 		t.Run(fmt.Sprintf("make_local_copy=%v", makeLocalCopy), func(t *testing.T) {
 			var params = StringMap{
+				"ProviderVcdSystem":       providerVcdSystem,
+				"ProviderVcdOrg1":         providerVcdOrg1,
+				"ProviderVcdOrg2":         providerVcdOrg2,
 				"SkipMessage":             skipMessage,
 				"PublisherOrg":            publisherOrg,
 				"PublisherVdc":            testConfig.Nsxt.Vdc,
@@ -99,7 +155,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 			resourceSubscriber := "vcd_subscribed_catalog." + subscriberCatalog
 			resource.Test(t, resource.TestCase{
 				PreCheck:          func() { preRunChecks(t) },
-				ProviderFactories: testAccProviders,
+				ProviderFactories: buildMultipleProviders(),
 				CheckDestroy: resource.ComposeTestCheckFunc(
 					testCheckCatalogDestroy(publisherOrg, publisherCatalog),
 					testCheckCatalogDestroy(subscriberOrg, subscriberCatalog),
@@ -138,8 +194,10 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							testCheckCatalogAndItemsExist(publisherOrg, publisherCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
 							testCheckCatalogAndItemsExist(subscriberOrg, subscriberCatalog, true, numberOfVappTemplates+numberOfMediaItems, numberOfVappTemplates, numberOfMediaItems),
-							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
-							resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog)),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription)),
 						),
 					},
 					{
@@ -155,13 +213,18 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceSubscriber, "name", subscriberCatalog),
 
 							// A subscribed catalog gets its description and metadata from the publisher
-							resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription),
-							resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog"),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "description", publisherDescription)),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog")),
 
 							// Subscribed catalog items also get their metadata from the corresponding published items
-							resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
-							resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
-							resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog)),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+							checkWithTimeout(checkTimeout, checkDelay,
+								resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
 
 							// If these VM exist, it means that the corresponding vApp template and Media items are fully functional
 							resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
@@ -196,14 +259,13 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 // expectedMedia is the number of Media
 func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
-		if err != nil {
-			return err
+		if testAccProvider == nil || testAccProvider.Meta() == nil {
+			return fmt.Errorf("testAccProvider is not initialized")
 		}
-		catalog, err := org.GetAdminCatalogByName(catalogName, false)
+		conn := testAccProvider.Meta().(*VCDClient)
+		catalog, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving catalog %s/%s: %s", orgName, catalogName, err)
 		}
 		if !checkItems {
 			return nil
@@ -218,15 +280,15 @@ func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool,
 
 		items, err := catalog.QueryCatalogItemList()
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving catalog item list: %s", err)
 		}
 		vappTemplates, err := catalog.QueryVappTemplateList()
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving vApp templates list: %s", err)
 		}
 		mediaItems, err := catalog.QueryMediaList()
 		if err != nil {
-			return err
+			return fmt.Errorf("error retrieving media items list: %s", err)
 		}
 		if len(items) != expectedItems {
 			return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
@@ -244,25 +306,27 @@ func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool,
 func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
-		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "vcd_catalog" &&
-				rs.Primary.Attributes["org"] != orgName &&
-				rs.Primary.Attributes["name"] != catalogName {
-				continue
-			}
-
-			adminOrg, err := conn.GetAdminOrg(orgName)
-			if err != nil {
-				return fmt.Errorf(errorRetrievingOrg, orgName+" and error: "+err.Error())
-			}
-
-			_, err = adminOrg.GetCatalogById(rs.Primary.ID, false)
-
-			if err == nil {
-				return fmt.Errorf("catalog %s still exists", catalogName)
-			}
+		_, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
+		if err == nil {
+			return fmt.Errorf("catalog %s still exists", catalogName)
 		}
 		return nil
+	}
+}
+
+// checkWithTimeout runs the wanted check function "f" until it succeeds or the given "timeout" expires.
+// The check pauses for the amount of time specified by "delay"
+func checkWithTimeout(timeout, delay time.Duration, f resource.TestCheckFunc) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		start := time.Now()
+		for time.Since(start) < timeout {
+			time.Sleep(delay)
+			err := f(state)
+			if err == nil {
+				return nil
+			}
+		}
+		return f(state)
 	}
 }
 
@@ -270,12 +334,16 @@ func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc
 const testAccVcdPublisherCatalogCreation = `
 {{.SkipMessage}}
 data "vcd_storage_profile" "storage_profile" {
+  provider = {{.ProviderVcdSystem}}
+
   org  = "{{.PublisherOrg}}"
   vdc  = "{{.PublisherVdc}}"
   name = "{{.PublisherStorageProfile}}"
 }
 
 resource "vcd_catalog" "{{.PublisherCatalog}}" {
+  provider = {{.ProviderVcdOrg1}}
+
   org                = "{{.PublisherOrg}}"
   name               = "{{.PublisherCatalog}}"
   description        = "{{.PublisherDescription}}"
@@ -298,6 +366,8 @@ resource "vcd_catalog" "{{.PublisherCatalog}}" {
 // testAccVcdPublisherCatalogItems creates all items that depend on the publishing catalog
 const testAccVcdPublisherCatalogItems = `
 resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
+  provider = {{.ProviderVcdOrg1}}
+
   count      = {{.NumberOfVappTemplates}}
   org        = "{{.PublisherOrg}}"
   catalog_id = vcd_catalog.{{.PublisherCatalog}}.id
@@ -314,6 +384,8 @@ resource "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}" {
 }
 
 resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
+  provider = {{.ProviderVcdOrg1}}
+
   count   = {{.NumberOfMediaItems}}
   org     = "{{.PublisherOrg}}"
   catalog = vcd_catalog.{{.PublisherCatalog}}.name
@@ -333,6 +405,8 @@ resource "vcd_catalog_media" "{{.MediaItemBaseName}}" {
 // testAccSubscribedCatalogCreation creates the subscribed catalog (in a different Org)
 const testAccSubscribedCatalogCreation = `
 resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
+  provider = {{.ProviderVcdOrg2}}
+
   org  = "{{.SubscriberOrg}}"
   name = "{{.SubscriberCatalog}}"
 
@@ -350,6 +424,8 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 // testAccSubscribedCatalogUpdate adds parameters to the subscribed catalog to handle synchronisation
 const testAccSubscribedCatalogUpdate = `
 resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
+  provider = {{.ProviderVcdOrg2}}
+
   org  = "{{.SubscriberOrg}}"
   name = "{{.SubscriberCatalog}}"
 
@@ -369,24 +445,32 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 // and a VM that uses one of the subscribed items
 const testAccSubscribedCatalogSync = `
 data "vcd_catalog_item" "{{.VappTemplateBaseName}}-1" {
+  provider = {{.ProviderVcdOrg2}}
+
   org     = "{{.SubscriberOrg}}"
   catalog = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
   name    = "{{.VappTemplateBaseName}}-1"
 }
 
 data "vcd_catalog_vapp_template" "{{.VappTemplateBaseName}}-1" {
+  provider = {{.ProviderVcdOrg2}}
+
   org        = "{{.SubscriberOrg}}"
   catalog_id = vcd_subscribed_catalog.{{.SubscriberCatalog}}.id
   name       = "{{.VappTemplateBaseName}}-1"
 }
 
 data "vcd_catalog_media" "{{.MediaItemBaseName}}-1" {
+  provider = {{.ProviderVcdOrg2}}
+
   org     = "{{.SubscriberOrg}}"
   catalog = vcd_subscribed_catalog.{{.SubscriberCatalog}}.name
   name    = "{{.MediaItemBaseName}}-1"
 }
 
 resource "vcd_vm" "{{.VmName}}" {
+  provider = {{.ProviderVcdOrg2}}
+
   org           = "{{.SubscriberOrg}}"
   vdc           = "{{.SubscriberVdc}}"
   name          = "{{.VmName}}"
@@ -397,6 +481,8 @@ resource "vcd_vm" "{{.VmName}}" {
 }
 
 resource "vcd_vm" "{{.VmName}}2" {
+  provider = {{.ProviderVcdOrg2}}
+
   org              = "{{.SubscriberOrg}}"
   vdc              = "{{.SubscriberVdc}}"
   name             = "{{.VmName}}2"
@@ -406,6 +492,8 @@ resource "vcd_vm" "{{.VmName}}2" {
 }
 
 resource "vcd_vm" "{{.VmName}}3" {
+  provider = {{.ProviderVcdOrg2}}
+
   org              = "{{.SubscriberOrg}}"
   vdc              = "{{.SubscriberVdc}}"
   name             = "{{.VmName}}3"
@@ -417,5 +505,24 @@ resource "vcd_vm" "{{.VmName}}3" {
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
   power_on         = false
+}
+`
+
+const testAccSubscribedCatalogVSphere = `
+data "vcd_subscribed_catalog" "{{.VsphereSubscriberCatalog}}" {
+  org  = "{{.SubscriberOrg}}"
+  name = "{{.VsphereSubscriberCatalog}}"
+}
+
+resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
+  org  = "{{.SubscriberOrg}}"
+  name = "{{.SubscriberCatalog}}"
+
+  delete_force     = true
+  delete_recursive = true
+
+  subscription_url = data.vcd_subscribed_catalog.{{.VsphereSubscriberCatalog}}.subscription_url
+  make_local_copy  = true
+  sync_on_refresh  = true
 }
 `
