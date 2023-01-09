@@ -5,7 +5,7 @@ provider "vcd" {
   url                  = var.url
   sysorg               = var.sysOrg
   org                  = var.org
-  allow_unverified_ssl = "true"
+  allow_unverified_ssl = true
   max_retry_timeout    = 600
   logging              = true
   logging_file         = "go-vcloud-director-provider.log"
@@ -20,8 +20,8 @@ resource "vcd_org" "another-org" {
   name             = var.org
   full_name        = "another org"
   description      = "Organization ${var.org}"
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 }
 
 // Creates a new user. It is used for the credentials of the tenant script

@@ -15,7 +15,7 @@ provider "vcd" {
   sysorg               = "System"
   org                  = var.org
   vdc                  = var.vdc
-  allow_unverified_ssl = "true"
+  allow_unverified_ssl = true
   max_retry_timeout    = 600
   logging              = true
   logging_file         = "go-vcloud-director.log"
@@ -36,8 +36,8 @@ resource "vcd_subscribed_catalog" "remote-subscriber" {
   name               = "remote-subscriber"
   storage_profile_id = data.vcd_storage_profile.storage_profile.id
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 
   subscription_url      = var.subscription_url
   make_local_copy       = true

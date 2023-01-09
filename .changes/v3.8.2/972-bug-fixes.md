@@ -1,0 +1,1 @@
+* Change `vcd_catalog`, `vcd_catalog_media`, `vcd_catalog_vapp_template`, and `vcd_catalog_item` to access their entities without the need to use a full Org object, thus allowing the access to shared catalogs from other organizations (Issue #960) [GH-972]

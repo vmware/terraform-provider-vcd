@@ -433,3 +433,316 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}", "vcd_network_routed.{{.NetworkName2}}"]
 }
 `
+
+// TestAccVcdNsxtVappNetworks checks that NSX-T Org networks can be attached to vApp, given that
+// NSX-T Edge Cluster is specified in NSX-T VDC
+func TestAccVcdNsxtVappNetworks(t *testing.T) {
+	preTestChecks(t)
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"VdcName":                   t.Name(),
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"EdgeCluster":               testConfig.Nsxt.NsxtEdgeCluster,
+		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
+		"TestName":                  t.Name(),
+		"NetworkName":               t.Name(),
+
+		"Tags": "network vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdNsxtVappNetwork, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	params["FuncName"] = t.Name() + "step-2"
+	configTextDS := templateFill(testAccVcdNsxtVappNetworkDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configTextDS)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.with-isolated", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.with-routed", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.isolated-attached", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.routed-attached", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckResourceAttrSet("vcd_org_vdc.with-edge-cluster", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.nsxt-backed", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.nsxt-backed2", "id"),
+				),
+			},
+			{
+				Config: configTextDS,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("vcd_vapp_network.routed-attached", "id", "data.vcd_vapp_network.routed-attached", "id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_network.isolated-attached", "id", "data.vcd_vapp_network.isolated-attached", "id"),
+
+					resource.TestCheckResourceAttrPair("vcd_vapp_org_network.with-isolated", "id", "data.vcd_vapp_org_network.with-isolated", "id"),
+					resource.TestCheckResourceAttrPair("vcd_vapp_org_network.with-routed", "id", "data.vcd_vapp_org_network.with-routed", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtVappNetwork = `
+data "vcd_provider_vdc" "pvdc" {
+  name = "{{.ProviderVdc}}"
+}
+
+data "vcd_nsxt_edge_cluster" "ec" {
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+  name            = "{{.EdgeCluster}}"
+}
+
+resource "vcd_org_vdc" "with-edge-cluster" {
+  name = "{{.VdcName}}"
+  org  = "{{.Org}}"
+
+  allocation_model  = "ReservationPool"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = data.vcd_provider_vdc.pvdc.name
+  network_quota     = 5
+
+  edge_cluster_id = data.vcd_nsxt_edge_cluster.ec.id
+
+  compute_capacity {
+    cpu {
+      allocated = 1024
+      limit     = 1024
+    }
+
+    memory {
+      allocated = 1024
+      limit     = 1024
+    }
+  }
+
+  storage_profile {
+    name     = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+}
+
+resource "vcd_network_isolated_v2" "net1" {
+  org      = "{{.Org}}"
+  owner_id = vcd_org_vdc.with-edge-cluster.id
+  name     = "{{.NetworkName}}-isolated"
+
+  gateway       = "7.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "7.1.1.10"
+    end_address   = "7.1.1.20"
+  }
+}
+
+resource "vcd_vapp" "test" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  name     = "{{.TestName}}"
+  power_on = false
+
+  depends_on = [vcd_org_vdc.with-edge-cluster]
+}
+
+resource "vcd_vapp_network" "isolated-attached" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  name               = "{{.TestName}}-isolated-attached"
+  vapp_name          = vcd_vapp.test.name
+  gateway            = "10.10.66.1"
+  netmask            = "255.255.255.0"
+  guest_vlan_allowed = false
+  
+  org_network_name   = vcd_network_isolated_v2.net1.name
+
+  static_ip_pool {
+    start_address = "10.10.66.10"
+    end_address   = "10.10.66.20"
+  }
+
+  depends_on = [
+	vcd_vapp.test,
+	vcd_network_isolated_v2.net1
+  ]
+}
+
+resource "vcd_network_isolated_v2" "net2" {
+	org      = "{{.Org}}"
+	owner_id = vcd_org_vdc.with-edge-cluster.id
+	name     = "{{.NetworkName}}-isolated-2"
+  
+	gateway       = "8.1.1.1"
+	prefix_length = 24
+  
+	static_ip_pool {
+	  start_address = "8.1.1.10"
+	  end_address   = "8.1.1.20"
+	}
+  }
+
+resource "vcd_vapp_org_network" "with-isolated" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name = vcd_vapp.test.name
+  
+  org_network_name = vcd_network_isolated_v2.net2.name
+
+  depends_on = [
+	vcd_vapp.test,
+	vcd_network_isolated_v2.net1
+  ]
+}
+
+data "vcd_external_network_v2" "existing-extnet" {
+	name = "{{.ExternalNetwork}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org         = "{{.Org}}"
+  owner_id    = vcd_org_vdc.with-edge-cluster.id
+  name        = "{{.TestName}}"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+
+  subnet {
+     gateway       = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+
+resource "vcd_network_routed_v2" "nsxt-backed" {
+  org         = "{{.Org}}"
+  name        = "{{.TestName}}-routed"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+}
+
+resource "vcd_network_routed_v2" "nsxt-backed2" {
+  org  = "{{.Org}}"
+  name = "{{.TestName}}-routed-2"
+  
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+  
+  gateway       = "2.1.1.1"
+  prefix_length = 24
+  
+  static_ip_pool {
+    start_address = "2.1.1.10"
+    end_address   = "2.1.1.20"
+  }
+}
+
+resource "vcd_vapp_network" "routed-attached" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  name               = "{{.TestName}}-routed-attached"
+  vapp_name          = vcd_vapp.test.name
+  gateway            = "20.10.66.1"
+  netmask            = "255.255.255.0"
+  guest_vlan_allowed = false
+  
+  org_network_name   = vcd_network_routed_v2.nsxt-backed2.name
+
+  static_ip_pool {
+    start_address = "20.10.66.10"
+    end_address   = "20.10.66.20"
+  }
+
+  depends_on = [
+	vcd_vapp.test,
+	vcd_network_routed_v2.nsxt-backed2
+  ]
+}
+
+resource "vcd_vapp_org_network" "with-routed" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name = vcd_vapp.test.name
+  
+  org_network_name = vcd_network_routed_v2.nsxt-backed2.name
+
+  depends_on = [
+	vcd_vapp.test,
+	vcd_network_routed_v2.nsxt-backed2
+  ]
+}
+`
+const testAccVcdNsxtVappNetworkDS = testAccVcdNsxtVappNetwork + `
+# skip-binary-test: Data Source test
+data "vcd_vapp_network" "routed-attached" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name = vcd_vapp.test.name
+  name      = vcd_vapp_network.routed-attached.name
+}
+
+data "vcd_vapp_network" "isolated-attached" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name = vcd_vapp.test.name
+  name      = vcd_vapp_network.isolated-attached.name
+}
+
+data "vcd_vapp_org_network" "with-isolated" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name        = vcd_vapp.test.name
+  org_network_name = vcd_vapp_org_network.with-isolated.org_network_name
+}
+
+data "vcd_vapp_org_network" "with-routed" {
+  org = "{{.Org}}"
+  vdc = vcd_org_vdc.with-edge-cluster.name
+
+  vapp_name        = vcd_vapp.test.name
+  org_network_name = vcd_vapp_org_network.with-routed.org_network_name
+}
+`

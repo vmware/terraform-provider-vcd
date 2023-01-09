@@ -4,8 +4,10 @@
 package vcd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -158,4 +160,58 @@ func TestAccClientUserAgent(t *testing.T) {
 		t.Fatalf("Expected User-Agent header in go-vcloud-director to be '%s', got '%s'",
 			expectedHeaderPrefix, vcdClient.VCDClient.Client.UserAgent)
 	}
+}
+
+// createOrgVCDConnection creates a connection to the VCD using an Org user
+// The credentials are the ones set in the configuration file for the org user.
+// Passing an empty suffix will connect to the first Org (example: "testorg")
+// Passing a suffix "-1" will connect to the second org (example: "testorg-1")
+func createOrgVCDConnection(orgSuffix string) *VCDClient {
+	config := Config{
+		User:            testConfig.TestEnvBuild.OrgUser,
+		Password:        testConfig.TestEnvBuild.OrgUserPassword,
+		Token:           "",
+		ApiToken:        "",
+		UseSamlAdfs:     false,
+		CustomAdfsRptId: "",
+		SysOrg:          testConfig.VCD.Org + orgSuffix,
+		Org:             testConfig.VCD.Org + orgSuffix,
+		Vdc:             "",
+		Href:            testConfig.Provider.Url,
+		InsecureFlag:    testConfig.Provider.AllowInsecure,
+		MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
+	}
+	conn, err := config.Client()
+	if err != nil {
+		panic("unable to initialize VCD connection :" + err.Error())
+	}
+	return conn
+}
+
+// testOrgProvider creates a new provider with Org credentials
+// See createOrgVCDConnection to see how to use orgSuffix
+func testOrgProvider(orgSuffix string) *schema.Provider {
+	newProvider := Provider()
+
+	newProvider.ConfigureContextFunc = func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		return createOrgVCDConnection(orgSuffix), nil
+	}
+	return newProvider
+}
+
+// buildMultipleProviders builds a provider factory with a system administrator and
+// two Org users, taking the credentials from the configuration file
+func buildMultipleProviders() map[string]func() (*schema.Provider, error) {
+	providers := map[string]func() (*schema.Provider, error){
+		providerVcdSystem: func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
+		providerVcdOrg1: func() (*schema.Provider, error) {
+			return testOrgProvider(""), nil
+		},
+		providerVcdOrg2: func() (*schema.Provider, error) {
+			return testOrgProvider("-1"), nil
+		},
+	}
+	return providers
 }

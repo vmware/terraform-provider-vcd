@@ -553,7 +553,9 @@ func readTaskIdCollection(vcdClient *VCDClient, catalogId string, d *schema.Reso
 			collection.Failed = append(collection.Failed, item.(string))
 		}
 	}
-	if !d.Get("store_tasks").(bool) {
+	rawStoreTasks := d.Get("store_tasks")
+	storeTasks := rawStoreTasks != nil && rawStoreTasks.(bool)
+	if !storeTasks {
 		return collection, nil
 	}
 	fileName, err := getTaskListFileName(catalogId, d)
@@ -677,7 +679,7 @@ func runSubscribedCatalogSyncOperations(d *schema.ResourceData, vcdClient *VCDCl
 	var err error
 	collection, err = readTaskIdCollection(vcdClient, catalogId, d)
 	if err != nil {
-		return fmt.Errorf("error reading catalog task IDs")
+		return fmt.Errorf("error reading catalog task IDs: %s", err)
 	}
 	taskList = collection.Running
 

@@ -35,7 +35,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) diag.Diagno
 	err = catalogItem.Delete()
 	if err != nil {
 		log.Printf("[DEBUG] Error removing catalog item %s", err)
-		return diag.Errorf("error removing catalog item %s", err)
+		return diag.Errorf("[deleteCatalogItem] error removing catalog item %s: %s", catalogItem.CatalogItem.Name, err)
 	}
 
 	_, err = catalog.GetCatalogItemByName(catalogItemName, true)
@@ -51,12 +51,11 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) diag.Diagno
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
 	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, err)
+		return nil, fmt.Errorf("error retrieving org name: %s", err)
 	}
-
-	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
+	catalog, err := vcdClient.Client.GetCatalogByName(orgName, d.Get("catalog").(string))
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog.")
 		return nil, fmt.Errorf("unable to find catalog: %s", err)
