@@ -14,7 +14,7 @@ import (
 )
 
 // TestAccVcdAnyAccessControlGroups checks that vcd_org_vdc_access_control, vcd_vapp_access_control,
-// and vcd_catalog_access_control resources are capable of correctly handling group IDs correctly.
+// and vcd_catalog_access_control resources are capable of handling group IDs correctly.
 func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
