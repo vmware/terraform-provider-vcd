@@ -20,7 +20,6 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 		"Version":   "1.0.0",
 		"Vendor":    "vendor1",
 		"Name":      t.Name(),
-		"Readonly":  "false",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -48,7 +47,7 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
-					resource.TestCheckResourceAttr(interfaceName, "readonly", params["Readonly"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
 				),
 			},
 			{
@@ -58,7 +57,7 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()+"-Update"),
-					resource.TestCheckResourceAttr(interfaceName, "readonly", params["Readonly"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
 				),
 			},
 			{
@@ -78,7 +77,6 @@ resource "vcd_rde_interface" "interface1" {
   version   = "{{.Version}}"
   vendor    = "{{.Vendor}}"
   name      = "{{.Name}}"
-  readonly  = {{.Readonly}} 
 }
 `
 
