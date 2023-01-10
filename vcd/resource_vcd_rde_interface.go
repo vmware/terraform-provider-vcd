@@ -31,7 +31,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true, // Can't update version
-				Description: "The interface's version. The version should follow semantic versioning rules",
+				Description: "The interface's version. The version must follow semantic versioning rules",
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -47,7 +47,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 			"readonly": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if the entity type cannot be modified",
+				Description: "True if the defined interface cannot be modified",
 			},
 		},
 	}
