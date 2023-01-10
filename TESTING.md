@@ -12,7 +12,9 @@
 - [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
 - [Conditional running of tests](#conditional-running-of-tests)
+- [Tests with multiple providers](#tests-with-multiple-providers)
 - [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
+- [Troubleshooting code issues](#troubleshooting-code-issues)
 
 ## Meeting prerequisites: Building the test environment
 
@@ -505,6 +507,29 @@ the file manually, or use the tag `-vcd-remove-test-list`.
 
 **VERY IMPORTANT**: for the conditional running to work, each test must have a call to `preTestChecks(t)`  at the beginning
 and to `postTestChecks(t)` right before the end.
+
+## Tests with multiple providers
+
+When the test requires multiple providers (such as system administrator + tenant or two different tenants with an
+optional system administrator), we can take advantage of the capability of setting multiple providers as `ProviderFactories`,
+using a pre-defined function and several conventions:
+
+1. Set the test as being only runnable by system administrator (`skipIfNotSysAdmin`). The Org user roles will be defined
+   by the provider names (see item #3).
+2. Add the provider factories (`ProviderFactories: buildMultipleProviders(),`)
+3. Assign an explicit provider to every resource or data source, using `provider = vcd` for system administrator, 
+   and `provider = vcdorg1` and `provider = vcdorg2` for tenants using the first and second Org in your VCD (e.g. "testorg" and "testorg-1").
+4. The provider names must not be changed. Also, do not use the expressions `vcdorg1` or `vcdorg2` in any other
+   test that don't require multiple providers.
+
+The test framework does not support aliases. Therefore, the test that runs in the integrated environment will be slightly
+different from the text that gets written to the files in `test-artifacts`, where the absolute provider names get
+converted to aliases, and an explicit provider definition for the Org users is added to the script.
+Look at `TestResourceInfoProviders` to see a full example of how to use the method described in this section.
+
+**CAVEAT**: when using `buildMultipleProviders()`, you must make sure that the system provider (`vcd`) is used at least
+once in the HCL script. If it is not, the variable `testAccProvider` may not get initialised, and if that happens,
+test checks that use the expression `conn := testAccProvider.Meta().(*VCDClient)` will panic.
 
 ## Environment variables and corresponding flags
 
