@@ -21,7 +21,7 @@ func TestAccVcdRdeType(t *testing.T) {
 		"Version":             "1.0.0",
 		"Vendor":              "vendor",
 		"Name":                t.Name(),
-		"Description":         "Created by" + t.Name(),
+		"Description":         "Created by " + t.Name(),
 		"InterfaceReferences": "vcd_rde_interface.rde-interface1.id",
 		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json",                                                                   // TODO: Parameterize this value???
 		"SchemaUrl":           "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-2/test-resources/rde_type.json", // FIXME
@@ -116,9 +116,9 @@ resource "vcd_rde_interface" "rde-interface2" {
 }
 
 resource "vcd_rde_type" "rde-type-file" {
-  namespace     = "{{.Namespace}}file"
+  namespace     = "{{.Namespace}}"
   version       = "{{.Version}}"
-  vendor        = "{{.Vendor}}file"
+  vendor        = "{{.Vendor}}"
   name          = "{{.Name}}"
   description   = "{{.Description}}"
   interface_ids = [{{.InterfaceReferences}}]
