@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
 	"testing"
 )
 
@@ -22,8 +23,8 @@ func TestAccVcdRdeType(t *testing.T) {
 		"Name":                t.Name(),
 		"Description":         "Created by" + t.Name(),
 		"InterfaceReferences": "vcd_rde_interface.rde-interface1.id",
-		"ExternalId":          "externalId",
-		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json", // TODO: Parameterize this value???
+		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json",                                                                   // TODO: Parameterize this value???
+		"SchemaUrl":           "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-2/test-resources/rde_type.json", // FIXME
 	}
 	testParamsNotEmpty(t, params)
 
@@ -41,37 +42,55 @@ func TestAccVcdRdeType(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION create: %s\n", configTextCreate)
 	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
 
-	rdeTypeName := "vcd_rde_type.rde-type"
+	rdeTypeFromFile := "vcd_rde_type.rde-type-file"
+	rdeTypeFromUrl := "vcd_rde_type.rde-type-url"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckRdeTypeDestroy(rdeTypeName),
+		CheckDestroy:      testAccCheckRdeTypesDestroy(rdeTypeFromFile, rdeTypeFromUrl),
 		Steps: []resource.TestStep{
 			{
 				Config: configTextCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(rdeTypeName, "namespace", params["Namespace"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "version", params["Version"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "vendor", params["Vendor"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "name", t.Name()),
-					resource.TestCheckResourceAttr(rdeTypeName, "description", "Created by"+t.Name()),
-					resource.TestCheckResourceAttr(rdeTypeName, "external_id", params["ExternalId"].(string)),
-					resource.TestCheckResourceAttrPair(rdeTypeName, "interface_ids.0", "vcd_rde_interface.rde-interface1", "id"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "namespace", params["Namespace"].(string)+"file"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "name", t.Name()),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "description", "Created by"+t.Name()),
+					resource.TestCheckResourceAttrPair(rdeTypeFromFile, "interface_ids.0", "vcd_rde_interface.rde-interface1", "id"),
+					resource.TestMatchResourceAttr(rdeTypeFromFile, "schema", regexp.MustCompile("{.*\"foo\":\"bar\".*}")),
+
+					resource.TestCheckResourceAttr(rdeTypeFromUrl, "namespace", params["Namespace"].(string)+"url"),
+					resource.TestCheckResourceAttr(rdeTypeFromUrl, "vendor", params["Vendor"].(string)+"url"),
+
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "version", rdeTypeFromFile, "version"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "name", rdeTypeFromFile, "name"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "description", rdeTypeFromFile, "description"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "interface_ids.0", rdeTypeFromFile, "interface_ids.0"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "schema", rdeTypeFromFile, "schema"),
 				),
 			},
 			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(rdeTypeName, "namespace", params["Namespace"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "version", params["Version"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "vendor", params["Vendor"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "name", t.Name()+"-Update"),
-					resource.TestCheckResourceAttr(rdeTypeName, "description", "Created by"+t.Name()+"-Update"),
-					resource.TestCheckResourceAttr(rdeTypeName, "external_id", params["ExternalId"].(string)),
-					resource.TestCheckResourceAttr(rdeTypeName, "interface_ids.#", "2"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "namespace", params["Namespace"].(string)+"file"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "name", t.Name()+"-Update"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "description", "Created by"+t.Name()+"-Update"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "interface_ids.#", "2"),
+
+					resource.TestCheckResourceAttr(rdeTypeFromUrl, "namespace", params["Namespace"].(string)+"url"),
+					resource.TestCheckResourceAttr(rdeTypeFromUrl, "vendor", params["Vendor"].(string)+"url"),
+
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "version", rdeTypeFromFile, "version"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "name", rdeTypeFromFile, "name"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "description", rdeTypeFromFile, "description"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "interface_ids.#", rdeTypeFromFile, "interface_ids.#"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "schema", rdeTypeFromFile, "schema"),
 				),
 			},
 			{
-				ResourceName:      rdeTypeName,
+				ResourceName:      rdeTypeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
@@ -96,39 +115,49 @@ resource "vcd_rde_interface" "rde-interface2" {
   name        = "name2"
 }
 
-resource "vcd_rde_type" "rde-type" {
-  namespace     = "{{.Namespace}}"
+resource "vcd_rde_type" "rde-type-file" {
+  namespace     = "{{.Namespace}}file"
   version       = "{{.Version}}"
-  vendor        = "{{.Vendor}}"
+  vendor        = "{{.Vendor}}file"
   name          = "{{.Name}}"
   description   = "{{.Description}}"
   interface_ids = [{{.InterfaceReferences}}]
-  external_id   = "{{.ExternalId}}"
   schema        = file("{{.SchemaPath}}")
+}
+
+resource "vcd_rde_type" "rde-type-url" {
+  namespace     = "{{.Namespace}}url"
+  version       = "{{.Version}}"
+  vendor        = "{{.Vendor}}url"
+  name          = "{{.Name}}"
+  description   = "{{.Description}}"
+  interface_ids = [{{.InterfaceReferences}}]
+  schema_url    = "{{.SchemaUrl}}"
 }
 `
 
 // testAccCheckRdeTypeDestroy checks that the RDE type defined by its identifier no longer
 // exists in VCD.
-func testAccCheckRdeTypeDestroy(identifier string) resource.TestCheckFunc {
+func testAccCheckRdeTypesDestroy(identifiers ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[identifier]
-		if !ok {
-			return fmt.Errorf("not found: %s", identifier)
-		}
+		for _, identifier := range identifiers {
+			rs, ok := s.RootModule().Resources[identifier]
+			if !ok {
+				return fmt.Errorf("not found: %s", identifier)
+			}
 
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no RDE ID is set")
-		}
+			if rs.Primary.ID == "" {
+				return fmt.Errorf("no RDE type ID is set")
+			}
 
-		conn := testAccProvider.Meta().(*VCDClient)
+			conn := testAccProvider.Meta().(*VCDClient)
 
-		_, err := conn.VCDClient.GetRdeTypeById(rs.Primary.ID)
+			_, err := conn.VCDClient.GetRdeTypeById(rs.Primary.ID)
 
-		if err == nil || !govcd.ContainsNotFound(err) {
-			return fmt.Errorf("%s not deleted yet", identifier)
+			if err == nil || !govcd.ContainsNotFound(err) {
+				return fmt.Errorf("%s not deleted yet", identifier)
+			}
 		}
 		return nil
-
 	}
 }
