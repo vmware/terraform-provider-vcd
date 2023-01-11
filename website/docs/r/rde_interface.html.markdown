@@ -17,7 +17,7 @@ Supported in provider *v3.9+*
 ```hcl
 resource "vcd_rde_interface" "my-interface" {
   vendor    = "bigcorp"
-  namespace = "tech1"
+  namespace = "tech"
   version   = "1.2.3"
   name      = "BigCorp Interface"
   readonly  = false
@@ -32,7 +32,10 @@ The following arguments are supported:
 * `namespace` - (Required) A unique namespace associated with the Defined Interface.
 * `version` - (Required) The version of the Defined Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the Defined Interface.
-* `readonly` - (Optional) Specifies if the Defined Interface can be only read. Defaults to `false`.
+
+## Attribute Reference
+
+* `readonly` - Specifies if the Defined Interface can be only read.
 
 ## Importing
 

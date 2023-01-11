@@ -27,9 +27,9 @@ resource "vcd_org" "my-org" {
   name             = "my-org"
   full_name        = "My organization"
   description      = "The pride of my work"
-  is_enabled       = "true"
-  delete_recursive = "true"
-  delete_force     = "true"
+  is_enabled       = true
+  delete_recursive = true
+  delete_force     = true
 
   vapp_lease {
     maximum_runtime_lease_in_sec          = 3600 # 1 hour
@@ -113,7 +113,7 @@ resource "vcd_org" "example" {
     type        = "MetadataStringValue"
     value       = "bar"
     user_access = "PRIVATE"
-    is_system   = "true" # Requires System admin privileges
+    is_system   = true # Requires System admin privileges
   }
 
   metadata_entry {
@@ -121,7 +121,7 @@ resource "vcd_org" "example" {
     type        = "MetadataBooleanValue"
     value       = "true"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```
@@ -156,8 +156,8 @@ For example, using this structure, representing an existing Org that was **not**
 resource "vcd_org" "my-orgadmin" {
   name             = "my-org"
   full_name        = "guessing"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
 }
 ```
 

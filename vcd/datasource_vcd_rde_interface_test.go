@@ -15,9 +15,9 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 
 	// This is a Defined Interface that comes with VCD out of the box
 	var params = StringMap{
-		"Namespace": "k8s",
-		"Version":   "1.0.0",
-		"Vendor":    "vmware",
+		"InterfaceNamespace": "k8s",
+		"InterfaceVersion":   "1.0.0",
+		"InterfaceVendor":    "vmware",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -29,18 +29,18 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", configText)
 
-	interfaceName := "data.vcd_rde_interface.interfaceDS"
+	interfaceName := "data.vcd_rde_interface.interface-ds"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(interfaceName, "namespace", params["Namespace"].(string)),
-					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
-					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "namespace", params["InterfaceNamespace"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "version", params["InterfaceVersion"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "vendor", params["InterfaceVendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", "Kubernetes"), // Name is always the same
-					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["InterfaceVendor"].(string), params["InterfaceNamespace"].(string), params["InterfaceVersion"].(string))),
 					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
 				),
 			},
@@ -50,9 +50,9 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 }
 
 const testAccVcdRdeDefinedInterfaceDS = `
-data "vcd_rde_interface" "interfaceDS" {
-  namespace = "{{.Namespace}}"
-  version   = "{{.Version}}"
-  vendor    = "{{.Vendor}}"
+data "vcd_rde_interface" "interface-ds" {
+  namespace = "{{.InterfaceNamespace}}"
+  version   = "{{.InterfaceVersion}}"
+  vendor    = "{{.InterfaceVendor}}"
 }
 `

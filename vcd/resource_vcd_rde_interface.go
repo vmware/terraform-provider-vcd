@@ -31,7 +31,7 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true, // Can't update version
-				Description: "The interface's version. The version should follow semantic versioning rules",
+				Description: "The interface's version. The version must follow semantic versioning rules",
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -44,11 +44,10 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Required:    true,
 				Description: "The name of the defined interface",
 			},
-			// FIXME: It seems this field is always false??????
 			"readonly": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if the entity type cannot be modified. Defaults to false",
+				Description: "True if the defined interface cannot be modified",
 			},
 		},
 	}
@@ -61,14 +60,12 @@ func resourceVcdRdeInterfaceCreate(ctx context.Context, d *schema.ResourceData, 
 	nss := d.Get("namespace").(string)
 	version := d.Get("version").(string)
 	name := d.Get("name").(string)
-	readonly := d.Get("readonly").(bool)
 
 	_, err := vcdClient.VCDClient.CreateDefinedInterface(&types.DefinedInterface{
-		Name:       name,
-		Namespace:  nss,
-		Version:    version,
-		Vendor:     vendor,
-		IsReadOnly: readonly,
+		Name:      name,
+		Namespace: nss,
+		Version:   version,
+		Vendor:    vendor,
 	})
 	if err != nil {
 		return diag.Errorf("could not create the Defined Interface with name %s, vendor %s, namespace %s and version %s: %s", name, vendor, nss, version, err)

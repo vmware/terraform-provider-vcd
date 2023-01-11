@@ -27,8 +27,8 @@ resource "vcd_org" "my-org-clone" {
   deployed_vm_quota    = data.vcd_org.my-org.deployed_vm_quota
   stored_vm_quota      = data.vcd_org.my-org.stored_vm_quota
   is_enabled           = data.vcd_org.my-org.is_enabled
-  delete_force         = "true"
-  delete_recursive     = "true"
+  delete_force         = true
+  delete_recursive     = true
   vapp_lease {
     maximum_runtime_lease_in_sec          = data.vcd_org.my-org.vapp_lease.0.maximum_runtime_lease_in_sec
     power_off_on_runtime_lease_expiration = data.vcd_org.my-org.vapp_lease.0.power_off_on_runtime_lease_expiration

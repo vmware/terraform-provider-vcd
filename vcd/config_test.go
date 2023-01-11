@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/kr/pretty"
 	"io"
 	"net/http"
 	"net/url"
@@ -105,13 +106,14 @@ type TestConfig struct {
 			PlacementPolicyVmGroup string `json:"placementPolicyVmGroup"` // Name of the VM group to create VM Placement Policies
 		} `json:"nsxtProviderVdc"`
 		Catalog struct {
-			Name                    string `json:"name,omitempty"`
-			CatalogItem             string `json:"catalogItem,omitempty"`
-			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
-			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
-			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
-			NsxtBackedCatalogName   string `json:"nsxtBackedCatalogName,omitempty"`
-			NsxtCatalogItem         string `json:"nsxtCatalogItem,omitempty"`
+			Name                     string `json:"name,omitempty"`
+			CatalogItem              string `json:"catalogItem,omitempty"`
+			CatalogItemWithMultiVms  string `json:"catalogItemWithMultiVms,omitempty"`
+			VmName1InMultiVmItem     string `json:"vmName1InMultiVmItem,omitempty"`
+			VmName2InMultiVmItem     string `json:"VmName2InMultiVmItem,omitempty"`
+			NsxtBackedCatalogName    string `json:"nsxtBackedCatalogName,omitempty"`
+			NsxtCatalogItem          string `json:"nsxtCatalogItem,omitempty"`
+			VSphereSubscribedCatalog string `json:"vSphereSubscribedCatalog,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -266,6 +268,11 @@ var (
 )
 
 const (
+	providerVcdSystem              = "vcd"
+	providerVcdOrg1                = "vcdorg1"
+	providerVcdOrg1Alias           = "vcd.org1"
+	providerVcdOrg2                = "vcdorg2"
+	providerVcdOrg2Alias           = "vcd.org2"
 	customTemplatesDirectory       = "test-templates"
 	testArtifactsDirectory         = "test-artifacts"
 	envVcdAddProvider              = "VCD_ADD_PROVIDER"
@@ -464,7 +471,7 @@ func templateFill(tmpl string, data StringMap) string {
 	if vcdSkipTemplateWriting {
 		TemplateWriting = false
 	}
-	var writeStr = buf.Bytes()
+	var populatedStr = buf.Bytes()
 
 	// This is a quick way of enabling an alternate testing mode:
 	// When REMOVE_ORG_VDC_FROM_TEMPLATE is set, the terraform
@@ -476,13 +483,33 @@ func templateFill(tmpl string, data StringMap) string {
 		buf2 := reOrg.ReplaceAll(buf.Bytes(), []byte("# org = "))
 		reVdc := regexp.MustCompile(`\svdc\s*=`)
 		buf2 = reVdc.ReplaceAll(buf2, []byte("# vdc = "))
-		writeStr = buf2
+		populatedStr = buf2
 	}
 	if TemplateWriting {
 		if !dirExists(testArtifactsDirectory) {
 			err := os.Mkdir(testArtifactsDirectory, 0750)
 			if err != nil {
 				panic(fmt.Errorf("error creating directory %s: %s", testArtifactsDirectory, err))
+			}
+		}
+		reProvider1 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdOrg1)
+		reProvider2 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdOrg2)
+
+		templateText := string(populatedStr)
+
+		usingProvider1 := reProvider1.MatchString(templateText)
+		usingProvider2 := reProvider2.MatchString(templateText)
+		// Since the integrated test framework does not support aliases, but the Terraform tool
+		// requires them, we change the explicit provider names used in the framework
+		// with properly aliased ones (for use in the binary tests)
+		if vcdAddProvider && (usingProvider1 || usingProvider2) {
+			if usingProvider1 {
+				templateText = fmt.Sprintf("%s\n%s", templateText, getOrgProviderText("org1", testConfig.VCD.Org))
+				templateText = strings.Replace(templateText, providerVcdOrg1, providerVcdOrg1Alias, -1)
+			}
+			if usingProvider2 {
+				templateText = fmt.Sprintf("%s\n%s", templateText, getOrgProviderText("org2", testConfig.VCD.Org+"-1"))
+				templateText = strings.Replace(templateText, providerVcdOrg2, providerVcdOrg2Alias, -1)
 			}
 		}
 		resourceFile := path.Join(testArtifactsDirectory, caller) + ".tf"
@@ -497,7 +524,7 @@ func templateFill(tmpl string, data StringMap) string {
 			panic(fmt.Errorf("error creating file %s: %s", resourceFile, err))
 		}
 		writer := bufio.NewWriter(file)
-		count, err := writer.Write(writeStr)
+		count, err := writer.Write([]byte(templateText))
 		if err != nil || count == 0 {
 			panic(fmt.Errorf("error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
 		}
@@ -508,7 +535,7 @@ func templateFill(tmpl string, data StringMap) string {
 		_ = file.Close()
 	}
 	// Returns the populated template
-	return string(writeStr)
+	return string(populatedStr)
 }
 
 func getConfigFileName() string {
@@ -1048,7 +1075,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		}
 		err = catalogItem.Delete()
 		if err != nil {
-			fmt.Printf("error removing catalog item %#v", err)
+			fmt.Printf("[destroySuiteCatalogAndItem] error removing catalog item %#v", err)
 			return
 		}
 		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
@@ -1704,5 +1731,58 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 func skipTestForApiToken(t *testing.T) {
 	if testConfig.Provider.ApiToken != "" {
 		t.Skipf("skipping test %s because API token does not support this functionality", t.Name())
+	}
+}
+
+func getOrgProviderText(providerName, orgName string) string {
+	orgProviderTemplate := `
+provider "vcd" {
+  alias                = "{{.ProviderName}}"
+  user                 = "{{.OrgUser}}"
+  password             = "{{.OrgUserPassword}}"
+  auth_type            = "integrated"
+  url                  = "{{.VcdUrl}}"
+  sysorg               = "{{.Org}}"
+  org                  = "{{.Org}}"
+  allow_unverified_ssl = "true"
+  max_retry_timeout    = 600
+  logging              = true
+  logging_file         = "go-vcloud-director-{{.Org}}.log"
+}`
+
+	data := StringMap{
+		"OrgUser":         testConfig.TestEnvBuild.OrgUser,
+		"OrgUserPassword": testConfig.TestEnvBuild.OrgUserPassword,
+		"VcdUrl":          testConfig.Provider.Url,
+		"SysOrg":          orgName,
+		"Org":             orgName,
+		"ProviderName":    providerName,
+		"Alias":           "",
+	}
+	unfilledTemplate := template.Must(template.New("getOrgProvider").Parse(orgProviderTemplate))
+	buf := &bytes.Buffer{}
+
+	// If an error occurs, returns an empty string
+	if err := unfilledTemplate.Execute(buf, data); err != nil {
+		return ""
+	}
+	return buf.String()
+}
+
+// logState will save the current Terraform state in the log
+func logState(label string) resource.TestCheckFunc {
+	line := fmt.Sprintf("# %s", strings.Repeat("-", 80))
+	return func(s *terraform.State) error {
+		util.Logger.Println(line)
+		util.Logger.Printf("# %s\n", label)
+		util.Logger.Println(line)
+		for resName, res := range s.RootModule().Resources {
+			util.Logger.Println("#", line)
+			util.Logger.Printf("# %s\n", resName)
+			util.Logger.Println("#", line)
+			util.Logger.Printf("%# v\n", pretty.Formatter(res))
+			util.Logger.Println("#", line)
+		}
+		return nil
 	}
 }

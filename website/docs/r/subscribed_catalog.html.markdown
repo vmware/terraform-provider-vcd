@@ -23,8 +23,8 @@ resource "vcd_subscribed_catalog" "subscriber" {
   org  = "my-org"
   name = "subscriber"
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 
   subscription_url      = var.subscription_url
   make_local_copy       = true
@@ -43,8 +43,8 @@ resource "vcd_subscribed_catalog" "subscriber" {
   org  = "my-org"
   name = "subscriber"
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 
   subscription_url      = var.subscription_url
   make_local_copy       = false
@@ -112,8 +112,8 @@ catalog. For example, using this structure, representing an existing subscribed 
 resource "vcd_subscribed_catalog" "my-catalog" {
   org              = "my-org"
   name             = "my-catalog"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
   subscription_url = var.publish_subscription_url
 }
 ```

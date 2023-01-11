@@ -89,7 +89,6 @@ func resourceVcdRdeType() *schema.Resource {
 					"The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version." +
 					"If not set, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type",
 			},
-			// FIXME: It seems only accepts false???? Doesnt support Update neither
 			"readonly": {
 				Type:        schema.TypeBool,
 				Computed:    true,

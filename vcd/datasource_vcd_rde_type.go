@@ -13,7 +13,7 @@ func datasourceVcdRdeType() *schema.Resource {
 			"vendor": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The vendor name for the Runtime Defined Entity type",
+				Description: "The vendor name of the Runtime Defined Entity type",
 			},
 			"namespace": {
 				Type:        schema.TypeString,
@@ -23,7 +23,7 @@ func datasourceVcdRdeType() *schema.Resource {
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The version of the Runtime Defined Entity type. The version string must follow semantic versioning rules",
+				Description: "The version of the Runtime Defined Entity type. The version string follows semantic versioning rules",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -56,8 +56,8 @@ func datasourceVcdRdeType() *schema.Resource {
 			"inherited_version": {
 				Type:     schema.TypeString,
 				Computed: true,
-				Description: "To be used when creating a new version of a Runtime Defined Entity type. Specifies the version of the type that will be the template for the authorization configuration of the new version." +
-					"The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version." +
+				Description: "Specifies the version of the type that will be the template for the authorization configuration of the new version. " +
+					"The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version. " +
 					"If not set, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type",
 			},
 			"readonly": {

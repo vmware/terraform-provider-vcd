@@ -17,7 +17,7 @@ Supported in provider *v3.9+*
 ```hcl
 data "vcd_rde_interface" "my-interface" {
   vendor    = "bigcorp"
-  namespace = "tech1"
+  namespace = "tech"
   version   = "1.2.3"
 }
 
