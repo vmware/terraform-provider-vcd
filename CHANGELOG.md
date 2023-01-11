@@ -1,6 +1,24 @@
-## 3.8.2 (TBC)
+## 3.8.2 (January 12th, 2023)
 
-Changes in progress for v3.8.2 are available at [.changes/v3.8.2](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.8.2) until the release.
+### IMPROVEMENTS
+* Add `catalog_id` to resource and data source `vcd_catalog_media` to allow handling similarly to `vcd_catalog_vapp_template` ([#972](https://github.com/vmware/terraform-provider-vcd/pull/972))
+
+### BUG FIXES
+* Fix a bug that caused inconsistent plan when using `group_id` in `vcd_catalog_access_control`,
+  `vcd_org_vdc_access_control` and `vcd_vapp_access_control` resources ([#963](https://github.com/vmware/terraform-provider-vcd/pull/963))
+* Change `vcd_catalog`, `vcd_catalog_media`, `vcd_catalog_vapp_template`, and `vcd_catalog_item` to access their entities without the need to use a full Org object, thus allowing the access to shared catalogs from other organizations (Issue #960) ([#972](https://github.com/vmware/terraform-provider-vcd/pull/972))
+* Remove unnecessary URL checks from `vcd_subscribed_catalog` creation, to allow subscribing to non-VCD entities, such as vSphere shared library ([#972](https://github.com/vmware/terraform-provider-vcd/pull/972))
+
+* Remove unnecessary validation that prevents attaching NSX-T Org network to vApp using
+  `org_network_name` field in `vcd_vapp_network` resource ([#975](https://github.com/vmware/terraform-provider-vcd/pull/975))
+
+### DEPRECATIONS
+Deprecate usage of `catalog` in favor of `catalog_id` in `vcd_catalog_media` ([#972](https://github.com/vmware/terraform-provider-vcd/pull/972))
+
+### NOTES
+* Add mini-framework for running tests with several Organizations ([#972](https://github.com/vmware/terraform-provider-vcd/pull/972))
+* Try to amend quirky test `TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVm` that sometimes fails due to a bad filter.
+  It now uses a shorter name for the Dynamic Security Groups to try to not break the resulting filter chain ([#980](https://github.com/vmware/terraform-provider-vcd/pull/980))
 
 ## 3.8.1 (December 14, 2022)
 
