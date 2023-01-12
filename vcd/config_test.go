@@ -851,7 +851,7 @@ func TestMain(m *testing.M) {
 		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
 	}
 
-	if skipLeftoverRemoval {
+	if skipLeftoverRemoval || vcdShortTest {
 		os.Exit(exitCode)
 	}
 	govcdClient, err := getTestVCDFromJson(testConfig)
