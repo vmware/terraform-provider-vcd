@@ -5,7 +5,7 @@ provider "vcd" {
   url                  = var.url
   sysorg               = var.org
   org                  = var.org
-  allow_unverified_ssl = "true"
+  allow_unverified_ssl = true
   max_retry_timeout    = 600
   logging              = true
   logging_file         = "go-vcloud-director-org.log"

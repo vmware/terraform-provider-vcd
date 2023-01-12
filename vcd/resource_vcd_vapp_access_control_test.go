@@ -193,39 +193,6 @@ func testAccCheckVcdVappAccessControlExists(resourceName string, orgName, vdcNam
 	}
 }
 
-func testAccCheckVappAccessControlDestroy(orgName, vdcName string, vappNames []string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
-		if err != nil {
-			return fmt.Errorf("error: could not find Org: %s", err)
-		}
-		vdc, err := org.GetVDCByName(vdcName, false)
-		if err != nil {
-			return fmt.Errorf("error: could not find VDC: %s", err)
-		}
-		var destroyed int
-		var existing []string
-		for _, vappName := range vappNames {
-
-			_, err = vdc.GetVAppByName(vappName, false)
-			if err != nil && govcd.IsNotFound(err) {
-				// The vApp was removed
-				destroyed++
-			}
-			if err == nil {
-				existing = append(existing, vappName)
-			}
-		}
-
-		if destroyed == len(vappNames) {
-			return nil
-		}
-		return fmt.Errorf("vapps %v not deleted yet", existing)
-	}
-}
-
 const testAccVappAccessControl = `
 {{.SkipNotice}}
 resource "vcd_org_user" "{{.UserName1}}" {

@@ -97,13 +97,13 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("error getting org name for vcd_catalog_item: %s", err)
 	}
 
 	catalogName := d.Get("catalog").(string)
-	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	catalog, err := vcdClient.Client.GetCatalogByName(orgName, catalogName)
 	if err != nil {
 		log.Printf("[DEBUG] Error finding Catalog: %s", err)
 		return diag.Errorf("error finding Catalog: %s", err)
@@ -303,12 +303,8 @@ func resourceVcdCatalogItemImport(_ context.Context, d *schema.ResourceData, met
 	}
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
-	}
 
-	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	catalog, err := vcdClient.Client.GetCatalogByName(orgName, catalogName)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}

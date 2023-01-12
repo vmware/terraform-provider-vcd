@@ -409,7 +409,7 @@ func TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms(t *testing.T) {
 		"NsxtVdc":  testConfig.Nsxt.Vdc,
 		"VdcGroup": testConfig.Nsxt.VdcGroup,
 		"EdgeGw":   testConfig.Nsxt.VdcGroupEdgeGateway,
-		"TestName": t.Name(),
+		"TestName": "DSGVdcGroupCritWithVms", // Shortened name instead of t.Name() as it could be the reason sometimes VdcGroup.GetNsxtFirewallGroupByName fails complaining about the filter
 		"Tags":     "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
@@ -590,7 +590,7 @@ resource "vcd_nsxt_dynamic_security_group" "group1" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group1"
+  name = "{{.TestName}}-1"
 
   criteria {
 	rule {
@@ -606,7 +606,7 @@ resource "vcd_nsxt_dynamic_security_group" "group2" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group2"
+  name = "{{.TestName}}-2"
 
   criteria {
     rule {
@@ -622,7 +622,7 @@ resource "vcd_nsxt_dynamic_security_group" "group3" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group3"
+  name = "{{.TestName}}-3"
 
   criteria {
     rule {
@@ -638,7 +638,7 @@ resource "vcd_nsxt_dynamic_security_group" "group4" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group4"
+  name = "{{.TestName}}-4"
 
   criteria {
     rule {
@@ -656,28 +656,28 @@ data "vcd_nsxt_dynamic_security_group" "group1" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group1"
+  name = "{{.TestName}}-1"
 }
 
 data "vcd_nsxt_dynamic_security_group" "group2" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group2"
+  name = "{{.TestName}}-2"
 }
 
 data "vcd_nsxt_dynamic_security_group" "group3" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group3"
+  name = "{{.TestName}}-3"
 }
 
 data "vcd_nsxt_dynamic_security_group" "group4" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group4"
+  name = "{{.TestName}}-4"
 }
 `
 
@@ -687,7 +687,7 @@ resource "vcd_nsxt_dynamic_security_group" "group5" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group5"
+  name = "{{.TestName}}-5"
 
   criteria {
 	rule {
@@ -703,7 +703,7 @@ resource "vcd_nsxt_dynamic_security_group" "group6" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group6"
+  name = "{{.TestName}}-6"
 
   criteria {
     rule {
@@ -722,14 +722,14 @@ data "vcd_nsxt_dynamic_security_group" "group5" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group5"
+  name = "{{.TestName}}-5"
 }
 
 data "vcd_nsxt_dynamic_security_group" "group6" {
   org          = "{{.Org}}"
   vdc_group_id = data.vcd_vdc_group.group1.id
 
-  name = "{{.TestName}}-group6"
+  name = "{{.TestName}}-6"
 }
 `
 
