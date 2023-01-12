@@ -121,7 +121,7 @@ func main() {
 	for _, fileName := range fileList {
 
 		// First, we get the file contents
-		text, err := os.ReadFile(fileName)
+		text, err := os.ReadFile(fileName) // #nosec G304 -- only used for test creation
 		if err != nil {
 			fmt.Printf("error reading %s: %s\n", fileName, err)
 			os.Exit(1)
