@@ -117,7 +117,7 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 			},
 			{
 				Config: configText2,
-				// Taint:  []string{"vcd_external_network_v2.ext-net-nsxt"},
+				Taint:  []string{"vcd_external_network_v2.ext-net-nsxt"},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
@@ -127,6 +127,8 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
 						"dns1": "8.8.8.8",
 						"dns2": "8.8.4.4",
+						// dns_suffix has a bug in VCD (<= 10.4.1) which does not return it after
+						// setting
 						// "dns_suffix":    "host.test",
 						"enabled":       "false",
 						"gateway":       "192.168.30.49",
