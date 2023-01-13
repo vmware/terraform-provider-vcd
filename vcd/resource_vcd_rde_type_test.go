@@ -55,9 +55,9 @@ func TestAccVcdRdeType(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "name", t.Name()),
-					resource.TestCheckResourceAttr(rdeTypeFromFile, "description", "Created by"+t.Name()),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "description", "Created by "+t.Name()),
 					resource.TestCheckResourceAttrPair(rdeTypeFromFile, "interface_ids.0", "vcd_rde_interface.rde-interface1", "id"),
-					resource.TestMatchResourceAttr(rdeTypeFromFile, "schema", regexp.MustCompile("{.*\"foo\":\"bar\".*}")),
+					resource.TestMatchResourceAttr(rdeTypeFromFile, "schema", regexp.MustCompile("{.*\"foo\".*\"bar\".*}")),
 
 					resource.TestCheckResourceAttr(rdeTypeFromUrl, "namespace", params["Namespace"].(string)+"url"),
 					resource.TestCheckResourceAttr(rdeTypeFromUrl, "vendor", params["Vendor"].(string)+"url"),
@@ -93,7 +93,7 @@ func TestAccVcdRdeType(t *testing.T) {
 				ResourceName:      rdeTypeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
+				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string)+"file", params["Namespace"].(string)+"file", params["Version"].(string)),
 			},
 		},
 	})

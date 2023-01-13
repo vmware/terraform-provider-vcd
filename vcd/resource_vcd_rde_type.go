@@ -119,28 +119,21 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	vendor := d.Get("vendor").(string)
-	namespace := d.Get("namespace").(string)
-	version := d.Get("version").(string)
-
-	// RDE Type Creation endpoint suffers from race conditions, hence more than 1 RDE Type cannot be created in parallel.
-	// We force to do it sequentially with a mutex.
-	key := fmt.Sprintf("vendor:%s|namespace:%s|version:%s", vendor, namespace, version)
-	vcdMutexKV.kvLock(key)
-
-	_, err = vcdClient.VCDClient.CreateRdeType(&types.DefinedEntityType{
-		Name:             d.Get("name").(string),
-		Namespace:        namespace,
-		Version:          version,
-		Description:      d.Get("description").(string),
-		ExternalId:       d.Get("external_id").(string),
-		InheritedVersion: d.Get("inherited_version").(string),
-		Interfaces:       convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
-		IsReadOnly:       d.Get("readonly").(bool),
-		Schema:           jsonSchema,
-		Vendor:           vendor,
+	executeRdeTypeFunctionWithMutex(func() {
+		_, err = vcdClient.VCDClient.CreateRdeType(&types.DefinedEntityType{
+			Name:             d.Get("name").(string),
+			Namespace:        d.Get("namespace").(string),
+			Version:          d.Get("version").(string),
+			Description:      d.Get("description").(string),
+			ExternalId:       d.Get("external_id").(string),
+			InheritedVersion: d.Get("inherited_version").(string),
+			Interfaces:       convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
+			IsReadOnly:       d.Get("readonly").(bool),
+			Schema:           jsonSchema,
+			Vendor:           d.Get("vendor").(string),
+		})
 	})
-	vcdMutexKV.kvUnlock(key)
+
 	if err != nil {
 		return diag.Errorf("could not create the Runtime Defined Entity type: %s", err)
 	}
@@ -167,6 +160,21 @@ func getRdeTypeSchema(d *schema.ResourceData) (map[string]interface{}, error) {
 	}
 
 	return unmarshalledJson, err
+}
+
+// executeRdeTypeFunctionWithMutex executes the given function related to RDE writing with a mutex, this is because
+// RDE Type write operations suffer from race conditions (at least in API v37.2), hence more than 1 RDE Type cannot be
+// written in parallel.
+// We force to do it sequentially with a mutex.
+func executeRdeTypeFunctionWithMutex(rdeWriteFunction func()) {
+	// FIXME: The key should be more fine-grained, find which parameter causes the race condition. I believe it's either externalId or inheritedVersion, but
+	// not confirmed yet.
+	key := "vcd_rde_type"
+	vcdMutexKV.kvLock(key)
+
+	rdeWriteFunction()
+
+	vcdMutexKV.kvUnlock(key)
 }
 
 // fileFromUrlToString checks that the given url is correct and points to a given file type,
@@ -267,12 +275,14 @@ func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	err = rdeType.Update(types.DefinedEntityType{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		ExternalId:  d.Get("external_id").(string),
-		Interfaces:  convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
-		Schema:      jsonSchema,
+	executeRdeTypeFunctionWithMutex(func() {
+		err = rdeType.Update(types.DefinedEntityType{
+			Name:        d.Get("name").(string),
+			Description: d.Get("description").(string),
+			ExternalId:  d.Get("external_id").(string),
+			Interfaces:  convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
+			Schema:      jsonSchema,
+		})
 	})
 	if err != nil {
 		return diag.Errorf("could not update the Runtime Defined Entity type: %s", err)
@@ -289,7 +299,10 @@ func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = rdeType.Delete()
+	executeRdeTypeFunctionWithMutex(func() {
+		err = rdeType.Delete()
+	})
+
 	if err != nil {
 		return diag.Errorf("could not delete the Runtime Defined Entity type: %s", err)
 	}
