@@ -116,9 +116,9 @@ resource "vcd_rde_interface" "rde-interface2" {
 }
 
 resource "vcd_rde_type" "rde-type-file" {
-  namespace     = "{{.Namespace}}"
+  namespace     = "{{.Namespace}}file"
   version       = "{{.Version}}"
-  vendor        = "{{.Vendor}}"
+  vendor        = "{{.Vendor}}file"
   name          = "{{.Name}}"
   description   = "{{.Description}}"
   interface_ids = [{{.InterfaceReferences}}]

@@ -119,18 +119,28 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
+	vendor := d.Get("vendor").(string)
+	namespace := d.Get("namespace").(string)
+	version := d.Get("version").(string)
+
+	// RDE Type Creation endpoint suffers from race conditions, hence more than 1 RDE Type cannot be created in parallel.
+	// We force to do it sequentially with a mutex.
+	key := fmt.Sprintf("vendor:%s|namespace:%s|version:%s", vendor, namespace, version)
+	vcdMutexKV.kvLock(key)
+
 	_, err = vcdClient.VCDClient.CreateRdeType(&types.DefinedEntityType{
 		Name:             d.Get("name").(string),
-		Namespace:        d.Get("namespace").(string),
-		Version:          d.Get("version").(string),
+		Namespace:        namespace,
+		Version:          version,
 		Description:      d.Get("description").(string),
 		ExternalId:       d.Get("external_id").(string),
 		InheritedVersion: d.Get("inherited_version").(string),
 		Interfaces:       convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
 		IsReadOnly:       d.Get("readonly").(bool),
 		Schema:           jsonSchema,
-		Vendor:           d.Get("vendor").(string),
+		Vendor:           vendor,
 	})
+	vcdMutexKV.kvUnlock(key)
 	if err != nil {
 		return diag.Errorf("could not create the Runtime Defined Entity type: %s", err)
 	}
