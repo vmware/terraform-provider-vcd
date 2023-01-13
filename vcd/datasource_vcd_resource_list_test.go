@@ -216,40 +216,48 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),
-					checkListForKnownItem(def.name, def.knownItem),
+					checkListForKnownItem(def.name, def.knownItem, true),
 				),
 			},
 		},
 	})
 }
 
-func checkListForKnownItem(resName, wanted string) resource.TestCheckFunc {
+func checkListForKnownItem(resName, target string, isWanted bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if wanted == "" {
+		if target == "" {
 			return nil
 		}
 
 		resourcePath := "data.vcd_resource_list." + resName
 
-		resource, ok := s.RootModule().Resources[resourcePath]
+		res, ok := s.RootModule().Resources[resourcePath]
 		if !ok {
 			return fmt.Errorf("resource %s not found", resName)
 		}
 
 		var list = make([]string, 0)
 
-		for key, value := range resource.Primary.Attributes {
-			if strings.HasPrefix(key, "list") {
+		for key, value := range res.Primary.Attributes {
+			if strings.HasPrefix(key, "list.") {
 				list = append(list, value)
 			}
 		}
 
 		for _, item := range list {
-			if item == wanted {
-				return nil
+			if item == target {
+				if isWanted {
+					return nil
+				} else {
+					return fmt.Errorf("item '%s' found in '%s'", target, resName)
+				}
 			}
 		}
-		return fmt.Errorf("item '%s' not found in list %s", wanted, resourcePath)
+		if isWanted {
+			return fmt.Errorf("item '%s' not found in list %s", target, resourcePath)
+		} else {
+			return nil
+		}
 	}
 }
 

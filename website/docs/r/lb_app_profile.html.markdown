@@ -56,7 +56,7 @@ resource "vcd_lb_app_profile" "http" {
   persistence_mechanism          = "cookie"
   cookie_name                    = "JSESSIONID"
   cookie_mode                    = "insert"
-  insert_x_forwarded_http_header = "true"
+  insert_x_forwarded_http_header = true
 }
 ```
 
