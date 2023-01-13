@@ -1,4 +1,4 @@
-//go:build multivm || functional
+//go:build multivm || ALL || functional
 
 package vcd
 
