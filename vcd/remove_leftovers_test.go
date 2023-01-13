@@ -44,7 +44,7 @@ var doNotDelete = entityList{
 // alsoDelete contains a list of entities that should be removed , in addition to the ones
 // found by name matching
 // Add to this list if you ever get an entity left behind by a test
-// Note: these names were captured running 'go run get_resource_names.go' in ./vcd/test-artifacts
+// Note: these names were captured running 'go run get_test_resource_names.go' in ./vcd/test-artifacts
 var alsoDelete = entityList{
 	{Type: "vcd_catalog", Name: "Catalog-AC-0", Comment: "from vcd.TestAccVcdCatalogAccessControl-update.tf: Catalog-AC-0"},
 	{Type: "vcd_catalog", Name: "Catalog-AC-1", Comment: "from vcd.TestAccVcdCatalogAccessControl-update.tf: Catalog-AC-1"},

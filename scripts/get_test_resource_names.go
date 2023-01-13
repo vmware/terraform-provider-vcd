@@ -1,10 +1,14 @@
-// get_resource_names collects the resource names from the test files in test-artifacts
+// get_test_resource_names collects the resource names from the test files in test-artifacts
 // By default, it skips the names starting with 'Test' or 'test', as they are otherwise
 // recognised and handled during the leftover removal operation.
-// The resulting list has to be added to `remove_leftover_test.go`
-
+// This file gets copied to ./vcd/test-artifacts when we run `make test-binary` or `make test-binary-prepare`
+//
 // Run the code in ./vcd/test-artifacts, possibly after running `make test-binary-prepare` in the top directory
-// go run get_resource_names.go | vim -
+// go run get_test_resource_names.go | vim -
+//
+// At the end, this program prints two things:
+// 1: the JSON text of our entities (to be used stand-alone)
+// 2: the Go representation of the entities (to be pasted in remove_leftovers_test.go)
 
 // Version 0.1 - 2022-12-14
 
@@ -224,6 +228,6 @@ func main() {
 	// At the end we print two things:
 	// 1: the JSON text of our entities (to be used stand-alone)
 	fmt.Printf("%s\n", jsonText)
-	// 2: the Go representation of the entities (to be pasted in remove_leftovers.go)
+	// 2: the Go representation of the entities (to be pasted in remove_leftovers_test.go)
 	fmt.Printf("%# v\n", pretty.Formatter(foundEntities))
 }
