@@ -39,7 +39,7 @@ func TestAccVcdRdeTypeDS(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(typeName, "namespace", params["TypeNamespace"].(string)),
 					resource.TestCheckResourceAttr(typeName, "version", params["TypeVersion"].(string)),
 					resource.TestCheckResourceAttr(typeName, "vendor", params["TypeVendor"].(string)),

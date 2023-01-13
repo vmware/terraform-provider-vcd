@@ -42,7 +42,7 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configTextCreate,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(interfaceName, "namespace", params["Namespace"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
@@ -52,7 +52,7 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 			},
 			{
 				Config: configTextUpdate,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(interfaceName, "namespace", params["Namespace"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),

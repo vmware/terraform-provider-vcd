@@ -35,7 +35,7 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(interfaceName, "namespace", params["InterfaceNamespace"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["InterfaceVersion"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["InterfaceVendor"].(string)),
