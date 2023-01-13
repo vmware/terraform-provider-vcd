@@ -11,18 +11,22 @@ import (
 	"testing"
 )
 
-// TODO Create RDE with wrong JSON
-//
-//	Delete it, should be ok
-//	Create again with wrong JSON
-//	Update with correct JSON
-//	Delete it and create a new with good JSON
-//	Import
+// TestAccVcdRde tests the behaviour of RDE instances:
+// - Step 1: Create 3 RDEs: One with file, other with URL, last one with wrong JSON.
+// - Step 2: Delete all RDEs, even the wrong one.
+// - Step 3: Repeat step 1
+// - Step 4: Update one RDE name. Update wrong JSON in RDE.
+// - Step 5: Delete the RDE that has fixed the JSON.
+// - Step 6: Import
+
+// Delete it and create a new with good JSON
+// Import
 func TestAccVcdRde(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
+		"FuncName":   t.Name() + "-Step1",
 		"Namespace":  "namespace",
 		"Version":    "1.0.0",
 		"Vendor":     "vendor",
@@ -33,17 +37,16 @@ func TestAccVcdRde(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configTextCreate := templateFill(testAccVcdRde, params)
-	params["FuncName"] = t.Name() + "-Update"
-	params["Name"] = params["FuncName"]
-	configTextUpdate := templateFill(testAccVcdRde, params)
+	step1 := templateFill(testAccVcdRde, params)
+	params["FuncName"] = t.Name() + "-Step2"
+	step2 := templateFill(testAccVcdRde, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION create: %s\n", configTextCreate)
-	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION step 1: %s\n", step1)
+	debugPrintf("#[DEBUG] CONFIGURATION step 2: %s\n", step2)
 
 	rdeType := "vcd_rde_type.rde-type"
 	rdeFromFile := "vcd_rde.rde-file"
@@ -53,8 +56,8 @@ func TestAccVcdRde(t *testing.T) {
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
 		Steps: []resource.TestStep{
 			{
-				Config: configTextCreate,
-				Check:  resource.ComposeTestCheckFunc(),
+				Config: step1,
+				Check:  resource.ComposeAggregateTestCheckFunc(),
 			},
 			{
 				ResourceName:      rdeFromFile,
@@ -93,6 +96,12 @@ resource "vcd_rde" "rde-url" {
   name          = "{{.Name}}url"
   entity_url    = "{{.EntityUrl}}"
 }
+
+resource "vcd_rde" "naughty-rde" {
+  rde_type_id   = vcd_rde_type.rde-type.id
+  name          = "{{.Name}}naughty"
+  entity        = "{ \"this_json_is_bad\": \"yes\"}"
+}
 `
 
 // testAccCheckRdeDestroy checks that the RDE instances defined by their identifiers no longer
@@ -114,7 +123,10 @@ func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.Te
 			rdeType, err := conn.VCDClient.GetRdeTypeById(rdeTypeRes.Primary.ID)
 
 			if err != nil {
-				return fmt.Errorf("could not retrieve RDE type %s to destroy its instances: %s", rdeTypeRes.Primary.ID, err)
+				if govcd.ContainsNotFound(err) {
+					continue
+				}
+				return fmt.Errorf("error getting the RDE type %s to be able to destroy its instances: %s", rdeTypeRes.Primary.ID, err)
 			}
 
 			_, err = rdeType.GetRdeById(identifier)
