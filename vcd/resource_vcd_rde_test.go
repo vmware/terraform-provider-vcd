@@ -1,5 +1,4 @@
 //go:build rde || ALL || functional
-// +build rde ALL functional
 
 package vcd
 
@@ -8,25 +7,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
 	"testing"
 )
 
 // TestAccVcdRde tests the behaviour of RDE instances:
 // - Step 1: Create 3 RDEs: One with file, other with URL, last one with wrong JSON.
-// - Step 2: Delete all RDEs, even the wrong one.
-// - Step 3: Repeat step 1
-// - Step 4: Update one RDE name. Update wrong JSON in RDE.
-// - Step 5: Delete the RDE that has fixed the JSON.
-// - Step 6: Import
-
-// Delete it and create a new with good JSON
-// Import
+// - Step 2: Taint to test delete on wrong RDEs and repeat step 1.
+// - Step 3: Update one RDE name. Update wrong JSON in RDE.
+// - Step 4: Import
 func TestAccVcdRde(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"FuncName":   t.Name() + "-Step1",
+		"FuncName":   t.Name() + "-Step1-and-2",
 		"Namespace":  "namespace",
 		"Version":    "1.0.0",
 		"Vendor":     "vendor",
@@ -37,40 +32,81 @@ func TestAccVcdRde(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	step1 := templateFill(testAccVcdRde, params)
-	params["FuncName"] = t.Name() + "-Step2"
-	step2 := templateFill(testAccVcdRde, params)
+	step1and2 := templateFill(testAccVcdRdeStep1and2, params)
+	params["FuncName"] = t.Name() + "-Step3"
+	step3 := templateFill(testAccVcdRdeStep3, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION step 1: %s\n", step1)
-	debugPrintf("#[DEBUG] CONFIGURATION step 2: %s\n", step2)
+	debugPrintf("#[DEBUG] CONFIGURATION step 1 and 2: %s\n", step1and2)
+	debugPrintf("#[DEBUG] CONFIGURATION step 3: %s\n", step3)
 
+	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Namespace"].(string))
 	rdeType := "vcd_rde_type.rde-type"
 	rdeFromFile := "vcd_rde.rde-file"
 	rdeFromUrl := "vcd_rde.rde-url"
+	rdeWrong := "vcd_rde.rde-naughty"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
 		Steps: []resource.TestStep{
 			{
-				Config: step1,
-				Check:  resource.ComposeAggregateTestCheckFunc(),
+				Config: step1and2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
+					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file"),
+					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_id", rdeType, "id"),
+					resource.TestMatchResourceAttr(rdeFromFile, "entity", regexp.MustCompile("{.*\"stringValue\".*}")),
+					resource.TestCheckResourceAttr(rdeFromFile, "state", "RESOLVED"),
+					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(rdeFromFile, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+
+					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
+					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_id", rdeFromFile, "rde_type_id"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "entity", rdeFromFile, "entity"),
+					resource.TestCheckResourceAttr(rdeFromUrl, "state", "RESOLVED"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
+
+					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
+					resource.TestCheckResourceAttr(rdeWrong, "name", t.Name()+"naughty"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_id", rdeFromFile, "rde_type_id"),
+					resource.TestCheckResourceAttr(rdeWrong, "entity", "{\"this_json_is_bad\":\"yes\"}"),
+					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLUTION_ERROR"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
+				),
+			},
+			{
+				Config: step1and2,
+				Taint:  []string{rdeWrong}, // We force a deletion of a wrongly resolved RDE.
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLUTION_ERROR"),
+				),
+			},
+			{
+				Config: step3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file-updated"),
+					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url-updated"),
+					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLVED"),
+				),
 			},
 			{
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdRde(params["Name"].(string)+"file", params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
+				ImportStateIdFunc: importStateIdRde(params["Name"].(string)+"file-updated", params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
 			},
 		},
 	})
 	postTestChecks(t)
 }
 
-const testAccVcdRde = `
+const testAccVcdRdePrerequisites = `
 data "vcd_rde_interface" "existing-interface" {
   namespace = "k8s"
   version   = "1.0.0"
@@ -84,7 +120,9 @@ resource "vcd_rde_type" "rde-type" {
   name          = "{{.Name}}-type"
   schema        = file("{{.SchemaPath}}")
 }
+`
 
+const testAccVcdRdeStep1and2 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde-file" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}file"
@@ -97,10 +135,30 @@ resource "vcd_rde" "rde-url" {
   entity_url    = "{{.EntityUrl}}"
 }
 
-resource "vcd_rde" "naughty-rde" {
+resource "vcd_rde" "rde-naughty" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}naughty"
   entity        = "{ \"this_json_is_bad\": \"yes\"}"
+}
+`
+
+const testAccVcdRdeStep3 = testAccVcdRdePrerequisites + `
+resource "vcd_rde" "rde-file" {
+  rde_type_id   = vcd_rde_type.rde-type.id
+  name          = "{{.Name}}file-updated" # Updated name
+  entity        = file("{{.EntityPath}}")
+}
+
+resource "vcd_rde" "rde-url" {
+  rde_type_id   = vcd_rde_type.rde-type.id
+  name          = "{{.Name}}url-updated" # Updated name
+  entity_url    = "{{.EntityUrl}}"
+}
+
+resource "vcd_rde" "rde-naughty" {
+  rde_type_id   = vcd_rde_type.rde-type.id
+  name          = "{{.Name}}naughty"
+  entity        = file("{{.EntityPath}}") # Updated to a correct JSON
 }
 `
 

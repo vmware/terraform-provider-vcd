@@ -273,5 +273,6 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
+	dSet(d, "rde_type_id", rdeType.DefinedEntityType.ID)
 	return []*schema.ResourceData{d}, nil
 }
