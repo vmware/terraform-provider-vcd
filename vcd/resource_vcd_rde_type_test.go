@@ -50,7 +50,7 @@ func TestAccVcdRdeType(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configTextCreate,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "namespace", params["Namespace"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
@@ -71,7 +71,7 @@ func TestAccVcdRdeType(t *testing.T) {
 			},
 			{
 				Config: configTextUpdate,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "namespace", params["Namespace"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
