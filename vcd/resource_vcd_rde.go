@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 )
@@ -148,6 +149,11 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 
 	dSet(d, "name", rde.DefinedEntity.Name)
 	dSet(d, "external_id", rde.DefinedEntity.ExternalId)
+	dSet(d, "state", rde.DefinedEntity.State)
+
+	if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State != "RESOLVED" {
+		util.Logger.Printf("[DEBUG] RDE %s is not in RESOLVED state and can't be used properly", rde.DefinedEntity.Name)
+	}
 
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
 	if err != nil {

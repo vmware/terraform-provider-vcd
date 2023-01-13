@@ -114,3 +114,15 @@ func importStateIdDefinedInterface(vendor, namespace, version string) resource.I
 			version, nil
 	}
 }
+
+func importStateIdRde(name, vendor, namespace, version string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return name +
+			ImportSeparator +
+			vendor +
+			ImportSeparator +
+			namespace +
+			ImportSeparator +
+			version, nil
+	}
+}
