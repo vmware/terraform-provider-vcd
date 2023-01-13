@@ -178,7 +178,7 @@ func executeRdeTypeFunctionWithMutex(rdeWriteFunction func()) {
 }
 
 // fileFromUrlToString checks that the given url is correct and points to a given file type,
-// if so it downloads its contents and returns it as string.
+// if so it downloads its contents and returns it as string.g
 func fileFromUrlToString(url, fileType string) (string, error) {
 	if !strings.HasSuffix(url, fileType) {
 		return "", fmt.Errorf("it was expecting the URL to point to a %s file but it was %s", fileType, url)

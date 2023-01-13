@@ -226,7 +226,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Deprecated:    "Use metadata_entry instead",
 			ConflictsWith: []string{"metadata_entry"},
 		},
-		"metadata_entry": getMetadataEntrySchema("VM", false),
+		"metadata_entry": getMetadataEntrySchema("VM", false, true),
 		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,

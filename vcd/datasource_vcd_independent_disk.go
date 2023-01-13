@@ -105,7 +105,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Description: "Key and value pairs for disk metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Disk", true),
+			"metadata_entry": getMetadataEntrySchema("Disk", true, true),
 		},
 	}
 }

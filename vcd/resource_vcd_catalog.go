@@ -101,7 +101,7 @@ func resourceVcdCatalog() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 				Description:   "Key and value pairs for catalog metadata.",
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog", false),
+			"metadata_entry": getMetadataEntrySchema("Catalog", false, true),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -47,7 +47,7 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "Key and value pairs for catalog item metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Media", true),
+			"metadata_entry": getMetadataEntrySchema("Media", true, true),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,

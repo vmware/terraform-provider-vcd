@@ -15,7 +15,7 @@ func datasourceVcdRde() *schema.Resource {
 				Computed:    true,
 				Description: "The name of the Runtime Defined Entity",
 			},
-			"metadata_entry": getMetadataEntrySchema("Runtime Defined Entity", true),
+			"metadata_entry": getMetadataEntrySchema("Runtime Defined Entity", true, true),
 		},
 	}
 }

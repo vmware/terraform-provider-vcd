@@ -23,12 +23,13 @@ func TestAccVcdRde(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Namespace":   "namespace",
-		"Version":     "1.0.0",
-		"Vendor":      "vendor",
-		"Name":        t.Name(),
-		"Description": "Created by " + t.Name(),
-		"SchemaPath":  getCurrentDir() + "/../test-resources/rde_type.json", // TODO: Parameterize this value???
+		"Namespace":  "namespace",
+		"Version":    "1.0.0",
+		"Vendor":     "vendor",
+		"Name":       t.Name(),
+		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
+		"EntityPath": getCurrentDir() + "/../test-resources/rde_instance.json",
+		"EntityUrl":  "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-3/test-resources/rde_instance.json", // FIXME
 	}
 	testParamsNotEmpty(t, params)
 
@@ -55,7 +56,6 @@ func TestAccVcdRde(t *testing.T) {
 				Config: configTextCreate,
 				Check:  resource.ComposeTestCheckFunc(),
 			},
-
 			{
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
@@ -79,7 +79,6 @@ resource "vcd_rde_type" "rde-type" {
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}"
   name          = "{{.Name}}-type"
-  description   = "{{.Description}}"
   schema        = file("{{.SchemaPath}}")
 }
 
@@ -115,7 +114,7 @@ func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.Te
 			rdeType, err := conn.VCDClient.GetRdeTypeById(rdeTypeRes.Primary.ID)
 
 			if err != nil {
-				return fmt.Errorf("RDE type %s is deleted before its RDE instances", rdeTypeRes.Primary.ID)
+				return fmt.Errorf("could not retrieve RDE type %s to destroy its instances: %s", rdeTypeRes.Primary.ID, err)
 			}
 
 			_, err = rdeType.GetRdeById(identifier)
@@ -125,5 +124,17 @@ func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.Te
 			}
 		}
 		return nil
+	}
+}
+
+func importStateIdRde(name, vendor, namespace, version string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return name +
+			ImportSeparator +
+			vendor +
+			ImportSeparator +
+			namespace +
+			ImportSeparator +
+			version, nil
 	}
 }

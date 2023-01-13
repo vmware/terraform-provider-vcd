@@ -171,7 +171,7 @@ func resourceOrg() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Organization", false),
+			"metadata_entry": getMetadataEntrySchema("Organization", false, true),
 		},
 	}
 }

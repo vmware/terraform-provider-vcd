@@ -114,7 +114,7 @@ func datasourceVcdOrg() *schema.Resource {
 				Description: "Key and value pairs for organization metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Organization", true),
+			"metadata_entry": getMetadataEntrySchema("Organization", true, true),
 		},
 	}
 }
