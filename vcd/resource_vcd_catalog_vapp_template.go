@@ -6,10 +6,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 	"time"
 )
+
+const maximumSynchronisationCheckDuration = 60 * time.Second
 
 func resourceVcdCatalogVappTemplate() *schema.Resource {
 	return &schema.Resource{
@@ -101,13 +104,8 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
-	}
-
 	catalogId := d.Get("catalog_id").(string)
-	catalog, err := org.GetCatalogById(catalogId, false)
+	catalog, err := vcdClient.Client.GetCatalogById(catalogId)
 	if err != nil {
 		log.Printf("[DEBUG] Error finding Catalog: %s", err)
 		return diag.Errorf("error finding Catalog: %s", err)
@@ -159,10 +157,6 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	dSet(d, "name", vAppTemplate.VAppTemplate.Name)
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", vAppTemplate.VAppTemplate.Description)
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
-	}
 
 	_, isCatalogIdSet := d.GetOk("catalog_id")
 	if !isCatalogIdSet { // This can only happen in the data source.
@@ -170,21 +164,22 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 		if err != nil {
 			return diag.Errorf("error retrieving the Catalog name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
 		}
-		catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+
+		orgName, err := vcdClient.GetOrgNameFromResource(d)
+		if err != nil {
+			return diag.Errorf("no org name found in resource data: %s", err)
+		}
+		catalog, err := vcdClient.Client.GetCatalogByName(orgName, catalogName)
 		if err != nil {
 			return diag.Errorf("error retrieving Catalog from vApp Template with name %s: %s", vAppTemplate.VAppTemplate.Name, err)
 		}
 		dSet(d, "catalog_id", catalog.Catalog.ID)
 	} else {
-		vdcName, err := vAppTemplate.GetVdcName()
+		vappTemplateRec, err := vAppTemplate.GetVappTemplateRecord()
 		if err != nil {
-			return diag.Errorf("error retrieving the VDC name to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
+			return diag.Errorf("error retrieving the vApp Template record for '%s': %s", vAppTemplate.VAppTemplate.Name, err)
 		}
-		vdc, err := adminOrg.GetVDCByName(vdcName, false)
-		if err != nil {
-			return diag.Errorf("error retrieving the VDC to which the vApp Template '%s' belongs: %s", vAppTemplate.VAppTemplate.Name, err)
-		}
-		dSet(d, "vdc_id", vdc.Vdc.ID)
+		dSet(d, "vdc_id", "urn:vcloud:vdc:"+extractUuid(vappTemplateRec.Vdc))
 	}
 
 	err = updateMetadataInState(d, vAppTemplate)
@@ -233,13 +228,8 @@ func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceD
 func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
-	}
-
 	catalogId := d.Get("catalog_id").(string)
-	catalog, err := org.GetCatalogById(catalogId, false)
+	catalog, err := vcdClient.Client.GetCatalogById(catalogId)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find Catalog with ID %s", catalogId)
 		return diag.Errorf("unable to find Catalog with ID %s", catalogId)
@@ -293,19 +283,18 @@ func resourceVcdCatalogVappTemplateImport(_ context.Context, d *schema.ResourceD
 	}
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetOrgByName(orgName)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
-	}
 
-	catalog, err := org.GetCatalogByName(catalogOrVdcName, false)
+	catalog, err := vcdClient.Client.GetCatalogByName(orgName, catalogOrVdcName)
 	var vdc *govcd.Vdc
 	if err != nil {
+		org, err := vcdClient.GetOrgByName(orgName)
+		if err != nil {
+			return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+		}
 		vdc, err = org.GetVDCByName(catalogOrVdcName, false)
 		if err != nil {
 			return nil, govcd.ErrorEntityNotFound
 		}
-
 	}
 	var vAppTemplate *govcd.VAppTemplate
 	if vdc != nil {
@@ -337,22 +326,23 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 		identifier = d.Get("name").(string)
 	}
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, err)
-	}
-
 	// Get the catalog only if its ID is set, as in data source we can search with VDC ID instead.
 	var catalog *govcd.Catalog
+	var err error
 	var vdc *govcd.Vdc
 	catalogId, isSearchedByCatalog := d.GetOk("catalog_id")
 	if isSearchedByCatalog {
-		catalog, err = adminOrg.GetCatalogById(catalogId.(string), false)
+		catalog, err = vcdClient.Client.GetCatalogById(catalogId.(string))
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find Catalog.")
 			return nil, fmt.Errorf("unable to find Catalog: %s", err)
 		}
 	} else {
+		// If we search the catalog by VDC, we assume access to the Org
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return nil, fmt.Errorf(errorRetrievingOrg, err)
+		}
 		vdc, err = adminOrg.GetVDCById(d.Get("vdc_id").(string), false)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VDC.")
@@ -380,10 +370,9 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 			if err != nil {
 				return nil, err
 			}
-			// This checks that the vApp Template is synchronized in the catalog
-			_, err = vcdClient.QuerySynchronizedVAppTemplateById(vAppTemplate.VAppTemplate.ID)
+			err := checkSynchronisedVappTemplate(vcdClient, vAppTemplate)
 			if err != nil {
-				return nil, fmt.Errorf("the found vApp Template %s is not usable: %s", vAppTemplate.VAppTemplate.ID, err)
+				return nil, err
 			}
 			d.SetId(vAppTemplate.VAppTemplate.ID)
 			return vAppTemplate, nil
@@ -412,14 +401,36 @@ func findVAppTemplate(d *schema.ResourceData, vcdClient *VCDClient, origin strin
 	}
 	if origin == "datasource" {
 		// This checks that the vApp Template is synchronized in the catalog
-		_, err = vcdClient.QuerySynchronizedVAppTemplateById(vAppTemplate.VAppTemplate.ID)
+		err := checkSynchronisedVappTemplate(vcdClient, vAppTemplate)
 		if err != nil {
-			return nil, fmt.Errorf("the found vApp Template %s is not usable: %s", vAppTemplate.VAppTemplate.ID, err)
+			return nil, err
 		}
 	}
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 	log.Printf("[TRACE] vApp Template read completed: %#v", vAppTemplate.VAppTemplate)
 	return vAppTemplate, nil
+}
+
+func checkSynchronisedVappTemplate(vcdClient *VCDClient, vAppTemplate *govcd.VAppTemplate) error {
+	startCheck := time.Now()
+	var err error
+	timeout := false
+	iterations := 0
+	// This checks that the vApp Template is synchronized in the catalog
+	for !timeout {
+		iterations++
+		_, err = vcdClient.QuerySynchronizedVAppTemplateById(vAppTemplate.VAppTemplate.ID)
+		if err == nil {
+			break
+		}
+		timeout = time.Since(startCheck) > maximumSynchronisationCheckDuration
+		time.Sleep(500 * time.Millisecond)
+	}
+	util.Logger.Printf("[DEBUG] [checkSynchronisedVappTemplate] {timeout: %v - iterations %d} synchronisation query for %s completed after %s\n", timeout, iterations, vAppTemplate.VAppTemplate.Name, time.Since(startCheck))
+	if err != nil {
+		return fmt.Errorf("the found vApp Template %s (%s) is not usable: %s", vAppTemplate.VAppTemplate.Name, vAppTemplate.VAppTemplate.ID, err)
+	}
+	return nil
 }
 
 // uploadOvaFroFilePath uploads an OVA file specified in the resource to the given catalog

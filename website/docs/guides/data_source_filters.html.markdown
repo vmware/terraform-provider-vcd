@@ -259,7 +259,7 @@ data "vcd_catalog" "unknown_cat" {
 
   filter {
     date     = ">= 2020-04-02 10:00"
-    earliest = "true"
+    earliest = true
   }
 }
 # Finds an isolated network with gateway IP starting with `192.168.3`

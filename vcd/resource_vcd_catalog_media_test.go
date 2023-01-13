@@ -172,9 +172,13 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalogMediaBasic = `
-  resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
   name                 = "{{.CatalogMediaName}}"
   description          = "{{.Description}}"
@@ -259,8 +263,8 @@ resource "vcd_catalog_media" "test-catalog-media" {
 
 const testAccCheckVcdCatalogMediaMetadataDatasource = `
 data "vcd_catalog_media" "test-catalog-media-ds" {
-  org     = vcd_catalog_media.test-catalog-media.org
-  catalog = vcd_catalog_media.test-catalog-media.catalog
-  name    = vcd_catalog_media.test-catalog-media.name
+  org        = vcd_catalog_media.test-catalog-media.org
+  catalog_id = vcd_catalog_media.test-catalog-media.catalog_id
+  name       = vcd_catalog_media.test-catalog-media.name
 }
 `
