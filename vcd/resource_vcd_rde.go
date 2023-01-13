@@ -86,14 +86,23 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not find any Runtime Defined Entity type with ID %s: %s", rdeTypeId, err)
 	}
 
-	_, err = rdeType.CreateRde(types.DefinedEntity{
+	rde, err := rdeType.CreateRde(types.DefinedEntity{
 		Name:   d.Get("name").(string),
 		Entity: jsonSchema,
 	})
+	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
+	// it should go to the Update operation instead.
+	d.SetId(rde.DefinedEntity.ID)
 
 	if err != nil {
 		return diag.Errorf("could not create the Runtime Defined Entity: %s", err)
 	}
+
+	err = rde.Resolve()
+	if err != nil {
+		return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+	}
+
 	return resourceVcdRdeRead(ctx, d, meta)
 }
 
@@ -179,7 +188,7 @@ func getRde(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntity, err
 }
 
 func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rdeType, err := getRde(d, meta)
+	rde, err := getRde(d, meta)
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		return nil
@@ -192,7 +201,7 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	err = rdeType.Update(types.DefinedEntity{
+	err = rde.Update(types.DefinedEntity{
 		Name:       d.Get("name").(string),
 		ExternalId: d.Get("external_id").(string),
 		Entity:     jsonEntity,
@@ -200,11 +209,18 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("could not update the Runtime Defined Entity: %s", err)
 	}
+
+	// Resolve is required as there can be changes in the JSON entity.
+	err = rde.Resolve()
+	if err != nil {
+		return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+	}
+
 	return resourceVcdRdeRead(ctx, d, meta)
 }
 
 func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rdeType, err := getRde(d, meta)
+	rde, err := getRde(d, meta)
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		return nil
@@ -212,7 +228,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = rdeType.Delete()
+	err = rde.Delete()
 	if err != nil {
 		return diag.Errorf("could not delete the Runtime Defined Entity: %s", err)
 	}
@@ -229,15 +245,15 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.
 //
-// Example resource name (_resource_name_): vcd_rde_type.outer-type
-// Example import path (_the_id_string_): vmware.kubernetes.1.0.0
+// Example resource name (_resource_name_): vcd_rde.outer-rde
+// Example import path (_the_id_string_): my-rde.vmware.kubernetes.1.0.0
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) < 3 {
-		return nil, fmt.Errorf("resource identifier must be specified as vendor.namespace.version")
+	if len(resourceURI) < 4 {
+		return nil, fmt.Errorf("resource identifier must be specified as rde-name.vendor.namespace.version")
 	}
-	vendor, namespace, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
+	rdeName, vendor, namespace, version := resourceURI[0], resourceURI[1], resourceURI[2], strings.Join(resourceURI[3:], ".")
 
 	vcdClient := meta.(*VCDClient)
 	rdeType, err := vcdClient.GetRdeType(vendor, namespace, version)
@@ -245,6 +261,11 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf("error finding Runtime Defined Entity with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
 	}
 
-	d.SetId(rdeType.DefinedEntityType.ID)
+	rde, err := rdeType.GetRdeByName(rdeName)
+	if err != nil {
+		return nil, fmt.Errorf("error finding Runtime Defined Entity with name %s: %s", rdeName, err)
+	}
+
+	d.SetId(rde.DefinedEntity.ID)
 	return []*schema.ResourceData{d}, nil
 }
