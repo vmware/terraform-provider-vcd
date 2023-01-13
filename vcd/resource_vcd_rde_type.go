@@ -192,9 +192,12 @@ func fileFromUrlToString(url, fileType string) (string, error) {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			util.Logger.Printf("[ERROR] Could not close body: %s", err)
+			util.Logger.Printf("[ERROR] fileFromUrlToString: Could not close HTTP response body: %s", err)
 		}
 	}()
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("could not get file from URL %s, got status %s", url, resp.Status)
+	}
 	_, err = io.Copy(buf, resp.Body)
 	if err != nil {
 		return "", err
