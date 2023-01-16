@@ -195,7 +195,7 @@ func fileFromUrlToString(url, fileType string) (string, error) {
 			util.Logger.Printf("[ERROR] fileFromUrlToString: Could not close HTTP response body: %s", err)
 		}
 	}()
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("could not get file from URL %s, got status %s", url, resp.Status)
 	}
 	_, err = io.Copy(buf, resp.Body)
