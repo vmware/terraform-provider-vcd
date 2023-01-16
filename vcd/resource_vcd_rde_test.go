@@ -208,3 +208,32 @@ func importStateIdRde(name, vendor, namespace, version string) resource.ImportSt
 			version, nil
 	}
 }
+
+// TestAccVcdRdeMetadata tests metadata CRUD on Runtime Defined Entities.
+func TestAccVcdRdeMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_org_vdc.test-rde-ds",
+		StringMap{})
+}
+
+const testAccCheckVcdRdeMetadata = `
+data "vcd_rde_type" "rde-type" {
+  vendor    = "vmware"
+  namespace = "tkgcluster"
+  version   = "1.0.0"
+}
+
+resource "vcd_rde" "test-rde" {
+  rde_type_id   = data.vcd_rde_type.rde-type.id
+  name          = "{{.Name}}"
+  entity        = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+}
+`
+
+const testAccCheckVcdRdeMetadataDatasource = `
+data "vcd_rde" "test-rde-ds" {
+  name = vcd_rde.test-rde.name
+}
+`
