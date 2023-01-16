@@ -16,7 +16,7 @@ provider "vcd" {
   sysorg               = "System"
   org                  = var.org
   vdc                  = var.vdc
-  allow_unverified_ssl = "true"
+  allow_unverified_ssl = true
   max_retry_timeout    = 600
   logging              = true
   logging_file         = "go-vcloud-director.log"
@@ -38,8 +38,8 @@ resource "vcd_catalog" "test-publisher" {
   description        = "test publisher catalog"
   storage_profile_id = data.vcd_storage_profile.storage_profile.id
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
 
   metadata_entry {
     key         = "identity"
@@ -65,9 +65,9 @@ resource "vcd_catalog" "test-publisher" {
     is_system   = false
   }
 
-  publish_enabled               = "true"
-  cache_enabled                 = "true"
-  preserve_identity_information = "false"
+  publish_enabled               = true
+  cache_enabled                 = true
+  preserve_identity_information = false
   password                      = chomp(data.local_sensitive_file.password_file.content)
 }
 

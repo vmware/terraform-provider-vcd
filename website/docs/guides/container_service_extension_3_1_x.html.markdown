@@ -63,9 +63,9 @@ Here is an example that creates both the Organization and the VDC:
 resource "vcd_org" "cse_org" {
   name             = "cse_org"
   full_name        = "Organization to deploy Kubernetes clusters with CSE"
-  is_enabled       = "true"
-  delete_force     = "true"
-  delete_recursive = "true"
+  is_enabled       = true
+  delete_force     = true
+  delete_recursive = true
 }
 
 resource "vcd_org_vdc" "cse_vdc" {
@@ -394,8 +394,8 @@ resource "vcd_catalog" "cat-cse" {
 
   storage_profile_id = data.vcd_storage_profile.cse_storage_profile.id
 
-  delete_force     = "true"
-  delete_recursive = "true"
+  delete_force     = true
+  delete_recursive = true
   depends_on       = [vcd_org_vdc.cse_vdc]
 }
 ```
@@ -415,18 +415,17 @@ resource "vcd_catalog_item" "tkgm_ova" {
   org     = vcd_org.cse_org.name
   catalog = vcd_catalog.cat-cse.name
 
-  name                 = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  description          = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
-  ova_path             = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
-  upload_piece_size    = 100
-  show_upload_progress = true
+  name              = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+  description       = "ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322"
+  ova_path          = "/Users/johndoe/Download/ubuntu-2004-kube-v1.21.2+vmware.1-tkg.1-7832907791984498322.ova"
+  upload_piece_size = 100
 
   metadata_entry {
     key         = "kind"
     value       = "TKGm" # This value is always the same
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -434,7 +433,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = "TKGm" # This value is always the same
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -442,7 +441,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = split("-", var.tkgm-ova-name)[3] # The version comes in the OVA name downloaded from Customer Connect
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -450,7 +449,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = replace(var.tkgm-ova-name, ".ova", "") # The name as it was in the OVA downloaded from Customer Connect
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -458,7 +457,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = split("-", var.tkgm-ova-name)[0] # The OS comes in the OVA name downloaded from Customer Connect
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 
   metadata_entry {
@@ -466,7 +465,7 @@ resource "vcd_catalog_item" "tkgm_ova" {
     value       = "1" # This value is always the same
     type        = "MetadataStringValue"
     user_access = "READWRITE"
-    is_system   = "false"
+    is_system   = false
   }
 }
 ```
