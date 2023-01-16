@@ -27,12 +27,19 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 	params["Name"] = params["FuncName"]
 	configTextUpdate := templateFill(testAccVcdRdeDefinedInterface, params)
 
+	// We change the namespace to force deletion and re-creation
+	params["FuncName"] = t.Name() + "-ForceNew"
+	params["Name"] = t.Name()
+	params["Namespace"] = "namespace2"
+	configTextForceNew := templateFill(testAccVcdRdeDefinedInterface, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION create: %s\n", configTextCreate)
 	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION force new: %s\n", configTextForceNew)
 
 	interfaceName := "vcd_rde_interface.interface1"
 	resource.Test(t, resource.TestCase{
@@ -42,7 +49,8 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 			{
 				Config: configTextCreate,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(interfaceName, "namespace", params["Namespace"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "namespace1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "namespace", "namespace1"),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
@@ -52,10 +60,22 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 			{
 				Config: configTextUpdate,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(interfaceName, "namespace", params["Namespace"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "namespace1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "namespace", "namespace1"),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()+"-Update"),
+					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
+				),
+			},
+			{
+				Config: configTextForceNew,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "namespace2", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "namespace", "namespace2"),
+					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
 				),
 			},
