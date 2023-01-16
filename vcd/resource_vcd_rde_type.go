@@ -101,7 +101,7 @@ func resourceVcdRdeType() *schema.Resource {
 // hasJsonValueChanged tells Terraform whether the JSON schema set in HCL configuration (which can have whatever identation and other quirks)
 // matches the obtained JSON from VCD. For that we need to compare them in the same compacted format.
 func hasJsonValueChanged(key, oldValue, newValue string, _ *schema.ResourceData) bool {
-	areEqual, err := areUnmarshaledJsonEqual([]byte(oldValue), []byte(newValue))
+	areEqual, err := areMarshaledJsonEqual([]byte(oldValue), []byte(newValue))
 	if err != nil {
 		if strings.Contains(err.Error(), "could not compact") {
 			util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, err)
@@ -195,7 +195,7 @@ func fileFromUrlToString(url, fileType string) (string, error) {
 			util.Logger.Printf("[ERROR] fileFromUrlToString: Could not close HTTP response body: %s", err)
 		}
 	}()
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("could not get file from URL %s, got status %s", url, resp.Status)
 	}
 	_, err = io.Copy(buf, resp.Body)
