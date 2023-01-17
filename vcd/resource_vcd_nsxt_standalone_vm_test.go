@@ -1,6 +1,4 @@
 //go:build (vm || nsxt || standaloneVm || ALL || functional) && !skipStandaloneVm
-// +build vm nsxt standaloneVm ALL functional
-// +build !skipStandaloneVm
 
 package vcd
 

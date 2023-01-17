@@ -1,5 +1,4 @@
 //go:build unit || ALL
-// +build unit ALL
 
 package vcd
 
