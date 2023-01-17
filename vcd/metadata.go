@@ -99,11 +99,11 @@ func metadataEntryResourceSchema(objectNameInDescription string, hasOldMetadata 
 // getMetadataEntrySchema returns a schema for the "metadata_entry" attribute, that can be used to
 // build data sources (isDatasource=true) or resources (isDatasource=false). The description of the
 // attribute will refer to the input resource name.
-func getMetadataEntrySchema(resourceNameInDescription string, isDatasource, hasOldMetadata bool) *schema.Schema {
+func getMetadataEntrySchema(resourceNameInDescription string, isDatasource, hasOldMetadataAttribute bool) *schema.Schema {
 	if isDatasource {
 		return metadataEntryDatasourceSchema(resourceNameInDescription)
 	}
-	return metadataEntryResourceSchema(resourceNameInDescription, hasOldMetadata)
+	return metadataEntryResourceSchema(resourceNameInDescription, hasOldMetadataAttribute)
 }
 
 // metadataCompatible allows to consider all structs that implement metadata handling to be the same type

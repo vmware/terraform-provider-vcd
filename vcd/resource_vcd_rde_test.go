@@ -212,9 +212,9 @@ func importStateIdRde(name, vendor, namespace, version string) resource.ImportSt
 // TestAccVcdRdeMetadata tests metadata CRUD on Runtime Defined Entities.
 func TestAccVcdRdeMetadata(t *testing.T) {
 	skipIfNotSysAdmin(t)
-	testMetadataEntryCRUD(t,
+	testOpenApiMetadataEntryCRUD(t,
 		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
-		testAccCheckVcdRdeMetadataDatasource, "data.vcd_org_vdc.test-rde-ds",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test-rde-ds",
 		StringMap{})
 }
 
@@ -226,14 +226,17 @@ data "vcd_rde_type" "rde-type" {
 }
 
 resource "vcd_rde" "test-rde" {
-  rde_type_id   = data.vcd_rde_type.rde-type.id
-  name          = "{{.Name}}"
-  entity        = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  rde_type_id = data.vcd_rde_type.rde-type.id
+  name        = "{{.Name}}"
+  entity      = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+
+  {{.Metadata}}
 }
 `
 
 const testAccCheckVcdRdeMetadataDatasource = `
 data "vcd_rde" "test-rde-ds" {
-  name = vcd_rde.test-rde.name
+  name        = vcd_rde.test-rde.name
+  rde_type_id = data.vcd_rde_type.rde-type.id
 }
 `

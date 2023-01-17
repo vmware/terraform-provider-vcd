@@ -69,7 +69,7 @@ func resourceVcdRde() *schema.Resource {
 				Description: "Every Runtime Defined Entity is created in the \"PRE_CREATED\" state. Once an entity is ready to be validated against its schema, it will transition in another state - RESOLVED, if the entity is valid according to the schema, or RESOLUTION_ERROR otherwise. If an entity in an \"RESOLUTION_ERROR\" state is updated, it will transition to the inital \"PRE_CREATED\" state without performing any validation. If its in the \"RESOLVED\" state, then it will be validated against the entity type schema and throw an exception if its invalid",
 				Computed:    true,
 			},
-			"metadata_entry": getMetadataEntrySchema("Runtime Defined Entity", false, false),
+			"metadata_entry": getOpenApiMetadataEntrySchema("Runtime Defined Entity", false),
 		},
 	}
 }
@@ -91,17 +91,24 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		Name:   d.Get("name").(string),
 		Entity: jsonSchema,
 	})
-	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
-	// it should go to the Update operation instead.
-	d.SetId(rde.DefinedEntity.ID)
-
 	if err != nil {
 		return diag.Errorf("could not create the Runtime Defined Entity: %s", err)
 	}
 
+	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
+	// it should go to the Update operation instead. Otherwise we could end with several RDEs with same name and RDE type,
+	// which is allowed by VCD and would break data sources.
+	// TODO: Does it happen with resolved entities????
+	d.SetId(rde.DefinedEntity.ID)
+
 	err = rde.Resolve()
 	if err != nil {
 		return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+	}
+
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
@@ -171,6 +178,11 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
 	}
 
+	err = updateOpenApiMetadataInState(d, rde)
+	if err != nil {
+		return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
+	}
+
 	d.SetId(rde.DefinedEntity.ID)
 
 	return nil
@@ -220,6 +232,11 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	err = rde.Resolve()
 	if err != nil {
 		return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+	}
+
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not update metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
