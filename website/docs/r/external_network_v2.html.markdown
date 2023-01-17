@@ -179,9 +179,10 @@ The following arguments are supported:
 * `gateway` - (Required) Gateway of the network.
 * `prefix_length` - (Required) Network prefix.
 * `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pool](#ip-pool) below for details.
-* `dns1` - (Optional) Primary DNS server.
-* `dns2` - (Optional) Secondary DNS server.
-* `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.
+* `dns1` - (Optional) Primary DNS server. Provider version *v3.9+* also supports NSX-T
+* `dns2` - (Optional) Secondary DNS server. Provider version *v3.9+* also supports NSX-T
+* `dns_suffix` - (Optional) A FQDN for the virtual machines on this network. Provider version
+  *v3.9+* also supports NSX-T
 * `enabled` - (Optional) Default is `true`.
 
 <a id="ip-pool"></a>
