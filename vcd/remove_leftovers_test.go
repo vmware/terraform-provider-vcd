@@ -91,7 +91,7 @@ var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
-		fmt.Printf("Start leftover removal\n")
+		fmt.Printf("Start leftovers removal\n")
 	}
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
