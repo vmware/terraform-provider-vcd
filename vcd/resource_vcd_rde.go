@@ -87,8 +87,20 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not find any Runtime Defined Entity type with ID %s: %s", rdeTypeId, err)
 	}
 
-	rde, err := rdeType.CreateRde(types.DefinedEntity{
-		Name:   d.Get("name").(string),
+	// VCD allows to have multiple RDEs with the same name, but this is not compatible with Terraform as there is no
+	// other way to unequivocally identify a RDE from a given type.
+	// In other words, without this check, the data source could be broken easily.
+	name := d.Get("name").(string)
+	rde, err := rdeType.GetRdeByName(name)
+	if err == nil && rde != nil {
+		return diag.Errorf("found another Runtime Defined Entity with same name: %s", rde.DefinedEntity.ID)
+	}
+	if err != nil && !govcd.ContainsNotFound(err) {
+		return diag.Errorf("could not create an RDE, failed fetching existing RDEs: %s", err)
+	}
+
+	rde, err = rdeType.CreateRde(types.DefinedEntity{
+		Name:   name,
 		Entity: jsonSchema,
 	})
 	if err != nil {
@@ -96,9 +108,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
-	// it should go to the Update operation instead. Otherwise we could end with several RDEs with same name and RDE type,
-	// which is allowed by VCD and would break data sources.
-	// TODO: Does it happen with resolved entities????
+	// it should go to the Update operation instead.
 	d.SetId(rde.DefinedEntity.ID)
 
 	err = rde.Resolve()

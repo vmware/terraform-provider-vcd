@@ -15,6 +15,7 @@ import (
 // - Step 1: Create 3 RDEs: One with file, other with URL, last one with wrong JSON.
 // - Step 2: Taint to test delete on wrong RDEs and repeat step 1.
 // - Step 3: Update one RDE name. Update wrong JSON in RDE.
+// - Step 4: Attempt to create a clone of an RDE with same name and type ID. It should fail.
 // - Step 4: Import
 func TestAccVcdRde(t *testing.T) {
 	preTestChecks(t)
@@ -35,6 +36,8 @@ func TestAccVcdRde(t *testing.T) {
 	step1and2 := templateFill(testAccVcdRdeStep1and2, params)
 	params["FuncName"] = t.Name() + "-Step3"
 	step3 := templateFill(testAccVcdRdeStep3, params)
+	params["FuncName"] = t.Name() + "-Step4"
+	step4 := templateFill(testAccVcdRdeStep4, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -42,6 +45,7 @@ func TestAccVcdRde(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION step 1 and 2: %s\n", step1and2)
 	debugPrintf("#[DEBUG] CONFIGURATION step 3: %s\n", step3)
+	debugPrintf("#[DEBUG] CONFIGURATION step 4: %s\n", step4)
 
 	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Namespace"].(string))
 	rdeType := "vcd_rde_type.rde-type"
@@ -94,6 +98,10 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url-updated"),
 					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLVED"),
 				),
+			},
+			{
+				Config:      step4,
+				ExpectError: regexp.MustCompile(".*found another Runtime Defined Entity with same name.*"),
 			},
 			{
 				ResourceName:      rdeFromFile,
@@ -159,6 +167,15 @@ resource "vcd_rde" "rde-naughty" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}naughty"
   entity        = file("{{.EntityPath}}") # Updated to a correct JSON
+}
+`
+
+const testAccVcdRdeStep4 = testAccVcdRdeStep3 + `
+# skip-binary-test - This should fail
+resource "vcd_rde" "rde-naughty-clone" {
+  rde_type_id   = vcd_rde_type.rde-type.id
+  name          = "{{.Name}}naughty"
+  entity        = file("{{.EntityPath}}")
 }
 `
 
