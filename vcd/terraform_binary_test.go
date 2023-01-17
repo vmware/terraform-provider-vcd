@@ -1,5 +1,4 @@
 //go:build binary
-// +build binary
 
 package vcd
 

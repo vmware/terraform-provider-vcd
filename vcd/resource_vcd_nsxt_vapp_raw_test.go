@@ -1,5 +1,4 @@
 //go:build vapp || vm || nsxt || ALL || functional
-// +build vapp vm nsxt ALL functional
 
 package vcd
 

@@ -1,5 +1,4 @@
 //go:build nsxv || gateway || ALL || functional
-// +build nsxv gateway ALL functional
 
 package vcd
 

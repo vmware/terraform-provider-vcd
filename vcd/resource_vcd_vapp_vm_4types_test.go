@@ -1,5 +1,4 @@
 //go:build vapp || vm || standaloneVm || ALL || functional
-// +build vapp vm standaloneVm ALL functional
 
 package vcd
 
