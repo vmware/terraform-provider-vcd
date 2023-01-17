@@ -13,6 +13,7 @@
 - [Custom terraform scripts](#custom-terraform-scripts)
 - [Conditional running of tests](#conditional-running-of-tests)
 - [Tests with multiple providers](#tests-with-multiple-providers)
+- [Leftovers removal](#leftovers-removal)
 - [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
 - [Troubleshooting code issues](#troubleshooting-code-issues)
 
@@ -531,6 +532,20 @@ Look at `TestResourceInfoProviders` to see a full example of how to use the meth
 once in the HCL script. If it is not, the variable `testAccProvider` may not get initialised, and if that happens,
 test checks that use the expression `conn := testAccProvider.Meta().(*VCDClient)` will panic.
 
+## Leftovers removal
+
+After the test stuite runs, an automated process will scan the VCD and remove any resources that may have been
+left behind because od test failure or environment issues.
+The procedure can be skipped by using the flag `-vcd-skip-leftovers-removal`. If you want the operation to omit
+details of the scanning, you can use `-vcd-silent-leftovers-removal`.
+
+To run the removal only, without running the full suite, use the command
+
+```
+$ go test -tags functional -run RemoveLeftovers # or the name of any non-existing test
+```
+
+
 ## Environment variables and corresponding flags
 
 There are several environment variables that can affect the tests. Many of them have a corresponding flag
@@ -567,6 +582,8 @@ used in the documentation index.
 * `VCD_SHOW_ELAPSED_TIME` (`-vcd-show-elapsed-time`) Show elapsed time since the start of the suite in pre and post checks (false)
 * `VCD_SHOW_TIMESTAMP` (`-vcd-show-timestamp`) Show timestamp in pre and post checks (false)
 * `VCD_SKIP_PATTERN` (`-vcd-skip-pattern`) Skip tests that match the pattern (implies vcd-pre-post-checks ()
+* `VCD_SKIP_LEFTOVERS_REMOVAL` (`-vcd-skip-leftover-removal`) Do not run the leftovers removal at the end of the suite
+* `VCD_SILENT_LEFTOVERS_REMOVAL` (`-vcd-silent-leftover-removal`) Omit details during leftovers removal.
 
 
 When both the environment variable and the command line option are possible, the environment variable gets evaluated first.
