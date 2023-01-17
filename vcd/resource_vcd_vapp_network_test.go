@@ -1,5 +1,4 @@
 //go:build network || vapp || ALL || functional
-// +build network vapp ALL functional
 
 package vcd
 

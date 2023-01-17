@@ -162,6 +162,7 @@ function binary_test {
         exit 1
     fi
     cp $scripts_dir/test-binary.sh test-artifacts/test-binary.sh
+    cp $scripts_dir/get_test_resource_names.go test-artifacts/get_test_resource_names.go
     chmod +x test-artifacts/test-binary.sh
     cd test-artifacts
     for old_file in already_run.txt failed_tests.txt

@@ -1,5 +1,4 @@
 //go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb certificate vdcGroup ldap ALL
 
 package vcd
 
@@ -12,8 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/kr/pretty"
-	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -55,6 +52,8 @@ func init() {
 	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
 	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
 	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
+	setBoolFlag(&skipLeftoversRemoval, "vcd-skip-leftovers-removal", "VCD_SKIP_LEFTOVERS_REMOVAL", "Do not attempt removal of leftovers at the end of the test suite")
+	setBoolFlag(&silentLeftoversRemoval, "vcd-silent-leftovers-removal", "VCD_SILENT_LEFTOVERS_REMOVAL", "Omit details during removal of leftovers")
 
 }
 
@@ -265,6 +264,12 @@ var (
 
 	// runTestRunListFileLock regulates access to the list of run tests
 	runTestRunListFileLock = newMutexKVSilent()
+
+	// skipLeftoversRemoval skips the removal of leftovers at the end of the test suite
+	skipLeftoversRemoval = false
+
+	// silentLeftoversRemoval omits details while removing leftovers
+	silentLeftoversRemoval = false
 )
 
 const (
@@ -710,9 +715,7 @@ func getConfigStruct(config string) TestConfig {
 		configStruct.Certificates.Certificate2PrivateKeyPath = certificatePrivatePath2Path
 	}
 
-	// Partial duplication of actions performed in createSuiteCatalogAndItem
 	// It is needed when we run the binary tests without TEST_ACC
-	// TODO: convert the actions from createSuiteCatalogAndItem into a terraform config file
 	if configStruct.VCD.Catalog.Name != "" {
 		testSuiteCatalogName = configStruct.VCD.Catalog.Name
 	}
@@ -839,181 +842,35 @@ func TestMain(m *testing.M) {
 				return testAccProvider, nil
 			},
 		}
-
-		// forcing item cleanup before test run
-		if os.Getenv("VCD_TEST_SUITE_CLEANUP") != "" {
-			fmt.Printf("VCD_TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
-			destroySuiteCatalogAndItem(testConfig)
-		}
-
-		createSuiteCatalogAndItem(testConfig)
 	}
 
 	// Runs all test functions
 	exitCode := m.Run()
 
-	if !vcdShortTest {
-
-		if !testConfig.Ova.Preserve {
-			destroySuiteCatalogAndItem(testConfig)
-		} else {
-			fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
-		}
-	}
 	if vcdShowCount {
 		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
 	}
 
-	// TODO: cleanup leftovers
+	if skipLeftoversRemoval || vcdShortTest {
+		os.Exit(exitCode)
+	}
+	govcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		fmt.Printf("error getting a govcd client: %s\n", err)
+		exitCode = 1
+	} else {
+		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
+		if err != nil {
+			fmt.Printf("error authenticating provider: %s\n", err)
+			exitCode = 1
+		}
+		err := removeLeftovers(govcdClient, !silentLeftoversRemoval)
+		if err != nil {
+			fmt.Printf("error during leftover removal: %s\n", err)
+			exitCode = 1
+		}
+	}
 	os.Exit(exitCode)
-}
-
-// createSuiteCatalogAndItem creates catalog and/or catalog item if they are not preconfigured.
-func createSuiteCatalogAndItem(config TestConfig) {
-	fmt.Printf("Checking resources to create for test suite...\n")
-
-	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
-
-	if config.Ova.OvaTestFileName == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests terminated\n"))
-	}
-
-	if config.Ova.OvaDownloadUrl == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests terminated\n"))
-	} else if testConfig.VCD.Catalog.CatalogItem == "" {
-		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
-
-		if fileExists(ovaFilePath) {
-			fmt.Printf("File already exists. Skipping downloading\n")
-		} else {
-			err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("OVA downloaded\n")
-		}
-	}
-
-	vcdClient, err := getTestVCDFromJson(config)
-	if vcdClient == nil || err != nil {
-		panic(err)
-	}
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
-	if err != nil {
-		panic(err)
-	}
-
-	org, err := vcdClient.GetOrgByName(config.VCD.Org)
-	if err != nil {
-		panic(err)
-	}
-
-	var catalog *govcd.Catalog
-
-	catalogPreserved := true
-	catalog, err = org.GetCatalogByName(testSuiteCatalogName, false)
-	if err != nil {
-		catalogPreserved = false
-	}
-
-	if testConfig.VCD.Catalog.Name == "" && !catalogPreserved {
-		fmt.Printf("Creating catalog for test suite...\n")
-		*catalog, err = org.CreateCatalog(testSuiteCatalogName, "Test suite purpose")
-		if err != nil || *catalog == (govcd.Catalog{}) {
-			panic(err)
-		}
-		fmt.Printf("Catalog created successfully\n")
-
-	} else if testConfig.VCD.Catalog.Name != "" {
-		fmt.Printf("Skipping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
-
-		existingCatalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
-		if err != nil {
-			fmt.Printf("Preconfigured catalog wasn't found \n")
-			panic(err)
-		}
-
-		catalog = existingCatalog
-		fmt.Printf("Catalog found successfully\n")
-		testSuiteCatalogName = testConfig.VCD.Catalog.Name
-	} else {
-		fmt.Printf("Skipping catalog creation - catalog was preserved from previous creation \n")
-	}
-
-	catalogItemPreserved := true
-	_, err = catalog.GetCatalogItemByName(testSuiteCatalogOVAItem, false)
-	if err != nil {
-		catalogItemPreserved = false
-	}
-
-	if testConfig.VCD.Catalog.CatalogItem == "" && !catalogItemPreserved {
-		fmt.Printf("Creating catalog item for test suite...\n")
-		task, err := catalog.UploadOvf(ovaFilePath, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
-		if err != nil {
-			fmt.Printf("error uploading new catalog item: %s", err)
-			panic(err)
-		}
-
-		err = task.ShowUploadProgress()
-		if err != nil {
-			fmt.Printf("error waiting for task to complete: %+v", err)
-			panic(err)
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			fmt.Printf("error waiting for task to complete: %+v", err)
-			panic(err)
-		}
-
-		fmt.Printf("Catalog item created successfully\n")
-
-	} else if testConfig.VCD.Catalog.CatalogItem != "" {
-		fmt.Printf("Skipping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
-
-		item, err := catalog.GetCatalogItemByName(testConfig.VCD.Catalog.CatalogItem, false)
-		if err != nil && item != nil {
-			fmt.Printf("Preconfigured catalog item wasn't found \n")
-			panic(err)
-		}
-		fmt.Printf("Catalog item found successfully\n")
-		testSuiteCatalogOVAItem = testConfig.VCD.Catalog.CatalogItem
-	} else {
-		fmt.Printf("Skipping catalog item creation - catalog item was preserved from previous creation \n")
-	}
-
-}
-
-// DownloadFile will download a url to a local file. It's efficient because it will
-// write as it downloads and not load the whole file into memory.
-func downloadFile(filePath string, url string) error {
-
-	// Create the file
-	out, err := os.Create(filepath.Clean(filePath))
-	if err != nil {
-		return err
-	}
-	defer safeClose(out)
-
-	// Get the data
-	// #nosec G107 -- The URL needs to come from a variable for this purpose
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			util.Logger.Printf("[ERROR] Could not close body: %s", err)
-		}
-	}()
-
-	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Creates a VCDClient based on the endpoint given in the TestConfig argument.
@@ -1028,61 +885,6 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId),
 		govcd.WithHttpUserAgent(buildUserAgent("test", testConfig.Provider.SysOrg)))
 	return vcdClient, nil
-}
-
-func destroySuiteCatalogAndItem(config TestConfig) {
-	fmt.Printf("Looking for resources to delete from test suite...\n")
-	vcdClient, err := getTestVCDFromJson(config)
-	if vcdClient == nil || err != nil {
-		panic(err)
-	}
-
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
-	if err != nil {
-		panic(err)
-	}
-
-	org, err := vcdClient.GetOrgByName(config.VCD.Org)
-	if err != nil {
-		panic(err)
-	}
-
-	catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
-	if err != nil {
-		fmt.Printf("catalog already removed %#v", err)
-		return
-	}
-
-	isCatalogDeleted := false
-	if testConfig.VCD.Catalog.Name == "" {
-		fmt.Printf("Deleting catalog for test suite...\n")
-		err = catalog.Delete(true, true)
-		if err != nil {
-			fmt.Printf("error removing catalog %#v", err)
-			return
-		}
-		isCatalogDeleted = true
-		fmt.Printf("Catalog %s removed successfully\n", catalog.Catalog.Name)
-	} else {
-		fmt.Printf("Catalog deletion skipped as user defined resource used \n")
-	}
-
-	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
-		catalogItem, err := catalog.GetCatalogItemByName(testSuiteCatalogOVAItem, false)
-		if err != nil {
-			fmt.Printf("error finding catalog item %#v", err)
-			return
-		}
-		err = catalogItem.Delete()
-		if err != nil {
-			fmt.Printf("[destroySuiteCatalogAndItem] error removing catalog item %#v", err)
-			return
-		}
-		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
-	} else {
-		fmt.Printf("Catalog item deletion skipped as user defined resource is used or removed with catalog\n")
-	}
-
 }
 
 // Used by resources at the top of the hierarchy (such as Org, ExternalNetwork)

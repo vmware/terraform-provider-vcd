@@ -1,5 +1,4 @@
 //go:build certificate || ALL || functional
-// +build certificate ALL functional
 
 package vcd
 
