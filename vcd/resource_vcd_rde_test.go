@@ -101,7 +101,7 @@ func TestAccVcdRde(t *testing.T) {
 			},
 			{
 				Config:      step4,
-				ExpectError: regexp.MustCompile(".*found another Runtime Defined Entity with same name.*"),
+				ExpectError: regexp.MustCompile(".*found other Runtime Defined Entities with same name.*"),
 			},
 			{
 				ResourceName:      rdeFromFile,
