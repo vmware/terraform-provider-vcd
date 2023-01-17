@@ -91,15 +91,19 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// other way to unequivocally identify a RDE from a given type.
 	// In other words, without this check, the data source could be broken easily.
 	name := d.Get("name").(string)
-	rde, err := rdeType.GetRdeByName(name)
-	if err == nil && rde != nil {
-		return diag.Errorf("found another Runtime Defined Entity with same name: %s", rde.DefinedEntity.ID)
+	rdes, err := rdeType.GetRdesByName(name)
+	if err == nil && rdes != nil {
+		rdeList := make([]string, len(rdes))
+		for i, rde := range rdes {
+			rdeList[i] = rde.DefinedEntity.ID
+		}
+		return diag.Errorf("found other Runtime Defined Entities with same name: %v", rdeList)
 	}
 	if err != nil && !govcd.ContainsNotFound(err) {
 		return diag.Errorf("could not create an RDE, failed fetching existing RDEs: %s", err)
 	}
 
-	rde, err = rdeType.CreateRde(types.DefinedEntity{
+	rde, err := rdeType.CreateRde(types.DefinedEntity{
 		Name:   name,
 		Entity: jsonSchema,
 	})
@@ -212,7 +216,14 @@ func getRde(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntity, err
 		return rdeType.GetRdeById(d.Id())
 	}
 
-	return rdeType.GetRdeByName(d.Get("name").(string))
+	rdes, err := rdeType.GetRdesByName(d.Get("name").(string))
+	if err != nil {
+		return nil, err
+	}
+
+	// We return the first found RDE as a design decision. Ideally, we should only find more than one RDE with the same
+	// name during imports, where Terraform doesn't have any control.
+	return rdes[0], nil
 }
 
 func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -294,12 +305,14 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf("error finding Runtime Defined Entity with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
 	}
 
-	rde, err := rdeType.GetRdeByName(rdeName)
+	rdes, err := rdeType.GetRdesByName(rdeName)
 	if err != nil {
 		return nil, fmt.Errorf("error finding Runtime Defined Entity with name %s: %s", rdeName, err)
 	}
 
-	d.SetId(rde.DefinedEntity.ID)
+	// VCD allows having many RDEs with same name, so during import it could be that we import the one that we don't want to.
+	// The only way to do it unequivocally would be forcing users to import by URN.
+	d.SetId(rdes[0].DefinedEntity.ID)
 	dSet(d, "rde_type_id", rdeType.DefinedEntityType.ID)
 	return []*schema.ResourceData{d}, nil
 }
