@@ -66,7 +66,7 @@ func resourceVcdRde() *schema.Resource {
 			},
 			"state": {
 				Type:        schema.TypeString,
-				Description: "Every Runtime Defined Entity is created in the \"PRE_CREATED\" state. Once an entity is ready to be validated against its schema, it will transition in another state - RESOLVED, if the entity is valid according to the schema, or RESOLUTION_ERROR otherwise. If an entity in an \"RESOLUTION_ERROR\" state is updated, it will transition to the inital \"PRE_CREATED\" state without performing any validation. If its in the \"RESOLVED\" state, then it will be validated against the entity type schema and throw an exception if its invalid",
+				Description: "If the specified JSON in either `entity` or `entity_url` is correct, the state will be RESOLVED, otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
 				Computed:    true,
 			},
 			"metadata_entry": getOpenApiMetadataEntrySchema("Runtime Defined Entity", false),
