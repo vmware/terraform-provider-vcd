@@ -1,5 +1,4 @@
 //go:build vdc || ALL || functional
-// +build vdc ALL functional
 
 package vcd
 

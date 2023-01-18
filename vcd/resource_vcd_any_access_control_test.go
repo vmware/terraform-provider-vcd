@@ -1,5 +1,4 @@
 //go:build access_control || vdc || catalog || vapp || ALL || functional
-// +build access_control vdc catalog vapp ALL functional
 
 package vcd
 

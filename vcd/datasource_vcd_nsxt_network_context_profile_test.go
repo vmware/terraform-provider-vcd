@@ -1,5 +1,4 @@
 //go:build nsxt || network || vdcGroup || functional || ALL
-// +build nsxt network vdcGroup functional ALL
 
 package vcd
 

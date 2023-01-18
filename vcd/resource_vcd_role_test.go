@@ -1,5 +1,4 @@
 //go:build role || ALL || functional
-// +build role ALL functional
 
 package vcd
 
