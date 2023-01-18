@@ -1,1 +1,2 @@
-* Fix a bug, that would not return an error while authenticating with invalid password [GH-962]
+* Fix a bug that prevented returning a specific error while authenticating provider with invalid
+  password [GH-962]
