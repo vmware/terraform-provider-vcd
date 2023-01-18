@@ -42,4 +42,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the supported attributes are defined in the
-[Defined Interface resource](/providers/vmware/vcd/latest/docs/resources/rde_type#argument-reference).
+[Runtime Defined Entity type resource](/providers/vmware/vcd/latest/docs/resources/rde_type#argument-reference).
