@@ -1,5 +1,4 @@
 //go:build nsxt || alb || ALL || functional
-// +build nsxt alb ALL functional
 
 package vcd
 

@@ -1,5 +1,4 @@
 //go:build multinetwork || functional
-// +build multinetwork functional
 
 package vcd
 
