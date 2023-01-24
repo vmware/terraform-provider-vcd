@@ -11,6 +11,12 @@ import (
 	"testing"
 )
 
+// TODO: Test resolve = false
+// Create non-resolved RDE
+// Delete should fail
+// Update schema of resolved entity?
+// Update to resolve = false when resolved??
+
 // TestAccVcdRde tests the behaviour of RDE instances:
 // - Step 1: Create 3 RDEs: One with file, other with URL, last one with wrong JSON.
 // - Step 2: Taint to test delete on wrong RDEs and repeat step 1.
@@ -27,6 +33,7 @@ func TestAccVcdRde(t *testing.T) {
 		"Version":    "1.0.0",
 		"Vendor":     "vendor",
 		"Name":       t.Name(),
+		"Resolve":    true,
 		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath": getCurrentDir() + "/../test-resources/rde_instance.json",
 		"EntityUrl":  "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-3/test-resources/rde_instance.json", // FIXME
@@ -134,18 +141,21 @@ const testAccVcdRdeStep1and2 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde-file" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}file"
+  resolve       = {{.Resolve}}
   entity        = file("{{.EntityPath}}")
 }
 
 resource "vcd_rde" "rde-url" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}url"
+  resolve       = {{.Resolve}}
   entity_url    = "{{.EntityUrl}}"
 }
 
 resource "vcd_rde" "rde-naughty" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}naughty"
+  resolve       = {{.Resolve}}
   entity        = "{ \"this_json_is_bad\": \"yes\"}"
 }
 `
@@ -154,18 +164,21 @@ const testAccVcdRdeStep3 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde-file" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}file-updated" # Updated name
+  resolve       = {{.Resolve}}
   entity        = file("{{.EntityPath}}")
 }
 
 resource "vcd_rde" "rde-url" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}url-updated" # Updated name
+  resolve       = {{.Resolve}}
   entity_url    = "{{.EntityUrl}}"
 }
 
 resource "vcd_rde" "rde-naughty" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}naughty"
+  resolve       = {{.Resolve}}
   entity        = file("{{.EntityPath}}") # Updated to a correct JSON
 }
 `
@@ -175,6 +188,7 @@ const testAccVcdRdeStep4 = testAccVcdRdeStep3 + `
 resource "vcd_rde" "rde-naughty-clone" {
   rde_type_id   = vcd_rde_type.rde-type.id
   name          = "{{.Name}}naughty"
+  resolve       = {{.Resolve}}
   entity        = file("{{.EntityPath}}")
 }
 `

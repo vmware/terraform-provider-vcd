@@ -25,6 +25,7 @@ data "vcd_rde_type" "my-type" {
 resource "vcd_rde" "my-rde" {
   rde_type_id   = data.vcd_rde_type.my-type.id
   name          = "My custom RDE"
+  resolve       = true
   entity        = file("${path.module}/entities/custom-rde.json")
 }
 ```
@@ -41,6 +42,7 @@ data "vcd_rde_type" "my-type" {
 resource "vcd_rde" "my-rde" {
   rde_type_id   = data.vcd_rde_type.my-type.id
   name          = "My custom RDE"
+  resolve       = true
   entity_url    = "https://just.an-example.com/entities/custom-rde.json"
 }
 ```
@@ -51,6 +53,9 @@ The following arguments are supported:
 
 * `rde_type_id` - (Required) The ID of the type of the Runtime Defined Entity. You can use the [`vcd_rde_type`](/providers/vmware/vcd/latest/docs/data-sources/rde_type) data source to retrieve it.
 * `name` - (Required) The name of the Runtime Defined Entity.
+* `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
+  resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
+  deleted until the entity is resolved by either party.
 * `entity` - (Optional) A string that specifies a valid JSON for the entity. It can be retrieved with functions such as `file`, `templatefile`... Either `entity` or `entity_url` is required.
 * `entity_url` - (Optional) The URL that points to a valid JSON for the entity. Either `entity` or `entity_url` is required.
   If `entity_url` is used, the downloaded schema will be computed in the `entity` attribute.
@@ -82,6 +87,7 @@ Example:
 resource "vcd_rde" "my-rde" {
   rde_type_id = data.vcd_rde_type.my-type.id
   name        = "My custom RDE"
+  resolve     = true
   entity_url  = "https://just.an-example.com/entities/custom-rde.json"
   
   metadata_entry {

@@ -64,6 +64,13 @@ func resourceVcdRde() *schema.Resource {
 				Description: "The organization of the Runtime Defined Entity",
 				Computed:    true,
 			},
+			"resolve": {
+				Type: schema.TypeBool,
+				Description: "If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be" +
+					"resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be" +
+					"deleted until the entity is resolved.",
+				Required: true,
+			},
 			"state": {
 				Type:        schema.TypeString,
 				Description: "If the specified JSON in either `entity` or `entity_url` is correct, the state will be RESOLVED, otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
@@ -115,9 +122,12 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// it should go to the Update operation instead.
 	d.SetId(rde.DefinedEntity.ID)
 
-	err = rde.Resolve()
-	if err != nil {
-		return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+	mustResolve := d.Get("resolve").(bool)
+	if mustResolve {
+		err = rde.Resolve()
+		if err != nil {
+			return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+		}
 	}
 
 	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
@@ -173,7 +183,7 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 	dSet(d, "state", rde.DefinedEntity.State)
 
 	if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State != "RESOLVED" {
-		util.Logger.Printf("[DEBUG] RDE %s is not in RESOLVED state and can't be used properly", rde.DefinedEntity.Name)
+		util.Logger.Printf("[DEBUG] RDE %s is not in RESOLVED state", rde.DefinedEntity.Name)
 	}
 
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
@@ -249,10 +259,12 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not update the Runtime Defined Entity: %s", err)
 	}
 
-	// Resolve is required as there can be changes in the JSON entity.
-	err = rde.Resolve()
-	if err != nil {
-		return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+	mustResolve := d.Get("resolve").(bool)
+	if mustResolve {
+		err = rde.Resolve()
+		if err != nil {
+			return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+		}
 	}
 
 	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
@@ -272,6 +284,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	err = rde.Delete()
 	if err != nil {
 		return diag.Errorf("could not delete the Runtime Defined Entity: %s", err)
