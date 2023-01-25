@@ -9,24 +9,25 @@ description: |-
 # vcd\_rde\_interface
 
 Provides the capability of fetching an existing Defined Interface from VMware Cloud Director.
+Requires system administrator privileges.
 
 Supported in provider *v3.9+*
 
 ## Example Usage
 
 ```hcl
-data "vcd_rde_interface" "my-interface" {
+data "vcd_rde_interface" "my_interface" {
   vendor    = "bigcorp"
   namespace = "tech"
   version   = "1.2.3"
 }
 
-output "interface-name" {
-  value = data.vcd_rde_interface.my-interface.name
+output "interface_name" {
+  value = data.vcd_rde_interface.my_interface.name
 }
 
-output "interface-id" {
-  value = data.vcd_rde_interface.my-interface.id
+output "interface_id" {
+  value = data.vcd_rde_interface.my_interface.id
 }
 ```
 

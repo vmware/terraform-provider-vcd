@@ -9,18 +9,18 @@ description: |-
 # vcd\_rde\_interface
 
 Provides the capability of creating, updating, and deleting Defined Interfaces in VMware Cloud Director.
+Requires system administrator privileges.
 
 Supported in provider *v3.9+*
 
 ## Example Usage
 
 ```hcl
-resource "vcd_rde_interface" "my-interface" {
+resource "vcd_rde_interface" "my_interface" {
   vendor    = "bigcorp"
   namespace = "tech"
   version   = "1.2.3"
   name      = "BigCorp Interface"
-  readonly  = false
 }
 ```
 
@@ -47,7 +47,7 @@ unequivocally identifies it.
 For example, using this structure, representing an existing Defined Interface that was **not** created using Terraform:
 
 ```hcl
-resource "vcd_rde_interface" "outer-interface" {
+resource "vcd_rde_interface" "outer_interface" {
   vendor    = "bigcorp"
   namespace = "tech"
   version   = "4.5.6"
@@ -57,7 +57,7 @@ resource "vcd_rde_interface" "outer-interface" {
 You can import such Defined Interface into Terraform state using this command
 
 ```
-terraform import vcd_rde_interface.outer-interface bigcorp.tech.4.5.6
+terraform import vcd_rde_interface.outer_interface bigcorp.tech.4.5.6
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
