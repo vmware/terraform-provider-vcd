@@ -23,10 +23,11 @@ data "vcd_rde_type" "my-type" {
 }
 
 resource "vcd_rde" "my-rde" {
-  rde_type_id   = data.vcd_rde_type.my-type.id
-  name          = "My custom RDE"
-  resolve       = true
-  entity        = file("${path.module}/entities/custom-rde.json")
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
+  entity      = file("${path.module}/entities/custom-rde.json")
 }
 ```
 
@@ -40,10 +41,11 @@ data "vcd_rde_type" "my-type" {
 }
 
 resource "vcd_rde" "my-rde" {
-  rde_type_id   = data.vcd_rde_type.my-type.id
-  name          = "My custom RDE"
-  resolve       = true
-  entity_url    = "https://just.an-example.com/entities/custom-rde.json"
+  org          = "my-org"
+  rde_type_id  = data.vcd_rde_type.my-type.id
+  name         = "My custom RDE"
+  resolve      = true
+  entity_url   = "https://just.an-example.com/entities/custom-rde.json"
 }
 ```
 
@@ -51,7 +53,8 @@ resource "vcd_rde" "my-rde" {
 
 The following arguments are supported:
 
-* `rde_type_id` - (Required) The ID of the type of the Runtime Defined Entity. You can use the [`vcd_rde_type`](/providers/vmware/vcd/latest/docs/data-sources/rde_type) data source to retrieve it.
+* `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
+* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) of the Runtime Defined Entity.
 * `name` - (Required) The name of the Runtime Defined Entity.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
@@ -85,6 +88,7 @@ Example:
 
 ```hcl
 resource "vcd_rde" "my-rde" {
+  org         = "my-org"
   rde_type_id = data.vcd_rde_type.my-type.id
   name        = "My custom RDE"
   resolve     = true
