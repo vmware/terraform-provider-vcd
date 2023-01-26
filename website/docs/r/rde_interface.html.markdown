@@ -10,7 +10,7 @@ description: |-
 
 Provides the capability of creating, updating, and deleting Defined Interfaces in VMware Cloud Director.
 
--> Creating, updating and deleting Defined Interfaces require System administrator privileges.
+-> Creating, updating and deleting Defined Interfaces requires System administrator privileges.
 
 Supported in provider *v3.9+*
 
