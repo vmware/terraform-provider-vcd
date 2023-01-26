@@ -9,7 +9,6 @@ description: |-
 # vcd\_rde\_interface
 
 Provides the capability of fetching an existing Defined Interface from VMware Cloud Director.
-Requires system administrator privileges.
 
 Supported in provider *v3.9+*
 
