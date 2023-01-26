@@ -23,6 +23,13 @@ func resourceVcdRde() *schema.Resource {
 			StateContext: resourceVcdRdeImport,
 		},
 		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
