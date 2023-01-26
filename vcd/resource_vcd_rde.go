@@ -91,6 +91,16 @@ func resourceVcdRde() *schema.Resource {
 func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	tenantContext := govcd.TenantContext{}
+	if vcdClient.Client.IsSysAdmin {
+		org, err := vcdClient.GetOrgFromResource(d)
+		if err != nil {
+			return diag.Errorf(errorRetrievingOrg, err)
+		}
+		tenantContext.OrgId = org.Org.ID
+		tenantContext.OrgName = org.Org.Name
+	}
+
 	jsonSchema, err := getRdeJson(d)
 	if err != nil {
 		return diag.FromErr(err)
