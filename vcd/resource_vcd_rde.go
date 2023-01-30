@@ -10,6 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -332,26 +333,63 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 // Example import path (_the_id_string_): my-rde.vmware.kubernetes.1.0.0
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) < 4 {
-		return nil, fmt.Errorf("resource identifier must be specified as rde-name.vendor.namespace.version")
-	}
-	rdeName, vendor, namespace, version := resourceURI[0], resourceURI[1], resourceURI[2], strings.Join(resourceURI[3:], ".")
-
+	var rde *govcd.DefinedEntity
+	var err error
 	vcdClient := meta.(*VCDClient)
-	rdeType, err := vcdClient.GetRdeType(vendor, namespace, version)
-	if err != nil {
-		return nil, fmt.Errorf("error finding Runtime Defined Entity with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
+
+	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
+'rde-id' to import by rule id
+'vendor.namespace.version.name.position' where position is the RDE number as returned by VCD, starting on 1
+'list@vendor.namespace.version.name' to get a list of RDEs with their respective positions and real IDs`)
+
+	log.Printf("[DEBUG] importing vcd_rde resource with provided id %s", d.Id())
+
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	switch len(resourceURI) {
+	case 1:
+		rde, err = vcdClient.VCDClient.GetRdeById(resourceURI[0])
+		if err != nil {
+			return nil, err
+		}
+	case 4:
+		listAndVendorSplit := strings.Split(resourceURI[0], "@")
+		if len(listAndVendorSplit) != 2 {
+			return nil, helpError
+		}
+		rdes, err := vcdClient.GetRdesByName(listAndVendorSplit[1], resourceURI[1], resourceURI[2], resourceURI[3])
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("Found RDEs with vendor %s, namespace %s, version %s and name %s:\n", listAndVendorSplit[1], resourceURI[1], resourceURI[2], resourceURI[3])
+		for _, rde := range rdes {
+			fmt.Println(rde.DefinedEntity.ID)
+		}
+		return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
+	case 5:
+		rdes, err := vcdClient.VCDClient.GetRdesByName(resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3])
+		if err != nil {
+			return nil, err
+		}
+		idx, err := strconv.Atoi(resourceURI[4])
+		if err != nil {
+			return nil, fmt.Errorf("introduced position %v is not a number", resourceURI[4])
+		}
+		if idx < 1 || idx > len(rdes) {
+			return nil, fmt.Errorf("introduced position %d is outside the range of RDEs retrieved: %d", idx, len(rdes))
+		}
+		rde = rdes[idx-1]
+	default:
+		return nil, helpError
 	}
 
-	rdes, err := rdeType.GetRdesByName(rdeName)
-	if err != nil {
-		return nil, fmt.Errorf("error finding Runtime Defined Entity with name %s: %s", rdeName, err)
+	d.SetId(rde.DefinedEntity.ID)
+	rdeTypeParts := strings.Split(rde.DefinedEntity.EntityType, ":")
+	if len(rdeTypeParts) < 5 {
+		return nil, fmt.Errorf("error in recovered RDE, its Type is incorrect: %s", rde.DefinedEntity.EntityType)
 	}
+	dSet(d, "rde_type_vendor", rdeTypeParts[3])
+	dSet(d, "rde_type_namespace", rdeTypeParts[4])
+	dSet(d, "rde_type_version", rdeTypeParts[5])
 
-	// VCD allows having many RDEs with same name, so during import it could be that we import the one that we don't want to.
-	// The only way to do it unequivocally would be forcing users to import by URN.
-	d.SetId(rdes[0].DefinedEntity.ID)
-	dSet(d, "rde_type_id", rdeType.DefinedEntityType.ID)
 	return []*schema.ResourceData{d}, nil
 }
