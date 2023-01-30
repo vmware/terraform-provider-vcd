@@ -12,13 +12,23 @@ func datasourceVcdRde() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
+				Required:    true,
 				Description: "The name of the Runtime Defined Entity",
-				Required:    true,
 			},
-			"rde_type_id": {
+			"rde_type_vendor": {
 				Type:        schema.TypeString,
-				Description: "The type ID of the Runtime Defined Entity",
 				Required:    true,
+				Description: "The Runtime Defined Entity Type vendor",
+			},
+			"rde_type_namespace": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The Runtime Defined Entity Type namespace",
+			},
+			"rde_type_version": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The Runtime Defined Entity Type version",
 			},
 			"external_id": {
 				Type:        schema.TypeString,

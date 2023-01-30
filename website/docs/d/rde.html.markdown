@@ -40,7 +40,9 @@ output "rde-id" {
 
 The following arguments are supported:
 
-* `rde_type_id` - (Required) The ID of the type of the Runtime Defined Entity. You can use the [`vcd_rde_type`](/providers/vmware/vcd/latest/docs/data-sources/rde_type) data source to retrieve it.
+* `rde_type_vendor` - (Required) The vendor of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) that the RDE is instance of.
+* `rde_type_namespace` - (Required) The namespace of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) that the RDE is instance of.
+* `rde_type_version` - (Required) The version of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) that the RDE is instance of.
 * `name` - (Required) The name of the RDE to fetch.
 
 ## Attribute Reference

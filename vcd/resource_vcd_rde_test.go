@@ -55,10 +55,10 @@ func TestAccVcdRde(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION step 4: %s\n", step4)
 
 	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Namespace"].(string))
-	rdeType := "vcd_rde_type.rde-type"
-	rdeFromFile := "vcd_rde.rde-file"
-	rdeFromUrl := "vcd_rde.rde-url"
-	rdeWrong := "vcd_rde.rde-naughty"
+	rdeType := "vcd_rde_type.rde_type"
+	rdeFromFile := "vcd_rde.rde_file"
+	rdeFromUrl := "vcd_rde.rde_url"
+	rdeWrong := "vcd_rde.rde_naughty"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
@@ -122,74 +122,94 @@ func TestAccVcdRde(t *testing.T) {
 }
 
 const testAccVcdRdePrerequisites = `
-data "vcd_rde_interface" "existing-interface" {
+data "vcd_rde_interface" "existing_interface" {
   namespace = "k8s"
   version   = "1.0.0"
   vendor    = "vmware"
 }
 
-resource "vcd_rde_type" "rde-type" {
+resource "vcd_rde_type" "rde_type" {
   namespace     = "{{.Namespace}}"
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}"
-  name          = "{{.Name}}-type"
+  name          = "{{.Name}}_type"
   schema        = file("{{.SchemaPath}}")
 }
 `
 
 const testAccVcdRdeStep1and2 = testAccVcdRdePrerequisites + `
-resource "vcd_rde" "rde-file" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}file"
-  resolve       = {{.Resolve}}
-  entity        = file("{{.EntityPath}}")
+resource "vcd_rde" "rde_file" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}file"
+  resolve            = {{.Resolve}}
+  entity             = file("{{.EntityPath}}")
+
+depends_on = [ vcd_rde_type.rde_type]
 }
 
-resource "vcd_rde" "rde-url" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}url"
-  resolve       = {{.Resolve}}
-  entity_url    = "{{.EntityUrl}}"
+resource "vcd_rde" "rde_url" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}url"
+  resolve            = {{.Resolve}}
+  entity_url         = "{{.EntityUrl}}"
+
+depends_on = [ vcd_rde_type.rde_type]
 }
 
-resource "vcd_rde" "rde-naughty" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}naughty"
-  resolve       = {{.Resolve}}
-  entity        = "{ \"this_json_is_bad\": \"yes\"}"
+resource "vcd_rde" "rde_naughty" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}naughty"
+  resolve            = {{.Resolve}}
+  entity             = "{ \"this_json_is_bad\": \"yes\"}"
+
+depends_on = [ vcd_rde_type.rde_type]
 }
 `
 
 const testAccVcdRdeStep3 = testAccVcdRdePrerequisites + `
-resource "vcd_rde" "rde-file" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}file-updated" # Updated name
-  resolve       = {{.Resolve}}
-  entity        = file("{{.EntityPath}}")
+resource "vcd_rde" "rde_file" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}file-updated" # Updated name
+  resolve            = {{.Resolve}}
+  entity             = file("{{.EntityPath}}")
 }
 
-resource "vcd_rde" "rde-url" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}url-updated" # Updated name
-  resolve       = {{.Resolve}}
-  entity_url    = "{{.EntityUrl}}"
+resource "vcd_rde" "rde_url" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}url-updated" # Updated name
+  resolve            = {{.Resolve}}
+  entity_url         = "{{.EntityUrl}}"
 }
 
-resource "vcd_rde" "rde-naughty" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}naughty"
-  resolve       = {{.Resolve}}
-  entity        = file("{{.EntityPath}}") # Updated to a correct JSON
+resource "vcd_rde" "rde_naughty" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}naughty"
+  resolve            = {{.Resolve}}
+  entity             = file("{{.EntityPath}}") # Updated to a correct JSON
 }
 `
 
 const testAccVcdRdeStep4 = testAccVcdRdeStep3 + `
 # skip-binary-test - This should fail
-resource "vcd_rde" "rde-naughty-clone" {
-  rde_type_id   = vcd_rde_type.rde-type.id
-  name          = "{{.Name}}naughty"
-  resolve       = {{.Resolve}}
-  entity        = file("{{.EntityPath}}")
+resource "vcd_rde" "rde_naughty-clone" {
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}naughty"
+  resolve            = {{.Resolve}}
+  entity             = file("{{.EntityPath}}")
 }
 `
 
@@ -250,14 +270,14 @@ func TestAccVcdRdeMetadata(t *testing.T) {
 }
 
 const testAccCheckVcdRdeMetadata = `
-data "vcd_rde_type" "rde-type" {
+data "vcd_rde_type" "rde_type" {
   vendor    = "vmware"
   namespace = "tkgcluster"
   version   = "1.0.0"
 }
 
 resource "vcd_rde" "test-rde" {
-  rde_type_id = data.vcd_rde_type.rde-type.id
+  rde_type_id = data.vcd_rde_type.rde_type.id
   name        = "{{.Name}}"
   entity      = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
 
@@ -268,6 +288,6 @@ resource "vcd_rde" "test-rde" {
 const testAccCheckVcdRdeMetadataDatasource = `
 data "vcd_rde" "test-rde-ds" {
   name        = vcd_rde.test-rde.name
-  rde_type_id = data.vcd_rde_type.rde-type.id
+  rde_type_id = data.vcd_rde_type.rde_type.id
 }
 `

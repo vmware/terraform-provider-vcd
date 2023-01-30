@@ -54,7 +54,9 @@ resource "vcd_rde" "my-rde" {
 The following arguments are supported:
 
 * `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
-* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) of the Runtime Defined Entity.
+* `rde_type_vendor` - (Required) The vendor of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
+* `rde_type_namespace` - (Required) The namespace of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
+* `rde_type_version` - (Required) The version of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
 * `name` - (Required) The name of the Runtime Defined Entity.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
