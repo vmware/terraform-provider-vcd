@@ -110,6 +110,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_catalog_vapp_template":                     datasourceVcdCatalogVappTemplate(),              // 3.8
 	"vcd_subscribed_catalog":                        datasourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_task":                                      datasourceVcdTask(),                             // 3.8
+	"vcd_nsxv_distributed_firewall":                 datasourceVcdNsxvDistributedFirewall(),          // 3.9
 }
 
 var globalResourceMap = map[string]*schema.Resource{
