@@ -27,7 +27,7 @@ func resourceVcdRde() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
+				Description: "The name of organization that will own this Runtime Defined Entity, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"name": {
@@ -35,11 +35,26 @@ func resourceVcdRde() *schema.Resource {
 				Required:    true,
 				Description: "The name of the Runtime Defined Entity",
 			},
-			"rde_type_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The type ID of the Runtime Defined Entity",
+			"rde_type_vendor": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The Runtime Defined Entity Type vendor",
+				RequiredWith: []string{"rde_type_namespace", "rde_type_version"},
+			},
+			"rde_type_namespace": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The Runtime Defined Entity Type namespace",
+				RequiredWith: []string{"rde_type_vendor", "rde_type_version"},
+			},
+			"rde_type_version": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The Runtime Defined Entity Type version",
+				RequiredWith: []string{"rde_type_vendor", "rde_type_namespace"},
 			},
 			"external_id": {
 				Type:        schema.TypeString,
@@ -91,31 +106,20 @@ func resourceVcdRde() *schema.Resource {
 func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	tenantContext := govcd.TenantContext{}
-	if vcdClient.Client.IsSysAdmin {
-		org, err := vcdClient.GetOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf(errorRetrievingOrg, err)
-		}
-		tenantContext.OrgId = org.Org.ID
-		tenantContext.OrgName = org.Org.Name
-	}
-
 	jsonSchema, err := getRdeJson(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	rdeTypeId := d.Get("rde_type_id").(string)
-	rdeType, err := vcdClient.VCDClient.GetRdeTypeById(rdeTypeId)
-	if err != nil {
-		return diag.Errorf("could not find any Runtime Defined Entity type with ID %s: %s", rdeTypeId, err)
-	}
+
+	name := d.Get("name").(string)
+	vendor := d.Get("rde_type_vendor").(string)
+	nss := d.Get("rde_type_namespace").(string)
+	version := d.Get("rde_type_version").(string)
 
 	// VCD allows to have multiple RDEs with the same name, but this is not compatible with Terraform as there is no
 	// other way to unequivocally identify a RDE from a given type.
-	// In other words, without this check, the data source could be broken easily.
-	name := d.Get("name").(string)
-	rdes, err := rdeType.GetRdesByName(name)
+	// In other words, without this check, the data source could be potentially broken.
+	rdes, err := vcdClient.GetRdesByName(vendor, nss, version, name)
 	if err == nil && rdes != nil {
 		rdeList := make([]string, len(rdes))
 		for i, rde := range rdes {
@@ -127,10 +131,21 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not create an RDE, failed fetching existing RDEs: %s", err)
 	}
 
-	rde, err := rdeType.CreateRde(types.DefinedEntity{
-		Name:   name,
-		Entity: jsonSchema,
-	})
+	tenantContext := govcd.TenantContext{}
+	if vcdClient.Client.IsSysAdmin {
+		org, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return diag.Errorf("error retrieving org %s: %s", d.Get("org").(string), err)
+		}
+		tenantContext.OrgId = org.AdminOrg.ID
+		tenantContext.OrgName = org.AdminOrg.Name
+	}
+
+	rde, err := vcdClient.CreateRde(vendor, nss, version, types.DefinedEntity{
+		Name:       name,
+		ExternalId: d.Get("external_id").(string),
+		Entity:     jsonSchema,
+	}, &tenantContext)
 	if err != nil {
 		return diag.Errorf("could not create the Runtime Defined Entity: %s", err)
 	}
@@ -139,8 +154,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// it should go to the Update operation instead.
 	d.SetId(rde.DefinedEntity.ID)
 
-	mustResolve := d.Get("resolve").(bool)
-	if mustResolve {
+	if d.Get("resolve").(bool) {
 		err = rde.Resolve()
 		if err != nil {
 			return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
@@ -233,17 +247,16 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 func getRde(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntity, error) {
 	vcdClient := meta.(*VCDClient)
 
-	rdeTypeId := d.Get("rde_type_id").(string)
-	rdeType, err := vcdClient.VCDClient.GetRdeTypeById(rdeTypeId)
-	if err != nil {
-		return nil, err
-	}
-
 	if d.Id() != "" {
-		return rdeType.GetRdeById(d.Id())
+		return vcdClient.GetRdeById(d.Id())
 	}
 
-	rdes, err := rdeType.GetRdesByName(d.Get("name").(string))
+	vendor := d.Get("rde_type_vendor").(string)
+	nss := d.Get("rde_type_namespace").(string)
+	version := d.Get("rde_type_version").(string)
+	name := d.Get("name").(string)
+
+	rdes, err := vcdClient.GetRdesByName(vendor, nss, version, name)
 	if err != nil {
 		return nil, err
 	}
@@ -276,8 +289,7 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not update the Runtime Defined Entity: %s", err)
 	}
 
-	mustResolve := d.Get("resolve").(bool)
-	if mustResolve {
+	if d.Get("resolve").(bool) {
 		err = rde.Resolve()
 		if err != nil {
 			return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
