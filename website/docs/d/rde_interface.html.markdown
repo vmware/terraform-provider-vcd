@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_rde_interface"
 sidebar_current: "docs-vcd-data-source-rde-interface"
 description: |-
-   Provides the capability of fetching an existing Defined Interfaces from VMware Cloud Director.
+   Provides the capability of fetching an existing Runtime Defined Entity Interface from VMware Cloud Director.
 ---
 
 # vcd\_rde\_interface
 
-Provides the capability of fetching an existing Defined Interface from VMware Cloud Director.
+Provides the capability of fetching an existing Runtime Defined Entity Interface from VMware Cloud Director.
 
 Supported in provider *v3.9+*
 
@@ -34,9 +34,9 @@ output "interface_id" {
 
 The following arguments are supported:
 
-* `vendor` - (Required) The vendor of the Defined Interface.
-* `namespace` - (Required) A unique namespace associated with the Defined Interface.
-* `version` - (Required) The version of the Defined Interface. Must follow [semantic versioning](https://semver.org/) syntax.
+* `vendor` - (Required) The vendor of the RDE Interface.
+* `namespace` - (Required) A unique namespace associated with the RDE Interface.
+* `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 
 ## Attribute Reference
 
