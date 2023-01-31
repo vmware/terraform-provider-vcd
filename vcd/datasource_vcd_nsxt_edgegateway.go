@@ -95,6 +95,12 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 								},
 							},
 						},
+						"total_ip_count": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Computed:    true,
+							Description: "Total number of IP addresses allocated for this subnet",
+						},
 					},
 				},
 			},
