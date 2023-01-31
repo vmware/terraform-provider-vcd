@@ -10,6 +10,9 @@ description: |-
 
 Provides the capability of creating, updating, and deleting Runtime Defined Entity Interfaces in VMware Cloud Director.
 
+A Runtime Defined Entity Interface is specified unequivocally by 3 elements: `vendor`, `namespace` and `version`. This
+3-tuple must be unique. See the examples section for more details.
+
 -> Creating, updating and deleting RDE Interfaces requires System administrator privileges.
 
 Supported in provider *v3.9+*
@@ -17,13 +20,23 @@ Supported in provider *v3.9+*
 ## Example Usage
 
 ```hcl
-resource "vcd_rde_interface" "my_interface" {
+resource "vcd_rde_interface" "my_interface1" {
   vendor    = "bigcorp"
   namespace = "tech"
   version   = "1.2.3"
   name      = "BigCorp Interface"
 }
+
+resource "vcd_rde_interface" "my_interface2" {
+   vendor    = "bigcorp"
+   namespace = "tech"
+   version   = "1.2.4"
+   name      = "Another BigCorp Interface"
+}
 ```
+
+The second interface is valid because the version is different. If we set `version = "1.2.3"` in `my_interface2`,
+creation would fail despite having a different name, as the 3-tuple `vendor`, `namespace` and `version` would be the same.
 
 ## Argument Reference
 
