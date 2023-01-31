@@ -27,11 +27,11 @@ resource "vcd_rde_interface" "my_interface1" {
   name      = "BigCorp Interface"
 }
 
-resource "vcd_rde_interface" "my_interface2" {
-   vendor    = "bigcorp"
-   namespace = "tech"
-   version   = "1.2.4"
-   name      = "Another BigCorp Interface"
+resource "vcd_rde_interface" "my_interface2" { 
+  vendor    = "bigcorp"
+  namespace = "tech"
+  version   = "1.2.4"
+  name      = "Another BigCorp Interface"
 }
 ```
 
