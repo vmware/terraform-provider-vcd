@@ -118,10 +118,6 @@ func getDefinedInterface(d *schema.ResourceData, meta interface{}) (*govcd.Defin
 
 func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	di, err := getDefinedInterface(d, meta)
-	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Defined Interface no longer exists. Removing from tfstate")
-		return nil
-	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,10 +132,6 @@ func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceVcdRdeInterfaceDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	di, err := getDefinedInterface(d, meta)
-	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Defined Interface no longer exists. Removing from tfstate")
-		return nil
-	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
