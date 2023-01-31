@@ -30,8 +30,11 @@ resource "vcd_rde_interface" "my_interface" {
 The following arguments are supported:
 
 * `vendor` - (Required) The vendor of the RDE Interface.
+  The combination of `vendor`, `namespace` and `version` specifies a unique RDE Interface.
 * `namespace` - (Required) A unique namespace associated with the RDE Interface.
-* `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
+  The combination of `vendor`, `namespace` and `version` specifies a unique RDE Interface.
+* `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax. 
+  The combination of `vendor`, `namespace` and `version` specifies a unique RDE Interface.
 * `name` - (Required) The name of the RDE Interface.
 
 ## Attribute Reference
