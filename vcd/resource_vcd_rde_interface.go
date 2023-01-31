@@ -25,13 +25,13 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true, // Can't update namespace
-				Description: "A unique namespace associated with the interface",
+				Description: "A unique namespace associated with the Runtime Defined Entity Interface",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true, // Can't update version
-				Description: "The interface's version. The version must follow semantic versioning rules",
+				Description: "The Runtime Defined Entity Interface's version. The version must follow semantic versioning rules",
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -42,12 +42,12 @@ func resourceVcdRdeInterface() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the defined interface",
+				Description: "The name of the Runtime Defined Entity Interface",
 			},
 			"readonly": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if the defined interface cannot be modified",
+				Description: "True if the Runtime Defined Entity Interface cannot be modified",
 			},
 		},
 	}
@@ -68,7 +68,7 @@ func resourceVcdRdeInterfaceCreate(ctx context.Context, d *schema.ResourceData, 
 		Vendor:    vendor,
 	})
 	if err != nil {
-		return diag.Errorf("could not create the Defined Interface with name %s, vendor %s, namespace %s and version %s: %s", name, vendor, nss, version, err)
+		return diag.Errorf("could not create the Runtime Defined Entity Interface with name %s, vendor %s, namespace %s and version %s: %s", name, vendor, nss, version, err)
 	}
 	return resourceVcdRdeInterfaceRead(ctx, d, meta)
 }
@@ -83,7 +83,7 @@ func resourceVcdRdeInterfaceRead(ctx context.Context, d *schema.ResourceData, me
 func genericVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	di, err := getDefinedInterface(d, meta)
 	if origin == "resource" && govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Defined Interface no longer exists. Removing from tfstate")
+		log.Printf("[DEBUG] Runtime Defined Entity Interface no longer exists. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
@@ -125,7 +125,7 @@ func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, 
 		Name: d.Get("name").(string), // Only name can be updated
 	})
 	if err != nil {
-		return diag.Errorf("could not update the Defined Interface: %s", err)
+		return diag.Errorf("could not update the Runtime Defined Entity Interface: %s", err)
 	}
 	return resourceVcdRdeInterfaceRead(ctx, d, meta)
 }
@@ -137,7 +137,7 @@ func resourceVcdRdeInterfaceDelete(_ context.Context, d *schema.ResourceData, me
 	}
 	err = di.Delete()
 	if err != nil {
-		return diag.Errorf("could not delete the Defined Interface: %s", err)
+		return diag.Errorf("could not delete the Runtime Defined Entity Interface: %s", err)
 	}
 	return nil
 }
@@ -165,7 +165,7 @@ func resourceVcdRdeInterfaceImport(_ context.Context, d *schema.ResourceData, me
 	vcdClient := meta.(*VCDClient)
 	di, err := vcdClient.GetDefinedInterface(vendor, namespace, version)
 	if err != nil {
-		return nil, fmt.Errorf("error finding Defined Interface with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
+		return nil, fmt.Errorf("error finding Runtime Defined Entity Interface with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
 	}
 
 	d.SetId(di.DefinedInterface.ID)
