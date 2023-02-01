@@ -349,7 +349,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
-'rde-id' to import by rule id
+'rde-id' to import by RDE id
 'vendor.namespace.version.name.position' where position is the RDE number as returned by VCD, starting on 1
 'list@vendor.namespace.version.name' to get a list of RDEs with their respective positions and real IDs`)
 
