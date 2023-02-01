@@ -159,9 +159,14 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
-	if err != nil {
-		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
+	// Metadata is only supported since v37.0
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
+		err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+		if err != nil {
+			return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
+		}
+	} else if _, ok := d.GetOk("metadata_entry"); ok {
+		return diag.Errorf("metadata_entry is only supported since VCD 10.4.0")
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
@@ -197,7 +202,8 @@ func resourceVcdRdeRead(ctx context.Context, d *schema.ResourceData, meta interf
 // If origin == "datasource", if the referenced RDE type doesn't exist, it errors.
 // If origin == "resource", if the referenced RDE type doesn't exist, it removes it from tfstate and exits normally.
 func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	rde, err := getRde(d, meta)
+	vcdClient := meta.(*VCDClient)
+	rde, err := getRde(d, vcdClient)
 	if origin == "resource" && govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		d.SetId("")
@@ -231,9 +237,12 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
 	}
 
-	err = updateOpenApiMetadataInState(d, rde)
-	if err != nil {
-		return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
+	// Metadata is only available since API v37.0
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
+		err = updateOpenApiMetadataInState(d, rde)
+		if err != nil {
+			return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
+		}
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
@@ -242,9 +251,7 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 }
 
 // getRde retrieves a Runtime Defined Entity from VCD with the required attributes from the Terraform config.
-func getRde(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntity, error) {
-	vcdClient := meta.(*VCDClient)
-
+func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity, error) {
 	if d.Id() != "" {
 		return vcdClient.GetRdeById(d.Id())
 	}
@@ -265,7 +272,8 @@ func getRde(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntity, err
 }
 
 func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rde, err := getRde(d, meta)
+	vcdClient := meta.(*VCDClient)
+	rde, err := getRde(d, vcdClient)
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		return nil
@@ -294,16 +302,22 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
-	if err != nil {
-		return diag.Errorf("could not update metadata for the Runtime Defined Entity: %s", err)
+	// Metadata is only supported since v37.0
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
+		err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+		if err != nil {
+			return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
+		}
+	} else if _, ok := d.GetOk("metadata_entry"); ok {
+		return diag.Errorf("metadata_entry is only supported since VCD 10.4.0")
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
 }
 
 func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rde, err := getRde(d, meta)
+	vcdClient := meta.(*VCDClient)
+	rde, err := getRde(d, vcdClient)
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		return nil
@@ -333,51 +347,72 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 // Example import path (_the_id_string_): my-rde.vmware.kubernetes.1.0.0
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	var rde *govcd.DefinedEntity
-	var err error
 	vcdClient := meta.(*VCDClient)
-
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
 'rde-id' to import by rule id
 'vendor.namespace.version.name.position' where position is the RDE number as returned by VCD, starting on 1
 'list@vendor.namespace.version.name' to get a list of RDEs with their respective positions and real IDs`)
 
+	printList := func(vendor, namespace, version, name string) error {
+		rdes, err := vcdClient.GetRdesByName(vendor, namespace, version, name)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Found RDEs with vendor %s, namespace %s, version %s and name %s:\n", vendor, namespace, version, name)
+		for _, rde := range rdes {
+			fmt.Println(rde.DefinedEntity.ID)
+		}
+		return fmt.Errorf("resource was not imported! %s", helpError.Error())
+	}
+
+	getRdeInPosition := func(vendor, namespace, version, name, position string) (*govcd.DefinedEntity, error) {
+		rdes, err := vcdClient.VCDClient.GetRdesByName(vendor, namespace, version, name)
+		if err != nil {
+			return nil, err
+		}
+		idx, err := strconv.Atoi(position)
+		if err != nil {
+			return nil, fmt.Errorf("introduced position %v is not a number", position)
+		}
+		if idx < 1 || idx > len(rdes) {
+			return nil, fmt.Errorf("introduced position %d is outside the range of RDEs retrieved: [1, %d]", idx, len(rdes))
+		}
+		return rdes[idx-1], nil
+	}
+
 	log.Printf("[DEBUG] importing vcd_rde resource with provided id %s", d.Id())
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	var rde *govcd.DefinedEntity
+	var err error
 	switch len(resourceURI) {
-	case 1:
+	case 1: // ie: urn:vcloud:entity:vendor:namespace:a074f9e9-5d76-4f1e-8c37-f4e8b28e51ff
 		rde, err = vcdClient.VCDClient.GetRdeById(resourceURI[0])
 		if err != nil {
 			return nil, err
 		}
-	case 4:
+	case 4: // ie: list@vendor.namespace.1.2.3.name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
 		}
-		rdes, err := vcdClient.GetRdesByName(listAndVendorSplit[1], resourceURI[1], resourceURI[2], resourceURI[3])
+		return nil, printList(listAndVendorSplit[1], resourceURI[1], resourceURI[2], resourceURI[3])
+	case 5: // ie: VCD_IMPORT_SEPARATOR="_" vendor_namespace_1.2.3_name_1
+		rde, err = getRdeInPosition(resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3], resourceURI[4])
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Found RDEs with vendor %s, namespace %s, version %s and name %s:\n", listAndVendorSplit[1], resourceURI[1], resourceURI[2], resourceURI[3])
-		for _, rde := range rdes {
-			fmt.Println(rde.DefinedEntity.ID)
+	case 6: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_namespace_1.2.3_name
+		listAndVendorSplit := strings.Split(resourceURI[0], "@")
+		if len(listAndVendorSplit) != 2 {
+			return nil, helpError
 		}
-		return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
-	case 5:
-		rdes, err := vcdClient.VCDClient.GetRdesByName(resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3])
+		return nil, printList(listAndVendorSplit[1], resourceURI[1], fmt.Sprintf("%s.%s.%s", resourceURI[2], resourceURI[3], resourceURI[4]), resourceURI[5])
+	case 7: // ie: vendor.namespace.1.2.3.name.1
+		rde, err = getRdeInPosition(resourceURI[0], resourceURI[1], fmt.Sprintf("%s.%s.%s", resourceURI[2], resourceURI[3], resourceURI[4]), resourceURI[5], resourceURI[6])
 		if err != nil {
 			return nil, err
 		}
-		idx, err := strconv.Atoi(resourceURI[4])
-		if err != nil {
-			return nil, fmt.Errorf("introduced position %v is not a number", resourceURI[4])
-		}
-		if idx < 1 || idx > len(rdes) {
-			return nil, fmt.Errorf("introduced position %d is outside the range of RDEs retrieved: %d", idx, len(rdes))
-		}
-		rde = rdes[idx-1]
 	default:
 		return nil, helpError
 	}

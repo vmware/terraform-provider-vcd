@@ -59,6 +59,10 @@ func TestAccVcdRde(t *testing.T) {
 	rdeFromFile := "vcd_rde.rde_file"
 	rdeFromUrl := "vcd_rde.rde_url"
 	rdeWrong := "vcd_rde.rde_naughty"
+
+	// We will cache an RDE identifier, so we can use it later for importing
+	cachedId := &testCachedFieldValue{}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
@@ -66,9 +70,12 @@ func TestAccVcdRde(t *testing.T) {
 			{
 				Config: step1and2,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue(rdeFromFile, "id"),
 					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file"),
-					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_id", rdeType, "id"),
+					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_vendor", rdeType, "vendor"),
+					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_namespace", rdeType, "namespace"),
+					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_version", rdeType, "version"),
 					resource.TestMatchResourceAttr(rdeFromFile, "entity", regexp.MustCompile("{.*\"stringValue\".*}")),
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "RESOLVED"),
 					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
@@ -76,7 +83,9 @@ func TestAccVcdRde(t *testing.T) {
 
 					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_id", rdeFromFile, "rde_type_id"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_version", rdeFromFile, "rde_type_version"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "entity", rdeFromFile, "entity"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "state", "RESOLVED"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
@@ -84,7 +93,9 @@ func TestAccVcdRde(t *testing.T) {
 
 					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeWrong, "name", t.Name()+"naughty"),
-					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_id", rdeFromFile, "rde_type_id"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_version", rdeFromFile, "rde_type_version"),
 					resource.TestCheckResourceAttr(rdeWrong, "entity", "{\"this_json_is_bad\":\"yes\"}"),
 					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLUTION_ERROR"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
@@ -111,10 +122,27 @@ func TestAccVcdRde(t *testing.T) {
 				ExpectError: regexp.MustCompile(".*found other Runtime Defined Entities with same name.*"),
 			},
 			{
+				// Import by vendor + namespace + version + name + position
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdRde(params["Name"].(string)+"file-updated", params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
+				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
+			},
+			{
+				// Import by ID
+				ResourceName:      rdeFromFile,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					return cachedId.fieldValue, nil
+				},
+			},
+			{
+				// Test list
+				ResourceName:      rdeFromFile,
+				ImportState:       true,
+				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", true),
+				ExpectError:       regexp.MustCompile(".*"),
 			},
 		},
 	})
@@ -135,6 +163,24 @@ resource "vcd_rde_type" "rde_type" {
   name          = "{{.Name}}_type"
   schema        = file("{{.SchemaPath}}")
 }
+
+# Creating a RDE Type creates a bundle and some rights in the background, but the
+# bundle is unpublished by default.
+# We create another bundle so we can publish it to all tenants and they can
+# use RDEs.
+resource "vcd_rights_bundle" "rde_type_bundle" {
+  name                   = "{{.Name}} bundle"
+  description            = "{{.Name}} bundle"
+  publish_to_all_tenants = true
+  rights = [
+    "{{.Vendor}}:{{.Namespace}}: Administrator Full access",
+    "{{.Vendor}}:{{.Namespace}}: Full Access",
+    "{{.Vendor}}:{{.Namespace}}: Modify",
+    "{{.Vendor}}:{{.Namespace}}: View",
+    "{{.Vendor}}:{{.Namespace}}: Administrator View",
+  ]
+  depends_on = [vcd_rde_type.rde_type]
+}
 `
 
 const testAccVcdRdeStep1and2 = testAccVcdRdePrerequisites + `
@@ -146,7 +192,7 @@ resource "vcd_rde" "rde_file" {
   resolve            = {{.Resolve}}
   entity             = file("{{.EntityPath}}")
 
-depends_on = [ vcd_rde_type.rde_type]
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 
 resource "vcd_rde" "rde_url" {
@@ -157,7 +203,7 @@ resource "vcd_rde" "rde_url" {
   resolve            = {{.Resolve}}
   entity_url         = "{{.EntityUrl}}"
 
-depends_on = [ vcd_rde_type.rde_type]
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 
 resource "vcd_rde" "rde_naughty" {
@@ -168,7 +214,7 @@ resource "vcd_rde" "rde_naughty" {
   resolve            = {{.Resolve}}
   entity             = "{ \"this_json_is_bad\": \"yes\"}"
 
-depends_on = [ vcd_rde_type.rde_type]
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 `
 
@@ -180,6 +226,8 @@ resource "vcd_rde" "rde_file" {
   name               = "{{.Name}}file-updated" # Updated name
   resolve            = {{.Resolve}}
   entity             = file("{{.EntityPath}}")
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 
 resource "vcd_rde" "rde_url" {
@@ -189,6 +237,8 @@ resource "vcd_rde" "rde_url" {
   name               = "{{.Name}}url-updated" # Updated name
   resolve            = {{.Resolve}}
   entity_url         = "{{.EntityUrl}}"
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 
 resource "vcd_rde" "rde_naughty" {
@@ -198,6 +248,8 @@ resource "vcd_rde" "rde_naughty" {
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
   entity             = file("{{.EntityPath}}") # Updated to a correct JSON
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 `
 
@@ -210,6 +262,8 @@ resource "vcd_rde" "rde_naughty-clone" {
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
   entity             = file("{{.EntityPath}}")
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 `
 
@@ -248,15 +302,19 @@ func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.Te
 	}
 }
 
-func importStateIdRde(name, vendor, namespace, version string) resource.ImportStateIdFunc {
+func importStateIdRde(vendor, namespace, version, name, position string, list bool) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		return name +
-			ImportSeparator +
-			vendor +
+		commonIdPart := vendor +
 			ImportSeparator +
 			namespace +
 			ImportSeparator +
-			version, nil
+			version +
+			ImportSeparator +
+			name
+		if list {
+			return "list@" + commonIdPart, nil
+		}
+		return commonIdPart + ImportSeparator + position, nil
 	}
 }
 
