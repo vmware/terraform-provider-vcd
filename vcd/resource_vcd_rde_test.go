@@ -123,10 +123,11 @@ func TestAccVcdRde(t *testing.T) {
 			},
 			{
 				// Import by vendor + namespace + version + name + position
-				ResourceName:      rdeFromFile,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
+				ResourceName:            rdeFromFile,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
+				ImportStateVerifyIgnore: []string{"resolve"},
 			},
 			{
 				// Import by ID
@@ -136,6 +137,7 @@ func TestAccVcdRde(t *testing.T) {
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					return cachedId.fieldValue, nil
 				},
+				ImportStateVerifyIgnore: []string{"resolve"},
 			},
 			{
 				// Test list
@@ -321,6 +323,10 @@ func importStateIdRde(vendor, namespace, version, name, position string, list bo
 // TestAccVcdRdeMetadata tests metadata CRUD on Runtime Defined Entities.
 func TestAccVcdRdeMetadata(t *testing.T) {
 	skipIfNotSysAdmin(t)
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skip("skipped as metadata for vcd_rde is only supported since VCD 10.4.0")
+	}
 	testOpenApiMetadataEntryCRUD(t,
 		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
 		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test-rde-ds",
