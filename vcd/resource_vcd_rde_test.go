@@ -414,16 +414,16 @@ func addRightsToTenantUser(t *testing.T, vendor, namespace string) {
 		t.Errorf("could not get a VCD connection to add rights to tenant user")
 	}
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
-	if err != nil || role == nil {
+	if err != nil {
 		t.Errorf("could not get Organization Administrator global role: %s", err)
 	}
 	rightsBundleName := fmt.Sprintf("%s:%s Entitlement", vendor, namespace)
 	rightsBundle, err := vcdClient.VCDClient.Client.GetRightsBundleByName(rightsBundleName)
-	if err != nil || rightsBundle == nil {
+	if err != nil {
 		t.Errorf("could not get %s rights bundle: %s", rightsBundleName, err)
 	}
 	rights, err := rightsBundle.GetRights(nil)
-	if err != nil || rights == nil {
+	if err != nil {
 		t.Errorf("could not get rights from %s rights bundle: %s", rightsBundleName, err)
 	}
 	var rightsToAdd []types.OpenApiReference
