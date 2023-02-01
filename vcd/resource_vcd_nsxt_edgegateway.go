@@ -71,12 +71,11 @@ var nsxtEdgeAutoSubnet = &schema.Resource{
 			Required:    true,
 			Description: "Netmask address for a subnet (e.g. 24 for /24)",
 		},
-		// "primary_ip": {
-		// 	Type:        schema.TypeString,
-		// 	Optional:    true,
-		// 	Computed:    true,
-		// 	Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
-		// },
+		"primary_ip": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
+		},
 		// "total_ip_count": {
 		// 	Type: schema.TypeInt,
 		// 	// Optional:    true,
@@ -375,7 +374,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}
 	}
 
-	autoSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
+	isPrimaryIpSet, autoSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
 	if _, isSetAutoSubnet := d.GetOk("auto_subnet"); isSetAutoSubnet {
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: autoSubnetValues}
 	}
@@ -389,9 +388,9 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 
 		// When primary IP is explicitly set - we need to reduce the total allocated IP count by 1
 		// as this is the way that QuickAddAllocatedIPCount field works
-		// if isPrimaryIpSet {
-		// 	edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - 1
-		// }
+		if isPrimaryIpSet {
+			edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - 1
+		}
 	}
 
 	// Optional edge_cluster_id
@@ -576,9 +575,9 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 	return subnetSlice
 }
 
-func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) []types.OpenAPIEdgeGatewaySubnetValue {
-	// var isPrimaryIpSet bool
-	// var primaryIpIndex int
+func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) (bool, []types.OpenAPIEdgeGatewaySubnetValue) {
+	var isPrimaryIpSet bool
+	var primaryIpIndex int
 
 	extNetworks := d.Get("auto_subnet").(*schema.Set).List()
 	subnetSlice := make([]types.OpenAPIEdgeGatewaySubnetValue, len(extNetworks))
@@ -588,13 +587,13 @@ func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) []types.Op
 		singleSubnet := types.OpenAPIEdgeGatewaySubnetValue{
 			Gateway:      subnetMap["gateway"].(string),
 			PrefixLength: subnetMap["prefix_length"].(int),
-			// PrimaryIP:    subnetMap["primary_ip"].(string),
+			PrimaryIP:    subnetMap["primary_ip"].(string),
 		}
 
-		// if subnetMap["primary_ip"].(string) != "" {
-		// 	isPrimaryIpSet = true
-		// 	primaryIpIndex = index
-		// }
+		if subnetMap["primary_ip"].(string) != "" {
+			isPrimaryIpSet = true
+			primaryIpIndex = index
+		}
 
 		// if subnetMap["total_ip_count"].(int) != 0 {
 		// 	singleSubnet.TotalIPCount = subnetMap["total_ip_count"].(int)
@@ -608,13 +607,13 @@ func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) []types.Op
 	// first item in JSON list therefore if `primary_ip` was specified in other item than first one must shuffle slice
 	// elements so that the one with primary_ip is first.
 	// The order does not really matter for Terraform schema as TypeSet is used, but user must get expected primary_ip.
-	// if isPrimaryIpSet {
-	// 	subnetZero := subnetSlice[0]
-	// 	subnetSlice[0] = subnetSlice[primaryIpIndex]
-	// 	subnetSlice[primaryIpIndex] = subnetZero
-	// }
+	if isPrimaryIpSet {
+		subnetZero := subnetSlice[0]
+		subnetSlice[0] = subnetSlice[primaryIpIndex]
+		subnetSlice[primaryIpIndex] = subnetZero
+	}
 
-	return subnetSlice
+	return isPrimaryIpSet, subnetSlice
 }
 
 func getNsxtEdgeGatewayUplinkRangeTypes(subnetMap map[string]interface{}) []types.OpenApiIPRangeValues {
@@ -715,8 +714,14 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 		// oneSubnet["primary_ip"] = subnetValue.PrimaryIP
 		// oneSubnet["total_ip_count"] = subnetValue.TotalIPCount
 		// oneSubnet["used_ip_count"] = subnetValue.UsedIPCount
+
+		if subnetValue.PrimaryIP != "" {
+			oneSubnet["primary_ip"] = subnetValue.PrimaryIP
+		}
+
 		autoSubnets = append(autoSubnets, oneSubnet)
 	}
+
 	autoSubnetSet := schema.NewSet(schema.HashResource(nsxtEdgeAutoSubnet), autoSubnets)
 	err = d.Set("auto_subnet", autoSubnetSet)
 	if err != nil {
