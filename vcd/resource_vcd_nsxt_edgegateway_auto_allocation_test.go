@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// TestAccVcdNsxtEdgeGatewayAutoAllocationTotal tests
+// * auto_subnet allocation with total_allocated_ip_count
 func TestAccVcdNsxtEdgeGatewayAutoAllocationTotal(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
@@ -83,7 +85,7 @@ func TestAccVcdNsxtEdgeGatewayAutoAllocationTotal(t *testing.T) {
 						"gateway":       "14.14.14.1",
 						"prefix_length": "24",
 					}),
-					// stateDumper(),
+					stateDumper(),
 				),
 			},
 		},
