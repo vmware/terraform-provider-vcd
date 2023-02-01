@@ -93,7 +93,9 @@ func TestAccVcdRde(t *testing.T) {
 					addRightsToTenantUser(t, params["Vendor"].(string), params["Namespace"].(string))
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
+					// We cache the ID to use it on later steps
 					cachedId.cacheTestResourceFieldValue(rdeFromFile, "id"),
+
 					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file"),
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_vendor", rdeType, "vendor"),
@@ -158,16 +160,16 @@ func TestAccVcdRde(t *testing.T) {
 				Config:      step4,
 				ExpectError: regexp.MustCompile(".*found other Runtime Defined Entities with same name.*"),
 			},
+			// Import by vendor + namespace + version + name + position
 			{
-				// Import by vendor + namespace + version + name + position
 				ResourceName:            rdeFromFile,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
 				ImportStateVerifyIgnore: []string{"resolve"},
 			},
+			// Import using the cached RDE ID
 			{
-				// Import by ID
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -176,12 +178,12 @@ func TestAccVcdRde(t *testing.T) {
 				},
 				ImportStateVerifyIgnore: []string{"resolve"},
 			},
+			// Import with the list option, it should return the RDE that we cached
 			{
-				// Test list
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
 				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", true),
-				ExpectError:       regexp.MustCompile(".*"),
+				ExpectError:       regexp.MustCompile(`.*` + cachedId.fieldValue + `.*`),
 			},
 		},
 	})

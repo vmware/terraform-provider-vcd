@@ -358,9 +358,9 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Found RDEs with vendor %s, namespace %s, version %s and name %s:\n", vendor, namespace, version, name)
+		fmt.Printf("Found RDEs with vendor '%s', namespace '%s', version '%s' and name '%s':\n", vendor, namespace, version, name)
 		for _, rde := range rdes {
-			fmt.Println(rde.DefinedEntity.ID)
+			fmt.Printf("* %s\n", rde.DefinedEntity.ID)
 		}
 		return fmt.Errorf("resource was not imported! %s", helpError.Error())
 	}
