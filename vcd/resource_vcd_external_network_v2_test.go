@@ -51,13 +51,17 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	}
 	testParamsNotEmpty(t, params)
 
-	params["FuncName"] = t.Name()
-	configText := templateFill(testAccCheckVcdExternalNetworkV2Nsxt, params)
+	params["FuncName"] = t.Name() + "step"
+	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -111,13 +115,58 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 				),
 			},
 			{
+				Config: configText2,
+				Taint:  []string{"vcd_external_network_v2.ext-net-nsxt"},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1": "8.8.8.8",
+						"dns2": "8.8.4.4",
+						// dns_suffix has a bug in VCD (<= 10.4.1) which does not return it after
+						// setting
+						// "dns_suffix":    "host.test",
+						"enabled":       "false",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "true",
+						"gateway":       "14.14.14.1",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "14.14.14.20",
+						"end_address":   "14.14.14.25",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "14.14.14.10",
+						"end_address":   "14.14.14.15",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+					testCheckMatchOutput("nsxt-manager", regexp.MustCompile("^urn:vcloud:nsxtmanager:.*")),
+					testCheckOutputNonEmpty("nsxt-tier0-router"), // Match any non empty string
+				),
+			},
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
 			},
 			{
-				Config: configText1,
+				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
@@ -157,7 +206,7 @@ data "vcd_nsxt_tier0_router" "router" {
 
 `
 
-const testAccCheckVcdExternalNetworkV2Nsxt = testAccCheckVcdExternalNetworkV2NsxtDS + `
+const testAccCheckVcdExternalNetworkV2NsxtStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
 resource "vcd_external_network_v2" "ext-net-nsxt" {
   name        = "{{.ExternalNetworkName}}"
   description = "{{.Description}}"
@@ -203,7 +252,58 @@ output "nsxt-tier0-router" {
 }
 `
 
-const testAccCheckVcdExternalNetworkV2NsxtStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
+const testAccCheckVcdExternalNetworkV2NsxtStep2 = testAccCheckVcdExternalNetworkV2NsxtDS + `
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+  description = "{{.Description}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    enabled       = false
+    gateway       = "{{.Gateway}}"
+    prefix_length = "{{.Netmask}}"
+
+	dns1       = "8.8.8.8"
+	dns2       = "8.8.4.4"
+	# VCD bug does not return the value after it is set
+	# dns_suffix = "host.test"
+
+    static_ip_pool {
+      start_address = "{{.StartAddress}}"
+      end_address   = "{{.EndAddress}}"
+    }
+  }
+
+  ip_scope {
+    gateway       = "14.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "14.14.14.10"
+      end_address   = "14.14.14.15"
+    }
+    
+    static_ip_pool {
+      start_address = "14.14.14.20"
+      end_address   = "14.14.14.25"
+    }
+  }
+}
+
+output "nsxt-manager" {
+  value = tolist(vcd_external_network_v2.ext-net-nsxt.nsxt_network)[0].nsxt_manager_id
+}
+
+output "nsxt-tier0-router" {
+  value = tolist(vcd_external_network_v2.ext-net-nsxt.nsxt_network)[0].nsxt_tier0_router_id
+}
+`
+
+const testAccCheckVcdExternalNetworkV2NsxtStep3 = testAccCheckVcdExternalNetworkV2NsxtDS + `
 # skip-binary-test: only for updates
 resource "vcd_external_network_v2" "ext-net-nsxt" {
   name        = "{{.ExternalNetworkName}}"
