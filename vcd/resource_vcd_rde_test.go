@@ -13,12 +13,6 @@ import (
 	"testing"
 )
 
-// TODO: Test resolve = false
-// Create non-resolved RDE
-// Delete should fail
-// Update schema of resolved entity?
-// Update to resolve = false when resolved??
-
 // TestAccVcdRde tests the behaviour of RDE instances.
 func TestAccVcdRde(t *testing.T) {
 	preTestChecks(t)
@@ -32,7 +26,7 @@ func TestAccVcdRde(t *testing.T) {
 		"Version":        "1.0.0",
 		"Vendor":         "vendor",
 		"Name":           t.Name(),
-		"Resolve":        true,
+		"Resolve":        false,
 		"SchemaPath":     getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath":     getCurrentDir() + "/../test-resources/rde_instance.json",
 		"EntityUrl":      "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-3/test-resources/rde_instance.json", // FIXME
@@ -41,20 +35,27 @@ func TestAccVcdRde(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-Prereqs"
 	preReqsConfig := templateFill(testAccVcdRdePrerequisites, params)
-	params["FuncName"] = t.Name() + "-Step1And2"
-	step1and2 := templateFill(testAccVcdRdeStep1and2, params)
-	params["FuncName"] = t.Name() + "-Step3"
-	step3 := templateFill(testAccVcdRdeStep3, params)
-	params["FuncName"] = t.Name() + "-Step4"
-	step4 := templateFill(testAccVcdRdeStep4, params)
+	params["FuncName"] = t.Name() + "-Init"
+	stepInit := templateFill(testAccVcdRde1, params)
+	params["FuncName"] = t.Name() + "-DeleteFail"
+	stepDeleteFail := templateFill(testAccVcdRde2, params)
+	params["FuncName"] = t.Name() + "-Resolve"
+	params["Resolve"] = true
+	stepResolve := templateFill(testAccVcdRde1, params)
+	params["FuncName"] = t.Name() + "-FixWrongRde"
+	stepFixWrongRde := templateFill(testAccVcdRde3, params)
+	params["FuncName"] = t.Name() + "-Duplicate"
+	stepCreateDuplicate := templateFill(testAccVcdRde4, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION step 1 and 2: %s\n", step1and2)
-	debugPrintf("#[DEBUG] CONFIGURATION step 3: %s\n", step3)
-	debugPrintf("#[DEBUG] CONFIGURATION step 4: %s\n", step4)
+	debugPrintf("#[DEBUG] CONFIGURATION preReqs: %s\n", preReqsConfig)
+	debugPrintf("#[DEBUG] CONFIGURATION init: %s\n", stepInit)
+	debugPrintf("#[DEBUG] CONFIGURATION resolve: %s\n", stepResolve)
+	debugPrintf("#[DEBUG] CONFIGURATION fix wrong RDE: %s\n", stepFixWrongRde)
+	debugPrintf("#[DEBUG] CONFIGURATION duplicate: %s\n", stepCreateDuplicate)
 
 	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Namespace"].(string))
 	rdeType := "vcd_rde_type.rde_type"
@@ -66,12 +67,17 @@ func TestAccVcdRde(t *testing.T) {
 	// We will cache an RDE identifier, so we can use it later for importing
 	cachedId := &testCachedFieldValue{}
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil || vcdClient.VCDClient == nil {
+		t.Errorf("could not get a VCD connection to add rights to tenant user")
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
 		Steps: []resource.TestStep{
-			// Step 1: Preconfigure the test: We fetch an existing interface and create an RDE Type.
-			// Creating an RDE Type creates an associated Rights Bundle that is not published to all tenants by default.
+			// Preconfigure the test: We fetch an existing interface and create an RDE Type.
+			// Creating an RDE Type creates an associated Rights Bundle that is NOT published to all tenants by default.
 			// To move forward we need these rights published, so we create a new published bundle with the same rights.
 			{
 				Config: preReqsConfig,
@@ -80,17 +86,17 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeType, "namespace", params["Namespace"].(string)),
 				),
 			},
-			// Step 2: Create 4 RDEs:
+			// Create 4 RDEs in non-resolved state (pre-created):
 			// - From a file with Sysadmin using tenant context.
 			// - From a URL with Sysadmin using tenant context.
 			// - With a wrong JSON schema, it should be created.
 			// - From a file with Tenant user as Organization Administrator.
-			// For the Tenant user to be able to use RDEs, we need to add rights to the Organization Administrator global
+			// For the Tenant user to be able to use RDEs, we need to add the RDE Type rights to the Organization Administrator global
 			// role, which is done in `addRightsToTenantUser`.
 			{
-				Config: step1and2,
+				Config: stepInit,
 				PreConfig: func() {
-					addRightsToTenantUser(t, params["Vendor"].(string), params["Namespace"].(string))
+					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Namespace"].(string))
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// We cache the ID to use it on later steps
@@ -101,8 +107,8 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_vendor", rdeType, "vendor"),
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_namespace", rdeType, "namespace"),
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_version", rdeType, "version"),
-					resource.TestMatchResourceAttr(rdeFromFile, "entity", regexp.MustCompile("{.*\"stringValue\".*}")),
-					resource.TestCheckResourceAttr(rdeFromFile, "state", "RESOLVED"),
+					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile("{.*\"stringValue\".*}")),
+					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
 					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestMatchResourceAttr(rdeFromFile, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 
@@ -111,8 +117,8 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_version", rdeFromFile, "rde_type_version"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "entity", rdeFromFile, "entity"),
-					resource.TestCheckResourceAttr(rdeFromUrl, "state", "RESOLVED"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "computed_entity", rdeFromFile, "computed_entity"),
+					resource.TestCheckResourceAttr(rdeFromUrl, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
 
@@ -121,8 +127,8 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_version", rdeFromFile, "rde_type_version"),
-					resource.TestCheckResourceAttr(rdeWrong, "entity", "{\"this_json_is_bad\":\"yes\"}"),
-					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLUTION_ERROR"),
+					resource.TestCheckResourceAttr(rdeWrong, "computed_entity", "{\"this_json_is_bad\":\"yes\"}"),
+					resource.TestCheckResourceAttr(rdeWrong, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
 
@@ -131,23 +137,40 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_version", rdeFromFile, "rde_type_version"),
-					resource.TestCheckResourceAttrPair(rdeTenant, "entity", rdeFromFile, "entity"),
-					resource.TestCheckResourceAttr(rdeTenant, "state", "RESOLVED"),
+					resource.TestCheckResourceAttrPair(rdeTenant, "computed_entity", rdeFromFile, "computed_entity"),
+					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "org_id", rdeFromFile, "org_id"),
 					resource.TestMatchResourceAttr(rdeTenant, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
 				),
 			},
-			// Step 3: Taint the wrong RDE to test that we can delete a resolved RDE with wrong JSONs
+			// Delete the RDE that has wrong JSON. It should fail because the RDE is not resolved.
+			// NOTE: We cannot use SDK Taint here because it will be permanently tainted, hence we can't update it
+			// to a correct state in next steps (we can't un-taint)
 			{
-				Config: step1and2,
-				Taint:  []string{rdeWrong}, // We force a deletion of a wrongly resolved RDE.
+				Config:      stepDeleteFail,
+				ExpectError: regexp.MustCompile(".*could not delete the Runtime Defined Entity.*"),
+			},
+			// Updates all RDEs to resolve them
+			{
+				Config: stepResolve,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(rdeFromFile, "state", "RESOLVED"),
+					resource.TestCheckResourceAttr(rdeFromUrl, "state", "RESOLVED"),
+					resource.TestCheckResourceAttr(rdeTenant, "state", "RESOLVED"),
+					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLUTION_ERROR"),
+				),
+			},
+			// Taint the RDE that has wrong JSON. It should be removed now as it was resolved (with errors)
+			{
+				Config: stepResolve,
+				Taint:  []string{rdeWrong}, // This time is resolved, but still wrong
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLUTION_ERROR"),
 				),
 			},
-			// Step 3: Fixes the wrong RDE and resolves it. It also updates the names of the other RDEs.
+			// Fixes the wrong RDE and resolves it. It also updates the names of the other RDEs.
 			{
-				Config: step3,
+				Config: stepFixWrongRde,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file-updated"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url-updated"),
@@ -155,9 +178,21 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeWrong, "state", "RESOLVED"),
 				),
 			},
-			// Step 4: The provider doesn't allow creating more than one RDE with same name.
+			// We test the use case where a 3rd party member changes the RDE json in VCD. The computed entity should change,
+			// while the input entity should remain the same.
 			{
-				Config:      step4,
+				Config: stepFixWrongRde,
+				PreConfig: func() {
+					manipulateRde(t, vcdClient, cachedId.fieldValue)
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(rdeFromFile, "input_entity", rdeWrong, "input_entity"),
+					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile(`.*stringValueChanged.*`)),
+				),
+			},
+			// The provider doesn't allow creating more than one RDE with same name.
+			{
+				Config:      stepCreateDuplicate,
 				ExpectError: regexp.MustCompile(".*found other Runtime Defined Entities with same name.*"),
 			},
 			// Import by vendor + namespace + version + name + position
@@ -166,7 +201,7 @@ func TestAccVcdRde(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
-				ImportStateVerifyIgnore: []string{"resolve"},
+				ImportStateVerifyIgnore: []string{"resolve", "input_entity", "input_entity_url"},
 			},
 			// Import using the cached RDE ID
 			{
@@ -176,7 +211,7 @@ func TestAccVcdRde(t *testing.T) {
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					return cachedId.fieldValue, nil
 				},
-				ImportStateVerifyIgnore: []string{"resolve"},
+				ImportStateVerifyIgnore: []string{"resolve", "input_entity", "input_entity_url"},
 			},
 			// Import with the list option, it should return the RDE that we cached
 			{
@@ -230,7 +265,7 @@ resource "vcd_rights_bundle" "rde_type_bundle" {
 }
 `
 
-const testAccVcdRdeStep1and2 = testAccVcdRdePrerequisites + `
+const testAccVcdRde1 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -239,7 +274,7 @@ resource "vcd_rde" "rde_file" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}file"
   resolve            = {{.Resolve}}
-  entity             = file("{{.EntityPath}}")
+  input_entity       = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -252,7 +287,7 @@ resource "vcd_rde" "rde_url" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}url"
   resolve            = {{.Resolve}}
-  entity_url         = "{{.EntityUrl}}"
+  input_entity_url   = "{{.EntityUrl}}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -265,7 +300,7 @@ resource "vcd_rde" "rde_naughty" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
-  entity             = "{ \"this_json_is_bad\": \"yes\"}"
+  input_entity       = "{ \"this_json_is_bad\": \"yes\"}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -278,13 +313,13 @@ resource "vcd_rde" "rde_tenant" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}tenant"
   resolve            = {{.Resolve}}
-  entity             = file("{{.EntityPath}}")
+  input_entity       = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 `
 
-const testAccVcdRdeStep3 = testAccVcdRdePrerequisites + `
+const testAccVcdRde2 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -293,7 +328,7 @@ resource "vcd_rde" "rde_file" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}file-updated" # Updated name
   resolve            = {{.Resolve}}
-  entity             = file("{{.EntityPath}}")
+  input_entity       = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -306,7 +341,35 @@ resource "vcd_rde" "rde_url" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}url-updated" # Updated name
   resolve            = {{.Resolve}}
-  entity_url         = "{{.EntityUrl}}"
+  input_entity_url   = "{{.EntityUrl}}"
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
+}
+`
+
+const testAccVcdRde3 = testAccVcdRdePrerequisites + `
+resource "vcd_rde" "rde_file" {
+  provider = {{.ProviderSystem}}
+
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}file-updated" # Updated name
+  resolve            = {{.Resolve}}
+  input_entity       = file("{{.EntityPath}}")
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle]
+}
+
+resource "vcd_rde" "rde_url" {
+  provider = {{.ProviderSystem}}
+
+  rde_type_vendor    = vcd_rde_type.rde_type.vendor
+  rde_type_namespace = vcd_rde_type.rde_type.namespace
+  rde_type_version   = vcd_rde_type.rde_type.version
+  name               = "{{.Name}}url-updated" # Updated name
+  resolve            = {{.Resolve}}
+  input_entity_url   = "{{.EntityUrl}}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -319,7 +382,7 @@ resource "vcd_rde" "rde_naughty" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
-  entity             = file("{{.EntityPath}}") # Updated to a correct JSON
+  input_entity       = file("{{.EntityPath}}") # Updated to a correct JSON
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -332,13 +395,13 @@ resource "vcd_rde" "rde_tenant" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}tenant-updated" # Updated name
   resolve            = {{.Resolve}}
-  entity             = file("{{.EntityPath}}")
+  input_entity       = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
 `
 
-const testAccVcdRdeStep4 = testAccVcdRdeStep3 + `
+const testAccVcdRde4 = testAccVcdRde3 + `
 # skip-binary-test - This should fail
 resource "vcd_rde" "rde_naughty-clone" {
   provider = {{.ProviderSystem}}
@@ -348,7 +411,7 @@ resource "vcd_rde" "rde_naughty-clone" {
   rde_type_version   = vcd_rde_type.rde_type.version
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
-  entity             = file("{{.EntityPath}}")
+  input_entity       = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -410,11 +473,7 @@ func importStateIdRde(vendor, namespace, version, name, position string, list bo
 // on RDEs.
 // NOTE: We don't need to remove the added rights after the test is run, because the RDE Type and the Rights Bundle
 // are destroyed and the rights disappear with them gone.
-func addRightsToTenantUser(t *testing.T, vendor, namespace string) {
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.VCDClient == nil {
-		t.Errorf("could not get a VCD connection to add rights to tenant user")
-	}
+func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, namespace string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
 		t.Errorf("could not get Organization Administrator global role: %s", err)
@@ -422,11 +481,11 @@ func addRightsToTenantUser(t *testing.T, vendor, namespace string) {
 	rightsBundleName := fmt.Sprintf("%s:%s Entitlement", vendor, namespace)
 	rightsBundle, err := vcdClient.VCDClient.Client.GetRightsBundleByName(rightsBundleName)
 	if err != nil {
-		t.Errorf("could not get %s rights bundle: %s", rightsBundleName, err)
+		t.Errorf("could not get '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	rights, err := rightsBundle.GetRights(nil)
 	if err != nil {
-		t.Errorf("could not get rights from %s rights bundle: %s", rightsBundleName, err)
+		t.Errorf("could not get rights from '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	var rightsToAdd []types.OpenApiReference
 	for _, right := range rights {
@@ -439,7 +498,22 @@ func addRightsToTenantUser(t *testing.T, vendor, namespace string) {
 	}
 	err = role.AddRights(rightsToAdd)
 	if err != nil {
-		t.Errorf("could not add rights %v to role %s", rightsToAdd, role.GlobalRole.Name)
+		t.Errorf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
+	}
+}
+
+// manipulateRde mimics a 3rd party member that changes an RDE in VCD side. This is a common use-case in RDEs
+func manipulateRde(t *testing.T, vcdClient *VCDClient, rdeId string) {
+	rde, err := vcdClient.GetRdeById(rdeId)
+	if err != nil {
+		t.Errorf("could not get RDE with ID '%s': %s", rdeId, err)
+	}
+
+	rde.DefinedEntity.Entity["bar"] = "stringValueChanged"
+
+	err = rde.Update(*rde.DefinedEntity)
+	if err != nil {
+		t.Errorf("could not update RDE with ID '%s': %s", rdeId, err)
 	}
 }
 

@@ -59,20 +59,24 @@ func resourceVcdRde() *schema.Resource {
 				Optional:    true,
 				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
 			},
-			"entity_url": {
+			"input_entity_url": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "URL that should point to a JSON representation of the Runtime Defined Entity. The JSON will be validated against the schema of the RDE type that the entity is an instance of",
-				ExactlyOneOf: []string{"entity_url", "entity"},
+				Description:  "URL that should point to a JSON representation of the Runtime Defined Entity and is used to initialize/override its contents",
+				ExactlyOneOf: []string{"input_entity_url", "input_entity"},
 			},
-			"entity": {
+			"input_entity": {
 				Type:                  schema.TypeString,
 				Optional:              true,
-				Computed:              true,
-				Description:           "A JSON representation of the Runtime Defined Entity. The JSON will be validated against the schema of the RDE type that the entity is an instance of",
-				ExactlyOneOf:          []string{"entity_url", "entity"},
+				Description:           "A JSON representation of the Runtime Defined Entity that is defined by the user and is used to initialize/override its contents",
+				ExactlyOneOf:          []string{"input_entity_url", "input_entity"},
 				DiffSuppressFunc:      hasJsonValueChanged,
 				DiffSuppressOnRefresh: true,
+			},
+			"computed_entity": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A computed representation of the actual Runtime Defined Entity JSON retrieved from VCD. Useful to see the actual entity contents if it is being changed by a third party in VCD",
 			},
 			"owner_id": {
 				Type:        schema.TypeString,
@@ -104,11 +108,6 @@ func resourceVcdRde() *schema.Resource {
 func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	jsonSchema, err := getRdeJson(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	name := d.Get("name").(string)
 	vendor := d.Get("rde_type_vendor").(string)
 	nss := d.Get("rde_type_namespace").(string)
@@ -137,6 +136,11 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 		tenantContext.OrgId = org.AdminOrg.ID
 		tenantContext.OrgName = org.AdminOrg.Name
+	}
+
+	jsonSchema, err := getRdeJson(d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	rde, err := vcdClient.CreateRde(vendor, nss, version, types.DefinedEntity{
@@ -176,13 +180,13 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 func getRdeJson(d *schema.ResourceData) (map[string]interface{}, error) {
 	var jsonRde string
 	var err error
-	if url, isUrlSet := d.GetOk("entity_url"); isUrlSet {
+	if url, isUrlSet := d.GetOk("input_entity_url"); isUrlSet {
 		jsonRde, err = fileFromUrlToString(url.(string), ".json")
 		if err != nil {
 			return nil, fmt.Errorf("could not download JSON RDE from url %s: %s", url, err)
 		}
 	} else {
-		jsonRde = d.Get("entity").(string)
+		jsonRde = d.Get("input_entity").(string)
 	}
 
 	var unmarshalledJson map[string]interface{}
@@ -225,7 +229,7 @@ func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("could not save the Runtime Defined Entity JSON into state: %s", err)
 	}
-	err = d.Set("entity", jsonEntity)
+	err = d.Set("computed_entity", jsonEntity)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -274,10 +278,6 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity,
 func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	rde, err := getRde(d, vcdClient)
-	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
-		return nil
-	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -318,10 +318,6 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	rde, err := getRde(d, vcdClient)
-	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
-		return nil
-	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
