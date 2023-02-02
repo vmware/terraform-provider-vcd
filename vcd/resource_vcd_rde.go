@@ -270,9 +270,8 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity,
 		return nil, err
 	}
 
-	// We return the first found RDE as a design decision. Ideally, we should only find more than one RDE with the same
-	// name during imports, where Terraform doesn't have any control.
-	return rdes[0], nil
+	// We perform another GET by ID to retrieve the ETag of the RDE
+	return vcdClient.GetRdeById(rdes[0].DefinedEntity.ID)
 }
 
 func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
