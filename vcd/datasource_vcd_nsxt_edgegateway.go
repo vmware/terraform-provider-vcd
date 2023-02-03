@@ -95,12 +95,6 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 								},
 							},
 						},
-						"total_ip_count": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Computed:    true,
-							Description: "Total number of IP addresses allocated for this subnet",
-						},
 					},
 				},
 			},
@@ -120,19 +114,35 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 							Computed:    true,
 							Description: "Netmask address for a subnet (e.g. 24 for /24)",
 						},
-						// "primary_ip": {
-						// 	Type:        schema.TypeString,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
-						// },
-						// "total_ip_count": {
-						// 	Type: schema.TypeInt,
-						// 	// Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "Total number of IP addresses allocated for this subnet",
-						// 	// ConflictsWith: []string{"subnet.allocated_ips"},
-						// },
+					},
+				},
+			},
+			"auto_allocated_subnet": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"gateway": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Gateway address for a subnet",
+						},
+						"prefix_length": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Netmask address for a subnet (e.g. 24 for /24)",
+						},
+						"primary_ip": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
+						},
+						"allocated_ip_count": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Number of IP addresses to allocate",
+						},
 					},
 				},
 			},

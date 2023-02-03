@@ -49,17 +49,25 @@ var nsxtEdgeSubnet = &schema.Resource{
 			Description: "Define one or more blocks to sub-allocate pools on the edge gateway",
 			Elem:        nsxtEdgeSubnetRange,
 		},
-		"total_ip_count": {
+	},
+}
+
+var nsxtEdgeAutoSubnetTotal = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"gateway": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Gateway address for a subnet",
+		},
+		"prefix_length": {
 			Type:        schema.TypeInt,
-			Optional:    true,
-			Computed:    true,
-			Description: "Total number of IP addresses allocated for this subnet",
-			// ConflictsWith: []string{"subnet.allocated_ips"},
+			Required:    true,
+			Description: "Netmask address for a subnet (e.g. 24 for /24)",
 		},
 	},
 }
 
-var nsxtEdgeAutoSubnet = &schema.Resource{
+var nsxtEdgeAutoSubnetAllocated = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"gateway": {
 			Type:        schema.TypeString,
@@ -74,15 +82,14 @@ var nsxtEdgeAutoSubnet = &schema.Resource{
 		"primary_ip": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
 		},
-		// "total_ip_count": {
-		// 	Type: schema.TypeInt,
-		// 	// Optional:    true,
-		// 	Computed:    true,
-		// 	Description: "Total number of IP addresses allocated for this subnet",
-		// 	// ConflictsWith: []string{"subnet.allocated_ips"},
-		// },
+		"allocated_ip_count": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "Number of IP addresses to allocate",
+		},
 	},
 }
 
@@ -148,16 +155,28 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:          schema.TypeInt,
 				Computed:      true,
 				Optional:      true,
-				Description:   "Total number of IP addresses allocated for this gateway",
-				ConflictsWith: []string{"subnet"},
+				Description:   "Total number of IP addresses allocated for this gateway. Must be used with 'auto_subnet' definitions only",
+				RequiredWith:  []string{"auto_subnet"},
+				ConflictsWith: []string{"subnet", "auto_allocated_subnet"},
 			},
 			"auto_subnet": {
 				Type:          schema.TypeSet,
 				Optional:      true,
 				Computed:      true,
-				Description:   "",
-				Elem:          nsxtEdgeAutoSubnet,
-				ConflictsWith: []string{"subnet"},
+				Description:   "Subnet definitions for this Edge Gateway. IP allocation is controlled using 'total_allocated_ip_count'",
+				Elem:          nsxtEdgeAutoSubnetTotal,
+				RequiredWith:  []string{"total_allocated_ip_count"},
+				ConflictsWith: []string{"subnet", "auto_allocated_subnet"},
+				AtLeastOneOf:  []string{"auto_subnet", "subnet", "auto_allocated_subnet"},
+			},
+			"auto_allocated_subnet": {
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Computed:      true,
+				Description:   "Auto allocation of subnets by using per subnet IP allocation counts",
+				Elem:          nsxtEdgeAutoSubnetAllocated,
+				ConflictsWith: []string{"subnet", "auto_subnet"},
+				AtLeastOneOf:  []string{"auto_subnet", "subnet", "auto_allocated_subnet"},
 			},
 			"subnet": {
 				Type:          schema.TypeSet,
@@ -165,7 +184,8 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:      true,
 				Description:   "One or more blocks with external network information to be attached to this gateway's interface including IP allocation ranges",
 				Elem:          nsxtEdgeSubnet,
-				ConflictsWith: []string{"auto_subnet", "total_allocated_ip_count"},
+				ConflictsWith: []string{"auto_subnet", "total_allocated_ip_count", "auto_allocated_subnet"},
+				AtLeastOneOf:  []string{"auto_subnet", "subnet", "auto_allocated_subnet"},
 			},
 			"primary_ip": {
 				Type:        schema.TypeString,
@@ -363,34 +383,31 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		EdgeGatewayUplinks: []types.EdgeGatewayUplinks{{
-			UplinkID: d.Get("external_network_id").(string),
-			// Subnets:   types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)},
+			UplinkID:  d.Get("external_network_id").(string),
 			Dedicated: d.Get("dedicate_external_network").(bool),
 		}},
 		OwnerRef: &types.OpenApiReference{ID: ownerId},
 	}
 
-	if _, isSetSubnet := d.GetOk("subnet"); isSetSubnet {
+	_, usingSubnetAllocation := d.GetOk("subnet")
+	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
+	_, usingAutoAllocatedSubnetAllocation := d.GetOk("auto_allocated_subnet")
+
+	switch {
+	case usingSubnetAllocation:
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}
-	}
-
-	isPrimaryIpSet, autoSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
-	if _, isSetAutoSubnet := d.GetOk("auto_subnet"); isSetAutoSubnet {
+	case usingAutoSubnetAllocation:
+		autoSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: autoSubnetValues}
-	}
-
-	// Adding allocated IP count is not trivial. There are different cases that this number can be impacted:
-	// * Creating without any primary_ip fields defined - it will become the same as total_allocated_ip_count
-	// * Creating but with primary_ip fields defined - it will become the same as total_allocated_ip_count - 1
-
-	if totalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
-		edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int)
-
-		// When primary IP is explicitly set - we need to reduce the total allocated IP count by 1
-		// as this is the way that QuickAddAllocatedIPCount field works
-		if isPrimaryIpSet {
-			edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - 1
+		if totalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
+			edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int)
 		}
+	case usingAutoAllocatedSubnetAllocation:
+		autoAllocateSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)
+		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: autoAllocateSubnetValues}
+	default:
+		return nil, fmt.Errorf("one of the following fields must be set: 'subnet', 'auto_subnet', 'auto_allocated_subnet'")
+
 	}
 
 	// Optional edge_cluster_id
@@ -575,14 +592,31 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 	return subnetSlice
 }
 
-func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) (bool, []types.OpenAPIEdgeGatewaySubnetValue) {
-	var isPrimaryIpSet bool
-	var primaryIpIndex int
-
+func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) []types.OpenAPIEdgeGatewaySubnetValue {
 	extNetworks := d.Get("auto_subnet").(*schema.Set).List()
 	subnetSlice := make([]types.OpenAPIEdgeGatewaySubnetValue, len(extNetworks))
 
 	for index, singleSubnet := range extNetworks {
+		subnetMap := singleSubnet.(map[string]interface{})
+		singleSubnet := types.OpenAPIEdgeGatewaySubnetValue{
+			Gateway:      subnetMap["gateway"].(string),
+			PrefixLength: subnetMap["prefix_length"].(int),
+		}
+
+		subnetSlice[index] = singleSubnet
+	}
+
+	return subnetSlice
+}
+
+func getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d *schema.ResourceData) []types.OpenAPIEdgeGatewaySubnetValue {
+	var isPrimaryIpSet bool
+	var primaryIpIndex int
+
+	schemaSubnets := d.Get("auto_allocated_subnet").(*schema.Set).List()
+	subnetSlice := make([]types.OpenAPIEdgeGatewaySubnetValue, len(schemaSubnets))
+
+	for index, singleSubnet := range schemaSubnets {
 		subnetMap := singleSubnet.(map[string]interface{})
 		singleSubnet := types.OpenAPIEdgeGatewaySubnetValue{
 			Gateway:      subnetMap["gateway"].(string),
@@ -595,10 +629,8 @@ func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) (bool, []t
 			primaryIpIndex = index
 		}
 
-		// if subnetMap["total_ip_count"].(int) != 0 {
-		// 	singleSubnet.TotalIPCount = subnetMap["total_ip_count"].(int)
-		// 	singleSubnet.AutoAllocateIPRanges = true
-		// }
+		singleSubnet.AutoAllocateIPRanges = true // required for allocated_ip_count
+		singleSubnet.TotalIPCount = subnetMap["allocated_ip_count"].(int)
 
 		subnetSlice[index] = singleSubnet
 	}
@@ -613,7 +645,7 @@ func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) (bool, []t
 		subnetSlice[primaryIpIndex] = subnetZero
 	}
 
-	return isPrimaryIpSet, subnetSlice
+	return subnetSlice
 }
 
 func getNsxtEdgeGatewayUplinkRangeTypes(subnetMap map[string]interface{}) []types.OpenApiIPRangeValues {
@@ -711,21 +743,32 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 		oneSubnet := make(map[string]interface{})
 		oneSubnet["gateway"] = subnetValue.Gateway
 		oneSubnet["prefix_length"] = subnetValue.PrefixLength
-		// oneSubnet["primary_ip"] = subnetValue.PrimaryIP
-		// oneSubnet["total_ip_count"] = subnetValue.TotalIPCount
-		// oneSubnet["used_ip_count"] = subnetValue.UsedIPCount
-
-		if subnetValue.PrimaryIP != "" {
-			oneSubnet["primary_ip"] = subnetValue.PrimaryIP
-		}
 
 		autoSubnets = append(autoSubnets, oneSubnet)
 	}
 
-	autoSubnetSet := schema.NewSet(schema.HashResource(nsxtEdgeAutoSubnet), autoSubnets)
+	autoSubnetSet := schema.NewSet(schema.HashResource(nsxtEdgeAutoSubnetTotal), autoSubnets)
 	err = d.Set("auto_subnet", autoSubnetSet)
 	if err != nil {
 		return fmt.Errorf("error setting NSX-T Edge Gateway automatic subnets after read: %s", err)
+	}
+
+	// Auto allocated subnet
+	autoAllocatedSubnets := make([]interface{}, 1)
+	for _, subnetValue := range edgeUplink.Subnets.Values {
+		oneSubnet := make(map[string]interface{})
+		oneSubnet["gateway"] = subnetValue.Gateway
+		oneSubnet["prefix_length"] = subnetValue.PrefixLength
+		oneSubnet["primary_ip"] = subnetValue.PrimaryIP
+		oneSubnet["allocated_ip_count"] = subnetValue.TotalIPCount
+
+		autoAllocatedSubnets = append(autoAllocatedSubnets, oneSubnet)
+	}
+
+	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(nsxtEdgeAutoSubnetAllocated), autoAllocatedSubnets)
+	err = d.Set("auto_allocated_subnet", autoAllocatedSubnetSet)
+	if err != nil {
+		return fmt.Errorf("error setting NSX-T Edge Gateway auto allocated subnets after read: %s", err)
 	}
 
 	return nil
