@@ -54,11 +54,6 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 
 	configText := templateFill(testAccCatalogCreation, params)
 
-	params["FuncName"] = t.Name() + "-rename"
-	catalogUpdatedName := catalogName + "_updated"
-	params["CatalogName"] = catalogUpdatedName
-	renameText := templateFill(testAccCatalogCreation, params)
-
 	params["FuncName"] = t.Name() + "-access"
 	// Remove skip: the full script will run fine in binary tests
 	params["SkipNotice"] = " "
@@ -67,6 +62,12 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 	params["SkipNotice"] = "# skip-binary-test: timing problems"
 	params["FuncName"] = t.Name() + "-vm-creation"
 	vmCreationText := templateFill(testAccCatalogCreation+testAccCatalogAccessOrgUser+testAccVMsFromSharedCatalogs, params)
+
+	params["FuncName"] = t.Name() + "-rename"
+	catalogUpdatedName := catalogName + "_updated"
+	params["CatalogName"] = catalogUpdatedName
+	renameText := templateFill(testAccCatalogCreation, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -113,36 +114,23 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 				),
 			},
 			{
-				Config: renameText,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceCatalogOrg1, "name", catalogUpdatedName),
-					resource.TestCheckResourceAttr(resourceCatalogOrg1, "org", org1Name),
-					resource.TestCheckResourceAttr(resourceCatalogOrg1, "description", descriptionOrg1),
-					resource.TestCheckResourceAttr(resourceCatalogOrg2, "name", catalogUpdatedName),
-					resource.TestCheckResourceAttr(resourceCatalogOrg2, "org", org2Name),
-					resource.TestCheckResourceAttr(resourceCatalogOrg2, "description", descriptionOrg2),
-					resource.TestCheckResourceAttrPair(resourcevAppTemplate1, "catalog_id", resourceCatalogOrg1, "id"),
-					resource.TestCheckResourceAttrPair(resourceMedia1, "catalog_id", resourceCatalogOrg1, "id"),
-				),
-			},
-			{
 				Config: accessText,
 				Check: resource.ComposeTestCheckFunc(
 					logState("catalog-related-data-sources"),
-					resource.TestCheckResourceAttr(dataSourceCatalogOrg1, "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr(dataSourceCatalogOrg1, "name", catalogName),
 					resource.TestCheckResourceAttr(dataSourceCatalogOrg1, "org", org1Name),
 					resource.TestCheckResourceAttr(dataSourceCatalogOrg1, "description", descriptionOrg1),
-					resource.TestCheckResourceAttr(dataSourceCatalogOrg2, "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr(dataSourceCatalogOrg2, "name", catalogName),
 					resource.TestCheckResourceAttr(dataSourceCatalogOrg2, "org", org2Name),
 					resource.TestCheckResourceAttr(dataSourceCatalogOrg2, "description", descriptionOrg2),
 
-					resource.TestCheckResourceAttr("data.vcd_catalog.catalog_org1_from_org2", "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr("data.vcd_catalog.catalog_org1_from_org2", "name", catalogName),
 					resource.TestCheckResourceAttr("data.vcd_catalog.catalog_org1_from_org2", "org", org1Name),
 					resource.TestCheckResourceAttr("data.vcd_catalog.catalog_org1_from_org2", "description", descriptionOrg1),
 					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_name", "name", catalogMediaName),
 					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_name", "org", org1Name),
-					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_name", "catalog", catalogUpdatedName),
-					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_id", "catalog", catalogUpdatedName),
+					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_name", "catalog", catalogName),
+					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_id", "catalog", catalogName),
 					resource.TestCheckResourceAttr("data.vcd_catalog_media.test_media_by_catalog_id", "description", descriptionOrg1),
 					resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test_vapp_template1", "name", vappTemplateName),
 					resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test_vapp_template1", "org", org1Name),
@@ -157,6 +145,19 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 					testAccCheckVcdStandaloneVmExists(localVmName+"-2", "vcd_vm."+localVmName+"-2", org2Name, vdc2Name),
 					resource.TestCheckResourceAttr("vcd_vm."+localVmName+"-1", "name", localVmName+"-1"),
 					resource.TestCheckResourceAttr("vcd_vm."+localVmName+"-2", "name", localVmName+"-2"),
+				),
+			},
+			{
+				Config: renameText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceCatalogOrg1, "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr(resourceCatalogOrg1, "org", org1Name),
+					resource.TestCheckResourceAttr(resourceCatalogOrg1, "description", descriptionOrg1),
+					resource.TestCheckResourceAttr(resourceCatalogOrg2, "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr(resourceCatalogOrg2, "org", org2Name),
+					resource.TestCheckResourceAttr(resourceCatalogOrg2, "description", descriptionOrg2),
+					resource.TestCheckResourceAttrPair(resourcevAppTemplate1, "catalog_id", resourceCatalogOrg1, "id"),
+					resource.TestCheckResourceAttrPair(resourceMedia1, "catalog_id", resourceCatalogOrg1, "id"),
 				),
 			},
 		},
