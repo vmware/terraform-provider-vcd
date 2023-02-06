@@ -242,7 +242,7 @@ func TestAccVcdNsxtEdgeGatewayAutoAllocatedSubnet(t *testing.T) {
 			},
 			{
 				Config: configText2,
-				Taint:  []string{"vcd_nsxt_edgegateway.nsxt-edge"},
+				// Taint:  []string{"vcd_nsxt_edgegateway.nsxt-edge"},
 				Check: resource.ComposeTestCheckFunc(
 					stateDumper(),
 
@@ -276,7 +276,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 
-  # total_allocated_ip_count = 100 # all IPs in the external network
   auto_allocated_subnet {
     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length

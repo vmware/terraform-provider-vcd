@@ -393,16 +393,21 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
 	_, usingAutoAllocatedSubnetAllocation := d.GetOk("auto_allocated_subnet")
 
+	log.Printf("[TRACE] NSX-T Edge Gateway operation '%t' using subnet allocation: %t, auto subnet allocation: %t, auto allocated subnet allocation: %t",
+		isCreateOperation, usingSubnetAllocation, usingAutoSubnetAllocation, usingAutoAllocatedSubnetAllocation)
+	log.Printf("[TRACE] NSX-T Edge Gateway operation '%t' has change subnet allocation: %t, auto subnet allocation: %t, auto allocated subnet allocation: %t",
+		isCreateOperation, d.HasChange("subnet"), d.HasChange("auto_subnet"), d.HasChange("auto_allocated_subnet"))
+
 	switch {
-	case usingSubnetAllocation:
+	case (isCreateOperation && usingSubnetAllocation) || (d.HasChange("subnet") && !isCreateOperation):
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}
-	case usingAutoSubnetAllocation:
+	case (isCreateOperation && usingAutoSubnetAllocation) || (d.HasChange("auto_subnet") && !isCreateOperation):
 		autoSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: autoSubnetValues}
 		if totalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
 			edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int)
 		}
-	case usingAutoAllocatedSubnetAllocation:
+	case (isCreateOperation && usingAutoAllocatedSubnetAllocation) || (d.HasChange("auto_allocated_subnet") && !isCreateOperation):
 		autoAllocateSubnetValues := getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: autoAllocateSubnetValues}
 	default:
