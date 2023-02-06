@@ -1,0 +1,1 @@
+* Create `TestAccVcdCatalogRename` [GH-992]

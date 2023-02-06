@@ -133,6 +133,122 @@ func TestAccVcdCatalog(t *testing.T) {
 	postTestChecks(t)
 }
 
+// TestAccVcdCatalogRenamed ensures that a Catalog can be renamed and the contents of it
+// will remain unchanged.
+func TestAccVcdCatalogRename(t *testing.T) {
+	preTestChecks(t)
+
+	catalogName := t.Name() + "-cat"
+	catalogMediaName := t.Name() + "-media"
+	vappTemplateName := t.Name() + "-templ"
+
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"CatalogName":      catalogName,
+		"CatalogMediaName": catalogMediaName,
+		"VappTemplateName": vappTemplateName,
+		"Description":      t.Name(),
+		"OvaPath":          testConfig.Ova.OvaPath,
+		"MediaPath":        testConfig.Media.MediaPath,
+		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
+		"VmName":           t.Name() + "-vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccCheckVcdCatalogRename, params)
+
+	params["FuncName"] = t.Name() + "-rename"
+	params["CatalogName"] = catalogName + "_updated"
+	renameText := templateFill(testAccCheckVcdCatalogRename, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: buildMultipleProviders(),
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckCatalogEntityState("vcd_catalog", testConfig.VCD.Org, t.Name(), false),
+		),
+		Steps: []resource.TestStep{
+			// Test creation
+			{
+				Config: configText,
+				Check:  resource.ComposeTestCheckFunc(),
+			},
+			{
+				Config: renameText,
+				Check:  resource.ComposeTestCheckFunc(),
+			},
+		},
+	})
+}
+
+const testAccCheckVcdCatalogRename = `
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name        = "{{.CatalogName}}"
+  description = "{{.Description}}"
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+
+  metadata = {
+    catalog_metadata  = "catalog Metadata"
+    catalog_metadata2 = "catalog Metadata2"
+  }
+}
+
+resource "vcd_catalog_vapp_template" "test_vapp_template" {
+  org     = "{{.Org}}"
+  catalog_id = resource.vcd_catalog.test-catalog.id
+
+  name                 = "{{.VappTemplateName}}"
+  description          = "TestDescription"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+}
+
+resource "vcd_catalog_media"  "test_media" {
+  org     = "{{.Org}}"
+  catalog_id = resource.vcd_catalog.test-catalog.id
+
+  name                 = "{{.CatalogMediaName}}"
+  description          = "TestDescription"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+}
+
+resource "vcd_vm" "{{.VmName}}-1" {
+  org              = "{{.Org}}"
+  name             = "{{.VmName}}-1"
+  vapp_template_id = resource.vcd_catalog_vapp_template.test_vapp_template.id
+  description      = "test standalone VM 1"
+  power_on         = false
+
+
+}
+
+resource "vcd_vm" "{{.VmName}}-2" {
+  org              = "{{.Org}}"
+  name             = "{{.VmName}}-2"
+  boot_image_id    = resource.vcd_catalog_media.test_media.id
+  description      = "test standalone VM 2"
+  computer_name    = "standalone"
+  cpus             = 1
+  memory           = 1024
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  power_on         = false
+
+  depends_on = [vcd_catalog_media.test_media]
+}
+
+`
+
 // TestAccVcdCatalogWithStorageProfile is very similar to TestAccVcdCatalog, but it ensure that a catalog can be created
 // using specific storage profile
 func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
