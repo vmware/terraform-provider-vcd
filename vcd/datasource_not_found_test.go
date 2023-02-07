@@ -289,8 +289,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `ip_address = "71.58.12.36"` + "\n"
 		case "vendor":
 			templateFields = templateFields + `vendor = "notexisting"` + "\n"
-		case "namespace":
-			templateFields = templateFields + `namespace = "notexisting"` + "\n"
+		case "nss":
+			templateFields = templateFields + `nss = "notexisting"` + "\n"
 		case "version":
 			templateFields = templateFields + `version = "9.9.9"` + "\n"
 		}

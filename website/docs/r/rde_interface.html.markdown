@@ -10,7 +10,7 @@ description: |-
 
 Provides the capability of creating, updating, and deleting Runtime Defined Entity Interfaces in VMware Cloud Director.
 
-A Runtime Defined Entity Interface is specified unequivocally by 3 elements: `vendor`, `namespace` and `version`. This
+A Runtime Defined Entity Interface is specified unequivocally by 3 elements: `vendor`, `nss` and `version`. This
 3-tuple must be unique. See the examples section for more details.
 
 -> Creating, updating and deleting RDE Interfaces requires System administrator privileges.
@@ -21,31 +21,31 @@ Supported in provider *v3.9+*
 
 ```hcl
 resource "vcd_rde_interface" "my_interface1" {
-  vendor    = "bigcorp"
-  namespace = "tech"
-  version   = "1.2.3"
-  name      = "BigCorp Interface"
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "1.2.3"
+  name    = "BigCorp Interface"
 }
 
 resource "vcd_rde_interface" "my_interface2" {
-  vendor    = "bigcorp"
-  namespace = "tech"
-  version   = "1.2.4"
-  name      = "Another BigCorp Interface"
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "1.2.4"
+  name    = "Another BigCorp Interface"
 }
 ```
 
 The second interface is valid because the version is different. If we set `version = "1.2.3"` in `my_interface2`,
-creation would fail despite having a different name, as the 3-tuple `vendor`, `namespace` and `version` would be the same.
+creation would fail despite having a different name, as the 3-tuple `vendor`, `nss` and `version` would be the same.
 
 ## Argument Reference
 
 The following arguments are supported:
 
--> The 3-tuple of `vendor`, `namespace` and `version` specifies a unique RDE Interface.
+-> The 3-tuple of `vendor`, `nss` and `version` specifies a unique RDE Interface.
 
 * `vendor` - (Required) The vendor of the RDE Interface.
-* `namespace` - (Required) A unique namespace associated with the RDE Interface.
+* `nss` - (Required) A unique namespace associated with the RDE Interface.
 * `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the RDE Interface.
 
@@ -58,14 +58,14 @@ The following arguments are supported:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing RDE Interface can be [imported][docs-import] into this resource via supplying its vendor, namespace and version, which
+An existing RDE Interface can be [imported][docs-import] into this resource via supplying its vendor, nss and version, which
 unequivocally identifies it.
 For example, using this structure, representing an existing RDE Interface that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_rde_interface" "outer_interface" {
   vendor    = "bigcorp"
-  namespace = "tech"
+  nss = "tech"
   version   = "4.5.6"
 }
 ```

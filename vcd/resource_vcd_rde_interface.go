@@ -21,10 +21,10 @@ func resourceVcdRdeInterface() *schema.Resource {
 			StateContext: resourceVcdRdeInterfaceImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"namespace": {
+			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true, // Can't update namespace
+				ForceNew:    true, // Can't update nss
 				Description: "A unique namespace associated with the Runtime Defined Entity Interface",
 			},
 			"version": {
@@ -57,18 +57,18 @@ func resourceVcdRdeInterfaceCreate(ctx context.Context, d *schema.ResourceData, 
 	vcdClient := meta.(*VCDClient)
 
 	vendor := d.Get("vendor").(string)
-	nss := d.Get("namespace").(string)
+	nss := d.Get("nss").(string)
 	version := d.Get("version").(string)
 	name := d.Get("name").(string)
 
 	_, err := vcdClient.VCDClient.CreateDefinedInterface(&types.DefinedInterface{
-		Name:      name,
-		Namespace: nss,
-		Version:   version,
-		Vendor:    vendor,
+		Name:    name,
+		Nss:     nss,
+		Version: version,
+		Vendor:  vendor,
 	})
 	if err != nil {
-		return diag.Errorf("could not create the Runtime Defined Entity Interface with name %s, vendor %s, namespace %s and version %s: %s", name, vendor, nss, version, err)
+		return diag.Errorf("could not create the Runtime Defined Entity Interface with name %s, vendor %s, nss %s and version %s: %s", name, vendor, nss, version, err)
 	}
 	return resourceVcdRdeInterfaceRead(ctx, d, meta)
 }
@@ -92,7 +92,7 @@ func genericVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta 
 	}
 
 	dSet(d, "vendor", di.DefinedInterface.Vendor)
-	dSet(d, "namespace", di.DefinedInterface.Namespace)
+	dSet(d, "nss", di.DefinedInterface.Nss)
 	dSet(d, "version", di.DefinedInterface.Version)
 	dSet(d, "name", di.DefinedInterface.Name)
 	dSet(d, "readonly", di.DefinedInterface.IsReadOnly)
@@ -110,7 +110,7 @@ func getDefinedInterface(d *schema.ResourceData, meta interface{}) (*govcd.Defin
 	}
 
 	vendor := d.Get("vendor").(string)
-	nss := d.Get("namespace").(string)
+	nss := d.Get("nss").(string)
 	version := d.Get("version").(string)
 
 	return vcdClient.VCDClient.GetDefinedInterface(vendor, nss, version)
@@ -158,14 +158,14 @@ func resourceVcdRdeInterfaceDelete(_ context.Context, d *schema.ResourceData, me
 func resourceVcdRdeInterfaceImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) < 3 {
-		return nil, fmt.Errorf("resource identifier must be specified as vendor.namespace.version")
+		return nil, fmt.Errorf("resource identifier must be specified as vendor.nss.version")
 	}
-	vendor, namespace, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
+	vendor, nss, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
 
 	vcdClient := meta.(*VCDClient)
-	di, err := vcdClient.GetDefinedInterface(vendor, namespace, version)
+	di, err := vcdClient.GetDefinedInterface(vendor, nss, version)
 	if err != nil {
-		return nil, fmt.Errorf("error finding Runtime Defined Entity Interface with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
+		return nil, fmt.Errorf("error finding Runtime Defined Entity Interface with vendor %s, nss %s and version %s: %s", vendor, nss, version, err)
 	}
 
 	d.SetId(di.DefinedInterface.ID)

@@ -10,7 +10,7 @@ func datasourceVcdRdeInterface() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdRdeInterfaceRead,
 		Schema: map[string]*schema.Schema{
-			"namespace": {
+			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique namespace associated with the Runtime Defined Entity Interface",

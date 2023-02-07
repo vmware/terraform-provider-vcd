@@ -16,9 +16,9 @@ Supported in provider *v3.9+*
 
 ```hcl
 data "vcd_rde_interface" "my_interface" {
-  vendor    = "bigcorp"
-  namespace = "tech"
-  version   = "1.2.3"
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "1.2.3"
 }
 
 output "interface_name" {
@@ -35,7 +35,7 @@ output "interface_id" {
 The following arguments are supported:
 
 * `vendor` - (Required) The vendor of the RDE Interface.
-* `namespace` - (Required) A unique namespace associated with the RDE Interface.
+* `nss` - (Required) A unique namespace associated with the RDE Interface.
 * `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 
 ## Attribute Reference
