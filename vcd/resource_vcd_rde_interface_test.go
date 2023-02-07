@@ -15,10 +15,10 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Namespace": "namespace1",
-		"Version":   "1.0.0",
-		"Vendor":    "vendor1",
-		"Name":      t.Name(),
+		"Nss":     "nss1",
+		"Version": "1.0.0",
+		"Vendor":  "vendor1",
+		"Name":    t.Name(),
 	}
 	testParamsNotEmpty(t, params)
 
@@ -27,10 +27,10 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 	params["Name"] = params["FuncName"]
 	configTextUpdate := templateFill(testAccVcdRdeDefinedInterface, params)
 
-	// We change the namespace to force deletion and re-creation
+	// We change the nss to force deletion and re-creation
 	params["FuncName"] = t.Name() + "-ForceNew"
 	params["Name"] = t.Name()
-	params["Namespace"] = "namespace2"
+	params["Nss"] = "nss2"
 	configTextForceNew := templateFill(testAccVcdRdeDefinedInterface, params)
 
 	if vcdShortTest {
@@ -49,8 +49,8 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 			{
 				Config: configTextCreate,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "namespace1", params["Version"].(string))),
-					resource.TestCheckResourceAttr(interfaceName, "namespace", "namespace1"),
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "nss1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "nss", "nss1"),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
@@ -60,8 +60,8 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 			{
 				Config: configTextUpdate,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "namespace1", params["Version"].(string))),
-					resource.TestCheckResourceAttr(interfaceName, "namespace", "namespace1"),
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "nss1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "nss", "nss1"),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()+"-Update"),
@@ -71,8 +71,8 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 			{
 				Config: configTextForceNew,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "namespace2", params["Version"].(string))),
-					resource.TestCheckResourceAttr(interfaceName, "namespace", "namespace2"),
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "nss2", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "nss", "nss2"),
 					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
 					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
@@ -83,7 +83,7 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 				ResourceName:      interfaceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string)),
+				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string)),
 			},
 		},
 	})
@@ -92,10 +92,10 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 
 const testAccVcdRdeDefinedInterface = `
 resource "vcd_rde_interface" "interface1" {
-  namespace = "{{.Namespace}}"
-  version   = "{{.Version}}"
-  vendor    = "{{.Vendor}}"
-  name      = "{{.Name}}"
+  nss     = "{{.Nss}}"
+  version = "{{.Version}}"
+  vendor  = "{{.Vendor}}"
+  name    = "{{.Name}}"
 }
 `
 
@@ -124,11 +124,11 @@ func testAccCheckRdeInterfaceDestroy(identifier string) resource.TestCheckFunc {
 	}
 }
 
-func importStateIdDefinedInterface(vendor, namespace, version string) resource.ImportStateIdFunc {
+func importStateIdDefinedInterface(vendor, nss, version string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		return vendor +
 			ImportSeparator +
-			namespace +
+			nss +
 			ImportSeparator +
 			version, nil
 	}

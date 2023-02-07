@@ -16,13 +16,13 @@ func TestAccVcdRdeType(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Namespace":           "namespace",
+		"Nss":                 "nss",
 		"Version":             "1.0.0",
 		"Vendor":              "vendor",
 		"Name":                t.Name(),
 		"Description":         "Created by " + t.Name(),
 		"InterfaceReferences": "vcd_rde_interface.rde-interface1.id",
-		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json",                                                                   // TODO: Parameterize this value???
+		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json",
 		"SchemaUrl":           "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-2/test-resources/rde_type.json", // FIXME
 	}
 	testParamsNotEmpty(t, params)
@@ -50,7 +50,7 @@ func TestAccVcdRdeType(t *testing.T) {
 			{
 				Config: configTextCreate,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(rdeTypeFromFile, "namespace", params["Namespace"].(string)+"file"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "nss", params["Nss"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "name", t.Name()),
@@ -58,7 +58,7 @@ func TestAccVcdRdeType(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTypeFromFile, "interface_ids.0", "vcd_rde_interface.rde-interface1", "id"),
 					resource.TestMatchResourceAttr(rdeTypeFromFile, "schema", regexp.MustCompile("{.*\"foo\".*\"bar\".*}")),
 
-					resource.TestCheckResourceAttr(rdeTypeFromUrl, "namespace", params["Namespace"].(string)+"url"),
+					resource.TestCheckResourceAttr(rdeTypeFromUrl, "nss", params["Nss"].(string)+"url"),
 					resource.TestCheckResourceAttr(rdeTypeFromUrl, "vendor", params["Vendor"].(string)+"url"),
 
 					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "version", rdeTypeFromFile, "version"),
@@ -71,14 +71,14 @@ func TestAccVcdRdeType(t *testing.T) {
 			{
 				Config: configTextUpdate,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(rdeTypeFromFile, "namespace", params["Namespace"].(string)+"file"),
+					resource.TestCheckResourceAttr(rdeTypeFromFile, "nss", params["Nss"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "version", params["Version"].(string)),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "name", t.Name()+"-Update"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "description", "Created by"+t.Name()+"-Update"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "interface_ids.#", "2"),
 
-					resource.TestCheckResourceAttr(rdeTypeFromUrl, "namespace", params["Namespace"].(string)+"url"),
+					resource.TestCheckResourceAttr(rdeTypeFromUrl, "nss", params["Nss"].(string)+"url"),
 					resource.TestCheckResourceAttr(rdeTypeFromUrl, "vendor", params["Vendor"].(string)+"url"),
 
 					resource.TestCheckResourceAttrPair(rdeTypeFromUrl, "version", rdeTypeFromFile, "version"),
@@ -92,7 +92,7 @@ func TestAccVcdRdeType(t *testing.T) {
 				ResourceName:      rdeTypeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string)+"file", params["Namespace"].(string)+"file", params["Version"].(string)),
+				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string)+"file", params["Nss"].(string)+"file", params["Version"].(string)),
 			},
 		},
 	})
@@ -101,21 +101,21 @@ func TestAccVcdRdeType(t *testing.T) {
 
 const testAccVcdRdeType = `
 resource "vcd_rde_interface" "rde-interface1" {
-  namespace = "namespace1"
-  version   = "1.0.0"
-  vendor    = "vendor1"
-  name      = "name1"
+  nss     = "namespace1"
+  version = "1.0.0"
+  vendor  = "vendor1"
+  name    = "name1"
 }
 
 resource "vcd_rde_interface" "rde-interface2" {
-  namespace   = "namespace2"
-  version     = "2.0.0"
-  vendor      = "vendor2"
-  name        = "name2"
+  nss     = "namespace2"
+  version = "2.0.0"
+  vendor  = "vendor2"
+  name    = "name2"
 }
 
 resource "vcd_rde_type" "rde-type-file" {
-  namespace     = "{{.Namespace}}file"
+  nss           = "{{.Nss}}file"
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}file"
   name          = "{{.Name}}"
@@ -125,7 +125,7 @@ resource "vcd_rde_type" "rde-type-file" {
 }
 
 resource "vcd_rde_type" "rde-type-url" {
-  namespace     = "{{.Namespace}}url"
+  nss           = "{{.Nss}}url"
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}url"
   name          = "{{.Name}}"

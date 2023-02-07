@@ -17,9 +17,9 @@ Supported in provider *v3.9+*
 
 ```hcl
 data "vcd_rde_type" "my-rde-type" {
-  vendor    = "bigcorp"
-  namespace = "tech"
-  version   = "1.2.3"
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "1.2.3"
 }
 
 output "type-name" {
@@ -36,7 +36,7 @@ output "type-id" {
 The following arguments are supported:
 
 * `vendor` - (Required) The vendor of the Runtime Defined Entity type.
-* `namespace` - (Required) A unique namespace associated with the Runtime Defined Entity type.
+* `nss` - (Required) A unique namespace associated with the Runtime Defined Entity type.
 * `version` - (Required) The version of the Runtime Defined Entity type. Must follow [semantic versioning](https://semver.org/) syntax.
 
 ## Attribute Reference

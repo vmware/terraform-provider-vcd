@@ -654,6 +654,7 @@ func TestAccVcdNsxtEdgeBgpConfigIntegrationVdc(t *testing.T) {
 		"Org":        testConfig.VCD.Org,
 		"NsxtVdc":    testConfig.Nsxt.Vdc,
 		"NsxtEdgeGw": testConfig.Nsxt.EdgeGateway,
+		"TestName":   t.Name(),
 
 		"Tags": "network nsxt",
 	}
@@ -776,6 +777,7 @@ func TestAccVcdNsxtEdgeBgpConfigIntegrationVdcGroup(t *testing.T) {
 		"Org":                  testConfig.VCD.Org,
 		"NsxtVdcGroup":         testConfig.Nsxt.VdcGroup,
 		"NsxtEdgeGwInVdcGroup": testConfig.Nsxt.VdcGroupEdgeGateway,
+		"TestName":             t.Name(),
 
 		"Tags": "network nsxt",
 	}

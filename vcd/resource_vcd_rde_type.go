@@ -28,25 +28,25 @@ func resourceVcdRdeType() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the Runtime Defined Entity type",
+				Description: "The name of the Runtime Defined Entity Type",
 			},
 			"vendor": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The vendor name for the Runtime Defined Entity type",
+				Description: "The vendor name for the Runtime Defined Entity Type",
 			},
-			"namespace": {
+			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "A unique namespace associated with the Runtime Defined Entity type",
+				Description: "A unique namespace associated with the Runtime Defined Entity Type",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The version of the Runtime Defined Entity type. The version string must follow semantic versioning rules",
+				Description: "The version of the Runtime Defined Entity Type. The version string must follow semantic versioning rules",
 			},
 			"interface_ids": {
 				Type: schema.TypeSet,
@@ -54,19 +54,19 @@ func resourceVcdRdeType() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Optional:    true,
-				Description: "Set of Defined Interface URNs that this Runtime Defined Entity type is referenced by",
+				Description: "Set of Defined Interface URNs that this Runtime Defined Entity Type is referenced by",
 			},
 			"schema_url": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "URL that should point to a JSON-Schema valid definition file of the Runtime Defined Entity type",
+				Description:  "URL that should point to a JSON-Schema valid definition file of the Runtime Defined Entity Type",
 				AtLeastOneOf: []string{"schema_url", "schema"},
 			},
 			"schema": {
 				Type:                  schema.TypeString,
 				Optional:              true,
 				Computed:              true,
-				Description:           "The JSON-Schema valid definition of the Runtime Defined Entity type",
+				Description:           "The JSON-Schema valid definition of the Runtime Defined Entity Type",
 				AtLeastOneOf:          []string{"schema_url", "schema"},
 				DiffSuppressFunc:      hasJsonValueChanged,
 				DiffSuppressOnRefresh: true,
@@ -74,7 +74,7 @@ func resourceVcdRdeType() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The description of the Runtime Defined Entity type",
+				Description: "The description of the Runtime Defined Entity Type",
 			},
 			"external_id": {
 				Type:        schema.TypeString,
@@ -85,27 +85,25 @@ func resourceVcdRdeType() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: "To be used when creating a new version of a Runtime Defined Entity type. Specifies the version of the type that will be the template for the authorization configuration of the new version." +
+				Description: "To be used when creating a new version of a Runtime Defined Entity Type. Specifies the version of the type that will be the template for the authorization configuration of the new version." +
 					"The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version." +
 					"If not set, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type",
 			},
 			"readonly": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if the Runtime Defined Entity type cannot be modified",
+				Description: "True if the Runtime Defined Entity Type cannot be modified",
 			},
 		},
 	}
 }
 
 // hasJsonValueChanged tells Terraform whether the JSON schema set in HCL configuration (which can have whatever identation and other quirks)
-// matches the obtained JSON from VCD. For that we need to compare them in the same compacted format.
+// matches the obtained JSON from VCD.
 func hasJsonValueChanged(key, oldValue, newValue string, _ *schema.ResourceData) bool {
 	areEqual, err := areMarshaledJsonEqual([]byte(oldValue), []byte(newValue))
 	if err != nil {
-		if strings.Contains(err.Error(), "could not compact") {
-			util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, err)
-		}
+		util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, err)
 		return false
 	}
 	return areEqual
@@ -122,7 +120,7 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 	executeRdeTypeFunctionWithMutex(func() {
 		_, err = vcdClient.VCDClient.CreateRdeType(&types.DefinedEntityType{
 			Name:             d.Get("name").(string),
-			Namespace:        d.Get("namespace").(string),
+			Nss:              d.Get("nss").(string),
 			Version:          d.Get("version").(string),
 			Description:      d.Get("description").(string),
 			ExternalId:       d.Get("external_id").(string),
@@ -135,7 +133,7 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 	})
 
 	if err != nil {
-		return diag.Errorf("could not create the Runtime Defined Entity type: %s", err)
+		return diag.Errorf("could not create the Runtime Defined Entity Type: %s", err)
 	}
 	return resourceVcdRdeTypeRead(ctx, d, meta)
 }
@@ -167,13 +165,9 @@ func getRdeTypeSchema(d *schema.ResourceData) (map[string]interface{}, error) {
 // written in parallel.
 // We force to do it sequentially with a mutex.
 func executeRdeTypeFunctionWithMutex(rdeWriteFunction func()) {
-	// FIXME: The key should be more fine-grained, find which parameter causes the race condition. I believe it's either externalId or inheritedVersion, but
-	// not confirmed yet.
 	key := "vcd_rde_type"
 	vcdMutexKV.kvLock(key)
-
 	rdeWriteFunction()
-
 	vcdMutexKV.kvUnlock(key)
 }
 
@@ -210,13 +204,13 @@ func resourceVcdRdeTypeRead(ctx context.Context, d *schema.ResourceData, meta in
 	return genericVcdRdeTypeRead(ctx, d, meta, "resource")
 }
 
-// genericVcdRdeTypeRead reads a Runtime Defined Entity type from VCD and sets the Terraform state accordingly.
+// genericVcdRdeTypeRead reads a Runtime Defined Entity Type from VCD and sets the Terraform state accordingly.
 // If origin == "datasource", if the referenced RDE type doesn't exist, it errors.
 // If origin == "resource", if the referenced RDE type doesn't exist, it removes it from tfstate and exits normally.
 func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	rdeType, err := getRdeType(d, meta)
 	if origin == "resource" && govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Runtime Defined Entity type no longer exists. Removing from tfstate")
+		log.Printf("[DEBUG] Runtime Defined Entity Type no longer exists. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
@@ -225,7 +219,7 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	}
 
 	dSet(d, "vendor", rdeType.DefinedEntityType.Vendor)
-	dSet(d, "namespace", rdeType.DefinedEntityType.Namespace)
+	dSet(d, "nss", rdeType.DefinedEntityType.Nss)
 	dSet(d, "version", rdeType.DefinedEntityType.Version)
 	dSet(d, "name", rdeType.DefinedEntityType.Name)
 	dSet(d, "readonly", rdeType.DefinedEntityType.IsReadOnly)
@@ -238,7 +232,7 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	}
 	jsonSchema, err := jsonToCompactString(rdeType.DefinedEntityType.Schema)
 	if err != nil {
-		return diag.Errorf("could not save the Runtime Defined Entity type schema into state: %s", err)
+		return diag.Errorf("could not save the Runtime Defined Entity Type schema into state: %s", err)
 	}
 	err = d.Set("schema", jsonSchema)
 	if err != nil {
@@ -249,7 +243,7 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-// getRdeType retrieves a Runtime Defined Entity type from VCD with the required attributes from the Terraform config.
+// getRdeType retrieves a Runtime Defined Entity Type from VCD with the required attributes from the Terraform config.
 func getRdeType(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntityType, error) {
 	vcdClient := meta.(*VCDClient)
 
@@ -258,7 +252,7 @@ func getRdeType(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntityT
 	}
 
 	vendor := d.Get("vendor").(string)
-	nss := d.Get("namespace").(string)
+	nss := d.Get("nss").(string)
 	version := d.Get("version").(string)
 
 	return vcdClient.VCDClient.GetRdeType(vendor, nss, version)
@@ -267,7 +261,7 @@ func getRdeType(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntityT
 func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	rdeType, err := getRdeType(d, meta)
 	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Runtime Defined Entity type no longer exists. Removing from tfstate")
+		log.Printf("[DEBUG] Runtime Defined Entity Type no longer exists. Removing from tfstate")
 		return nil
 	}
 	if err != nil {
@@ -288,7 +282,7 @@ func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		})
 	})
 	if err != nil {
-		return diag.Errorf("could not update the Runtime Defined Entity type: %s", err)
+		return diag.Errorf("could not update the Runtime Defined Entity Type: %s", err)
 	}
 	return resourceVcdRdeTypeRead(ctx, d, meta)
 }
@@ -296,7 +290,7 @@ func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	rdeType, err := getRdeType(d, meta)
 	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Runtime Defined Entity type no longer exists. Removing from tfstate")
+		log.Printf("[DEBUG] Runtime Defined Entity Type no longer exists. Removing from tfstate")
 		return nil
 	}
 	if err != nil {
@@ -307,7 +301,7 @@ func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta in
 	})
 
 	if err != nil {
-		return diag.Errorf("could not delete the Runtime Defined Entity type: %s", err)
+		return diag.Errorf("could not delete the Runtime Defined Entity Type: %s", err)
 	}
 	return nil
 }
@@ -328,14 +322,14 @@ func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta in
 func resourceVcdRdeTypeImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) < 3 {
-		return nil, fmt.Errorf("resource identifier must be specified as vendor.namespace.version")
+		return nil, fmt.Errorf("resource identifier must be specified as vendor.nss.version")
 	}
-	vendor, namespace, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
+	vendor, nss, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
 
 	vcdClient := meta.(*VCDClient)
-	rdeType, err := vcdClient.GetRdeType(vendor, namespace, version)
+	rdeType, err := vcdClient.GetRdeType(vendor, nss, version)
 	if err != nil {
-		return nil, fmt.Errorf("error finding Runtime Defined Entity type with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
+		return nil, fmt.Errorf("error finding Runtime Defined Entity Type with vendor %s, nss %s and version %s: %s", vendor, nss, version, err)
 	}
 
 	d.SetId(rdeType.DefinedEntityType.ID)
