@@ -157,8 +157,9 @@ func TestAccVcdCatalogRename(t *testing.T) {
 
 	configText := templateFill(testAccCheckVcdCatalogRename, params)
 
+	catalogUpdatedName := catalogName + "_updated"
 	params["FuncName"] = t.Name() + "-rename"
-	params["CatalogName"] = catalogName + "_updated"
+	params["CatalogName"] = catalogUpdatedName
 	renameText := templateFill(testAccCheckVcdCatalogRename, params)
 
 	if vcdShortTest {
@@ -166,21 +167,45 @@ func TestAccVcdCatalogRename(t *testing.T) {
 		return
 	}
 	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] RENAMING CONFIGURATION: %s", renameText)
+
+	resourceCatalog := "vcd_catalog.test-catalog"
+	resourceMedia := "vcd_catalog_media.test_media"
+	resourcevAppTemplate := "vcd_catalog_vapp_template.test_vapp_template"
+	// Use field value caching function across multiple test steps to ensure object wasn't recreated (ID did not change)
+	cachedId := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
-		ProviderFactories: buildMultipleProviders(),
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckCatalogEntityState("vcd_catalog", testConfig.VCD.Org, t.Name(), false),
-		),
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			// Test creation
 			{
 				Config: configText,
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogName),
+					resource.TestCheckResourceAttr(resourceCatalog, "description", t.Name()),
+					testAccCheckVcdCatalogExists(resourceCatalog),
+					resource.TestMatchResourceAttr(resourceCatalog, "catalog_version", regexp.MustCompile(`^\d+`)),
+					resource.TestMatchResourceAttr(resourceCatalog, "owner_name", regexp.MustCompile(`^\S+$`)),
+				),
 			},
 			{
 				Config: renameText,
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					cachedId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					resource.TestCheckResourceAttr(resourceCatalog, "number_of_vapp_templates", "1"),
+					resource.TestCheckResourceAttr(resourceCatalog, "number_of_media", "1"),
+				),
+			},
+			{
+				Config: renameText,
+				Check: resource.ComposeTestCheckFunc(
+					cachedId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedId.testCheckCachedResourceFieldValue(resourceMedia, "catalog_id"),
+					cachedId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "catalog_id"),
+				),
 			},
 		},
 	})
@@ -196,10 +221,6 @@ resource "vcd_catalog" "test-catalog" {
   delete_force      = "true"
   delete_recursive  = "true"
 
-  metadata = {
-    catalog_metadata  = "catalog Metadata"
-    catalog_metadata2 = "catalog Metadata2"
-  }
 }
 
 resource "vcd_catalog_vapp_template" "test_vapp_template" {
@@ -243,8 +264,6 @@ resource "vcd_vm" "{{.VmName}}-2" {
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
   power_on         = false
-
-  depends_on = [vcd_catalog_media.test_media]
 }
 
 `
