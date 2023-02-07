@@ -36,7 +36,7 @@ func resourceVcdRdeType() *schema.Resource {
 				ForceNew:    true,
 				Description: "The vendor name for the Runtime Defined Entity Type",
 			},
-			"namespace": {
+			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -120,7 +120,7 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 	executeRdeTypeFunctionWithMutex(func() {
 		_, err = vcdClient.VCDClient.CreateRdeType(&types.DefinedEntityType{
 			Name:             d.Get("name").(string),
-			Namespace:        d.Get("namespace").(string),
+			Nss:              d.Get("nss").(string),
 			Version:          d.Get("version").(string),
 			Description:      d.Get("description").(string),
 			ExternalId:       d.Get("external_id").(string),
@@ -219,7 +219,7 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	}
 
 	dSet(d, "vendor", rdeType.DefinedEntityType.Vendor)
-	dSet(d, "namespace", rdeType.DefinedEntityType.Namespace)
+	dSet(d, "nss", rdeType.DefinedEntityType.Nss)
 	dSet(d, "version", rdeType.DefinedEntityType.Version)
 	dSet(d, "name", rdeType.DefinedEntityType.Name)
 	dSet(d, "readonly", rdeType.DefinedEntityType.IsReadOnly)
@@ -252,7 +252,7 @@ func getRdeType(d *schema.ResourceData, meta interface{}) (*govcd.DefinedEntityT
 	}
 
 	vendor := d.Get("vendor").(string)
-	nss := d.Get("namespace").(string)
+	nss := d.Get("nss").(string)
 	version := d.Get("version").(string)
 
 	return vcdClient.VCDClient.GetRdeType(vendor, nss, version)
@@ -322,14 +322,14 @@ func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta in
 func resourceVcdRdeTypeImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) < 3 {
-		return nil, fmt.Errorf("resource identifier must be specified as vendor.namespace.version")
+		return nil, fmt.Errorf("resource identifier must be specified as vendor.nss.version")
 	}
-	vendor, namespace, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
+	vendor, nss, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
 
 	vcdClient := meta.(*VCDClient)
-	rdeType, err := vcdClient.GetRdeType(vendor, namespace, version)
+	rdeType, err := vcdClient.GetRdeType(vendor, nss, version)
 	if err != nil {
-		return nil, fmt.Errorf("error finding Runtime Defined Entity Type with vendor %s, namespace %s and version %s: %s", vendor, namespace, version, err)
+		return nil, fmt.Errorf("error finding Runtime Defined Entity Type with vendor %s, nss %s and version %s: %s", vendor, nss, version, err)
 	}
 
 	d.SetId(rdeType.DefinedEntityType.ID)

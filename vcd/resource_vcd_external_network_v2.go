@@ -47,23 +47,17 @@ var networkV2IpScope = &schema.Resource{
 			Optional:     true,
 			Description:  "Primary DNS server",
 			ValidateFunc: validation.IsIPAddress,
-			// Only NSX-V allows configuring DNS
-			ConflictsWith: []string{"nsxt_network"},
 		},
 		"dns2": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Description:  "Secondary DNS server",
 			ValidateFunc: validation.IsIPAddress,
-			// Only NSX-V allows configuring DNS
-			ConflictsWith: []string{"nsxt_network"},
 		},
 		"dns_suffix": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "DNS suffix",
-			// Only NSX-V allows configuring DNS
-			ConflictsWith: []string{"nsxt_network"},
 		},
 	},
 }
