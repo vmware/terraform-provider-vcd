@@ -17,14 +17,14 @@ Supported in provider *v3.9+*
 
 ```hcl
 data "vcd_rde_interface" "my-interface" {
-  vendor    = "bigcorp"
-  namespace = "tech1"
-  version   = "1.2.3"
+  vendor  = "bigcorp"
+  nss     = "tech1"
+  version = "1.2.3"
 }
 
 resource "vcd_rde_type" "my-rde-type" {
   vendor        = "vmware"
-  namespace     = "vcd"
+  nss           = "vcd"
   version       = "4.5.6"
   name          = "My VMware RDE Type"
   interface_ids = [data.vcd_rde_interface.my-interface.id]
@@ -36,14 +36,14 @@ resource "vcd_rde_type" "my-rde-type" {
 
 ```hcl
 data "vcd_rde_interface" "my-interface" {
-  vendor    = "bigcorp"
-  namespace = "tech1"
-  version   = "1.2.3"
+  vendor  = "bigcorp"
+  ns      = "tech1"
+  version = "1.2.3"
 }
 
 resource "vcd_rde_type" "my-rde-type" {
   vendor        = "vmware"
-  namespace     = "vcd"
+  nss           = "vcd"
   version       = "4.5.6"
   name          = "My VMware RDE Type"
   interface_ids = [data.vcd_rde_interface.my-interface.id]
@@ -56,7 +56,7 @@ resource "vcd_rde_type" "my-rde-type" {
 The following arguments are supported:
 
 * `vendor` - (Required) The vendor of the Runtime Defined Entity type.
-* `namespace` - (Required) A unique namespace associated with the Runtime Defined Entity type.
+* `nss` - (Required) A unique namespace associated with the Runtime Defined Entity type.
 * `version` - (Required) The version of the Runtime Defined Entity type. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the Runtime Defined Entity type.
 * `description` - (Optional) The description of the Runtime Defined Entity type.
@@ -81,15 +81,15 @@ The following attributes are supported:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing Runtime Defined Entity type can be [imported][docs-import] into this resource via supplying its vendor, namespace and version, which
+An existing Runtime Defined Entity type can be [imported][docs-import] into this resource via supplying its vendor, nss and version, which
 unequivocally identifies it.
 For example, using this structure, representing an existing Runtime Defined Entity type that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_rde_type" "outer-rde-type" {
-  vendor    = "bigcorp"
-  namespace = "tech"
-  version   = "4.5.6"
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "4.5.6"
 }
 ```
 
