@@ -178,7 +178,7 @@ func TestAccVcdCatalogRename(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVdcDestroy,
+		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
 			// Test creation
 			{
