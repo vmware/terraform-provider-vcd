@@ -138,12 +138,13 @@ func TestAccVcdCatalog(t *testing.T) {
 func TestAccVcdCatalogRename(t *testing.T) {
 	preTestChecks(t)
 
+	orgName := testConfig.VCD.Org
 	catalogName := t.Name() + "-cat"
 	catalogMediaName := t.Name() + "-media"
 	vappTemplateName := t.Name() + "-templ"
 
 	var params = StringMap{
-		"Org":              testConfig.VCD.Org,
+		"Org":              orgName,
 		"CatalogName":      catalogName,
 		"CatalogMediaName": catalogMediaName,
 		"VappTemplateName": vappTemplateName,
@@ -184,27 +185,32 @@ func TestAccVcdCatalogRename(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					testAccCheckVcdCatalogExists(resourceCatalog),
+					testAccCheckCatalogEntityState("vcd_catalog_media", orgName, catalogMediaName, true),
+					testAccCheckCatalogEntityState("vcd_catalog_vapp_template", orgName, vappTemplateName, true),
 					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogName),
 					resource.TestCheckResourceAttr(resourceCatalog, "description", t.Name()),
-					testAccCheckVcdCatalogExists(resourceCatalog),
 					resource.TestMatchResourceAttr(resourceCatalog, "catalog_version", regexp.MustCompile(`^\d+`)),
 					resource.TestMatchResourceAttr(resourceCatalog, "owner_name", regexp.MustCompile(`^\S+$`)),
 				),
 			},
 			{
+				// Intermediate step needed to rename the catalog before checking
+				// the vApp template and media depending on it.
 				Config: renameText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					resource.TestCheckResourceAttr(resourceCatalog, "number_of_vapp_templates", "1"),
-					resource.TestCheckResourceAttr(resourceCatalog, "number_of_media", "1"),
 				),
 			},
 			{
 				Config: renameText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedId.testCheckCachedResourceFieldValue(resourceMedia, "catalog_id"),
-					cachedId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "catalog_id"),
+					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr(resourceCatalog, "number_of_vapp_templates", "1"),
+					resource.TestCheckResourceAttr(resourceCatalog, "number_of_media", "1"),
+					resource.TestCheckResourceAttrPair(resourcevAppTemplate, "catalog_id", resourceCatalog, "id"),
+					resource.TestCheckResourceAttrPair(resourceMedia, "catalog_id", resourceCatalog, "id"),
 				),
 			},
 		},
