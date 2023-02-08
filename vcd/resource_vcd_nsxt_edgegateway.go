@@ -817,8 +817,13 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	// End of 'subnet' field
 
 	// 'auto_subnet' and 'total_allocated_ip_count' fields
-	if edgeGw.TotalIpCount != nil {
-		dSet(d, "total_allocated_ip_count", *edgeGw.TotalIpCount)
+	totalAllocatedIpCount, err := edgeGateway.GetAllocatedIpCount(false)
+	if err != nil {
+		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count: %s", err)
+	}
+	err = d.Set("total_allocated_ip_count", *totalAllocatedIpCount)
+	if err != nil {
+		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count: %s", err)
 	}
 
 	autoSubnets := make([]interface{}, 1)
