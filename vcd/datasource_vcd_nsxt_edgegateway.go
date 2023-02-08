@@ -156,6 +156,32 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Optional:    true,
 				Description: "NSX-T Edge Cluster ID.",
 			},
+			"used_ips": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "All used IP addresses",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"unused_ips": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "All unused IP addresses",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"used_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of used IP addresses",
+			},
+			"unused_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of unused IP addresses",
+			},
 		},
 	}
 }
@@ -201,7 +227,7 @@ func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("error looking up Edge Gateway - switch did not match any cases")
 	}
 
-	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
+	err = setNsxtEdgeGatewayData(edge, d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error reading NSX-T Edge Gateway data: %s", err))
 	}

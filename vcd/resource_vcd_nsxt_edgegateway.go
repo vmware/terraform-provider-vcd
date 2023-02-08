@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -198,6 +200,32 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Select specific NSX-T Edge Cluster. Will be inherited from external network if not specified",
 			},
+			"used_ips": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "All used IP addresses",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"unused_ips": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "All unused IP addresses",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"used_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of used IP addresses",
+			},
+			"unused_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of unused IP addresses",
+			},
 		},
 	}
 }
@@ -296,7 +324,7 @@ func resourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway: %s", err)
 	}
 
-	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
+	err = setNsxtEdgeGatewayData(edge, d)
 	if err != nil {
 		return diag.Errorf("error setting NSX-T Edge Gateway data: %s", err)
 	}
@@ -393,10 +421,9 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
 	_, usingAutoAllocatedSubnetAllocation := d.GetOk("auto_allocated_subnet")
 
-	log.Printf("[TRACE] NSX-T Edge Gateway operation '%t' using subnet allocation: %t, auto subnet allocation: %t, auto allocated subnet allocation: %t",
-		isCreateOperation, usingSubnetAllocation, usingAutoSubnetAllocation, usingAutoAllocatedSubnetAllocation)
-	log.Printf("[TRACE] NSX-T Edge Gateway operation '%t' has change subnet allocation: %t, auto subnet allocation: %t, auto allocated subnet allocation: %t",
-		isCreateOperation, d.HasChange("subnet"), d.HasChange("auto_subnet"), d.HasChange("auto_allocated_subnet"))
+	log.Printf("[TRACE] NSX-T Edge Gateway operation '%t' 'subnet': %t (HasChange %t), 'auto_subnet': %t (HasChange %t), 'auto_allocated_subnet': %t (HasChange %t)",
+		isCreateOperation, usingSubnetAllocation, d.HasChange("subnet"), usingAutoSubnetAllocation,
+		d.HasChange("auto_subnet"), usingAutoAllocatedSubnetAllocation, d.HasChange("auto_allocated_subnet"))
 
 	switch {
 	case (isCreateOperation && usingSubnetAllocation) || (d.HasChange("subnet") && !isCreateOperation):
@@ -673,20 +700,21 @@ func getNsxtEdgeGatewayUplinkRangeTypes(subnetMap map[string]interface{}) []type
 }
 
 // setNsxtEdgeGatewayData stores Terraform schema from a read *types.OpenAPIEdgeGateway type
-func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.ResourceData) error {
-	dSet(d, "name", edgeGateway.Name)
-	dSet(d, "description", edgeGateway.Description)
-	dSet(d, "edge_cluster_id", edgeGateway.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
-	if len(edgeGateway.EdgeGatewayUplinks) < 1 {
+func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.ResourceData) error {
+	edgeGw := edgeGateway.EdgeGateway
+	dSet(d, "name", edgeGw.Name)
+	dSet(d, "description", edgeGw.Description)
+	dSet(d, "edge_cluster_id", edgeGw.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
+	if len(edgeGw.EdgeGatewayUplinks) < 1 {
 		return fmt.Errorf("no edge gateway uplinks detected during read")
 	}
 
-	dSet(d, "owner_id", edgeGateway.OwnerRef.ID)
-	dSet(d, "vdc", edgeGateway.OwnerRef.Name)
+	dSet(d, "owner_id", edgeGw.OwnerRef.ID)
+	dSet(d, "vdc", edgeGw.OwnerRef.Name)
 
 	// NSX-T Edge Gateways support only 1 uplink. Edge gateway can only be connected to one external network (in NSX-T terms
 	// Tier 1 gateway can only be connected to single Tier 0 gateway)
-	edgeUplink := edgeGateway.EdgeGatewayUplinks[0]
+	edgeUplink := edgeGw.EdgeGatewayUplinks[0]
 
 	dSet(d, "dedicate_external_network", edgeUplink.Dedicated)
 	dSet(d, "external_network_id", edgeUplink.UplinkID)
@@ -739,8 +767,8 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 	//
 	// Automatic allocation related fields
 	//
-	if edgeGateway.TotalIpCount != nil {
-		dSet(d, "total_allocated_ip_count", *edgeGateway.TotalIpCount)
+	if edgeGw.TotalIpCount != nil {
+		dSet(d, "total_allocated_ip_count", *edgeGw.TotalIpCount)
 	}
 
 	autoSubnets := make([]interface{}, 1)
@@ -776,6 +804,43 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 		return fmt.Errorf("error setting NSX-T Edge Gateway auto allocated subnets after read: %s", err)
 	}
 
+	allTime := time.Now()
+
+	startTime := time.Now()
+	unusedIps, err := edgeGateway.GetAllUnusedExternalIPAddresses(false)
+	timeElapsed := time.Since(startTime)
+	log.Printf("[TRACE] Time elapsed for GetAllUnusedExternalIPAddresses: %s", timeElapsed)
+	if err != nil {
+		return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
+	}
+	// unusedIpStringSlice := convertNetIpAddrsToStrings(unusedIps)
+	unusedIpStringSlice := convertNetIpAddrsToStrings(unusedIps)
+	err = d.Set("unused_ips", unusedIpStringSlice)
+	if err != nil {
+		return fmt.Errorf("error setting NSX-T Edge Gateway unused IPs after read: %s", err)
+
+	}
+
+	startTime = time.Now()
+	timeElapsed = time.Since(startTime)
+	log.Printf("[TRACE] Time elapsed for GetUsedIpAddressSlice: %s", timeElapsed)
+	usedIps, err := edgeGateway.GetUsedIpAddressSlice(false)
+	if err != nil {
+		return fmt.Errorf("error getting NSX-T Edge Gateway used IPs after read: %s", err)
+	}
+	usedIpSlice := convertNetIpAddrsToStrings(usedIps)
+	// err = d.Set("used_ips", convertStringsToTypeSet(usedIpSlice))
+	err = d.Set("used_ips", usedIpSlice)
+	if err != nil {
+		return fmt.Errorf("error setting NSX-T Edge Gateway unused IPs after read: %s", err)
+	}
+
+	timeElapsed = time.Since(allTime)
+	log.Printf("[TRACE] Time elapsed for store NSX-T Edge Gateway IPs: %s", timeElapsed)
+
+	dSet(d, "used_ip_count", len(usedIps))
+	dSet(d, "unused_ip_count", len(unusedIps))
+
 	return nil
 }
 
@@ -784,4 +849,13 @@ func setNsxtEdgeGatewayData(edgeGateway *types.OpenAPIEdgeGateway, d *schema.Res
 type vdcOrVdcGroupVerifier interface {
 	IsNsxt() bool
 	GetNsxtEdgeGatewayByName(name string) (*govcd.NsxtEdgeGateway, error)
+}
+
+// function to convert []netip.Addr to []string
+func convertNetIpAddrsToStrings(netIpAddrs []netip.Addr) []string {
+	var ipStrings []string
+	for _, ip := range netIpAddrs {
+		ipStrings = append(ipStrings, ip.String())
+	}
+	return ipStrings
 }

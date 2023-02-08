@@ -57,6 +57,8 @@ func TestAccVcdNsxtEdgeGatewayAutoAllocationAutoSubnet(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "100"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ips.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ips.#", "99"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "auto_subnet.*", map[string]string{
 						"gateway":       "93.0.0.1",
 						"prefix_length": "24",
@@ -331,3 +333,132 @@ func stateDumper() resource.TestCheckFunc {
 		return nil
 	}
 }
+
+//// TypeSet benchmark
+
+func TestAccVcdNsxtEdgeGatewayAutoAllocationAutoSubnetBenchmark(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	skipNoConfiguration(t, StringMap{"Nsxt.ExternalNetwork": testConfig.Nsxt.ExternalNetwork})
+
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxtVdc":             testConfig.Nsxt.Vdc,
+		"NsxtEdgeGatewayVcd":  t.Name(),
+		"ExternalNetwork":     testConfig.Nsxt.ExternalNetwork,
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+
+		"Tags": "gateway nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtEdgeGatewayAutoAllocationAutoSubnet1Benchmark, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	// params["FuncName"] = t.Name() + "-step2"
+	// configText2 := templateFill(testAccVcdNsxtEdgeGatewayAutoAllocationAutoSubnet2, params)
+	// debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					stateDumper(),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "100"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ips.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ips.#", "99"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "auto_subnet.*", map[string]string{
+						"gateway":       "1.1.1.1",
+						"prefix_length": "1",
+					}),
+					// resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "auto_subnet.*", map[string]string{
+					// 	"gateway":       "14.14.14.1",
+					// 	"prefix_length": "24",
+					// }),
+				),
+			},
+			// {
+			// 	Config: configText2,
+			// 	Taint:  []string{"vcd_nsxt_edgegateway.nsxt-edge"},
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
+			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "204"),
+			// 		resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip"),
+			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "auto_subnet.*", map[string]string{
+			// 			"gateway":       "93.0.0.1",
+			// 			"prefix_length": "24",
+			// 		}),
+			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "auto_subnet.*", map[string]string{
+			// 			"gateway":       "14.14.14.1",
+			// 			"prefix_length": "24",
+			// 		}),
+			// 		stateDumper(),
+			// 	),
+			// },
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtEdgeGatewayAutoAllocationAutoSubnet1Benchmark = `
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "{{.NsxtTier0Router}}"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+
+  ip_scope {
+    enabled       = true
+    gateway       = "1.1.1.1"
+    prefix_length = "1"
+
+    static_ip_pool {
+      start_address = "0.0.0.1"
+      end_address   = "127.255.255.254"
+    }
+  }
+
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
+
+  external_network_id = vcd_external_network_v2.ext-net-nsxt.id
+
+  total_allocated_ip_count = 2147483646 # all IPs in the external network
+  auto_subnet {
+    gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
+    prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
+  }
+}
+`
