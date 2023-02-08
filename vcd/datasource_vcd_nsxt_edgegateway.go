@@ -156,22 +156,6 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Optional:    true,
 				Description: "NSX-T Edge Cluster ID.",
 			},
-			"used_ips": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "All used IP addresses",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"unused_ips": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "All unused IP addresses",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 			"used_ip_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,

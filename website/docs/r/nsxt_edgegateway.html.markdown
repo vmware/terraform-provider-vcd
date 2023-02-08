@@ -203,14 +203,14 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
   external_network_id = data.vcd_external_network_v2.ext-net-nsxt.id
 
-  # 100 IPs will be allocated from any of `auto_subnet` defined blocks. `primary_ip` will be exposed
-  # as a root attribute
+  # 100 IPs will be allocated from any of `auto_subnet` defined blocks
 
   total_allocated_ip_count = 100 
 
   auto_subnet {
     gateway       = "77.77.77.1"
-    prefix_length = "24
+    prefix_length = "24"
+    primary_ip    = "77.77.77.254"
   }
 
   auto_subnet {
@@ -240,7 +240,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   auto_allocated_subnet {
     gateway            = "88.77.77.1"
     prefix_length      = "24"
-    allocated_ip_count = 9
+    allocated_ip_count = 15
   }
 }
 ```
@@ -289,7 +289,8 @@ can be used to lookup ID by name.
 different strategies: Manual IP allocation (`subnet`), automatic IP allocations in any of defined
 subnets (`auto_subnet` with `total_allocated_ip_count`), automatic IP allocations per defined subnet
 (`auto_allocated_subnet`). One of these is **required**. Different set definition structures are
-required due to Terraform schema limitations.
+required due to Terraform schema limitations. **Note**. Allocation modes are split due to Terraform 
+schema limitations and migrations between configuration can only be done __manually__.
 
 
 <a id="edgegateway-subnet"></a>
@@ -317,6 +318,7 @@ allocated
 
 * `gateway` - (Required) - Gateway for a subnet in external network
 * `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `primary_ip` (Required) - Is required, but only in one of defined `auto_subnet` set
 
 ~> Only network definitions are required and IPs are allocated automatically, based on
 `total_allocated_ip_count` parameter
@@ -332,13 +334,15 @@ required. Automatic allocation will be used
 * `gateway` - (Required) - Gateway for a subnet in external network
 * `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
 * `primary_ip` (Required) - Is required, but only in one of defined `auto_allocated_subnet` sets
-* `allocated_ip_count` (Required) - 
+* `allocated_ip_count` (Required) - Number of allocated IPs from that particular subnet
 
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
 * `primary_ip` - Primary IP address exposed for an easy access without nesting.
+* `used_ip_count` - Unused IP count in this Edge Gateway
+* `unused_ip_count` Used IP count in this Edge Gateway
 
 
 ## Importing
