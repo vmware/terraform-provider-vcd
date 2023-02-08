@@ -242,29 +242,28 @@ resource "vcd_catalog" "test-catalog" {
   name        = "{{.CatalogName}}"
   description = "{{.Description}}"
 
-  delete_force      = "true"
-  delete_recursive  = "true"
-
+  delete_force     = "true"
+  delete_recursive = "true"
 }
 
 resource "vcd_catalog_vapp_template" "test-vapp-template" {
   org     = "{{.Org}}"
   catalog_id = resource.vcd_catalog.test-catalog.id
 
-  name                 = "{{.VappTemplateName}}"
-  description          = "TestDescription"
-  ova_path             = "{{.OvaPath}}"
-  upload_piece_size    = {{.UploadPieceSize}}
+  name              = "{{.VappTemplateName}}"
+  description       = "TestDescription"
+  ova_path          = "{{.OvaPath}}"
+  upload_piece_size = {{.UploadPieceSize}}
 }
 
 resource "vcd_catalog_media"  "test-media" {
   org     = "{{.Org}}"
   catalog_id = resource.vcd_catalog.test-catalog.id
 
-  name                 = "{{.CatalogMediaName}}"
-  description          = "TestDescription"
-  media_path           = "{{.MediaPath}}"
-  upload_piece_size    = {{.UploadPieceSize}}
+  name              = "{{.CatalogMediaName}}"
+  description       = "TestDescription"
+  media_path        = "{{.MediaPath}}"
+  upload_piece_size = {{.UploadPieceSize}}
 }
 
 resource "vcd_vm" "{{.VmName}}-1" {
@@ -273,8 +272,6 @@ resource "vcd_vm" "{{.VmName}}-1" {
   vapp_template_id = resource.vcd_catalog_vapp_template.test-vapp-template.id
   description      = "test standalone VM 1"
   power_on         = false
-
-
 }
 
 resource "vcd_vm" "{{.VmName}}-2" {
