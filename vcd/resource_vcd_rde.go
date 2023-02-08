@@ -95,6 +95,12 @@ func resourceVcdRde() *schema.Resource {
 					"deleted until the entity is resolved.",
 				Required: true,
 			},
+			"force_delete": {
+				Type:        schema.TypeBool,
+				Description: "If `true`, the Runtime Defined Entity will be deleted even if it was not resolved",
+				Default:     false,
+				Optional:    true,
+			},
 			"state": {
 				Type:        schema.TypeString,
 				Description: "If the specified JSON in either `entity` or `entity_url` is correct, the state will be RESOLVED, otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
@@ -320,6 +326,13 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	rde, err := getRde(d, vcdClient)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if d.Get("force_delete").(bool) {
+		err = rde.Resolve()
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	err = rde.Delete()
