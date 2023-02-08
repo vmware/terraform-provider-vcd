@@ -271,6 +271,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity,
 	}
 
 	// We perform another GET by ID to retrieve the ETag of the RDE
+	// FIXME: Check what happens if we create from scratch an RDE with name "a" and there's already one with "a" in VCD
 	return vcdClient.GetRdeById(rdes[0].DefinedEntity.ID)
 }
 
