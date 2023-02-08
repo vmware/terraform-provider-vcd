@@ -139,12 +139,15 @@ func TestAccVcdCatalogRename(t *testing.T) {
 	preTestChecks(t)
 
 	orgName := testConfig.VCD.Org
+	vdcName := testConfig.Nsxt.Vdc
 	catalogName := t.Name() + "-cat"
 	catalogMediaName := t.Name() + "-media"
 	vappTemplateName := t.Name() + "-templ"
+	vmName := "test-vm"
 
 	var params = StringMap{
 		"Org":              orgName,
+		"Vdc":              vdcName,
 		"CatalogName":      catalogName,
 		"CatalogMediaName": catalogMediaName,
 		"VappTemplateName": vappTemplateName,
@@ -152,7 +155,7 @@ func TestAccVcdCatalogRename(t *testing.T) {
 		"OvaPath":          testConfig.Ova.OvaPath,
 		"MediaPath":        testConfig.Media.MediaPath,
 		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"VmName":           "test-vm",
+		"VmName":           vmName,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -184,7 +187,11 @@ func TestAccVcdCatalogRename(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckCatalogDestroy,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testCheckCatalogDestroy(orgName, catalogUpdatedName),
+			testAccCheckVcdStandaloneVmDestroy(vmName+"-1", orgName, vdcName),
+			testAccCheckVcdStandaloneVmDestroy(vmName+"-2", orgName, vdcName),
+		),
 		Steps: []resource.TestStep{
 			// Test creation
 			{
@@ -214,6 +221,8 @@ func TestAccVcdCatalogRename(t *testing.T) {
 					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "id"),
 					cachedVMId1.testCheckCachedResourceFieldValue(resourceVM1, "id"),
 					cachedVMId2.testCheckCachedResourceFieldValue(resourceVM2, "id"),
+					testAccCheckVcdStandaloneVmExists(vmName+"-1", resourceVM1, orgName, vdcName),
+					testAccCheckVcdStandaloneVmExists(vmName+"-2", resourceVM2, orgName, vdcName),
 				),
 			},
 			{
@@ -268,6 +277,7 @@ resource "vcd_catalog_media"  "test-media" {
 
 resource "vcd_vm" "{{.VmName}}-1" {
   org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
   name             = "{{.VmName}}-1"
   vapp_template_id = resource.vcd_catalog_vapp_template.test-vapp-template.id
   description      = "test standalone VM 1"
@@ -276,6 +286,7 @@ resource "vcd_vm" "{{.VmName}}-1" {
 
 resource "vcd_vm" "{{.VmName}}-2" {
   org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
   name             = "{{.VmName}}-2"
   boot_image_id    = resource.vcd_catalog_media.test-media.id
   description      = "test standalone VM 2"
