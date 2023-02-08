@@ -205,7 +205,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
   # 100 IPs will be allocated from any of `auto_subnet` defined blocks
 
-  total_allocated_ip_count = 100 
+  total_allocated_ip_count = 100
 
   auto_subnet {
     gateway       = "77.77.77.1"
