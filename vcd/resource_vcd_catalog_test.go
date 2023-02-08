@@ -174,7 +174,11 @@ func TestAccVcdCatalogRename(t *testing.T) {
 	resourceMedia := "vcd_catalog_media.test_media"
 	resourcevAppTemplate := "vcd_catalog_vapp_template.test_vapp_template"
 	// Use field value caching function across multiple test steps to ensure object wasn't recreated (ID did not change)
-	cachedId := &testCachedFieldValue{}
+	cachedCatalogId := &testCachedFieldValue{}
+	cachedMediaId := &testCachedFieldValue{}
+	cachedvAppTemplateId := &testCachedFieldValue{}
+	cachedVMId1 := &testCachedFieldValue{}
+	cachedVMId2 := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -184,7 +188,11 @@ func TestAccVcdCatalogRename(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					cachedId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedCatalogId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedvAppTemplateId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedVMId1.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedVMId2.cacheTestResourceFieldValue(resourceCatalog, "id"),
 					testAccCheckVcdCatalogExists(resourceCatalog),
 					testAccCheckCatalogEntityState("vcd_catalog_media", orgName, catalogMediaName, true),
 					testAccCheckCatalogEntityState("vcd_catalog_vapp_template", orgName, vappTemplateName, true),
@@ -199,13 +207,21 @@ func TestAccVcdCatalogRename(t *testing.T) {
 				// the vApp template and media depending on it.
 				Config: renameText,
 				Check: resource.ComposeTestCheckFunc(
-					cachedId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedCatalogId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
 				),
 			},
 			{
 				Config: renameText,
 				Check: resource.ComposeTestCheckFunc(
-					cachedId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedCatalogId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
 					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogUpdatedName),
 					resource.TestCheckResourceAttr(resourceCatalog, "number_of_vapp_templates", "1"),
 					resource.TestCheckResourceAttr(resourceCatalog, "number_of_media", "1"),
