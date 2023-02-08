@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/netip"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -883,13 +882,4 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 type vdcOrVdcGroupVerifier interface {
 	IsNsxt() bool
 	GetNsxtEdgeGatewayByName(name string) (*govcd.NsxtEdgeGateway, error)
-}
-
-// function to convert []netip.Addr to []string
-func convertNetIpAddrsToStrings(netIpAddrs []netip.Addr) []string {
-	var ipStrings []string
-	for _, ip := range netIpAddrs {
-		ipStrings = append(ipStrings, ip.String())
-	}
-	return ipStrings
 }
