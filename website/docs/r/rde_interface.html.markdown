@@ -65,7 +65,7 @@ For example, using this structure, representing an existing RDE Interface that w
 ```hcl
 resource "vcd_rde_interface" "outer_interface" {
   vendor    = "bigcorp"
-  nss = "tech"
+  nss       = "tech"
   version   = "4.5.6"
 }
 ```
