@@ -36,7 +36,7 @@ var nsxtEdgeSubnet = &schema.Resource{
 		"prefix_length": {
 			Type:        schema.TypeInt,
 			Required:    true,
-			Description: "Netmask address for a subnet (e.g. 24 for /24)",
+			Description: "Prefix length for a subnet (e.g. 24)",
 		},
 		"primary_ip": {
 			Type:        schema.TypeString,
@@ -69,7 +69,7 @@ var nsxtEdgeAutoSubnetAndTotal = &schema.Resource{
 		"prefix_length": {
 			Type:        schema.TypeInt,
 			Required:    true,
-			Description: "Netmask address for a subnet (e.g. 24 for /24)",
+			Description: "Prefix length for a subnet (e.g. 24)",
 		},
 	},
 }
@@ -84,7 +84,7 @@ var nsxtEdgeAutoAllocatedSubnet = &schema.Resource{
 		"prefix_length": {
 			Type:        schema.TypeInt,
 			Required:    true,
-			Description: "Netmask address for a subnet (e.g. 24 for /24)",
+			Description: "Prefix length for a subnet (e.g. 24)",
 		},
 		"primary_ip": {
 			Type:        schema.TypeString,
@@ -420,6 +420,16 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 		isCreateOperation, isUpdateOperation, usingSubnetAllocation, d.HasChange("subnet"), usingAutoSubnetAllocation,
 		d.HasChange("auto_subnet"), usingAutoAllocatedSubnetAllocation, d.HasChange("auto_allocated_subnet"))
 
+	// This switch takes the decision on which allocation method to use for building up the Edge
+	// Gateway uplink structure. It is based on the following rules which work together with schema
+	// constraints to ensure that only one allocation method is used:
+	// *. 'subnet' is used for create operationor if its schema has changed during an update operation
+	// *. 'auto_subnet' is used for create operationor if its schema has changed during an update operation
+	// *. 'auto_allocated_subnet' is used for create operationor if its schema has changed during an update operation
+	// *. If an update operation is performed and none of the above has changed, then the existing
+	// allocation is passed through from the existing Edge Gateway
+	// * Default case - throw an error if none of the above cases match
+
 	switch {
 	// 'subnet' is specified
 	case (isCreateOperation && usingSubnetAllocation) || (isUpdateOperation && d.HasChange("subnet")):
@@ -432,6 +442,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 		if totalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
 			edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int)
 			// Primary IP is an additional IP address that is not included in the total allocated IP count
+			// when used with QuickAddAllocatedIPCount
 			if isPrimaryIpSet {
 				edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - 1
 			}
@@ -442,7 +453,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 
 		}
 
-	// auto_allocated_subnet is specified
+	// 'auto_allocated_subnet' is specified
 	case (isCreateOperation && usingAutoAllocatedSubnetAllocation) || (isUpdateOperation && d.HasChange("auto_allocated_subnet")):
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)}
 
@@ -598,6 +609,8 @@ func getOwnerId(d *schema.ResourceData, vcdClient *VCDClient, ownerIdField, vdcF
 		ownerIdField, vdcField, inheritedVdcField)
 }
 
+// getNsxtEdgeGatewayUplinksType is used to convert the uplink slice from the schema to the type
+// based on 'subnet' field
 func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGatewaySubnetValue {
 	var isPrimaryIpSet bool
 	var primaryIpIndex int
@@ -639,6 +652,8 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 	return subnetSlice
 }
 
+// getNsxtEdgeGatewayUplinksTypeAutoSubnets is used to convert the uplink slice from the schema to
+// the type based on 'auto_subnet' field
 func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) (bool, []types.OpenAPIEdgeGatewaySubnetValue) {
 	var isPrimaryIpSet bool
 	var primaryIpIndex int
@@ -675,6 +690,8 @@ func getNsxtEdgeGatewayUplinksTypeAutoSubnets(d *schema.ResourceData) (bool, []t
 	return isPrimaryIpSet, subnetSlice
 }
 
+// getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets is used to convert the uplink slice from the
+// schema to the type based on 'auto_allocated_subnet' field
 func getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d *schema.ResourceData) []types.OpenAPIEdgeGatewaySubnetValue {
 	var isPrimaryIpSet bool
 	var primaryIpIndex int

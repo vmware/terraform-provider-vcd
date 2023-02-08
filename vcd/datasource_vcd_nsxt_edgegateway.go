@@ -71,7 +71,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"prefix_length": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Netmask address for a subnet (e.g. 24 for /24)",
+							Description: "Prefix length for a subnet (e.g. 24)",
 						},
 						"primary_ip": {
 							Type:        schema.TypeString,
@@ -101,7 +101,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			"auto_subnet": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "",
+				Description: "Exposes IP allocation subnet for this Edge Gateway",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"gateway": {
@@ -117,7 +117,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"prefix_length": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Netmask address for a subnet (e.g. 24 for /24)",
+							Description: "Prefix length for a subnet (e.g. 24)",
 						},
 					},
 				},
@@ -125,7 +125,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			"auto_allocated_subnet": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "",
+				Description: "Exposes IP allocation subnet for this Edge Gateway including allocated IP count",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"gateway": {
@@ -136,7 +136,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"prefix_length": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Netmask address for a subnet (e.g. 24 for /24)",
+							Description: "Prefix length for a subnet (e.g. 24)",
 						},
 						"primary_ip": {
 							Type:        schema.TypeString,
@@ -170,6 +170,11 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of unused IP addresses",
+			},
+			"total_allocated_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Total number of IP addresses allocated for this Edge Gateway",
 			},
 		},
 	}
