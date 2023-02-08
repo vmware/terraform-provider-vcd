@@ -42,7 +42,7 @@ func resourceVcdRde() *schema.Resource {
 				ForceNew:    true,
 				Description: "The Runtime Defined Entity Type vendor",
 			},
-			"rde_type_namespace": {
+			"rde_type_nss": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -110,7 +110,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	name := d.Get("name").(string)
 	vendor := d.Get("rde_type_vendor").(string)
-	nss := d.Get("rde_type_namespace").(string)
+	nss := d.Get("rde_type_nss").(string)
 	version := d.Get("rde_type_version").(string)
 
 	// VCD allows to have multiple RDEs with the same name, but this is not compatible with Terraform as there is no
@@ -261,7 +261,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity,
 	}
 
 	vendor := d.Get("rde_type_vendor").(string)
-	nss := d.Get("rde_type_namespace").(string)
+	nss := d.Get("rde_type_nss").(string)
 	version := d.Get("rde_type_version").(string)
 	name := d.Get("name").(string)
 
@@ -419,7 +419,7 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf("error in recovered RDE, its Type is incorrect: %s", rde.DefinedEntity.EntityType)
 	}
 	dSet(d, "rde_type_vendor", rdeTypeParts[3])
-	dSet(d, "rde_type_namespace", rdeTypeParts[4])
+	dSet(d, "rde_type_nss", rdeTypeParts[4])
 	dSet(d, "rde_type_version", rdeTypeParts[5])
 
 	return []*schema.ResourceData{d}, nil

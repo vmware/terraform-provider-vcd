@@ -350,9 +350,12 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 	createHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
-	params["FuncName"] = t.Name() + "WithDatasource"
-	withDatasourceHcl := templateFill(datasourceTemplate+"\n# skip-binary-test\n"+resourceTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
+	withDatasourceHcl := ""
+	if datasourceTemplate != "" {
+		params["FuncName"] = t.Name() + "WithDatasource"
+		withDatasourceHcl = templateFill(datasourceTemplate+"\n# skip-binary-test\n"+resourceTemplate, params)
+		debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
+	}
 
 	params["FuncName"] = t.Name() + "DeleteOneKey"
 	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 0, 1, 1, 1)
@@ -404,6 +407,9 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				),
 			},
 			{
+				SkipFunc: func() (bool, error) {
+					return withDatasourceHcl == "", nil
+				},
 				Config: withDatasourceHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),

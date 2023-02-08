@@ -22,7 +22,7 @@ func TestAccVcdRde(t *testing.T) {
 		"FuncName":       t.Name() + "-Step1-and-2",
 		"ProviderSystem": providerVcdSystem,
 		"ProviderOrg1":   providerVcdOrg1,
-		"Namespace":      "namespace",
+		"Nss":            "nss",
 		"Version":        "1.0.0",
 		"Vendor":         "vendor",
 		"Name":           t.Name(),
@@ -57,7 +57,7 @@ func TestAccVcdRde(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION fix wrong RDE: %s\n", stepFixWrongRde)
 	debugPrintf("#[DEBUG] CONFIGURATION duplicate: %s\n", stepCreateDuplicate)
 
-	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Namespace"].(string))
+	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Nss"].(string))
 	rdeType := "vcd_rde_type.rde_type"
 	rdeFromFile := "vcd_rde.rde_file"
 	rdeFromUrl := "vcd_rde.rde_url"
@@ -83,7 +83,7 @@ func TestAccVcdRde(t *testing.T) {
 				Config: preReqsConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(rdeType, "vendor", params["Vendor"].(string)),
-					resource.TestCheckResourceAttr(rdeType, "namespace", params["Namespace"].(string)),
+					resource.TestCheckResourceAttr(rdeType, "nss", params["Nss"].(string)),
 				),
 			},
 			// Create 4 RDEs in non-resolved state (pre-created):
@@ -96,7 +96,7 @@ func TestAccVcdRde(t *testing.T) {
 			{
 				Config: stepInit,
 				PreConfig: func() {
-					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Namespace"].(string))
+					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// We cache the ID to use it on later steps
@@ -105,7 +105,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file"),
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_vendor", rdeType, "vendor"),
-					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_namespace", rdeType, "namespace"),
+					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_nss", rdeType, "nss"),
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_version", rdeType, "version"),
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile("{.*\"stringValue\".*}")),
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
@@ -115,7 +115,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeFromUrl, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_nss", rdeFromFile, "rde_type_nss"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "rde_type_version", rdeFromFile, "rde_type_version"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "state", "PRE_CREATED"),
@@ -125,7 +125,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeWrong, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeWrong, "name", t.Name()+"naughty"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
-					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_nss", rdeFromFile, "rde_type_nss"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_version", rdeFromFile, "rde_type_version"),
 					resource.TestCheckResourceAttr(rdeWrong, "computed_entity", "{\"this_json_is_bad\":\"yes\"}"),
 					resource.TestCheckResourceAttr(rdeWrong, "state", "PRE_CREATED"),
@@ -135,7 +135,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeTenant, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeTenant, "name", t.Name()+"tenant"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_vendor", rdeFromFile, "rde_type_vendor"),
-					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_namespace", rdeFromFile, "rde_type_namespace"),
+					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_nss", rdeFromFile, "rde_type_nss"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "rde_type_version", rdeFromFile, "rde_type_version"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
@@ -195,12 +195,12 @@ func TestAccVcdRde(t *testing.T) {
 				Config:      stepCreateDuplicate,
 				ExpectError: regexp.MustCompile(".*found other Runtime Defined Entities with same name.*"),
 			},
-			// Import by vendor + namespace + version + name + position
+			// Import by vendor + nss + version + name + position
 			{
 				ResourceName:            rdeFromFile,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
+				ImportStateIdFunc:       importStateIdRde(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), t.Name()+"file-updated", "1", false),
 				ImportStateVerifyIgnore: []string{"resolve", "input_entity", "input_entity_url"},
 			},
 			// Import using the cached RDE ID
@@ -217,7 +217,7 @@ func TestAccVcdRde(t *testing.T) {
 			{
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
-				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Namespace"].(string), params["Version"].(string), t.Name()+"file-updated", "1", true),
+				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), t.Name()+"file-updated", "1", true),
 				ExpectError:       regexp.MustCompile(`.*` + cachedId.fieldValue + `.*`),
 			},
 		},
@@ -229,19 +229,19 @@ const testAccVcdRdePrerequisites = `
 data "vcd_rde_interface" "existing_interface" {
   provider = {{.ProviderSystem}}
 
-  namespace = "k8s"
-  version   = "1.0.0"
-  vendor    = "vmware"
+  nss     = "k8s"
+  version = "1.0.0"
+  vendor  = "vmware"
 }
 
 resource "vcd_rde_type" "rde_type" {
   provider = {{.ProviderSystem}}
 
-  namespace     = "{{.Namespace}}"
-  version       = "{{.Version}}"
-  vendor        = "{{.Vendor}}"
-  name          = "{{.Name}}_type"
-  schema        = file("{{.SchemaPath}}")
+  nss     = "{{.Nss}}"
+  version = "{{.Version}}"
+  vendor  = "{{.Vendor}}"
+  name    = "{{.Name}}_type"
+  schema  = file("{{.SchemaPath}}")
 }
 
 # Creating a RDE Type creates a bundle and some rights in the background, but the
@@ -255,11 +255,11 @@ resource "vcd_rights_bundle" "rde_type_bundle" {
   description            = "{{.Name}} bundle"
   publish_to_all_tenants = true
   rights = [
-    "{{.Vendor}}:{{.Namespace}}: Administrator Full access",
-    "{{.Vendor}}:{{.Namespace}}: Full Access",
-    "{{.Vendor}}:{{.Namespace}}: Modify",
-    "{{.Vendor}}:{{.Namespace}}: View",
-    "{{.Vendor}}:{{.Namespace}}: Administrator View",
+    "{{.Vendor}}:{{.Nss}}: Administrator Full access",
+    "{{.Vendor}}:{{.Nss}}: Full Access",
+    "{{.Vendor}}:{{.Nss}}: Modify",
+    "{{.Vendor}}:{{.Nss}}: View",
+    "{{.Vendor}}:{{.Nss}}: Administrator View",
   ]
   depends_on = [vcd_rde_type.rde_type]
 }
@@ -269,12 +269,12 @@ const testAccVcdRde1 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}file"
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}file"
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -282,12 +282,12 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}url"
-  resolve            = {{.Resolve}}
-  input_entity_url   = "{{.EntityUrl}}"
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}url"
+  resolve          = {{.Resolve}}
+  input_entity_url = "{{.EntityUrl}}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -295,12 +295,12 @@ resource "vcd_rde" "rde_url" {
 resource "vcd_rde" "rde_naughty" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}naughty"
-  resolve            = {{.Resolve}}
-  input_entity       = "{ \"this_json_is_bad\": \"yes\"}"
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}naughty"
+  resolve          = {{.Resolve}}
+  input_entity     = "{ \"this_json_is_bad\": \"yes\"}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -308,12 +308,12 @@ resource "vcd_rde" "rde_naughty" {
 resource "vcd_rde" "rde_tenant" {
   provider = {{.ProviderOrg1}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}tenant"
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}tenant"
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -323,12 +323,12 @@ const testAccVcdRde2 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}file-updated" # Updated name
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}file-updated" # Updated name
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -336,12 +336,12 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}url-updated" # Updated name
-  resolve            = {{.Resolve}}
-  input_entity_url   = "{{.EntityUrl}}"
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}url-updated" # Updated name
+  resolve          = {{.Resolve}}
+  input_entity_url = "{{.EntityUrl}}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -351,12 +351,12 @@ const testAccVcdRde3 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}file-updated" # Updated name
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}file-updated" # Updated name
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -364,12 +364,12 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}url-updated" # Updated name
-  resolve            = {{.Resolve}}
-  input_entity_url   = "{{.EntityUrl}}"
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}url-updated" # Updated name
+  resolve          = {{.Resolve}}
+  input_entity_url = "{{.EntityUrl}}"
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -377,12 +377,12 @@ resource "vcd_rde" "rde_url" {
 resource "vcd_rde" "rde_naughty" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}naughty"
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}") # Updated to a correct JSON
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}naughty"
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}") # Updated to a correct JSON
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -390,12 +390,12 @@ resource "vcd_rde" "rde_naughty" {
 resource "vcd_rde" "rde_tenant" {
   provider = {{.ProviderOrg1}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}tenant-updated" # Updated name
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}tenant-updated" # Updated name
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -406,12 +406,12 @@ const testAccVcdRde4 = testAccVcdRde3 + `
 resource "vcd_rde" "rde_naughty-clone" {
   provider = {{.ProviderSystem}}
 
-  rde_type_vendor    = vcd_rde_type.rde_type.vendor
-  rde_type_namespace = vcd_rde_type.rde_type.namespace
-  rde_type_version   = vcd_rde_type.rde_type.version
-  name               = "{{.Name}}naughty"
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
+  rde_type_vendor  = vcd_rde_type.rde_type.vendor
+  rde_type_nss     = vcd_rde_type.rde_type.nss
+  rde_type_version = vcd_rde_type.rde_type.version
+  name             = "{{.Name}}naughty"
+  resolve          = {{.Resolve}}
+  input_entity     = file("{{.EntityPath}}")
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
 }
@@ -452,11 +452,11 @@ func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.Te
 	}
 }
 
-func importStateIdRde(vendor, namespace, version, name, position string, list bool) resource.ImportStateIdFunc {
+func importStateIdRde(vendor, nss, version, name, position string, list bool) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		commonIdPart := vendor +
 			ImportSeparator +
-			namespace +
+			nss +
 			ImportSeparator +
 			version +
 			ImportSeparator +
@@ -468,17 +468,17 @@ func importStateIdRde(vendor, namespace, version, name, position string, list bo
 	}
 }
 
-// addRightsToTenantUser adds the RDE type (specified by vendor and namespace) rights to the
+// addRightsToTenantUser adds the RDE type (specified by vendor and nss) rights to the
 // Organization Administrator global role, so a tenant user with this role can perform CRUD operations
 // on RDEs.
 // NOTE: We don't need to remove the added rights after the test is run, because the RDE Type and the Rights Bundle
 // are destroyed and the rights disappear with them gone.
-func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, namespace string) {
+func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
 		t.Errorf("could not get Organization Administrator global role: %s", err)
 	}
-	rightsBundleName := fmt.Sprintf("%s:%s Entitlement", vendor, namespace)
+	rightsBundleName := fmt.Sprintf("%s:%s Entitlement", vendor, nss)
 	rightsBundle, err := vcdClient.VCDClient.Client.GetRightsBundleByName(rightsBundleName)
 	if err != nil {
 		t.Errorf("could not get '%s' rights bundle: %s", rightsBundleName, err)
@@ -489,7 +489,7 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, namespace
 	}
 	var rightsToAdd []types.OpenApiReference
 	for _, right := range rights {
-		if strings.Contains(strings.ToLower(right.Name), fmt.Sprintf("%s:%s", vendor, namespace)) {
+		if strings.Contains(strings.ToLower(right.Name), fmt.Sprintf("%s:%s", vendor, nss)) {
 			rightsToAdd = append(rightsToAdd, types.OpenApiReference{
 				Name: right.Name,
 				ID:   right.ID,
@@ -526,29 +526,25 @@ func TestAccVcdRdeMetadata(t *testing.T) {
 	}
 	testOpenApiMetadataEntryCRUD(t,
 		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
-		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test-rde-ds",
+		"", "",
 		StringMap{})
 }
 
 const testAccCheckVcdRdeMetadata = `
 data "vcd_rde_type" "rde_type" {
-  vendor    = "vmware"
-  namespace = "tkgcluster"
-  version   = "1.0.0"
+  vendor  = "vmware"
+  nss     = "tkgcluster"
+  version = "1.0.0"
 }
 
 resource "vcd_rde" "test-rde" {
-  rde_type_id = data.vcd_rde_type.rde_type.id
-  name        = "{{.Name}}"
-  entity      = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  rde_type_vendor  = data.vcd_rde_type.rde_type.vendor
+  rde_type_nss     = data.vcd_rde_type.rde_type.nss
+  rde_type_version = data.vcd_rde_type.rde_type.version
+
+  name         = "{{.Name}}"
+  input_entity = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
 
   {{.Metadata}}
-}
-`
-
-const testAccCheckVcdRdeMetadataDatasource = `
-data "vcd_rde" "test-rde-ds" {
-  name        = vcd_rde.test-rde.name
-  rde_type_id = data.vcd_rde_type.rde_type.id
 }
 `
