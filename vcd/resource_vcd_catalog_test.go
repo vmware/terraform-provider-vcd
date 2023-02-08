@@ -152,7 +152,7 @@ func TestAccVcdCatalogRename(t *testing.T) {
 		"OvaPath":          testConfig.Ova.OvaPath,
 		"MediaPath":        testConfig.Media.MediaPath,
 		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"VmName":           t.Name() + "-vm",
+		"VmName":           "test-vm",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -171,8 +171,10 @@ func TestAccVcdCatalogRename(t *testing.T) {
 	debugPrintf("#[DEBUG] RENAMING CONFIGURATION: %s", renameText)
 
 	resourceCatalog := "vcd_catalog.test-catalog"
-	resourceMedia := "vcd_catalog_media.test_media"
-	resourcevAppTemplate := "vcd_catalog_vapp_template.test_vapp_template"
+	resourceMedia := "vcd_catalog_media.test-media"
+	resourcevAppTemplate := "vcd_catalog_vapp_template.test-vapp-template"
+	resourceVM1 := "vcd_vm.test-vm-1"
+	resourceVM2 := "vcd_vm.test-vm-2"
 	// Use field value caching function across multiple test steps to ensure object wasn't recreated (ID did not change)
 	cachedCatalogId := &testCachedFieldValue{}
 	cachedMediaId := &testCachedFieldValue{}
@@ -189,10 +191,10 @@ func TestAccVcdCatalogRename(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedCatalogId.cacheTestResourceFieldValue(resourceCatalog, "id"),
-					cachedMediaId.cacheTestResourceFieldValue(resourceCatalog, "id"),
-					cachedvAppTemplateId.cacheTestResourceFieldValue(resourceCatalog, "id"),
-					cachedVMId1.cacheTestResourceFieldValue(resourceCatalog, "id"),
-					cachedVMId2.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.cacheTestResourceFieldValue(resourceMedia, "id"),
+					cachedvAppTemplateId.cacheTestResourceFieldValue(resourcevAppTemplate, "id"),
+					cachedVMId1.cacheTestResourceFieldValue(resourceVM1, "id"),
+					cachedVMId2.cacheTestResourceFieldValue(resourceVM2, "id"),
 					testAccCheckVcdCatalogExists(resourceCatalog),
 					testAccCheckCatalogEntityState("vcd_catalog_media", orgName, catalogMediaName, true),
 					testAccCheckCatalogEntityState("vcd_catalog_vapp_template", orgName, vappTemplateName, true),
@@ -208,20 +210,20 @@ func TestAccVcdCatalogRename(t *testing.T) {
 				Config: renameText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedCatalogId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedMediaId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.testCheckCachedResourceFieldValue(resourceMedia, "id"),
+					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceVM1, "id"),
+					cachedVMId2.testCheckCachedResourceFieldValue(resourceVM2, "id"),
 				),
 			},
 			{
 				Config: renameText,
 				Check: resource.ComposeTestCheckFunc(
 					cachedCatalogId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedMediaId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
-					cachedVMId1.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.testCheckCachedResourceFieldValue(resourceMedia, "id"),
+					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceVM1, "id"),
+					cachedVMId2.testCheckCachedResourceFieldValue(resourceVM2, "id"),
 					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogUpdatedName),
 					resource.TestCheckResourceAttr(resourceCatalog, "number_of_vapp_templates", "1"),
 					resource.TestCheckResourceAttr(resourceCatalog, "number_of_media", "1"),
@@ -245,7 +247,7 @@ resource "vcd_catalog" "test-catalog" {
 
 }
 
-resource "vcd_catalog_vapp_template" "test_vapp_template" {
+resource "vcd_catalog_vapp_template" "test-vapp-template" {
   org     = "{{.Org}}"
   catalog_id = resource.vcd_catalog.test-catalog.id
 
@@ -255,7 +257,7 @@ resource "vcd_catalog_vapp_template" "test_vapp_template" {
   upload_piece_size    = {{.UploadPieceSize}}
 }
 
-resource "vcd_catalog_media"  "test_media" {
+resource "vcd_catalog_media"  "test-media" {
   org     = "{{.Org}}"
   catalog_id = resource.vcd_catalog.test-catalog.id
 
@@ -268,7 +270,7 @@ resource "vcd_catalog_media"  "test_media" {
 resource "vcd_vm" "{{.VmName}}-1" {
   org              = "{{.Org}}"
   name             = "{{.VmName}}-1"
-  vapp_template_id = resource.vcd_catalog_vapp_template.test_vapp_template.id
+  vapp_template_id = resource.vcd_catalog_vapp_template.test-vapp-template.id
   description      = "test standalone VM 1"
   power_on         = false
 
@@ -278,7 +280,7 @@ resource "vcd_vm" "{{.VmName}}-1" {
 resource "vcd_vm" "{{.VmName}}-2" {
   org              = "{{.Org}}"
   name             = "{{.VmName}}-2"
-  boot_image_id    = resource.vcd_catalog_media.test_media.id
+  boot_image_id    = resource.vcd_catalog_media.test-media.id
   description      = "test standalone VM 2"
   computer_name    = "standalone"
   cpus             = 1
