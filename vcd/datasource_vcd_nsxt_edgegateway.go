@@ -109,6 +109,11 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 							Computed:    true,
 							Description: "Gateway address for a subnet",
 						},
+						"primary_ip": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Primary IP address for the Edge Gateway",
+						},
 						"prefix_length": {
 							Type:        schema.TypeInt,
 							Computed:    true,
@@ -136,7 +141,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"primary_ip": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
+							Description: "Primary IP address for the Edge Gateway - will be auto-assigned if not defined",
 						},
 						"allocated_ip_count": {
 							Type:        schema.TypeInt,

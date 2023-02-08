@@ -290,7 +290,7 @@ different strategies: Manual IP allocation (`subnet`), automatic IP allocations 
 subnets (`auto_subnet` with `total_allocated_ip_count`), automatic IP allocations per defined subnet
 (`auto_allocated_subnet`). One of these is **required**. Different set definition structures are
 required due to Terraform schema limitations. **Note**. Allocation modes are split due to Terraform 
-schema limitations and migrations between configuration can only be done __manually__.
+schema limitations and migrations between configurations can only be done __manually__.
 
 
 <a id="edgegateway-subnet"></a>

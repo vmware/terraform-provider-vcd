@@ -63,6 +63,7 @@ var nsxtEdgeAutoSubnetAndTotal = &schema.Resource{
 		"primary_ip": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
 		},
 		"prefix_length": {
@@ -228,7 +229,7 @@ func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error getting Org: %s", err)
 	}
 
-	nsxtEdgeGatewayType, err := getNsxtEdgeGatewayType(d, vcdClient, true, nil)
+	nsxtEdgeGatewayType, err := getNsxtEdgeGatewayType(d, vcdClient, true, nil, nil)
 	if err != nil {
 		return diag.Errorf("could not create NSX-T Edge Gateway type: %s", err)
 	}
@@ -282,7 +283,7 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway allocated IP count: %s", err)
 	}
 
-	updatedEdge, err := getNsxtEdgeGatewayType(d, vcdClient, false, allocatedIpCount)
+	updatedEdge, err := getNsxtEdgeGatewayType(d, vcdClient, false, allocatedIpCount, edge)
 	if err != nil {
 		return diag.Errorf("error updating NSX-T Edge Gateway type: %s", err)
 	}
@@ -379,7 +380,7 @@ func resourceVcdNsxtEdgeGatewayImport(_ context.Context, d *schema.ResourceData,
 }
 
 // getNsxtEdgeGatewayType creates *types.OpenAPIEdgeGateway from Terraform schema
-func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCreateOperation bool, allocatedIpCount *int) (*types.OpenAPIEdgeGateway, error) {
+func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCreateOperation bool, allocatedIpCount *int, edgeGateway *govcd.NsxtEdgeGateway) (*types.OpenAPIEdgeGateway, error) {
 	inheritedVdcField := vcdClient.Vdc
 	vdcField := d.Get("vdc").(string)
 	ownerIdField := d.Get("owner_id").(string)
@@ -423,6 +424,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	// 'subnet' is specified
 	case (isCreateOperation && usingSubnetAllocation) || (isUpdateOperation && d.HasChange("subnet")):
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}
+
 	// 'auto_subnet' and 'total_allocated_ip_count' are specified
 	case (isCreateOperation && usingAutoSubnetAllocation) || (isUpdateOperation && (d.HasChange("auto_subnet") || d.HasChange("total_allocated_ip_count"))):
 		isPrimaryIpSet, subnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
@@ -439,9 +441,17 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 			}
 
 		}
+
 	// auto_allocated_subnet is specified
 	case (isCreateOperation && usingAutoAllocatedSubnetAllocation) || (isUpdateOperation && d.HasChange("auto_allocated_subnet")):
 		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)}
+
+	// If no changes occur in the 'subnet', 'auto_subnet' or 'auto_allocated_subnet' fields during
+	// 'Update', then we pass the original values to the update request
+	case isUpdateOperation && edgeGateway != nil:
+		if isUpdateOperation && edgeGateway != nil {
+			edgeGatewayType.EdgeGatewayUplinks = edgeGateway.EdgeGateway.EdgeGatewayUplinks
+		}
 	default:
 		return nil, fmt.Errorf("one of the following fields must be set: 'subnet', 'auto_subnet', 'auto_allocated_subnet'")
 
