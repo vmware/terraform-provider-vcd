@@ -197,12 +197,12 @@ func TestAccVcdCatalogRename(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceCatalog),
 					cachedCatalogId.cacheTestResourceFieldValue(resourceCatalog, "id"),
 					cachedMediaId.cacheTestResourceFieldValue(resourceMedia, "id"),
 					cachedvAppTemplateId.cacheTestResourceFieldValue(resourcevAppTemplate, "id"),
 					cachedVMId1.cacheTestResourceFieldValue(resourceVM1, "id"),
 					cachedVMId2.cacheTestResourceFieldValue(resourceVM2, "id"),
-					testAccCheckVcdCatalogExists(resourceCatalog),
 					testAccCheckCatalogEntityState("vcd_catalog_media", orgName, catalogMediaName, true),
 					testAccCheckCatalogEntityState("vcd_catalog_vapp_template", orgName, vappTemplateName, true),
 					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogName),
