@@ -57,6 +57,7 @@ func resourceVcdRde() *schema.Resource {
 			"external_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
 			},
 			"input_entity_url": {
