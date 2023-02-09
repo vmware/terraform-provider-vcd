@@ -161,7 +161,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:          schema.TypeInt,
 				Computed:      true,
 				Optional:      true,
-				Description:   "Total number of IP addresses allocated for this gateway. Must be used with 'auto_subnet' definitions only",
+				Description:   "Total number of IP addresses allocated for this gateway. Can be set with 'auto_subnet' definitions only",
 				RequiredWith:  []string{"auto_subnet"},
 				ConflictsWith: []string{"subnet", "auto_allocated_subnet"},
 			},
@@ -422,10 +422,10 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	// This switch takes the decision on which allocation method to use for building up the Edge
 	// Gateway uplink structure. It is based on the following rules which work together with schema
 	// constraints to ensure that only one allocation method is used:
-	// *. 'subnet' is used for create operationor if its schema has changed during an update operation
-	// *. 'auto_subnet' is used for create operationor if its schema has changed during an update operation
-	// *. 'auto_allocated_subnet' is used for create operationor if its schema has changed during an update operation
-	// *. If an update operation is performed and none of the above has changed, then the existing
+	// * 'subnet' is used for create operation if its schema has changed during an update operation
+	// * 'auto_subnet' is used for create operation if its schema has changed during an update operation
+	// * 'auto_allocated_subnet' is used for create operation if its schema has changed during an update operation
+	// * If an update operation is performed and none of the above has changed, then the existing
 	// allocation is passed through from the existing Edge Gateway
 	// * Default case - throw an error if none of the above cases match
 
