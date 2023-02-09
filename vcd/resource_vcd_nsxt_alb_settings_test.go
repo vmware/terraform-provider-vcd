@@ -200,6 +200,210 @@ resource "vcd_nsxt_alb_settings" "test" {
 }
 `
 
+func TestAccVcdNsxtAlbSettingsTransparentMode(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+	skipNoNsxtAlbConfiguration(t)
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"ControllerName":         t.Name(),
+		"ControllerUrl":          testConfig.Nsxt.NsxtAlbControllerUrl,
+		"ControllerUsername":     testConfig.Nsxt.NsxtAlbControllerUser,
+		"ControllerPassword":     testConfig.Nsxt.NsxtAlbControllerPassword,
+		"ImportableCloud":        testConfig.Nsxt.NsxtAlbImportableCloud,
+		"ReservationModel":       "DEDICATED",
+		"Org":                    testConfig.VCD.Org,
+		"NsxtVdc":                testConfig.Nsxt.Vdc,
+		"EdgeGw":                 testConfig.Nsxt.EdgeGateway,
+		"TransparentModeEnabled": true,
+		"LicenseType":            " ",
+		"SupportedFeatureSet":    `supported_feature_set = "PREMIUM"`,
+
+		"Tags": "nsxt alb",
+	}
+
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	params["IsActive"] = "true"
+	configText1 := templateFill(testAccVcdNsxtAlbGeneralSettingsTransparentMode, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	params["TransparentModeEnabled"] = "false"
+	params["SupportedFeatureSetSettings"] = " "
+	configText2 := templateFill(testAccVcdNsxtAlbGeneralSettingsTransparentMode, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
+			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
+		),
+
+		Steps: []resource.TestStep{
+			{
+				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "192.168.255.1/25"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "ipv6_service_network_specification", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_transparent_mode_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "supported_feature_set", "PREMIUM"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "192.168.255.1/25"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "ipv6_service_network_specification", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_transparent_mode_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "supported_feature_set", "PREMIUM"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtAlbGeneralSettingsTransparentMode = testAccVcdNsxtAlbProviderPrereqs + `
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_alb_settings" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id       = data.vcd_nsxt_edgegateway.existing.id
+  is_active             = {{.IsActive}}
+
+  {{.SupportedFeatureSet}}
+
+  is_transparent_mode_enabled = {{.TransparentModeEnabled}}
+
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [vcd_nsxt_alb_service_engine_group.first]
+}
+`
+
+// TestAccVcdNsxtAlbSettingsDualStackMode tests ALB settings with dual stack mode - IPv4 and IPv6
+// addresses set for Service Network Specification
+func TestAccVcdNsxtAlbSettingsDualStackMode(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+	skipNoNsxtAlbConfiguration(t)
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"ControllerName":         t.Name(),
+		"ControllerUrl":          testConfig.Nsxt.NsxtAlbControllerUrl,
+		"ControllerUsername":     testConfig.Nsxt.NsxtAlbControllerUser,
+		"ControllerPassword":     testConfig.Nsxt.NsxtAlbControllerPassword,
+		"ImportableCloud":        testConfig.Nsxt.NsxtAlbImportableCloud,
+		"ReservationModel":       "DEDICATED",
+		"Org":                    testConfig.VCD.Org,
+		"NsxtVdc":                testConfig.Nsxt.Vdc,
+		"EdgeGw":                 testConfig.Nsxt.EdgeGateway,
+		"TransparentModeEnabled": true,
+		"LicenseType":            " ",
+		"SupportedFeatureSet":    `supported_feature_set = "PREMIUM"`,
+
+		"Tags": "nsxt alb",
+	}
+
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	params["IsActive"] = "true"
+	configText1 := templateFill(testAccVcdNsxtAlbGeneralSettingsDualStackMode, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
+			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
+		),
+
+		Steps: []resource.TestStep{
+			{
+				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "10.10.255.225/27"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "ipv6_service_network_specification", "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "supported_feature_set", "PREMIUM"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtAlbGeneralSettingsDualStackMode = testAccVcdNsxtAlbProviderPrereqs + `
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_alb_settings" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  is_active       = {{.IsActive}}
+  
+  service_network_specification      = "10.10.255.225/27"
+  ipv6_service_network_specification = "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"
+
+  {{.SupportedFeatureSet}}
+
+
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [vcd_nsxt_alb_service_engine_group.first]
+}
+`
+
 func testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(edgeName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 

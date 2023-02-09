@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -58,6 +59,13 @@ func resourceVcdAlbSettings() *schema.Resource {
 				Computed:    true,
 				Description: "Optional custom network CIDR definition for ALB Service Engine placement (VCD default is 192.168.255.1/25)",
 			},
+			"ipv6_service_network_specification": {
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				Optional:    true,
+				Computed:    true,
+				Description: "The IPv6 network definition in Gateway CIDR format which will be used by Load Balancer service on Edge (VCD 10.4.0+)",
+			},
 			"supported_feature_set": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -65,6 +73,12 @@ func resourceVcdAlbSettings() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
 				Description:  "Feature set for ALB in this Edge Gateway. One of 'STANDARD', 'PREMIUM'.",
+			},
+			"is_transparent_mode_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Enabling transparent mode allows to configure Preserve Client IP on a Virtual Service (VCD 10.4.1+)",
 			},
 		},
 	}
@@ -85,7 +99,11 @@ func resourceVcdAlbSettingsCreateUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
 
-	albConfig := getNsxtAlbConfigurationType(d)
+	albConfig, err := getNsxtAlbConfigurationType(d, vcdClient)
+	if err != nil {
+		return diag.Errorf("error getting ALB configuration: %s", err)
+	}
+
 	_, err = nsxtEdge.UpdateAlbSettings(albConfig)
 	if err != nil {
 		return diag.Errorf("error setting NSX-T ALB General Settings: %s", err)
@@ -179,18 +197,41 @@ func resourceVcdAlbSettingsImport(_ context.Context, d *schema.ResourceData, met
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNsxtAlbConfigurationType(d *schema.ResourceData) *types.NsxtAlbConfig {
+func getNsxtAlbConfigurationType(d *schema.ResourceData, vcdClient *VCDClient) (*types.NsxtAlbConfig, error) {
 	albConfig := &types.NsxtAlbConfig{
 		Enabled:                  d.Get("is_active").(bool),
 		ServiceNetworkDefinition: d.Get("service_network_specification").(string),
 		SupportedFeatureSet:      d.Get("supported_feature_set").(string),
 	}
 
-	return albConfig
+	// Setting transparent mode is only possible in VCD 10.4.1+ (37.1+), throw error otherwise
+	transparentModeValue, isTransparentModeEnabled := d.GetOkExists("is_transparent_mode_enabled")
+	if isTransparentModeEnabled {
+		if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+			return nil, fmt.Errorf("setting 'is_transparent_mode_enabled' is only supported in VCD 10.4.1+ (37.1+)")
+		}
+		albConfig.TransparentModeEnabled = takeBoolPointer(transparentModeValue.(bool))
+	}
+
+	// Setting IPv6 service network definition is only possible in VCD 10.4.0 (37.0+), throw error
+	// otherwise
+	ipv6ServiceNetworkDefinition := d.Get("ipv6_service_network_specification").(string)
+	if ipv6ServiceNetworkDefinition != "" {
+		if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+			return nil, fmt.Errorf("setting 'ipv6_service_network_specification' is only supported in VCD 10.4.0+ (37.0+)")
+		}
+		albConfig.Ipv6ServiceNetworkDefinition = ipv6ServiceNetworkDefinition
+	}
+
+	return albConfig, nil
 }
 
 func setNsxtAlbConfigurationData(config *types.NsxtAlbConfig, d *schema.ResourceData) {
 	dSet(d, "is_active", config.Enabled)
 	dSet(d, "service_network_specification", config.ServiceNetworkDefinition)
 	dSet(d, "supported_feature_set", config.SupportedFeatureSet)
+	dSet(d, "ipv6_service_network_specification", config.Ipv6ServiceNetworkDefinition)
+	if config.TransparentModeEnabled != nil {
+		dSet(d, "is_transparent_mode_enabled", *config.TransparentModeEnabled)
+	}
 }
