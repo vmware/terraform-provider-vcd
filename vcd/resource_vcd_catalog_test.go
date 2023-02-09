@@ -133,7 +133,7 @@ func TestAccVcdCatalog(t *testing.T) {
 	postTestChecks(t)
 }
 
-// TestAccVcdCatalogRenamed ensures that a Catalog can be renamed and the contents of it
+// TestAccVcdCatalogRename ensures that a Catalog can be renamed and the contents of it
 // will remain unchanged.
 func TestAccVcdCatalogRename(t *testing.T) {
 	preTestChecks(t)

@@ -1,1 +1,1 @@
-* Create `TestAccVcdCatalogRename` [GH-992]
+* Create `TestAccVcdCatalogRename`, which checks that renaming a catalog does not affect its contents [GH-992]
