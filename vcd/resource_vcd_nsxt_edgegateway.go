@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 var nsxtEdgeSubnetRange = &schema.Resource{
@@ -404,67 +405,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	edgeGatewayType := types.OpenAPIEdgeGateway{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		EdgeGatewayUplinks: []types.EdgeGatewayUplinks{{
-			UplinkID:  d.Get("external_network_id").(string),
-			Dedicated: d.Get("dedicate_external_network").(bool),
-		}},
-		OwnerRef: &types.OpenApiReference{ID: ownerId},
-	}
-
-	_, usingSubnetAllocation := d.GetOk("subnet")
-	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
-	_, usingAutoAllocatedSubnetAllocation := d.GetOk("auto_allocated_subnet")
-
-	log.Printf("[TRACE] NSX-T Edge Gateway operation (isCreate '%t', isUpdate '%t') 'subnet': %t (HasChange %t), 'auto_subnet': %t (HasChange %t), 'auto_allocated_subnet': %t (HasChange %t)",
-		isCreateOperation, isUpdateOperation, usingSubnetAllocation, d.HasChange("subnet"), usingAutoSubnetAllocation,
-		d.HasChange("auto_subnet"), usingAutoAllocatedSubnetAllocation, d.HasChange("auto_allocated_subnet"))
-
-	// This switch takes the decision on which allocation method to use for building up the Edge
-	// Gateway uplink structure. It is based on the following rules which work together with schema
-	// constraints to ensure that only one allocation method is used:
-	// * 'subnet' is used for create operation if its schema has changed during an update operation
-	// * 'auto_subnet' is used for create operation if its schema has changed during an update operation
-	// * 'auto_allocated_subnet' is used for create operation if its schema has changed during an update operation
-	// * If an update operation is performed and none of the above has changed, then the existing
-	// allocation is passed through from the existing Edge Gateway
-	// * Default case - throw an error if none of the above cases match
-
-	switch {
-	// 'subnet' is specified
-	case (isCreateOperation && usingSubnetAllocation) || (isUpdateOperation && d.HasChange("subnet")):
-		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}
-
-	// 'auto_subnet' and 'total_allocated_ip_count' are specified
-	case (isCreateOperation && usingAutoSubnetAllocation) || (isUpdateOperation && (d.HasChange("auto_subnet") || d.HasChange("total_allocated_ip_count"))):
-		isPrimaryIpSet, subnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
-		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: subnetValues}
-		if totalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
-			edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int)
-			// Primary IP is an additional IP address that is not included in the total allocated IP count
-			// when used with QuickAddAllocatedIPCount
-			if isPrimaryIpSet {
-				edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - 1
-			}
-
-			if isUpdateOperation && allocatedIpCount != nil {
-				edgeGatewayType.EdgeGatewayUplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - *allocatedIpCount
-			}
-
-		}
-
-	// 'auto_allocated_subnet' is specified
-	case (isCreateOperation && usingAutoAllocatedSubnetAllocation) || (isUpdateOperation && d.HasChange("auto_allocated_subnet")):
-		edgeGatewayType.EdgeGatewayUplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)}
-
-	// If no changes occur in the 'subnet', 'auto_subnet' or 'auto_allocated_subnet' fields during
-	// 'Update', then we pass the original values to the update request
-	case isUpdateOperation && edgeGateway != nil:
-		if isUpdateOperation && edgeGateway != nil {
-			edgeGatewayType.EdgeGatewayUplinks = edgeGateway.EdgeGateway.EdgeGatewayUplinks
-		}
-	default:
-		return nil, fmt.Errorf("one of the following fields must be set: 'subnet', 'auto_subnet', 'auto_allocated_subnet'")
-
+		OwnerRef:    &types.OpenApiReference{ID: ownerId},
 	}
 
 	// Optional edge_cluster_id
@@ -476,7 +417,145 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 		}
 	}
 
+	// Handle uplink and IP allocations for create and update in separate functions
+	switch {
+	case isCreateOperation:
+		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksTypeForCreate(d)
+		if err != nil {
+			return nil, err
+		}
+	case isUpdateOperation:
+		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksTypeForUpdate(d, allocatedIpCount, edgeGateway)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Set common uplink values
+	edgeGatewayType.EdgeGatewayUplinks[0].UplinkID = d.Get("external_network_id").(string)
+	edgeGatewayType.EdgeGatewayUplinks[0].Dedicated = d.Get("dedicate_external_network").(bool)
+
 	return &edgeGatewayType, nil
+}
+
+// getNsxtEdgeGatewayUplinksTypeForCreate handles uplink structure in update only operations
+func getNsxtEdgeGatewayUplinksTypeForCreate(d *schema.ResourceData) ([]types.EdgeGatewayUplinks, error) {
+	_, usingSubnetAllocation := d.GetOk("subnet")
+	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
+	_, usingAutoAllocatedSubnetAllocation := d.GetOk("auto_allocated_subnet")
+
+	log.Printf("[TRACE] NSX-T Edge Gateway creation 'subnet': %t (HasChange %t), 'auto_subnet': %t (HasChange %t), 'auto_allocated_subnet': %t (HasChange %t)",
+		usingSubnetAllocation, d.HasChange("subnet"), usingAutoSubnetAllocation, d.HasChange("auto_subnet"), usingAutoAllocatedSubnetAllocation, d.HasChange("auto_allocated_subnet"))
+
+	switch {
+	// 'subnet' is specified
+	case usingSubnetAllocation:
+		return []types.EdgeGatewayUplinks{{Subnets: types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}}}, nil
+
+	// 'auto_subnet' and 'total_allocated_ip_count' are specified
+	case usingAutoSubnetAllocation:
+		isPrimaryIpSet, subnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
+
+		uplinks := []types.EdgeGatewayUplinks{{}}
+		uplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: subnetValues}
+		if totalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
+
+			// For create operation, the total_allocated_ip_count cannot be negative and therefore we can utilize QuickAddAllocatedIPCount field
+			uplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int)
+			// Primary IP is an additional IP address that is not included in the total allocated IP
+			// count when used with QuickAddAllocatedIPCount therefore we need to subtract it
+			if isPrimaryIpSet {
+				uplinks[0].QuickAddAllocatedIPCount = totalIpCount.(int) - 1
+			}
+
+		}
+		return uplinks, nil
+
+	// 'auto_allocated_subnet' is specified
+	case usingAutoAllocatedSubnetAllocation:
+		return []types.EdgeGatewayUplinks{{Subnets: types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)}}}, nil
+
+	}
+
+	return nil, fmt.Errorf("one of the following fields must be set: 'subnet', 'auto_subnet', 'auto_allocated_subnet'")
+}
+
+// getNsxtEdgeGatewayUplinksTypeForUpdate handles uplink structure in update only operations
+func getNsxtEdgeGatewayUplinksTypeForUpdate(d *schema.ResourceData, currentlyAllocatedIpCount *int, edgeGateway *govcd.NsxtEdgeGateway) ([]types.EdgeGatewayUplinks, error) {
+	if edgeGateway == nil {
+		return nil, fmt.Errorf("edge gateway cannot be nil")
+	}
+
+	if currentlyAllocatedIpCount == nil {
+		return nil, fmt.Errorf("currentlyAllocatedIpCount cannot be nil for update operation")
+	}
+
+	_, usingSubnetAllocation := d.GetOk("subnet")
+	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
+	_, usingAutoAllocatedSubnetAllocation := d.GetOk("auto_allocated_subnet")
+
+	log.Printf("[TRACE] NSX-T Edge Gateway update 'subnet': %t (HasChange %t), 'auto_subnet': %t (HasChange %t), 'auto_allocated_subnet': %t (HasChange %t)",
+		usingSubnetAllocation, d.HasChange("subnet"), usingAutoSubnetAllocation, d.HasChange("auto_subnet"), usingAutoAllocatedSubnetAllocation, d.HasChange("auto_allocated_subnet"))
+
+	switch {
+	// 'subnet' is specified
+	case d.HasChange("subnet"):
+		return []types.EdgeGatewayUplinks{{Subnets: types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)}}}, nil
+
+	// 'auto_subnet' and 'total_allocated_ip_count' are specified
+	case d.HasChange("auto_subnet") || d.HasChange("total_allocated_ip_count"):
+		_, subnetValues := getNsxtEdgeGatewayUplinksTypeAutoSubnets(d)
+		uplinks := []types.EdgeGatewayUplinks{{}}
+		uplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: subnetValues}
+		if desiredtotalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
+			if desiredtotalIpCount.(int) < 1 {
+				return nil, fmt.Errorf("total_allocated_ip_count must be greater than 0")
+			}
+
+			// Allocation and deallocation of IPs are distinct operations due to API limitations
+			// To decide whether to allocate or deallocate IPs, we need to calculate the balance.
+			// Balance is the difference between desired and current total allocated IP count
+			// If balance is positive, we need to allocate additional IPs
+			// Example: 204 - 200 = 4 (4 IPs to allocate)
+			// If balance is negative, we need to deallocate IPs
+			// Example: 200 - 204 = -4 (4 IPs to deallocate)
+			ipBalance := desiredtotalIpCount.(int) - *currentlyAllocatedIpCount
+			util.Logger.Printf("[TRACE] Edge Gateway Ip Balance is '%d' (desired IP count '%d', currently allocated IP count'%d')",
+				ipBalance, desiredtotalIpCount.(int), *currentlyAllocatedIpCount)
+
+			// If balance is positive, we can utilize QuickAddAllocatedIPCount field
+			if ipBalance > 0 {
+				util.Logger.Printf("[TRACE] Edge Gateway Requesting to allocate '%d' IPs", ipBalance)
+				uplinks[0].QuickAddAllocatedIPCount = ipBalance
+			}
+
+			// If balance is negative, we need to deallocate IPs by modifying the structure
+			if ipBalance < 0 {
+				util.Logger.Printf("[TRACE] Edge Gateway Modifying structure to deallocate '%d' IPs", -ipBalance)
+				uplinks = edgeGateway.EdgeGateway.EdgeGatewayUplinks
+				edgeGatewayStructure := &types.OpenAPIEdgeGateway{
+					EdgeGatewayUplinks: uplinks,
+				}
+
+				err := edgeGatewayStructure.DeallocateIpCount(-ipBalance)
+				if err != nil {
+					return nil, fmt.Errorf("error deallocating IPs: %s", err)
+				}
+			}
+
+		}
+
+		return uplinks, nil
+
+	// 'auto_allocated_subnet' is specified
+	case d.HasChange("auto_allocated_subnet"):
+		return []types.EdgeGatewayUplinks{{Subnets: types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)}}}, nil
+
+	// If no changes occur in the 'subnet', 'auto_subnet' or 'auto_allocated_subnet' fields during
+	// 'Update', then we pass back original values to the update request
+	default:
+		return edgeGateway.EdgeGateway.EdgeGatewayUplinks, nil
+	}
 }
 
 // getCreateOwnerIdWithStartingVdcId defines how `owner_id` is defined for NSX-T Edge Gateway create
@@ -712,7 +791,7 @@ func getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d *schema.ResourceData) []
 		}
 
 		singleSubnet.AutoAllocateIPRanges = true // required for allocated_ip_count
-		singleSubnet.TotalIPCount = subnetMap["allocated_ip_count"].(int)
+		singleSubnet.TotalIPCount = takeIntPointer(subnetMap["allocated_ip_count"].(int))
 
 		subnetSlice[index] = singleSubnet
 	}
@@ -849,7 +928,7 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 		oneSubnet["gateway"] = subnetValue.Gateway
 		oneSubnet["prefix_length"] = subnetValue.PrefixLength
 		oneSubnet["primary_ip"] = subnetValue.PrimaryIP
-		oneSubnet["allocated_ip_count"] = subnetValue.TotalIPCount
+		oneSubnet["allocated_ip_count"] = *subnetValue.TotalIPCount
 
 		autoAllocatedSubnets = append(autoAllocatedSubnets, oneSubnet)
 	}
