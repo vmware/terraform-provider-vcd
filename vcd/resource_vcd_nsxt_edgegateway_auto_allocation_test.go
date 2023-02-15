@@ -157,10 +157,10 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
       end_address   = "14.14.14.25"
     }
 
-	static_ip_pool {
-		start_address = "14.14.14.100"
-		end_address   = "14.14.14.200"
-	  }
+    static_ip_pool {
+      start_address = "14.14.14.100"
+      end_address   = "14.14.14.200"
+    }
   }
 }
 `
@@ -177,12 +177,12 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   auto_subnet {
     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
-	primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].start_address
+    primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].start_address
   }
 
   auto_subnet {
-	gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[1].gateway
-	prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[1].prefix_length
+    gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[1].gateway
+    prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[1].prefix_length
   }
 }
 `
@@ -411,7 +411,6 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
       end_address   = "1.255.255.254"
     }
   }
-
 }
 
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
@@ -425,7 +424,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   auto_subnet {
     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
-	primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+    primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
   }
 }
 `
