@@ -193,7 +193,57 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 ```
+## Example Usage (Automatic IP allocation from any subnet)
 
+```hcl
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.vdc1.id
+  name     = "nsxt-edge"
+
+  external_network_id = data.vcd_external_network_v2.ext-net-nsxt.id
+
+  # 100 IPs will be allocated from any of `auto_subnet` defined blocks
+
+  total_allocated_ip_count = 100
+
+  auto_subnet {
+    gateway       = "77.77.77.1"
+    prefix_length = "24"
+    primary_ip    = "77.77.77.254"
+  }
+
+  auto_subnet {
+    gateway       = "88.77.77.1"
+    prefix_length = "24"
+  }
+}
+```
+
+## Example Usage (Automatic IP allocation per subnet)
+
+```hcl
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.vdc1.id
+  name     = "nsxt-edge"
+
+  external_network_id = data.vcd_external_network_v2.ext-net-nsxt.id
+
+  auto_allocated_subnet {
+    gateway            = "77.77.77.1"
+    prefix_length      = "24"
+    primary_ip         = "77.77.77.10"
+    allocated_ip_count = 9
+  }
+
+  auto_allocated_subnet {
+    gateway            = "88.77.77.1"
+    prefix_length      = "24"
+    allocated_ip_count = 15
+  }
+}
+```
 
 ## Argument Reference
 
@@ -223,12 +273,29 @@ definition at provider level.
 * `description` - (Optional) A unique name for the edge gateway.
 * `external_network_id` - (Required) An external network ID. **Note:** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
 can be used to lookup ID by name.
-* `subnet` - (Required) One or more [subnets](#edgegateway-subnet) defined for edge gateway.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
 * `dedicate_external_network` - (Optional) Dedicating the External Network will enable Route Advertisement for this Edge Gateway. Default `false`.
 
+* `subnet` - (Optional) One or more [subnets](#edgegateway-subnet) defined for edge gateway. One of
+  `subnet`, `auto_subnet` or `auto_allocated_subnet` is **required**.
+* `auto_subnet` - (Optional, *v3.9+*) One or more [subnets](#edgegateway-auto-subnet) defined for
+  edge gateway. One of `subnet`, `auto_subnet` or `auto_allocated_subnet` is **required**. 
+* `auto_allocated_subnet` - (*v3.9+*) One or more [subnets](#edgegateway-auto-allocated-subnet)
+  defined for edge gateway. One of `subnet`, `auto_subnet` or `auto_allocated_subnet` is
+  **required**.
+* `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `auto_subnet`
+
+~> Starting with v3.9 of this provider, NSX-T Edge Gateways can allocate IP addresses by using
+different strategies: Manual IP allocation (`subnet`), automatic IP allocations in any of defined
+subnets (`auto_subnet` with `total_allocated_ip_count`), automatic IP allocations per defined subnet
+(`auto_allocated_subnet`). One of these is **required**. Different set definition structures are
+required due to Terraform schema limitations. **Note**. Allocation modes are split due to Terraform 
+schema limitations and migrations between configurations can only be done __manually__.
+
+
 <a id="edgegateway-subnet"></a>
-## Edge Gateway Subnet
+
+## Edge Gateway Subnet (manual IP allocation)
 
 * `gateway` - (Required) - Gateway for a subnet in external network
 * `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
@@ -239,17 +306,43 @@ be one__ `primary_ip` defined for edge gateway.
 allocated
 
 <a id="edgegateway-subnet-ip-allocation"></a>
+
 ## Edge Gateway Subnet IP Allocation
 
 * `start_address` - (Required) - Start IP address of a range
 * `end_address` - (Required) - End IP address of a range
 
+<a id="edgegateway-auto-subnet"></a>
+
+## Edge Gateway Automatic IP allocation (from *any* of the defined `auto_subnet` entries)
+
+* `gateway` - (Required) - Gateway for a subnet in external network
+* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `primary_ip` (Required) - Is required, but only in one of defined `auto_subnet` set
+
+~> Only network definitions are required and IPs are allocated automatically, based on
+`total_allocated_ip_count` parameter
+
+
+<a id="edgegateway-auto-allocated-subnet"></a>
+
+### Automatic IP allocation (per defined `auto_allocated_subnet` entries)
+
+~> Subnet definitions (with one of them having `primary_ip` defined) and `allocated_ip_count` are
+required. Automatic allocation will be used 
+
+* `gateway` - (Required) - Gateway for a subnet in external network
+* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `primary_ip` (Required) - Is required, but only in one of defined `auto_allocated_subnet` sets
+* `allocated_ip_count` (Required) - Number of allocated IPs from that particular subnet
 
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
 * `primary_ip` - Primary IP address exposed for an easy access without nesting.
+* `used_ip_count` - Unused IP count in this Edge Gateway
+* `unused_ip_count` Used IP count in this Edge Gateway
 
 
 ## Importing
