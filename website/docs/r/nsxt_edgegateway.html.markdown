@@ -204,7 +204,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   external_network_id = data.vcd_external_network_v2.ext-net-nsxt.id
 
   # 100 IPs will be allocated from any of `auto_subnet` defined blocks
-
   total_allocated_ip_count = 100
 
   auto_subnet {
@@ -279,9 +278,9 @@ can be used to lookup ID by name.
 * `subnet` - (Optional) One or more [subnets](#edgegateway-subnet) defined for edge gateway. One of
   `subnet`, `auto_subnet` or `auto_allocated_subnet` is **required**.
 * `auto_subnet` - (Optional, *v3.9+*) One or more [subnets](#edgegateway-auto-subnet) defined for
-  edge gateway. One of `subnet`, `auto_subnet` or `auto_allocated_subnet` is **required**. 
+  Edge Gateway. One of `subnet`, `auto_subnet` or `auto_allocated_subnet` is **required**.
 * `auto_allocated_subnet` - (*v3.9+*) One or more [subnets](#edgegateway-auto-allocated-subnet)
-  defined for edge gateway. One of `subnet`, `auto_subnet` or `auto_allocated_subnet` is
+  defined for Edge Gateway. One of `subnet`, `auto_subnet` or `auto_allocated_subnet` is
   **required**.
 * `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `auto_subnet`
 
@@ -318,7 +317,7 @@ allocated
 
 * `gateway` - (Required) - Gateway for a subnet in external network
 * `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
-* `primary_ip` (Required) - Is required, but only in one of defined `auto_subnet` set
+* `primary_ip` (Required) - Is required, but only in one of defined `auto_subnet` block
 
 ~> Only network definitions are required and IPs are allocated automatically, based on
 `total_allocated_ip_count` parameter
@@ -326,14 +325,14 @@ allocated
 
 <a id="edgegateway-auto-allocated-subnet"></a>
 
-### Automatic IP allocation (per defined `auto_allocated_subnet` entries)
+## Automatic IP allocation (per defined `auto_allocated_subnet` entries)
 
 ~> Subnet definitions (with one of them having `primary_ip` defined) and `allocated_ip_count` are
 required. Automatic allocation will be used 
 
 * `gateway` - (Required) - Gateway for a subnet in external network
 * `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
-* `primary_ip` (Required) - Is required, but only in one of defined `auto_allocated_subnet` sets
+* `primary_ip` (Required) - Is required, but only in one of defined `auto_allocated_subnet` block
 * `allocated_ip_count` (Required) - Number of allocated IPs from that particular subnet
 
 ## Attribute Reference

@@ -438,7 +438,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	return &edgeGatewayType, nil
 }
 
-// getNsxtEdgeGatewayUplinksTypeForCreate handles uplink structure in update only operations
+// getNsxtEdgeGatewayUplinksTypeForCreate handles uplink structure in create only operations
 func getNsxtEdgeGatewayUplinksTypeForCreate(d *schema.ResourceData) ([]types.EdgeGatewayUplinks, error) {
 	_, usingSubnetAllocation := d.GetOk("subnet")
 	_, usingAutoSubnetAllocation := d.GetOk("auto_subnet")
