@@ -74,10 +74,10 @@ The following arguments are supported:
 * `service_network_specification` - (Optional) Gateway CIDR format which will be used by Load Balancer service. All the
   load balancer service engines associated with the Service Engine Group will be attached to this network. The subnet
   prefix length must be 25. If nothing is set, the **default is 192.168.255.125/25**. This field cannot be updated
-* `ipv6_service_network_specification` (Optional; *v3.9+*, *VCD 10.4.0+*) The IPv6 network definition in Gateway
-  CIDR format which will be used by Load Balancer service on Edge. All the load balancer service
-  engines associated with the Service Engine Group will be attached to this network. This field
-  cannot be updated
+* `ipv6_service_network_specification` (Optional; *v3.9+*, *VCD 10.4.0+*) The IPv6 network
+  definition in CIDR format which will be used by Load Balancer service in the Edge Gateway. All the
+  load balancer service engines associated with the Service Engine Group will be attached to this
+  network. This field cannot be updated
 
 ~> IPv4 service network will be used if both the `service_network_specification` and
 `ipv6_service_network_specification` properties are unset. If both are set, it will still be one
