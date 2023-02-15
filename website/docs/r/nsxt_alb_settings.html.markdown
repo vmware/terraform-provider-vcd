@@ -37,6 +37,28 @@ resource "vcd_nsxt_alb_settings" "org1" {
 }
 ```
 
+## Example Usage (Enabling NSX-T ALB with IPv6 service network and transparent mode on NSX-T Edge Gateway)
+
+```hcl
+data "vcd_nsxt_edgegateway" "existing" {
+  org = "my-org"
+  vdc = "nsxt-vdc"
+
+  name = "nsxt-gw"
+}
+
+resource "vcd_nsxt_alb_settings" "org1" {
+  org = "my-org"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  is_active       = true
+
+  service_network_specification      = "10.10.255.225/27"
+  ipv6_service_network_specification = "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"
+  is_transparent_mode_enabled        = true
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
