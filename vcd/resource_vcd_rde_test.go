@@ -483,13 +483,18 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 	if err != nil {
 		t.Errorf("could not get '%s' rights bundle: %s", rightsBundleName, err)
 	}
+	err = rightsBundle.PublishAllTenants()
+	if err != nil {
+		t.Errorf("could not publish '%s' rights bundle to all tenants: %s", rightsBundleName, err)
+	}
+
 	rights, err := rightsBundle.GetRights(nil)
 	if err != nil {
 		t.Errorf("could not get rights from '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	var rightsToAdd []types.OpenApiReference
 	for _, right := range rights {
-		if strings.Contains(strings.ToLower(right.Name), fmt.Sprintf("%s:%s", vendor, nss)) {
+		if strings.Contains(right.Name, fmt.Sprintf("%s:%s", vendor, nss)) {
 			rightsToAdd = append(rightsToAdd, types.OpenApiReference{
 				Name: right.Name,
 				ID:   right.ID,
