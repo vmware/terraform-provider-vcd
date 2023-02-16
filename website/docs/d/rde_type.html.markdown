@@ -9,7 +9,6 @@ description: |-
 # vcd\_rde\_type
 
 Provides the capability of fetching an existing Runtime Defined Entity type from VMware Cloud Director.
-Requires system administrator privileges.
 
 Supported in provider *v3.9+*
 
