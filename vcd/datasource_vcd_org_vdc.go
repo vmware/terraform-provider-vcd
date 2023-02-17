@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -224,6 +225,11 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
 			},
+			"enable_distributed_firewall": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if distributed firewall is enabled - Only applies to NSX-V VDCs",
+			},
 		},
 	}
 }
@@ -236,7 +242,8 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+	vdcName := d.Get("name").(string)
+	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
 		return diag.Errorf("unable to find VDC %s", err)
@@ -254,5 +261,14 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
+	dSet(d, "enable_distributed_firewall", false)
+	if adminVdc.IsNsxv() {
+		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
+		enabled, err := dfw.IsEnabled()
+		if err != nil {
+			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+		}
+		dSet(d, "enable_distributed_firewall", enabled)
+	}
 	return nil
 }
