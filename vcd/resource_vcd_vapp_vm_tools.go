@@ -1216,3 +1216,25 @@ func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error 
 	}
 	return nil
 }
+
+func createOrUpdateVmSecurityTags(d *schema.ResourceData, vm *govcd.VM) error {
+	var err error
+	entitySecurityTags := &types.EntitySecurityTags{}
+
+	if entitySecurityTagsFromSchema, ok := d.GetOk("security_tags"); ok {
+		entitySecurityTagsSlice := convertSchemaSetToSliceOfStrings(entitySecurityTagsFromSchema.(*schema.Set))
+		entitySecurityTags.Tags = entitySecurityTagsSlice
+		_, err = vm.UpdateVMSecurityTags(entitySecurityTags)
+		log.Printf("[DEBUG] security_tags are set %s", entitySecurityTags)
+		if err != nil {
+			return fmt.Errorf("error setting VM Security Tags: %s", err)
+		}
+	} else {
+		_, err = vm.UpdateVMSecurityTags(entitySecurityTags)
+		log.Printf("[DEBUG] security_tags are NOT set %s", entitySecurityTags)
+		if err != nil {
+			return fmt.Errorf("error setting VM Security Tags: %s", err)
+		}
+	}
+	return nil
+}

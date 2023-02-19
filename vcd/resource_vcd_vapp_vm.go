@@ -617,6 +617,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true, // As it can get populated automatically by VDC default policy
 			Description: "VM placement policy ID. Has to be assigned to Org VDC.",
 		},
+		"security_tags": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Computed:    false,
+			Description: "Security tags to assign to this VM",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
 		"status": {
 			Type:        schema.TypeInt,
 			Computed:    true,
@@ -789,6 +796,14 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	err = updateAdvancedComputeSettings(d, vm)
 	if err != nil {
 		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
+	}
+
+	// Handle VM Security Tags settings 
+	// Such schema fields are processed:
+	// * security_tags
+	err = createOrUpdateVmSecurityTags(d, vm)
+	if err != nil {
+		return diag.Errorf("[VM create] error creating security tags for VM %s : %s", vm.VM.Name, err)
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1062,6 +1077,12 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 
 	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
+	// Handle VM Security Tags settings
+	err = createOrUpdateVmSecurityTags(d, vm)
+	if err != nil {
+		return nil, fmt.Errorf("[VM create] error creating security tags for VM %s : %s", vm.VM.Name, err)
 	}
 
 	// Template VMs require CPU/Memory setting
@@ -1399,6 +1420,12 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	err = newVm.UpdateNetworkConnectionSection(&networkConnectionSection)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
+	}
+
+	// Handle VM Security Tags settings
+	err = createOrUpdateVmSecurityTags(d, newVm)
+	if err != nil {
+		return nil, fmt.Errorf("[VM create] error creating security tags for VM %s : %s", newVm.VM.Name, err)
 	}
 
 	return newVm, nil
@@ -1746,6 +1773,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 	}
 
+	// Update the security tags
+	if d.HasChange("security_tags") {
+		err = createOrUpdateVmSecurityTags(d, vm)
+		if err != nil {
+			return diag.Errorf("[VM Update] error updating security tags for VM %s : %s", vm.VM.Name, err)
+		}
+	}
+
 	// If the VM was powered off during update but it has to be powered on
 	if d.Get("power_on").(bool) {
 		vmStatus, err := vm.GetStatus()
@@ -1790,6 +1825,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 	}
+
 	log.Printf("[DEBUG] [VM update] finished")
 	return genericVcdVmRead(d, meta, "update")
 }
@@ -1974,6 +2010,12 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 			dSet(d, "placement_policy_id", vm.VM.ComputePolicy.VmPlacementPolicy.ID)
 		}
 	}
+
+	entitySecurityTags, err := vm.GetVMSecurityTags()
+	if err != nil {
+		return diag.Errorf("[VM read] unable to read VM security tags: %s", err)
+	}
+	dSet(d, "security_tags", convertStringsToTypeSet(entitySecurityTags.Tags))
 
 	statusText, err := vm.GetStatus()
 	if err != nil {
