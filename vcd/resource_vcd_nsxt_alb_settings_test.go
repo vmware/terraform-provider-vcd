@@ -345,6 +345,11 @@ func TestAccVcdNsxtAlbSettingsDualStackMode(t *testing.T) {
 	configText1 := templateFill(testAccVcdNsxtAlbGeneralSettingsDualStackMode, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
+	params["FuncName"] = t.Name() + "step2"
+	params["IsActive"] = "true"
+	configText2 := templateFill(testAccVcdNsxtAlbGeneralSettingsDualStackModeIPv6Only, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -373,6 +378,22 @@ func TestAccVcdNsxtAlbSettingsDualStackMode(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "supported_feature_set", "PREMIUM"),
 				),
 			},
+			{
+				// Recreating from scratch while having only ipv6_service_network_specification set
+				// and checking that only IPv6 address is set
+				Taint:  []string{"vcd_nsxt_alb_settings.test"},
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "ipv6_service_network_specification", "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "supported_feature_set", "PREMIUM"),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -394,6 +415,31 @@ resource "vcd_nsxt_alb_settings" "test" {
   is_active       = {{.IsActive}}
   
   service_network_specification      = "10.10.255.225/27"
+  ipv6_service_network_specification = "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"
+
+  {{.SupportedFeatureSet}}
+
+
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [vcd_nsxt_alb_service_engine_group.first]
+}
+`
+
+const testAccVcdNsxtAlbGeneralSettingsDualStackModeIPv6Only = testAccVcdNsxtAlbProviderPrereqs + `
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_alb_settings" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  is_active       = {{.IsActive}}
+  
   ipv6_service_network_specification = "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"
 
   {{.SupportedFeatureSet}}
