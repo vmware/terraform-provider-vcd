@@ -89,6 +89,8 @@ other end of the IPSec VPN tunnel.
 * `local_ip_address` - (Required) IPv4 Address for the endpoint. This has to be a suballocated IP on the Edge Gateway.
 * `local_networks` - (Required) A set of local networks in CIDR format. At least one value required
 * `remote_ip_address` - (Required) Public IPv4 Address of the remote device terminating the VPN connection
+* `remote_id` - (Optional, *v3.9+*) Remote ID uniquely identifies the peer site. If the remote ID is
+  not set, it will default to the remote IP address
 * `remote_networks` - (Optional) Set of remote networks in CIDR format. Leaving it empty is interpreted as 0.0.0.0/0
 * `logging` - (Optional) Sets whether logging for the tunnel is enabled or not. (default - `false`)
 * `security_profile_customization` - (Optional) a block allowing to

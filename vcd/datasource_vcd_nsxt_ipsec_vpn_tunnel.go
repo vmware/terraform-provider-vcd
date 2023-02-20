@@ -69,6 +69,11 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Computed:    true,
 				Description: "Public IPv4 Address of the remote device terminating the VPN connection",
 			},
+			"remote_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Remote ID",
+			},
 			"remote_networks": {
 				Type:        schema.TypeSet,
 				Computed:    true,
