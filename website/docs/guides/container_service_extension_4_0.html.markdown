@@ -410,14 +410,273 @@ resource "vcd_rde_type" "capvcd_cluster_type" {
 
 ### Create CSE Admin Role
 
+This is a provider-level role in 'System' org.
+VMware Cloud Director Container Service Extension Server v4 uses this role to process cluster operations
+
+```hcl
+resource "vcd_role" "cse_admin_role" {
+  org = "System"
+  name = "CSE Admin Role"
+  description = "Used for administrative purposes"
+  rights = [
+    "API Tokens: Manage",
+    "vmware:VCDKEConfig: Administrator Full access",
+    "vmware:VCDKEConfig: Administrator View",
+    "vmware:VCDKEConfig: Full Access",
+    "vmware:VCDKEConfig: Modify",
+    "vmware:VCDKEConfig: View",
+    "vmware:capvcdCluster: Administrator Full access",
+    "vmware:capvcdCluster: Administrator View",
+    "vmware:capvcdCluster: Full Access",
+    "vmware:capvcdCluster: Modify",
+    "vmware:capvcdCluster: View"
+  ]
+
+  depends_on = [
+    vcd_rde_type.vcd_ke_config_type,
+    vcd_rde_type.capvcd_cluster_type,
+  ]
+}
+```
+
+Create a user:
+
+```hcl
+resource "vcd_org_user" "cse_admin" {
+  org      = vcd_org.solutions_organization.name
+  name     = "cse-admin"
+  password = "ca$hc0w"
+  role     = vcd_role.cse_admin_role.name
+}
+```
+
+~> You need to create an API token for this user
+
 ### Create and Publish 'Kubernetes Clusters Rights Bundle'
+
+Create and publish:
+
+```hcl
+resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
+  name        = "Kubernetes Clusters Rights Bundle"
+  description = "Rights bundle with required rights for managing Kubernetes clusters"
+  rights = [
+    "API Tokens: Manage",
+    "vApp: Allow All Extra Config",
+    "Catalog: View Published Catalogs",
+    "Organization vDC Shared Named Disk: Create",
+    "Organization vDC Gateway: View",
+    "Organization vDC Gateway: View NAT",
+    "Organization vDC Gateway: Configure NAT",
+    "Organization vDC Gateway: View Load Balancer",
+    "Organization vDC Gateway: Configure Load Balancer",
+    "vmware:capvcdCluster: Administrator Full access",
+    "vmware:capvcdCluster: Full Access",
+    "vmware:capvcdCluster: Modify",
+    "vmware:capvcdCluster: View",
+    "vmware:capvcdCluster: Administrator View",
+    "General: Administrator View",
+    "Certificate Library: Manage",
+    "Access All Organization VDCs",
+    "Certificate Library: View",
+    "Organization vDC Named Disk: Create",
+    "Organization vDC Named Disk: Edit Properties",
+    "Organization vDC Named Disk: View Properties",
+    "vmware:tkgcluster: Full Access",
+    "vmware:tkgcluster: Modify",
+    "vmware:tkgcluster: View",
+    "vmware:tkgcluster: Administrator View",
+    "vmware:tkgcluster: Administrator Full access",
+  ]
+  publish_to_all_tenants = true
+  depends_on = [
+    vcd_rde_type.capvcd_cluster_type
+  ]
+}
+```
 
 ### Create and Publish 'Kubernetes Cluster Author' global role
 
+```hcl
+resource "vcd_global_role" "k8s_cluster_author" {
+  name        = "Kubernetes Cluster Author"
+  description = "Role to create Kubernetes clusters"
+  rights = [
+    "API Tokens: Manage",
+    "Access All Organization VDCs",
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: View Private and Shared Catalogs",
+    "Catalog: View Published Catalogs",
+    "Certificate Library: View",
+    "Organization vDC Compute Policy: View",
+    "Organization vDC Gateway: Configure Load Balancer",
+    "Organization vDC Gateway: Configure NAT",
+    "Organization vDC Gateway: View",
+    "Organization vDC Gateway: View Load Balancer",
+    "Organization vDC Gateway: View NAT",
+    "Organization vDC Named Disk: Create",
+    "Organization vDC Named Disk: Delete",
+    "Organization vDC Named Disk: Edit Properties",
+    "Organization vDC Named Disk: View Properties",
+    "Organization vDC Network: View Properties",
+    "Organization vDC Shared Named Disk: Create",
+    "Organization vDC: VM-VM Affinity Edit",
+    "Organization: View",
+    "UI Plugins: View",
+    "VAPP_VM_METADATA_TO_VCENTER",
+    "vApp Template / Media: Copy",
+    "vApp Template / Media: Edit",
+    "vApp Template / Media: View",
+    "vApp Template: Checkout",
+    "vApp: Allow All Extra Config",
+    "vApp: Copy",
+    "vApp: Create / Reconfigure",
+    "vApp: Delete",
+    "vApp: Download",
+    "vApp: Edit Properties",
+    "vApp: Edit VM CPU",
+    "vApp: Edit VM Hard Disk",
+    "vApp: Edit VM Memory",
+    "vApp: Edit VM Network",
+    "vApp: Edit VM Properties",
+    "vApp: Manage VM Password Settings",
+    "vApp: Power Operations",
+    "vApp: Sharing",
+    "vApp: Snapshot Operations",
+    "vApp: Upload",
+    "vApp: Use Console",
+    "vApp: VM Boot Options",
+    "vApp: View ACL",
+    "vApp: View VM metrics",
+    "vmware:capvcdCluster: Administrator Full access",
+    "vmware:capvcdCluster: Full Access",
+    "vmware:capvcdCluster: Modify",
+    "vmware:capvcdCluster: View",
+    "vmware:capvcdCluster: Administrator View",
+    "vmware:tkgcluster: Full Access",
+    "vmware:tkgcluster: Modify",
+    "vmware:tkgcluster: View",
+    "vmware:tkgcluster: Administrator View",
+    "vmware:tkgcluster: Administrator Full access",
+  ]
+
+  publish_to_all_tenants = true
+
+  depends_on = [
+    vcd_rights_bundle.k8s_clusters_rights_bundle
+  ]
+}
+```
+
+### Set up networking
+
+This step assumes that your VDC doesn't have any networking set up. If you have already networking in place, please
+skip this step.
+
+
+### Configure CSE server
+
+```hcl
+# We read the entity JSON of the VCDKEConfig as template as some fields are references to Terraform resources.
+# The inputs are taken from UI.
+data "template_file" "vcd_ke_config_instance_template" {
+  template = file("${path.module}/entities/vcdkeconfig.json")
+  vars = {
+    capvcd_version                  = var.capvcd_version
+    cpi_version                     = var.cpi_version
+    csi_version                     = var.csi_version
+    github_personal_access_token    = var.github_personal_access_token
+    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name
+    no_proxy                        = var.no_proxy
+    http_proxy                      = var.http_proxy
+    https_proxy                     = var.https_proxy
+    syslog_host                     = var.syslog_host
+    syslog_port                     = var.syslog_port
+  }
+}
+
+resource "vcd_rde" "vcd_ke_config_instance" {
+  # org         = "System"
+  name             = "vcdKeConfig"
+  rde_type_vendor  = vcd_rde_type.vcd_ke_config_type.vendor
+  rde_type_nss     = vcd_rde_type.vcd_ke_config_type.nss
+  rde_type_version = vcd_rde_type.vcd_ke_config_type.version
+  resolve          = true
+  input_entity     = data.template_file.vcd_ke_config_instance_template.rendered
+}
+```
+
+### Deploy CSE server
+
+```hcl
+
+resource "vcd_vapp" "cse_appliance_vapp" {
+  org  = vcd_org.solutions_organization.name
+  vdc  = vcd_org_vdc.solutions_vdc.name
+  name = "CSE Appliance vApp"
+
+  lease {
+    runtime_lease_in_sec = 0
+    storage_lease_in_sec = 0
+  }
+}
+
+resource "vcd_vapp_org_network" "cse_appliance_network" {
+  org = vcd_org.solutions_organization.name
+  vdc = vcd_org_vdc.solutions_vdc.name
+
+  vapp_name        = vcd_vapp.cse_appliance_vapp.name
+  org_network_name = vcd_network_routed_v2.solutions_routed_network.name
+}
+
+resource "vcd_vapp_vm" "cse_appliance_vm" {
+  org = vcd_org.solutions_organization.name
+  vdc = vcd_org_vdc.solutions_vdc.name
+
+  vapp_name = vcd_vapp.cse_appliance_vapp.name
+  name      = "CSE Appliance VM"
+
+  vapp_template_id = vcd_catalog_vapp_template.cse_ova.id
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.cse_appliance_network.org_network_name
+    ip_allocation_mode = "POOL"
+  }
+
+  guest_properties = {
+
+    # VCD host
+    "cse.vcdHost" = replace(var.vcd_api_endpoint, "/api", "")
+
+    # CSE service account's org
+    "cse.AppOrg" = vcd_org.solutions_organization.name
+
+    # CSE service account's Access Token
+    "cse.vcdRefreshToken" = var.service_account_access_token
+
+    # CSE service account's username
+    "cse.vcdUsername" = var.service_account_username
+
+    # CSE service vApp's org
+    "cse.userOrg" = "System"
+  }
+
+  customization {
+    force                      = false
+    enabled                    = true
+    allow_local_admin_password = true
+    auto_generate_password     = false
+    admin_password             = var.cse_vm_password # In the guide it says to auto generate, but for simplicity it is hardcoded
+  }
+}
+```
 
 ## CSE upgrade process
 
 ## Cluster operations
+
+### Create a cluster
 
 ### Retrieve its kubeconfig
 
