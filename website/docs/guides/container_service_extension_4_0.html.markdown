@@ -678,10 +678,102 @@ resource "vcd_vapp_vm" "cse_appliance_vm" {
 
 ### Create a cluster
 
+```hcl
+data "template_file" "k8s_cluster_yaml_template" {
+  template = file("${path.module}/capvcd_templates/v1.22.9.yaml")
+  vars = {
+    cluster_name = var.k8s_cluster_name
+
+    vcd_url     = replace(var.vcd_api_endpoint, "/api", "")
+    org         = vcd_org.cluster_organization.name
+    vdc         = vcd_org_vdc.cluster_vdc.name
+    org_network = vcd_network_routed_v2.cluster_routed_network.name
+
+    base64_username  = base64encode(var.k8s_cluster_user)
+    base64_api_token = base64encode(var.k8s_cluster_api_token)
+
+    ssh_public_key                   = ""
+    control_plane_machine_count      = 1
+    control_plane_sizing_policy_name = vcd_vm_sizing_policy.default_policy.name
+    control_plane_sizing_policy_name = ""
+    control_plane_placement_policy   = ""
+    control_plane_storage_profile    = ""
+    control_plane_disk_size          = "20Gi"
+
+    worker_storage_policy   = ""
+    worker_sizing_policy = vcd_vm_sizing_policy.default_policy.name
+    worker_placement_policy = ""
+    worker_machine_count    = 1
+    worker_disk_size        = "20Gi"
+
+    catalog_name = vcd_catalog.cse_catalog.name
+    tkgm_ova     = replace(var.tkgm_ova_name, ".ova", "")
+
+    pods_cidr     = "100.96.0.0/11"
+    services_cidr = "100.64.0.0/13"
+  }
+}
+
+# sample_cluster.yaml file should convert \n into \\n and " into \" first
+data "template_file" "rde_k8s_cluster_instance_template" {
+  template = file("${path.module}/entities/k8s_cluster.json")
+  vars = {
+    vcd_url   = replace(var.vcd_api_endpoint, "/api", "")
+    name      = var.k8s_cluster_name
+    org       = vcd_org.cluster_organization.name
+    vdc       = vcd_org_vdc.cluster_vdc.name
+    capi_yaml = replace(replace(data.template_file.k8s_cluster_yaml_template.rendered, "\n", "\\n"), "\"", "\\\"")
+
+    delete                = false # Make this true to delete the cluster
+    force_delete          = false # Make this true to forcefully delete the cluster
+    auto_repair_on_errors = false
+  }
+}
+
+resource "vcd_rde" "k8s_cluster_instance" {
+  org              = vcd_org.cluster_organization.name
+  name             = var.k8s_cluster_name
+  rde_type_vendor  = vcd_rde_type.capvcd_cluster_type.vendor
+  rde_type_nss     = vcd_rde_type.capvcd_cluster_type.nss
+  rde_type_version = vcd_rde_type.capvcd_cluster_type.version
+  resolve          = false # MUST be false as it is resolved by CSE appliance
+  force_delete     = true  # MUST be true as it won't be resolved by Terraform
+  input_entity     = data.template_file.rde_k8s_cluster_instance_template.rendered
+
+  depends_on = [
+    vcd_vapp_vm.cse_appliance_vm, vcd_catalog_vapp_template.tkgm_ova
+  ]
+}
+
+output "computed_k8s_cluster_id" {
+  value = vcd_rde.k8s_cluster_instance.id
+}
+
+output "computed_k8s_cluster_capvcdyaml" {
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["spec"]["capiYaml"]
+}
+```
+
 ### Retrieve its kubeconfig
+
+```hcl
+# output "kubeconfig" {  
+#   value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["capvcd"]["private"]["kubeConfig"]
+# }
+```
 
 ### Upgrade a cluster
 
 ### Delete a cluster
 
+~> Don't remove the resource from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
+Follow the mentioned steps instead.
+
 ## Uninstall CSE
+
+Before uninstalling CSE, make sure you perform an update operation to mark all clusters for deletion.
+
+~> Don't remove the K8s cluster resources from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
+Follow the mentioned steps instead.
+
+Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
