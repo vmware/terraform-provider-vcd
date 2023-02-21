@@ -413,3 +413,16 @@ resource "vcd_rde_type" "capvcd_cluster_type" {
 ### Create and Publish 'Kubernetes Clusters Rights Bundle'
 
 ### Create and Publish 'Kubernetes Cluster Author' global role
+
+
+## CSE upgrade process
+
+## Cluster operations
+
+### Retrieve its kubeconfig
+
+### Upgrade a cluster
+
+### Delete a cluster
+
+## Uninstall CSE
