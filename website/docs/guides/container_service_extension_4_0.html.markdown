@@ -164,6 +164,8 @@ resource "vcd_vm_sizing_policy" "tkg_s" {
 }
 ```
 
+You can of course create more policies that suit to your needs. The above policies are **just the minimum required**.
+
 ### Set up the VDCs
 
 In this step we will create a specific [VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc) that will host
@@ -172,21 +174,31 @@ that will host the clusters for the tenants to use, called "Cluster VDC".
 
 You can customise the following sample HCL snippet to your needs. It creates these two [VDCs](/providers/vmware/vcd/latest/docs/resources/org_vdc)
 
-~> The target VDC needs to be backed by **NSX-T** for CSE to work.
-
 ```hcl
+# We fetch some required information like Provider VDC, Edge Clusters, etc
+data "vcd_provider_vdc" "nsxt_pvdc" {
+  name = "nsxTPvdc1"
+}
+
+data "vcd_nsxt_edge_cluster" "cluster_edgecluster" {
+  org             = vcd_org.cluster_organization.name
+  provider_vdc_id = data.vcd_provider_vdc.nsxt_pvdc.id
+  name            = "edgeCluster1"
+}
+
+# The VDC that will host the Kubernetes clusters
 resource "vcd_org_vdc" "cluster_vdc" {
   name        = "cluster_vdc"
   description = "Cluster VDC"
   org         = vcd_org.cluster_organization.name
 
-  allocation_model  = "AllocationVApp"
+  allocation_model  = "AllocationVApp" # You can use other models
   network_pool_name = "NSX-T Overlay 1"
   provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name
   edge_cluster_id   = data.vcd_nsxt_edge_cluster.cluster_edgecluster.id
 
+  # You can tune these arguments to your needs
   network_quota = 1000
-
   compute_capacity {
     cpu {
       allocated = 0
@@ -224,5 +236,180 @@ resource "vcd_org_vdc" "cluster_vdc" {
     vcd_vm_sizing_policy.tkg_s.id,
   ]
 }
+
+data "vcd_nsxt_edge_cluster" "solutions_edgecluster" {
+  org             = vcd_org.cluster_organization.name
+  provider_vdc_id = data.vcd_provider_vdc.nsxt_pvdc.id
+  name            = "edgeCluster2"
+}
+
+# The VDC that will host the CSE appliance
+resource "vcd_org_vdc" "solutions_vdc" {
+  name        = "solutions_vdc"
+  description = "Solutions VDC"
+  org         = vcd_org.solutions_organization.name
+
+  allocation_model  = "AllocationVApp" # You can use other models
+  network_pool_name = "NSX-T Overlay 1"
+  provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name
+  edge_cluster_id   = data.vcd_nsxt_edge_cluster.solutions_edgecluster.id
+
+  # You can tune these arguments to your needs
+  network_quota = 1000
+  compute_capacity {
+    cpu {
+      allocated = 0
+    }
+
+    memory {
+      allocated = 0
+    }
+  }
+
+  storage_profile {
+    name    = "*"
+    limit   = 0
+    default = true
+  }
+
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
+  delete_force             = true
+  delete_recursive         = true
+
+  # You can create more Sizing Policies and add them to the VDC:
+  default_compute_policy_id = vcd_vm_sizing_policy.other_policy.id
+  vm_sizing_policy_ids = [
+    vcd_vm_sizing_policy.other_policy.id
+  ]
+}
 ```
 
+### Create Catalogs and upload OVAs
+
+We need to create some [Catalogs](/providers/vmware/vcd/latest/docs/resources/catalog) to be able to store and retrieve
+CSE Server OVAs and maintain a repository of Kubernetes Template OVAs.
+In this step, we will create two [Catalogs](/providers/vmware/vcd/latest/docs/resources/catalog):
+
+- One Catalog in the Solutions Organization to upload CSE Server OVA for easy access.
+- One shared Catalog in the Solutions Organization that will contain the Kubernetes Template OVAs.
+
+Here's a sample HCL that can help you to achieve this setup:
+
+```hcl
+resource "vcd_catalog" "cse_catalog" {
+  org  = vcd_org.solutions_organization.name # References the Solutions Organization created previously
+  name = "cse_catalog"
+
+  delete_force     = "true"
+  delete_recursive = "true"
+  # You can use a specific `storage_profile_id` argument here to use the same storage as the Solutions VDC
+}
+
+resource "vcd_catalog" "tkgm_catalog" {
+  org  = vcd_org.solutions_organization.name # References the Solutions Organization created previously
+  name = "tkgm_catalog"
+
+  delete_force     = "true"
+  delete_recursive = "true"
+  # You can use a specific `storage_profile_id` argument here to use the same storage as the Solutions VDC
+}
+
+# We share the TKGm Catalog with the Cluster Organization created previously.
+resource "vcd_catalog_access_control" "tkgm_catalog_ac" {
+  org                  = vcd_org.solutions_organization.name # References the Solutions Organization created previously
+  catalog_id           = vcd_catalog.tkgm_catalog.id
+  shared_with_everyone = false
+  shared_with {
+    org_id       = vcd_org.cluster_organization.id
+    access_level = "ReadOnly"
+  }
+}
+```
+
+If you have already some [Catalogs](/providers/vmware/vcd/latest/docs/data-sources/catalog) available, you can fetch them
+with a data source instead:
+
+```hcl
+data "vcd_catalog" "cse_catalog" {
+  org  = vcd_org.solutions_organization.name
+  name = "cse_catalog"
+}
+
+# This should be shared if it belongs to the Solutions Organization
+data "vcd_catalog" "tkgm_catalog" {
+  org  = vcd_org.solutions_organization.name
+  name = "tkgm_catalog"
+}
+```
+
+To upload both CSE and TKGm OVAs, you can use the following sample HCL snippets:
+
+```hcl
+resource "vcd_catalog_vapp_template" "tkgm_ova" {
+  org        = vcd_org.solutions_organization.name  # References the Solutions Organization created previously
+  catalog_id = vcd_catalog.tkgm_catalog.id  # References the TKGm Catalog created previously
+
+  name        = replace(var.tkgm_ova_file, ".ova", "")
+  description = replace(var.tkgm_ova_file, ".ova", "")
+  ova_path    = format("%s/%s", var.tkgm_ova_folder, var.tkgm_ova_file)
+}
+
+resource "vcd_catalog_vapp_template" "cse_ova" {
+  org        = vcd_org.solutions_organization.name  # References the Solutions Organization created previously
+  catalog_id = vcd_catalog.cse_catalog.id # References the CSE Catalog created previously
+
+  name        = replace(var.cse_ova_file, ".ova", "")
+  description = replace(var.cse_ova_file, ".ova", "")
+  ova_path    = format("%s/%s", var.cse_ova_folder, var.cse_ova_file)
+}
+```
+
+As you can see, the `name`, `description` and `ova_path` are taken from variables. This is just a suggestion. You can
+use other ways of retrieving the OVAs that are better suited to your needs.
+
+### Register Interfaces and Entity Types
+
+It is required that you add the following [Runtime Defined Entity Interfaces](/providers/vmware/vcd/latest/docs/resources/rde_interface)
+and [Runtime Defined Entity Types](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to VCD:
+
+```hcl
+resource "vcd_rde_interface" "vcd_ke_config_interface" {
+  name    = "VCDKEConfig"
+  version = "1.0.0"
+  vendor  = "vmware"
+  nss     = "VCDKEConfig"
+}
+
+# This one exists in VCD
+data "vcd_rde_interface" "kubernetes_interface" {
+  vendor  = "vmware"
+  nss     = "k8s"
+  version = "1.0.0"
+}
+
+resource "vcd_rde_type" "vcd_ke_config_type" {
+  name          = "VCD-KE RDE Schema"
+  nss           = "VCDKEConfig"
+  version       = "1.0.0"
+  schema        = file("${path.module}/schemas/vcdkeconfig-type-schema.json")
+  vendor        = "vmware"
+  interface_ids = [vcd_rde_interface.vcd_ke_config_interface.id]
+}
+
+resource "vcd_rde_type" "capvcd_cluster_type" {
+  name          = "CAPVCD Cluster"
+  nss           = "capvcdCluster"
+  version       = "1.1.0"
+  schema        = file("${path.module}/schemas/capvcd-type-schema.json")
+  vendor        = "vmware"
+  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
+}
+```
+
+### Create CSE Admin Role
+
+### Create and Publish 'Kubernetes Clusters Rights Bundle'
+
+### Create and Publish 'Kubernetes Cluster Author' global role
