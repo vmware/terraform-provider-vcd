@@ -51,6 +51,21 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Computed:    true,
 				Description: "Pre-Shared Key (PSK)",
 			},
+			"authentication_mode": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "One of 'PSK' (default), 'CERTIFICATE'",
+			},
+			"certificate_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Optional certificate ID to use for authentication",
+			},
+			"ca_certificate_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Optional CA certificate ID to use for authentication",
+			},
 			"local_ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,

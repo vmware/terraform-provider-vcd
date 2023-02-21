@@ -737,3 +737,146 @@ func testAccCheckNsxtIpSecVpnTunnelDestroy(ipSecVpnTunnelIdentifier string) reso
 		return nil
 	}
 }
+
+func TestAccVcdNsxtIpSecVpnTunnelCertAuth(t *testing.T) {
+	preTestChecks(t)
+
+	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
+		testConfig.Certificates.Certificate1PrivateKeyPath == "" || testConfig.Certificates.Certificate1Pass == "" {
+		t.Skip("Variables Certificates.Certificate1Path, Certificates.Certificate2Path, " +
+			"Certificates.Certificate1PrivateKeyPath, Certificates.Certificate1Pass must be set")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxtVdc":             testConfig.Nsxt.Vdc,
+		"EdgeGw":              testConfig.Nsxt.EdgeGateway,
+		"NetworkName":         t.Name(),
+		"CertificatePath":     testConfig.Certificates.Certificate1Path,
+		"PrivateKey":          testConfig.Certificates.Certificate1PrivateKeyPath,
+		"PassPhrase":          testConfig.Certificates.Certificate1Pass,
+		"RootCertificatePath": testConfig.Certificates.RootCertificatePath,
+		"RootCertificateKey":  testConfig.Certificates.RootCertificatePrivateKeyPath,
+		"Alias":               t.Name(),
+		"AliasCa":             t.Name() + "-ca",
+		"Tags":                "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccNsxtIpSecVpnTunnelCertAuth1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step2"
+	params["ResourceName"] = "test-tunnel-1"
+	configText2 := templateFill(testAccNsxtIpSecVpnTunnelCertAuth1DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// ignoreDataSourceFields specifies a field list to ignore for data source comparison with resource. These
+	// fields should return the same values, but because 'status' is not controlled and resource and data source are
+	// read not at the same time - there is a risk one will have status and other won't
+	ignoreDataSourceFields := []string{"status", "ike_service_status", "ike_fail_reason"}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1"),
+			testAccCheckNsxtIpSecVpnTunnelDestroy("test-tunnel-1-updated"),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "pre_shared_key", "test-psk"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_ip_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.#", "3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "10.10.10.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "pre_shared_key", "test-psk"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_ip_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.#", "3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "10.10.10.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccNsxtIpSecVpnTunnelCertAuth1 = testAccNsxtIpSetPrereqs + `
+resource "vcd_library_certificate" "ca-cert" {
+  org         = "{{.Org}}"
+  alias       = "{{.AliasCa}}"
+  description = "CA certificate"
+  certificate = file("{{.RootCertificatePath}}")
+}
+
+resource "vcd_library_certificate" "cert" {
+  org                    = "{{.Org}}"
+  alias                  = "{{.Alias}}"
+  description            = "Certificate"
+  certificate            = file("{{.CertificatePath}}")
+  private_key            = file("{{.PrivateKey}}")
+  private_key_passphrase = "{{.PassPhrase}}"
+}
+
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
+
+  name        = "test-tunnel-1"
+  description = "test-tunnel-description"
+
+  authentication_mode = "CERTIFICATE"
+  certificate_id      = vcd_library_certificate.cert.id
+  ca_certificate_id   = vcd_library_certificate.ca-cert.id
+  
+  pre_shared_key    = "test-psk"
+  # Primary IP address of Edge Gateway
+  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address
+  remote_ip_address = "1.2.3.4"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+}
+`
+const testAccNsxtIpSecVpnTunnelCertAuth1DS = testAccNsxtIpSecVpnTunnelCertAuth1 + testAccNsxtIpSecVpnTunnelDS
