@@ -52,13 +52,14 @@ provider "vcd" {
 
 ### Set up the Organizations
 
-In this guide we will configure CSE v4.0 making use of two different [Organizations][r_org]:
+In this guide we will configure CSE v4.0 making use of two different [Organizations][org]:
 
-- Solutions [Organization][r_org]: This [Organization][r_org] will host all provider-scoped items, such as the CSE Appliance vApp.
-- Cluster [Organization][r_org]: This [Organization][r_org] will host the Kubernetes clusters for the tenants to use.
+- Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Appliance vApp.
+  It should only be accessible to CSE administrators.
+- Cluster [Organization][org]: This [Organization][org] will host the Kubernetes clusters for the users to consume them.
 
-This setup is just a proposal, you can have more cluster [organizations][r_org] or reuse an existing [organization][d_org].
-In the sample HCL below you can find these two [Organizations][r_org] configured with no lease for vApps nor vApp Templates.
+This setup is just a proposal, you can have more cluster [organizations][org] or reuse an existing one.
+In the sample HCL below you can find these two [Organizations][org] configured with no lease for vApps nor vApp Templates.
 You can adjust it to fit with the requirements of your service:
 
 ```hcl
@@ -103,7 +104,7 @@ resource "vcd_org" "cluster_organization" {
 }
 ```
 
-As mentioned, if you already have some [Organizations][d_org] available, you can fetch them with a data source instead:
+As mentioned, if you already have some [Organizations][org] available, you can fetch them with a data source instead:
 
 ```hcl
 data "vcd_org" "solutions_organization" {
@@ -115,12 +116,12 @@ data "vcd_org" "cluster_organization" {
 }
 ```
 
-### Create the needed Sizing Policies
+### Create the needed VM Sizing Policies
 
-CSE v4.0 requires a specific set of [Sizing Policies][r_sizing] to be able to dimension the Kubernetes clusters.
+CSE v4.0 requires a specific set of [VM Sizing Policies][sizing] to be able to dimension the Kubernetes clusters.
 You must create them with the HCL snippet below.
 
-~> Apply this HCL as it is. In other words, the names, descriptions and CPU/Memory specifications should **not** be modified.
+~> Apply this HCL as it is. In other words, names, descriptions and CPU/Memory specifications should **not** be modified.
 
 ```hcl
 resource "vcd_vm_sizing_policy" "tkg_xl" {
@@ -168,21 +169,32 @@ resource "vcd_vm_sizing_policy" "tkg_s" {
 }
 ```
 
-You can of course create more [Sizing policies][r_sizing], the ones specified above are just **the minimum required**
-for CSE to work.
+You can of course create more [VM Sizing Policies][sizing], the ones specified above are just **the minimum required**
+for CSE to work:
+
+```hcl
+# We can create as many policies as we need
+resource "vcd_vm_sizing_policy" "other_policy" {
+  name        = "Other policy"
+  description = "Other useful Sizing Policy"
+}
+```
+
 
 ### Set up the VDCs
 
-In this step we will create a specific [VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc) that will host
-the CSE appliance and its configuration, called "Solutions VDC", and a second [VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
-that will host the clusters for the tenants to use, called "Cluster VDC".
+In this guide we will configure a single [VDC][vdc] per Organization:
 
-You can customise the following sample HCL snippet to your needs. It creates these two [VDCs](/providers/vmware/vcd/latest/docs/resources/org_vdc)
+- One VDC for the Solutions Organization.
+- One VDC for the Cluster Organization.
+
+This setup is just a proposal, you can have more [VDCs][vdc] or reuse some existing [VDCs][vdc]
+In the sample HCL below you can find these two [VDC][vdc]:
 
 ```hcl
 # We fetch some required information like Provider VDC, Edge Clusters, etc
 data "vcd_provider_vdc" "nsxt_pvdc" {
-  name = "nsxTPvdc1"
+  name = "providerVdc1"
 }
 
 data "vcd_nsxt_edge_cluster" "cluster_edgecluster" {
@@ -198,11 +210,11 @@ resource "vcd_org_vdc" "cluster_vdc" {
   org         = vcd_org.cluster_organization.name
 
   allocation_model  = "AllocationVApp" # You can use other models
-  network_pool_name = "NSX-T Overlay 1"
-  provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name
-  edge_cluster_id   = data.vcd_nsxt_edge_cluster.cluster_edgecluster.id
+  network_pool_name = "NSX-T pool"
+  provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name # Use a valid Provider VDC retrieved above
+  edge_cluster_id   = data.vcd_nsxt_edge_cluster.cluster_edgecluster.id # Use a valid Edge Cluster retrieved above
 
-  # You can tune these arguments to your needs
+  # You can tune these arguments to your fit your needs
   network_quota = 1000
   compute_capacity {
     cpu {
@@ -214,26 +226,22 @@ resource "vcd_org_vdc" "cluster_vdc" {
     }
   }
 
+  # You can tune these arguments to your fit your needs
   storage_profile {
     name    = "*"
     limit   = 0
     default = true
   }
 
-  storage_profile {
-    name    = "Development2"
-    limit   = 0
-    default = false
-  }
-
+  # You can tune these arguments to your fit your needs
   enabled                  = true
   enable_thin_provisioning = true
   enable_fast_provisioning = true
   delete_force             = true
   delete_recursive         = true
 
+  # Make sure you specify the VM Sizing Policies created previously
   default_compute_policy_id = vcd_vm_sizing_policy.tkg_s.id
-
   vm_sizing_policy_ids = [
     vcd_vm_sizing_policy.tkg_xl.id,
     vcd_vm_sizing_policy.tkg_l.id,
@@ -248,18 +256,18 @@ data "vcd_nsxt_edge_cluster" "solutions_edgecluster" {
   name            = "edgeCluster2"
 }
 
-# The VDC that will host the CSE appliance
+# The VDC that will host the CSE appliance and other provider-level items
 resource "vcd_org_vdc" "solutions_vdc" {
   name        = "solutions_vdc"
   description = "Solutions VDC"
   org         = vcd_org.solutions_organization.name
 
   allocation_model  = "AllocationVApp" # You can use other models
-  network_pool_name = "NSX-T Overlay 1"
-  provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name
-  edge_cluster_id   = data.vcd_nsxt_edge_cluster.solutions_edgecluster.id
+  network_pool_name = "NSX-T pool"
+  provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name # Use a valid Provider VDC retrieved above
+  edge_cluster_id   = data.vcd_nsxt_edge_cluster.solutions_edgecluster.id # Use a valid Edge Cluster retrieved above
 
-  # You can tune these arguments to your needs
+  # You can tune these arguments to your fit your needs
   network_quota = 1000
   compute_capacity {
     cpu {
@@ -271,12 +279,14 @@ resource "vcd_org_vdc" "solutions_vdc" {
     }
   }
 
+  # You can tune these arguments to your fit your needs
   storage_profile {
     name    = "*"
     limit   = 0
     default = true
   }
 
+  # You can tune these arguments to your fit your needs
   enabled                  = true
   enable_thin_provisioning = true
   enable_fast_provisioning = true
@@ -293,9 +303,8 @@ resource "vcd_org_vdc" "solutions_vdc" {
 
 ### Create Catalogs and upload OVAs
 
-We need to create some [Catalogs](/providers/vmware/vcd/latest/docs/resources/catalog) to be able to store and retrieve
-CSE Server OVAs and maintain a repository of Kubernetes Template OVAs.
-In this step, we will create two [Catalogs](/providers/vmware/vcd/latest/docs/resources/catalog):
+We need to create some [Catalogs][catalog] to be able to store and retrieve CSE Server OVAs and maintain a repository of Kubernetes Template OVAs.
+In this step, we will create two [Catalogs][catalog]:
 
 - One Catalog in the Solutions Organization to upload CSE Server OVA for easy access.
 - One shared Catalog in the Solutions Organization that will contain the Kubernetes Template OVAs.
@@ -309,7 +318,12 @@ resource "vcd_catalog" "cse_catalog" {
 
   delete_force     = "true"
   delete_recursive = "true"
-  # You can use a specific `storage_profile_id` argument here to use the same storage as the Solutions VDC
+  
+  # In this guide, everything is created from scratch, so it is needed to wait for the VDC to be available, so the
+  # Catalog can be created.
+  depends_on = [
+    vcd_org_vdc.solutions_vdc
+  ]
 }
 
 resource "vcd_catalog" "tkgm_catalog" {
@@ -318,7 +332,12 @@ resource "vcd_catalog" "tkgm_catalog" {
 
   delete_force     = "true"
   delete_recursive = "true"
-  # You can use a specific `storage_profile_id` argument here to use the same storage as the Solutions VDC
+  
+  # In this guide, everything is created from scratch, so it is needed to wait for the VDC to be available, so the
+  # Catalog can be created.
+  depends_on = [
+    vcd_org_vdc.solutions_vdc
+  ]
 }
 
 # We share the TKGm Catalog with the Cluster Organization created previously.
@@ -327,14 +346,13 @@ resource "vcd_catalog_access_control" "tkgm_catalog_ac" {
   catalog_id           = vcd_catalog.tkgm_catalog.id
   shared_with_everyone = false
   shared_with {
-    org_id       = vcd_org.cluster_organization.id
+    org_id       = vcd_org.cluster_organization.id # Shared with the Cluster Organization
     access_level = "ReadOnly"
   }
 }
 ```
 
-If you have already some [Catalogs](/providers/vmware/vcd/latest/docs/data-sources/catalog) available, you can fetch them
-with a data source instead:
+If you have already some [Catalogs][catalog] available, you can fetch them with a data source instead:
 
 ```hcl
 data "vcd_catalog" "cse_catalog" {
@@ -342,7 +360,8 @@ data "vcd_catalog" "cse_catalog" {
   name = "cse_catalog"
 }
 
-# This should be shared if it belongs to the Solutions Organization
+# This should be shared with the Cluster organization if it belongs to the Solutions Organization.
+# If it is not shared, please look at the `vcd_catalog_access_control` from the snippet above.
 data "vcd_catalog" "tkgm_catalog" {
   org  = vcd_org.solutions_organization.name
   name = "tkgm_catalog"
@@ -376,38 +395,49 @@ use other ways of retrieving the OVAs that are better suited to your needs.
 
 ### Register Interfaces and Entity Types
 
-It is required that you add the following [Runtime Defined Entity Interfaces](/providers/vmware/vcd/latest/docs/resources/rde_interface)
-and [Runtime Defined Entity Types](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to VCD:
+CSE 4.0 requires some new [Runtime Defined Entity Interfaces][rde_interface] and [Runtime Defined Entity Types][rde_type]
+to be created in VCD.
+
+The required schemas to create [Runtime Defined Entity Types][rde_type] are present in this repository and are already
+referenced in the snippet below.
+
+It will create the following items in your VCD appliance:
+
+- "VCDKEConfig" type, this is required to instantiate an entity that will contain the CSE Server required configuration.
+- "CAPVCD" type, this is required to instantiate Kubernetes clusters.
+- "VCDKEConfig" interface, required by the VCDKEConfig type.
+
+~> Apply this HCL as it is. In other words, the interfaces and types should have the specified `name`, `version`, `vendor` and `nss` to work with CSE v4.0
 
 ```hcl
-resource "vcd_rde_interface" "vcd_ke_config_interface" {
+resource "vcd_rde_interface" "vcdkeconfig_interface" {
   name    = "VCDKEConfig"
   version = "1.0.0"
   vendor  = "vmware"
   nss     = "VCDKEConfig"
 }
 
-# This one exists in VCD
+# This one exists in VCD, so we just fetch it with a data source
 data "vcd_rde_interface" "kubernetes_interface" {
   vendor  = "vmware"
   nss     = "k8s"
   version = "1.0.0"
 }
 
-resource "vcd_rde_type" "vcd_ke_config_type" {
+resource "vcd_rde_type" "vcdkeconfig_type" {
   name          = "VCD-KE RDE Schema"
   nss           = "VCDKEConfig"
   version       = "1.0.0"
-  schema        = file("${path.module}/schemas/vcdkeconfig-type-schema.json")
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json" 
   vendor        = "vmware"
-  interface_ids = [vcd_rde_interface.vcd_ke_config_interface.id]
+  interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 
 resource "vcd_rde_type" "capvcd_cluster_type" {
   name          = "CAPVCD Cluster"
   nss           = "capvcdCluster"
   version       = "1.1.0"
-  schema        = file("${path.module}/schemas/capvcd-type-schema.json")
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
   vendor        = "vmware"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 }
@@ -784,6 +814,9 @@ Follow the mentioned steps instead.
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
 
 
-[r_org]: </providers/vmware/vcd/latest/docs/resources/org> (vcd_org)
-[d_org]: </providers/vmware/vcd/latest/docs/data-sources/org> (vcd_org)
-[r_sizing]: </providers/vmware/vcd/latest/docs/resources/vm_sizing_policy> (vcd_vm_sizing_policy)
+[org]: </providers/vmware/vcd/latest/docs/resources/org> (vcd_org)
+[sizing]: </providers/vmware/vcd/latest/docs/resources/vm_sizing_policy> (vcd_vm_sizing_policy)
+[vdc]: </providers/vmware/vcd/latest/docs/resources/org_vdc> (vcd_org_vdc)
+[catalog]: </providers/vmware/vcd/latest/docs/resources/catalog> (vcd_catalog)
+[rde_interface]: </providers/vmware/vcd/latest/docs/resources/rde_interface> (vcd_rde_interface)
+[rde_type]: </providers/vmware/vcd/latest/docs/resources/rde_type> (vcd_rde_type)
