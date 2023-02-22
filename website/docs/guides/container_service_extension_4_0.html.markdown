@@ -24,7 +24,11 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Installation process
 
-To start installing CSE v4.0 in a VCD appliance, you must use **v3.9.0 or above** of the VCD Terraform Provider:
+To start installing CSE v4.0 in a VCD appliance, you must use **v3.9.0 or above** of the VCD Terraform Provider
+configured as **System administrator**, as you'll need to create provider-scoped items such as Runtime Defined Entities,
+Roles, Compute Policies, etc.
+
+You can use the following example to start composing your Terraform configuration:
 
 ```hcl
 terraform {
@@ -46,39 +50,18 @@ provider "vcd" {
 }
 ```
 
-As you will be creating several administrator-scoped resources like Orgs, VDCs, Provider Gateways, etc; make sure you provide 
-**System administrator** credentials.
-
 ### Set up the Organizations
 
-In this step we will create a specific [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will host
-the CSE appliance and its configuration, called "Solutions Organization", and a second [Organization](/providers/vmware/vcd/latest/docs/resources/org)
-that will host the clusters for the tenants to use, called "Cluster Organization".
+In this guide we will configure CSE v4.0 making use of two different [Organizations][r_org]:
 
-You can customise the following sample HCL snippet to your needs. It creates these two [Organizations](/providers/vmware/vcd/latest/docs/resources/org)
-with no limits on lease:
+- Solutions [Organization][r_org]: This [Organization][r_org] will host all provider-scoped items, such as the CSE Appliance vApp.
+- Cluster [Organization][r_org]: This [Organization][r_org] will host the Kubernetes clusters for the tenants to use.
+
+This setup is just a proposal, you can have more cluster [organizations][r_org] or reuse an existing [organization][d_org].
+In the sample HCL below you can find these two [Organizations][r_org] configured with no lease for vApps nor vApp Templates.
+You can adjust it to fit with the requirements of your service:
 
 ```hcl
-resource "vcd_org" "cluster_organization" {
-  name             = "cluster_org"
-  full_name        = "Cluster Organization"
-  is_enabled       = true
-  delete_force     = true
-  delete_recursive = true
-
-  vapp_lease {
-    maximum_runtime_lease_in_sec          = 0
-    power_off_on_runtime_lease_expiration = false
-    maximum_storage_lease_in_sec          = 0
-    delete_on_storage_lease_expiration    = false
-  }
-
-  vapp_template_lease {
-    maximum_storage_lease_in_sec       = 0
-    delete_on_storage_lease_expiration = false
-  }
-}
-
 resource "vcd_org" "solutions_organization" {
   name             = "solutions_org"
   full_name        = "Solutions Organization"
@@ -98,25 +81,46 @@ resource "vcd_org" "solutions_organization" {
     delete_on_storage_lease_expiration = false
   }
 }
+
+resource "vcd_org" "cluster_organization" {
+  name             = "cluster_org"
+  full_name        = "Cluster Organization"
+  is_enabled       = true
+  delete_force     = true
+  delete_recursive = true
+
+  vapp_lease {
+    maximum_runtime_lease_in_sec          = 0
+    power_off_on_runtime_lease_expiration = false
+    maximum_storage_lease_in_sec          = 0
+    delete_on_storage_lease_expiration    = false
+  }
+
+  vapp_template_lease {
+    maximum_storage_lease_in_sec       = 0
+    delete_on_storage_lease_expiration = false
+  }
+}
 ```
 
-If you have already some [Organizations](/providers/vmware/vcd/latest/docs/data-sources/org) available, you can fetch them
-with a data source instead:
+As mentioned, if you already have some [Organizations][d_org] available, you can fetch them with a data source instead:
 
 ```hcl
-data "vcd_org" "cluster_organization" {
-  name = "cluster_org"
-}
-
 data "vcd_org" "solutions_organization" {
   name = "solutions_org"
+}
+
+data "vcd_org" "cluster_organization" {
+  name = "cluster_org"
 }
 ```
 
 ### Create the needed Sizing Policies
 
-CSE 4.0 requires a specific set of Sizing Policies to be able to dimension the Kubernetes clusters. You can create them
-with the following HCL snippet. The names and descriptions should not be modified from this snippet.
+CSE v4.0 requires a specific set of [Sizing Policies][r_sizing] to be able to dimension the Kubernetes clusters.
+You must create them with the HCL snippet below.
+
+~> Apply this HCL as it is. In other words, the names, descriptions and CPU/Memory specifications should **not** be modified.
 
 ```hcl
 resource "vcd_vm_sizing_policy" "tkg_xl" {
@@ -164,7 +168,8 @@ resource "vcd_vm_sizing_policy" "tkg_s" {
 }
 ```
 
-You can of course create more policies that suit to your needs. The above policies are **just the minimum required**.
+You can of course create more [Sizing policies][r_sizing], the ones specified above are just **the minimum required**
+for CSE to work.
 
 ### Set up the VDCs
 
@@ -777,3 +782,8 @@ Before uninstalling CSE, make sure you perform an update operation to mark all c
 Follow the mentioned steps instead.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
+
+
+[r_org]: </providers/vmware/vcd/latest/docs/resources/org> (vcd_org)
+[d_org]: </providers/vmware/vcd/latest/docs/data-sources/org> (vcd_org)
+[r_sizing]: </providers/vmware/vcd/latest/docs/resources/vm_sizing_policy> (vcd_vm_sizing_policy)
