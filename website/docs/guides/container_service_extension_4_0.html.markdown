@@ -472,7 +472,7 @@ resource "vcd_role" "cse_admin_role" {
 
   # This role depends on the created RDE Types as the rights are created after creation of the type.
   depends_on = [
-    vcd_rde_type.vcd_ke_config_type,
+    vcd_rde_type.vcdkeconfig_type,
     vcd_rde_type.capvcd_cluster_type,
   ]
 }
@@ -496,6 +496,8 @@ resource "vcd_org_user" "cse_admin" {
 Apart from the role to administrate the CSE Server created in previous step, we also need a [Global Role][global_role] for the Kubernetes clusters consumers.
 It would be similar to the concept of "vApp Author" but for Kubernetes clusters. In order to create the [Global Role][global_role], first we need
 to create a new [Rights Bundle][rights_bundle] and publish it to all the tenants:
+
+~> Apply this HCL as it is. In other words, the created [Rights Bundle][rights_bundle] should have the specified name, description and have the specified set of rights.
 
 ```hcl
 resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
@@ -538,7 +540,9 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
 }
 ```
 
-Now we're in the position to create the Global Role
+Now we're in the position to create the [Global Role][global_role]:
+
+~> Apply this HCL as it is. In other words, the created [Global Role][global_role] should have the specified name, description and have the specified set of rights.
 
 ```hcl
 resource "vcd_global_role" "k8s_cluster_author" {
@@ -605,6 +609,7 @@ resource "vcd_global_role" "k8s_cluster_author" {
 
   publish_to_all_tenants = true
 
+  # As we use rights created by the CAPVCD Type created previously, we need to depend on it
   depends_on = [
     vcd_rights_bundle.k8s_clusters_rights_bundle
   ]
@@ -616,14 +621,13 @@ resource "vcd_global_role" "k8s_cluster_author" {
 This step assumes that your VDC doesn't have any networking set up. If you have already networking in place, please
 skip this step.
 
-
 ### Configure CSE server
 
 ```hcl
 # We read the entity JSON of the VCDKEConfig as template as some fields are references to Terraform resources.
 # The inputs are taken from UI.
-data "template_file" "vcd_ke_config_instance_template" {
-  template = file("${path.module}/entities/vcdkeconfig.json")
+data "template_file" "vcdkeconfig_instance_template" {
+  template = file("${path.module}/entities/vcdkeconfig-template.json")
   vars = {
     capvcd_version                  = var.capvcd_version
     cpi_version                     = var.cpi_version
@@ -638,14 +642,14 @@ data "template_file" "vcd_ke_config_instance_template" {
   }
 }
 
-resource "vcd_rde" "vcd_ke_config_instance" {
-  # org         = "System"
+resource "vcd_rde" "vcdkeconfig_instance" {
+  org              = "System"
   name             = "vcdKeConfig"
-  rde_type_vendor  = vcd_rde_type.vcd_ke_config_type.vendor
-  rde_type_nss     = vcd_rde_type.vcd_ke_config_type.nss
-  rde_type_version = vcd_rde_type.vcd_ke_config_type.version
+  rde_type_vendor  = vcd_rde_type.vcdkeconfig_type.vendor
+  rde_type_nss     = vcd_rde_type.vcdkeconfig_type.nss
+  rde_type_version = vcd_rde_type.vcdkeconfig_type.version
   resolve          = true
-  input_entity     = data.template_file.vcd_ke_config_instance_template.rendered
+  input_entity     = data.template_file.vcdkeconfig_instance_template.rendered
 }
 ```
 
@@ -712,14 +716,24 @@ resource "vcd_vapp_vm" "cse_appliance_vm" {
     auto_generate_password     = false
     admin_password             = var.cse_vm_password # In the guide it says to auto generate, but for simplicity it is hardcoded
   }
+
+  depends_on = [
+    vcd_rde.vcdkeconfig_instance
+  ]
 }
 ```
 
 ## CSE upgrade process
 
+Coming soon
+
 ## Cluster operations
 
+Coming soon
+
 ### Create a cluster
+
+Coming soon
 
 ```hcl
 data "template_file" "k8s_cluster_yaml_template" {
@@ -797,7 +811,9 @@ output "computed_k8s_cluster_capvcdyaml" {
 }
 ```
 
-### Retrieve its kubeconfig
+### Retrieve a cluster Kubeconfig
+
+Coming soon
 
 ```hcl
 # output "kubeconfig" {  
@@ -807,7 +823,11 @@ output "computed_k8s_cluster_capvcdyaml" {
 
 ### Upgrade a cluster
 
+Coming soon
+
 ### Delete a cluster
+
+Coming soon
 
 ~> Don't remove the resource from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
 Follow the mentioned steps instead.
