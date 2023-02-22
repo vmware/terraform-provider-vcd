@@ -58,15 +58,15 @@ The following arguments are supported:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing RDE Interface can be [imported][docs-import] into this resource via supplying its vendor, nss and version, which
+An existing RDE Interface can be [imported][docs-import] into this resource via supplying its `vendor`, `nss` and `version`, which
 unequivocally identifies it.
 For example, using this structure, representing an existing RDE Interface that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_rde_interface" "outer_interface" {
-  vendor    = "bigcorp"
-  nss       = "tech"
-  version   = "4.5.6"
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "4.5.6"
 }
 ```
 
