@@ -619,8 +619,270 @@ resource "vcd_global_role" "k8s_cluster_author" {
 
 ### Set up networking
 
-This step assumes that your VDC doesn't have any networking set up. If you have already networking in place, please
-skip this step.
+This step assumes that your VDC doesn't have any networking set up, so it builds a very basic setup that will make CSE v4.0 work.
+If you have already networking in place, please skip this step and configure CSE server with an existing network.
+
+#### Provider Gateways
+
+The first step is setting up the [Provider Gateways][provider_gateway] as System administrator, we will set up one per Organization.
+These gateways will route public IPs to the [Edge Gateways][edge_gateway] that we will create in the following step.
+
+```hcl
+data "vcd_nsxt_manager" "cse_nsxt_manager" {
+  name = "nsxtManager1"
+}
+
+data "vcd_nsxt_tier0_router" "solutions_tier0_router" {
+  name            = "VCD T0 edgeCluster1"
+  nsxt_manager_id = data.vcd_nsxt_manager.cse_nsxt_manager.id
+}
+
+resource "vcd_external_network_v2" "solutions_tier0" {
+  name = "solutions_tier0"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.cse_nsxt_manager.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.solutions_tier0_router.id
+  }
+
+  ip_scope {
+    gateway       = "2.7.4.1"
+    prefix_length = 24
+
+    static_ip_pool {
+      start_address = "2.7.4.1"
+      end_address   = "2.7.4.254"
+    }
+  }
+}
+
+data "vcd_nsxt_tier0_router" "cluster_tier0_router" {
+  name            = "VCD T0 edgeCluster2"
+  nsxt_manager_id = data.vcd_nsxt_manager.cse_nsxt_manager.id
+}
+
+resource "vcd_external_network_v2" "cluster_tier0" {
+  name = "cluster_tier0"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.cse_nsxt_manager.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.cluster_tier0_router.id
+  }
+
+  ip_scope {
+    gateway       = "2.7.5.1"
+    prefix_length = 24
+
+    static_ip_pool {
+      start_address = "2.7.5.1"
+      end_address   = "2.7.5.254"
+    }
+  }
+}
+```
+
+#### Edge Gateways
+
+```hcl
+resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
+  org      = vcd_org.solutions_organization.name
+  owner_id = vcd_org_vdc.solutions_vdc.id
+
+  name                      = "solutions_edgegateway"
+  external_network_id       = vcd_external_network_v2.solutions_tier0.id
+  dedicate_external_network = true
+
+  subnet {
+    gateway       = var.gateway_ip
+    prefix_length = 19
+    primary_ip    = var.solutions_static_ips[0][0] # The first IP provided will be assigned as gateway IP
+
+    dynamic "allocated_ips" {
+      for_each = var.solutions_static_ips
+      iterator = ip
+      content {
+        start_address = ip.value[0]
+        end_address   = ip.value[1]
+      }
+    }
+  }
+
+  depends_on = [vcd_org_vdc.solutions_vdc]
+}
+
+resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
+  org      = vcd_org.cluster_organization.name
+  owner_id = vcd_org_vdc.cluster_vdc.id
+
+  name                      = "cluster_edgegateway"
+  external_network_id       = vcd_external_network_v2.cluster_tier0.id
+  dedicate_external_network = true
+
+  subnet {
+    gateway       = var.gateway_ip
+    prefix_length = 19
+    primary_ip    = var.cluster_static_ips[0][0] # The first IP provided will be assigned as gateway IP
+
+    dynamic "allocated_ips" {
+      for_each = var.cluster_static_ips
+      iterator = ip
+      content {
+        start_address = ip.value[0]
+        end_address   = ip.value[1]
+      }
+    }
+  }
+
+  depends_on = [vcd_org_vdc.cluster_vdc]
+}
+```
+
+#### Advanced Load Balancer configuration
+
+-> To learn more about the Advanced Load Balancer capabilities, please read the Terraform guide [here](/providers/vmware/vcd/latest/docs/guides/nsxt_alb).
+
+The following snippet
+
+```hcl
+data "vcd_nsxt_alb_controller" "cse_avi_controller" {
+  name = "aviController1"
+}
+
+data "vcd_nsxt_alb_importable_cloud" "cse_importable_cloud" {
+  name          = var.avi_importable_cloud
+  controller_id = data.vcd_nsxt_alb_controller.cse_avi_controller.id
+}
+
+resource "vcd_nsxt_alb_cloud" "cse_nsxt_alb_cloud" {
+  name = "cse_nsxt_alb_cloud"
+
+  controller_id       = data.vcd_nsxt_alb_controller.cse_avi_controller.id
+  importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cse_importable_cloud.id
+  network_pool_id     = data.vcd_nsxt_alb_importable_cloud.cse_importable_cloud.network_pool_id
+}
+
+resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
+  name                                 = "cse_alb_seg"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.cse_nsxt_alb_cloud.id
+  importable_service_engine_group_name = "Default-Group"
+  reservation_model                    = "SHARED"
+}
+
+## ALB for solutions edge gateway
+
+resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
+  org             = vcd_org.solutions_organization.name
+  edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
+  is_active       = true
+
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+}
+
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "solutions_assignment" {
+  org                       = vcd_org.solutions_organization.name
+  edge_gateway_id           = vcd_nsxt_alb_settings.solutions_alb_settings.edge_gateway_id
+  service_engine_group_id   = vcd_nsxt_alb_service_engine_group.cse_alb_seg.id
+  reserved_virtual_services = 50
+  max_virtual_services      = 50
+}
+
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "cluster_assignment" {
+  org                       = vcd_org.cluster_organization.name
+  edge_gateway_id           = vcd_nsxt_alb_settings.cluster_alb_settings.edge_gateway_id
+  service_engine_group_id   = vcd_nsxt_alb_service_engine_group.cse_alb_seg.id
+  reserved_virtual_services = 50
+  max_virtual_services      = 50
+}
+
+resource "vcd_nsxt_alb_settings" "cluster_alb_settings" {
+  org             = vcd_org.cluster_organization.name
+  edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
+  is_active       = true
+
+  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+}
+```
+
+#### Organization networks
+
+```hcl
+resource "vcd_network_routed_v2" "solutions_routed_network" {
+  org         = vcd_org.solutions_organization.name
+  name        = "solutions_routed_network"
+  description = "Solutions routed network"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
+
+  gateway       = "192.168.0.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "192.168.0.2"
+    end_address   = "192.168.0.10"
+  }
+
+  dns1       = "10.84.54.20"
+  dns2       = "1.1.1.1"
+  dns_suffix = "eng.vmware.com"
+}
+
+resource "vcd_network_routed_v2" "cluster_routed_network" {
+  org         = vcd_org.cluster_organization.name
+  name        = "cluster_net_routed"
+  description = "Routed network for the K8s clusters"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
+
+  gateway       = "10.0.0.1"
+  prefix_length = 16
+
+  static_ip_pool {
+    start_address = "10.0.0.2"
+    end_address   = "10.0.255.254"
+  }
+
+  dns1       = "10.84.54.20"
+  dns2       = "1.1.1.1"
+  dns_suffix = "eng.vmware.com"
+}
+
+resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
+  edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
+  enabled         = true
+  subnets         = ["192.168.0.0/24"]
+}
+
+resource "vcd_nsxt_route_advertisement" "cluster_routing_advertisement" {
+  edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
+  enabled         = true
+  subnets         = ["10.0.0.0/16"]
+}
+
+resource "vcd_nsxt_firewall" "solutions_firewall" {
+  org             = vcd_org.solutions_organization.name
+  edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
+
+  rule {
+    action      = "ALLOW"
+    name        = "Allow all traffic"
+    direction   = "IN_OUT"
+    ip_protocol = "IPV4_IPV6"
+  }
+}
+
+resource "vcd_nsxt_firewall" "cluster_firewall" {
+  org             = vcd_org.cluster_organization.name
+  edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
+
+  rule {
+    action      = "ALLOW"
+    name        = "Allow all traffic"
+    direction   = "IN_OUT"
+    ip_protocol = "IPV4_IPV6"
+  }
+}
+```
 
 ### Configure CSE server
 
@@ -853,3 +1115,5 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [user]: </providers/vmware/vcd/latest/docs/resources/user> (vcd_user)
 [rights_bundle]: </providers/vmware/vcd/latest/docs/resources/rights_bundle> (vcd_rights_bundle)
 [global_role]: </providers/vmware/vcd/latest/docs/resources/global_role> (vcd_global_role)
+[provider_gateway]: </providers/vmware/vcd/latest/docs/resources/external_network_v2> (vcd_external_network_v2)
+[edge_gateway]: </providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway> (vcd_nsxt_edgegateway)
