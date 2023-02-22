@@ -54,9 +54,9 @@ provider "vcd" {
 
 In this guide we will configure CSE v4.0 making use of two different [Organizations][org]:
 
-- Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Appliance vApp.
+- Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Server.
   It should only be accessible to CSE administrators.
-- Cluster [Organization][org]: This [Organization][org] will host the Kubernetes clusters for the users to consume them.
+- Cluster [Organization][org]: This [Organization][org] will host the Kubernetes clusters for the users of this tenant to consume them.
 
 This setup is just a proposal, you can have more cluster [organizations][org] or reuse an existing one.
 In the sample HCL below you can find these two [Organizations][org] configured with no lease for vApps nor vApp Templates.
@@ -188,8 +188,9 @@ In this guide we will configure a single [VDC][vdc] per Organization:
 - One VDC for the Solutions Organization.
 - One VDC for the Cluster Organization.
 
-This setup is just a proposal, you can have more [VDCs][vdc] or reuse some existing [VDCs][vdc]
-In the sample HCL below you can find these two [VDC][vdc]:
+This setup is just a proposal, you can have more [VDCs][vdc] or reuse some existing [VDCs][vdc].
+
+In the sample HCL below you can find these two [VDCs][vdc]:
 
 ```hcl
 # We fetch some required information like Provider VDC, Edge Clusters, etc
@@ -540,7 +541,7 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
 }
 ```
 
-Now we're in the position to create the [Global Role][global_role]:
+Now we're in position to create the [Global Role][global_role]:
 
 ~> Apply this HCL as it is. In other words, the created [Global Role][global_role] should have the specified name, description and have the specified set of rights.
 
@@ -850,4 +851,5 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [rde_type]: </providers/vmware/vcd/latest/docs/resources/rde_type> (vcd_rde_type)
 [role]: </providers/vmware/vcd/latest/docs/resources/role> (vcd_role)
 [user]: </providers/vmware/vcd/latest/docs/resources/user> (vcd_user)
+[rights_bundle]: </providers/vmware/vcd/latest/docs/resources/rights_bundle> (vcd_rights_bundle)
 [global_role]: </providers/vmware/vcd/latest/docs/resources/global_role> (vcd_global_role)
