@@ -61,7 +61,7 @@ The following arguments are supported:
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
   deleted until the entity is resolved by either party.
-* `force_delete` - (Optional) If `true`, the Runtime Defined Entity will be deleted even if it was not resolved. It is `false` by default.
+* `resolve_on_destroy` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved.
 * `entity` - (Optional) A string that specifies a valid JSON for the entity. It can be retrieved with functions such as `file`, `templatefile`... Either `entity` or `entity_url` is required.
 * `entity_url` - (Optional) The URL that points to a valid JSON for the entity. Either `entity` or `entity_url` is required.
   If `entity_url` is used, the downloaded schema will be computed in the `entity` attribute.

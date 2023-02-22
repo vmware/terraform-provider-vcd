@@ -96,9 +96,9 @@ func resourceVcdRde() *schema.Resource {
 					"deleted until the entity is resolved.",
 				Required: true,
 			},
-			"force_delete": {
+			"resolve_on_destroy": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, the Runtime Defined Entity will be deleted even if it was not resolved",
+				Description: "If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved.",
 				Default:     false,
 				Optional:    true,
 			},
@@ -329,7 +329,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	if d.Get("force_delete").(bool) {
+	if d.Get("resolve_on_destroy").(bool) {
 		err = rde.Resolve()
 		if err != nil {
 			return diag.FromErr(err)

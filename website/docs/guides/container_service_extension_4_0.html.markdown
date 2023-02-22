@@ -407,7 +407,7 @@ It will create the following items in your VCD appliance:
 - "CAPVCD" type, this is required to instantiate Kubernetes clusters.
 - "VCDKEConfig" interface, required by the VCDKEConfig type.
 
-~> Apply this HCL as it is. In other words, the interfaces and types should have the specified `name`, `version`, `vendor` and `nss` to work with CSE v4.0
+~> Apply this HCL as it is. In other words, the [RDE Interfaces][rde_interface] and [RDE Types][rde_type] should have the specified `name`, `version`, `vendor` and `nss` to work with CSE v4.0
 
 ```hcl
 resource "vcd_rde_interface" "vcdkeconfig_interface" {
@@ -445,8 +445,11 @@ resource "vcd_rde_type" "capvcd_cluster_type" {
 
 ### Create CSE Admin Role
 
-This is a provider-level role in 'System' org.
-VMware Cloud Director Container Service Extension Server v4 uses this role to process cluster operations
+Until now, we have created everything as System administrator, but for security reasons we should create another [User][user] with
+a specific subset of rights to run the CSE Server and other administrative tasks with it. In order to do that, we will create
+a new provider-scoped [Role][role] called **"CSE Admin Role"**, a [User][user] with this [Role][role], and create an API token for it.
+
+~> Apply this HCL as it is. In other words, the created [Role][role] should have the specified name, belong to System, and have the specified set of rights.
 
 ```hcl
 resource "vcd_role" "cse_admin_role" {
@@ -467,6 +470,7 @@ resource "vcd_role" "cse_admin_role" {
     "vmware:capvcdCluster: View"
   ]
 
+  # This role depends on the created RDE Types as the rights are created after creation of the type.
   depends_on = [
     vcd_rde_type.vcd_ke_config_type,
     vcd_rde_type.capvcd_cluster_type,
@@ -474,22 +478,24 @@ resource "vcd_role" "cse_admin_role" {
 }
 ```
 
-Create a user:
+After creating the [Role][role], we need to create the CSE Administrator user. **Please change the password accordingly**.
 
 ```hcl
 resource "vcd_org_user" "cse_admin" {
-  org      = vcd_org.solutions_organization.name
+  org      = vcd_org.solutions_organization.name # It should belong to the Solutions Org, as CSE Appliance will live there
   name     = "cse-admin"
-  password = "ca$hc0w"
+  password = "******"
   role     = vcd_role.cse_admin_role.name
 }
 ```
 
-~> You need to create an API token for this user
+~> Take into account that you need to create an API token for this user using UI or a shell script, in order to configure the CSE Appliance later on.
 
-### Create and Publish 'Kubernetes Clusters Rights Bundle'
+### Create and publish a "Kubernetes Cluster Author" global role
 
-Create and publish:
+Apart from the role to administrate the CSE Server created in previous step, we also need a [Global Role][global_role] for the Kubernetes clusters consumers.
+It would be similar to the concept of "vApp Author" but for Kubernetes clusters. In order to create the [Global Role][global_role], first we need
+to create a new [Rights Bundle][rights_bundle] and publish it to all the tenants:
 
 ```hcl
 resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
@@ -524,13 +530,15 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
     "vmware:tkgcluster: Administrator Full access",
   ]
   publish_to_all_tenants = true
+  
+  # As we use rights created by the CAPVCD Type created previously, we need to depend on it
   depends_on = [
     vcd_rde_type.capvcd_cluster_type
   ]
 }
 ```
 
-### Create and Publish 'Kubernetes Cluster Author' global role
+Now we're in the position to create the Global Role
 
 ```hcl
 resource "vcd_global_role" "k8s_cluster_author" {
@@ -760,7 +768,7 @@ data "template_file" "rde_k8s_cluster_instance_template" {
     capi_yaml = replace(replace(data.template_file.k8s_cluster_yaml_template.rendered, "\n", "\\n"), "\"", "\\\"")
 
     delete                = false # Make this true to delete the cluster
-    force_delete          = false # Make this true to forcefully delete the cluster
+    resolve_on_destroy    = false # Make this true to forcefully delete the cluster
     auto_repair_on_errors = false
   }
 }
@@ -772,7 +780,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
   rde_type_nss     = vcd_rde_type.capvcd_cluster_type.nss
   rde_type_version = vcd_rde_type.capvcd_cluster_type.version
   resolve          = false # MUST be false as it is resolved by CSE appliance
-  force_delete     = true  # MUST be true as it won't be resolved by Terraform
+  resolve_on_destroy     = true  # MUST be true as it won't be resolved by Terraform
   input_entity     = data.template_file.rde_k8s_cluster_instance_template.rendered
 
   depends_on = [
@@ -820,3 +828,6 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [catalog]: </providers/vmware/vcd/latest/docs/resources/catalog> (vcd_catalog)
 [rde_interface]: </providers/vmware/vcd/latest/docs/resources/rde_interface> (vcd_rde_interface)
 [rde_type]: </providers/vmware/vcd/latest/docs/resources/rde_type> (vcd_rde_type)
+[role]: </providers/vmware/vcd/latest/docs/resources/role> (vcd_role)
+[user]: </providers/vmware/vcd/latest/docs/resources/user> (vcd_user)
+[global_role]: </providers/vmware/vcd/latest/docs/resources/global_role> (vcd_global_role)
