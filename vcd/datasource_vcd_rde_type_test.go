@@ -1,5 +1,4 @@
 //go:build rde || ALL || functional
-// +build rde ALL functional
 
 package vcd
 
