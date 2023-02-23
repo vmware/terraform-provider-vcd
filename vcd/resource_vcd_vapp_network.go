@@ -469,7 +469,8 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 	if rebootVAppOnDestroy {
 		vappStatusBeforeOperation, err = vapp.GetStatus()
 		if err != nil {
-			return diag.Errorf("error getting vApp status before vApp network removal: %s", err)
+			return diag.Errorf("error getting vApp '%s' status before vApp network removal: %s",
+				vapp.VApp.Name, err)
 		}
 
 		util.Logger.Printf("[TRACE] reboot_vapp_on_destroy=true, vApp '%s' status before network removal is '%s'",
@@ -482,7 +483,7 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 			}
 			err = task.WaitTaskCompletion()
 			if err != nil {
-				return diag.Errorf("error completing tasks: %s", err)
+				return diag.Errorf("error completing vApp Power Off task: %s", err)
 			}
 		}
 	}

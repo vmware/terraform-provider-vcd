@@ -814,8 +814,6 @@ resource "vcd_vapp" "test" {
   org  = "{{.Org}}"
   vdc  = "{{.VdcName}}"
   name = "{{.TestName}}"
-
-  power_on = true
 }
 `
 
@@ -924,7 +922,7 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 			{ // Explicitly attempt to destroy the vApp with reboot_vapp_on_destroy = false (default value)
 				Config:  configText1,
 				Destroy: true,
-				// Test that enriched error message with hint for reboot_vapp_on_destroy is
+				// Test that enriched error message with hint for 'reboot_vapp_on_destroy' is
 				// returned. This is to validate that error catching mechanism is working as VCD API
 				// evolves.
 				ExpectError: regexp.MustCompile("reboot_vapp_on_destroy"),
