@@ -620,7 +620,7 @@ resource "vcd_global_role" "k8s_cluster_author" {
 ### Set up networking
 
 This step assumes that your VDC doesn't have any networking set up, so it builds a very basic setup that will make CSE v4.0 work.
-If you have already networking in place, please skip this step and configure CSE server with an existing network.
+If you have already networking in place, please skip this step and configure CSE server with an existing organization network.
 
 #### Provider Gateways
 
@@ -646,12 +646,12 @@ resource "vcd_external_network_v2" "solutions_tier0" {
   }
 
   ip_scope {
-    gateway       = "2.7.4.1"
+    gateway       = "10.0.45.1"
     prefix_length = 24
 
     static_ip_pool {
-      start_address = "2.7.4.1"
-      end_address   = "2.7.4.254"
+      start_address = "10.0.45.2"
+      end_address   = "10.0.45.120"
     }
   }
 }
@@ -670,18 +670,21 @@ resource "vcd_external_network_v2" "cluster_tier0" {
   }
 
   ip_scope {
-    gateway       = "2.7.5.1"
+    gateway       = "10.0.45.1"
     prefix_length = 24
 
     static_ip_pool {
-      start_address = "2.7.5.1"
-      end_address   = "2.7.5.254"
+      start_address = "10.0.45.121"
+      end_address   = "10.0.45.254"
     }
   }
 }
 ```
 
 #### Edge Gateways
+
+Next step will be adding two [Edge Gateways][edge_gateway] that will be consuming the Provider Gateways and act as routers for both the
+Solutions Organization and the Cluster Organization, respectively.
 
 ```hcl
 resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
@@ -693,17 +696,13 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   dedicate_external_network = true
 
   subnet {
-    gateway       = var.gateway_ip
-    prefix_length = 19
-    primary_ip    = var.solutions_static_ips[0][0] # The first IP provided will be assigned as gateway IP
+    gateway       = "10.0.45.1"
+    prefix_length = 24
+    primary_ip    = "10.0.45.2"
 
-    dynamic "allocated_ips" {
-      for_each = var.solutions_static_ips
-      iterator = ip
-      content {
-        start_address = ip.value[0]
-        end_address   = ip.value[1]
-      }
+    static_ip_pool {
+      start_address = "10.0.45.2"
+      end_address   = "10.0.45.120"
     }
   }
 
@@ -719,17 +718,13 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   dedicate_external_network = true
 
   subnet {
-    gateway       = var.gateway_ip
-    prefix_length = 19
-    primary_ip    = var.cluster_static_ips[0][0] # The first IP provided will be assigned as gateway IP
+    gateway       = "10.0.45.1"
+    prefix_length = 24
+    primary_ip    = "10.0.45.121"
 
-    dynamic "allocated_ips" {
-      for_each = var.cluster_static_ips
-      iterator = ip
-      content {
-        start_address = ip.value[0]
-        end_address   = ip.value[1]
-      }
+    static_ip_pool {
+      start_address = "10.0.45.121"
+      end_address   = "10.0.45.254"
     }
   }
 
@@ -741,7 +736,8 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
 
 -> To learn more about the Advanced Load Balancer capabilities, please read the Terraform guide [here](/providers/vmware/vcd/latest/docs/guides/nsxt_alb).
 
-The following snippet
+The following snippet configures an ALB Service Engine Group that will be shared by both Solutions and Cluster organizations. Then, we
+assign it to the two Edge Gateways created above.
 
 ```hcl
 data "vcd_nsxt_alb_controller" "cse_avi_controller" {
@@ -805,6 +801,11 @@ resource "vcd_nsxt_alb_settings" "cluster_alb_settings" {
 ```
 
 #### Organization networks
+
+Last step is create a routed network in every organization, that will be used to give Internet access to the CSE Server
+in the Solutions Organization, and to Kubernetes clusters in the Cluster Organization.
+
+The important parts here are activating route advertisement and configuring proper rules in the Edge Gateway firewall.
 
 ```hcl
 resource "vcd_network_routed_v2" "solutions_routed_network" {
@@ -885,6 +886,8 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
 ```
 
 ### Configure CSE server
+
+
 
 ```hcl
 # We read the entity JSON of the VCDKEConfig as template as some fields are references to Terraform resources.
