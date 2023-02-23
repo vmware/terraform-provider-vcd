@@ -495,7 +495,7 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 		if strings.Contains(err.Error(), "Stop the vApp and try again") {
 			return diag.Errorf("error removing vApp network: %s \n\n"+
 				"Parent vApp '%s' must be powered off in VCD 10.4.1+ to remove a vApp network. \n"+
-				"You can use 'reboot_vapp_on_destroy=true' flag to power off vApp before removing network",
+				"You can use 'reboot_vapp_on_destroy=true' flag to power off vApp before removing network.",
 				vapp.VApp.Name, err)
 		}
 
@@ -503,9 +503,9 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 	}
 
 	// If vApp was not powered off before and 'reboot_vapp_on_destroy' flag was used - power it on
-	// again The reason we check for vappStatusBeforeOperation != "POWERED_ON" is that a vApp could
+	// again. The reason we check for vappStatusBeforeOperation != "POWERED_ON" is that a vApp could
 	// have had different states than "POWERED_OFF" and "POWERED_ON" (e.g. "PARTIALLY_POWERED_OFF"),
-	// but we cannot restore exactly such state. So we only restore "POWERED_ON" state.
+	// but we cannot restore exactly such state. So we restore "POWERED_ON" state.
 	if rebootVAppOnDestroy && vappStatusBeforeOperation != "POWERED_OFF" {
 		util.Logger.Printf("[TRACE] reboot_vapp_on_destroy=true, restoring vApp '%s' power state, was '%s'",
 			vapp.VApp.Name, vappStatusBeforeOperation)
