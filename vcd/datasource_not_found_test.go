@@ -79,7 +79,8 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				t.Skip(`Works only with system admin privileges`)
 			}
 		// vcd_resource_list and vcd_resource_schema don't search for real entities
-		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema":
+		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema" ||
+			dataSourceName == "vcd_nsxv_service_finder":
 			t.Skip(`not a real data source`)
 		}
 
@@ -92,6 +93,9 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 		var params = StringMap{
 			"DataSourceName":  dataSourceName,
 			"MandatoryFields": addedParams,
+		}
+		if dataSourceName == "vcd_nsxv_distributed_firewall" {
+			params["MandatoryFields"] = `vdc_id = "deadbeef-dead-beef-dead-beefdeadbeef"`
 		}
 
 		params["FuncName"] = "NotFoundDataSource-" + dataSourceName
