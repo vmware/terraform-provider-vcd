@@ -910,8 +910,6 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVappNetworkDestroy,
-			testAccCheckVcdVAppDestroy,
-			testAccCheckVcdNsxtVAppVmDestroy(t.Name()),
 		),
 		Steps: []resource.TestStep{
 			{ // Create setup
