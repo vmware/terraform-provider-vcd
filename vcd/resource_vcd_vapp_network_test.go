@@ -748,6 +748,11 @@ data "vcd_vapp_org_network" "with-routed" {
 }
 `
 
+// TestAccVcdNsxtVappNetworkRemoval checks the following:
+// * Creates a vApp with two networks (vcd_vapp_network and vcd_vapp_org_network), both having
+// reboot_vapp_on_destroy = true
+// * Removes everything, except vApp to check that its power state remains POWERED_ON (int status 4)
+// after network removal
 func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
 	preTestChecks(t)
 	// String map to fill the template
@@ -770,6 +775,10 @@ func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
 	configText1 := templateFill(testAccVcdNsxtVappNetworkRemoval, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccVcdNsxtVappNetworkRemovalVApp, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -778,7 +787,7 @@ func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
-			{
+			{ // Create setup
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
@@ -787,19 +796,30 @@ func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
 				),
 			},
+			{ // Delete everything, except vApp to check that its power state is still powered on
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttr("vcd_vapp.test", "status", "4"), // 4 is POWERED_ON
+					resource.TestCheckResourceAttr("vcd_vapp.test", "status_text", "POWERED_ON"),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtVappNetworkRemoval = `
+const testAccVcdNsxtVappNetworkRemovalVApp = `
 resource "vcd_vapp" "test" {
-  org      = "{{.Org}}"
-  vdc      = "{{.VdcName}}"
-  name     = "{{.TestName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.VdcName}}"
+  name = "{{.TestName}}"
+
   power_on = true
 }
+`
 
+const testAccVcdNsxtVappNetworkRemoval = testAccVcdNsxtVappNetworkRemovalVApp + `
 resource "vcd_vapp_network" "test" {
   org = "{{.Org}}"
   vdc = "{{.VdcName}}"
