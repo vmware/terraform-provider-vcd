@@ -106,7 +106,7 @@ func TestAccVcdRdeType(t *testing.T) {
 			{
 				Config: configTextTenantDS,
 				PreConfig: func() {
-					addRdeTypeRightsToTenantUser(t, vcdClient, params["Vendor"].(string)+"url", params["Nss"].(string)+"url")
+					addRdeTypeRightsToTenantUser(t, vcdClient, params["Vendor"].(string)+"file", params["Nss"].(string)+"file")
 				},
 				Check: resourceFieldsEqual(rdeTypeFromDS, rdeTypeFromFile, []string{"%", "schema_url"}), // Exclude % as we don't have `schema_url`
 			},
