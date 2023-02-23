@@ -414,8 +414,8 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   power_on = true
 
-  description   = "test empty VM2"
-  name          = "{{.VMName2}}"
+  description = "test empty VM2"
+  name        = "{{.VMName2}}"
   
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"

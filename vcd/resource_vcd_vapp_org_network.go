@@ -18,7 +18,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 		CreateContext: resourceVappOrgNetworkCreate,
 		ReadContext:   resourceVappOrgNetworkRead,
 		UpdateContext: resourceVappOrgNetworkUpdate,
-		DeleteContext: resourceVappOrgNetworkDelete,
+		DeleteContext: resourceVappAndVappOrgNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdVappOrgNetworkImport,
 		},
@@ -60,6 +60,12 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
+			},
+			"reboot_vapp_on_destroy": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Specifies whether the vApp should be rebooted when the vApp network is removed. Default is false.",
 			},
 		},
 	}
@@ -184,6 +190,11 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 }
 
 func resourceVappOrgNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// reboot_vapp_on_destroy does not have any effect on update therefore skipping update if only
+	// this field was modified
+	if !d.HasChangeExcept("reboot_vapp_on_destroy") {
+		return resourceVappOrgNetworkRead(ctx, d, meta)
+	}
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
@@ -210,31 +221,6 @@ func resourceVappOrgNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	return resourceVappOrgNetworkRead(ctx, d, meta)
-}
-
-func resourceVappOrgNetworkDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentVapp(d)
-	defer vcdClient.unLockParentVapp(d)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return diag.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
-	if err != nil {
-		return diag.Errorf("error finding vApp: %#v", err)
-	}
-
-	_, err = vapp.RemoveNetwork(d.Id())
-	if err != nil {
-		return diag.Errorf("error removing vApp network: %s", err)
-	}
-
-	d.SetId("")
-
-	return nil
 }
 
 // resourceVcdVappOrgNetworkImport is responsible for importing the resource.
