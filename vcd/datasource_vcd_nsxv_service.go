@@ -42,6 +42,11 @@ func datasourceVcdNsxvService() *schema.Resource {
 				Computed:    true,
 				Description: "Source port used by the service",
 			},
+			"app_guid": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Application GUID name",
+			},
 		},
 	}
 }
@@ -57,7 +62,7 @@ func datasourceVcdNsxvServiceRead(_ context.Context, d *schema.ResourceData, met
 	service, err := dfw.GetServiceByName(serviceName)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("error retrieving service: %s - %s", govcd.ErrorEntityNotFound, err)
 	}
 
 	dSet(d, "name", service.Name)
@@ -70,6 +75,9 @@ func datasourceVcdNsxvServiceRead(_ context.Context, d *schema.ResourceData, met
 	}
 	if service.Element.SourcePort != nil {
 		dSet(d, "source_port", *service.Element.SourcePort)
+	}
+	if service.Element.AppGuidName != nil {
+		dSet(d, "app_guid", *service.Element.AppGuidName)
 	}
 	d.SetId(service.ObjectID)
 

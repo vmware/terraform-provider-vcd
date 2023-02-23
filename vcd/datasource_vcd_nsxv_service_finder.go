@@ -19,10 +19,17 @@ func datasourceVcdNsxvServiceFinder() *schema.Resource {
 				Required:    true,
 				Description: "The ID of VDC",
 			},
-			"regexp": {
+			"search_expression": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Regular expression used to search services or groups",
+			},
+			// Note: the search is case-insensitive by default, to mimic the behavior of the UI
+			"case_sensitive": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Convert the search to case sensitive",
 			},
 			"type": {
 				Type:         schema.TypeString,
@@ -33,7 +40,7 @@ func datasourceVcdNsxvServiceFinder() *schema.Resource {
 			"objects": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Objects found with the combination of 'regexp' + 'type'",
+				Description: "Objects found with the combination of 'search_expression' + 'type'",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -65,7 +72,15 @@ func datasourceVcdNsxvServiceFinderRead(_ context.Context, d *schema.ResourceDat
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 
 	wantedType := d.Get("type").(string)
-	rawRegexp := d.Get("regexp").(string)
+	rawRegexp := d.Get("search_expression").(string)
+	rawCaseSensitive := d.Get("case_sensitive")
+	caseSensitive := false
+	if rawCaseSensitive != nil {
+		caseSensitive = rawCaseSensitive.(bool)
+	}
+	if !caseSensitive {
+		rawRegexp = `(?i)` + rawRegexp
+	}
 
 	var result []map[string]string
 
@@ -81,7 +96,7 @@ func datasourceVcdNsxvServiceFinderRead(_ context.Context, d *schema.ResourceDat
 	}
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("error retrieving %s list: %s - %s", wantedType, govcd.ErrorEntityNotFound, err)
 	}
 
 	for _, service := range services {

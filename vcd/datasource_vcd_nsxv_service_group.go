@@ -60,7 +60,7 @@ func datasourceVcdNsxvServiceGroupRead(_ context.Context, d *schema.ResourceData
 
 	serviceGroup, err := dfw.GetServiceGroupByName(serviceGroupName)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("error retrieving service groups: %s - %s", govcd.ErrorEntityNotFound, err)
 	}
 
 	var services []map[string]string
