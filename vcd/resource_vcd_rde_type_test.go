@@ -21,7 +21,7 @@ func TestAccVcdRdeType(t *testing.T) {
 		"Vendor":              "vendor",
 		"Name":                t.Name(),
 		"Description":         "Created by " + t.Name(),
-		"InterfaceReferences": "vcd_rde_interface.rde-interface1.id",
+		"InterfaceReferences": "vcd_rde_interface.rde_interface1.id",
 		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json",
 		"SchemaUrl":           "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-2/test-resources/rde_type.json", // FIXME
 	}
@@ -31,7 +31,7 @@ func TestAccVcdRdeType(t *testing.T) {
 	params["FuncName"] = t.Name() + "-Update"
 	params["Name"] = params["FuncName"]
 	params["Description"] = "Created by" + params["FuncName"].(string)
-	params["InterfaceReferences"] = "vcd_rde_interface.rde-interface1.id, vcd_rde_interface.rde-interface2.id"
+	params["InterfaceReferences"] = "vcd_rde_interface.rde_interface1.id, vcd_rde_interface.rde_interface2.id"
 	configTextUpdate := templateFill(testAccVcdRdeType, params)
 
 	if vcdShortTest {
@@ -41,8 +41,8 @@ func TestAccVcdRdeType(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION create: %s\n", configTextCreate)
 	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
 
-	rdeTypeFromFile := "vcd_rde_type.rde-type-file"
-	rdeTypeFromUrl := "vcd_rde_type.rde-type-url"
+	rdeTypeFromFile := "vcd_rde_type.rde_type_file"
+	rdeTypeFromUrl := "vcd_rde_type.rde_type_url"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRdeTypesDestroy(rdeTypeFromFile, rdeTypeFromUrl),
@@ -55,7 +55,7 @@ func TestAccVcdRdeType(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "vendor", params["Vendor"].(string)+"file"),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "name", t.Name()),
 					resource.TestCheckResourceAttr(rdeTypeFromFile, "description", "Created by "+t.Name()),
-					resource.TestCheckResourceAttrPair(rdeTypeFromFile, "interface_ids.0", "vcd_rde_interface.rde-interface1", "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeFromFile, "interface_ids.0", "vcd_rde_interface.rde_interface1", "id"),
 					resource.TestMatchResourceAttr(rdeTypeFromFile, "schema", regexp.MustCompile("{.*\"foo\".*\"bar\".*}")),
 
 					resource.TestCheckResourceAttr(rdeTypeFromUrl, "nss", params["Nss"].(string)+"url"),
@@ -100,21 +100,21 @@ func TestAccVcdRdeType(t *testing.T) {
 }
 
 const testAccVcdRdeType = `
-resource "vcd_rde_interface" "rde-interface1" {
+resource "vcd_rde_interface" "rde_interface1" {
   nss     = "namespace1"
   version = "1.0.0"
   vendor  = "vendor1"
   name    = "name1"
 }
 
-resource "vcd_rde_interface" "rde-interface2" {
+resource "vcd_rde_interface" "rde_interface2" {
   nss     = "namespace2"
   version = "2.0.0"
   vendor  = "vendor2"
   name    = "name2"
 }
 
-resource "vcd_rde_type" "rde-type-file" {
+resource "vcd_rde_type" "rde_type_file" {
   nss           = "{{.Nss}}file"
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}file"
@@ -124,7 +124,7 @@ resource "vcd_rde_type" "rde-type-file" {
   schema        = file("{{.SchemaPath}}")
 }
 
-resource "vcd_rde_type" "rde-type-url" {
+resource "vcd_rde_type" "rde_type_url" {
   nss           = "{{.Nss}}url"
   version       = "{{.Version}}"
   vendor        = "{{.Vendor}}url"

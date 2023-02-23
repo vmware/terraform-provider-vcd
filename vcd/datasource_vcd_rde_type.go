@@ -15,7 +15,7 @@ func datasourceVcdRdeType() *schema.Resource {
 				Required:    true,
 				Description: "The vendor name of the Runtime Defined Entity type",
 			},
-			"namespace": {
+			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique namespace associated with the Runtime Defined Entity type",
