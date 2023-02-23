@@ -798,7 +798,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
 	}
 
-	// Handle VM Security Tags settings 
+	// Handle VM Security Tags settings
 	// Such schema fields are processed:
 	// * security_tags
 	err = createOrUpdateVmSecurityTags(d, vm)
