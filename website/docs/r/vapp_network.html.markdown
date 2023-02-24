@@ -50,7 +50,11 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network.
 * `description` - (Optional; *v2.7+*, *vCD 9.5+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this network belongs to.
-* `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
+* `netmask` - (Deprecated) Use `prefix_length` instead. The netmask for the new network.
+
+~> **Note:** VCD returns Ipv6 addresses in extended-shortened format e.g `fe80:0:a:ab:0:abc:abcd:aaaa`, it is up to the user
+to match it, otherwise Terraform will return an inconsistent plan
+* `prefix_length` - (Optional) The subnet prefix length for the network.
 * `gateway` - (Required) The gateway for this network.
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.
