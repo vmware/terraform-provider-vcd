@@ -77,7 +77,7 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	postTestChecks(t)
 }
 
-func TestAccVcdVappNetwork_IsolatedIpv6(t *testing.T) {
+func TestAccVcdVappNetwork_Isolated_ipv6(t *testing.T) {
 	preTestChecks(t)
 
 	var params = StringMap{
