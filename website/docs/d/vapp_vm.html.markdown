@@ -118,6 +118,7 @@ The following arguments are supported:
 * `placement_policy_id` - (*v3.8+*) VM placement policy ID.
 * `status` - (*v3.8+*) The vApp status as a numeric code.
 * `status_text` - (*v3.8+*) The vApp status as text.
+* `security_tags` - (Optional; *v3.8+*) List of security tags assigned to this VM.
 
 See [VM resource](/providers/vmware/vcd/latest/docs/resources/vapp_vm#attribute-reference) for more info about VM attributes.
 
