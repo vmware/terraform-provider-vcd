@@ -383,6 +383,13 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "VM placement policy ID.",
 		},
+		"security_tags": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Computed:    true,
+			Description: "Security tags assigned to this VM",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
 		"status": {
 			Type:        schema.TypeInt,
 			Computed:    true,
