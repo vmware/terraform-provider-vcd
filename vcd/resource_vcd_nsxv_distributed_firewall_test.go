@@ -54,8 +54,8 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dfwResource, "id"),
-
 					resource.TestCheckResourceAttr(dfwResource, "rule.#", "3"),
+					// TODO: add checks on rules components
 				),
 			},
 		},
@@ -175,6 +175,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
       type  = "Network"
     }
     # direct network destination
+    # (currently omitted due to VCD bug: the network comes back as "Unknown object(VM Network)")
     #destination {
     #  name  = data.vcd_network_direct.net-d.name
     #  value = data.vcd_network_direct.net-d.id
