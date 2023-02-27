@@ -5,35 +5,114 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-// ruleComponent can define one of the following:
-// * a source
-// * a destination
-// * an "apply-to" clause
-func ruleComponent(label, origin string) map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"name": {
-			Type:        schema.TypeString,
-			Required:    origin == "resource",
-			Computed:    origin == "datasource",
-			Description: fmt.Sprintf("Name of the %s entity", label),
+func sourceDef() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the source entity",
+			},
+			"type": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Type of the source entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address, Ipv6Address)",
+			},
+			"value": {
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   filterVdcId,
+				Description: "Value of the source entity",
+			},
 		},
-		"type": {
-			Type:        schema.TypeString,
-			Required:    origin == "resource",
-			Computed:    origin == "datasource",
-			Description: fmt.Sprintf("Type of the %s entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address, Ipv6Address)", label),
+	}
+}
+
+func destinationDef() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the destination entity",
+			},
+			"type": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Type of the destination entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address, Ipv6Address)",
+			},
+			"value": {
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   filterVdcId,
+				Description: "Value of the destination entity",
+			},
 		},
-		"value": {
-			Type:        schema.TypeString,
-			Required:    origin == "resource",
-			Computed:    origin == "datasource",
-			Description: fmt.Sprintf("Value of the %s entity", label),
+	}
+}
+
+func appliedToDef() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the applied-to entity",
+			},
+			"type": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Type of the applied-to entity (one of Network, Edge, VirtualMachine, IPSet, VDC, Ipv4Address, Ipv6Address)",
+			},
+			"value": {
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   filterVdcId,
+				Description: "Value of the applied-to entity",
+			},
+		},
+	}
+}
+
+func serviceDef() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"protocol": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Protocol of the service (one of TCP, UDP, ICMP) (When not using name/value)",
+			},
+			"source_port": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Source port for this service. Leaving it empty means 'any' port",
+			},
+			"destination_port": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Destination port for this service. Leaving it empty means 'any' port",
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Name of service (Application, ApplicationGroup)",
+			},
+			"value": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Value of the service",
+				StateFunc:   filterVdcId,
+			},
+			"type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Type of service",
+			},
 		},
 	}
 }
@@ -100,55 +179,20 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 						"packet_type": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Default:     "Any",
+							Default:     "any",
 							Description: "Packet type of the rule (any, ipv4, ipv6)",
 						},
 						"source": {
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Optional:    true,
 							Description: "List of source traffic for this rule. Leaving it empty means 'any'",
-							Elem: &schema.Resource{
-								Schema: ruleComponent("source", "resource"),
-							},
+							Elem:        sourceDef(),
 						},
 						"service": {
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Optional:    true,
 							Description: "Service definitions for this rule. Leaving it empty means 'any'",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"protocol": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Protocol of the service (one of TCP, UDP, ICMP) (When not using name/value)",
-									},
-									"source_port": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Source port for this service. Leaving it empty means 'any' port",
-									},
-									"destination_port": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Destination port for this service. Leaving it empty means 'any' port",
-									},
-									"name": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Name of service",
-									},
-									"value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Value of the service",
-									},
-									"type": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Type of service",
-									},
-								},
-							},
+							Elem:        serviceDef(),
 						},
 						"exclude_source": {
 							Type:        schema.TypeBool,
@@ -157,12 +201,10 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 							Description: "If set, reverses the content of the source elements",
 						},
 						"destination": {
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Optional:    true,
 							Description: "List of destination traffic for this rule. Leaving it empty means 'any'",
-							Elem: &schema.Resource{
-								Schema: ruleComponent("destination", "resource"),
-							},
+							Elem:        destinationDef(),
 						},
 						"exclude_destination": {
 							Type:        schema.TypeBool,
@@ -171,12 +213,10 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 							Description: "If set, reverses the content of the destination elements",
 						},
 						"applied_to": {
-							Type:        schema.TypeList,
-							Optional:    true,
+							Type:        schema.TypeSet,
+							Required:    true,
 							Description: "List of elements to which this rule applies",
-							Elem: &schema.Resource{
-								Schema: ruleComponent("apply-to", "resource"),
-							},
+							Elem:        appliedToDef(),
 						},
 					},
 				},
@@ -195,7 +235,6 @@ func genericVcdNsxvDistributedFirewallRead(_ context.Context, d *schema.Resource
 	vdcId := d.Get("vdc_id").(string)
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 	configuration, err := dfw.GetConfiguration()
-	//enabled, err := dfw.IsEnabled()
 
 	if err != nil {
 		if origin == "datasource" {
@@ -206,6 +245,7 @@ func genericVcdNsxvDistributedFirewallRead(_ context.Context, d *schema.Resource
 	}
 	d.SetId(vdcId)
 	if configuration == nil { // disabled
+		util.Logger.Println("[NSXV DFW DISABLED]")
 		dSet(d, "enabled", false)
 		err = d.Set("rule", nil)
 		if err != nil {
@@ -228,9 +268,6 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 	vcdClient := meta.(*VCDClient)
 
 	vdcId := d.Get("vdc_id").(string)
-	if vdcId == "" {
-		vdcId = d.Id()
-	}
 	wantToEnable := d.Get("enabled").(bool)
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 	isEnabled, err := dfw.IsEnabled()
@@ -238,12 +275,22 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 	if !isEnabled && wantToEnable {
+		if !vcdClient.Client.IsSysAdmin {
+			return diag.Errorf("distributed firewall for VDC %s cannot be enabled without System administrator privileges ", vdcId)
+		}
 		err := dfw.Enable()
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		isEnabled = true
+	}
+	if !isEnabled {
+		return diag.Errorf("distributed firewall for VDC %s needs to be enabled before being configured by a non-system administrator", vdcId)
 	}
 	if !wantToEnable {
+		if !vcdClient.Client.IsSysAdmin {
+			return diag.Errorf("distributed firewall for VDC %s cannot be disabled without System administrator privileges ", vdcId)
+		}
 		err := dfw.Disable()
 		if err != nil {
 			return diag.FromErr(err)
@@ -262,7 +309,7 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 }
 
 func resourceVcdNsxvDistributedFirewallCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdNsxvDistributedFirewallCreateUpdate(ctx, d, meta, "creation")
+	return resourceVcdNsxvDistributedFirewallCreateUpdate(ctx, d, meta, "create")
 }
 
 func resourceVcdNsxvDistributedFirewallUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -277,9 +324,17 @@ func resourceVcdNsxvDistributedFirewallDelete(_ context.Context, d *schema.Resou
 		vdcId = d.Id()
 	}
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
-	err := dfw.Disable()
+	util.Logger.Printf("[INFO] disabling NSXV distributed firewall for VDC %s\n", vdcId)
+	if vcdClient.Client.IsSysAdmin {
+		err := dfw.Disable()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
+	}
+	_, err := dfw.UpdateConfiguration([]types.NsxvDistributedFirewallRule{})
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("error removing distributed firewall rules: %s", err)
 	}
 	return nil
 }
@@ -288,7 +343,7 @@ func resourceVcdNsxvDistributedFirewallDelete(_ context.Context, d *schema.Resou
 func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewallRule, error) {
 
 	var resultRules []types.NsxvDistributedFirewallRule
-	rawRuleList, ok := d.Get("rule").([]interface{}) // []interface{}
+	rawRuleList, ok := d.Get("rule").([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("[resourceToDfwRules] expected interface slice - got %T", rawRuleList)
 	}
@@ -300,23 +355,19 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 		excludeSource := ruleMap["exclude_source"].(bool)
 		excludeDestination := ruleMap["exclude_destination"].(bool)
 		resultRule := types.NsxvDistributedFirewallRule{
-			Disabled: !ruleMap["enabled"].(bool),
-			Logged:   ruleMap["logged"].(bool),
-			Name:     ruleMap["name"].(string),
-			Action:   ruleMap["action"].(string),
-			//AppliedToList: types.AppliedToList{},
+			Disabled:   !ruleMap["enabled"].(bool),
+			Logged:     ruleMap["logged"].(bool),
+			Name:       ruleMap["name"].(string),
+			Action:     ruleMap["action"].(string),
 			Direction:  ruleMap["direction"].(string),
 			PacketType: ruleMap["packet_type"].(string),
-			//SectionID:     nil,
-			//Sources:      nil,
-			//Destinations: nil,
-			Services: nil,
+			Services:   nil,
 		}
-		rawSources := d.Get("source")
-		if rawSources != nil {
+		rawSources, ok := ruleMap["source"]
+		if ok && rawSources != nil {
+			sourceSet := rawSources.(*schema.Set)
 			var sources []types.Source
-			sourceList := rawSources.([]interface{})
-			for j, s := range sourceList {
+			for j, s := range sourceSet.List() {
 				source, ok := s.(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - source %d - expected map[string]interface{} - got %T", i, j, s)
@@ -327,9 +378,12 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					Type:    source["type"].(string),
 					IsValid: true,
 				}
+				// TODO: find why sourceSet.List() returns an extra empty item
+				if inputSource.Name == "" && inputSource.Type == "" {
+					continue
+				}
 				// When the source is an IP address, the name should be filled with the same value
-				_, errs := validation.IsIPAddress(inputSource.Value, "source")
-				if errs == nil && inputSource.Name == "" {
+				if inputSource.Name == "" && (inputSource.Type == govcd.DFWElementIpv6 || inputSource.Type == govcd.DFWElementIpv4) {
 					inputSource.Name = inputSource.Value
 				}
 				sources = append(sources, inputSource)
@@ -339,11 +393,11 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 				Source:   sources,
 			}
 		}
-		rawDestinations := d.Get("destination")
-		if rawDestinations != nil {
+		rawDestinations, ok := ruleMap["destination"]
+		if ok && rawDestinations != nil {
+			destinationSet := rawDestinations.(*schema.Set)
 			var destinations []types.Destination
-			destinationList := rawDestinations.([]interface{})
-			for j, dest := range destinationList {
+			for j, dest := range destinationSet.List() {
 				destination, ok := dest.(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - destination %d - expected map[string]interface{} - got %T", i, j, dest)
@@ -354,9 +408,12 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					Type:    destination["type"].(string),
 					IsValid: true,
 				}
-				// When the source is an IP address, the name should be filled with the same value
-				_, errs := validation.IsIPAddress(inputDestination.Value, "destination")
-				if errs == nil && inputDestination.Name == "" {
+				// TODO: find why inputDestination.List() returns an extra empty item
+				if inputDestination.Name == "" && inputDestination.Type == "" {
+					continue
+				}
+				// When the destination is an IP address, the name should be filled with the same value
+				if inputDestination.Name == "" && (inputDestination.Type == govcd.DFWElementIpv6 || inputDestination.Type == govcd.DFWElementIpv4) {
 					inputDestination.Name = inputDestination.Value
 				}
 				destinations = append(destinations, inputDestination)
@@ -366,11 +423,11 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 				Destination: destinations,
 			}
 		}
-		rawAppliedTo := d.Get("applied_to")
-		if rawAppliedTo != nil {
+		rawAppliedTo, ok := ruleMap["applied_to"]
+		if ok && rawAppliedTo != nil {
 			var appliedTo []types.AppliedTo
-			appliedToList := rawAppliedTo.([]interface{})
-			for j, a := range appliedToList {
+			appliedToSet := rawAppliedTo.(*schema.Set)
+			for j, a := range appliedToSet.List() {
 				apply, ok := a.(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - applied-to %d - expected map[string]interface{} - got %T", i, j, a)
@@ -381,17 +438,21 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					Type:    apply["type"].(string),
 					IsValid: true,
 				}
+				// TODO: find why inputApplyTo.List() returns an extra empty item
+				if inputApplyTo.Name == "" && inputApplyTo.Type == "" {
+					continue
+				}
 				appliedTo = append(appliedTo, inputApplyTo)
 			}
 			resultRule.AppliedToList = &types.AppliedToList{
 				AppliedTo: appliedTo,
 			}
 		}
-		rawServices := d.Get("service")
-		if rawServices != nil {
+		rawServices, ok := ruleMap["service"]
+		if ok && rawServices != nil {
 			var services []types.Service
-			serviceList := rawServices.([]interface{})
-			for j, s := range serviceList {
+			serviceSet := rawServices.(*schema.Set)
+			for j, s := range serviceSet.List() {
 				service, ok := s.(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - service %d - expected map[string]interface{} - got %T", i, j, s)
@@ -454,65 +515,78 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 		ruleMap["name"] = rule.Name
 		ruleMap["action"] = rule.Action
 		ruleMap["direction"] = rule.Direction
+		ruleMap["packet_type"] = rule.PacketType
 
 		// sources
 		if rule.Sources != nil && len(rule.Sources.Source) > 0 {
-			var sourceList []map[string]interface{}
+			var rawSourceList []interface{}
 			for _, s := range rule.Sources.Source {
 				sourceMap := map[string]interface{}{
 					"name":  s.Name,
 					"type":  s.Type,
-					"value": s.Value,
+					"value": filterVdcId(s.Value),
 				}
-				sourceList = append(sourceList, sourceMap)
+				rawSourceList = append(rawSourceList, sourceMap)
 			}
-			ruleMap["source"] = sourceList
+			sourceSet := schema.NewSet(schema.HashResource(sourceDef()), rawSourceList)
+			ruleMap["source"] = sourceSet
 		}
 		// destinations
 		if rule.Destinations != nil && len(rule.Destinations.Destination) > 0 {
-			var destinationList []map[string]interface{}
+			var destinationList []interface{}
 			for _, dest := range rule.Destinations.Destination {
 				destinationMap := map[string]interface{}{
 					"name":  dest.Name,
 					"type":  dest.Type,
-					"value": dest.Value,
+					"value": filterVdcId(dest.Value),
 				}
 				destinationList = append(destinationList, destinationMap)
 			}
-			ruleMap["destination"] = destinationList
+			destinationSet := schema.NewSet(schema.HashResource(destinationDef()), destinationList)
+			ruleMap["destination"] = destinationSet
 		}
 		// services
 		if rule.Services != nil && len(rule.Services.Service) > 0 {
-			var serviceList []map[string]interface{}
+			var serviceList []interface{}
 			for _, s := range rule.Services.Service {
 				serviceMap := map[string]interface{}{
 					"name":             s.Name,
 					"type":             s.Type,
-					"destination_port": *s.DestinationPort,
-					"source_port":      *s.SourcePort,
+					"destination_port": stringOnNotNil(s.DestinationPort),
+					"source_port":      stringOnNotNil(s.SourcePort),
 					"protocol":         getDfwProtocolString(s.Protocol),
-					"value":            s.Value,
+					"value":            filterVdcId(s.Value),
 				}
 				serviceList = append(serviceList, serviceMap)
 			}
-			ruleMap["service"] = serviceList
+			serviceSet := schema.NewSet(schema.HashResource(serviceDef()), serviceList)
+			ruleMap["service"] = serviceSet
 		}
 		// applied-to
 		if rule.AppliedToList != nil && len(rule.AppliedToList.AppliedTo) > 0 {
-			var appliedToList []map[string]interface{}
+			var appliedToList []interface{}
 			for _, a := range rule.AppliedToList.AppliedTo {
 				appliedToMap := map[string]interface{}{
 					"name":  a.Name,
 					"type":  a.Type,
-					"value": a.Value,
+					"value": filterVdcId(a.Value),
 				}
 				appliedToList = append(appliedToList, appliedToMap)
 			}
-			ruleMap["applied_to"] = appliedToList
+			appliedToSet := schema.NewSet(schema.HashResource(appliedToDef()), appliedToList)
+			ruleMap["applied_to"] = appliedToSet
 		}
-
 		rulesList = append(rulesList, ruleMap)
 	}
 
 	return d.Set("rule", rulesList)
+}
+
+// stringOnNotNil returns the contents of a string pointer
+// if the pointer is nil, returns an empty string
+func stringOnNotNil(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
 }

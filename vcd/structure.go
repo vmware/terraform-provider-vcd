@@ -56,6 +56,16 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 	return temp
 }
 
+// filterVdcId returns a bare UUID if the initial value contains a VDC ID
+// otherwise it returns the initial value
+func filterVdcId(i interface{}) string {
+	s := i.(string)
+	if strings.HasPrefix(s, "urn:vcloud:vdc:") {
+		return extractUuid(s)
+	}
+	return s
+}
+
 // convertSchemaSetToSliceOfStrings accepts Terraform's *schema.Set object and converts it to slice
 // of strings.
 // This is useful for extracting values from a set of strings
