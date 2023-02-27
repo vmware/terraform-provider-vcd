@@ -5,10 +5,20 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
+
+var DFWElements = []string{
+	govcd.DFWElementIpv4,
+	govcd.DFWElementNetwork,
+	govcd.DFWElementEdge,
+	govcd.DFWElementIpSet,
+	govcd.DFWElementVirtualMachine,
+	govcd.DFWElementVdc,
+}
 
 func sourceDef() *schema.Resource {
 	return &schema.Resource{
@@ -19,9 +29,10 @@ func sourceDef() *schema.Resource {
 				Description: "Name of the source entity",
 			},
 			"type": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Type of the source entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address, Ipv6Address)",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Type of the source entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address)",
+				ValidateFunc: validation.StringInSlice(DFWElements, false),
 			},
 			"value": {
 				Type:        schema.TypeString,
@@ -42,9 +53,10 @@ func destinationDef() *schema.Resource {
 				Description: "Name of the destination entity",
 			},
 			"type": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Type of the destination entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address, Ipv6Address)",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Type of the destination entity (one of Network, Edge, VirtualMachine, IpSet, VDC, Ipv4Address)",
+				ValidateFunc: validation.StringInSlice(DFWElements, false),
 			},
 			"value": {
 				Type:        schema.TypeString,
@@ -65,9 +77,10 @@ func appliedToDef() *schema.Resource {
 				Description: "Name of the applied-to entity",
 			},
 			"type": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Type of the applied-to entity (one of Network, Edge, VirtualMachine, IPSet, VDC, Ipv4Address, Ipv6Address)",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Type of the applied-to entity (one of Network, Edge, VirtualMachine, IPSet, VDC, Ipv4Address)",
+				ValidateFunc: validation.StringInSlice(DFWElements, false),
 			},
 			"value": {
 				Type:        schema.TypeString,
@@ -383,7 +396,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					continue
 				}
 				// When the source is an IP address, the name should be filled with the same value
-				if inputSource.Name == "" && (inputSource.Type == govcd.DFWElementIpv6 || inputSource.Type == govcd.DFWElementIpv4) {
+				if inputSource.Name == "" && inputSource.Type == govcd.DFWElementIpv4 {
 					inputSource.Name = inputSource.Value
 				}
 				sources = append(sources, inputSource)
@@ -413,7 +426,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					continue
 				}
 				// When the destination is an IP address, the name should be filled with the same value
-				if inputDestination.Name == "" && (inputDestination.Type == govcd.DFWElementIpv6 || inputDestination.Type == govcd.DFWElementIpv4) {
+				if inputDestination.Name == "" && inputDestination.Type == govcd.DFWElementIpv4 {
 					inputDestination.Name = inputDestination.Value
 				}
 				destinations = append(destinations, inputDestination)

@@ -12,6 +12,7 @@ func computedMap(input map[string]*schema.Schema) map[string]*schema.Schema {
 		v.Required = false
 		v.Computed = true
 		v.StateFunc = nil
+		v.ValidateFunc = nil
 		output[k] = v
 	}
 	return output
