@@ -77,10 +77,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		return
 	}
 
-	step4func := resource.TestStep{}
 	var step5Check resource.TestCheckFunc
 
-	step4func = resource.TestStep{
+	step4func := resource.TestStep{
 		Config: configTextVMUpdateStep4,
 		Check: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),

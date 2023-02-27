@@ -114,6 +114,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxv_service_finder":                       datasourceVcdNsxvServiceFinder(),                // 3.9
 	"vcd_nsxv_service":                              datasourceVcdNsxvService(),                      // 3.9
 	"vcd_nsxv_service_group":                        datasourceVcdNsxvServiceGroup(),                 // 3.9
+	"vcd_rde_interface":                             datasourceVcdRdeInterface(),                     // 3.9
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -193,6 +194,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_catalog_access_control":                    resourceVcdCatalogAccessControl(),             // 3.8
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_nsxv_distributed_firewall":                 resourceVcdNsxvDistributedFirewall(),          // 3.9
+	"vcd_rde_interface":                             resourceVcdRdeInterface(),                     // 3.9
 }
 
 // Provider returns a terraform.ResourceProvider.

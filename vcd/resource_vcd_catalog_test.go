@@ -133,6 +133,173 @@ func TestAccVcdCatalog(t *testing.T) {
 	postTestChecks(t)
 }
 
+// TestAccVcdCatalogRename ensures that a Catalog can be renamed and the contents of it
+// will remain unchanged.
+func TestAccVcdCatalogRename(t *testing.T) {
+	preTestChecks(t)
+
+	orgName := testConfig.VCD.Org
+	vdcName := testConfig.Nsxt.Vdc
+	catalogName := t.Name() + "-cat"
+	catalogMediaName := t.Name() + "-media"
+	vappTemplateName := t.Name() + "-templ"
+	vmName := "test-vm"
+
+	var params = StringMap{
+		"Org":              orgName,
+		"Vdc":              vdcName,
+		"CatalogName":      catalogName,
+		"CatalogMediaName": catalogMediaName,
+		"VappTemplateName": vappTemplateName,
+		"Description":      t.Name(),
+		"OvaPath":          testConfig.Ova.OvaPath,
+		"MediaPath":        testConfig.Media.MediaPath,
+		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
+		"VmName":           vmName,
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccCheckVcdCatalogRename, params)
+
+	catalogUpdatedName := catalogName + "_updated"
+	params["FuncName"] = t.Name() + "-rename"
+	params["CatalogName"] = catalogUpdatedName
+	renameText := templateFill(testAccCheckVcdCatalogRename, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] RENAMING CONFIGURATION: %s", renameText)
+
+	resourceCatalog := "vcd_catalog.test-catalog"
+	resourceMedia := "vcd_catalog_media.test-media"
+	resourcevAppTemplate := "vcd_catalog_vapp_template.test-vapp-template"
+	resourceVM1 := "vcd_vm.test-vm-1"
+	resourceVM2 := "vcd_vm.test-vm-2"
+	// Use field value caching function across multiple test steps to ensure object wasn't recreated (ID did not change)
+	cachedCatalogId := &testCachedFieldValue{}
+	cachedMediaId := &testCachedFieldValue{}
+	cachedvAppTemplateId := &testCachedFieldValue{}
+	cachedVMId1 := &testCachedFieldValue{}
+	cachedVMId2 := &testCachedFieldValue{}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testCheckCatalogDestroy(orgName, catalogUpdatedName),
+			testAccCheckVcdStandaloneVmDestroy(vmName+"-1", orgName, vdcName),
+			testAccCheckVcdStandaloneVmDestroy(vmName+"-2", orgName, vdcName),
+		),
+		Steps: []resource.TestStep{
+			// Test creation
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceCatalog),
+					cachedCatalogId.cacheTestResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.cacheTestResourceFieldValue(resourceMedia, "id"),
+					cachedvAppTemplateId.cacheTestResourceFieldValue(resourcevAppTemplate, "id"),
+					cachedVMId1.cacheTestResourceFieldValue(resourceVM1, "id"),
+					cachedVMId2.cacheTestResourceFieldValue(resourceVM2, "id"),
+					testAccCheckCatalogEntityState("vcd_catalog_media", orgName, catalogMediaName, true),
+					testAccCheckCatalogEntityState("vcd_catalog_vapp_template", orgName, vappTemplateName, true),
+					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogName),
+					resource.TestCheckResourceAttr(resourceCatalog, "description", t.Name()),
+					resource.TestMatchResourceAttr(resourceCatalog, "catalog_version", regexp.MustCompile(`^\d+`)),
+					resource.TestMatchResourceAttr(resourceCatalog, "owner_name", regexp.MustCompile(`^\S+$`)),
+				),
+			},
+			{
+				// Intermediate step needed to rename the catalog before checking
+				// the vApp template and media depending on it.
+				Config: renameText,
+				Check: resource.ComposeTestCheckFunc(
+					cachedCatalogId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.testCheckCachedResourceFieldValue(resourceMedia, "id"),
+					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceVM1, "id"),
+					cachedVMId2.testCheckCachedResourceFieldValue(resourceVM2, "id"),
+					testAccCheckVcdStandaloneVmExists(vmName+"-1", resourceVM1, orgName, vdcName),
+					testAccCheckVcdStandaloneVmExists(vmName+"-2", resourceVM2, orgName, vdcName),
+				),
+			},
+			{
+				Config: renameText,
+				Check: resource.ComposeTestCheckFunc(
+					cachedCatalogId.testCheckCachedResourceFieldValue(resourceCatalog, "id"),
+					cachedMediaId.testCheckCachedResourceFieldValue(resourceMedia, "id"),
+					cachedvAppTemplateId.testCheckCachedResourceFieldValue(resourcevAppTemplate, "id"),
+					cachedVMId1.testCheckCachedResourceFieldValue(resourceVM1, "id"),
+					cachedVMId2.testCheckCachedResourceFieldValue(resourceVM2, "id"),
+					resource.TestCheckResourceAttr(resourceCatalog, "name", catalogUpdatedName),
+					resource.TestCheckResourceAttr(resourceCatalog, "number_of_vapp_templates", "1"),
+					resource.TestCheckResourceAttr(resourceCatalog, "number_of_media", "1"),
+					resource.TestCheckResourceAttrPair(resourcevAppTemplate, "catalog_id", resourceCatalog, "id"),
+					resource.TestCheckResourceAttrPair(resourceMedia, "catalog_id", resourceCatalog, "id"),
+				),
+			},
+		},
+	})
+}
+
+const testAccCheckVcdCatalogRename = `
+resource "vcd_catalog" "test-catalog" {
+  org = "{{.Org}}" 
+  
+  name        = "{{.CatalogName}}"
+  description = "{{.Description}}"
+
+  delete_force     = "true"
+  delete_recursive = "true"
+}
+
+resource "vcd_catalog_vapp_template" "test-vapp-template" {
+  org     = "{{.Org}}"
+  catalog_id = resource.vcd_catalog.test-catalog.id
+
+  name              = "{{.VappTemplateName}}"
+  description       = "TestDescription"
+  ova_path          = "{{.OvaPath}}"
+  upload_piece_size = {{.UploadPieceSize}}
+}
+
+resource "vcd_catalog_media"  "test-media" {
+  org     = "{{.Org}}"
+  catalog_id = resource.vcd_catalog.test-catalog.id
+
+  name              = "{{.CatalogMediaName}}"
+  description       = "TestDescription"
+  media_path        = "{{.MediaPath}}"
+  upload_piece_size = {{.UploadPieceSize}}
+}
+
+resource "vcd_vm" "{{.VmName}}-1" {
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.VmName}}-1"
+  vapp_template_id = resource.vcd_catalog_vapp_template.test-vapp-template.id
+  description      = "test standalone VM 1"
+  power_on         = false
+}
+
+resource "vcd_vm" "{{.VmName}}-2" {
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.VmName}}-2"
+  boot_image_id    = resource.vcd_catalog_media.test-media.id
+  description      = "test standalone VM 2"
+  computer_name    = "standalone"
+  cpus             = 1
+  memory           = 1024
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  power_on         = false
+}
+
+`
+
 // TestAccVcdCatalogWithStorageProfile is very similar to TestAccVcdCatalog, but it ensure that a catalog can be created
 // using specific storage profile
 func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
