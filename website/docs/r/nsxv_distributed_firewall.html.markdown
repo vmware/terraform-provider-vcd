@@ -177,7 +177,6 @@ Each Firewall Rule contains the following attributes:
 
 * `name` - (Optional) Explanatory name for firewall rule (uniqueness not enforced)
 * `direction` - (Required) One of `in`, `out`, or `inout`. (default `in`)
-* `ip_protocol` - (Optional) One of `IPV4`,  `IPV6`, or `IPV4_IPV6` (default `IPV4_IPV6`)
 * `action` - (Required) Defines if it should `allow` or `deny` traffic. 
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
@@ -196,8 +195,13 @@ Each element of the `source`, `destination`, or `applied_to` is identified by th
 
 * `name` - (Required) is the name of the object. When using a literal object (such as an IP or IP range), the name **must**
   contain the same text as the `value`
-* `type` - (Required) is the type of the object. One of `Network`, `Edge`, `VirtualMachine`, `IPSet`, `VDC`, `Ipv4Address`, `Ipv6Address`.
+* `type` - (Required) is the type of the object. One of `Network`, `Edge`, `VirtualMachine`, `IPSet`, `VDC`, `Ipv4Address`.
    Note that the case of the type identifiers are relevant. Using `IpSet` instead of `IPSet` results in an error.
+   Also note that `Ipv4Address` allows any of:
+    * An IP Address (example: `192.168.1.1`)
+    * A list of IP addresses (example: `192.168.1.2,192.168.1.15`)
+    * A range of IP addresses (example: `10.10.10.2-10.10.10.20`)
+    * A CIDR (example: `10.10.10.1/24`)
 * `value` - (Required) - When using a named object (such a VM or a network), this field will have the object ID. For a literal
    object, such as an IP or IP range, this will be the text of the IP reference.
 
