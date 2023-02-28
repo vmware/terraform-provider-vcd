@@ -92,7 +92,7 @@ resource "vcd_rde" "my-rde" {
 
 ## Input entity vs Computed entity
 
-There is a common use case for RDEs, where they are used by 3rd party components that perform continuous updates on them,
+There is a common use case for RDEs where they are used by 3rd party components that perform continuous updates on them,
 which are expected and desired. This conflicts with Terraform way of working, as doing a `terraform plan` would reveal 
 the required actions to remove every single change done by those 3rd party tools, which we don't want in this case.
 
