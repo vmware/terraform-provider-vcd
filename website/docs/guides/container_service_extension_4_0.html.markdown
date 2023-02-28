@@ -822,10 +822,6 @@ resource "vcd_network_routed_v2" "solutions_routed_network" {
     start_address = "192.168.0.2"
     end_address   = "192.168.0.10"
   }
-
-  dns1       = "10.84.54.20"
-  dns2       = "1.1.1.1"
-  dns_suffix = "eng.vmware.com"
 }
 
 resource "vcd_network_routed_v2" "cluster_routed_network" {
@@ -842,10 +838,6 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
     start_address = "10.0.0.2"
     end_address   = "10.0.255.254"
   }
-
-  dns1       = "10.84.54.20"
-  dns2       = "1.1.1.1"
-  dns_suffix = "eng.vmware.com"
 }
 
 resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
@@ -887,7 +879,9 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
 
 ### Configure CSE server
 
-
+The CSE Server relies on the [RDE Type][rde_type] that we created some steps ago, so we need a [RDE instance][rde] of that type
+to configure it. To create this RDE, we can either use a JSON referenced in a given URL (`entity_url`), or use one from a file. In this example
+we make use of `template_file` data source to be able to parameterize the contents of the RDE, so we will use
 
 ```hcl
 # We read the entity JSON of the VCDKEConfig as template as some fields are references to Terraform resources.
@@ -1114,6 +1108,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [catalog]: </providers/vmware/vcd/latest/docs/resources/catalog> (vcd_catalog)
 [rde_interface]: </providers/vmware/vcd/latest/docs/resources/rde_interface> (vcd_rde_interface)
 [rde_type]: </providers/vmware/vcd/latest/docs/resources/rde_type> (vcd_rde_type)
+[rde]: </providers/vmware/vcd/latest/docs/resources/rde> (vcd_rde)
 [role]: </providers/vmware/vcd/latest/docs/resources/role> (vcd_role)
 [user]: </providers/vmware/vcd/latest/docs/resources/user> (vcd_user)
 [rights_bundle]: </providers/vmware/vcd/latest/docs/resources/rights_bundle> (vcd_rights_bundle)
