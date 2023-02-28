@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxv_distributed_firewall"
 sidebar_current: "docs-vcd-resource-nsxv-distributed-firewall"
 description: |-
-  The NSXV Distributed Firewall allows user to segment organization virtual data center entities, such as
+  The NSX-V Distributed Firewall allows user to segment organization virtual data center entities, such as
   virtual machines, edges, networks, based on several attributes
 ---
 
@@ -148,7 +148,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 
     # No source, destination, service: will be interpreted as `any`
 
-    # applied to the current VDC
+    # Applied to the current VDC
     applied_to {
       name  = data.vcd_org_vdc.my-vdc.name
       type  = "VDC"
@@ -162,11 +162,11 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 
 The following arguments are supported:
 
-* `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a data source
+* `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a `vcd_org_vdc` data source
 * `enabled` - (Optional) - If true, the firewall needs to be enabled. Only system administrators can enable or
-  disable the NSXV distributed firewall. It can also be enabled using a property in `vcd_org_vdc`
-* `rule` - (Optional) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order**
-  defines firewall rule precedence. If no rules are defined, all will be removed from the firewall.
+  disable the NSX-V distributed firewall. It can also be enabled using property `enable_distributed_firewall` in `vcd_org_vdc`
+* `rule` - (Optional) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order
+  defines firewall rule precedence**. If no rules are defined, all will be removed from the firewall.
 
 <a id="firewall-rule"></a>
 ## Firewall Rule
@@ -193,12 +193,12 @@ Leaving it empty matches `any` (all)
 
 Each element of the `source`, `destination`, or `applied_to` is identified by three elements:
 
-* `name` - (Required) is the name of the object. When using a literal object (such as an IP or IP range), the name **must**
-  contain the same text as the `value`
+* `name` - (Required) is the name of the object. When using a literal object (such as an IP or IP range), **the name must
+  contain the same text as the `value`**
 * `type` - (Required) is the type of the object. One of `Network`, `Edge`, `VirtualMachine`, `IPSet`, `VDC`, `Ipv4Address`.
    Note that the case of the type identifiers are relevant. Using `IpSet` instead of `IPSet` results in an error.
    Also note that `Ipv4Address` allows any of:
-    * An IP Address (example: `192.168.1.1`)
+    * An IP address (example: `192.168.1.1`)
     * A list of IP addresses (example: `192.168.1.2,192.168.1.15`)
     * A range of IP addresses (example: `10.10.10.2-10.10.10.20`)
     * A CIDR (example: `10.10.10.1/24`)
@@ -209,6 +209,7 @@ Each element of the `source`, `destination`, or `applied_to` is identified by th
 ### Service objects
 
 A service object can be one of the three following things:
+
 * A named service, identified by fields `name` and `value` with `type = "Application"`
 * A named service group, identified by fields `name` and `value` with `type = "ApplicationGroup"`
 * A literal service, identified by fields `protocol`, `ports`, `source_port`, `destination_port`
@@ -216,12 +217,12 @@ A service object can be one of the three following things:
 The following fields can be used:
 
 * Named services:
-  * `name` (Optional) - Mandatory if defining a named object or object group
-  * `value` (Optional) - Mandatory if defining a named object or object group
-  * `type` (Optional) - Mandatory if defining a named object or object group. (One of `Application` or `ApplicationGroup`)
+  * `name` (Optional) - Required if defining a named object or object group
+  * `value` (Optional) - Required if defining a named object or object group
+  * `type` (Optional) - Required if defining a named object or object group. (One of `Application` or `ApplicationGroup`)
 
 * Literal services:
   * `protocol` (Required) - Required when defining a literal object. (One of `TCP`, `UDP`, `ICMP`)
-  * `ports` (Optional) - The ports used by the service. Could be a single port, a comma delimited list, or a range.
+  * `ports` (Optional) - The ports used by the service. Could be a single port, a comma delimited list, or a range
   * `source_port` (Optional) - The source port used by the service, if any
   * `destination_port` (Optional) - The destination port used by the service, if any

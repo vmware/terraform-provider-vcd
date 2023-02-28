@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxv\_service_finder
 
-Provides a VMware Cloud Director NSXV distributed firewall services and service groups finder
+Provides a VMware Cloud Director NSX-V distributed firewall services and service groups finder
 used to retrieve existing services by regular expressions
 
 Supported in provider *v3.9+*

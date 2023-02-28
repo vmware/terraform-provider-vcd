@@ -244,7 +244,7 @@ The following arguments are supported:
 * `edge_cluster_id` - (Optional, *v3.8+*, *VCD 10.3+*) An ID of NSX-T Edge Cluster which should
   provide vApp Networking Services or DHCP for isolated networks. Can be looked up using
   `vcd_nsxt_edge_cluster` data source.
-* `enable_distributed_firewall` - (Optional, *v3.9+*, *VCD 10.3+*) Enables or disables the NSXV distributed firewall. - Requires system administrator privileges.
+* `enable_distributed_firewall` - (Optional, *v3.9+*, *VCD 10.3+*) Enables or disables the NSX-V distributed firewall. - Requires system administrator privileges.
 
 <a id="storageprofile"></a>
 ## Storage Profile

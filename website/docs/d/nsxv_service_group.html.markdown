@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxv\_service\_group
 
-Provides a VMware Cloud Director NSXV distributed firewall service used to read an existing service group
+Provides a VMware Cloud Director NSX-V distributed firewall service used to read an existing service group
 
 Supported in provider *v3.9+*
 
