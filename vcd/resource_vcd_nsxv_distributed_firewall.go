@@ -9,6 +9,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
+	"strings"
 )
 
 var DFWElements = []string{
@@ -136,6 +137,9 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 		CreateContext: resourceVcdNsxvDistributedFirewallCreate,
 		UpdateContext: resourceVcdNsxvDistributedFirewallUpdate,
 		DeleteContext: resourceVcdNsxvDistributedFirewallDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdNsxvDistributedFirewallImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"vdc_id": {
@@ -157,7 +161,7 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type:        schema.TypeString,
+							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Firewall Rule ID",
 						},
@@ -251,14 +255,14 @@ func genericVcdNsxvDistributedFirewallRead(_ context.Context, d *schema.Resource
 
 	if err != nil {
 		if origin == "datasource" {
-			return diag.Errorf("[NSXV Distributed Firewall DS Read] error retrieving NSX-V Firewall state: %s - %s", err, govcd.ErrorEntityNotFound)
+			return diag.Errorf("[NSX-V Distributed Firewall DS Read] error retrieving NSX-V Firewall state: %s - %s", err, govcd.ErrorEntityNotFound)
 		}
 		d.SetId("")
 		return nil
 	}
 	d.SetId(vdcId)
 	if configuration == nil { // disabled
-		util.Logger.Println("[NSXV DFW DISABLED]")
+		util.Logger.Println("[NSX-V DFW DISABLED]")
 		dSet(d, "enabled", false)
 		err = d.Set("rule", nil)
 		if err != nil {
@@ -267,12 +271,12 @@ func genericVcdNsxvDistributedFirewallRead(_ context.Context, d *schema.Resource
 		return nil
 	}
 
-	util.Logger.Println("[NSXV DFW START]")
+	util.Logger.Println("[NSX-V DFW START]")
 	err = dfwRulesToResource(dfw.Configuration.Layer3Sections.Section.Rule, d)
 	if err != nil {
 		return diag.Errorf("error setting distributed firewall state: %s", err)
 	}
-	util.Logger.Println("[NSXV DFW END]")
+	util.Logger.Println("[NSX-V DFW END]")
 
 	return nil
 }
@@ -337,7 +341,7 @@ func resourceVcdNsxvDistributedFirewallDelete(_ context.Context, d *schema.Resou
 		vdcId = d.Id()
 	}
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
-	util.Logger.Printf("[INFO] disabling NSXV distributed firewall for VDC %s\n", vdcId)
+	util.Logger.Printf("[INFO] disabling NSX-V distributed firewall for VDC %s\n", vdcId)
 	if vcdClient.Client.IsSysAdmin {
 		err := dfw.Disable()
 		if err != nil {
@@ -352,7 +356,7 @@ func resourceVcdNsxvDistributedFirewallDelete(_ context.Context, d *schema.Resou
 	return nil
 }
 
-// resourceToDfwRules takes the data from HCL and returns a list of NSXV distributed firewall rules
+// resourceToDfwRules takes the data from HCL and returns a list of NSX-V distributed firewall rules
 func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewallRule, error) {
 
 	var resultRules []types.NsxvDistributedFirewallRule
@@ -517,7 +521,7 @@ func getDfwProtocolString(i *int) string {
 	return ""
 }
 
-// dfwRulesToResource gets the rules from a NSXV distributed firewall and sets the corresponding state
+// dfwRulesToResource gets the rules from a NSX-V distributed firewall and sets the corresponding state
 func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.ResourceData) error {
 	var rulesList []map[string]interface{}
 
@@ -529,6 +533,9 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 		ruleMap["action"] = rule.Action
 		ruleMap["direction"] = rule.Direction
 		ruleMap["packet_type"] = rule.PacketType
+		if rule.ID != nil {
+			ruleMap["id"] = *rule.ID
+		}
 
 		// sources
 		if rule.Sources != nil && len(rule.Sources.Source) > 0 {
@@ -602,4 +609,47 @@ func stringOnNotNil(p *string) string {
 		return ""
 	}
 	return *p
+}
+
+func resourceVcdNsxvDistributedFirewallImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+
+	vcdClient := meta.(*VCDClient)
+	var dfw *govcd.NsxvDistributedFirewall
+
+	var vdcId string
+	if len(resourceURI) == 1 { // only VDC-ID
+		uuid := extractUuid(resourceURI[0])
+		if uuid == "" {
+			return nil, fmt.Errorf("not a valid ID provided for VDC")
+		}
+		vdcId = resourceURI[0]
+		dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
+	} else {
+		if len(resourceURI) == 2 { // Org name + VDC name
+			orgName := resourceURI[0]
+			vdcName := resourceURI[1]
+			org, err := vcdClient.GetOrg(orgName)
+			if err != nil {
+				return nil, err
+			}
+			vdc, err := org.GetVDCByName(vdcName, false)
+			if err != nil {
+				return nil, err
+			}
+			vdcId = resourceURI[1]
+			dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdc.Vdc.ID)
+		}
+	}
+	configuration, err := dfw.GetConfiguration()
+	if err != nil {
+		return nil, err
+	}
+	if configuration == nil {
+		return nil, fmt.Errorf("distributed firewall for VDC %s is not enabled", dfw.VdcId)
+	}
+	d.SetId(vdcId)
+	dSet(d, "enabled", true)
+	dSet(d, "vdc_id", vdcId)
+	return []*schema.ResourceData{d}, nil
 }
