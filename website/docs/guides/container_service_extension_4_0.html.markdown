@@ -884,7 +884,9 @@ to configure it. To create this RDE, we can either use a JSON referenced in a gi
 
 In this example we make use of `template_file` data source to be able to parameterize the contents of the RDE, so we will
 take the rendered JSON into the `input_entity` argument from [`vcd_rde`][rde]. The specified variables are the same requested
-from the VCD UI:
+from the VCD UI.
+
+-> Find [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json) the VCDKEConfig JSON template
 
 ```hcl
 # We read the entity JSON as template as some fields are references to Terraform resources.
