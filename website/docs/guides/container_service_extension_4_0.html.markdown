@@ -880,40 +880,52 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
 ### Configure CSE server
 
 The CSE Server relies on the [RDE Type][rde_type] that we created some steps ago, so we need a [RDE instance][rde] of that type
-to configure it. To create this RDE, we can either use a JSON referenced in a given URL (`entity_url`), or use one from a file. In this example
-we make use of `template_file` data source to be able to parameterize the contents of the RDE, so we will use
+to configure it. To create this RDE, we can either use a JSON referenced in a given URL (`input_entity_url`), or use one from a file (`input_entity`).
+
+In this example we make use of `template_file` data source to be able to parameterize the contents of the RDE, so we will
+take the rendered JSON into the `input_entity` argument from [`vcd_rde`][rde]. The specified variables are the same requested
+from the VCD UI:
 
 ```hcl
-# We read the entity JSON of the VCDKEConfig as template as some fields are references to Terraform resources.
+# We read the entity JSON as template as some fields are references to Terraform resources.
 # The inputs are taken from UI.
 data "template_file" "vcdkeconfig_instance_template" {
   template = file("${path.module}/entities/vcdkeconfig-template.json")
   vars = {
-    capvcd_version                  = var.capvcd_version
-    cpi_version                     = var.cpi_version
-    csi_version                     = var.csi_version
-    github_personal_access_token    = var.github_personal_access_token
-    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name
-    no_proxy                        = var.no_proxy
-    http_proxy                      = var.http_proxy
-    https_proxy                     = var.https_proxy
-    syslog_host                     = var.syslog_host
-    syslog_port                     = var.syslog_port
+    capvcd_version                  = "1.1.0"
+    cpi_version                     = "1.2.0"
+    csi_version                     = "1.3.0"
+    github_personal_access_token    = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy
+    no_proxy                        = "localhost,127.0.0.1,cluster.local,.svc"
+    http_proxy                      = ""
+    https_proxy                     = ""
+    syslog_host                     = ""
+    syslog_port                     = ""
   }
 }
 
+# This RDE should be applied as it is
 resource "vcd_rde" "vcdkeconfig_instance" {
-  org              = "System"
+  org              = "System" # TODO!!!! Can be other org????
   name             = "vcdKeConfig"
-  rde_type_vendor  = vcd_rde_type.vcdkeconfig_type.vendor
-  rde_type_nss     = vcd_rde_type.vcdkeconfig_type.nss
-  rde_type_version = vcd_rde_type.vcdkeconfig_type.version
+  rde_type_vendor  = vcd_rde_type.vcdkeconfig_type.vendor  # References the RDE Type
+  rde_type_nss     = vcd_rde_type.vcdkeconfig_type.nss     # References the RDE Type
+  rde_type_version = vcd_rde_type.vcdkeconfig_type.version # References the RDE Type
   resolve          = true
   input_entity     = data.template_file.vcdkeconfig_instance_template.rendered
 }
 ```
 
 ### Deploy CSE server
+
+The last step to configure CSE v4.0 in VCD is to deploy the CSE OVA as a vApp. To do that, we will need the following:
+
+- The wrapping vApp. We set leases to be infinite as we want the CSE Server to be always up and running. This will depend on
+  the lease settings specified in the Solutions Organization.
+- A vApp network that makes use of the Routed network created in previous steps.
+- The CSE Server VM. To create it, we will use the CSE OVA uploaded in previous steps, as well as some required `guest_properties`.
+  These properties make use of the previously created token for the Service account in previous steps.
 
 ```hcl
 
@@ -954,7 +966,7 @@ resource "vcd_vapp_vm" "cse_appliance_vm" {
   guest_properties = {
 
     # VCD host
-    "cse.vcdHost" = replace(var.vcd_api_endpoint, "/api", "")
+    "cse.vcdHost" = "https://vcd.my-company.com"
 
     # CSE service account's org
     "cse.AppOrg" = vcd_org.solutions_organization.name
@@ -966,15 +978,14 @@ resource "vcd_vapp_vm" "cse_appliance_vm" {
     "cse.vcdUsername" = var.service_account_username
 
     # CSE service vApp's org
-    "cse.userOrg" = "System"
+    "cse.userOrg" = vcd_org.solutions_organization.name
   }
 
   customization {
     force                      = false
     enabled                    = true
     allow_local_admin_password = true
-    auto_generate_password     = false
-    admin_password             = var.cse_vm_password # In the guide it says to auto generate, but for simplicity it is hardcoded
+    auto_generate_password     = true
   }
 
   depends_on = [
@@ -982,6 +993,12 @@ resource "vcd_vapp_vm" "cse_appliance_vm" {
   ]
 }
 ```
+
+### Final considerations
+
+To evaluate the correctness of the setup, you can look up the CSE logs present in the CSE Server VM.
+You can visit [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html)
+to learn how to monitor the logs and troubleshoot possible problems.
 
 ## CSE upgrade process
 
