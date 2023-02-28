@@ -13,7 +13,7 @@ Requires system administrator privileges.
 
 Supported in provider *v3.9+*
 
-## Example Usage with a schema file
+## Example Usage with a JSON file
 
 ```hcl
 data "vcd_rde_type" "my-type" {
@@ -22,12 +22,53 @@ data "vcd_rde_type" "my-type" {
   version   = "1.2.3"
 }
 
-resource "vcd_rde" "my-rde" {
-  org         = "my-org"
-  rde_type_id = data.vcd_rde_type.my-type.id
-  name        = "My custom RDE"
-  resolve     = true
-  entity      = file("${path.module}/entities/custom-rde.json")
+resource "vcd_rde" "my_rde" {
+  org          = "my-org"
+  rde_type_id  = data.vcd_rde_type.my-type.id
+  name         = "My custom RDE"
+  resolve      = true
+  input_entity = file("${path.module}/entities/custom-rde.json")
+}
+
+output "computed_rde" {
+  value = vcd_rde.my_rde.computed_entity
+}
+```
+
+
+## Example Usage with a JSON template
+
+Using the [`template_file`](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) data source will
+allow you to parameterize RDE creation with custom inputs, as follows:
+
+```hcl
+data "template_file" "json_template" {
+  template = file("${path.module}/entities/custom-rde.json")
+  vars = {
+    name          = var.name
+    custom_field  = "This one is hardcoded"
+    another_field = var.anoter_field
+    replicas      = 2
+  }
+}
+
+
+data "vcd_rde_type" "my-type" {
+  vendor    = "bigcorp"
+  namespace = "tech1"
+  version   = "1.2.3"
+}
+
+resource "vcd_rde" "my_rde" {
+  org          = "my-org"
+  rde_type_id  = data.vcd_rde_type.my-type.id
+  name         = "My custom RDE"
+  resolve      = true
+  input_entity = data.template_file.json_template.rendered # Use the rendered JSON as input
+}
+
+output "computed_rde" {
+  value = vcd_rde.my_rde.computed_entity
 }
 ```
 
@@ -49,6 +90,30 @@ resource "vcd_rde" "my-rde" {
 }
 ```
 
+## Input entity vs Computed entity
+
+There is a common use case for RDEs, where they are used by 3rd party components that perform continuous updates on them,
+which are expected and desired. This conflicts with Terraform way of working, as doing a `terraform plan` would reveal 
+the required actions to remove every single change done by those 3rd party tools, which we don't want in this case.
+
+To add compatibility with this scenario, there are two important arguments, `input_entity` and `input_entity_url`,
+and one important computed attribute, `computed_entity`.
+
+If your RDE is intended to be managed **only and exclusively** by Terraform, the contents of the input JSON should always match with
+those retrieved into `computed_entity`. Otherwise, only `computed_entity` will reflect the current state of the RDE in VCD, whereas
+`input_entity` and `input_entity_url` will only specify the RDE contents that are needed either on creation or in a deliberate
+update that will cause the RDE contents to be **completely overridden**.
+
+As per this last point, one needs to be careful when updating `input_entity` or `input_entity_url`, as Terraform will apply
+whatever changes were done, ignoring the real state from `computed_entity`. To perform a real update, one
+needs to check the contents of the `computed_entity` and do some diff with the original input.
+
+## RDE resolution
+
+RDEs must be resolved to be used, and this operation can be done either by Terraform with `resolve=true`, or by a 3rd party
+actor that will do it behind the scenes. In this last scenario, it is advisable to mark `resolve_on_destroy=true` so Terraform
+can destroy the RDE if something goes wrong.
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -60,21 +125,21 @@ The following arguments are supported:
 * `name` - (Required) The name of the Runtime Defined Entity.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
-  deleted until the entity is resolved by either party.
-* `resolve_on_destroy` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved.
-* `entity` - (Optional) A string that specifies a valid JSON for the entity. It can be retrieved with functions such as `file`, `templatefile`... Either `entity` or `entity_url` is required.
-* `entity_url` - (Optional) The URL that points to a valid JSON for the entity. Either `entity` or `entity_url` is required.
-  If `entity_url` is used, the downloaded schema will be computed in the `entity` attribute.
-* `external_id` - (Optional) An external entity's ID that this Runtime Defined Entity may have a relation to.
+  deleted until the input_entity is resolved by either party, unless `resolve_on_destroy=true`.
+* `resolve_on_destroy` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved. It is `false` by default.
+* `input_entity` - (Optional) A string that specifies a valid JSON for the RDE. It can be retrieved with functions such as `file`, `templatefile`... Either `input_entity` or `input_entity_url` is required.
+* `input_entity_url` - (Optional) The URL that points to a valid JSON for the RDE. Either `input_entity` or `input_entity_url` is required.
+* `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
 * `metadata_entry` - (Optional) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 
 The following attributes are supported:
 
+* `computed_entity` - The real state of this RDE in VCD.
 * `owner_id` - The ID of the owner of this Runtime Defined Entity, corresponds to a [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user).
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
-* `state` - If the specified JSON in either `entity` or `entity_url` is correct, the state will be `RESOLVED`, otherwise it will be `RESOLUTION_ERROR`. If an entity in an `RESOLUTION_ERROR` state, it will require to be updated to a correct JSON to be usable.
+* `state` - If the specified JSON in either `input_entity` or `entity_url` is correct, the state will be `RESOLVED`, otherwise it will be `RESOLUTION_ERROR`. If an input_entity in an `RESOLUTION_ERROR` state, it will require to be updated to a correct JSON to be usable.
 
 <a id="metadata"></a>
 ## Metadata
