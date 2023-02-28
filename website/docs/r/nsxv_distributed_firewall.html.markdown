@@ -163,12 +163,10 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 The following arguments are supported:
 
 * `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a `vcd_org_vdc` data source
-* `enabled` - (Optional) - If true, the firewall needs to be enabled. Only system administrators can enable or
-  disable the NSX-V distributed firewall. It can also be enabled using property `enable_distributed_firewall` in `vcd_org_vdc`
+* `enabled` - (Optional) - If true, the firewall needs to be enabled. See [Enabling and disabling the Distributed Firewall](#enabling-and-disabling-the-distributed-firewall)
 * `rule` - (Optional) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order
   defines firewall rule precedence**. If no rules are defined, all will be removed from the firewall.
 
-<a id="firewall-rule"></a>
 ## Firewall Rule
 
 -> Order of `rule` blocks defines order of firewall rules in the system.
@@ -183,12 +181,11 @@ Each Firewall Rule contains the following attributes:
 * `source` - (Optional) A set of source objects. See below for [source or destination objects](#source-or-destination-objects)
 Leaving it empty matches `any` (all)
 * `destination` - (Optional) A set of destination objects. See below for [source or destination objects](#source-or-destination-objects). Leaving it empty matches `Any` (all)
-* `service` - (Optional) An optional set of services to use for this rule. See below for [service objects](#service-objects)
-* `applied_to` - (Required) A set of objects to which the rule applies. See below for [source or destination objects](#source-or-destination-objects) 
+* `service` - (Optional) An optional set of services to use for this rule. See below for [Service objects](#service-objects)
+* `applied_to` - (Required) A set of objects to which the rule applies. See below for [Source or destination objects](#source-or-destination-objects) 
 * `exclude_source` - (Optional) - reverses value of `source` for the rule to match everything except specified objects.
 * `exclude_destination` - (Optional) - reverses value of `destination` for the rule to match everything except specified objects.
 
-<a id="source-or-destination-objects"></a>
 ### Source or destination objects
 
 Each element of the `source`, `destination`, or `applied_to` is identified by three elements:
@@ -205,7 +202,6 @@ Each element of the `source`, `destination`, or `applied_to` is identified by th
 * `value` - (Required) - When using a named object (such a VM or a network), this field will have the object ID. For a literal
    object, such as an IP or IP range, this will be the text of the IP reference.
 
-<a id="service-objects"></a>
 ### Service objects
 
 A service object can be one of the three following things:
@@ -226,3 +222,19 @@ The following fields can be used:
   * `ports` (Optional) - The ports used by the service. Could be a single port, a comma delimited list, or a range
   * `source_port` (Optional) - The source port used by the service, if any
   * `destination_port` (Optional) - The destination port used by the service, if any
+
+## Enabling and disabling the Distributed Firewall
+
+The NSX-V Distributed firewall can be enabled or disabled by a system administrator, which has two possibilities:
+
+* Running an instance of `vcd_nsxv_distributed_firewall` setting `enabled = true`, with no rules, before allowing tenants to use it.
+* Creating a `vcd_org_vdc` with the property `enabled_distributed_firewall = true`
+
+In both cases, the distributed firewall will be ready for organization users to add and remove rules.
+
+Regarding tenant operations, the property `enabled` should always be set to `true`. This means that the user expects
+the firewall to be enabled, and the operation will fail if it is not.
+
+The user role has also implications when we want to remove the distributed firewall (`terraform destroy`). When we run the
+operation as system administrator, the firewall gets disabled, meaning that no tenant operations will be allowed after that.
+When a tenant runs `terraform destroy`, all the rules are removed, but the firewall stays enabled.
