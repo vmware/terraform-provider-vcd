@@ -111,9 +111,9 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_subscribed_catalog":                        datasourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_task":                                      datasourceVcdTask(),                             // 3.8
 	"vcd_nsxv_distributed_firewall":                 datasourceVcdNsxvDistributedFirewall(),          // 3.9
-	"vcd_nsxv_service_finder":                       datasourceVcdNsxvServiceFinder(),                // 3.9
-	"vcd_nsxv_service":                              datasourceVcdNsxvService(),                      // 3.9
-	"vcd_nsxv_service_group":                        datasourceVcdNsxvServiceGroup(),                 // 3.9
+	"vcd_nsxv_application_finder":                   datasourceVcdNsxvApplicationFinder(),            // 3.9
+	"vcd_nsxv_application":                          datasourceVcdNsxvApplication(),                  // 3.9
+	"vcd_nsxv_application_group":                    datasourceVcdNsxvApplicationGroup(),             // 3.9
 	"vcd_rde_interface":                             datasourceVcdRdeInterface(),                     // 3.9
 }
 

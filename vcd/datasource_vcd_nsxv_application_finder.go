@@ -9,9 +9,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func datasourceVcdNsxvServiceFinder() *schema.Resource {
+func datasourceVcdNsxvApplicationFinder() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdNsxvServiceFinderRead,
+		ReadContext: datasourceVcdNsxvApplicationFinderRead,
 
 		Schema: map[string]*schema.Schema{
 			"vdc_id": {
@@ -22,7 +22,7 @@ func datasourceVcdNsxvServiceFinder() *schema.Resource {
 			"search_expression": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Regular expression used to search services or groups",
+				Description: "Regular expression used to search applications or groups",
 			},
 			// Note: the search is case-insensitive by default, to mimic the behavior of the UI
 			"case_sensitive": {
@@ -34,8 +34,8 @@ func datasourceVcdNsxvServiceFinder() *schema.Resource {
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "Type of object. One of 'service', 'service_group'",
-				ValidateFunc: validation.StringInSlice([]string{"service", "service_group"}, false),
+				Description:  "Type of object. One of 'application', 'application_group'",
+				ValidateFunc: validation.StringInSlice([]string{"application", "application_group"}, false),
 			},
 			"objects": {
 				Type:        schema.TypeSet,
@@ -65,7 +65,7 @@ func datasourceVcdNsxvServiceFinder() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxvServiceFinderRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxvApplicationFinderRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vdcId := d.Get("vdc_id").(string)
@@ -84,31 +84,31 @@ func datasourceVcdNsxvServiceFinderRead(_ context.Context, d *schema.ResourceDat
 
 	var result []map[string]string
 
-	var services []types.Application
-	var serviceGroups []types.ApplicationGroup
+	var applications []types.Application
+	var applicationGroups []types.ApplicationGroup
 	var err error
 
 	switch wantedType {
-	case "service":
-		services, err = dfw.GetServicesByRegex(rawRegexp)
-	case "service_group":
-		serviceGroups, err = dfw.GetServiceGroupsByRegex(rawRegexp)
+	case "application":
+		applications, err = dfw.GetServicesByRegex(rawRegexp)
+	case "application_group":
+		applicationGroups, err = dfw.GetServiceGroupsByRegex(rawRegexp)
 	}
 
 	if err != nil {
 		return diag.Errorf("error retrieving %s list: %s - %s", wantedType, govcd.ErrorEntityNotFound, err)
 	}
 
-	for _, service := range services {
+	for _, application := range applications {
 		item := map[string]string{
-			"name":  service.Name,
-			"type":  service.Type.TypeName,
-			"value": service.ObjectID,
+			"name":  application.Name,
+			"type":  application.Type.TypeName,
+			"value": application.ObjectID,
 		}
 		result = append(result, item)
 	}
 
-	for _, sg := range serviceGroups {
+	for _, sg := range applicationGroups {
 		item := map[string]string{
 			"name":  sg.Name,
 			"type":  sg.Type.TypeName,

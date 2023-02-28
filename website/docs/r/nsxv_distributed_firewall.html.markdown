@@ -44,12 +44,12 @@ data "vcd_edgegateway" "edge" {
   name = "my-edge"
 }
 
-data "vcd_nsxv_service" "service1" {
+data "vcd_nsxv_application" "application1" {
   vdc_id = data.vcd_org_vdc.my-vdc.id
   name   = "POP3"
 }
 
-data "vcd_nsxv_service_group" "service_group1" {
+data "vcd_nsxv_application_group" "application_group1" {
   vdc_id = data.vcd_org_vdc.my-vdc.id
   name   = "MS Exchange 2010 Mailbox Servers"
 }
@@ -70,24 +70,24 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
       type  = "IPSet"
     }
 
-    # Using an anonymous service
-    service {
+    # Using an anonymous application
+    application {
       protocol         = "TCP"
       source_port      = "20250"
       destination_port = "20251"
     }
 
-    # Using a named service
-    service {
-      name  = data.vcd_nsxv_service.service1.name
-      value = data.vcd_nsxv_service.service1.id
+    # Using a named application
+    application {
+      name  = data.vcd_nsxv_application.application1.name
+      value = data.vcd_nsxv_application.application1.id
       type  = "Application"
     }
 
-    # Using a named service group
-    service {
-      name  = data.vcd_nsxv_service_group.service_group1.name
-      value = data.vcd_nsxv_service_group.service_group1.id
+    # Using a named application group
+    application {
+      name  = data.vcd_nsxv_application_group.application_group1.name
+      value = data.vcd_nsxv_application_group.application_group1.id
       type  = "ApplicationGroup"
     }
 
@@ -146,7 +146,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
     direction = "inout"
     action    = "deny"
 
-    # No source, destination, service: will be interpreted as `any`
+    # No source, destination, application: will be interpreted as `any`
 
     # Applied to the current VDC
     applied_to {
@@ -181,7 +181,7 @@ Each Firewall Rule contains the following attributes:
 * `source` - (Optional) A set of source objects. See below for [source or destination objects](#source-or-destination-objects)
 Leaving it empty matches `any` (all)
 * `destination` - (Optional) A set of destination objects. See below for [source or destination objects](#source-or-destination-objects). Leaving it empty matches `Any` (all)
-* `service` - (Optional) An optional set of services to use for this rule. See below for [Service objects](#service-objects)
+* `application` - (Optional) An optional set of applications to use for this rule. See below for [Application objects](#application-objects)
 * `applied_to` - (Required) A set of objects to which the rule applies. See below for [Source or destination objects](#source-or-destination-objects) 
 * `exclude_source` - (Optional) - reverses value of `source` for the rule to match everything except specified objects.
 * `exclude_destination` - (Optional) - reverses value of `destination` for the rule to match everything except specified objects.
@@ -202,26 +202,26 @@ Each element of the `source`, `destination`, or `applied_to` is identified by th
 * `value` - (Required) - When using a named object (such a VM or a network), this field will have the object ID. For a literal
    object, such as an IP or IP range, this will be the text of the IP reference.
 
-### Service objects
+### Application objects
 
-A service object can be one of the three following things:
+An application object can be one of the three following things:
 
-* A named service, identified by fields `name` and `value` with `type = "Application"`
-* A named service group, identified by fields `name` and `value` with `type = "ApplicationGroup"`
-* A literal service, identified by fields `protocol`, `ports`, `source_port`, `destination_port`
+* A named application, identified by fields `name` and `value` with `type = "Application"`
+* A named application group, identified by fields `name` and `value` with `type = "ApplicationGroup"`
+* A literal application, identified by fields `protocol`, `ports`, `source_port`, `destination_port`
 
 The following fields can be used:
 
-* Named services:
+* Named applications:
   * `name` (Optional) - Required if defining a named object or object group
   * `value` (Optional) - Required if defining a named object or object group
   * `type` (Optional) - Required if defining a named object or object group. (One of `Application` or `ApplicationGroup`)
 
-* Literal services:
+* Literal applications:
   * `protocol` (Required) - Required when defining a literal object. (One of `TCP`, `UDP`, `ICMP`)
-  * `ports` (Optional) - The ports used by the service. Could be a single port, a comma delimited list, or a range
-  * `source_port` (Optional) - The source port used by the service, if any
-  * `destination_port` (Optional) - The destination port used by the service, if any
+  * `ports` (Optional) - The ports used by the application. Could be a single port, a comma delimited list, or a range
+  * `source_port` (Optional) - The source port used by the application, if any
+  * `destination_port` (Optional) - The destination port used by the application, if any
 
 ## Enabling and disabling the Distributed Firewall
 

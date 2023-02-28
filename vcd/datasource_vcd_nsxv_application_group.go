@@ -7,9 +7,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func datasourceVcdNsxvServiceGroup() *schema.Resource {
+func datasourceVcdNsxvApplicationGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdNsxvServiceGroupRead,
+		ReadContext: datasourceVcdNsxvApplicationGroupRead,
 
 		Schema: map[string]*schema.Schema{
 			"vdc_id": {
@@ -25,23 +25,23 @@ func datasourceVcdNsxvServiceGroup() *schema.Resource {
 			"id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Identifier of the service group",
+				Description: "Identifier of the application group",
 			},
-			"services": {
+			"applications": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Services belonging to this service group",
+				Description: "Applications belonging to this application group",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Name of the service",
+							Description: "Name of the application",
 						},
 						"value": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Identifier of the service",
+							Description: "Identifier of the application",
 						},
 					},
 				},
@@ -50,33 +50,33 @@ func datasourceVcdNsxvServiceGroup() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxvServiceGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxvApplicationGroupRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	vdcId := d.Get("vdc_id").(string)
-	serviceGroupName := d.Get("name").(string)
+	applicationGroupName := d.Get("name").(string)
 
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 
-	serviceGroup, err := dfw.GetServiceGroupByName(serviceGroupName)
+	applicationGroup, err := dfw.GetServiceGroupByName(applicationGroupName)
 	if err != nil {
-		return diag.Errorf("error retrieving service groups: %s - %s", govcd.ErrorEntityNotFound, err)
+		return diag.Errorf("error retrieving application groups: %s - %s", govcd.ErrorEntityNotFound, err)
 	}
 
-	var services []map[string]string
+	var applications []map[string]string
 
-	for _, s := range serviceGroup.Member {
+	for _, s := range applicationGroup.Member {
 		item := map[string]string{
 			"name":  s.Name,
 			"value": s.ObjectID,
 		}
-		services = append(services, item)
+		applications = append(applications, item)
 	}
-	err = d.Set("services", services)
+	err = d.Set("applications", applications)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(serviceGroup.ObjectID)
+	d.SetId(applicationGroup.ObjectID)
 
 	return nil
 

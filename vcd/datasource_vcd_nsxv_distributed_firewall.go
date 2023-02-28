@@ -81,12 +81,12 @@ func datasourceVcdNsxvDistributedFirewall() *schema.Resource {
 								Schema: computedMap(sourceDef().Schema),
 							},
 						},
-						"service": {
+						"application": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "Service definitions for this rule. Leaving it empty means 'any'",
+							Description: "Application definitions for this rule. Leaving it empty means 'any'",
 							Elem: &schema.Resource{
-								Schema: computedMap(serviceDef().Schema),
+								Schema: computedMap(applicationDef().Schema),
 							},
 						},
 						"exclude_source": {

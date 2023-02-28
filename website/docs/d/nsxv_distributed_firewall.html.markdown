@@ -29,7 +29,7 @@ data "vcd_nsxv_distributed_firewall" "dfw1" {
 
 The following arguments are supported:
 
-* `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a data source
+* `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a `vcd_org_vdc` data source
 
 ## Attributes reference
 

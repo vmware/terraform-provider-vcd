@@ -93,39 +93,39 @@ func appliedToDef() *schema.Resource {
 	}
 }
 
-func serviceDef() *schema.Resource {
+func applicationDef() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"protocol": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Protocol of the service (one of TCP, UDP, ICMP) (When not using name/value)",
+				Description: "Protocol of the application (one of TCP, UDP, ICMP) (When not using name/value)",
 			},
 			"source_port": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Source port for this service. Leaving it empty means 'any' port",
+				Description: "Source port for this application. Leaving it empty means 'any' port",
 			},
 			"destination_port": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Destination port for this service. Leaving it empty means 'any' port",
+				Description: "Destination port for this application. Leaving it empty means 'any' port",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Name of service (Application, ApplicationGroup)",
+				Description: "Name of application (Application, ApplicationGroup)",
 			},
 			"value": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Value of the service",
+				Description: "Value of the application",
 				StateFunc:   filterVdcId,
 			},
 			"type": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Type of service",
+				Description: "Type of application",
 			},
 		},
 	}
@@ -205,11 +205,11 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 							Description: "List of source traffic for this rule. Leaving it empty means 'any'",
 							Elem:        sourceDef(),
 						},
-						"service": {
+						"application": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Description: "Service definitions for this rule. Leaving it empty means 'any'",
-							Elem:        serviceDef(),
+							Description: "Application definitions for this rule. Leaving it empty means 'any'",
+							Elem:        applicationDef(),
 						},
 						"exclude_source": {
 							Type:        schema.TypeBool,
@@ -465,32 +465,32 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 				AppliedTo: appliedTo,
 			}
 		}
-		rawServices, ok := ruleMap["service"]
-		if ok && rawServices != nil {
-			var services []types.Service
-			serviceSet := rawServices.(*schema.Set)
-			for j, s := range serviceSet.List() {
-				service, ok := s.(map[string]interface{})
+		rawApplications, ok := ruleMap["application"]
+		if ok && rawApplications != nil {
+			var applications []types.Service
+			applicationSet := rawApplications.(*schema.Set)
+			for j, s := range applicationSet.List() {
+				application, ok := s.(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - service %d - expected map[string]interface{} - got %T", i, j, s)
+					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - application %d - expected map[string]interface{} - got %T", i, j, s)
 				}
-				sourcePort := service["source_port"].(string)
-				destinationPort := service["destination_port"].(string)
-				protocol := service["protocol"].(string)
+				sourcePort := application["source_port"].(string)
+				destinationPort := application["destination_port"].(string)
+				protocol := application["protocol"].(string)
 
-				inputService := types.Service{
-					Name:            service["name"].(string),
-					Value:           service["value"].(string),
-					Type:            service["type"].(string),
+				inputApplication := types.Service{
+					Name:            application["name"].(string),
+					Value:           application["value"].(string),
+					Type:            application["type"].(string),
 					SourcePort:      stringPtrOrNil(sourcePort),
 					DestinationPort: stringPtrOrNil(destinationPort),
 					Protocol:        getDfwProtocolCode(protocol),
 					IsValid:         true,
 				}
-				services = append(services, inputService)
+				applications = append(applications, inputApplication)
 			}
 			resultRule.Services = &types.Services{
-				Service: services,
+				Service: applications,
 			}
 		}
 		resultRules = append(resultRules, resultRule)
@@ -565,11 +565,11 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 			destinationSet := schema.NewSet(schema.HashResource(destinationDef()), destinationList)
 			ruleMap["destination"] = destinationSet
 		}
-		// services
+		// applications
 		if rule.Services != nil && len(rule.Services.Service) > 0 {
-			var serviceList []interface{}
+			var applicationList []interface{}
 			for _, s := range rule.Services.Service {
-				serviceMap := map[string]interface{}{
+				applicationMap := map[string]interface{}{
 					"name":             s.Name,
 					"type":             s.Type,
 					"destination_port": stringOnNotNil(s.DestinationPort),
@@ -577,10 +577,10 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 					"protocol":         getDfwProtocolString(s.Protocol),
 					"value":            filterVdcId(s.Value),
 				}
-				serviceList = append(serviceList, serviceMap)
+				applicationList = append(applicationList, applicationMap)
 			}
-			serviceSet := schema.NewSet(schema.HashResource(serviceDef()), serviceList)
-			ruleMap["service"] = serviceSet
+			applicationSet := schema.NewSet(schema.HashResource(applicationDef()), applicationList)
+			ruleMap["application"] = applicationSet
 		}
 		// applied-to
 		if rule.AppliedToList != nil && len(rule.AppliedToList.AppliedTo) > 0 {

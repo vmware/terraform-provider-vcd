@@ -104,12 +104,12 @@ data "vcd_edgegateway" "edge" {
   name = "{{.EdgeName}}"
 }
 
-data "vcd_nsxv_service" "service1" {
+data "vcd_nsxv_application" "application1" {
   vdc_id = data.vcd_org_vdc.my-vdc.id
   name   = "POP3"
 }
 
-data "vcd_nsxv_service_group" "service_group1" {
+data "vcd_nsxv_application_group" "application_group1" {
   vdc_id = data.vcd_org_vdc.my-vdc.id
   name   = "MS Exchange 2010 Mailbox Servers"
 }
@@ -128,22 +128,22 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
       type  = "IPSet"
     }
 
-    # anonymous service
-    service {
+    # anonymous application
+    application {
       protocol         = "TCP"
       source_port      = "20250"
       destination_port = "20251"
 	}
-    # named service
-    service {
-      name  = data.vcd_nsxv_service.service1.name
-      value = data.vcd_nsxv_service.service1.id
+    # named application
+    application {
+      name  = data.vcd_nsxv_application.application1.name
+      value = data.vcd_nsxv_application.application1.id
       type  = "Application"
     }
-    # named service group
-    service {
-      name  = data.vcd_nsxv_service_group.service_group1.name
-      value = data.vcd_nsxv_service_group.service_group1.id
+    # named application group
+    application {
+      name  = data.vcd_nsxv_application_group.application_group1.name
+      value = data.vcd_nsxv_application_group.application_group1.id
       type  = "ApplicationGroup"
     }
     applied_to {

@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxv_service_finder"
-sidebar_current: "docs-vcd-data-source-nsxv-service-finder"
+page_title: "VMware Cloud Director: vcd_nsxv_application_finder"
+sidebar_current: "docs-vcd-data-source-nsxv-application-finder"
 description: |-
-  Provides a VMware Cloud Director data source for searching NSX-V distributed firewall services and service groups
+  Provides a VMware Cloud Director data source for searching NSX-V distributed firewall applications and application groups
 ---
 
-# vcd\_nsxv\_service_finder
+# vcd\_nsxv\_application_finder
 
-Provides a VMware Cloud Director NSX-V distributed firewall services and service groups finder
-used to retrieve existing services by regular expressions
+Provides a VMware Cloud Director NSX-V distributed firewall applications and application groups finder
+used to retrieve existing applications by regular expressions
 
 Supported in provider *v3.9+*
 
@@ -21,18 +21,18 @@ data "vcd_odg_vdc" "my-vdc" {
   name = "my-vdc"
 }
 
-data "vcd_nsxv_service_finder" "my-SQL-services" {
+data "vcd_nsxv_application_finder" "my-SQL-services" {
   vdc_id            = data.vcd_odg_vdc.my-vdc.id
   search_expression = "sql"
   case_sensitive    = false
-  type              = "service_group"
+  type              = "application_group"
 }
 ```
 
 Sample output:
 
 ```
-service_groups = {
+application_groups = {
   "case_sensitive" = false
   "id" = "urn:vcloud:vdc:e5680ceb-1c15-48a8-9a54-e0bbc6fe909f"
   "objects" = toset([
@@ -68,7 +68,7 @@ service_groups = {
     },
   ])
   "search_expression" = "sql"
-  "type" = "service_group"
+  "type" = "application_group"
   "vdc_id" = "urn:vcloud:vdc:e5680ceb-1c15-48a8-9a54-e0bbc6fe909f"
 }
 ```
@@ -76,18 +76,18 @@ service_groups = {
 ## Example usage 2
 
 ```hcl
-data "vcd_nsxv_service_finder" "services" {
+data "vcd_nsxv_application_finder" "applications" {
   vdc_id            = data.vcd_org_vdc.my-vdc.id
   search_expression = "dns"
   case_sensitive    = false
-  type              = "service"
+  type              = "application"
 }
 ```
 
 Sample output:
 
 ```
-services = {
+applications = {
   "case_sensitive" = false
   "id" = "urn:vcloud:vdc:e5680ceb-1c15-48a8-9a54-e0bbc6fe909f"
   "objects" = toset([
@@ -108,7 +108,7 @@ services = {
     },
   ])
   "search_expression" = "dns"
-  "type" = "service"
+  "type" = "application"
   "vdc_id" = "urn:vcloud:vdc:e5680ceb-1c15-48a8-9a54-e0bbc6fe909f"
 }
 ```
@@ -118,8 +118,8 @@ services = {
 The following arguments are supported:
 
 * `vdc_id` - (Required) The ID of VDC to use.
-* `search_expression` - (Required) The regular expression that will be used to search the services
-* `type` - (Required) What kind of service we seek. One of `service`, `service_group`
+* `search_expression` - (Required) The regular expression that will be used to search the applications
+* `type` - (Required) What kind of application we seek. One of `application`, `application_group`
 * `case_sensitive` (Optional) Makes the search case-sensitive. By default, it is false.
 
 ## Attribute Reference
@@ -127,4 +127,4 @@ The following arguments are supported:
 * `objects` - A list of objects found by the search expression. Each one contains the following properties:
   * `name` - The name of the object
   * `value` - The identifier of the object
-  * `type` - the type of the object (`Application` for services and `ApplicationGroup` for service groups)
+  * `type` - the type of the object (`Application` or `ApplicationGroup`)
