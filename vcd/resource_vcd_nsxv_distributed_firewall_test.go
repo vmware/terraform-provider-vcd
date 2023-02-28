@@ -104,9 +104,16 @@ data "vcd_edgegateway" "edge" {
   name = "{{.EdgeName}}"
 }
 
+data "vcd_nsxv_application_finder" "found_applications" {
+  vdc_id            = data.vcd_org_vdc.my-vdc.id
+  search_expression = "^POP3$"
+  case_sensitive    = true
+  type              = "application"
+}
+
 data "vcd_nsxv_application" "application1" {
   vdc_id = data.vcd_org_vdc.my-vdc.id
-  name   = "POP3"
+  name   = tolist(data.vcd_nsxv_application_finder.found_applications.objects)[0].name
 }
 
 data "vcd_nsxv_application_group" "application_group1" {
