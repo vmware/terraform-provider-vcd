@@ -483,7 +483,7 @@ After creating the [Role][role], we need to create the CSE Administrator user. *
 
 ```hcl
 resource "vcd_org_user" "cse_admin" {
-  org      = vcd_org.solutions_organization.name # It should belong to the Solutions Org, as CSE Appliance will live there
+  org      = "System"
   name     = "cse-admin"
   password = "******"
   role     = vcd_role.cse_admin_role.name
