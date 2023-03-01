@@ -51,7 +51,7 @@ func datasourceVcdRdeType() *schema.Resource {
 			"external_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "An external entity's id that this definition may apply to",
+				Description: "An external entity's ID that this definition may apply to",
 			},
 			"inherited_version": {
 				Type:     schema.TypeString,

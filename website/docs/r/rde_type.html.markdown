@@ -32,7 +32,7 @@ resource "vcd_rde_type" "my_rde_type" {
 }
 ```
 
-## Example Usage with a URL that contains a schema file
+## Example Usage with a URL hosting the schema file
 
 ```hcl
 data "vcd_rde_interface" "my_interface" {
@@ -55,13 +55,15 @@ resource "vcd_rde_type" "my_rde_type" {
 
 The following arguments are supported:
 
+-> The 3-tuple of `vendor`, `nss` and `version` specifies a unique RDE Type.
+
 * `vendor` - (Required) The vendor of the Runtime Defined Entity Type.
 * `nss` - (Required) A unique namespace associated with the Runtime Defined Entity Type.
 * `version` - (Required) The version of the Runtime Defined Entity Type. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the Runtime Defined Entity Type.
 * `description` - (Optional) The description of the Runtime Defined Entity Type.
 * `interface_ids` - (Optional) The set of [Defined Interfaces](/providers/vmware/vcd/latest/docs/resources/rde_interface) that this Runtime Defined Entity Type will use.
-* `schema` - (Optional) A string that specifies a valid JSON schema. It can be retrieved with functions such as `file`, `templatefile`... Either `schema` or `schema_url` is required.
+* `schema` - (Optional) A string that specifies a valid JSON schema. It can be retrieved with functions such as `file`, `templatefile`, etc. Either `schema` or `schema_url` is required.
 * `schema_url` - (Optional) The URL that points to a valid JSON schema. Either `schema` or `schema_url` is required.
   If `schema_url` is used, the downloaded schema will be computed in the `schema` attribute.
 * `external_id` - (Optional) An external entity's id that this Runtime Defined Entity Type may apply to.

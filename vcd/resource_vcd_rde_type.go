@@ -34,19 +34,19 @@ func resourceVcdRdeType() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The vendor name for the Runtime Defined Entity Type",
+				Description: "The vendor name for the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "A unique namespace associated with the Runtime Defined Entity Type",
+				Description: "A unique namespace associated with the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The version of the Runtime Defined Entity Type. The version string must follow semantic versioning rules",
+				Description: "The version of the Runtime Defined Entity Type. The version string must follow semantic versioning rules. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"interface_ids": {
 				Type: schema.TypeSet,
@@ -60,14 +60,14 @@ func resourceVcdRdeType() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "URL that should point to a JSON-Schema valid definition file of the Runtime Defined Entity Type",
-				AtLeastOneOf: []string{"schema_url", "schema"},
+				ExactlyOneOf: []string{"schema_url", "schema"},
 			},
 			"schema": {
 				Type:                  schema.TypeString,
 				Optional:              true,
 				Computed:              true,
 				Description:           "The JSON-Schema valid definition of the Runtime Defined Entity Type",
-				AtLeastOneOf:          []string{"schema_url", "schema"},
+				ExactlyOneOf:          []string{"schema_url", "schema"},
 				DiffSuppressFunc:      hasJsonValueChanged,
 				DiffSuppressOnRefresh: true,
 			},
@@ -79,7 +79,7 @@ func resourceVcdRdeType() *schema.Resource {
 			"external_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "An external entity's id that this definition may apply to",
+				Description: "An external entity's ID that this definition may apply to",
 			},
 			"inherited_version": {
 				Type:     schema.TypeString,
