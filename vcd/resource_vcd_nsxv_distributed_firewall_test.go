@@ -163,6 +163,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
     name      = "second"
     direction = "inout"
     action    = "allow"
+    logged    = true
     # literal source
     source {
       name  = "10.10.1.0-10.10.1.100"

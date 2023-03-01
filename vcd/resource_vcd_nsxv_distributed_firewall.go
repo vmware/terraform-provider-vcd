@@ -183,21 +183,23 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 							Description: "Whether the rule traffic is logged",
 						},
 						"action": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Action of the rule (allow, deny)",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "Action of the rule (allow, deny)",
+							ValidateFunc: validation.StringInSlice([]string{"allow", "deny"}, false),
 						},
 						"direction": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "in",
-							Description: "Direction of the rule (in, out, inout)",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "Direction of the rule (in, out, inout)",
+							ValidateFunc: validation.StringInSlice([]string{"in", "out", "inout"}, false),
 						},
 						"packet_type": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "any",
-							Description: "Packet type of the rule (any, ipv4, ipv6)",
+							Type:         schema.TypeString,
+							Optional:     true,
+							Default:      "any",
+							Description:  "Packet type of the rule (any, ipv4, ipv6)",
+							ValidateFunc: validation.StringInSlice([]string{"any", "ipv4", "ipv6"}, false),
 						},
 						"source": {
 							Type:        schema.TypeSet,
@@ -538,8 +540,12 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 		}
 
 		// sources
+		excludeSource := false
 		if rule.Sources != nil && len(rule.Sources.Source) > 0 {
 			var rawSourceList []interface{}
+			if rule.Sources.Excluded {
+				excludeSource = true
+			}
 			for _, s := range rule.Sources.Source {
 				sourceMap := map[string]interface{}{
 					"name":  s.Name,
@@ -552,8 +558,12 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 			ruleMap["source"] = sourceSet
 		}
 		// destinations
+		excludeDestination := false
 		if rule.Destinations != nil && len(rule.Destinations.Destination) > 0 {
 			var destinationList []interface{}
+			if rule.Destinations.Excluded {
+				excludeDestination = true
+			}
 			for _, dest := range rule.Destinations.Destination {
 				destinationMap := map[string]interface{}{
 					"name":  dest.Name,
@@ -596,6 +606,12 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 			appliedToSet := schema.NewSet(schema.HashResource(appliedToDef()), appliedToList)
 			ruleMap["applied_to"] = appliedToSet
 		}
+		if excludeDestination {
+			ruleMap["exclude_destination"] = true
+		}
+		if excludeSource {
+			ruleMap["exclude_source"] = true
+		}
 		rulesList = append(rulesList, ruleMap)
 	}
 
@@ -637,8 +653,8 @@ func resourceVcdNsxvDistributedFirewallImport(ctx context.Context, d *schema.Res
 			if err != nil {
 				return nil, err
 			}
-			vdcId = resourceURI[1]
-			dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdc.Vdc.ID)
+			vdcId = vdc.Vdc.ID
+			dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 		}
 	}
 	configuration, err := dfw.GetConfiguration()
