@@ -23,8 +23,8 @@ data "vcd_org_vdc" "my-vdc" {
 }
 
 data "vcd_nsxv_ip_set" "test-ipset" {
-  org  = "datacloud"
-  vdc  = "vdc-datacloud"
+  org  = "my-org"
+  vdc  = "my-vdc"
   name = "TestIpSet"
 }
 
@@ -238,3 +238,32 @@ the firewall to be enabled, and the operation will fail if it is not.
 The user role has also implications when we want to remove the distributed firewall (`terraform destroy`). When we run the
 operation as system administrator, the firewall gets disabled, meaning that no tenant operations will be allowed after that.
 When a tenant runs `terraform destroy`, all the rules are removed, but the firewall stays enabled.
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing NSX-V distributed firewall can be [imported][docs-import] into this resource via supplying its path.
+The path for this resource can be one of:
+* vdc-ID
+* org-name.vdc-name
+
+For example, using the structure in [Example Usage](#example-usage), representing a firewall that was **not** created using Terraform:
+
+You can import such firewall into terraform state using one of the commands below:
+
+```
+terraform import vcd_nsxv_distributed_firewall.dfw1 urn:vcloud:vdc:e5680ceb-1c15-48a8-9a54-e0bbc6fe909f
+# or
+terraform import vcd_nsxv_distributed_firewall.dfw1 my-org.my-vdc
+```
+
+NOTE 1: To get the VDC ID, you can use a `vcd_org_vdc` data source, and check its ID from the Terraform state file (`terraform.tfstate`).
+
+NOTE 2: The default separator (.) can be changed using `Provider.import_separator` or the environmant variable `VCD_IMPORT_SEPARATOR`
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After importing, if you run `terraform plan` you will see whether you need to change something in the script to match
+the existing structure.
