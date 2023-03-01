@@ -205,8 +205,8 @@ func resourceVcdRdeTypeRead(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 // genericVcdRdeTypeRead reads a Runtime Defined Entity Type from VCD and sets the Terraform state accordingly.
-// If origin == "datasource", if the referenced RDE type doesn't exist, it errors.
-// If origin == "resource", if the referenced RDE type doesn't exist, it removes it from tfstate and exits normally.
+// If origin == "datasource", if the referenced RDE Type doesn't exist, it errors.
+// If origin == "resource", if the referenced RDE Type doesn't exist, it removes it from tfstate and exits normally.
 func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	rdeType, err := getRdeType(d, meta)
 	if origin == "resource" && govcd.ContainsNotFound(err) {
