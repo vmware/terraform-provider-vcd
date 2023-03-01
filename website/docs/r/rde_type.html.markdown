@@ -13,7 +13,7 @@ Requires system administrator privileges.
 
 Supported in provider *v3.9+*
 
-## Example Usage with a schema file
+## Example Usage with a local schema file
 
 ```hcl
 data "vcd_rde_interface" "my_interface" {
