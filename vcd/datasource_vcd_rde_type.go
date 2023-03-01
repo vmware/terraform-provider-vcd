@@ -13,17 +13,17 @@ func datasourceVcdRdeType() *schema.Resource {
 			"vendor": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The vendor name of the Runtime Defined Entity Type",
+				Description: "The vendor name of the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"nss": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "A unique namespace associated with the Runtime Defined Entity Type",
+				Description: "A unique namespace associated with the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The version of the Runtime Defined Entity Type. The version string follows semantic versioning rules",
+				Description: "The version of the Runtime Defined Entity Type. The version string follows semantic versioning rules. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"name": {
 				Type:        schema.TypeString,
