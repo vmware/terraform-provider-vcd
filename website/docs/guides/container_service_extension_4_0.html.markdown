@@ -257,7 +257,7 @@ data "vcd_nsxt_edge_cluster" "solutions_edgecluster" {
   name            = "edgeCluster2"
 }
 
-# The VDC that will host the CSE appliance and other provider-level items
+# The VDC that will host the CSE server and other provider-level items
 resource "vcd_org_vdc" "solutions_vdc" {
   name        = "solutions_vdc"
   description = "Solutions VDC"
@@ -490,7 +490,7 @@ resource "vcd_org_user" "cse_admin" {
 }
 ```
 
-~> Take into account that you need to create an API token for this user using UI or a shell script, in order to configure the CSE Appliance later on.
+~> Take into account that you need to create an API token for this user using UI or a shell script, in order to configure the CSE Server later on.
 
 ### Create and publish a "Kubernetes Cluster Author" global role
 
@@ -931,10 +931,10 @@ CSE v4.0 requires a vApp with the CSE Server VM running in a VDC. To do that, we
 
 ```hcl
 
-resource "vcd_vapp" "cse_appliance_vapp" {
+resource "vcd_vapp" "cse_server_vapp" {
   org  = vcd_org.solutions_organization.name
   vdc  = vcd_org_vdc.solutions_vdc.name
-  name = "CSE Appliance vApp"
+  name = "CSE Server vApp"
 
   lease {
     runtime_lease_in_sec = 0
@@ -942,26 +942,26 @@ resource "vcd_vapp" "cse_appliance_vapp" {
   }
 }
 
-resource "vcd_vapp_org_network" "cse_appliance_network" {
+resource "vcd_vapp_org_network" "cse_server_network" {
   org = vcd_org.solutions_organization.name
   vdc = vcd_org_vdc.solutions_vdc.name
 
-  vapp_name        = vcd_vapp.cse_appliance_vapp.name
+  vapp_name        = vcd_vapp.cse_server_vapp.name
   org_network_name = vcd_network_routed_v2.solutions_routed_network.name
 }
 
-resource "vcd_vapp_vm" "cse_appliance_vm" {
+resource "vcd_vapp_vm" "cse_server_vm" {
   org = vcd_org.solutions_organization.name
   vdc = vcd_org_vdc.solutions_vdc.name
 
-  vapp_name = vcd_vapp.cse_appliance_vapp.name
-  name      = "CSE Appliance VM"
+  vapp_name = vcd_vapp.cse_server_vapp.name
+  name      = "CSE Server VM"
 
   vapp_template_id = vcd_catalog_vapp_template.cse_ova.id
 
   network {
     type               = "org"
-    name               = vcd_vapp_org_network.cse_appliance_network.org_network_name
+    name               = vcd_vapp_org_network.cse_server_network.org_network_name
     ip_allocation_mode = "POOL"
   }
 
@@ -1072,12 +1072,12 @@ resource "vcd_rde" "k8s_cluster_instance" {
   rde_type_vendor  = vcd_rde_type.capvcd_cluster_type.vendor
   rde_type_nss     = vcd_rde_type.capvcd_cluster_type.nss
   rde_type_version = vcd_rde_type.capvcd_cluster_type.version
-  resolve          = false # MUST be false as it is resolved by CSE appliance
+  resolve          = false # MUST be false as it is resolved by CSE server
   resolve_on_destroy     = true  # MUST be true as it won't be resolved by Terraform
   input_entity     = data.template_file.rde_k8s_cluster_instance_template.rendered
 
   depends_on = [
-    vcd_vapp_vm.cse_appliance_vm, vcd_catalog_vapp_template.tkgm_ova
+    vcd_vapp_vm.cse_server_vm, vcd_catalog_vapp_template.tkgm_ova
   ]
 }
 
@@ -1129,7 +1129,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [rde_type]: </providers/vmware/vcd/latest/docs/resources/rde_type> (vcd_rde_type)
 [rde]: </providers/vmware/vcd/latest/docs/resources/rde> (vcd_rde)
 [role]: </providers/vmware/vcd/latest/docs/resources/role> (vcd_role)
-[user]: </providers/vmware/vcd/latest/docs/resources/user> (vcd_user)
+[user]: </providers/vmware/vcd/latest/docs/resources/org_user> (vcd_org?user)
 [rights_bundle]: </providers/vmware/vcd/latest/docs/resources/rights_bundle> (vcd_rights_bundle)
 [global_role]: </providers/vmware/vcd/latest/docs/resources/global_role> (vcd_global_role)
 [provider_gateway]: </providers/vmware/vcd/latest/docs/resources/external_network_v2> (vcd_external_network_v2)
