@@ -59,7 +59,7 @@ In this guide we will configure CSE v4.0 making use of two different [Organizati
 - Cluster [Organization][org]: This [Organization][org] will host the Kubernetes clusters for the users of this tenant to consume them.
 
 This setup is just a proposal, you can have more cluster [organizations][org] or reuse an existing one.
-In the sample HCL below you can find these two [Organizations][org] configured with no lease for vApps nor vApp Templates.
+In the sample HCL below you can find these two [Organizations][org] configured with unlimited lease for vApps nor vApp Templates.
 You can adjust it to fit with the requirements of your service:
 
 ```hcl
@@ -305,12 +305,10 @@ resource "vcd_org_vdc" "solutions_vdc" {
 ### Create Catalogs and upload OVAs
 
 We need to create some [Catalogs][catalog] to be able to store and retrieve CSE Server OVAs and maintain a repository of Kubernetes Template OVAs.
-In this step, we will create two [Catalogs][catalog]:
+In the sample HCL below, we will create two [Catalogs][catalog]:
 
 - One Catalog in the Solutions Organization to upload CSE Server OVA for easy access.
 - One shared Catalog in the Solutions Organization that will contain the Kubernetes Template OVAs.
-
-Here's a sample HCL that can help you to achieve this setup:
 
 ```hcl
 resource "vcd_catalog" "cse_catalog" {
@@ -368,6 +366,8 @@ data "vcd_catalog" "tkgm_catalog" {
   name = "tkgm_catalog"
 }
 ```
+
+-> You can find required OVA files [here](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.0/VMware-Cloud-Director-Container-Service-Extension-Install-provider-4.0/GUID-519D73E8-5459-439E-AB92-83076F556E53.html)
 
 To upload both CSE and TKGm OVAs, you can use the following sample HCL snippets:
 
@@ -494,7 +494,7 @@ resource "vcd_org_user" "cse_admin" {
 
 ### Create and publish a "Kubernetes Cluster Author" global role
 
-Apart from the role to administrate the CSE Server created in previous step, we also need a [Global Role][global_role] for the Kubernetes clusters consumers.
+Apart from the role to administrate the CSE Server mentioned previously, we also need a [Global Role][global_role] for the Kubernetes clusters consumers.
 It would be similar to the concept of "vApp Author" but for Kubernetes clusters. In order to create the [Global Role][global_role], first we need
 to create a new [Rights Bundle][rights_bundle] and publish it to all the tenants:
 
@@ -619,13 +619,13 @@ resource "vcd_global_role" "k8s_cluster_author" {
 
 ### Set up networking
 
-This step assumes that your VDC doesn't have any networking set up, so it builds a very basic setup that will make CSE v4.0 work.
-If you have already networking in place, please skip this step and configure CSE server with an existing organization network.
+This guide assumes that your VDC doesn't have any networking set up, so here we suggest some examples with a very basic setup that will make CSE v4.0 work.
+If you have already networking in place, please skip this section and configure CSE server with an existing organization network.
 
 #### Provider Gateways
 
-The first step is setting up the [Provider Gateways][provider_gateway] as System administrator, we will set up one per Organization.
-These gateways will route public IPs to the [Edge Gateways][edge_gateway] that we will create in the following step.
+The following HCL snippet will set up one [Provider Gateway][provider_gateway] per Organization.
+These gateways will route public IPs to the [Edge Gateways][edge_gateway] that are explained in the following section.
 
 ```hcl
 data "vcd_nsxt_manager" "cse_nsxt_manager" {
@@ -683,8 +683,8 @@ resource "vcd_external_network_v2" "cluster_tier0" {
 
 #### Edge Gateways
 
-Next step will be adding two [Edge Gateways][edge_gateway] that will be consuming the Provider Gateways and act as routers for both the
-Solutions Organization and the Cluster Organization, respectively.
+The following HCL example adds two [Edge Gateways][edge_gateway] that will be consuming the Provider Gateways from previous section,
+and act as routers for both the Solutions Organization and the Cluster Organization, respectively.
 
 ```hcl
 resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
@@ -737,7 +737,7 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
 -> To learn more about the Advanced Load Balancer capabilities, please read the Terraform guide [here](/providers/vmware/vcd/latest/docs/guides/nsxt_alb).
 
 The following snippet configures an ALB Service Engine Group that will be shared by both Solutions and Cluster organizations. Then, we
-assign it to the two Edge Gateways created above.
+assign it to the two Edge Gateways created in previous sections.
 
 ```hcl
 data "vcd_nsxt_alb_controller" "cse_avi_controller" {
@@ -802,7 +802,7 @@ resource "vcd_nsxt_alb_settings" "cluster_alb_settings" {
 
 #### Organization networks
 
-Last step is create a routed network in every organization, that will be used to give Internet access to the CSE Server
+This example HCL creates a routed network in every organization, that will be used to give Internet access to the CSE Server
 in the Solutions Organization, and to Kubernetes clusters in the Cluster Organization.
 
 The important parts here are activating route advertisement and configuring proper rules in the Edge Gateway firewall.
@@ -879,7 +879,7 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
 
 ### Configure CSE server
 
-The CSE Server relies on the [RDE Type][rde_type] that we created some steps ago, so we need a [RDE instance][rde] of that type
+The CSE Server relies on the [RDE Type][rde_type] that we created in previous sections, so we need a [RDE instance][rde] of that type
 to configure it. To create this RDE, we can either use a JSON referenced in a given URL (`input_entity_url`), or use one from a file (`input_entity`).
 
 In this example we make use of `template_file` data source to be able to parameterize the contents of the RDE, so we will
@@ -921,7 +921,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
 
 ### Deploy CSE server
 
-The last step to configure CSE v4.0 in VCD is to deploy the CSE OVA as a vApp. To do that, we will need the following:
+CSE v4.0 requires a vApp with the CSE Server VM running in a VDC. To do that, we will need the following:
 
 - The wrapping vApp. We set leases to be infinite as we want the CSE Server to be always up and running. This will depend on
   the lease settings specified in the Solutions Organization.
