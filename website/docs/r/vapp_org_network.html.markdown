@@ -46,10 +46,10 @@ The following arguments are supported:
 * `retain_ip_mac_enabled` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Configurable when `is_fenced` is true.
 * `reboot_vapp_on_destroy` - (Optional; *v3.9+*) **VCD 10.4.1+** API **prohibits removal of vApp
   network from a powered on vApp**. This field can be used to power off vApp during vApp network
-  removal. It will power on the vApp (if it was so) after removing network. (default `false`)
-  **Note.** It only affects *destroy* operation for the resource and will never power cycle vApp
-  during *update* operations. Changing this value will cause plan change, but *update* will be a
-  no-op operation.
+  removal. It will power on the vApp (if it was not powered off before the operation) after removing
+  network. (default `false`) **Note.** It only affects *delete* operation for the resource and will
+  never power cycle vApp during *update* operations. Changing this value will cause plan change, but
+  *update* will be a no-op operation.
 
 ## Importing
 
