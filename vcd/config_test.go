@@ -176,15 +176,13 @@ type TestConfig struct {
 		NsxtBackedMediaName string `json:"nsxtBackedMediaName,omitempty"`
 	} `json:"media"`
 	Certificates struct {
-		Certificate1Path              string `json:"certificate1Path,omitempty"`              // absolute path to pem file
-		Certificate1PrivateKeyPath    string `json:"certificate1PrivateKeyPath,omitempty"`    // absolute path to private key pem file
-		Certificate1Pass              string `json:"certificate1Pass,omitempty"`              // pass phrase for private key
-		Certificate2Path              string `json:"certificate2Path,omitempty"`              // absolute path to pem file
-		Certificate2PrivateKeyPath    string `json:"certificate2PrivateKeyPath,omitempty"`    // absolute path to private key pem file
-		Certificate2Pass              string `json:"certificate2Pass,omitempty"`              // absolute path to pem file
-		RootCertificatePath           string `json:"rootCertificatePath,omitempty"`           // absolute path to pem file
-		RootCertificatePrivateKeyPath string `json:"rootCertificatePrivateKeyPath,omitempty"` // absolute path to private key pem file
-		RootCertificatePass           string `json:"rootCertificatePass,omitempty"`           // absolute path to pem file
+		Certificate1Path           string `json:"certificate1Path,omitempty"`           // absolute path to pem file
+		Certificate1PrivateKeyPath string `json:"certificate1PrivateKeyPath,omitempty"` // absolute path to private key pem file
+		Certificate1Pass           string `json:"certificate1Pass,omitempty"`           // pass phrase for private key
+		Certificate2Path           string `json:"certificate2Path,omitempty"`           // absolute path to pem file
+		Certificate2PrivateKeyPath string `json:"certificate2PrivateKeyPath,omitempty"` // absolute path to private key pem file
+		Certificate2Pass           string `json:"certificate2Pass,omitempty"`           // absolute path to pem file
+		RootCertificatePath        string `json:"rootCertificatePath,omitempty"`        // absolute path to pem file
 	} `json:"certificates"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
@@ -724,13 +722,6 @@ func getConfigStruct(config string) TestConfig {
 			panic("error retrieving absolute path for certificate 2 path " + configStruct.Certificates.Certificate2Path)
 		}
 		configStruct.Certificates.RootCertificatePath = rootCertificatePath2Path
-	}
-	if configStruct.Certificates.RootCertificatePrivateKeyPath != "" {
-		rootCertificatePrivatePath1Path, err := filepath.Abs(configStruct.Certificates.RootCertificatePrivateKeyPath)
-		if err != nil {
-			panic("error retrieving absolute path for private certificate 1 path " + configStruct.Certificates.Certificate1PrivateKeyPath)
-		}
-		configStruct.Certificates.RootCertificatePrivateKeyPath = rootCertificatePrivatePath1Path
 	}
 
 	// It is needed when we run the binary tests without TEST_ACC

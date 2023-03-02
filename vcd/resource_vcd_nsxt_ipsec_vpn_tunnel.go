@@ -78,14 +78,16 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Description: "One of 'PSK' (default), 'CERTIFICATE'",
 			},
 			"certificate_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Optional certificate ID to use for authentication",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Optional certificate ID to use for authentication",
+				RequiredWith: []string{"ca_certificate_id"},
 			},
 			"ca_certificate_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Optional CA certificate ID to use for authentication",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Optional CA certificate ID to use for authentication",
+				RequiredWith: []string{"certificate_id"},
 			},
 			"local_ip_address": {
 				Type:        schema.TypeString,

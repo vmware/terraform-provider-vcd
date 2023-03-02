@@ -757,7 +757,6 @@ func TestAccVcdNsxtIpSecVpnTunnelCertAuth(t *testing.T) {
 		"PrivateKey":          testConfig.Certificates.Certificate1PrivateKeyPath,
 		"PassPhrase":          testConfig.Certificates.Certificate1Pass,
 		"RootCertificatePath": testConfig.Certificates.RootCertificatePath,
-		"RootCertificateKey":  testConfig.Certificates.RootCertificatePrivateKeyPath,
 		"Alias":               t.Name(),
 		"AliasCa":             t.Name() + "-ca",
 		"Tags":                "network nsxt",

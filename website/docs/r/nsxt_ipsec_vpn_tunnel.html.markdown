@@ -84,8 +84,8 @@ The following arguments are supported:
 * `name` - (Required) A name for NSX-T IPsec VPN Tunnel
 * `description` - (Optional) An optional description of the NSX-T IPsec VPN Tunnel
 * `enabled` - (Optional) Enables or disables IPsec VPN Tunnel (default `true`)
-* `pre_shared_key` - (Required) Pre-shared key for negotiation. **Note** the pre-shared key must be the same on the 
-other end of the IPSec VPN tunnel.
+* `pre_shared_key` - (Required) Pre-shared key for negotiation. **Note** the pre-shared key must be
+the same on the other end of the IPSec VPN tunnel and `authentication_mode` must be `PSK`
 * `local_ip_address` - (Required) IPv4 Address for the endpoint. This has to be a suballocated IP on the Edge Gateway.
 * `local_networks` - (Required) A set of local networks in CIDR format. At least one value required
 * `remote_ip_address` - (Required) Public IPv4 Address of the remote device terminating the VPN connection
@@ -93,6 +93,12 @@ other end of the IPSec VPN tunnel.
   not set, it will default to the remote IP address
 * `remote_networks` - (Optional) Set of remote networks in CIDR format. Leaving it empty is interpreted as 0.0.0.0/0
 * `logging` - (Optional) Sets whether logging for the tunnel is enabled or not. (default - `false`)
+* `authentication_mode` - (Optional, *v3.9+*) `PSK` or `CERTIFICATE` (default - `PSK`)
+* `certificate_id` - (Optional, *v3.9+*) Certificate ID (can be handled by `vcd_library_certificate`
+  resource or datasource). *Note* `authentication_mode` must be set to `CERTIFICATE`
+* `ca_certificate_id` - (Optional, *v3.9+*) CA Certificate ID (can be handled by
+  `vcd_library_certificate` resource or datasource) *Note* `authentication_mode` must be set to
+  `CERTIFICATE`
 * `security_profile_customization` - (Optional) a block allowing to
 [customize default security profile](#security-profile) parameters
 
