@@ -107,7 +107,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["orgNetwork"].(string)),
 				// These fields can't be retrieved from user data.
-				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_destroy"},
+				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_removal"},
 			},
 		},
 	})

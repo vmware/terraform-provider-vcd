@@ -158,7 +158,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 				},
 				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
-			"reboot_vapp_on_destroy": {
+			"reboot_vapp_on_removal": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -370,9 +370,9 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 }
 
 func resourceVappNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// reboot_vapp_on_destroy does not have any effect on update therefore skipping update if only
+	// reboot_vapp_on_removal does not have any effect on update therefore skipping update if only
 	// this field was modified
-	if !d.HasChangeExcept("reboot_vapp_on_destroy") {
+	if !d.HasChangeExcept("reboot_vapp_on_removal") {
 		return resourceVappNetworkRead(ctx, d, meta)
 	}
 
@@ -434,7 +434,7 @@ func resourceVappNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta
 // resourceVappAndVappOrgNetworkDelete deletes a vApp network.
 // Starting with VCD 10.4.1, a vApp network cannot be deleted from a powered on vApp. To avoid
 // inconvenience (especially in `terraform destroy` scenarios), there is a
-// 'reboot_vapp_on_destroy=true' flag.
+// 'reboot_vapp_on_removal=true' flag.
 // When the flag is set and vApp status is not POWERED_OFF, the vApp is powered off, the network is
 // deleted and the vApp powered on (if it was not powered off before).
 //
@@ -446,12 +446,12 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
-	// Should vApp be power cycled before deleting network? ('reboot_vapp_on_destroy=true')
+	// Should vApp be power cycled before deleting network? ('reboot_vapp_on_removal=true')
 	rebootVAppOnDestroy := false
 	vappStatusBeforeOperation := ""
-	vAppRebootEnabled, isSet := d.GetOkExists("reboot_vapp_on_destroy")
+	vAppRebootEnabled, isSet := d.GetOkExists("reboot_vapp_on_removal")
 	if isSet && vAppRebootEnabled.(bool) {
-		util.Logger.Printf("[TRACE] reboot_vapp_on_destroy=true is enabled with parent vApp '%s",
+		util.Logger.Printf("[TRACE] reboot_vapp_on_removal=true is enabled with parent vApp '%s",
 			d.Get("vapp_name").(string))
 		rebootVAppOnDestroy = true
 	}
@@ -473,10 +473,10 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 				vapp.VApp.Name, err)
 		}
 
-		util.Logger.Printf("[TRACE] reboot_vapp_on_destroy=true, vApp '%s' status before network removal is '%s'",
+		util.Logger.Printf("[TRACE] reboot_vapp_on_removal=true, vApp '%s' status before network removal is '%s'",
 			vapp.VApp.Name, vappStatusBeforeOperation)
 		if vappStatusBeforeOperation != "POWERED_OFF" {
-			util.Logger.Println("[TRACE] reboot_vapp_on_destroy=true, powering off vApp")
+			util.Logger.Println("[TRACE] reboot_vapp_on_removal=true, powering off vApp")
 			task, err := vapp.Undeploy() // UI Button "Power Off" calls undeploy API endpoint
 			if err != nil {
 				return diag.Errorf("error Powering Off: %s", err)
@@ -492,23 +492,23 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 	_, err = vapp.RemoveNetwork(d.Id())
 	if err != nil {
 		// VCD 10.4.1+ API returns error when removing network from powered off vApp
-		// If this error occurs - we add a hint to use 'reboot_vapp_on_destroy' flag
+		// If this error occurs - we add a hint to use 'reboot_vapp_on_removal' flag
 		if strings.Contains(err.Error(), "Stop the vApp and try again") {
 			return diag.Errorf("error removing vApp network: %s \n\n"+
 				"Parent vApp '%s' must be powered off in VCD 10.4.1+ to remove a vApp network. \n"+
-				"You can use 'reboot_vapp_on_destroy=true' flag to power off vApp before removing network.",
+				"You can use 'reboot_vapp_on_removal=true' flag to power off vApp before removing network.",
 				vapp.VApp.Name, err)
 		}
 
 		return diag.Errorf("error removing vApp network: %s", err)
 	}
 
-	// If vApp was not powered off before and 'reboot_vapp_on_destroy' flag was used - power it on
+	// If vApp was not powered off before and 'reboot_vapp_on_removal' flag was used - power it on
 	// again. The reason we check for vappStatusBeforeOperation != "POWERED_ON" is that a vApp could
 	// have had different states than "POWERED_OFF" and "POWERED_ON" (e.g. "PARTIALLY_POWERED_OFF"),
 	// but we cannot restore exactly such state. So we restore "POWERED_ON" state.
 	if rebootVAppOnDestroy && vappStatusBeforeOperation != "POWERED_OFF" {
-		util.Logger.Printf("[TRACE] reboot_vapp_on_destroy=true, restoring vApp '%s' power state, was '%s'",
+		util.Logger.Printf("[TRACE] reboot_vapp_on_removal=true, restoring vApp '%s' power state, was '%s'",
 			vapp.VApp.Name, vappStatusBeforeOperation)
 		task, err := vapp.PowerOn()
 		if err != nil {

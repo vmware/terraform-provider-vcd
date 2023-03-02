@@ -61,7 +61,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Default:     false,
 				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
 			},
-			"reboot_vapp_on_destroy": {
+			"reboot_vapp_on_removal": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -190,9 +190,9 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 }
 
 func resourceVappOrgNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// reboot_vapp_on_destroy does not have any effect on update therefore skipping update if only
+	// reboot_vapp_on_removal does not have any effect on update therefore skipping update if only
 	// this field was modified
-	if !d.HasChangeExcept("reboot_vapp_on_destroy") {
+	if !d.HasChangeExcept("reboot_vapp_on_removal") {
 		return resourceVappOrgNetworkRead(ctx, d, meta)
 	}
 	vcdClient := meta.(*VCDClient)

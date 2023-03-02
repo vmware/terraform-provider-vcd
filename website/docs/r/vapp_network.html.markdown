@@ -29,11 +29,11 @@ resource "vcd_vapp_network" "vappNet" {
   guest_vlan_allowed = true
 
   # VCD 10.4.1+ API does not allow to remove vApp network from
-  # a powered on vApp. Setting reboot_vapp_on_destroy to true
+  # a powered on vApp. Setting reboot_vapp_on_removal to true
   # will allow to power off parent vApp for network removal.
   # Note. It will power on the vApp if it was not powered off 
   # before the operation.
-  # reboot_vapp_on_destroy = true
+  # reboot_vapp_on_removal = true
 
   static_ip_pool {
     start_address = "192.168.2.51"
@@ -67,9 +67,9 @@ The following arguments are supported:
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
 * `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected. If not configured, then an isolated network is created.
 * `retain_ip_mac_enabled` - (Optional; *v2.7+*) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
-* `reboot_vapp_on_destroy` - (Optional; *v3.9+*) **VCD 10.4.1+** API **prohibits removal of vApp
-  network from a powered on vApp**. This field can be used to power off vApp during vApp network
-  removal. It will power on the vApp (if it was not powered off before the operation) after removing
+* `reboot_vapp_on_removal` - (Optional; *v3.9+*) **VCD 10.4.1+** API **prohibits removal of vApp
+  network from a powered on vApp**. Set to `true` to power off the vApp during vApp network removal.
+  If the vApp's original state was powered on, it will be powered back on after removing the
   network. (default `false`) **Note.** It only affects *delete* operation for the resource and will
   never power cycle vApp during *update* operations. Changing this value will cause plan change, but
   *update* will be a no-op operation.

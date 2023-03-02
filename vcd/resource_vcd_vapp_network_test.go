@@ -230,7 +230,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["vappNetworkName"].(string)),
 				// These fields can't be retrieved from user data.
-				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_destroy"},
+				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_removal"},
 			},
 		},
 	})
@@ -750,7 +750,7 @@ data "vcd_vapp_org_network" "with-routed" {
 
 // TestAccVcdNsxtVappNetworkRemoval checks the following:
 // * Creates a vApp with two networks (vcd_vapp_network and vcd_vapp_org_network), both having
-// reboot_vapp_on_destroy = true
+// reboot_vapp_on_removal = true
 // * Removes everything, except vApp to check that its power state remains POWERED_ON (int status 4)
 // after network removal
 func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
@@ -766,7 +766,7 @@ func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"ExistingRoutedNetwork":     testConfig.Nsxt.RoutedNetwork,
-		"RebootVappOnDestroy":       "true",
+		"RebootVappOnRemoval":       "true",
 
 		"Tags": "network vapp",
 	}
@@ -832,7 +832,7 @@ resource "vcd_vapp_network" "test" {
     end_address   = "192.168.2.100"
   }
 
-  reboot_vapp_on_destroy = {{.RebootVappOnDestroy}}
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
 }
 
 resource "vcd_vapp_org_network" "test" {
@@ -842,7 +842,7 @@ resource "vcd_vapp_org_network" "test" {
   vapp_name        = vcd_vapp.test.name
   org_network_name = "{{.ExistingRoutedNetwork}}"
 
-  reboot_vapp_on_destroy = {{.RebootVappOnDestroy}}
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
 }
 
 resource "vcd_vapp_vm" "test" {
@@ -863,8 +863,8 @@ resource "vcd_vapp_vm" "test" {
 `
 
 // TestAccVcdNsxtVappNetworkRemovalFails does the following:
-// * Attempts to replicate a user process of removing vApp networks without reboot_vapp_on_destroy
-// * Checks that user gets a clear error message with a hint to use reboot_vapp_on_destroy
+// * Attempts to replicate a user process of removing vApp networks without reboot_vapp_on_removal
+// * Checks that user gets a clear error message with a hint to use reboot_vapp_on_removal
 // * Checks that one can update the value and destroy whole environment afterwards
 func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 	preTestChecks(t)
@@ -890,7 +890,7 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
 		"TestName":                  t.Name(),
 		"ExistingRoutedNetwork":     testConfig.Nsxt.RoutedNetwork,
-		"RebootVappOnDestroy":       "false",
+		"RebootVappOnRemoval":       "false",
 
 		"Tags": "network vapp",
 	}
@@ -899,7 +899,7 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 	configText1 := templateFill(testAccVcdNsxtVappNetworkRemoval, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
-	params["RebootVappOnDestroy"] = "true"
+	params["RebootVappOnRemoval"] = "true"
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(testAccVcdNsxtVappNetworkRemoval, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
@@ -919,13 +919,13 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
 				),
 			},
-			{ // Explicitly attempt to destroy the vApp with reboot_vapp_on_destroy = false (default value)
+			{ // Explicitly attempt to destroy the vApp with reboot_vapp_on_removal = false (default value)
 				Config:  configText1,
 				Destroy: true,
-				// Test that enriched error message with hint for 'reboot_vapp_on_destroy' is
+				// Test that enriched error message with hint for 'reboot_vapp_on_removal' is
 				// returned. This is to validate that error catching mechanism is working as VCD API
 				// evolves.
-				ExpectError: regexp.MustCompile("reboot_vapp_on_destroy"),
+				ExpectError: regexp.MustCompile("reboot_vapp_on_removal"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_network.test", "id"),
@@ -933,7 +933,7 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
 				),
 			},
-			{ // Set the flag reboot_vapp_on_destroy=true so that vApp can be destroyed
+			{ // Set the flag reboot_vapp_on_removal=true so that vApp can be destroyed
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
