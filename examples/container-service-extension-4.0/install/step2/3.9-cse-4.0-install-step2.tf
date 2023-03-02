@@ -332,21 +332,49 @@ resource "vcd_role" "cse_admin_role" {
   description = "Used for administrative purposes"
   rights = [
     "API Tokens: Manage",
-    "vmware:VCDKEConfig: Administrator Full access",
-    "vmware:VCDKEConfig: Administrator View",
-    "vmware:VCDKEConfig: Full Access",
-    "vmware:VCDKEConfig: Modify",
-    "vmware:VCDKEConfig: View",
-    "vmware:capvcdCluster: Administrator Full access",
-    "vmware:capvcdCluster: Administrator View",
-    "vmware:capvcdCluster: Full Access",
-    "vmware:capvcdCluster: Modify",
-    "vmware:capvcdCluster: View"
-  ]
-
-  # This role depends on the created RDE Types as the rights are created after creation of the type.
-  depends_on = [
-    vcd_rde_type.vcdkeconfig_type,
-    vcd_rde_type.capvcd_cluster_type,
+    "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator Full access",
+    "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator View",
+    "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Full Access",
+    "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Modify",
+    "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: View",
+    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Administrator Full access",
+    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Administrator View",
+    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Full Access",
+    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Modify",
+    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: View"
   ]
 }
+
+resource "vcd_org_user" "cse_admin" {
+  org      = "System"
+  name     = var.cse_admin_user
+  password = var.cse_admin_password
+  role     = vcd_role.cse_admin_role.name
+}
+
+resource "null_resource" "cse_api_token_script" {
+  triggers = {
+    # Trigger the installation only if the attributes that force a replacement are changed. In other words, this only needs
+    # to be triggered if the user is deleted and re-created.
+    config_has_changed = join("_", [
+      vcd_org_user.cse_admin.name,
+      vcd_org_user.cse_admin.org,
+      vcd_org_user.cse_admin.is_external,
+    ])
+  }
+
+  provisioner "local-exec" {
+    when = create
+    command = "VCD_PASSWORD=${var.cse_admin_password} ./refresh_token.sh create ${var.vcd_url} ${var.cse_admin_user} System ${var.cse_admin_user}"
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "VCD_PASSWORD=${var.cse_admin_password} ./refresh_token.sh destroy ${var.vcd_url} ${var.cse_admin_user} System ${var.cse_admin_user}"
+  }
+}
+
+data "local_sensitive_file" "cse_api_token" {
+  filename = "${path.module}/.${vcd_org_user.cse_admin.name}_${vcd_org_user.cse_admin.name}"
+}
+

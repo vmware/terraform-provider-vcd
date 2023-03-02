@@ -10,13 +10,24 @@ variable "insecure_login" {
 }
 
 variable "administrator_user" {
-  description = "The VCD administrator password (Example: 'administrator')"
+  description = "The VCD administrator user (Example: 'administrator')"
   default     = "administrator"
   type        = string
 }
 
 variable "administrator_password" {
   description = "The VCD administrator password"
+  type        = string
+  sensitive   = true
+}
+
+variable "cse_admin_user" {
+  description = "The CSE administrator user (Example: 'cse-admin')"
+  type        = string
+}
+
+variable "cse_admin_password" {
+  description = "The CSE administrator password"
   type        = string
   sensitive   = true
 }
