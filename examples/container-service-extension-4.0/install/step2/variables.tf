@@ -1,3 +1,7 @@
+# ------------------------------------------------
+# Provider config
+# ------------------------------------------------
+
 variable "vcd_url" {
   description = "The VCD URL (Example: 'https://vcd.my-company.com')"
   type        = string
@@ -21,22 +25,30 @@ variable "administrator_password" {
   sensitive   = true
 }
 
-variable "cse_admin_user" {
-  description = "The CSE administrator user (Example: 'cse-admin')"
-  type        = string
-}
-
-variable "cse_admin_password" {
-  description = "The CSE administrator password"
-  type        = string
-  sensitive   = true
-}
-
 variable "administrator_org" {
   description = "The VCD administrator organization (Example: 'System')"
   type        = string
   default     = "System"
 }
+
+# ------------------------------------------------
+# CSE administrator user details
+# ------------------------------------------------
+
+variable "cse_admin_user" {
+  description = "The CSE administrator user (Example: 'cse-admin')"
+  type        = string
+}
+
+variable "cse_admin_api_token" {
+  description = "The CSE administrator API token"
+  type        = string
+  sensitive   = true
+}
+
+# ------------------------------------------------
+# VDC setup
+# ------------------------------------------------
 
 variable "provider_vdc_name" {
   description = "The Provider VDC that will be used to create the required VDCs"
@@ -52,6 +64,10 @@ variable "network_pool_name" {
   description = "The network pool to be used on VDC creation"
   type        = string
 }
+
+# ------------------------------------------------
+# Catalog and OVAs
+# ------------------------------------------------
 
 variable "tkgm_ova_folder" {
   description = "Path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
@@ -72,3 +88,51 @@ variable "cse_ova_file" {
   description = "CSE file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
   type        = string
 }
+
+# ------------------------------------------------
+# Networking
+# ------------------------------------------------
+
+variable "nsxt_manager_name" {
+  description = "NSX-T manager name"
+  type        = string
+}
+
+variable "nsxt_tier0_router_name" {
+  description = "NSX-T tier-0 router name"
+  type        = string
+}
+
+variable "solutions_provider_gateway_gateway_ip" {
+  description = "Gateway IP for the Solutions Provider Gateway"
+  type        = string
+}
+
+variable "solutions_provider_gateway_gateway_prefix_length" {
+  description = "Prefix length for the Solutions Provider Gateway"
+  type        = string
+}
+
+variable "solutions_provider_gateway_static_ips" {
+  type        = list(list(string))
+  description = "List of pairs of public IPs for the Solutions Provider Gateway"
+}
+
+variable "cluster_provider_gateway_gateway_ip" {
+  description = "Gateway IP for the Cluster Provider Gateway"
+  type        = string
+}
+
+variable "cluster_provider_gateway_gateway_prefix_length" {
+  description = "Prefix length for the Cluster Provider Gateway"
+  type        = string
+}
+
+variable "cluster_provider_gateway_static_ips" {
+  type        = list(list(string))
+  description = "List of pairs of public IPs for the Solutions Provider Gateway"
+}
+
+# ------------------------------------------------
+# ALB
+# ------------------------------------------------

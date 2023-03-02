@@ -12,7 +12,7 @@
 #
 # * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
 #   Other than that, this snippet should be applied as it is.
-#   You can check the comments on each resource/data source for more context.
+#   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
 # VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
@@ -39,20 +39,20 @@ provider "vcd" {
 
 # This is the interface required to create the "VCDKEConfig" Runtime Defined Entity Type.
 resource "vcd_rde_interface" "vcdkeconfig_interface" {
-  name    = "VCDKEConfig"
-  version = "1.0.0"
   vendor  = "vmware"
   nss     = "VCDKEConfig"
+  version = "1.0.0"
+  name    = "VCDKEConfig"
 }
 
 # This resource will manage the "VCDKEConfig" RDE Type required to instantiate the CSE Server configuration.
 # The schema URL points to the JSON schema hosted in the terraform-provider-vcd repository.
 resource "vcd_rde_type" "vcdkeconfig_type" {
-  name          = "VCD-KE RDE Schema"
+  vendor        = "vmware"
   nss           = "VCDKEConfig"
   version       = "1.0.0"
+  name          = "VCD-KE RDE Schema"
   schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse40-guide/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json"
-  vendor        = "vmware"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 
@@ -66,12 +66,12 @@ data "vcd_rde_interface" "kubernetes_interface" {
 
 # This RDE Interface will create the "capvcdCluster" RDE Type required to create Kubernetes clusters.
 # The schema URL points to the JSON schema hosted in the terraform-provider-vcd repository.
-resource "vcd_rde_type" "capvcd_cluster_type" {
-  name          = "CAPVCD Cluster"
+resource "vcd_rde_type" "capvcdcluster_type" {
+  vendor        = "vmware"
   nss           = "capvcdCluster"
   version       = "1.1.0"
+  name          = "CAPVCD Cluster"
   schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse40-guide/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
-  vendor        = "vmware"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 }
 
@@ -88,11 +88,11 @@ resource "vcd_role" "cse_admin_role" {
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Full Access",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Modify",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: View",
-    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Administrator Full access",
-    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Administrator View",
-    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Full Access",
-    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: Modify",
-    "${vcd_rde_type.capvcd_cluster_type.vendor}:${vcd_rde_type.capvcd_cluster_type.nss}: View"
+    "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Administrator Full access",
+    "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Administrator View",
+    "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Full Access",
+    "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Modify",
+    "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: View"
   ]
 }
 
@@ -105,6 +105,7 @@ resource "vcd_org_user" "cse_admin" {
   role     = vcd_role.cse_admin_role.name
 }
 
+# This will output the username that you need to create an API token for.
 output "cse_admin_username" {
   value = "Please create an API token for ${vcd_org_user.cse_admin.name} as it will be required for step 2"
 }

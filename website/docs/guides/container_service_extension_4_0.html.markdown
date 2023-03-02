@@ -24,7 +24,7 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Installation process
 
--> There is a ready to use Terraform configuration [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/3.9-cse-4.0-install.tf) that you can read, customise to your needs and apply. However,
+-> There is a ready to use Terraform configuration [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install) that you can read, customise to your needs and apply. However,
 reading this guide is recommended to understand the basic requirements of CSE v4.0 and how all the resources interact with each other.
 
 To start installing CSE v4.0 in a VCD appliance, you must use **v3.9.0 or above** of the VCD Terraform Provider

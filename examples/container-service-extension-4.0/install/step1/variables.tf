@@ -1,3 +1,7 @@
+# ------------------------------------------------
+# Provider config
+# ------------------------------------------------
+
 variable "vcd_url" {
   description = "The VCD URL (Example: 'https://vcd.my-company.com')"
   type        = string
@@ -21,6 +25,16 @@ variable "administrator_password" {
   sensitive   = true
 }
 
+variable "administrator_org" {
+  description = "The VCD administrator organization (Example: 'System')"
+  type        = string
+  default     = "System"
+}
+
+# ------------------------------------------------
+# CSE administrator user configuration
+# ------------------------------------------------
+
 variable "cse_admin_user" {
   description = "The CSE administrator user (Example: 'cse-admin')"
   type        = string
@@ -30,10 +44,4 @@ variable "cse_admin_password" {
   description = "The CSE administrator password"
   type        = string
   sensitive   = true
-}
-
-variable "administrator_org" {
-  description = "The VCD administrator organization (Example: 'System')"
-  type        = string
-  default     = "System"
 }

@@ -3,7 +3,6 @@
 # ------------------------------------------------
 # Provider config
 # ------------------------------------------------
-
 vcd_url                = "https://vcd.my-awesome-corp.com"
 administrator_user     = "administrator"
 administrator_password = "SuperSecurePassword123"
