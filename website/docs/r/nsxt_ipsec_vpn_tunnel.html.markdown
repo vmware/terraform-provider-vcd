@@ -73,6 +73,44 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 }
 ```
 
+## Example Usage (IPsec VPN Tunnel with Certificate auth and custom remote ID)
+
+```hcl
+data "vcd_library_certificate" "cert" {
+  org   = "myOrg"
+  alias = "certificate"
+}
+
+data "vcd_library_certificate" "ca-cert" {
+  org   = "myOrg"
+  alias = "ca-certificate"
+}
+
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "my-org"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  name        = "cert-tunnel"
+
+  authentication_mode = "CERTIFICATE"
+  certificate_id      = data.vcd_library_certificate.cert.id
+  ca_certificate_id   = data.vcd_library_certificate.ca-cert.id
+
+  # Primary IP address of Edge Gateway pulled from data source
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address
+  remote_ip_address = "1.2.3.4"
+  
+  # The remote ID must match the certificate SAN (Subject Alternative Name), 
+  # if available, or the distinguished name of the certificate used to secure 
+  # the remote endpoint.
+  remote_id         = "cert-san"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:

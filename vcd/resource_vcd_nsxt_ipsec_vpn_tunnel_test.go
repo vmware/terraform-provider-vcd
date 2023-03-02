@@ -802,7 +802,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCertAuth(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "cert-san"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
@@ -826,7 +826,7 @@ func TestAccVcdNsxtIpSecVpnTunnelCertAuth(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "cert-san"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
@@ -875,6 +875,7 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
   # That is a fake remote IP address
   remote_ip_address = "1.2.3.4"
+  remote_id         = "cert-san"
   remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
 }
 `
