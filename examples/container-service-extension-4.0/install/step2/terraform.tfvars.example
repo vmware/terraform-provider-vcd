@@ -1,0 +1,16 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+
+# ------------------------------------------------
+# Provider config
+# ------------------------------------------------
+vcd_url                = "https://vcd.my-awesome-corp.com"
+administrator_user     = "administrator"
+administrator_password = "SuperSecurePassword123"
+administrator_org      = "System"
+insecure_login         = "false"
+
+# ------------------------------------------------
+# CSE administrator user configuration
+# ------------------------------------------------
+cse_admin_user = "cse-user"
+cse_admin_password = "AnotherSuperSecurePassword123"
