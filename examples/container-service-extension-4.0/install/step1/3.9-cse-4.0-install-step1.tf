@@ -1,11 +1,18 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.0 installation, step 1:
 #
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+#   before applying this configuration.
+#
 # * The installation process is split into two steps as Providers will need to generate an API token for the created
 #   CSE administrator user, in order to use it with the CSE Server that will be deployed in the second step.
 #
-# * This step will only create the required Runtime Defined Entity (RDE) Interfaces, Types, Roles and finally
+# * This step will only create the required Runtime Defined Entity (RDE) Interfaces, Types, Role and finally
 #   the CSE administrator user.
+#
+# * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
+#   Other than that, this snippet should be applied as it is.
+#   You can check the comments on each resource/data source for more context.
 # ------------------------------------------------------------------------------------------------------------
 
 # VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
@@ -57,7 +64,7 @@ data "vcd_rde_interface" "kubernetes_interface" {
   version = "1.0.0"
 }
 
-# This RDE Interface will create the capvcdCluster RDE Type required to create Kubernetes clusters.
+# This RDE Interface will create the "capvcdCluster" RDE Type required to create Kubernetes clusters.
 # The schema URL points to the JSON schema hosted in the terraform-provider-vcd repository.
 resource "vcd_rde_type" "capvcd_cluster_type" {
   name          = "CAPVCD Cluster"
