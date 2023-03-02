@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # This script manages API tokens, used in CSE to manage the CSE Server.
+# It requires having 'curl', 'tr' and 'jq' present in $PATH
 
 # ----------------------------------------
 # Pre-checks
@@ -31,7 +32,7 @@ fi
 # Auxiliary functions
 # ----------------------------------------
 
-# login Sets the global variable bearer_token for other operations to use
+# Sets the global variable 'bearer_token' for other operations to use
 login() {
   bearer_token=$(curl -s --insecure --location -I -H "$version_header" \
        -H "Authorization: Basic $(printf '%s@%s:%s' "$user" "$org" "$VCD_PASSWORD" | base64)" \
@@ -42,7 +43,7 @@ login() {
   fi
 }
 
-# create Creates an API token and saves it into a file
+# Creates an API token and saves it into a file
 create() {
   register_response=$(curl -s --insecure --location -H "$version_header" -H "Authorization: Bearer $bearer_token" -H 'Content-Type: application/json' \
            --data "{\"client_name\": \"$token_name\"}" \
@@ -75,7 +76,7 @@ create() {
   echo "$result_token" > ".${user}_${token_name}"
 }
 
-# destroy Destroys the given API token that should be present in VCD
+# Destroys the given API token that should be present in VCD
 destroy() {
   get_token_response=$(curl -s --insecure --location -H "$version_header" -H "Authorization: Bearer $bearer_token" -H 'Content-Type: application/json' \
        -X GET "$vcd_url/cloudapi/1.0.0/tokens?page=1&pageSize=1&filterEncoded=true&filter=(name==$token_name;(type==PROXY,type==REFRESH))&sortAsc=name")

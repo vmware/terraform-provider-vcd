@@ -6,8 +6,8 @@
 #   information.
 #
 # * Some resources and data sources from this HCL are run as System administrator, as it involves creating provider
-#   elements such as Organizations, VDCs or Provider Gateways. CSE items are created by the CSE service account defined
-#   below.
+#   elements such as Organizations, VDCs or Provider Gateways. CSE Server is run with a more limited set of rights
+#   with a System-scoped user and an API token managed by the `refresh_token.sh` script.
 #
 # * Please customize the values present in this file to your needs. Also check `terraform.tfvars.example`
 #   for customisation.
@@ -26,12 +26,15 @@ terraform {
 }
 
 provider "vcd" {
-  url       = "${var.vcd_url}/api"
-  user      = var.administrator_user
-  password  = var.administrator_password
-  auth_type = "integrated"
-  sysorg    = var.administrator_org
-  org       = var.administrator_org
+  url                  = "${var.vcd_url}/api"
+  user                 = var.administrator_user
+  password             = var.administrator_password
+  auth_type            = "integrated"
+  sysorg               = var.administrator_org
+  org                  = var.administrator_org
+  allow_unverified_ssl = var.insecure_login
+  logging              = true
+  logging_file         = "cse_${var.administrator_user}.log"
 }
 
 # In this example HCL we will create two Organizations:
@@ -309,7 +312,7 @@ resource "vcd_rde_type" "vcdkeconfig_type" {
   name          = "VCD-KE RDE Schema"
   nss           = "VCDKEConfig"
   version       = "1.0.0"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse40-guide/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json"
   vendor        = "vmware"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
@@ -318,14 +321,14 @@ resource "vcd_rde_type" "capvcd_cluster_type" {
   name          = "CAPVCD Cluster"
   nss           = "capvcdCluster"
   version       = "1.1.0"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse40-guide/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
   vendor        = "vmware"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 }
 
 resource "vcd_role" "cse_admin_role" {
-  org = "System"
-  name = "CSE Admin Role"
+  org         = "System"
+  name        = "CSE Admin Role"
   description = "Used for administrative purposes"
   rights = [
     "API Tokens: Manage",

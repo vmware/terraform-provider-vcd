@@ -3,6 +3,12 @@ variable "vcd_url" {
   type        = string
 }
 
+variable "insecure_login" {
+  description = "Allow unverified SSL connections when operating with VCD"
+  type        = bool
+  default     = false
+}
+
 variable "administrator_user" {
   description = "The VCD administrator password (Example: 'administrator')"
   default     = "administrator"
