@@ -46,11 +46,14 @@ solutions_routed_network_gateway_ip            = "192.168.0.1"
 solutions_routed_network_prefix_length         = "24"
 solutions_routed_network_ip_pool_start_address = "192.168.0.2"
 solutions_routed_network_ip_pool_end_address   = "192.168.0.254"
+solutions_routed_network_advertised_subnet     = "192.168.0.0/24"
 
-cluster_routed_network_gateway_ip            = "10.10.0.1"
+cluster_routed_network_gateway_ip            = "10.0.0.1"
 cluster_routed_network_prefix_length         = "16"
 cluster_routed_network_ip_pool_start_address = "10.0.0.2"
 cluster_routed_network_ip_pool_end_address   = "10.0.255.254"
+cluster_routed_network_advertised_subnet     = "10.0.0.0/16"
+
 
 # ------------------------------------------------
 # Values to create ALB setup

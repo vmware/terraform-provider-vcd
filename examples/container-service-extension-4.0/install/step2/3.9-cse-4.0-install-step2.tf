@@ -611,13 +611,13 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
 resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
   enabled         = true
-  subnets         = ["${var.solutions_routed_network_gateway_ip}/${var.solutions_routed_network_prefix_length}"]
+  subnets         = [var.solutions_routed_network_advertised_subnet]
 }
 
 resource "vcd_nsxt_route_advertisement" "cluster_routing_advertisement" {
   edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
   enabled         = true
-  subnets         = ["${var.cluster_routed_network_gateway_ip}/${var.cluster_routed_network_prefix_length}"]
+  subnets         = [var.cluster_routed_network_advertised_subnet]
 }
 
 # WARNING: Please adjust this rule to your needs. The CSE Server requires Internet access to be configured.
