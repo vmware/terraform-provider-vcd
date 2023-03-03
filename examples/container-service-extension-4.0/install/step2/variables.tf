@@ -113,7 +113,7 @@ variable "solutions_provider_gateway_gateway_prefix_length" {
   type        = string
 }
 
-variable "solutions_provider_gateway_static_ips" {
+variable "solutions_provider_gateway_static_ip_ranges" {
   type        = list(list(string))
   description = "List of pairs of public IPs for the Solutions Provider Gateway"
 }
@@ -128,11 +128,127 @@ variable "cluster_provider_gateway_gateway_prefix_length" {
   type        = string
 }
 
-variable "cluster_provider_gateway_static_ips" {
+variable "cluster_provider_gateway_static_ip_ranges" {
   type        = list(list(string))
   description = "List of pairs of public IPs for the Solutions Provider Gateway"
+}
+
+variable "solutions_routed_network_gateway_ip" {
+  description = "Gateway IP for the Solutions routed network"
+  type        = string
+}
+
+variable "solutions_routed_network_prefix_length" {
+  description = "Prefix length for the Solutions routed network"
+  type        = string
+}
+
+variable "solutions_routed_network_ip_pool_start_address" {
+  description = "Start address for the IP pool of the Solutions routed network"
+  type        = string
+}
+
+variable "solutions_routed_network_ip_pool_end_address" {
+  description = "End address for the IP pool of the Solutions routed network"
+  type        = string
+}
+
+variable "cluster_routed_network_gateway_ip" {
+  description = "Gateway IP for the Cluster routed network"
+  type        = string
+}
+
+variable "cluster_routed_network_prefix_length" {
+  description = "Prefix length for the Cluster routed network"
+  type        = string
+}
+
+variable "cluster_routed_network_ip_pool_start_address" {
+  description = "Start address for the IP pool of the Cluster routed network"
+  type        = string
+}
+
+variable "cluster_routed_network_ip_pool_end_address" {
+  description = "End address for the IP pool of the Cluster routed network"
+  type        = string
 }
 
 # ------------------------------------------------
 # ALB
 # ------------------------------------------------
+variable "alb_controller_username" {
+  description = "The user to create an ALB Controller with"
+  type        = string
+}
+
+variable "alb_controller_password" {
+  description = "The password for the user that will be used to create the ALB Controller"
+  type        = string
+}
+
+variable "alb_controller_url" {
+  description = "The URL to create the ALB Controller"
+  type        = string
+}
+
+variable "alb_importable_cloud_name" {
+  description = "Name of an available importable cloud to be able to create an ALB NSX-T Cloud"
+  type        = string
+}
+
+# ------------------------------------------------
+# CSE Server
+# ------------------------------------------------
+variable "capvcd_version" {
+  type        = string
+  description = "VCDKEConfig: CAPVCD version"
+  default     = "1.1.0"
+}
+
+variable "cpi_version" {
+  type        = string
+  description = "VCDKEConfig: Cloud Provider Interface version"
+  default     = "1.2.0"
+}
+
+variable "csi_version" {
+  type        = string
+  description = "VCDKEConfig: Container Storage Interface version"
+  default     = "1.3.0"
+}
+
+variable "github_personal_access_token" {
+  type        = string
+  description = "VCDKEConfig: Prevents potential github rate limiting errors during cluster creation and deletion"
+  sensitive   = true
+}
+
+variable "no_proxy" {
+  type        = string
+  description = "VCDKEConfig: List of comma-separated domains without spaces"
+  default     = "localhost,127.0.0.1,cluster.local,.svc"
+}
+
+variable "http_proxy" {
+  type        = string
+  description = "VCDKEConfig: Address of your HTTP proxy server"
+  default     = ""
+}
+
+variable "https_proxy" {
+  type        = string
+  description = "VCDKEConfig: Address of your HTTPS proxy server"
+  default     = ""
+}
+
+variable "syslog_host" {
+  type        = string
+  description = "VCDKEConfig: Domain for system logs"
+  default     = ""
+}
+
+variable "syslog_port" {
+  type        = string
+  description = "VCDKEConfig: Port for system logs"
+  default     = ""
+}

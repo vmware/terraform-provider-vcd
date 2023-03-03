@@ -7,7 +7,7 @@
 # * Please apply Step 1 first, located at https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
-#   For example, network settings such as firewall rules, network subnets, VDC allocation modes, etc.
+#   For example, network settings such as firewall rules, network subnets, VDC allocation modes, ALB feature set, etc.
 #
 # * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
 #   You can check the comments on each resource/data source for more help and context.
@@ -420,7 +420,7 @@ resource "vcd_external_network_v2" "solutions_tier0" {
     prefix_length = var.solutions_provider_gateway_gateway_prefix_length
 
     dynamic "static_ip_pool" {
-      for_each = var.solutions_provider_gateway_static_ips
+      for_each = var.solutions_provider_gateway_static_ip_ranges
       iterator = ip
       content {
         start_address = ip.value[0]
@@ -443,7 +443,7 @@ resource "vcd_external_network_v2" "cluster_tier0" {
     prefix_length = var.cluster_provider_gateway_gateway_prefix_length
 
     dynamic "static_ip_pool" {
-      for_each = var.cluster_provider_gateway_static_ips
+      for_each = var.cluster_provider_gateway_static_ip_ranges
       iterator = ip
       content {
         start_address = ip.value[0]
@@ -461,11 +461,27 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   external_network_id       = vcd_external_network_v2.solutions_tier0.id
   dedicate_external_network = true
 
-  auto_subnet {
+  # TODO: Change to auto_subnet!!!
+  subnet {
     gateway       = var.solutions_provider_gateway_gateway_ip
     prefix_length = var.solutions_provider_gateway_gateway_prefix_length
-    primary_ip    = var.solutions_provider_gateway_static_ips[0][0]
+    primary_ip    = var.solutions_provider_gateway_static_ip_ranges[0][0]
+
+    dynamic "allocated_ips" {
+      for_each = var.solutions_provider_gateway_static_ip_ranges
+      iterator = ip
+      content {
+        start_address = ip.value[0]
+        end_address   = ip.value[1]
+      }
+    }
   }
+
+  #  auto_subnet {
+  #    gateway       = var.solutions_provider_gateway_gateway_ip
+  #    prefix_length = var.solutions_provider_gateway_gateway_prefix_length
+  #    primary_ip    = var.solutions_provider_gateway_static_ip_ranges[0][0]
+  #  }
 }
 
 resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
@@ -476,26 +492,45 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   external_network_id       = vcd_external_network_v2.cluster_tier0.id
   dedicate_external_network = true
 
-  auto_subnet {
+  # TODO: Change to auto_subnet!!!
+  subnet {
     gateway       = var.cluster_provider_gateway_gateway_ip
     prefix_length = var.cluster_provider_gateway_gateway_prefix_length
-    primary_ip    = var.cluster_provider_gateway_static_ips[0][0]
+    primary_ip    = var.cluster_provider_gateway_static_ip_ranges[0][0]
+
+    dynamic "allocated_ips" {
+      for_each = var.cluster_provider_gateway_static_ip_ranges
+      iterator = ip
+      content {
+        start_address = ip.value[0]
+        end_address   = ip.value[1]
+      }
+    }
   }
+
+  #  auto_subnet {
+  #    gateway       = var.cluster_provider_gateway_gateway_ip
+  #    prefix_length = var.cluster_provider_gateway_gateway_prefix_length
+  #    primary_ip    = var.cluster_provider_gateway_static_ip_ranges[0][0]
+  #  }
 }
 
-data "vcd_nsxt_alb_controller" "cse_avi_controller" {
-  name = "aviController1"
+resource "vcd_nsxt_alb_controller" "cse_avi_controller" {
+  name     = "cse_alb_controller"
+  username = var.alb_controller_username
+  password = var.alb_controller_password
+  url      = var.alb_controller_url
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cse_importable_cloud" {
-  name          = var.avi_importable_cloud
-  controller_id = data.vcd_nsxt_alb_controller.cse_avi_controller.id
+  name          = var.alb_importable_cloud_name
+  controller_id = vcd_nsxt_alb_controller.cse_avi_controller.id
 }
 
 resource "vcd_nsxt_alb_cloud" "cse_nsxt_alb_cloud" {
   name = "cse_nsxt_alb_cloud"
 
-  controller_id       = data.vcd_nsxt_alb_controller.cse_avi_controller.id
+  controller_id       = vcd_nsxt_alb_controller.cse_avi_controller.id
   importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cse_importable_cloud.id
   network_pool_id     = data.vcd_nsxt_alb_importable_cloud.cse_importable_cloud.network_pool_id
 }
@@ -508,7 +543,6 @@ resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
 }
 
 ## ALB for solutions edge gateway
-
 resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   org             = vcd_org.solutions_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
@@ -549,12 +583,12 @@ resource "vcd_network_routed_v2" "solutions_routed_network" {
 
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
 
-  gateway       = "192.168.0.1"
-  prefix_length = 24
+  gateway       = var.solutions_routed_network_gateway_ip
+  prefix_length = var.solutions_routed_network_prefix_length
 
   static_ip_pool {
-    start_address = "192.168.0.2"
-    end_address   = "192.168.0.10"
+    start_address = var.solutions_routed_network_ip_pool_start_address
+    end_address   = var.solutions_routed_network_ip_pool_end_address
   }
 }
 
@@ -565,27 +599,28 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
 
   edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
 
-  gateway       = "10.0.0.1"
-  prefix_length = 16
+  gateway       = var.cluster_routed_network_gateway_ip
+  prefix_length = var.cluster_routed_network_prefix_length
 
   static_ip_pool {
-    start_address = "10.0.0.2"
-    end_address   = "10.0.255.254"
+    start_address = var.cluster_routed_network_ip_pool_start_address
+    end_address   = var.cluster_routed_network_ip_pool_end_address
   }
 }
 
 resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
   enabled         = true
-  subnets         = ["192.168.0.0/24"]
+  subnets         = ["${var.solutions_routed_network_gateway_ip}/${var.solutions_routed_network_prefix_length}"]
 }
 
 resource "vcd_nsxt_route_advertisement" "cluster_routing_advertisement" {
   edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
   enabled         = true
-  subnets         = ["10.0.0.0/16"]
+  subnets         = ["${var.cluster_routed_network_gateway_ip}/${var.cluster_routed_network_prefix_length}"]
 }
 
+# WARNING: Please adjust this rule to your needs. The CSE Server requires Internet access to be configured.
 resource "vcd_nsxt_firewall" "solutions_firewall" {
   org             = vcd_org.solutions_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
@@ -598,6 +633,7 @@ resource "vcd_nsxt_firewall" "solutions_firewall" {
   }
 }
 
+# WARNING: Please adjust this rule to your needs. The Bootstrap clusters and final Kubernetes clusters require Internet access to be configured.
 resource "vcd_nsxt_firewall" "cluster_firewall" {
   org             = vcd_org.cluster_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
@@ -611,34 +647,42 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
 }
 
 # We read the entity JSON as template as some fields are references to Terraform resources.
-# The inputs are taken from UI.
+data "http" "vcdkeconfig_instance_template_from_url" {
+  url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json"
+}
 data "template_file" "vcdkeconfig_instance_template" {
-  template = file("${path.module}/entities/vcdkeconfig-template.json")
+  template = data.http.vcdkeconfig_instance_template_from_url.body
   vars = {
-    capvcd_version                  = "1.1.0"
-    cpi_version                     = "1.2.0"
-    csi_version                     = "1.3.0"
-    github_personal_access_token    = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    capvcd_version                  = var.capvcd_version
+    cpi_version                     = var.cpi_version
+    csi_version                     = var.csi_version
+    github_personal_access_token    = var.github_personal_access_token
     bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy
-    no_proxy                        = "localhost,127.0.0.1,cluster.local,.svc"
-    http_proxy                      = ""
-    https_proxy                     = ""
-    syslog_host                     = ""
-    syslog_port                     = ""
+    no_proxy                        = var.no_proxy
+    http_proxy                      = var.http_proxy
+    https_proxy                     = var.https_proxy
+    syslog_host                     = var.syslog_host
+    syslog_port                     = var.syslog_port
   }
+}
+
+# Fetch the RDE Type created in previous step
+data "vcd_rde_type" "existing_vcdkeconfig_type" {
+  vendor  = "vmware"
+  nss     = "VCDKEConfig"
+  version = "1.0.0"
 }
 
 # This RDE should be applied as it is
 resource "vcd_rde" "vcdkeconfig_instance" {
-  org              = "System" # TODO!!!! Can be other org????
+  org              = vcd_org.solutions_organization.name
   name             = "vcdKeConfig"
-  rde_type_vendor  = vcd_rde_type.vcdkeconfig_type.vendor  # References the RDE Type
-  rde_type_nss     = vcd_rde_type.vcdkeconfig_type.nss     # References the RDE Type
-  rde_type_version = vcd_rde_type.vcdkeconfig_type.version # References the RDE Type
+  rde_type_vendor  = data.vcd_rde_type.existing_vcdkeconfig_type.vendor
+  rde_type_nss     = data.vcd_rde_type.existing_vcdkeconfig_type.nss
+  rde_type_version = data.vcd_rde_type.existing_vcdkeconfig_type.version
   resolve          = true
   input_entity     = data.template_file.vcdkeconfig_instance_template.rendered
 }
-
 
 resource "vcd_vapp" "cse_server_vapp" {
   org  = vcd_org.solutions_organization.name
@@ -677,16 +721,16 @@ resource "vcd_vapp_vm" "cse_server_vm" {
   guest_properties = {
 
     # VCD host
-    "cse.vcdHost" = "https://vcd.my-company.com"
+    "cse.vcdHost" = var.vcd_url
 
     # CSE service account's org
     "cse.AppOrg" = vcd_org.solutions_organization.name
 
     # CSE service account's Access Token
-    "cse.vcdRefreshToken" = var.service_account_access_token
+    "cse.vcdRefreshToken" = var.cse_admin_api_token
 
     # CSE service account's username
-    "cse.vcdUsername" = var.service_account_username
+    "cse.vcdUsername" = var.cse_admin_user
 
     # CSE service vApp's org
     "cse.userOrg" = vcd_org.solutions_organization.name

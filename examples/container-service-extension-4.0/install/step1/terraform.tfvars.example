@@ -12,5 +12,5 @@ insecure_login         = "false"
 # ------------------------------------------------
 # CSE administrator user configuration
 # ------------------------------------------------
-cse_admin_user = "cse-user"
+cse_admin_user = "cse-admin"
 cse_admin_password = "AnotherSuperSecurePassword123"

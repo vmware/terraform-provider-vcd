@@ -78,7 +78,7 @@ resource "vcd_rde_type" "capvcdcluster_type" {
 # This role is having only the minimum set of rights required for the CSE Server to function.
 # It is created in the "System" provider organization scope.
 resource "vcd_role" "cse_admin_role" {
-  org         = "System"
+  org         = var.administrator_org
   name        = "CSE Admin Role"
   description = "Used for administrative purposes"
   rights = [
@@ -99,7 +99,7 @@ resource "vcd_role" "cse_admin_role" {
 # This will allow to have a user with a limited set of rights that can access the Provider area of VCD.
 # This user will be used by the CSE Server, with an API token that must be created afterwards.
 resource "vcd_org_user" "cse_admin" {
-  org      = "System"
+  org      = var.administrator_org
   name     = var.cse_admin_user
   password = var.cse_admin_password
   role     = vcd_role.cse_admin_role.name
@@ -107,5 +107,5 @@ resource "vcd_org_user" "cse_admin" {
 
 # This will output the username that you need to create an API token for.
 output "cse_admin_username" {
-  value = "Please create an API token for ${vcd_org_user.cse_admin.name} as it will be required for step 2"
+  value = "Please login as '${vcd_org_user.cse_admin.name}' and create an API token, as it will be required for step 2"
 }
