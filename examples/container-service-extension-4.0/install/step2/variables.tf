@@ -199,6 +199,12 @@ variable "alb_importable_cloud_name" {
 # ------------------------------------------------
 # CSE Server
 # ------------------------------------------------
+variable "vcdkeconfig_template_filepath" {
+  type        = string
+  description = "Path to the VCDKEConfig JSON template"
+  default     = "../../entities/vcdkeconfig-template.json"
+}
+
 variable "capvcd_version" {
   type        = string
   description = "VCDKEConfig: CAPVCD version"

@@ -646,16 +646,6 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
   }
 }
 
-# We read the entity JSON as template as some fields are references to Terraform resources.
-data "http" "vcdkeconfig_instance_template_from_url" {
-  url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json"
-}
-
-resource "local_file" "vcdkeconfig_instance_template_local_file" {
-  content  = data.http.vcdkeconfig_instance_template_from_url.response_body
-  filename = "${path.module}/vcdkeconfig-template.json"
-}
-
 # Fetch the RDE Type created in previous step
 data "vcd_rde_type" "existing_vcdkeconfig_type" {
   vendor  = "vmware"
@@ -665,13 +655,13 @@ data "vcd_rde_type" "existing_vcdkeconfig_type" {
 
 # This RDE should be applied as it is
 resource "vcd_rde" "vcdkeconfig_instance" {
-  org              = vcd_org.solutions_organization.name
+  org              = "System"
   name             = "vcdKeConfig"
   rde_type_vendor  = data.vcd_rde_type.existing_vcdkeconfig_type.vendor
   rde_type_nss     = data.vcd_rde_type.existing_vcdkeconfig_type.nss
   rde_type_version = data.vcd_rde_type.existing_vcdkeconfig_type.version
   resolve          = true
-  input_entity     = templatefile(local_file.vcdkeconfig_instance_template_local_file.filename, {
+  input_entity     = templatefile(var.vcdkeconfig_template_filepath, {
     capvcd_version                  = var.capvcd_version
     cpi_version                     = var.cpi_version
     csi_version                     = var.csi_version
@@ -682,7 +672,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
     https_proxy                     = var.https_proxy
     syslog_host                     = var.syslog_host
     syslog_port                     = var.syslog_port
-    })
+  })
 }
 
 resource "vcd_vapp" "cse_server_vapp" {
@@ -724,17 +714,17 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     # VCD host
     "cse.vcdHost" = var.vcd_url
 
-    # CSE service account's org
+    # CSE Server org
     "cse.AppOrg" = vcd_org.solutions_organization.name
 
-    # CSE service account's Access Token
+    # CSE admin account's Access Token
     "cse.vcdRefreshToken" = var.cse_admin_api_token
 
-    # CSE service account's username
+    # CSE admin account's username
     "cse.vcdUsername" = var.cse_admin_user
 
-    # CSE service vApp's org
-    "cse.userOrg" = vcd_org.solutions_organization.name
+    # CSE admin account's org
+    "cse.userOrg" = "System"
   }
 
   customization {
