@@ -5,12 +5,12 @@
 # ------------------------------------------------
 vcd_url                = "https://vcd.my-awesome-corp.com"
 administrator_user     = "administrator"
-administrator_password = "SuperSecurePassword123"
+administrator_password = "change-me"
 administrator_org      = "System"
 insecure_login         = "false"
 
 # ------------------------------------------------
 # CSE administrator user configuration
 # ------------------------------------------------
-cse_admin_user = "cse-admin"
-cse_admin_password = "AnotherSuperSecurePassword123"
+cse_admin_user     = "cse-admin"
+cse_admin_password = "change-me"
