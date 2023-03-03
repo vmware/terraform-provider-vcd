@@ -221,20 +221,20 @@ func jsonToCompactString(inputJson map[string]interface{}) (string, error) {
 // wrong happens when compacting both for comparison.
 func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 	if !json.Valid(json1) {
-		return false, fmt.Errorf("not a valid JSON: '%s'", json1)
+		return false, fmt.Errorf("first JSON is not valid: '%s'", json1)
 	}
 	if !json.Valid(json2) {
-		return false, fmt.Errorf("not a valid JSON: '%s'", json2)
+		return false, fmt.Errorf("second JSON is not valid: '%s'", json2)
 	}
 
 	var unmarshaledJson1, unmarshaledJson2 interface{}
 	err := json.Unmarshal(json1, &unmarshaledJson1)
 	if err != nil {
-		return false, fmt.Errorf("could not unmarshal JSON '%s': %s", json1, err)
+		return false, fmt.Errorf("could not unmarshal first JSON '%s': %s", json1, err)
 	}
 	err = json.Unmarshal(json2, &unmarshaledJson2)
 	if err != nil {
-		return false, fmt.Errorf("could not unmarshal JSON '%s': %s", json2, err)
+		return false, fmt.Errorf("could not unmarshal second JSON '%s': %s", json2, err)
 	}
 	return reflect.DeepEqual(unmarshaledJson1, unmarshaledJson2), nil
 }
