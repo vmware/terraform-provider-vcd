@@ -1,5 +1,4 @@
 //go:build rde || ALL || functional
-// +build rde ALL functional
 
 package vcd
 
@@ -16,12 +15,12 @@ func TestAccVcdRdeTypeDS(t *testing.T) {
 
 	// This is a RDE Type that comes with VCD out of the box
 	var params = StringMap{
-		"TypeNamespace":      "tkgcluster",
-		"TypeVersion":        "1.0.0",
-		"TypeVendor":         "vmware",
-		"InterfaceNamespace": "k8s",
-		"InterfaceVersion":   "1.0.0",
-		"InterfaceVendor":    "vmware",
+		"TypeNss":          "tkgcluster",
+		"TypeVersion":      "1.0.0",
+		"TypeVendor":       "vmware",
+		"InterfaceNss":     "k8s",
+		"InterfaceVersion": "1.0.0",
+		"InterfaceVendor":  "vmware",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -33,21 +32,21 @@ func TestAccVcdRdeTypeDS(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", configText)
 
-	typeName := "data.vcd_rde_type.rde-type-ds"
+	typeName := "data.vcd_rde_type.rde_type_ds"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(typeName, "namespace", params["TypeNamespace"].(string)),
+					resource.TestCheckResourceAttr(typeName, "nss", params["TypeNss"].(string)),
 					resource.TestCheckResourceAttr(typeName, "version", params["TypeVersion"].(string)),
 					resource.TestCheckResourceAttr(typeName, "vendor", params["TypeVendor"].(string)),
 					resource.TestCheckResourceAttr(typeName, "name", "TKG Cluster"), // Name is always the same
-					resource.TestCheckResourceAttr(typeName, "id", fmt.Sprintf("urn:vcloud:type:%s:%s:%s", params["TypeVendor"].(string), params["TypeNamespace"].(string), params["TypeVersion"].(string))),
+					resource.TestCheckResourceAttr(typeName, "id", fmt.Sprintf("urn:vcloud:type:%s:%s:%s", params["TypeVendor"].(string), params["TypeNss"].(string), params["TypeVersion"].(string))),
 					resource.TestCheckResourceAttr(typeName, "readonly", "false"),
 					resource.TestMatchResourceAttr(typeName, "schema", regexp.MustCompile("{.*\"title\":\"tkgcluster\".*}")),
-					resource.TestCheckResourceAttrPair(typeName, "interface_ids.0", "data.vcd_rde_interface.interface-ds", "id"),
+					resource.TestCheckResourceAttrPair(typeName, "interface_ids.0", "data.vcd_rde_interface.interface_ds", "id"),
 				),
 			},
 		},
@@ -55,10 +54,16 @@ func TestAccVcdRdeTypeDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdRdeTypeDS = testAccVcdRdeDefinedInterfaceDS + `
-data "vcd_rde_type" "rde-type-ds" {
-  namespace = "{{.TypeNamespace}}"
-  version   = "{{.TypeVersion}}"
-  vendor    = "{{.TypeVendor}}"
+const testAccVcdRdeTypeDS = `
+data "vcd_rde_interface" "interface_ds" {
+  nss     = "{{.InterfaceNss}}"
+  version = "{{.InterfaceVersion}}"
+  vendor  = "{{.InterfaceVendor}}"
+}
+
+data "vcd_rde_type" "rde_type_ds" {
+  nss     = "{{.TypeNss}}"
+  version = "{{.TypeVersion}}"
+  vendor  = "{{.TypeVendor}}"
 }
 `

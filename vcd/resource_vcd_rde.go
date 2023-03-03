@@ -145,7 +145,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		tenantContext.OrgName = org.AdminOrg.Name
 	}
 
-	jsonSchema, err := getRdeJson(d)
+	jsonSchema, err := getRdeJson(vcdClient, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -184,11 +184,11 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 // getRdeJson gets the RDE as JSON from the Terraform configuration
-func getRdeJson(d *schema.ResourceData) (map[string]interface{}, error) {
+func getRdeJson(vcdClient *VCDClient, d *schema.ResourceData) (map[string]interface{}, error) {
 	var jsonRde string
 	var err error
 	if url, isUrlSet := d.GetOk("input_entity_url"); isUrlSet {
-		jsonRde, err = fileFromUrlToString(url.(string), ".json")
+		jsonRde, err = fileFromUrlToString(vcdClient, url.(string), ".json")
 		if err != nil {
 			return nil, fmt.Errorf("could not download JSON RDE from url %s: %s", url, err)
 		}
@@ -288,7 +288,7 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	jsonEntity, err := getRdeJson(d)
+	jsonEntity, err := getRdeJson(vcdClient, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
