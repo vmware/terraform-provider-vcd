@@ -23,6 +23,12 @@ func TestAccVcdVsphereSubscriber(t *testing.T) {
 	if testConfig.VCD.Catalog.VSphereSubscribedCatalog == "" {
 		t.Skip("vSphereSubscribedCatalog was not defined")
 	}
+
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
+	}
+
 	subscriberCatalog := t.Name()
 	subscriberOrg := testConfig.VCD.Org
 	var params = StringMap{
@@ -68,6 +74,11 @@ func TestAccVcdVsphereSubscriber(t *testing.T) {
 func TestAccVcdSubscribedCatalog(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
+	}
 
 	var (
 		publisherDescription  = "test publisher catalog"
