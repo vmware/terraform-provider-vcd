@@ -651,7 +651,7 @@ data "http" "vcdkeconfig_instance_template_from_url" {
   url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json"
 }
 data "template_file" "vcdkeconfig_instance_template" {
-  template = data.http.vcdkeconfig_instance_template_from_url.body
+  template = data.http.vcdkeconfig_instance_template_from_url.response_body
   vars = {
     capvcd_version                  = var.capvcd_version
     cpi_version                     = var.cpi_version
