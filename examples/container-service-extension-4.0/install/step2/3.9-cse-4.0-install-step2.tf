@@ -655,7 +655,7 @@ data "vcd_rde_type" "existing_vcdkeconfig_type" {
 
 # This RDE should be applied as it is
 resource "vcd_rde" "vcdkeconfig_instance" {
-  org              = "System"
+  org              = var.administrator_org
   name             = "vcdKeConfig"
   rde_type_vendor  = data.vcd_rde_type.existing_vcdkeconfig_type.vendor
   rde_type_nss     = data.vcd_rde_type.existing_vcdkeconfig_type.nss
@@ -724,7 +724,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     "cse.vcdUsername" = var.cse_admin_user
 
     # CSE admin account's org
-    "cse.userOrg" = "System"
+    "cse.userOrg" = var.administrator_org
   }
 
   customization {
