@@ -4,10 +4,12 @@
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
 #   before applying this configuration.
 #
-# * Please apply Step 1 first, located at https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
+# * Please apply "3.9-cse-4.0-install-step1.tf" first, located at
+#   https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
-#   For example, network settings such as firewall rules, network subnets, VDC allocation modes, ALB feature set, etc.
+#   For example, network settings such as firewall rules, network subnets, VDC allocation modes, ALB feature set, etc should be
+#   carefully reviewed.
 #
 # * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
 #   You can check the comments on each resource/data source for more help and context.
@@ -35,6 +37,9 @@ provider "vcd" {
   logging              = true
   logging_file         = "cse_install_step2.log"
 }
+
+# The two resources below will create the two Organizations mentioned in the CSE documentation:
+# https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 
 # The Solution Organization will host the CSE Server and its intended to be used by CSE Administrators only.
 # The Kubernetes clusters are NOT placed here. The attributes related to lease are set to unlimited, as the CSE
@@ -82,7 +87,8 @@ resource "vcd_org" "cluster_organization" {
   }
 }
 
-# The VM Sizing Policies defined below must be created as they are. Nothing should be changed here.
+# The VM Sizing Policies defined below MUST be created as they are specified in this HCL. These are the default
+# policies required by CSE to create Kubernetes clusters, hence nothing should be modified here.
 resource "vcd_vm_sizing_policy" "tkg_xl" {
   name        = "TKG extra_large"
   description = "Extra large VM sizing policy for a Kubernetes cluster node"
@@ -139,18 +145,18 @@ data "vcd_nsxt_edge_cluster" "cluster_edgecluster" {
   name            = var.nsxt_edge_cluster_name
 }
 
-# The VDC that will host the Kubernetes clusters
+# The VDC that will host the Kubernetes clusters.
 resource "vcd_org_vdc" "cluster_vdc" {
   name        = "cluster_vdc"
   description = "Cluster VDC"
   org         = vcd_org.cluster_organization.name
 
-  allocation_model  = "AllocationVApp" # You can use other models
+  allocation_model  = "AllocationVApp" # You can use other models.
   network_pool_name = var.network_pool_name
   provider_vdc_name = data.vcd_provider_vdc.nsxt_pvdc.name
   edge_cluster_id   = data.vcd_nsxt_edge_cluster.cluster_edgecluster.id
 
-  # You can tune these arguments to your fit your needs
+  # You can tune these arguments to your fit your needs.
   network_quota = 50
   compute_capacity {
     cpu {
@@ -162,21 +168,21 @@ resource "vcd_org_vdc" "cluster_vdc" {
     }
   }
 
-  # You can tune these arguments to your fit your needs
+  # You can tune these arguments to your fit your needs.
   storage_profile {
     name    = "*"
     limit   = 0
     default = true
   }
 
-  # You can tune these arguments to your fit your needs
+  # You can tune these arguments to your fit your needs.
   enabled                  = true
   enable_thin_provisioning = true
   enable_fast_provisioning = true
   delete_force             = true
   delete_recursive         = true
 
-  # Make sure you specify the required VM Sizing Policies
+  # Make sure you specify the required VM Sizing Policies managed by the resources specified above.
   default_compute_policy_id = vcd_vm_sizing_policy.tkg_s.id
   vm_sizing_policy_ids = [
     vcd_vm_sizing_policy.tkg_xl.id,
@@ -268,7 +274,7 @@ resource "vcd_catalog_access_control" "tkgm_catalog_ac" {
 
 # We upload a minimum set of OVAs for CSE to work. Read the official documentation to check
 # where to find the OVAs:
-# https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.0/VMware-Cloud-Director-Container-Service-Extension-Install-provider-4.0/GUID-519D73E8-5459-439E-AB92-83076F556E53.html#GUID-519D73E8-5459-439E-AB92-83076F556E53
+# https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 resource "vcd_catalog_vapp_template" "tkgm_ova" {
   org        = vcd_org.solutions_organization.name # References the Solutions Organization created previously
   catalog_id = vcd_catalog.tkgm_catalog.id         # References the TKGm Catalog created previously
@@ -287,13 +293,15 @@ resource "vcd_catalog_vapp_template" "cse_ova" {
   ova_path    = format("%s/%s", var.cse_ova_folder, var.cse_ova_file)
 }
 
-# Fetch the RDE Type created in previous step
+# Fetch the RDE Type created in 3.9-cse-4.0-install-step1.tf. This is required to be able to create the following
+# Rights Bundle.
 data "vcd_rde_type" "existing_capvcdcluster_type" {
   vendor  = "vmware"
   nss     = "capvcdCluster"
   version = "1.1.0"
 }
 
+# This resource manages the Rights Bundle required by tenants to create and consume Kubernetes clusters.
 resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
   name        = "Kubernetes Clusters Rights Bundle"
   description = "Rights bundle with required rights for managing Kubernetes clusters"
@@ -325,9 +333,11 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
     "vmware:tkgcluster: Administrator View",
     "vmware:tkgcluster: Administrator Full access",
   ]
-  publish_to_all_tenants = true
+  publish_to_all_tenants = true # This needs to be published to all the Organizations
 }
 
+# With the Rights Bundle specified above, we need also a new Role for tenant users who want to create and manage
+# Kubernetes clusters.
 resource "vcd_global_role" "k8s_cluster_author" {
   name        = "Kubernetes Cluster Author"
   description = "Role to create Kubernetes clusters"
@@ -390,13 +400,16 @@ resource "vcd_global_role" "k8s_cluster_author" {
     "vmware:tkgcluster: Administrator Full access",
   ]
 
-  publish_to_all_tenants = true
+  publish_to_all_tenants = true # This needs to be published to all the Organizations
 
   # As we use rights created by the CAPVCD Type created previously, we need to depend on it
   depends_on = [
     vcd_rights_bundle.k8s_clusters_rights_bundle
   ]
 }
+
+# The networking setup specified below will configure one Provider Gateway + Edge Gateway + Routed network per
+# organization. You can customise this section according to your needs.
 
 data "vcd_nsxt_manager" "cse_nsxt_manager" {
   name = var.nsxt_manager_name
@@ -453,6 +466,7 @@ resource "vcd_external_network_v2" "cluster_tier0" {
   }
 }
 
+# This Edge Gateway will consume automatically the available IPs from the Provider Gateway.
 resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   org      = vcd_org.solutions_organization.name
   owner_id = vcd_org_vdc.solutions_vdc.id
@@ -484,6 +498,7 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   #  }
 }
 
+# This Edge Gateway will consume automatically the available IPs from the Provider Gateway.
 resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   org      = vcd_org.cluster_organization.name
   owner_id = vcd_org_vdc.cluster_vdc.id
@@ -515,6 +530,7 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   #  }
 }
 
+# CSE requires ALB to be configured to support the LoadBalancers that are deployed by the CPI of VMware Cloud Director.
 resource "vcd_nsxt_alb_controller" "cse_avi_controller" {
   name     = "cse_alb_controller"
   username = var.alb_controller_username
@@ -568,6 +584,7 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "cluster_assignment" {
   max_virtual_services      = 50
 }
 
+## ALB for cluster edge gateway
 resource "vcd_nsxt_alb_settings" "cluster_alb_settings" {
   org             = vcd_org.cluster_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
@@ -576,6 +593,7 @@ resource "vcd_nsxt_alb_settings" "cluster_alb_settings" {
   depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
 }
 
+# We create a Routed network in the Solutions organization that will be used by the CSE Server.
 resource "vcd_network_routed_v2" "solutions_routed_network" {
   org         = vcd_org.solutions_organization.name
   name        = "solutions_routed_network"
@@ -594,6 +612,7 @@ resource "vcd_network_routed_v2" "solutions_routed_network" {
   dns1       = var.solutions_routed_network_dns
 }
 
+# We create a Routed network in the Cluster organization that will be used by the Kubernetes clusters.
 resource "vcd_network_routed_v2" "cluster_routed_network" {
   org         = vcd_org.cluster_organization.name
   name        = "cluster_net_routed"
@@ -612,6 +631,7 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
   dns1       = var.solutions_routed_network_dns
 }
 
+# We need route advertisement in both networks to provide with Internet connectivity.
 resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
   enabled         = true
@@ -650,14 +670,14 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
   }
 }
 
-# Fetch the RDE Type created in previous step
+# Fetch the RDE Type created in 3.9-cse-4.0-install-step1.tf, as we need to create the configuration instance.
 data "vcd_rde_type" "existing_vcdkeconfig_type" {
   vendor  = "vmware"
   nss     = "VCDKEConfig"
   version = "1.0.0"
 }
 
-# This RDE should be applied as it is
+# This RDE should be applied as it is.
 resource "vcd_rde" "vcdkeconfig_instance" {
   org              = var.administrator_org
   name             = "vcdKeConfig"
