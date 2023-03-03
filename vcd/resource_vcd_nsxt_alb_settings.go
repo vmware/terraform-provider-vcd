@@ -206,11 +206,11 @@ func getNsxtAlbConfigurationType(d *schema.ResourceData, vcdClient *VCDClient) (
 	}
 
 	// Setting transparent mode is only possible in VCD 10.4.1+ (37.1+), throw error otherwise
-	transparentModeValue, isTransparentModeEnabled := d.GetOkExists("is_transparent_mode_enabled")
-	if isTransparentModeEnabled {
+	if !d.GetRawConfig().GetAttr("is_transparent_mode_enabled").IsNull() {
 		if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
 			return nil, fmt.Errorf("setting 'is_transparent_mode_enabled' is only supported in VCD 10.4.1+ (37.1+)")
 		}
+		transparentModeValue := d.Get("is_transparent_mode_enabled")
 		albConfig.TransparentModeEnabled = takeBoolPointer(transparentModeValue.(bool))
 	}
 
