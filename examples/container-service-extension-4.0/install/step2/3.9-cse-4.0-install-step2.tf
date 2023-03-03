@@ -590,6 +590,8 @@ resource "vcd_network_routed_v2" "solutions_routed_network" {
     start_address = var.solutions_routed_network_ip_pool_start_address
     end_address   = var.solutions_routed_network_ip_pool_end_address
   }
+
+  dns1       = var.solutions_routed_network_dns
 }
 
 resource "vcd_network_routed_v2" "cluster_routed_network" {
@@ -606,6 +608,8 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
     start_address = var.cluster_routed_network_ip_pool_start_address
     end_address   = var.cluster_routed_network_ip_pool_end_address
   }
+
+  dns1       = var.solutions_routed_network_dns
 }
 
 resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
@@ -715,7 +719,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     "cse.vcdHost" = var.vcd_url
 
     # CSE Server org
-    "cse.AppOrg" = vcd_org.solutions_organization.name
+    "cse.vAppOrg" = vcd_org.solutions_organization.name
 
     # CSE admin account's Access Token
     "cse.vcdRefreshToken" = var.cse_admin_api_token
