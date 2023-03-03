@@ -52,7 +52,7 @@ resource "vcd_rde_type" "vcdkeconfig_type" {
   nss           = "VCDKEConfig"
   version       = "1.0.0"
   name          = "VCD-KE RDE Schema"
-  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse40-guide/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 
@@ -71,7 +71,7 @@ resource "vcd_rde_type" "capvcdcluster_type" {
   nss           = "capvcdCluster"
   version       = "1.1.0"
   name          = "CAPVCD Cluster"
-  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse40-guide/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 }
 

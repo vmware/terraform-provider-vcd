@@ -461,7 +461,7 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   external_network_id       = vcd_external_network_v2.solutions_tier0.id
   dedicate_external_network = true
 
-  # TODO: Change to auto_subnet!!!
+  # TODO: Change to automatic allocation!!!
   subnet {
     gateway       = var.solutions_provider_gateway_gateway_ip
     prefix_length = var.solutions_provider_gateway_gateway_prefix_length
@@ -492,7 +492,7 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   external_network_id       = vcd_external_network_v2.cluster_tier0.id
   dedicate_external_network = true
 
-  # TODO: Change to auto_subnet!!!
+  # TODO: Change to automatic allocation!!!
   subnet {
     gateway       = var.cluster_provider_gateway_gateway_ip
     prefix_length = var.cluster_provider_gateway_gateway_prefix_length
@@ -650,20 +650,10 @@ resource "vcd_nsxt_firewall" "cluster_firewall" {
 data "http" "vcdkeconfig_instance_template_from_url" {
   url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json"
 }
-data "template_file" "vcdkeconfig_instance_template" {
-  template = data.http.vcdkeconfig_instance_template_from_url.response_body
-  vars = {
-    capvcd_version                  = var.capvcd_version
-    cpi_version                     = var.cpi_version
-    csi_version                     = var.csi_version
-    github_personal_access_token    = var.github_personal_access_token
-    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy
-    no_proxy                        = var.no_proxy
-    http_proxy                      = var.http_proxy
-    https_proxy                     = var.https_proxy
-    syslog_host                     = var.syslog_host
-    syslog_port                     = var.syslog_port
-  }
+
+resource "local_file" "vcdkeconfig_instance_template_local_file" {
+  content  = data.http.vcdkeconfig_instance_template_from_url.response_body
+  filename = "${path.module}/vcdkeconfig-template.json"
 }
 
 # Fetch the RDE Type created in previous step
@@ -681,7 +671,18 @@ resource "vcd_rde" "vcdkeconfig_instance" {
   rde_type_nss     = data.vcd_rde_type.existing_vcdkeconfig_type.nss
   rde_type_version = data.vcd_rde_type.existing_vcdkeconfig_type.version
   resolve          = true
-  input_entity     = data.template_file.vcdkeconfig_instance_template.rendered
+  input_entity     = templatefile(local_file.vcdkeconfig_instance_template_local_file.filename, {
+    capvcd_version                  = var.capvcd_version
+    cpi_version                     = var.cpi_version
+    csi_version                     = var.csi_version
+    github_personal_access_token    = var.github_personal_access_token
+    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy
+    no_proxy                        = var.no_proxy
+    http_proxy                      = var.http_proxy
+    https_proxy                     = var.https_proxy
+    syslog_host                     = var.syslog_host
+    syslog_port                     = var.syslog_port
+    })
 }
 
 resource "vcd_vapp" "cse_server_vapp" {
