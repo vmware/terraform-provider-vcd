@@ -4,41 +4,58 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+type distributedFirewallEntities struct {
+	org             string
+	vdc             string
+	routedNetwork   string
+	isolatedNetwork string
+	directNetwork   string
+	vApp            string
+	vm              string
+	edge            string
+	ipSet           string
+}
+
 func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
-	orgName := testConfig.VCD.Org
-
 	// TODO: get the network and vApp/VM names from configuration file (requires provisioner update)
-	routedNetworkName := fmt.Sprintf("net-%s-r", orgName)
-	directNetworkName := fmt.Sprintf("net-%s-d", orgName)
-	isolatedNetworkName := fmt.Sprintf("net-%s-i", orgName)
-	vappName := "TestVapp"
-	testVmName := "TestVm"
-	// String map to fill the template
+	entities := distributedFirewallEntities{
+		org:             testConfig.VCD.Org,
+		vdc:             testConfig.VCD.Vdc,
+		routedNetwork:   fmt.Sprintf("net-%s-r", testConfig.VCD.Org),
+		isolatedNetwork: fmt.Sprintf("net-%s-r", testConfig.VCD.Org),
+		directNetwork:   fmt.Sprintf("net-%s-d", testConfig.VCD.Org),
+		vApp:            "TestVapp",
+		vm:              "TestVm",
+		ipSet:           "TestIpSet",
+		edge:            testConfig.Networking.EdgeGateway,
+	}
+
 	var params = StringMap{
-		"Org":                   orgName,
+		"Org":                   entities.org,
 		"Name":                  t.Name(),
-		"Vdc":                   testConfig.VCD.Vdc,
-		"RoutedNetwork":         routedNetworkName,
-		"DirectNetwork":         directNetworkName,
-		"IsolatedNetwork":       isolatedNetworkName,
-		"IpSetName":             "TestIpSet",
-		"VappName":              vappName,
-		"VmName":                testVmName,
-		"EdgeName":              testConfig.Networking.EdgeGateway,
+		"Vdc":                   entities.vdc,
+		"RoutedNetwork":         entities.routedNetwork,
+		"IsolatedNetwork":       entities.isolatedNetwork,
+		"DirectNetwork":         entities.directNetwork,
+		"IpSetName":             entities.ipSet,
+		"VappName":              entities.vApp,
+		"VmName":                entities.vm,
+		"EdgeName":              entities.edge,
 		"TestName":              t.Name(),
 		"ProviderOrgDef":        " ",
-		"ProviderSystemDef":     fmt.Sprintf(`provider = "%s"`, providerVcdSystem),
+		"ProviderSystemDef":     fmt.Sprintf(`provider = %s`, providerVcdSystem),
 		"DistributedFirewallId": "data.vcd_org_vdc.my-vdc.id",
 		"FuncName":              t.Name(),
-		"SkipMessage":           " ",
 		"Tags":                  "vdc network",
 	}
 	testParamsNotEmpty(t, params)
@@ -46,48 +63,45 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 	configText := templateFill(testAccNsxvDistributedFirewall, params)
 	debugPrintf("#[DEBUG] %s CONFIGURATION: %s", t.Name(), configText)
 
-	params["ProviderOrgDef"] = fmt.Sprintf(`provider = "%s"`, providerVcdOrg1)
-	params["SkipMessage"] = "# skip-binary-test: not suitable for binary tests"
+	params["ProviderOrgDef"] = fmt.Sprintf(`provider = %s`, providerVcdOrg1)
 	params["FuncName"] = t.Name() + "-multi"
 	params["DistributedFirewallId"] = "vcd_nsxv_distributed_firewall.dfw1Init.vdc_id"
 	configTextMulti := templateFill(testAccNsxvDistributedFirewallInit+testAccNsxvDistributedFirewall, params)
-	debugPrintf("#[DEBUG] %s CONFIGURATION: %s", t.Name(), configText)
+	debugPrintf("#[DEBUG] %s CONFIGURATION - multi: %s", t.Name(), configTextMulti)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
 	dfwResource := "vcd_nsxv_distributed_firewall.dfw1"
+	dfwDataSource := "data.vcd_nsxv_distributed_firewall.dfw1-ds"
 	t.Run("all-sysadmin", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: testAccProviders,
-			Steps:             distributedFirewallTestSteps(configText, dfwResource, isolatedNetworkName),
+			CheckDestroy:      testCheckDistributedFirewallExistDestroy(entities, false),
+			Steps:             distributedFirewallTestSteps(configText, dfwResource, dfwDataSource, entities),
 		})
 	})
 	t.Run("multi-provider", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: buildMultipleProviders(),
-			Steps:             distributedFirewallTestSteps(configTextMulti, dfwResource, isolatedNetworkName),
+			CheckDestroy:      testCheckDistributedFirewallExistDestroy(entities, false),
+			Steps:             distributedFirewallTestSteps(configTextMulti, dfwResource, dfwDataSource, entities),
 		})
 	})
 	postTestChecks(t)
 }
 
-func distributedFirewallTestSteps(configText, dfwResource, networkName string) []resource.TestStep {
-
+func distributedFirewallTestSteps(configText, dfwResource, dfwDataSource string, entities distributedFirewallEntities) []resource.TestStep {
 	return []resource.TestStep{
 		{
 			Config: configText,
 			Check: resource.ComposeAggregateTestCheckFunc(
+				testCheckDistributedFirewallExistDestroy(entities, true),
 				resource.TestCheckResourceAttrSet(dfwResource, "id"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.#", "4"),
 				//logState("distributed-firewall-rules"),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.source.*",
-					map[string]string{
-						"name":  "10.10.1.0-10.10.1.100",
-						"value": "10.10.1.0-10.10.1.100",
-						"type":  "Ipv4Address",
-					}),
 				resource.TestCheckResourceAttr(dfwResource, "rule.3.name", "fallback"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.3.action", "deny"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.3.direction", "inout"),
@@ -109,7 +123,7 @@ func distributedFirewallTestSteps(configText, dfwResource, networkName string) [
 				resource.TestCheckResourceAttr(dfwResource, "rule.0.direction", "inout"),
 				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.source.*",
 					map[string]string{
-						"name": "TestIpSet",
+						"name": entities.ipSet,
 						"type": "IPSet",
 					}),
 				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.application.*",
@@ -129,22 +143,83 @@ func distributedFirewallTestSteps(configText, dfwResource, networkName string) [
 					}),
 				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.applied_to.*",
 					map[string]string{
-						"name": testConfig.Networking.EdgeGateway,
+						"name": entities.edge,
 						"type": "Edge",
+					}),
+				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.source.*",
+					map[string]string{
+						"name":  "10.10.1.0-10.10.1.100",
+						"value": "10.10.1.0-10.10.1.100",
+						"type":  "Ipv4Address",
+					}),
+				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.applied_to.*",
+					map[string]string{
+						"name": entities.vdc,
+						"type": "VDC",
+					}),
+				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.destination.*",
+					map[string]string{
+						"name": entities.routedNetwork,
+						"type": "Network",
 					}),
 				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.2.destination.*",
 					map[string]string{
-						"name": networkName,
+						"name": entities.isolatedNetwork,
 						"type": "Network",
 					}),
+				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.3.applied_to.*",
+					map[string]string{
+						"name": entities.vdc,
+						"type": "VDC",
+					}),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.0.name", dfwDataSource, "rule.0.name"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.0.action", dfwDataSource, "rule.0.action"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.0.direction", dfwDataSource, "rule.0.direction"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.1.name", dfwDataSource, "rule.1.name"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.1.action", dfwDataSource, "rule.1.action"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.1.direction", dfwDataSource, "rule.1.direction"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.2.name", dfwDataSource, "rule.2.name"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.2.action", dfwDataSource, "rule.2.action"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.2.direction", dfwDataSource, "rule.2.direction"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.3.name", dfwDataSource, "rule.3.name"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.3.action", dfwDataSource, "rule.3.action"),
+				resource.TestCheckResourceAttrPair(dfwResource, "rule.3.direction", dfwDataSource, "rule.3.direction"),
 			),
 		},
 		{
 			ResourceName:      dfwResource,
 			ImportState:       true,
 			ImportStateVerify: true,
-			ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, testConfig.VCD.Vdc),
+			ImportStateIdFunc: importStateIdOrgObject(entities.org, entities.vdc),
 		},
+	}
+}
+
+func testCheckDistributedFirewallExistDestroy(entities distributedFirewallEntities, wantExist bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.GetAdminOrgByName(entities.org)
+		if err != nil {
+			return err
+		}
+		vdc, err := org.GetVDCByName(entities.vdc, false)
+		if err != nil {
+			return err
+		}
+		dfw := govcd.NewNsxvDistributedFirewall(&conn.Client, vdc.Vdc.ID)
+		configuration, err := dfw.GetConfiguration()
+		if wantExist {
+			if err != nil || (configuration == nil || configuration.Layer3Sections == nil || configuration.Layer3Sections.Section == nil ||
+				len(configuration.Layer3Sections.Section.Rule) == 0) {
+				return fmt.Errorf("distributed firewall for VDC %s does not exist", vdc.Vdc.Name)
+			}
+		} else {
+			if err == nil || (configuration != nil && configuration.Layer3Sections != nil && configuration.Layer3Sections.Section != nil &&
+				len(configuration.Layer3Sections.Section.Rule) > 0) {
+				return fmt.Errorf("distributed firewall for VDC %s still exists", vdc.Vdc.Name)
+			}
+		}
+		return nil
 	}
 }
 
@@ -178,11 +253,11 @@ data "vcd_network_routed" "net-r" {
   name = "{{.RoutedNetwork}}"
 }
 
-data "vcd_network_direct" "net-d" {
-  {{.ProviderOrgDef}}
-  vdc  = data.vcd_org_vdc.my-vdc.name
-  name = "{{.DirectNetwork}}"
-}
+#data "vcd_network_direct" "net-d" {
+#  {{.ProviderOrgDef}}
+#  vdc  = data.vcd_org_vdc.my-vdc.name
+#  name = "{{.DirectNetwork}}"
+#}
 
 data "vcd_network_isolated" "net-i" {
   {{.ProviderOrgDef}}
@@ -326,10 +401,14 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
     }
   }
 }
+
+data "vcd_nsxv_distributed_firewall" "dfw1-ds" {
+  {{.ProviderOrgDef}}
+  vdc_id  = vcd_nsxv_distributed_firewall.dfw1.vdc_id
+}
 `
 
 const testAccNsxvDistributedFirewallInit = `
-{{.SkipMessage}}
 data "vcd_org_vdc" "my-vdc-system" {
   {{.ProviderSystemDef}}
   org  = "{{.Org}}"
@@ -341,8 +420,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1Init" {
   vdc_id  = data.vcd_org_vdc.my-vdc-system.id
   enabled = true
   lifecycle {
-    ignore_changes = [ "rule" ]
+    ignore_changes = [ rule ]
   }
 }
-
 `
