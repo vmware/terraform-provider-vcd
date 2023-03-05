@@ -27,7 +27,6 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
-	// TODO: get the network and vApp/VM names from configuration file (requires provisioner update)
 	entities := distributedFirewallEntities{
 		org:             testConfig.VCD.Org,
 		vdc:             testConfig.VCD.Vdc,
