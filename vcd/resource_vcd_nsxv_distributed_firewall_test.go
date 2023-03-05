@@ -94,6 +94,61 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 }
 
 func distributedFirewallTestSteps(configText, dfwResource, dfwDataSource string, entities distributedFirewallEntities) []resource.TestStep {
+	checkInnerRules := func(resourceName string) resource.TestCheckFunc {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.0.source.*",
+				map[string]string{
+					"name": entities.ipSet,
+					"type": "IPSet",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.0.application.*",
+				map[string]string{
+					"protocol":         "TCP",
+					"source_port":      "20250",
+					"destination_port": "20251",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.0.application.*",
+				map[string]string{
+					"name": "POP3",
+					"type": "Application",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.0.application.*",
+				map[string]string{
+					"type": "ApplicationGroup",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.0.applied_to.*",
+				map[string]string{
+					"name": entities.edge,
+					"type": "Edge",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.1.source.*",
+				map[string]string{
+					"name":  "10.10.1.0-10.10.1.100",
+					"value": "10.10.1.0-10.10.1.100",
+					"type":  "Ipv4Address",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.1.applied_to.*",
+				map[string]string{
+					"name": entities.vdc,
+					"type": "VDC",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.1.destination.*",
+				map[string]string{
+					"name": entities.routedNetwork,
+					"type": "Network",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.2.destination.*",
+				map[string]string{
+					"name": entities.isolatedNetwork,
+					"type": "Network",
+				}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceName, "rule.3.applied_to.*",
+				map[string]string{
+					"name": entities.vdc,
+					"type": "VDC",
+				}),
+		)
+	}
 	return []resource.TestStep{
 		{
 			Config: configText,
@@ -101,7 +156,7 @@ func distributedFirewallTestSteps(configText, dfwResource, dfwDataSource string,
 				testCheckDistributedFirewallExistDestroy(entities, true),
 				resource.TestCheckResourceAttrSet(dfwResource, "id"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.#", "4"),
-				//logState("distributed-firewall-rules"),
+
 				resource.TestCheckResourceAttr(dfwResource, "rule.3.name", "fallback"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.3.action", "deny"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.3.direction", "inout"),
@@ -109,8 +164,8 @@ func distributedFirewallTestSteps(configText, dfwResource, dfwDataSource string,
 				resource.TestCheckResourceAttr(dfwResource, "rule.2.name", "negated-destination"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.2.action", "allow"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.2.direction", "in"),
-				resource.TestCheckResourceAttr(dfwResource, "rule.2.exclude_destination", "true"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.2.exclude_source", "false"),
+				resource.TestCheckResourceAttr(dfwResource, "rule.2.exclude_destination", "true"),
 
 				resource.TestCheckResourceAttr(dfwResource, "rule.1.name", "negated-source"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.1.action", "allow"),
@@ -121,57 +176,9 @@ func distributedFirewallTestSteps(configText, dfwResource, dfwDataSource string,
 				resource.TestCheckResourceAttr(dfwResource, "rule.0.name", "straight"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.0.action", "allow"),
 				resource.TestCheckResourceAttr(dfwResource, "rule.0.direction", "inout"),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.source.*",
-					map[string]string{
-						"name": entities.ipSet,
-						"type": "IPSet",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.application.*",
-					map[string]string{
-						"protocol":         "TCP",
-						"source_port":      "20250",
-						"destination_port": "20251",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.application.*",
-					map[string]string{
-						"name": "POP3",
-						"type": "Application",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.application.*",
-					map[string]string{
-						"type": "ApplicationGroup",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.0.applied_to.*",
-					map[string]string{
-						"name": entities.edge,
-						"type": "Edge",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.source.*",
-					map[string]string{
-						"name":  "10.10.1.0-10.10.1.100",
-						"value": "10.10.1.0-10.10.1.100",
-						"type":  "Ipv4Address",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.applied_to.*",
-					map[string]string{
-						"name": entities.vdc,
-						"type": "VDC",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.1.destination.*",
-					map[string]string{
-						"name": entities.routedNetwork,
-						"type": "Network",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.2.destination.*",
-					map[string]string{
-						"name": entities.isolatedNetwork,
-						"type": "Network",
-					}),
-				resource.TestCheckTypeSetElemNestedAttrs(dfwResource, "rule.3.applied_to.*",
-					map[string]string{
-						"name": entities.vdc,
-						"type": "VDC",
-					}),
+				checkInnerRules(dfwResource),
+
+				// Check data source correspondence
 				resource.TestCheckResourceAttrPair(dfwResource, "rule.0.name", dfwDataSource, "rule.0.name"),
 				resource.TestCheckResourceAttrPair(dfwResource, "rule.0.action", dfwDataSource, "rule.0.action"),
 				resource.TestCheckResourceAttrPair(dfwResource, "rule.0.direction", dfwDataSource, "rule.0.direction"),
@@ -184,6 +191,7 @@ func distributedFirewallTestSteps(configText, dfwResource, dfwDataSource string,
 				resource.TestCheckResourceAttrPair(dfwResource, "rule.3.name", dfwDataSource, "rule.3.name"),
 				resource.TestCheckResourceAttrPair(dfwResource, "rule.3.action", dfwDataSource, "rule.3.action"),
 				resource.TestCheckResourceAttrPair(dfwResource, "rule.3.direction", dfwDataSource, "rule.3.direction"),
+				checkInnerRules(dfwDataSource),
 			),
 		},
 		{
