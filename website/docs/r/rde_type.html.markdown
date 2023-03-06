@@ -57,8 +57,8 @@ The following arguments are supported:
 
 -> The 3-tuple of `vendor`, `nss` and `version` specifies a unique RDE Type.
 
-* `vendor` - (Required) The vendor of the Runtime Defined Entity Type.
-* `nss` - (Required) A unique namespace associated with the Runtime Defined Entity Type.
+* `vendor` - (Required) The vendor of the Runtime Defined Entity Type. Only alphanumeric characters, underscores and hyphens allowed.
+* `nss` - (Required) A unique namespace associated with the Runtime Defined Entity Type. Only alphanumeric characters, underscores and hyphens allowed.
 * `version` - (Required) The version of the Runtime Defined Entity Type. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the Runtime Defined Entity Type.
 * `description` - (Optional) The description of the Runtime Defined Entity Type.

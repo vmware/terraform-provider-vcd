@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -31,16 +33,18 @@ func resourceVcdRdeType() *schema.Resource {
 				Description: "The name of the Runtime Defined Entity Type",
 			},
 			"vendor": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The vendor name for the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed"),
+				Description:  "The vendor name for the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"nss": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "A unique namespace associated with the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed"),
+				Description:  "A unique namespace associated with the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"version": {
 				Type:        schema.TypeString,
