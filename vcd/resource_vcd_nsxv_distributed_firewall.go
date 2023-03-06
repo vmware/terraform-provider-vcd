@@ -294,9 +294,6 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 	if !isEnabled && wantToEnable {
-		if !vcdClient.Client.IsSysAdmin {
-			return diag.Errorf("distributed firewall for VDC %s cannot be enabled without System administrator privileges ", vdcId)
-		}
 		err := dfw.Enable()
 		if err != nil {
 			return diag.FromErr(err)
@@ -304,12 +301,9 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 		isEnabled = true
 	}
 	if !isEnabled {
-		return diag.Errorf("distributed firewall for VDC %s needs to be enabled before being configured by a non-system administrator", vdcId)
+		return diag.Errorf("distributed firewall for VDC %s needs to be enabled before being configured", vdcId)
 	}
 	if !wantToEnable {
-		if !vcdClient.Client.IsSysAdmin {
-			return diag.Errorf("distributed firewall for VDC %s cannot be disabled without System administrator privileges ", vdcId)
-		}
 		err := dfw.Disable()
 		if err != nil {
 			return diag.FromErr(err)
@@ -344,16 +338,9 @@ func resourceVcdNsxvDistributedFirewallDelete(_ context.Context, d *schema.Resou
 	}
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 	util.Logger.Printf("[INFO] disabling NSX-V distributed firewall for VDC %s\n", vdcId)
-	if vcdClient.Client.IsSysAdmin {
-		err := dfw.Disable()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return nil
-	}
-	_, err := dfw.UpdateConfiguration([]types.NsxvDistributedFirewallRule{})
+	err := dfw.Disable()
 	if err != nil {
-		return diag.Errorf("error removing distributed firewall rules: %s", err)
+		return diag.FromErr(err)
 	}
 	return nil
 }

@@ -26,7 +26,6 @@ type distributedFirewallEntities struct {
 func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 	preTestChecks(t)
 
-	skipIfNotSysAdmin(t)
 	entities := distributedFirewallEntities{
 		org:             testConfig.VCD.Org,
 		vdc:             testConfig.VCD.Vdc,
@@ -52,7 +51,7 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 		"EdgeName":              entities.edge,
 		"TestName":              t.Name(),
 		"ProviderOrgDef":        " ",
-		"ProviderSystemDef":     fmt.Sprintf(`provider = %s`, providerVcdSystem),
+		"ProviderAdminDef":      fmt.Sprintf(`provider = %s`, providerVcdSystem),
 		"DistributedFirewallId": "data.vcd_org_vdc.my-vdc.id",
 		"FuncName":              t.Name(),
 		"Tags":                  "vdc network",
@@ -75,7 +74,7 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 
 	dfwResource := "vcd_nsxv_distributed_firewall.dfw1"
 	dfwDataSource := "data.vcd_nsxv_distributed_firewall.dfw1-ds"
-	t.Run("all-sysadmin", func(t *testing.T) {
+	t.Run("one-provider", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: testAccProviders,
 			CheckDestroy:      testCheckDistributedFirewallExistDestroy(entities, false),
@@ -416,15 +415,15 @@ data "vcd_nsxv_distributed_firewall" "dfw1-ds" {
 `
 
 const testAccNsxvDistributedFirewallInit = `
-data "vcd_org_vdc" "my-vdc-system" {
-  {{.ProviderSystemDef}}
+data "vcd_org_vdc" "my-vdc-admin" {
+  {{.ProviderAdminDef}}
   org  = "{{.Org}}"
   name = "{{.Vdc}}"
 }
 
 resource "vcd_nsxv_distributed_firewall" "dfw1Init" {
-  {{.ProviderSystemDef}}
-  vdc_id  = data.vcd_org_vdc.my-vdc-system.id
+  {{.ProviderAdminDef}}
+  vdc_id  = data.vcd_org_vdc.my-vdc-admin.id
   enabled = true
   lifecycle {
     ignore_changes = [ rule ]
