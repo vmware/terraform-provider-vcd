@@ -1,3 +1,5 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+
 # ------------------------------------------------
 # Provider config
 # ------------------------------------------------
