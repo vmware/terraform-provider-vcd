@@ -35,7 +35,7 @@ variable "administrator_org" {
 # CSE administrator user configuration
 # ------------------------------------------------
 
-variable "cse_admin_user" {
+variable "cse_admin_username" {
   description = "The CSE administrator user (Example: 'cse-admin')"
   type        = string
 }

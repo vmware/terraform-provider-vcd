@@ -100,12 +100,12 @@ resource "vcd_role" "cse_admin_role" {
 # This user will be used by the CSE Server, with an API token that must be created afterwards.
 resource "vcd_org_user" "cse_admin" {
   org      = var.administrator_org
-  name     = var.cse_admin_user
+  name     = var.cse_admin_username
   password = var.cse_admin_password
   role     = vcd_role.cse_admin_role.name
 }
 
 # This will output the username that you need to create an API token for.
-output "cse_admin_username" {
+output "ask_to_create_api_token" {
   value = "Please login as '${vcd_org_user.cse_admin.name}' and create an API token, as it will be required for step 2"
 }
