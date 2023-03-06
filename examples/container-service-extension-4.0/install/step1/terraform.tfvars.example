@@ -12,5 +12,7 @@ insecure_login         = "false"
 # ------------------------------------------------
 # CSE administrator user configuration
 # ------------------------------------------------
+# This user will be created by the Terraform configuration, so you can
+# customise what its user and password will be.
 cse_admin_user     = "cse-admin"
 cse_admin_password = "change-me"
