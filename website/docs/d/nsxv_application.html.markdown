@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxv\_application
 
-Provides a VMware Cloud Director NSX-V distributed firewall application used to read an existing application
+Provides a VMware Cloud Director NSX-V distributed firewall application data source used to read an existing application.
 
 Supported in provider *v3.9+*
 
@@ -44,8 +44,8 @@ pop3-application = {
 
 The following arguments are supported:
 
-* `vdc_id` - (Required) The ID of VDC to use.
-* `name` - (Required) The name of the application.
+* `vdc_id` - (Required) The ID of VDC to use
+* `name` - (Required) The name of the application
 
 ## Attribute Reference
 
@@ -54,4 +54,4 @@ The following arguments are supported:
 * `ports` - The ports used by the application. Could be a number, a list of numbers, or a range
 * `source_port` - The source port used by this application. Not all applications provide one
 * `destination_port` - The destination port used by this application. Not all applications provide one
-* `app_guid` - The application Identifier, when available
+* `app_guid` - The application identifier, when available

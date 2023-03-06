@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxv_application_group"
 sidebar_current: "docs-vcd-data-source-nsxv-application-group"
 description: |-
-  Provides a VMware Cloud Director data source for reading NSX-V distributed firewall application groups
+  Provides a VMware Cloud Director data source for reading NSX-V Distributed Firewall application groups
 ---
 
 # vcd\_nsxv\_application\_group
 
-Provides a VMware Cloud Director NSX-V distributed firewall application used to read an existing application group
+Provides a VMware Cloud Director NSX-V Distributed Firewall data source used to read an existing application group
 
 Supported in provider *v3.9+*
 
@@ -50,8 +50,8 @@ reporting-applications = {
 
 The following arguments are supported:
 
-* `vdc_id` - (Required) The ID of VDC to use.
-* `name` - (Required) The name of the application group.
+* `vdc_id` - (Required) The ID of VDC to use
+* `name` - (Required) The name of the application group
 
 ## Attribute Reference
 

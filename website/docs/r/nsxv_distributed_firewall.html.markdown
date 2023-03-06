@@ -163,9 +163,9 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 The following arguments are supported:
 
 * `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a `vcd_org_vdc` data source
-* `enabled` - (Optional) - If true, the firewall needs to be enabled. See [Enabling and disabling the Distributed Firewall](#enabling-and-disabling-the-distributed-firewall)
+* `enabled` - (Optional) - If true, the firewall will be enabled. It is necessary to have Org Admin privileges to enable the firewall
 * `rule` - (Optional) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order
-  defines firewall rule precedence**. If no rules are defined, all will be removed from the firewall.
+  defines firewall rule precedence**. If no rules are defined, all will be removed from the firewall
 
 ## Firewall Rule
 
@@ -175,7 +175,7 @@ Each Firewall Rule contains the following attributes:
 
 * `name` - (Optional) Explanatory name for firewall rule (uniqueness not enforced)
 * `direction` - (Required) One of `in`, `out`, or `inout` (default `in`)
-* `action` - (Required) Defines if it should `allow` or `deny` traffic. 
+* `action` - (Required) Defines if it should `allow` or `deny` traffic 
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
 * `source` - (Optional) A set of source objects. See below for [source or destination objects](#source-or-destination-objects)
@@ -183,8 +183,8 @@ Leaving it empty matches `any` (all)
 * `destination` - (Optional) A set of destination objects. See below for [source or destination objects](#source-or-destination-objects). Leaving it empty matches `any` (all)
 * `application` - (Optional) An optional set of applications to use for this rule. See below for [Application objects](#application-objects)
 * `applied_to` - (Required) A set of objects to which the rule applies. See below for [Source or destination objects](#source-or-destination-objects) 
-* `exclude_source` - (Optional) - reverses value of `source` for the rule to match everything except specified objects.
-* `exclude_destination` - (Optional) - reverses value of `destination` for the rule to match everything except specified objects.
+* `exclude_source` - (Optional) - reverses value of `source` for the rule to match everything except specified objects
+* `exclude_destination` - (Optional) - reverses value of `destination` for the rule to match everything except specified objects
 
 ### Source or destination objects
 
@@ -214,8 +214,8 @@ The following fields can be used:
 
 * Named applications:
   * `name` (Optional) - Required if defining a named object or object group
-  * `value` (Optional) - Required if defining a named object or object group
   * `type` (Optional) - Required if defining a named object or object group. (One of `Application` or `ApplicationGroup`)
+  * `value` (Optional) - Required if defining a named object or object group
 
 * Literal applications:
   * `protocol` (Required) - Required when defining a literal object. (One of `TCP`, `UDP`, `ICMP`)
@@ -223,28 +223,12 @@ The following fields can be used:
   * `source_port` (Optional) - The source port used by the application, if any
   * `destination_port` (Optional) - The destination port used by the application, if any
 
-## Enabling and disabling the Distributed Firewall
-
-The NSX-V Distributed firewall can be enabled or disabled by a system administrator, which has two possibilities:
-
-* Running an instance of `vcd_nsxv_distributed_firewall` setting `enabled = true`, with no rules, before allowing tenants to use it.
-* Creating a `vcd_org_vdc` with the property `enabled_distributed_firewall = true`
-
-In both cases, the distributed firewall will be ready for organization users to add and remove rules.
-
-Regarding tenant operations, the property `enabled` should always be set to `true`. This means that the user expects
-the firewall to be enabled, and the operation will fail if it is not.
-
-The user role has also implications when we want to remove the distributed firewall (`terraform destroy`). When we run the
-operation as system administrator, the firewall gets disabled, meaning that no tenant operations will be allowed after that.
-When a tenant runs `terraform destroy`, all the rules are removed, but the firewall stays enabled.
-
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing NSX-V distributed firewall can be [imported][docs-import] into this resource via supplying its path.
+An existing NSX-V Distributed Firewall can be [imported][docs-import] into this resource via supplying its path.
 The path for this resource can be one of:
 * vdc-ID
 * org-name.vdc-name

@@ -9,7 +9,7 @@ description: |-
 # vcd\_nsxv\_application_finder
 
 Provides a VMware Cloud Director NSX-V distributed firewall applications and application groups finder
-used to retrieve existing applications by regular expressions
+used to retrieve existing applications by regular expressions.
 
 Supported in provider *v3.9+*
 
@@ -117,14 +117,33 @@ applications = {
 
 The following arguments are supported:
 
-* `vdc_id` - (Required) The ID of VDC to use.
-* `search_expression` - (Required) The regular expression that will be used to search the applications
+* `vdc_id` - (Required) The ID of VDC to use
+* `search_expression` - (Required) The regular expression that will be used to search the applications. See [Search Expressions](#search-expressions) below
 * `type` - (Required) What kind of application we seek. One of `application`, `application_group`
-* `case_sensitive` (Optional) Makes the search case-sensitive. By default, it is false.
+* `case_sensitive` (Optional) Makes the search case-sensitive. By default, it is false
 
 ## Attribute Reference
 
 * `objects` - A list of objects found by the search expression. Each one contains the following properties:
   * `name` - The name of the object
-  * `value` - The identifier of the object
   * `type` - the type of the object (`Application` or `ApplicationGroup`)
+  * `value` - The identifier of the object
+
+
+## Search expressions
+
+To search for an application or application group, we can use simple or complex [regular expressions](https://en.wikipedia.org/wiki/Regular_expression).
+The expressions in this data source follow the [PCRE](https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions) standard.
+
+A **simple** regular expression is a (short) text that we expect to find within the application name. For example, the
+expression `sql` will find, among others, `Oracle i*SQLPlus` and `MSSQL Server Database Engine`, because the search, by default,
+ignores the case of the searched text.
+
+A more complex regular expression could use meta-characters and regular expression directives to search more precisely.
+For example, the expression `^server` tells the search to find a name that starts (`^`) with "server", thus finding
+"Server Message Block (SMB)" (starts with `server`), but not  "SAP MDM Server" (where `server` is not at the beginning
+of the name).
+
+If we want to search with even more accuracy, we could set the property `case_sensitive = true`, where the case of the
+text matters. Thus, searching for `VMware` would find `VMware-SRM-Replication` and `VMware-VCO-Messaging`, but not
+`Vmware-VC-WebAccess` (lowercase `m` after `V`).
