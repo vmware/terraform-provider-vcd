@@ -100,17 +100,20 @@ The [proposed configuration][step2] will create two [VDCs][vdc], one for the Sol
 
 You need to specify the following values in `terraform.tfvars`:
 
-- `provider_vdc_name`: This is used to fetch the [Provider VDC][provider_vdc] used to create the two VDCs. If you are going to use more than
-one Provider VDC, please consider modifying the proposed configuration.
-- `nsxt_edge_cluster_name`: This is used to fetch the [Edge Cluster][edge_cluster] used to create the two VDCs. If you are going to use more than
-one Edge Cluster, please consider modifying the proposed configuration.
-- `network_pool_name`: This is used to create both VDCs. If you are going to use more than
-one Network pool, please consider modifying the proposed configuration.
+- `provider_vdc_name`: This is used to fetch an existing [Provider VDC][provider_vdc], that will be used to create the two VDCs.
+  If you are going to use more than one [Provider VDC][provider_vdc], please consider modifying the proposed configuration.
+  In UI, [Provider VDCs][provider_vdc] can be found in the Provider view, inside _Cloud Resources_ menu.
+- `nsxt_edge_cluster_name`: This is used to fetch an existing [Edge Cluster][edge_cluster], that will be used to create the two VDCs.
+  If you are going to use more than one [Edge Cluster][edge_cluster], please consider modifying the proposed configuration.
+  In UI, [Edge Clusters][edge_cluster] can be found in the NSX-T manager web UI.
+- `network_pool_name`: This references an existing Network pool and it's used to create both VDCs.
+  If you are going to use more than one Network pool, please consider modifying the proposed configuration.
 
 The Cluster Organization's VDC has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
 You can customise the `default_compute_policy_id` to make any other TKG policy the default one.
 
-You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization.
+You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization. Also,
+if you already have usable [VDCs][vdc], you can change the configuration to fetch them instead.
 
 #### Catalog and OVAs
 
@@ -152,10 +155,12 @@ The configuration will create the following:
 
 In order to do so, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
-- `nsxt_manager_name`: It is required to create the [Provider Gateways][provider_gateway]. If you are going to use more than
-  one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration. 
-- `nsxt_tier0_router_name`: It is required to create the [Provider Gateways][provider_gateway]. If you are going to use more than
-  one [Tier-0 Router][nsxt_tier0_router], please consider modifying the proposed configuration.
+- `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager]. It is required to create the [Provider Gateways][provider_gateway].
+  If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration.
+  In UI, [NSX-T Managers][nsxt_manager] can be found in the Provider view, inside _Infrastructure Resources > NSX-T_.
+- `nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router]. It is required to create the [Provider Gateways][provider_gateway].
+  If you are going to use more than one [Tier-0 Router][nsxt_tier0_router], please consider modifying the proposed configuration.
+  In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
 - `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
 - `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
@@ -178,24 +183,24 @@ In order to do so, the [proposed configuration][step2] asks for the following va
     ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
   ]
   ```
-- `alb_controller_url`: URL of the ALB controller that will be used. See the [ALB guide][alb] for more info.
+- `alb_controller_url`: URL of an existing ALB controller that will be created in VCD side. See the [ALB guide][alb] for more info.
 - `alb_controller_username`: Username to access the ALB controller. See the [ALB guide][alb] for more info.
 - `alb_controller_password`: Password of the username used to access the ALB controller. See the [ALB guide][alb] for more info.
-- `alb_importable_cloud_name`: Name of the ALB Cloud defined in the ALB controller that will be imported to create an ALB Cloud in VCD. See the [ALB guide][alb] for more info.
-- `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] of the Solutions Organization.
-- `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed] of the Solutions Organization.
-- `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed] for the Solutions Organization has a pool of usable IPs, this field
+- `alb_importable_cloud_name`: Name of the existing ALB Cloud defined in the ALB controller that will be imported to create an ALB Cloud in VCD. See the [ALB guide][alb] for more info.
+- `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] that will be created in the Solutions Organization.
+- `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed] that will be created in the Solutions Organization.
+- `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed] for the Solutions Organization has a pool of usable IPs, this field
+- `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the end usable IP.
 - `solutions_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Solutions
   Organization [Routed network][routed].
 - `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed]. It can be left blank if it's not needed.
-- `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] of the Cluster Organization.
-- `cluster_routed_network_prefix_length`: The prefix length of the [Routed network][routed] of the Cluster Organization.
-- `cluster_routed_network_ip_pool_start_address`: The [Routed network][routed] for the Cluster Organization has a pool of usable IPs, this field
+- `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] that will be created in the Cluster Organization.
+- `cluster_routed_network_prefix_length`: The prefix length of the [Routed network][routed] that will be created in the Cluster Organization.
+- `cluster_routed_network_ip_pool_start_address`: The [Routed network][routed] that will be created in the Cluster Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed] for the Cluster Organization has a pool of usable IPs, this field
+- `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed] that will be created in the Cluster Organization will have a pool of usable IPs, this field
   defines the end usable IP.
 - `cluster_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Cluster
   Organization [Routed network][routed].
