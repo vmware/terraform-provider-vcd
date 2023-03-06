@@ -91,7 +91,7 @@ The [proposed configuration][step2] will create four VM Sizing Policies:
 - `TKG small`: 2 CPU, 4GB RAM.
 
 These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Cluster
-Organization to be able to dimension the created TKGm clusters.
+Organization's VDC to be able to dimension the created TKGm clusters (see section below).
 
 #### VDCs
 
