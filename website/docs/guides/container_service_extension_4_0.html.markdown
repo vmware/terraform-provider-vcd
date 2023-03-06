@@ -68,7 +68,7 @@ This step will create all the remaining elements to install CSE v4.0 in VCD. You
 to have a better understanding of the building blocks that are described in the [proposed Terraform configuration][step2].
 
 In this [configuration][step2] you can also find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
-and change the values present there to the ones that fit with your needs. You can also modify the proposed resources so they fit better to your needs.
+and change the values present there to the correct ones. You can also modify the proposed resources so they fit better to your needs.
 
 #### Organizations
 
@@ -85,10 +85,10 @@ to use the Organization [data source][org_d] to fetch them.
 
 The [proposed configuration][step2] will create four VM Sizing Policies:
 
-- TKG extra_large: 8 CPUs, 32GB RAM.
-- TKG large: 4 CPUs, 16GB RAM.
-- TKG medium: 2 CPUs, 8GB RAM.
-- TKG small: 2 CPU, 4GB RAM.
+- `TKG extra_large`: 8 CPUs, 32GB RAM.
+- `TKG large`: 4 CPUs, 16GB RAM.
+- `TKG medium`: 2 CPUs, 8GB RAM.
+- `TKG small`: 2 CPU, 4GB RAM.
 
 These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Cluster
 Organization to be able to dimension the created TKGm clusters.
