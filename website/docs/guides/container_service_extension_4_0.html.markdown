@@ -95,7 +95,7 @@ Organization's VDC to be able to dimension the created TKGm clusters (see sectio
 
 #### VDCs
 
-The [proposed configuration][step2] will create two VDCs, one for the Solutions Organization and another one for the Cluster Organization.
+The [proposed configuration][step2] will create two [VDCs][vdc], one for the Solutions Organization and another one for the Cluster Organization.
 
 You need to specify the following values in `terraform.tfvars`:
 
@@ -106,7 +106,7 @@ one Edge Cluster, please consider modifying the proposed configuration.
 - `network_pool_name`: This is used to create both VDCs. If you are going to use more than
 one Network pool, please consider modifying the proposed configuration.
 
-The Cluster Organization has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
+The Cluster Organization's VDC has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
 You can customise the `default_compute_policy_id` to make any other TKG policy the default one.
 
 You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization.
