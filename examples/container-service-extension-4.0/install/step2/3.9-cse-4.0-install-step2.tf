@@ -41,8 +41,8 @@ provider "vcd" {
 # The two resources below will create the two Organizations mentioned in the CSE documentation:
 # https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 
-# The Solution Organization will host the CSE Server and its intended to be used by CSE Administrators only.
-# The Kubernetes clusters are NOT placed here. The attributes related to lease are set to unlimited, as the CSE
+# The Solutions Organization will host the CSE Server and its intended to be used by CSE Administrators only.
+# The TKGm clusters are NOT placed here. The attributes related to lease are set to unlimited, as the CSE
 # Server should be always up and running in order to process requests.
 resource "vcd_org" "solutions_organization" {
   name             = "solutions_org"
@@ -64,9 +64,9 @@ resource "vcd_org" "solutions_organization" {
   }
 }
 
-# The Cluster Organization will host the Kubernetes clusters and its intended to be used by tenants.
-# The Kubernetes clusters must be placed here. The attributes related to lease are set to unlimited, as the Kubernetes
-# clusters vApps should not be powered off.
+# The Cluster Organization will host the TKGm clusters and its intended to be used by tenants.
+# The TKGm clusters must be placed here. The attributes related to lease are set to unlimited, as the TKGm clusters vApps
+# should not be powered off.
 resource "vcd_org" "cluster_organization" {
   name             = "cluster_org"
   full_name        = "Cluster Organization"
@@ -88,7 +88,7 @@ resource "vcd_org" "cluster_organization" {
 }
 
 # The VM Sizing Policies defined below MUST be created as they are specified in this HCL. These are the default
-# policies required by CSE to create Kubernetes clusters, hence nothing should be modified here.
+# policies required by CSE to create TKGm clusters, hence nothing should be modified here.
 resource "vcd_vm_sizing_policy" "tkg_xl" {
   name        = "TKG extra_large"
   description = "Extra large VM sizing policy for a Kubernetes cluster node"

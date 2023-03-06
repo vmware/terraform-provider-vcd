@@ -17,7 +17,7 @@ To know more about CSE v4.0, you can visit [the documentation][cse_docs].
 
 ## Pre-requisites
 
--> Please read also the pre-requisites section in [CSE official documentation][cse_docs].
+-> Please read also the pre-requisites section in the [CSE documentation][cse_docs].
 
 In order to complete the steps described in this guide, please be aware:
 
@@ -31,15 +31,15 @@ In order to complete the steps described in this guide, please be aware:
 -> To install CSE v4.0, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
-The installation process is split in two independent steps:
+The installation process is split in two independent steps that should be run separately:
 
-- The first step creates required [Runtime Defined Entity Interfaces][rde_interface] and [Types][rde_type], a new [Role][role]
-  and a CSE Administrator [user][user] that will be referenced later on in second step.
+- The first step creates the [Runtime Defined Entity Interfaces][rde_interface] and [Types][rde_type] that are required for CSE to work, a new [Role][role]
+  and a CSE Administrator [User][user] that will be referenced later on in second step.
 - The second step will configure remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs][catalog], Networks and [VMs][vm].
 
-The reason for such as split is that Providers require to generate an
-[API token][api_token]
-for the CSE Administrator user, which needs to be done outside the Terraform realm for security reasons.
+The reason for such as split is that Providers require to generate an [API token][api_token]
+for the CSE Administrator user. This operation needs to be done outside the Terraform realm for security reasons, and it's
+up to the Providers to decide the most ideal way to generate such a token for its CSE Administrator in their particular scenarios.
 
 ### Step 1: Create RDEs and the CSE Administrator user
 
@@ -52,8 +52,8 @@ This step will create the following:
 
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type].
 - The required `capvcdCluster` [RDE Type][rde_type].
-- CSE Admin Role: A role with all the required rights for CSE administrators to manage provider-sided elements of VCD.
-- CSE Administrator user: A user to administrate the CSE Server and other aspects of CSE.
+- The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-sided elements of VCD.
+- The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
 
 Once reviewed and applied with `terraform apply`, one **must login with the created CSE Administrator user to
 generate an API token** that will be used in the next step.
@@ -62,34 +62,40 @@ generate an API token** that will be used in the next step.
 
 -> To step of the installation refers to the Terraform configuration present [here][step2].
 
-~> Be sure that previous step is succesfully completed and the API token for the CSE Administrator user was created.
+~> Be sure that previous step is successfully completed and the API token for the CSE Administrator user was created.
 
-In this step we will create all the remaining elements to install CSE v4.0 in VCD. The [configuration to apply][step2]
-follows the architecture described in the [official documentation][cse_docs]:
+This step will create all the remaining elements to install CSE v4.0 in VCD. You can read subsequent sections
+to have a better understanding of the building blocks that are described in the [proposed Terraform configuration][step2].
+
+In this [configuration][step2] you can also find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
+and change the values present there to the ones that fit with your needs. You can also modify the proposed resources so they fit better to your needs.
+
+#### Organizations
+
+The [proposed configuration][step2] will create two new [Organizations][org], as specified in the [CSE documentation][cse_docs]:
 
 - A Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Server.
-  It should only be accessible to CSE administrators.
-- A Cluster [Organization][org]: This [Organization][org] will host the Kubernetes clusters for the users of this tenant to consume them.
+  It should only be accessible to the CSE Administrator and Providers.
+- A Cluster [Organization][org]: This [Organization][org] will host the TKGm clusters for the users of this tenant to consume them.
 
-In the [given configuration][step2] you can find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
-and change the values present there to the ones that fit with your needs.
+If you already have these two [Organizations][org] created and you want to use them instead, you can leverage customising the [proposed configuration][step2]
+to use the Organization [data source][org_d] to fetch them.
 
-In the following sections we describe more deeply the contents of this configuration file.
+#### VM Sizing Policies
 
-#### VM Sizing policies
-
-The [proposed configuration][step2] will create four VM Sizing Policies, that must be applied as they are defined:
+The [proposed configuration][step2] will create four VM Sizing Policies:
 
 - TKG extra_large: 8 CPUs, 32GB RAM.
 - TKG large: 4 CPUs, 16GB RAM.
 - TKG medium: 2 CPUs, 8GB RAM.
 - TKG small: 2 CPU, 4GB RAM.
 
-Nothing should be changed here.
+These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Cluster
+Organization to be able to dimension the created TKGm clusters.
 
 #### VDCs
 
-The [proposed configuration][step2] will create two VDCs, one per Organization.
+The [proposed configuration][step2] will create two VDCs, one for the Solutions Organization and another one for the Cluster Organization.
 
 You need to specify the following values in `terraform.tfvars`:
 
@@ -100,39 +106,41 @@ one Edge Cluster, please consider modifying the proposed configuration.
 - `network_pool_name`: This is used to create both VDCs. If you are going to use more than
 one Network pool, please consider modifying the proposed configuration.
 
+The Cluster Organization has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
+You can customise the `default_compute_policy_id` to make any other TKG policy the default one.
+
+You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization.
+
 #### Catalog and OVAs
 
 The [proposed configuration][step2] will create two catalogs:
 
-- A catalog to host CSE OVA files, only accesible to CSE Administrators.
-- A catalog to host TKGm OVA files, only accesible to CSE Administrators but shared as read-only to tenants.
+- A catalog to host CSE OVA files, only accessible to CSE Administrators.
+- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants.
 
 Then it will upload the required OVAs to them. The OVAs can be specified in `terraform.tfvars`:
 
-- `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should not end with a trailing `/`.
+- `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 - `tkgm_ova_file`: This will reference the file name of the TKGm OVA, like `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`.
-- `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should not end with a trailing `/`.
+- `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 - `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.0.1.ova`.
 
--> To download the required OVAs, please refer to [t]he official documentation][cse_docs].
+-> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
 ### "Kubernetes Cluster Author" global role
 
 Apart from the role to administrate the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
-for the Kubernetes clusters consumers.
-It would be similar to the concept of "vApp Author" but for Kubernetes clusters. In order to create the [Global Role][global_role], first we need
-to create a new [Rights Bundle][rights_bundle] and publish it to all the tenants.
+for the TKGm clusters consumers (it would be similar to the concept of "vApp Author" but for TKGm clusters).
 
-In the [proposed configuration][step2], this [Rights Bundle][rights_bundle] and [Global Role][global_role] are created 
-with all the required rights, so nothing needs to be customised here.
+In order to create this [Global Role][global_role], the [proposed configuration][step2] first
+creates a new [Rights Bundle][rights_bundle] and publishes it to all the tenants, then creates the [Global Role][global_role].
 
 ### Networking
 
 The [proposed configuration][step2] configures a basic networking layout that will make CSE v4.0 work. However, it is
-recommended that you review the code and adapt the different parts to your needs, specially for the resources like
-the Firewall.
+recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
 
 The configuration will create the following:
 
@@ -143,32 +151,73 @@ The configuration will create the following:
 
 In order to do so, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
-- `nsxt_manager_name`:
-- `nsxt_tier0_router_name`:
-- `solutions_provider_gateway_gateway_ip`:
-- `solutions_provider_gateway_gateway_prefix_length`:
-- `solutions_provider_gateway_static_ip_ranges`:
-- `cluster_provider_gateway_gateway_ip`:
-- `cluster_provider_gateway_gateway_prefix_length`:
-- `cluster_provider_gateway_static_ip_ranges`:
-- `solutions_routed_network_gateway_ip`:
-- `solutions_routed_network_prefix_length`:
-- `solutions_routed_network_ip_pool_start_address`:
-- `solutions_routed_network_ip_pool_end_address`:
-- `solutions_routed_network_advertised_subnet`:
-- `solutions_routed_network_dns`:
-- `cluster_routed_network_gateway_ip`:
-- `cluster_routed_network_prefix_length`:
-- `cluster_routed_network_ip_pool_start_address`:
-- `cluster_routed_network_ip_pool_end_address`:
-- `cluster_routed_network_advertised_subnet`:
-- `cluster_routed_network_dns`:
+- `nsxt_manager_name`: It is required to create the [Provider Gateways][provider_gateway]. If you are going to use more than
+  one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration. 
+- `nsxt_tier0_router_name`: It is required to create the [Provider Gateways][provider_gateway]. If you are going to use more than
+  one [Tier-0 Router][nsxt_tier0_router], please consider modifying the proposed configuration.
+- `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
+- `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
+- `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
+  Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
+  for this attribute would be:
+  ```
+  solutions_provider_gateway_static_ip_ranges = [
+    ["10.20.30.170", "10.20.30.170"], # A single IP ending in 170
+    ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
+  ]
+  ```
+- `cluster_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Cluster Organization.
+- `cluster_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
+- `cluster_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Cluster Organization.
+  Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
+  for this attribute would be:
+  ```
+  solutions_provider_gateway_static_ip_ranges = [
+    ["10.20.30.170", "10.20.30.170"], # A single IP ending in 170
+    ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
+  ]
+  ```
+- `alb_controller_url`: URL of the ALB controller that will be used. See the [ALB guide][alb] for more info.
+- `alb_controller_username`: Username to access the ALB controller. See the [ALB guide][alb] for more info.
+- `alb_controller_password`: Password of the username used to access the ALB controller. See the [ALB guide][alb] for more info.
+- `alb_importable_cloud_name`: Name of the ALB Cloud defined in the ALB controller that will be imported to create an ALB Cloud in VCD. See the [ALB guide][alb] for more info.
+- `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] of the Solutions Organization.
+- `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed] of the Solutions Organization.
+- `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed] for the Solutions Organization has a pool of usable IPs, this field
+  defines the first usable IP.
+- `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed] for the Solutions Organization has a pool of usable IPs, this field
+  defines the end usable IP.
+- `solutions_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Solutions
+  Organization [Routed network][routed].
+- `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed]. It can be left blank if it's not needed.
+- `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] of the Cluster Organization.
+- `cluster_routed_network_prefix_length`: The prefix length of the [Routed network][routed] of the Cluster Organization.
+- `cluster_routed_network_ip_pool_start_address`: The [Routed network][routed] for the Cluster Organization has a pool of usable IPs, this field
+  defines the first usable IP.
+- `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed] for the Cluster Organization has a pool of usable IPs, this field
+  defines the end usable IP.
+- `cluster_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Cluster
+  Organization [Routed network][routed].
+- `cluster_routed_network_dns`: DNS Server for the Cluster Organization [Routed network][routed]. It can be left blank if it's not needed.
 
 If you wish to have a different networking setup, please modify the [proposed configuration][step2].
 
 ### CSE Server
 
-WIP
+The final set of resources created by the [proposed configuration][step2] correspond to the CSE Server vApp.
+The generated VM makes use of the uploaded CSE OVA and some required guest properties.
+
+In order to do so, the [configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
+
+- `vcdkeconfig_template_filepath`: This references a local file that corresponds with the `VCDKEConfig` [RDE][rde] contents specified as a JSON template.
+  You can find this template [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
+  (Note: In `terraform.tfvars.example` the correct path is already provided).
+- `capvcd_version`: The version for CAPVCD schema. It should be "1.1.0" for CSE v4.0.
+- `cpi_version`: The version for CPI. It should be "1.2.0" for CSE v4.0.
+- `csi_version`: The version for CSI. It should be "1.3.0" for CSE v4.0.
+- `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens), this will avoid installation errors caused by GitHub rate limiting.
+- `cse_admin_user`: This should reference the CSE Administrator [User][user] that was created in Step 1.
+- `cse_admin_api_token`: This should be the API token that you created for the CSE Administrator after Step 1.
 
 ### Final considerations
 
@@ -294,13 +343,17 @@ Follow the mentioned steps instead.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
 
+[alb]: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/nsxt_alb
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
 [global_role]: /providers/vmware/vcd/latest/docs/resources/global_role
+[nsxt_manager]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_manager
+[nsxt_tier0_router]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router
 [org]: /providers/vmware/vcd/latest/docs/resources/org
+[org_d]: /providers/vmware/vcd/latest/docs/data-sources/org
 [provider_gateway]: /providers/vmware/vcd/latest/docs/resources/external_network_v2
 [provider_vdc]: /providers/vmware/vcd/latest/docs/data-sources/provider_vdc
 [rights_bundle]: /providers/vmware/vcd/latest/docs/resources/rights_bundle
