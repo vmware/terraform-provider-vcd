@@ -43,7 +43,7 @@ up to the Providers to decide the most ideal way to generate such a token for it
 
 ### Step 1: Create RDEs and the CSE Administrator user
 
--> To step of the installation refers to the Terraform configuration present [here][step1].
+-> This step of the installation refers to the Terraform configuration present [here][step1].
 
 In the [given configuration][step1] you can find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
 and change the values present there to the ones that fit with your needs.
@@ -60,7 +60,7 @@ generate an API token** that will be used in the next step.
 
 ### Step 2: Install CSE
 
--> To step of the installation refers to the Terraform configuration present [here][step2].
+-> This step of the installation refers to the Terraform configuration present [here][step2].
 
 ~> Be sure that previous step is successfully completed and the API token for the CSE Administrator user was created.
 
