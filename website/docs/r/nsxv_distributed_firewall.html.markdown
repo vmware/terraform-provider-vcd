@@ -174,13 +174,13 @@ The following arguments are supported:
 Each Firewall Rule contains the following attributes:
 
 * `name` - (Optional) Explanatory name for firewall rule (uniqueness not enforced)
-* `direction` - (Required) One of `in`, `out`, or `inout`. (default `in`)
+* `direction` - (Required) One of `in`, `out`, or `inout` (default `in`)
 * `action` - (Required) Defines if it should `allow` or `deny` traffic. 
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
 * `source` - (Optional) A set of source objects. See below for [source or destination objects](#source-or-destination-objects)
 Leaving it empty matches `any` (all)
-* `destination` - (Optional) A set of destination objects. See below for [source or destination objects](#source-or-destination-objects). Leaving it empty matches `Any` (all)
+* `destination` - (Optional) A set of destination objects. See below for [source or destination objects](#source-or-destination-objects). Leaving it empty matches `any` (all)
 * `application` - (Optional) An optional set of applications to use for this rule. See below for [Application objects](#application-objects)
 * `applied_to` - (Required) A set of objects to which the rule applies. See below for [Source or destination objects](#source-or-destination-objects) 
 * `exclude_source` - (Optional) - reverses value of `source` for the rule to match everything except specified objects.
