@@ -54,6 +54,7 @@ This step will create the following:
 - The required `capvcdCluster` [RDE Type][rde_type].
 - The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-sided elements of VCD.
 - The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
+  Feel free to add more attributes like `description` or `full_name` if needed.
 
 Once reviewed and applied with `terraform apply`, one **must login with the created CSE Administrator user to
 generate an API token** that will be used in the next step.
