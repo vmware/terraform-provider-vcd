@@ -31,7 +31,7 @@ func TestAccVcdNsxvDistributedFirewall(t *testing.T) {
 		org:             testConfig.VCD.Org,
 		vdc:             testConfig.VCD.Vdc,
 		routedNetwork:   fmt.Sprintf("net-%s-r", testConfig.VCD.Org),
-		isolatedNetwork: fmt.Sprintf("net-%s-r", testConfig.VCD.Org),
+		isolatedNetwork: fmt.Sprintf("net-%s-i", testConfig.VCD.Org),
 		directNetwork:   fmt.Sprintf("net-%s-d", testConfig.VCD.Org),
 		vApp:            "TestVapp",
 		vm:              "TestVm",
