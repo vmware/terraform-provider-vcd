@@ -107,5 +107,5 @@ resource "vcd_org_user" "cse_admin" {
 
 # This will output the username that you need to create an API token for.
 output "ask_to_create_api_token" {
-  value = "Please login as '${vcd_org_user.cse_admin.name}' and create an API token, as it will be required for step 2"
+  value = "Please go to ${var.vcd_url}/provider/administration/settings/user-preferences, logged in as '${vcd_org_user.cse_admin.name}' and create an API token, as it will be required for step 2"
 }
