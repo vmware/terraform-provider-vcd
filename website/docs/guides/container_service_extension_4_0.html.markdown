@@ -232,9 +232,66 @@ To evaluate the correctness of the setup, you can look up the CSE logs present i
 You can visit [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html)
 to learn how to monitor the logs and troubleshoot possible problems.
 
-## CSE upgrade process
+## Update CSE Server
 
-Coming soon
+### Update Configuration
+
+To make changes to the existing server configuration entity, you should find the `vcdkeconfig_instance` [RDE instance][rde]
+in the [proposed configuration][step2] that was created during the installation process. To update its parameters, you can simply
+**change the variable values that are referenced**. For this, go to **"CSE Server"** section in the Installation process to
+check them.
+
+After variables are changed, the CSE Server VM needs to be rebooted. You can trigger a reboot changing the CSE Server configuration
+as follows:
+
+```hcl
+resource "vcd_vapp_vm" "cse_server_vm" {
+  # ...
+  power_on = false # Trigger a power off
+  # ...
+}
+```
+
+Then change to power on again:
+
+```hcl
+resource "vcd_vapp_vm" "cse_server_vm" {
+  # ...
+  power_on = true # Trigger a power on
+  # ...
+}
+```
+
+This must be done as a 2-step operation.
+
+### Patch version upgrade
+
+To upgrade the CSE Server appliance, first you need to upload a new CSE Server OVA to the CSE catalog and then replace
+the reference to the [vApp Template][catalog_vapp_template] in the CSE Server VM.
+
+In the [proposed configuration][step2], you can find the `cse_ova` [vApp Template][catalog_vapp_template] and the 
+`cse_server_vm` [VM][vm] that were applied during the installation process.
+Then you can create a new `vcd_catalog_vapp_template` and modify `cse_server_vm` to reference it:
+
+```hcl
+# Uploads a new CSE Server OVA. In the example below, we upload version 4.0.2
+resource "vcd_catalog_vapp_template" "new_cse_ova" {
+  org        = vcd_org.solutions_organization.name # References the Solutions Organization
+  catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog
+
+  name        = "VMware_Cloud_Director_Container_Service_Extension-4.0.2"
+  description = "VMware_Cloud_Director_Container_Service_Extension-4.0.2"
+  ova_path    = "/home/bob/cse/VMware_Cloud_Director_Container_Service_Extension-4.0.2.ova"
+}
+
+# ...
+
+# Update the vApp Template reference to update the CSE Server
+resource "vcd_vapp_vm" "cse_server_vm" {
+  # ...
+  vapp_template_id = vcd_catalog_vapp_template.new_cse_ova.id # Change to the new OVA version
+}
+```
 
 ## Cluster operations
 
@@ -373,5 +430,6 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 [step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step2
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
+[catalog_vapp_template]: /providers/vmware/vcd/latest/docs/resources/catalog_vapp_template
 [vdc]: /providers/vmware/vcd/latest/docs/resources/org_vdc
 [vm]: /providers/vmware/vcd/latest/docs/resources/vapp_vm
