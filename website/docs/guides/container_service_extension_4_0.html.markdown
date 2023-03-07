@@ -295,6 +295,8 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 ## Cluster operations
 
+~> WORK IN PROGRESS
+
 The TKGm clusters that will be created and managed with Terraform are [RDE Instances][rde] of the `capvcdCluster` [RDE Type][rde_type]
 created during the installation process.
 
@@ -308,6 +310,8 @@ as they allow to customise several values that need to be replaced with other re
 that will be embedded in the JSON structure present [in this repository]( https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/tkgmcluster-template.json).
 
 ### Create a cluster
+
+~> WORK IN PROGRESS
 
 To create a cluster, please download the CAPVCD `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
 that corresponds to your TKGm OVA file.
@@ -376,7 +380,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
 
 ### Retrieve a cluster Kubeconfig
 
-Coming soon
+~> WORK IN PROGRESS
 
 ```hcl
 # output "kubeconfig" {  
@@ -386,11 +390,11 @@ Coming soon
 
 ### Upgrade a cluster
 
-Coming soon
+~> WORK IN PROGRESS
 
 ### Delete a cluster
 
-Coming soon
+~> WORK IN PROGRESS
 
 ~> Don't remove the resource from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
 Follow the mentioned steps instead.
