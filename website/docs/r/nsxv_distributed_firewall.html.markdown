@@ -56,7 +56,6 @@ data "vcd_nsxv_application_group" "application_group1" {
 
 resource "vcd_nsxv_distributed_firewall" "dfw1" {
   vdc_id  = data.vcd_org_vdc.my-vdc.id
-  enabled = true
 
   rule {
     name      = "third"
@@ -163,9 +162,12 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 The following arguments are supported:
 
 * `vdc_id` - (Required) The ID of VDC to manage the Distributed Firewall in. Can be looked up using a `vcd_org_vdc` data source
-* `enabled` - (Optional) - If true, the firewall will be enabled. It is necessary to have Org Admin privileges to enable the firewall
 * `rule` - (Optional) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order
   defines firewall rule precedence**. If no rules are defined, all will be removed from the firewall
+
+## Attribute Reference
+
+* `enabled` - Shows whether the NSX-V Distributed Firewall is enabled.
 
 ## Firewall Rule
 

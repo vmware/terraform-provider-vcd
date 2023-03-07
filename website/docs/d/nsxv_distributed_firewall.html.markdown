@@ -33,4 +33,4 @@ The following arguments are supported:
 
 ## Attributes reference
 
-All the arguments defined for the `vcd_nsxv_distributed_firewall` resource are reported as attributes for this data source.
+All the arguments and attributes defined for the `vcd_nsxv_distributed_firewall` resource are reported as attributes for this data source.
