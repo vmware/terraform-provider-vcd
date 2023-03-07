@@ -42,8 +42,8 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true, // VCD does not allow to change provider type
-				Description:  "Identity provider type - 'SAML' or 'INTEGRATED' for LDAP",
-				ValidateFunc: validation.StringInSlice([]string{"SAML", "INTEGRATED"}, false),
+				Description:  "Identity provider type for this this group. One of: 'INTEGRATED', 'SAML', 'OAUTH'."
+				ValidateFunc: validation.StringInSlice([]string{"INTEGRATED", "SAML", "OAUTH"}, false),
 			},
 			"description": {
 				Type:        schema.TypeString,
