@@ -98,8 +98,8 @@ variable "nsxt_manager_name" {
   type        = string
 }
 
-variable "nsxt_tier0_router_name" {
-  description = "NSX-T tier-0 router name"
+variable "solutions_nsxt_tier0_router_name" {
+  description = "Name of an existing NSX-T tier-0 router to create the Solutions Provider Gateway"
   type        = string
 }
 
@@ -116,6 +116,11 @@ variable "solutions_provider_gateway_gateway_prefix_length" {
 variable "solutions_provider_gateway_static_ip_ranges" {
   type        = list(list(string))
   description = "List of pairs of public IPs for the Solutions Provider Gateway"
+}
+
+variable "cluster_nsxt_tier0_router_name" {
+  description = "Name of an existing NSX-T tier-0 router to create the Cluster Provider Gateway"
+  type        = string
 }
 
 variable "cluster_provider_gateway_gateway_ip" {

@@ -39,20 +39,20 @@ provider "vcd" {
 
 locals {
   capvcd_yaml_rendered = templatefile("/users/bob/capvcd-templates/cluster-template-v1.22.9.yaml", {
-    CLUSTER_NAME     = var.k8s_cluster_name
-    TARGET_NAMESPACE = "${var.k8s_cluster_name}-ns"
+    CLUSTER_NAME     = "my-cluster"
+    TARGET_NAMESPACE = "my-cluster-ns"
 
-    VCD_SITE                     = replace(var.vcd_api_endpoint, "/api", "")
-    VCD_ORGANIZATION             = vcd_org.cluster_organization.name
-    VCD_ORGANIZATION_VDC         = vcd_org_vdc.cluster_vdc.name
-    VCD_ORGANIZATION_VDC_NETWORK = vcd_network_routed_v2.cluster_routed_network.name
+    VCD_SITE                     = var.vcd_url
+    VCD_ORGANIZATION             = "cluster_org"
+    VCD_ORGANIZATION_VDC         = "cluster_vdc"
+    VCD_ORGANIZATION_VDC_NETWORK = "cluster_routed_network"
 
     VCD_USERNAME_B64      = base64encode(var.k8s_cluster_user)
     VCD_REFRESH_TOKEN_B64 = base64encode(var.k8s_cluster_api_token)
     SSH_PUBLIC_KEY        = ""
 
     CONTROL_PLANE_MACHINE_COUNT        = 1
-    VCD_CONTROL_PLANE_SIZING_POLICY    = vcd_vm_sizing_policy.default_policy.name
+    VCD_CONTROL_PLANE_SIZING_POLICY    =
     VCD_CONTROL_PLANE_PLACEMENT_POLICY = ""
     VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
 

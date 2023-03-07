@@ -415,8 +415,8 @@ data "vcd_nsxt_manager" "cse_nsxt_manager" {
   name = var.nsxt_manager_name
 }
 
-data "vcd_nsxt_tier0_router" "cse_tier0_router" {
-  name            = var.nsxt_tier0_router_name
+data "vcd_nsxt_tier0_router" "solutions_tier0_router" {
+  name            = var.solutions_nsxt_tier0_router_name
   nsxt_manager_id = data.vcd_nsxt_manager.cse_nsxt_manager.id
 }
 
@@ -425,7 +425,7 @@ resource "vcd_external_network_v2" "solutions_tier0" {
 
   nsxt_network {
     nsxt_manager_id      = data.vcd_nsxt_manager.cse_nsxt_manager.id
-    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.cse_tier0_router.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.solutions_tier0_router.id
   }
 
   ip_scope {
@@ -443,12 +443,17 @@ resource "vcd_external_network_v2" "solutions_tier0" {
   }
 }
 
+data "vcd_nsxt_tier0_router" "cluster_tier0_router" {
+  name            = var.cluster_nsxt_tier0_router_name
+  nsxt_manager_id = data.vcd_nsxt_manager.cse_nsxt_manager.id
+}
+
 resource "vcd_external_network_v2" "cluster_tier0" {
   name = "cluster_tier0"
 
   nsxt_network {
     nsxt_manager_id      = data.vcd_nsxt_manager.cse_nsxt_manager.id
-    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.cse_tier0_router.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.cluster_tier0_router.id
   }
 
   ip_scope {
@@ -609,7 +614,7 @@ resource "vcd_network_routed_v2" "solutions_routed_network" {
     end_address   = var.solutions_routed_network_ip_pool_end_address
   }
 
-  dns1       = var.solutions_routed_network_dns
+  dns1 = var.solutions_routed_network_dns
 }
 
 # We create a Routed network in the Cluster organization that will be used by the Kubernetes clusters.
@@ -628,7 +633,7 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
     end_address   = var.cluster_routed_network_ip_pool_end_address
   }
 
-  dns1       = var.solutions_routed_network_dns
+  dns1 = var.solutions_routed_network_dns
 }
 
 # We need route advertisement in both networks to provide with Internet connectivity.
