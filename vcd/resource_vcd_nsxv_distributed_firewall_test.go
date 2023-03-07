@@ -301,7 +301,6 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
   {{.ProviderOrgDef}}
   # vdc_id  = data.vcd_org_vdc.my-vdc.id
   vdc_id  = {{.DistributedFirewallId}}
-  enabled = true
 
   # rule n. 0 
   rule {
@@ -424,7 +423,6 @@ data "vcd_org_vdc" "my-vdc-admin" {
 resource "vcd_nsxv_distributed_firewall" "dfw1Init" {
   {{.ProviderAdminDef}}
   vdc_id  = data.vcd_org_vdc.my-vdc-admin.id
-  enabled = true
   lifecycle {
     ignore_changes = [ rule ]
   }

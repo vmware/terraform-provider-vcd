@@ -149,10 +149,9 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 				Description: "The ID of VDC",
 			},
 			"enabled": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Description: "When true, it enables the NSX-V distributed firewall. When false, it disables the firewall. " +
-					"If this property is false, existing distributed firewall rules will be removed completely.",
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Shows whether the NSX-V distributed firewall is enabled",
 			},
 			"rule": {
 				Type:        schema.TypeList,
@@ -257,7 +256,7 @@ func genericVcdNsxvDistributedFirewallRead(_ context.Context, d *schema.Resource
 
 	if err != nil {
 		if origin == "datasource" {
-			return diag.Errorf("[NSX-V Distributed Firewall DS Read] error retrieving NSX-V Firewall state: %s - %s", err, govcd.ErrorEntityNotFound)
+			return diag.Errorf("[NSX-V Distributed Firewall DS Read] error retrieving NSX-V Firewall: %s - %s", err, govcd.ErrorEntityNotFound)
 		}
 		d.SetId("")
 		return nil
@@ -272,6 +271,7 @@ func genericVcdNsxvDistributedFirewallRead(_ context.Context, d *schema.Resource
 		}
 		return nil
 	}
+	dSet(d, "enabled", true)
 
 	util.Logger.Println("[NSX-V DFW START]")
 	err = dfwRulesToResource(dfw.Configuration.Layer3Sections.Section.Rule, d)
@@ -287,28 +287,17 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 	vcdClient := meta.(*VCDClient)
 
 	vdcId := d.Get("vdc_id").(string)
-	wantToEnable := d.Get("enabled").(bool)
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 	isEnabled, err := dfw.IsEnabled()
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if !isEnabled && wantToEnable {
+	if !isEnabled {
 		err := dfw.Enable()
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		isEnabled = true
-	}
-	if !isEnabled {
-		return diag.Errorf("distributed firewall for VDC %s needs to be enabled before being configured", vdcId)
-	}
-	if !wantToEnable {
-		err := dfw.Disable()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return resourceVcdNsxvDistributedFirewallRead(ctx, d, meta)
 	}
 	rules, err := resourceToDfwRules(d)
 	if err != nil {
@@ -646,13 +635,13 @@ func resourceVcdNsxvDistributedFirewallImport(ctx context.Context, d *schema.Res
 	}
 	configuration, err := dfw.GetConfiguration()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error retrieving NSX-V Distributed Firewall configuration: (%s) - the firewall may not be enabled", err)
 	}
 	if configuration == nil {
 		return nil, fmt.Errorf("distributed firewall for VDC %s is not enabled", dfw.VdcId)
 	}
 	d.SetId(vdcId)
-	dSet(d, "enabled", true)
+	dSet(d, "enabled", configuration != nil)
 	dSet(d, "vdc_id", vdcId)
 	return []*schema.ResourceData{d}, nil
 }
