@@ -42,7 +42,7 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true, // VCD does not allow to change provider type
-				Description:  "Identity provider type for this this group. One of: 'INTEGRATED', 'SAML', 'OAUTH'."
+				Description:  "Identity provider type for this this group. One of: 'INTEGRATED', 'SAML', 'OAUTH'.",
 				ValidateFunc: validation.StringInSlice([]string{"INTEGRATED", "SAML", "OAUTH"}, false),
 			},
 			"description": {
