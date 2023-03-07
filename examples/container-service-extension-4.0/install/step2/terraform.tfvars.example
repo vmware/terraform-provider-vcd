@@ -10,7 +10,7 @@ administrator_org      = "System"
 insecure_login         = "false"
 
 # ------------------------------------------------
-# VDC setup
+# NSX-T VDC setup
 # ------------------------------------------------
 provider_vdc_name      = "change-me"
 nsxt_edge_cluster_name = "change-me"

@@ -57,7 +57,9 @@ This step will create the following:
   Feel free to add more attributes like `description` or `full_name` if needed.
 
 Once reviewed and applied with `terraform apply`, one **must login with the created CSE Administrator user to
-generate an API token** that will be used in the next step.
+generate an API token** that will be used in the next step. In UI, the API tokens can be generated in the CSE Administrator
+user preferences in the top right, then go to the API tokens section, add a new one.
+Or you can visit `/provider/administration/settings/user-preferences` from your VCD url as CSE Administrator.
 
 ### Step 2: Install CSE
 
@@ -164,6 +166,7 @@ In order to do so, the [proposed configuration][step2] asks for the following va
 - `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
 - `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
+  At least one IP is required.
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
   ```
@@ -175,6 +178,7 @@ In order to do so, the [proposed configuration][step2] asks for the following va
 - `cluster_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Cluster Organization.
 - `cluster_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `cluster_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Cluster Organization.
+  At least one IP is required.
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
   ```
