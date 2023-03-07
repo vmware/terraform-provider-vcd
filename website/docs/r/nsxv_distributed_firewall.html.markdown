@@ -55,7 +55,7 @@ data "vcd_nsxv_application_group" "application_group1" {
 }
 
 resource "vcd_nsxv_distributed_firewall" "dfw1" {
-  vdc_id  = data.vcd_org_vdc.my-vdc.id
+  vdc_id = data.vcd_org_vdc.my-vdc.id
 
   rule {
     name      = "third"
