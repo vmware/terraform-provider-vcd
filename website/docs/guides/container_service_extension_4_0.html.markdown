@@ -236,7 +236,7 @@ to learn how to monitor the logs and troubleshoot possible problems.
 
 ### Update Configuration
 
-To make changes to the existing server configuration entity, you should find the `vcdkeconfig_instance` [RDE instance][rde]
+To make changes to the existing server configuration, you should find the `vcdkeconfig_instance` [RDE instance][rde]
 in the [proposed configuration][step2] that was created during the installation process. To update its parameters, you can simply
 **change the variable values that are referenced**. For this, go to **"CSE Server"** section in the Installation process to
 check them.
@@ -295,52 +295,72 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 ## Cluster operations
 
-Coming soon
+The TKGm clusters that will be created and managed with Terraform are [RDE Instances][rde] of the `capvcdCluster` [RDE Type][rde_type]
+created during the installation process.
+
+These [RDE Instances][rde] require a JSON input that describes the cluster with properties such as name, schema version, metadata, extra options and the
+CAPVCD `yaml` that must be embedded in the JSON content.
+
+This example will make use of the CAPVCD `yaml` templates present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates),
+as they allow to customise several values that need to be replaced with other resource references, such as Organization names, network names, etc.
+
+
+that will be embedded in the JSON structure present [in this repository]( https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/tkgmcluster-template.json).
 
 ### Create a cluster
 
-Coming soon
+To create a cluster, please download the CAPVCD `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
+that corresponds to your TKGm OVA file.
+
+Then, we need to read it with the `templatefile` function and put all the required values:
 
 ```hcl
-data "template_file" "k8s_cluster_yaml_template" {
-  template = file("${path.module}/capvcd_templates/v1.22.9.yaml")
-  vars = {
-    cluster_name = var.k8s_cluster_name
+locals {
+  capvcd_yaml_rendered = templatefile("/users/bob/capvcd-templates/cluster-template-v1.22.9.yaml", {
+    CLUSTER_NAME     = var.k8s_cluster_name
+    TARGET_NAMESPACE = "${var.k8s_cluster_name}-ns"
 
-    vcd_url     = replace(var.vcd_api_endpoint, "/api", "")
-    org         = vcd_org.cluster_organization.name
-    vdc         = vcd_org_vdc.cluster_vdc.name
-    org_network = vcd_network_routed_v2.cluster_routed_network.name
+    VCD_SITE                     = replace(var.vcd_api_endpoint, "/api", "")
+    VCD_ORGANIZATION             = vcd_org.cluster_organization.name
+    VCD_ORGANIZATION_VDC         = vcd_org_vdc.cluster_vdc.name
+    VCD_ORGANIZATION_VDC_NETWORK = vcd_network_routed_v2.cluster_routed_network.name
 
-    base64_username  = base64encode(var.k8s_cluster_user)
-    base64_api_token = base64encode(var.k8s_cluster_api_token)
+    VCD_USERNAME_B64      = base64encode(var.k8s_cluster_user)
+    VCD_REFRESH_TOKEN_B64 = base64encode(var.k8s_cluster_api_token)
+    SSH_PUBLIC_KEY        = ""
 
-    ssh_public_key                   = ""
-    control_plane_machine_count      = 1
-    control_plane_sizing_policy_name = vcd_vm_sizing_policy.default_policy.name
-    control_plane_sizing_policy_name = ""
-    control_plane_placement_policy   = ""
-    control_plane_storage_profile    = ""
-    control_plane_disk_size          = "20Gi"
+    CONTROL_PLANE_MACHINE_COUNT        = 1
+    VCD_CONTROL_PLANE_SIZING_POLICY    = vcd_vm_sizing_policy.default_policy.name
+    VCD_CONTROL_PLANE_PLACEMENT_POLICY = ""
+    VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
 
-    worker_storage_policy   = ""
-    worker_sizing_policy = vcd_vm_sizing_policy.default_policy.name
-    worker_placement_policy = ""
-    worker_machine_count    = 1
-    worker_disk_size        = "20Gi"
+    VCD_WORKER_STORAGE_PROFILE  = ""
+    VCD_WORKER_SIZING_POLICY    = vcd_vm_sizing_policy.default_policy.name
+    VCD_WORKER_PLACEMENT_POLICY = ""
+    WORKER_MACHINE_COUNT        = 1
 
-    catalog_name = vcd_catalog.cse_catalog.name
-    tkgm_ova     = replace(var.tkgm_ova_name, ".ova", "")
+    DISK_SIZE         = "20Gi"
+    VCD_CATALOG       = vcd_catalog.cse_catalog.name
+    VCD_TEMPLATE_NAME = replace(var.tkgm_ova_name, ".ova", "")
 
-    pods_cidr     = "100.96.0.0/11"
-    services_cidr = "100.64.0.0/13"
-  }
+    POD_CIDR     = "100.96.0.0/11"
+    SERVICE_CIDR = "100.64.0.0/13"
+  })
 }
+```
 
-# sample_cluster.yaml file should convert \n into \\n and " into \" first
-data "template_file" "rde_k8s_cluster_instance_template" {
-  template = file("${path.module}/entities/k8s_cluster.json")
-  vars = {
+The [RDE Instance][rde] that creates the cluster would then look like:
+
+```hcl
+resource "vcd_rde" "k8s_cluster_instance" {
+  org                = vcd_org.cluster_organization.name       # References the Cluster Organization created during installation
+  name               = var.k8s_cluster_name
+  rde_type_vendor    = vcd_rde_type.capvcd_cluster_type.vendor
+  rde_type_nss       = vcd_rde_type.capvcd_cluster_type.nss
+  rde_type_version   = vcd_rde_type.capvcd_cluster_type.version
+  resolve            = false # MUST be false as it is resolved by CSE appliance
+  resolve_on_destroy = true  # MUST be true as it won't be resolved by Terraform
+  input_entity       = templatefile("../../entities/tkgmcluster-template.json", {
     vcd_url   = replace(var.vcd_api_endpoint, "/api", "")
     name      = var.k8s_cluster_name
     org       = vcd_org.cluster_organization.name
@@ -348,32 +368,9 @@ data "template_file" "rde_k8s_cluster_instance_template" {
     capi_yaml = replace(replace(data.template_file.k8s_cluster_yaml_template.rendered, "\n", "\\n"), "\"", "\\\"")
 
     delete                = false # Make this true to delete the cluster
-    resolve_on_destroy    = false # Make this true to forcefully delete the cluster
+    force_delete          = false # Make this true to forcefully delete the cluster
     auto_repair_on_errors = false
-  }
-}
-
-resource "vcd_rde" "k8s_cluster_instance" {
-  org              = vcd_org.cluster_organization.name
-  name             = var.k8s_cluster_name
-  rde_type_vendor  = vcd_rde_type.capvcd_cluster_type.vendor
-  rde_type_nss     = vcd_rde_type.capvcd_cluster_type.nss
-  rde_type_version = vcd_rde_type.capvcd_cluster_type.version
-  resolve          = false # MUST be false as it is resolved by CSE server
-  resolve_on_destroy     = true  # MUST be true as it won't be resolved by Terraform
-  input_entity     = data.template_file.rde_k8s_cluster_instance_template.rendered
-
-  depends_on = [
-    vcd_vapp_vm.cse_server_vm, vcd_catalog_vapp_template.tkgm_ova
-  ]
-}
-
-output "computed_k8s_cluster_id" {
-  value = vcd_rde.k8s_cluster_instance.id
-}
-
-output "computed_k8s_cluster_capvcdyaml" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["spec"]["capiYaml"]
+  })
 }
 ```
 
@@ -400,10 +397,10 @@ Follow the mentioned steps instead.
 
 ## Uninstall CSE
 
-Before uninstalling CSE, make sure you perform an update operation to mark all clusters for deletion.
+~> Before uninstalling CSE, make sure you perform an update operation to mark all clusters for deletion.
 
 ~> Don't remove the K8s cluster resources from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
-Follow the mentioned steps instead.
+Follow the steps mentioned in **"Delete a cluster"** instead.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
 

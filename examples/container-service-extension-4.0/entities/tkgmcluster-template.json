@@ -1,0 +1,26 @@
+{
+    "apiVersion": "capvcd.vmware.com/v1.1",
+    "kind": "CAPVCDCluster",
+    "name": "${name}",
+    "metadata": {
+        "name": "${name}",
+        "orgName": "${org}",
+        "site": "${vcd_url}",
+        "virtualDataCenterName": "${vdc}"
+    },
+    "spec": {
+        "vcdKe": {
+            "isVCDKECluster": true,
+            "markForDelete": ${delete},
+            "forceDelete": ${force_delete},
+            "autoRepairOnErrors": ${auto_repair_on_errors},
+            "defaultStorageClassOptions": {
+                "filesystem": null,
+                "k8sStorageClassName": null,
+                "vcdStorageProfileName": null,
+                "useDeleteReclaimPolicy": null
+            }
+        },
+        "capiYaml": "${capi_yaml}"
+    }
+}
