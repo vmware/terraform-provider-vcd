@@ -9,7 +9,7 @@ description: |-
 # vcd\_org\_group
 
 Provides a VMware Cloud Director Organization group. This can be used to create, update, and delete
-organization groups defined in `SAML`, `OAUTH`  or `LDAP`.
+organization groups defined in `SAML`, `OAUTH` or `LDAP`.
 
 Supported in provider *v2.9+*
 
