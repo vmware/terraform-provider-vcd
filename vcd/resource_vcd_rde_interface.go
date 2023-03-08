@@ -22,10 +22,11 @@ func resourceVcdRdeInterface() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"nss": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true, // Can't update nss
-				Description: "A unique namespace associated with the Runtime Defined Entity Interface. Combination of `vendor`, `nss` and `version` must be unique",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true, // Can't update nss
+				ValidateFunc: validateAlphanumericWithUnderscoresAndHyphens(),
+				Description:  "A unique namespace associated with the Runtime Defined Entity Interface. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"version": {
 				Type:        schema.TypeString,
@@ -34,10 +35,11 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Description: "The Runtime Defined Entity Interface's version. The version must follow semantic versioning rules. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"vendor": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true, // Can't update vendor
-				Description: "The vendor name. Combination of `vendor`, `nss` and `version` must be unique",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true, // Can't update vendor
+				ValidateFunc: validateAlphanumericWithUnderscoresAndHyphens(),
+				Description:  "The vendor name. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"name": {
 				Type:        schema.TypeString,

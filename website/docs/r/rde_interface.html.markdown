@@ -44,8 +44,8 @@ The following arguments are supported:
 
 -> The 3-tuple of `vendor`, `nss` and `version` specifies a unique RDE Interface.
 
-* `vendor` - (Required) The vendor of the RDE Interface.
-* `nss` - (Required) A unique namespace associated with the RDE Interface.
+* `vendor` - (Required) The vendor of the RDE Interface. Only alphanumeric characters, underscores and hyphens allowed.
+* `nss` - (Required) A unique namespace associated with the RDE Interface. Only alphanumeric characters, underscores and hyphens allowed.
 * `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the RDE Interface.
 
