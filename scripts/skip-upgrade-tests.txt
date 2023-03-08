@@ -260,3 +260,4 @@ vcd.TestAccVcdVappFirewallRules-step2.tf v3.7.0 "vApp network removal from power
 vcd.TestAccVcdVappFirewallRules.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
 vcd.TestAccVcdVAppVmCustomizationSettings.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
 vcd.TestAccVcdVAppVmMulti.tf v3.7.0 "vApp network removal from powered on vApp is not supported in API V37.1+"
+vcd.ResourceSchema-vcd_nsxt_alb_settings.tf v3.8.2 "New fields to support latest ALB features"
