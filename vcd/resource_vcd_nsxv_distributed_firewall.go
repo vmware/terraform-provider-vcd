@@ -13,12 +13,12 @@ import (
 )
 
 var DFWElements = []string{
-	govcd.DFWElementIpv4,
-	govcd.DFWElementNetwork,
-	govcd.DFWElementEdge,
-	govcd.DFWElementIpSet,
-	govcd.DFWElementVirtualMachine,
-	govcd.DFWElementVdc,
+	types.DFWElementIpv4,
+	types.DFWElementNetwork,
+	types.DFWElementEdge,
+	types.DFWElementIpSet,
+	types.DFWElementVirtualMachine,
+	types.DFWElementVdc,
 }
 
 func sourceDef() *schema.Resource {
@@ -378,7 +378,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					continue
 				}
 				// When the source is an IP address, the name should be filled with the same value
-				if inputSource.Name == "" && inputSource.Type == govcd.DFWElementIpv4 {
+				if inputSource.Name == "" && inputSource.Type == types.DFWElementIpv4 {
 					inputSource.Name = inputSource.Value
 				}
 				sources = append(sources, inputSource)
@@ -408,7 +408,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					continue
 				}
 				// When the destination is an IP address, the name should be filled with the same value
-				if inputDestination.Name == "" && inputDestination.Type == govcd.DFWElementIpv4 {
+				if inputDestination.Name == "" && inputDestination.Type == types.DFWElementIpv4 {
 					inputDestination.Name = inputDestination.Value
 				}
 				destinations = append(destinations, inputDestination)
@@ -480,7 +480,7 @@ func getDfwProtocolCode(s string) *int {
 	if s == "" {
 		return nil
 	}
-	protocolNumber, ok := govcd.NsxvProtocolCodes[s]
+	protocolNumber, ok := types.NsxvProtocolCodes[s]
 	if !ok {
 		return nil
 	}
@@ -491,7 +491,7 @@ func getDfwProtocolString(i *int) string {
 	if i == nil {
 		return ""
 	}
-	for k, v := range govcd.NsxvProtocolCodes {
+	for k, v := range types.NsxvProtocolCodes {
 		if *i == v {
 			return k
 		}
