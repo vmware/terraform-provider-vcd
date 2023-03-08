@@ -1,6 +1,5 @@
 package vcd
 
-//lint:file-ignore SA1019 ignore GetOkExists deprecated function error
 import (
 	"context"
 	"fmt"
