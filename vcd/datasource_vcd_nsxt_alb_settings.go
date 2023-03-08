@@ -42,10 +42,20 @@ func datasourceVcdAlbSettings() *schema.Resource {
 				Computed:    true,
 				Description: "Optional custom network CIDR definition for ALB Service Engine placement (VCD default is 192.168.255.1/25)",
 			},
+			"ipv6_service_network_specification": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The IPv6 network definition in Gateway CIDR format which will be used by Load Balancer service on Edge (VCD 10.4.0+)",
+			},
 			"supported_feature_set": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Feature set for ALB in this Edge Gateway. One of 'STANDARD', 'PREMIUM'.",
+			},
+			"is_transparent_mode_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enabling transparent mode allows to configure Preserve Client IP on a Virtual Service (VCD 10.4.1+)",
 			},
 		},
 	}
