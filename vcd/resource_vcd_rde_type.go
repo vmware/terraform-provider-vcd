@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"io"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 )
 
@@ -36,14 +34,14 @@ func resourceVcdRdeType() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed"),
+				ValidateFunc: validateAlphanumericWithUnderscoresAndHyphens(),
 				Description:  "The vendor name for the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"nss": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed"),
+				ValidateFunc: validateAlphanumericWithUnderscoresAndHyphens(),
 				Description:  "A unique namespace associated with the Runtime Defined Entity Type. Combination of `vendor`, `nss` and `version` must be unique",
 			},
 			"version": {
@@ -102,7 +100,7 @@ func resourceVcdRdeType() *schema.Resource {
 	}
 }
 
-// hasJsonValueChanged tells Terraform whether the JSON schema set in HCL configuration (which can have whatever identation and other quirks)
+// hasJsonValueChanged tells Terraform whether the JSON schema set in HCL configuration (which can have whatever indentation and other quirks)
 // matches the obtained JSON from VCD.
 func hasJsonValueChanged(key, oldValue, newValue string, _ *schema.ResourceData) bool {
 	areEqual, err := areMarshaledJsonEqual([]byte(oldValue), []byte(newValue))
@@ -318,7 +316,7 @@ func resourceVcdRdeTypeDelete(_ context.Context, d *schema.ResourceData, meta in
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
 // 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in state file
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in state file
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.

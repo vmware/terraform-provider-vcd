@@ -218,7 +218,7 @@ func jsonToCompactString(inputJson map[string]interface{}) (string, error) {
 }
 
 // areMarshaledJsonEqual compares that two marshaled JSON strings are equal or not. Returns an error if something
-// wrong happens when compacting both for comparison.
+// wrong happens during the comparison process.
 func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 	if !json.Valid(json1) {
 		return false, fmt.Errorf("first JSON is not valid: '%s'", json1)
