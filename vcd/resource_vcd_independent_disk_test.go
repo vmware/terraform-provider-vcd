@@ -180,7 +180,7 @@ func TestAccVcdIndependentDiskBasicWithUpdates(t *testing.T) {
 	// released after v10.4.1.
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("<= 37.1") {
-		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+		t.Skip("This test may fail on versions up to VCD 10.4.1 (API V37.1) because of a known bug. Skipping.")
 	}
 
 	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" || testConfig.VCD.NsxtProviderVdc.StorageProfile2 == "" {
