@@ -37,6 +37,28 @@ resource "vcd_nsxt_alb_settings" "org1" {
 }
 ```
 
+## Example Usage (Enabling NSX-T ALB with IPv6 service network and transparent mode on NSX-T Edge Gateway)
+
+```hcl
+data "vcd_nsxt_edgegateway" "existing" {
+  org = "my-org"
+  vdc = "nsxt-vdc"
+
+  name = "nsxt-gw"
+}
+
+resource "vcd_nsxt_alb_settings" "org1" {
+  org = "my-org"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  is_active       = true
+
+  service_network_specification      = "10.10.255.225/27"
+  ipv6_service_network_specification = "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"
+  is_transparent_mode_enabled        = true
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -46,10 +68,23 @@ The following arguments are supported:
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `is_active` - (Required) Boolean value `true` or `false` if ALB is enabled. **Note** Delete operation of this resource
   will set it to `false`
-* `service_network_specification` - (Optional) Gateway CIDR format which will be used by Load Balancer service. All the
-  load balancer service engines associated with the Service Engine Group will be attached to this network. The subnet
-  prefix length must be 25. If nothing is set, the **default is 192.168.255.125/25**. This field cannot be updated
 * `supported_feature_set` - (Optional; *v3.7+*) Feature set of this Edge Gateway if ALB is enabled (`STANDARD` or `PREMIUM`)
+* `is_transparent_mode_enabled` - (Optional; *v3.9+*, *VCD 10.4.1+*) When enabled, it allows to
+  configure Preserve Client IP on a Virtual Service
+* `service_network_specification` - (Optional) Gateway CIDR format which will be used by Load
+  Balancer service. All the load balancer service engines associated with the Service Engine Group
+  will be attached to this network. The subnet prefix length must be 25. If nothing is set and
+  `ipv6_service_network_specification` is not used, the **default is 192.168.255.125/25**. This
+  field cannot be updated
+* `ipv6_service_network_specification` (Optional; *v3.9+*, *VCD 10.4.0+*) The IPv6 network
+  definition in CIDR format which will be used by Load Balancer service in the Edge Gateway. All the
+  load balancer service engines associated with the Service Engine Group will be attached to this
+  network. This field cannot be updated
+
+~> IPv4 service network will be used if both the `service_network_specification` and
+`ipv6_service_network_specification` properties are unset. If both are set, it will still be one
+service network with a dual IPv4 and IPv6 stack. If only `ipv6_service_network_specification` is
+used, then only IPv6 will be used.
 
 ~> The attribute `supported_feature_set` must not be used in VCD versions lower than 10.4. Starting with 10.4, it replaces `license_type` field in [nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller).
 

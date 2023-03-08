@@ -239,3 +239,58 @@ func testAccCheckRdeTypesDestroy(identifiers ...string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+// TestAccVcdRdeTypeValidation tests the validation rules for the RDE Type resource
+func TestAccVcdRdeTypeValidation(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Nss":        "wrong%%%%",
+		"Version":    "1.0.0",
+		"Vendor":     "Vendor_0-9",
+		"Name":       t.Name(),
+		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
+	}
+	testParamsNotEmpty(t, params)
+
+	config1 := templateFill(testAccVcdRdeTypeWrongFields, params)
+	params["FuncName"] = t.Name() + "2"
+	params["Nss"] = "Nss_0-9"
+	params["Vendor"] = "wrong%%%%"
+	config2 := templateFill(testAccVcdRdeTypeWrongFields, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", config1)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", config2)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      config1,
+				ExpectError: regexp.MustCompile(".*only alphanumeric characters, underscores and hyphens allowed.*"),
+			},
+			{
+				Config:      config2,
+				ExpectError: regexp.MustCompile(".*only alphanumeric characters, underscores and hyphens allowed.*"),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdRdeTypeWrongFields = `
+# skip-binary: This test checks early failure validations
+resource "vcd_rde_type" "rde_type_validation" {
+  nss           = "{{.Nss}}"
+  version       = "{{.Version}}"
+  vendor        = "{{.Vendor}}"
+  name          = "{{.Name}}"
+  description   = "{{.Description}}"
+  schema        = file("{{.SchemaPath}}")
+}
+`
