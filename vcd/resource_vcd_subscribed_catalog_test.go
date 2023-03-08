@@ -26,7 +26,7 @@ func TestAccVcdVsphereSubscriber(t *testing.T) {
 
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
-		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
+		t.Skip("This test may fail with versions prior to 10.4.0 because of side effects from other operations. Skipping.")
 	}
 
 	subscriberCatalog := t.Name()
@@ -77,7 +77,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
-		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
+		t.Skip("This test may fail with versions prior to 10.4.0 because of side effects from other operations. Skipping.")
 	}
 
 	var (

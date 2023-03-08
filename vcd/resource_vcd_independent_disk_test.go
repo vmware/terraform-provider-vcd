@@ -175,8 +175,9 @@ func TestAccVcdIndependentDiskBasicWithUpdates(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	// As of VCD 10.4.1, there might be some errors while updating on the VCD side, so the test is skipped
-	// to be re-evaluated after an upgrade of VCD.
+	// The test is being skipped due to a known bug in the current versions of VCD
+	// when updating the disk resources, thus the test will only be run on versions
+	// released after v10.4.1.
 	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("<= 37.1") {
 		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
