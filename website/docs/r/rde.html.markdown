@@ -109,8 +109,9 @@ needs to check the contents of the `computed_entity` and do some diff with the o
 ## RDE resolution
 
 RDEs must be resolved to be used or deleted, and this operation can be done either by Terraform with `resolve=true`, or by a 3rd party
-actor that will do it behind the scenes. In this last scenario, it is advisable to mark `resolve_on_destroy=true` so Terraform
-can destroy the RDE if it is not resolved by anyone.
+actor that will do it behind the scenes (`resolve=false`).
+In this last scenario, it is advisable to mark `resolve_on_destroy=true` so Terraform can destroy the RDE if it is not
+resolved by anyone.
 
 ## Argument Reference
 
