@@ -360,23 +360,23 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 	vcdClient := meta.(*VCDClient)
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
 'rde-id' to import by RDE id
-'vendor.namespace.version.name.position' where position is the RDE number as returned by VCD, starting on 1
-'list@vendor.namespace.version.name' to get a list of RDEs with their respective positions and real IDs`)
+'vendor.nss.version.name.position' where position is the RDE number as returned by VCD, starting on 1
+'list@vendor.nss.version.name' to get a list of RDEs with their respective positions and real IDs`)
 
-	printList := func(vendor, namespace, version, name string) error {
-		rdes, err := vcdClient.GetRdesByName(vendor, namespace, version, name)
+	printList := func(vendor, nss, version, name string) error {
+		rdes, err := vcdClient.GetRdesByName(vendor, nss, version, name)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Found RDEs with vendor '%s', namespace '%s', version '%s' and name '%s':\n", vendor, namespace, version, name)
+		fmt.Printf("Found RDEs with vendor '%s', nss '%s', version '%s' and name '%s':\n", vendor, nss, version, name)
 		for _, rde := range rdes {
 			fmt.Printf("* %s\n", rde.DefinedEntity.ID)
 		}
 		return fmt.Errorf("resource was not imported! %s", helpError.Error())
 	}
 
-	getRdeInPosition := func(vendor, namespace, version, name, position string) (*govcd.DefinedEntity, error) {
-		rdes, err := vcdClient.VCDClient.GetRdesByName(vendor, namespace, version, name)
+	getRdeInPosition := func(vendor, nss, version, name, position string) (*govcd.DefinedEntity, error) {
+		rdes, err := vcdClient.VCDClient.GetRdesByName(vendor, nss, version, name)
 		if err != nil {
 			return nil, err
 		}
@@ -396,29 +396,29 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 	var rde *govcd.DefinedEntity
 	var err error
 	switch len(resourceURI) {
-	case 1: // ie: urn:vcloud:entity:vendor:namespace:a074f9e9-5d76-4f1e-8c37-f4e8b28e51ff
+	case 1: // ie: urn:vcloud:entity:vendor:nss:a074f9e9-5d76-4f1e-8c37-f4e8b28e51ff
 		rde, err = vcdClient.VCDClient.GetRdeById(resourceURI[0])
 		if err != nil {
 			return nil, err
 		}
-	case 4: // ie: list@vendor.namespace.1.2.3.name
+	case 4: // ie: list@vendor.nss.1.2.3.name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
 		}
 		return nil, printList(listAndVendorSplit[1], resourceURI[1], resourceURI[2], resourceURI[3])
-	case 5: // ie: VCD_IMPORT_SEPARATOR="_" vendor_namespace_1.2.3_name_1
+	case 5: // ie: VCD_IMPORT_SEPARATOR="_" vendor_nss_1.2.3_name_1
 		rde, err = getRdeInPosition(resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3], resourceURI[4])
 		if err != nil {
 			return nil, err
 		}
-	case 6: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_namespace_1.2.3_name
+	case 6: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_nss_1.2.3_name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
 		}
 		return nil, printList(listAndVendorSplit[1], resourceURI[1], fmt.Sprintf("%s.%s.%s", resourceURI[2], resourceURI[3], resourceURI[4]), resourceURI[5])
-	case 7: // ie: vendor.namespace.1.2.3.name.1
+	case 7: // ie: vendor.nss.1.2.3.name.1
 		rde, err = getRdeInPosition(resourceURI[0], resourceURI[1], fmt.Sprintf("%s.%s.%s", resourceURI[2], resourceURI[3], resourceURI[4]), resourceURI[5], resourceURI[6])
 		if err != nil {
 			return nil, err

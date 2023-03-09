@@ -161,7 +161,7 @@ resource "vcd_rde" "my-rde" {
   name        = "My custom RDE"
   resolve     = true
   entity_url  = "https://just.an-example.com/entities/custom-rde.json"
-  
+
   metadata_entry {
     key      = "foo"
     type     = "StringEntry"
@@ -182,12 +182,45 @@ resource "vcd_rde" "my-rde" {
 
 ## Importing
 
-!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
 
-~> Note: VCD allows to have many Runtime Defined Entities from a given type with the same name. Due to limitations in the
-way that Terraform works, during an import, the chosen RDE will be the first one that VCD returns.
+-> Note: VCD allows to have many Runtime Defined Entities from a given type with the same name. The only way to differentiate
+them is with their unique ID.
 
-!!!! TODO: Maybe we can put a selector in the import chain????
+An existing Runtime Defined Entity can be [imported][docs-import] into this resource via supplying its `vendor`, `nss`,
+`version` and `name`. As this can identify not only one RDE but **many**, a `position` is also needed in the import process.
+For example, using this structure, representing an existing Runtime Defined Entity that was **not** created using Terraform:
+
+```hcl
+resource "vcd_rde" "outer_rde" {
+  vendor  = "bigcorp"
+  nss     = "tech"
+  version = "4.5.6"
+  name    = "foo"
+  # ...
+}
+```
+
+You can import such Runtime Defined Entity into Terraform state using this command
+
+```
+terraform import vcd_rde.outer_rde bigcorp.tech.4.5.6.foo.1
+```
+
+Where `vendor=bigcorp`, `nss=tech`, `version=4.5.6`, `name=foo` and we want the first retrieved RDE (`position=1`) in case
+there's more than one with that combination of type parameters and name.
+
+To know how many RDEs are available in VCD with the given combination of type parameters and name, one can do:
+
+```
+terraform import vcd_rde.outer_rde list@bigcorp.tech.4.5.6.foo
+```
+It will return a list of IDs. Then one can import again specifying the position, or directly with the ID:
+
+```
+terraform import vcd_rde.outer_rde urn:vcloud:entity:bigcorp:tech:a074f9e9-5d76-4f1e-8c37-f4e8b28e51ff
+```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
