@@ -304,7 +304,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 
   # rule n. 0 
   rule {
-	name      = "straight"
+    name      = "straight"
     direction = "inout"
     action    = "allow"
     source {
@@ -318,7 +318,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
       protocol         = "TCP"
       source_port      = "20250"
       destination_port = "20251"
-	}
+  }
     # named application
     application {
       name  = data.vcd_nsxv_application.application1.name
@@ -343,7 +343,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
     direction      = "in"
     action         = "allow"
     logged         = true
-	exclude_source = true
+    exclude_source = true
     # literal source
     source {
       name  = "10.10.1.0-10.10.1.100"
@@ -381,7 +381,7 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
     direction           = "in"
     action              = "allow"
     logged              = true
-	exclude_destination = true
+    exclude_destination = true
     # isolated network destination
     destination {
       name  = data.vcd_network_isolated.net-i.name
