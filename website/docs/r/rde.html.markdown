@@ -48,10 +48,10 @@ data "vcd_rde_type" "my-type" {
 }
 
 resource "vcd_rde" "my_rde" {
-  org          = "my-org"
-  rde_type_id  = data.vcd_rde_type.my-type.id
-  name         = "My custom RDE"
-  resolve      = true
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
   # Functions are evaluated eagerly, so the file must exist and not be a reference to a created Terraform resource
   input_entity = templatefile("${path.module}/entities/custom-rde.json", {
     name          = var.name
