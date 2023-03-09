@@ -409,11 +409,9 @@ The [RDE Instance][rde] that creates the cluster would then look like:
 resource "vcd_rde" "k8s_cluster_instance" {
   org                = "cluster_org"
   name               = "my-cluster"
-  rde_type_vendor    = vcd_rde_type.capvcd_cluster_type.vendor  # This must reference the CAPVCD RDE Type vendor
-  rde_type_nss       = vcd_rde_type.capvcd_cluster_type.nss     # This must reference the CAPVCD RDE Type nss
-  rde_type_version   = vcd_rde_type.capvcd_cluster_type.version # This must reference the CAPVCD RDE Type version
-  resolve            = false                                    # MUST be false as it is resolved by CSE Server
-  resolve_on_destroy = true                                     # MUST be true as it won't be resolved by Terraform
+  rde_type_id        = vcd_rde_type.capvcd_cluster_type.id  # This must reference the CAPVCD RDE Type
+  resolve            = false                                # MUST be false as it is resolved by CSE Server
+  resolve_on_destroy = true                                 # MUST be true as it won't be resolved by Terraform
   
   # Read the RDE template present in this repository
   input_entity       = templatefile("../../entities/tkgmcluster-template.json", {

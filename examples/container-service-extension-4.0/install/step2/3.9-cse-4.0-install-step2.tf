@@ -684,12 +684,10 @@ data "vcd_rde_type" "existing_vcdkeconfig_type" {
 
 # This RDE should be applied as it is.
 resource "vcd_rde" "vcdkeconfig_instance" {
-  org              = var.administrator_org
-  name             = "vcdKeConfig"
-  rde_type_vendor  = data.vcd_rde_type.existing_vcdkeconfig_type.vendor
-  rde_type_nss     = data.vcd_rde_type.existing_vcdkeconfig_type.nss
-  rde_type_version = data.vcd_rde_type.existing_vcdkeconfig_type.version
-  resolve          = true
+  org          = var.administrator_org
+  name         = "vcdKeConfig"
+  rde_type_id  = data.vcd_rde_type.existing_vcdkeconfig_type.id
+  resolve      = true
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     capvcd_version                  = var.capvcd_version
     cpi_version                     = var.cpi_version
