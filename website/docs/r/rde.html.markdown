@@ -80,11 +80,11 @@ data "vcd_rde_type" "my-type" {
 }
 
 resource "vcd_rde" "my-rde" {
-  org          = "my-org"
-  rde_type_id  = data.vcd_rde_type.my-type.id
-  name         = "My custom RDE"
-  resolve      = true
-  entity_url   = "https://just.an-example.com/entities/custom-rde.json"
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
+  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
 }
 ```
 
