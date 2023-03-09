@@ -257,3 +257,12 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible,
 	}
 	return nil
 }
+
+// stringOnNotNil returns the contents of a string pointer
+// if the pointer is nil, returns an empty string
+func stringOnNotNil(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}

@@ -156,7 +156,7 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 			"rule": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "Ordered list of distributed firewall rules. Will be considered only if `enabled` is true",
+				Description: "Ordered list of distributed firewall rules",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -203,32 +203,32 @@ func resourceVcdNsxvDistributedFirewall() *schema.Resource {
 						"source": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Description: "List of source traffic for this rule. Leaving it empty means 'any'",
+							Description: "List of source traffic for this rule. An empty value means 'any'",
 							Elem:        sourceDef(),
 						},
 						"application": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Description: "Application definitions for this rule. Leaving it empty means 'any'",
+							Description: "Application definitions for this rule. An empty value means 'any'",
 							Elem:        applicationDef(),
 						},
 						"exclude_source": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "If set, reverses the content of the source elements",
+							Description: "If true, the content of the source elements is reversed",
 						},
 						"destination": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Description: "List of destination traffic for this rule. Leaving it empty means 'any'",
+							Description: "List of destination traffic for this rule. An empty value means 'any'",
 							Elem:        destinationDef(),
 						},
 						"exclude_destination": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "If set, reverses the content of the destination elements",
+							Description: "If true, the content of the destination elements is reversed",
 						},
 						"applied_to": {
 							Type:        schema.TypeSet,
@@ -594,15 +594,11 @@ func dfwRulesToResource(rules []types.NsxvDistributedFirewallRule, d *schema.Res
 	return d.Set("rule", rulesList)
 }
 
-// stringOnNotNil returns the contents of a string pointer
-// if the pointer is nil, returns an empty string
-func stringOnNotNil(p *string) string {
-	if p == nil {
-		return ""
-	}
-	return *p
-}
-
+// resourceVcdNsxvDistributedFirewallImport starts the import of an existing NSX-V distributed firewall into Terraform state
+// It can work in two ways:
+// terraform import vcd_nsxv_distributed_firewall.identifier vdc_id
+// or
+// terraform import vcd_nsxv_distributed_firewall.identifier org-name.vdc-name
 func resourceVcdNsxvDistributedFirewallImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
@@ -610,29 +606,33 @@ func resourceVcdNsxvDistributedFirewallImport(ctx context.Context, d *schema.Res
 	var dfw *govcd.NsxvDistributedFirewall
 
 	var vdcId string
-	if len(resourceURI) == 1 { // only VDC-ID
+	switch len(resourceURI) {
+	case 1:
+		// only VDC ID
 		uuid := extractUuid(resourceURI[0])
 		if uuid == "" {
 			return nil, fmt.Errorf("not a valid ID provided for VDC")
 		}
 		vdcId = resourceURI[0]
 		dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
-	} else {
-		if len(resourceURI) == 2 { // Org name + VDC name
-			orgName := resourceURI[0]
-			vdcName := resourceURI[1]
-			org, err := vcdClient.GetOrg(orgName)
-			if err != nil {
-				return nil, err
-			}
-			vdc, err := org.GetVDCByName(vdcName, false)
-			if err != nil {
-				return nil, err
-			}
-			vdcId = vdc.Vdc.ID
-			dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
+	case 2:
+		// Org name + VDC name
+		orgName := resourceURI[0]
+		vdcName := resourceURI[1]
+		org, err := vcdClient.GetOrg(orgName)
+		if err != nil {
+			return nil, err
 		}
+		vdc, err := org.GetVDCByName(vdcName, false)
+		if err != nil {
+			return nil, err
+		}
+		vdcId = vdc.Vdc.ID
+		dfw = govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
+	default:
+		return nil, fmt.Errorf("expected number of URI components: 1 (VDC ID) or 2 (org name + VDC name) - found %d", len(resourceURI))
 	}
+
 	configuration, err := dfw.GetConfiguration()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving NSX-V Distributed Firewall configuration: (%s) - the firewall may not be enabled", err)
