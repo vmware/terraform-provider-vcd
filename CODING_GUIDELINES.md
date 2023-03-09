@@ -137,12 +137,12 @@ makes it possible for maintainers to understand the changes and expand on them.
 
 The documentation comes in three flavors:
 
-* One article per resource, located in the directory `./website/docs/r`, and one for the corresponding data source, located 
+* One [article per resource](#documenting-data-sources-and-resources), located in the directory `./website/docs/r`, and one for the corresponding data source, located 
   in `./website/docs/d`.
-* One article about topics that involve more than one resource, and need a wider breadth of documentation to be properly
+* One article about [topics that involve more than one resource](#documenting-broad-topics--guides-), and need a wider breadth of documentation to be properly
   explained, located in `./website/guides` (for example: the article **roles management** includes operations with **Roles**,
   **Global Roles**, **Rights**, and **Rights bundles**)
-* One or more **entries for the change log**, explaining what each pull request has contributed.
+* One or more [**entries for the change log**](#documenting-each-pull-request-for-the-changelog), explaining what each pull request has contributed.
 
 ### Documenting data sources and resources
 
@@ -160,7 +160,7 @@ Each entity, be it a resource or a data source, needs to have its documentation 
 
 Each page must then be linked appropriately in the file `./website/docs/vcd.erb`
 
-### Documenting broad topics
+### Documenting broad topics (guides)
 
 When a topic is too wide to be comprised in the description of one resource or data source, we can make a **Guide**, which
 is a free-form article that explains operations including several resources and data sources.
@@ -196,6 +196,8 @@ Before the release, we use two scripts:
   that we paste into `CHANGELOG.md`
 * `./scripts/changelog-links.sh`, which parses `CHANGELOG.md` and produces the URLs that replace every occurrence of `[GH-###]`
 
+As a last operation before the release, we open a PR with the updated `CHANGELOG.md`, giving the team a final chance to review
+the text of what will mostly constitute the release notes.
 
 ### References:
 * https://github.com/vmware/terraform-provider-vcd/pull/800#discussion_r825335060
