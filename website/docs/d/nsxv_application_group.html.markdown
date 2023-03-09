@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxv\_application\_group
 
-Provides a VMware Cloud Director NSX-V Distributed Firewall data source used to read an existing application group
+Provides a VMware Cloud Director NSX-V Distributed Firewall data source used to read an existing application group.
 
 Supported in provider *v3.9+*
 
