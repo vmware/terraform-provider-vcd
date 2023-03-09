@@ -225,10 +225,10 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
 			},
-			"enable_distributed_firewall": {
+			"enable_nsxv_distributed_firewall": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if distributed firewall is enabled - Only applies to NSX-V VDCs",
+				Description: "True if the NSX-V distributed firewall is enabled - Only applies to NSX-V VDCs",
 			},
 		},
 	}
@@ -261,14 +261,14 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	dSet(d, "enable_distributed_firewall", false)
+	dSet(d, "enable_nsxv_distributed_firewall", false)
 	if adminVdc.IsNsxv() {
 		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
 		enabled, err := dfw.IsEnabled()
 		if err != nil {
 			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
 		}
-		dSet(d, "enable_distributed_firewall", enabled)
+		dSet(d, "enable_nsxv_distributed_firewall", enabled)
 	}
 	return nil
 }
