@@ -35,7 +35,6 @@ output "computed_rde" {
 }
 ```
 
-
 ## Example Usage with a JSON template
 
 Using the [`template_file`](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) data source will
@@ -51,7 +50,6 @@ data "template_file" "json_template" {
     replicas      = 2
   }
 }
-
 
 data "vcd_rde_type" "my-type" {
   vendor    = "bigcorp"
@@ -110,23 +108,22 @@ needs to check the contents of the `computed_entity` and do some diff with the o
 
 ## RDE resolution
 
-RDEs must be resolved to be used, and this operation can be done either by Terraform with `resolve=true`, or by a 3rd party
-actor that will do it behind the scenes. In this last scenario, it is advisable to mark `resolve_on_destroy=true` so Terraform
-can destroy the RDE if something goes wrong.
+RDEs must be resolved to be used or deleted, and this operation can be done either by Terraform with `resolve=true`, or by a 3rd party
+actor that will do it behind the scenes (`resolve=false`).
+In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can destroy the RDE if it is not
+resolved by anyone.
 
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
-* `rde_type_vendor` - (Required) The vendor of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
-* `rde_type_namespace` - (Required) The namespace of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
-* `rde_type_version` - (Required) The version of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
+* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
 * `name` - (Required) The name of the Runtime Defined Entity.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
-  deleted until the input_entity is resolved by either party, unless `resolve_on_destroy=true`.
-* `resolve_on_destroy` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved. It is `false` by default.
+  deleted until the input_entity is resolved by either party, unless `resolve_on_removal=true`.
+* `resolve_on_removal` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved. It is `false` by default.
 * `input_entity` - (Optional) A string that specifies a valid JSON for the RDE. It can be retrieved with functions such as `file`, `templatefile`... Either `input_entity` or `input_entity_url` is required.
 * `input_entity_url` - (Optional) The URL that points to a valid JSON for the RDE. Either `input_entity` or `input_entity_url` is required.
 * `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
@@ -161,7 +158,7 @@ resource "vcd_rde" "my-rde" {
   name        = "My custom RDE"
   resolve     = true
   entity_url  = "https://just.an-example.com/entities/custom-rde.json"
-  
+
   metadata_entry {
     key      = "foo"
     type     = "StringEntry"
@@ -182,12 +179,43 @@ resource "vcd_rde" "my-rde" {
 
 ## Importing
 
-!!!!!!!!!!!!!!!!! TODO !!!!!!!!!!!!!
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
 
-~> Note: VCD allows to have many Runtime Defined Entities from a given type with the same name. Due to limitations in the
-way that Terraform works, during an import, the chosen RDE will be the first one that VCD returns.
+-> Note: VCD allows to have many Runtime Defined Entities from a given type with the same name. The only way to differentiate
+them is with their unique ID.
 
-!!!! TODO: Maybe we can put a selector in the import chain????
+An existing Runtime Defined Entity can be [imported][docs-import] into this resource via supplying its `vendor`, `nss`,
+`version` and `name`. As this can identify not only one RDE but **many**, a `position` is also needed in the import process.
+For example, using this structure, representing an existing Runtime Defined Entity that was **not** created using Terraform:
+
+```hcl
+resource "vcd_rde" "outer_rde" {
+  rde_type_id = data.my_rde_type.id
+  name        = "foo"
+  # ...
+}
+```
+
+You can import such Runtime Defined Entity into Terraform state using this command
+
+```
+terraform import vcd_rde.outer_rde bigcorp.tech.4.5.6.foo.1
+```
+
+Where `vendor=bigcorp`, `nss=tech`, `version=4.5.6`, `name=foo` and we want the first retrieved RDE (`position=1`) in case
+there's more than one with that combination of type parameters and name.
+
+To know how many RDEs are available in VCD with the given combination of type parameters and name, one can do:
+
+```
+terraform import vcd_rde.outer_rde list@bigcorp.tech.4.5.6.foo
+```
+It will return a list of IDs. Then one can import again specifying the position, or directly with the ID:
+
+```
+terraform import vcd_rde.outer_rde urn:vcloud:entity:bigcorp:tech:a074f9e9-5d76-4f1e-8c37-f4e8b28e51ff
+```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
