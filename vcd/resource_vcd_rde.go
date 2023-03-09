@@ -36,23 +36,11 @@ func resourceVcdRde() *schema.Resource {
 				Required:    true,
 				Description: "The name of the Runtime Defined Entity",
 			},
-			"rde_type_vendor": {
+			"rde_type_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The Runtime Defined Entity Type vendor",
-			},
-			"rde_type_nss": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The Runtime Defined Entity Type namespace",
-			},
-			"rde_type_version": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The Runtime Defined Entity Type version",
+				Description: "The Runtime Defined Entity Type ID",
 			},
 			"external_id": {
 				Type:        schema.TypeString,
@@ -96,7 +84,7 @@ func resourceVcdRde() *schema.Resource {
 					"deleted until the entity is resolved.",
 				Required: true,
 			},
-			"resolve_on_destroy": {
+			"resolve_on_removal": {
 				Type:        schema.TypeBool,
 				Description: "If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved.",
 				Default:     false,
@@ -116,23 +104,11 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	vcdClient := meta.(*VCDClient)
 
 	name := d.Get("name").(string)
-	vendor := d.Get("rde_type_vendor").(string)
-	nss := d.Get("rde_type_nss").(string)
-	version := d.Get("rde_type_version").(string)
+	rdeTypeId := d.Get("rde_type_id").(string)
 
-	// VCD allows to have multiple RDEs with the same name, but this is not compatible with Terraform as there is no
-	// other way to unequivocally identify a RDE from a given type.
-	// In other words, without this check, the data source could be potentially broken.
-	rdes, err := vcdClient.GetRdesByName(vendor, nss, version, name)
-	if err == nil && rdes != nil {
-		rdeList := make([]string, len(rdes))
-		for i, rde := range rdes {
-			rdeList[i] = rde.DefinedEntity.ID
-		}
-		return diag.Errorf("found other Runtime Defined Entities with same name: %v", rdeList)
-	}
-	if err != nil && !govcd.ContainsNotFound(err) {
-		return diag.Errorf("could not create an RDE, failed fetching existing RDEs: %s", err)
+	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
+	if err != nil {
+		return diag.Errorf("could not retrieve RDE Type with ID %s", rdeTypeId)
 	}
 
 	tenantContext := govcd.TenantContext{}
@@ -150,7 +126,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	rde, err := vcdClient.CreateRde(vendor, nss, version, types.DefinedEntity{
+	rde, err := rdeType.CreateRde(types.DefinedEntity{
 		Name:       name,
 		ExternalId: d.Get("external_id").(string),
 		Entity:     jsonSchema,
@@ -205,17 +181,10 @@ func getRdeJson(vcdClient *VCDClient, d *schema.ResourceData) (map[string]interf
 	return unmarshalledJson, err
 }
 
-func resourceVcdRdeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdRdeRead(ctx, d, meta, "resource")
-}
-
-// genericVcdRdeRead reads a Runtime Defined Entity from VCD and sets the Terraform state accordingly.
-// If origin == "datasource", if the referenced RDE type doesn't exist, it errors.
-// If origin == "resource", if the referenced RDE type doesn't exist, it removes it from tfstate and exits normally.
-func genericVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	rde, err := getRde(d, vcdClient)
-	if origin == "resource" && govcd.ContainsNotFound(err) {
+	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		d.SetId("")
 		return nil
@@ -267,18 +236,21 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity,
 		return vcdClient.GetRdeById(d.Id())
 	}
 
-	vendor := d.Get("rde_type_vendor").(string)
-	nss := d.Get("rde_type_nss").(string)
-	version := d.Get("rde_type_version").(string)
+	rdeTypeId := d.Get("rde_type_id").(string)
 	name := d.Get("name").(string)
 
-	rdes, err := vcdClient.GetRdesByName(vendor, nss, version, name)
+	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get RDE Type with ID %s", rdeTypeId)
 	}
 
-	// We perform another GET by ID to retrieve the ETag of the RDE
-	// FIXME: Check what happens if we create from scratch an RDE with name "a" and there's already one with "a" in VCD
+	rdes, err := rdeType.GetRdesByName(name)
+	if err != nil {
+		return nil, fmt.Errorf("could not get RDE with name %s and RDE Type ID %s", name, rdeTypeId)
+	}
+
+	// We perform another GET by ID to retrieve the ETag of the RDE.
+	// We pick the first retrieved RDE from the result above.
 	return vcdClient.GetRdeById(rdes[0].DefinedEntity.ID)
 }
 
@@ -329,7 +301,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	if d.Get("resolve_on_destroy").(bool) {
+	if d.Get("resolve_on_removal").(bool) {
 		err = rde.Resolve()
 		if err != nil {
 			return diag.FromErr(err)
@@ -428,13 +400,7 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
-	rdeTypeParts := strings.Split(rde.DefinedEntity.EntityType, ":")
-	if len(rdeTypeParts) < 5 {
-		return nil, fmt.Errorf("error in recovered RDE, its Type is incorrect: %s", rde.DefinedEntity.EntityType)
-	}
-	dSet(d, "rde_type_vendor", rdeTypeParts[3])
-	dSet(d, "rde_type_nss", rdeTypeParts[4])
-	dSet(d, "rde_type_version", rdeTypeParts[5])
+	dSet(d, "rde_type_id", rde.DefinedEntity.EntityType)
 
 	return []*schema.ResourceData{d}, nil
 }

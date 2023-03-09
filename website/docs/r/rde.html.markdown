@@ -110,7 +110,7 @@ needs to check the contents of the `computed_entity` and do some diff with the o
 
 RDEs must be resolved to be used or deleted, and this operation can be done either by Terraform with `resolve=true`, or by a 3rd party
 actor that will do it behind the scenes (`resolve=false`).
-In this last scenario, it is advisable to mark `resolve_on_destroy=true` so Terraform can destroy the RDE if it is not
+In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can destroy the RDE if it is not
 resolved by anyone.
 
 ## Argument Reference
@@ -118,14 +118,12 @@ resolved by anyone.
 The following arguments are supported:
 
 * `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
-* `rde_type_vendor` - (Required) The vendor of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
-* `rde_type_namespace` - (Required) The namespace of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
-* `rde_type_version` - (Required) The version of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
+* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
 * `name` - (Required) The name of the Runtime Defined Entity.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be
-  deleted until the input_entity is resolved by either party, unless `resolve_on_destroy=true`.
-* `resolve_on_destroy` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved. It is `false` by default.
+  deleted until the input_entity is resolved by either party, unless `resolve_on_removal=true`.
+* `resolve_on_removal` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved. It is `false` by default.
 * `input_entity` - (Optional) A string that specifies a valid JSON for the RDE. It can be retrieved with functions such as `file`, `templatefile`... Either `input_entity` or `input_entity_url` is required.
 * `input_entity_url` - (Optional) The URL that points to a valid JSON for the RDE. Either `input_entity` or `input_entity_url` is required.
 * `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
@@ -193,10 +191,8 @@ For example, using this structure, representing an existing Runtime Defined Enti
 
 ```hcl
 resource "vcd_rde" "outer_rde" {
-  vendor  = "bigcorp"
-  nss     = "tech"
-  version = "4.5.6"
-  name    = "foo"
+  rde_type_id = data.my_rde_type.id
+  name        = "foo"
   # ...
 }
 ```
