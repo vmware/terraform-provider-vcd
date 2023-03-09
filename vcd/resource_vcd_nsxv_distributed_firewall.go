@@ -290,22 +290,22 @@ func resourceVcdNsxvDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 	dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdcId)
 	isEnabled, err := dfw.IsEnabled()
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("[NSX-V distributed firewall %s] error checking firewall state %s", origin, err)
 	}
 	if !isEnabled {
 		err := dfw.Enable()
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.Errorf("[NSX-V distributed firewall %s] error enabling firewall %s", origin, err)
 		}
 		isEnabled = true
 	}
 	rules, err := resourceToDfwRules(d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("[NSX-V distributed firewall %s] error getting firewall rules %s", origin, err)
 	}
 	_, err = dfw.UpdateConfiguration(rules)
 	if err != nil {
-		return diag.Errorf("error updating distributed firewall configuration: %s", err)
+		return diag.Errorf("[NSX-V distributed firewall %s] error setting distributed firewall configuration: %s", origin, err)
 	}
 	return resourceVcdNsxvDistributedFirewallRead(ctx, d, meta)
 }
