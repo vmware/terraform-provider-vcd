@@ -108,11 +108,11 @@ func datasourceVcdNsxvApplicationFinderRead(_ context.Context, d *schema.Resourc
 		result = append(result, item)
 	}
 
-	for _, sg := range applicationGroups {
+	for _, ag := range applicationGroups {
 		item := map[string]string{
-			"name":  sg.Name,
-			"type":  sg.Type.TypeName,
-			"value": sg.ObjectID,
+			"name":  ag.Name,
+			"type":  ag.Type.TypeName,
+			"value": ag.ObjectID,
 		}
 		result = append(result, item)
 	}
