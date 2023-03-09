@@ -1,1 +1,1 @@
-* Update `CODING_GUIDELINES.md` with documentation notes [GH-10015]
+* Update `CODING_GUIDELINES.md` with documentation notes [GH-1015]
