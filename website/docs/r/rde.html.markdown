@@ -35,7 +35,6 @@ output "computed_rde" {
 }
 ```
 
-
 ## Example Usage with a JSON template
 
 Using the [`template_file`](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) data source will
@@ -51,7 +50,6 @@ data "template_file" "json_template" {
     replicas      = 2
   }
 }
-
 
 data "vcd_rde_type" "my-type" {
   vendor    = "bigcorp"
