@@ -30,12 +30,12 @@ func datasourceVcdNsxvDistributedFirewall() *schema.Resource {
 			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "When true, it enables the NSX-V distributed firewall",
+				Description: "When true, the retrieved NSX-V distributed firewall is enabled",
 			},
 			"rule": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Ordered list of distributed firewall rules. Will be considered only if `enabled` is true",
+				Description: "Ordered list of distributed firewall rules",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -76,7 +76,7 @@ func datasourceVcdNsxvDistributedFirewall() *schema.Resource {
 						"source": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "List of source traffic for this rule. Leaving it empty means 'any'",
+							Description: "List of source traffic for this rule. An empty value means 'any'",
 							Elem: &schema.Resource{
 								Schema: computedMap(sourceDef().Schema),
 							},
@@ -84,7 +84,7 @@ func datasourceVcdNsxvDistributedFirewall() *schema.Resource {
 						"application": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "Application definitions for this rule. Leaving it empty means 'any'",
+							Description: "Application definitions for this rule. An empty value means 'any'",
 							Elem: &schema.Resource{
 								Schema: computedMap(applicationDef().Schema),
 							},
@@ -92,12 +92,12 @@ func datasourceVcdNsxvDistributedFirewall() *schema.Resource {
 						"exclude_source": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "If set, reverses the content of the source elements",
+							Description: "If true, the content of the source elements is reversed",
 						},
 						"destination": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "List of destination traffic for this rule. Leaving it empty means 'any'",
+							Description: "List of destination traffic for this rule. An empty value means 'any'",
 							Elem: &schema.Resource{
 								Schema: computedMap(destinationDef().Schema),
 							},
@@ -105,7 +105,7 @@ func datasourceVcdNsxvDistributedFirewall() *schema.Resource {
 						"exclude_destination": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "If set, reverses the content of the destination elements",
+							Description: "If true, the content of the destination elements is reversed",
 						},
 						"applied_to": {
 							Type:        schema.TypeSet,
