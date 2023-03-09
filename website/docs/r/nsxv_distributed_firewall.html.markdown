@@ -10,7 +10,7 @@ description: |-
 # vcd\_nsxv\_distributed\_firewall
 
 The Distributed Firewall allows user to segment organization virtual data center entities, such as
-virtual machines, edges, networks, based on several attributes
+virtual machines, edges, networks, based on several attributes. This resource handles only **layer 3** rules.
 
 Supported in provider *v3.9+*
 
@@ -157,6 +157,8 @@ resource "vcd_nsxv_distributed_firewall" "dfw1" {
 }
 ```
 
+~> NOTE: when we remove a `vcd_nsxv_distributed_firewall`, the firewall gets disabled, and all rules (both layer 3 and layer 2) are removed.
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -176,7 +178,7 @@ The following arguments are supported:
 Each Firewall Rule contains the following attributes:
 
 * `name` - (Optional) Explanatory name for firewall rule (uniqueness not enforced)
-* `direction` - (Required) One of `in`, `out`, or `inout` (default `in`)
+* `direction` - (Required) One of `in`, `out`, or `inout`
 * `action` - (Required) Defines if it should `allow` or `deny` traffic 
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)

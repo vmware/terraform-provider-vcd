@@ -9,7 +9,7 @@ description: |-
 # vcd\_nsxv\_application_finder
 
 Provides a VMware Cloud Director NSX-V distributed firewall applications and application groups finder
-used to retrieve existing applications by regular expressions.
+used to retrieve existing ones by regular expressions.
 
 Supported in provider *v3.9+*
 

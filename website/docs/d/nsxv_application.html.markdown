@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxv\_application
 
-Provides a VMware Cloud Director NSX-V distributed firewall application data source used to read an existing application.
+Provides a VMware Cloud Director data source for reading NSX-V distributed firewall applications
 
 Supported in provider *v3.9+*
 
