@@ -139,7 +139,7 @@ The documentation comes in three flavors:
 
 * One [article per resource](#documenting-data-sources-and-resources), located in the directory `./website/docs/r`, and one for the corresponding data source, located 
   in `./website/docs/d`.
-* One article about [topics that involve more than one resource](#documenting-broad-topics--guides-), and need a wider breadth of documentation to be properly
+* One article about [topics that involve more than one resource](#documenting-broad-topics-guides), and need a wider breadth of documentation to be properly
   explained, located in `./website/guides` (for example: the article **roles management** includes operations with **Roles**,
   **Global Roles**, **Rights**, and **Rights bundles**)
 * One or more [**entries for the change log**](#documenting-each-pull-request-for-the-changelog), explaining what each pull request has contributed.
