@@ -314,9 +314,10 @@ as they allow to customise several values that need to be replaced with other re
 ### Create a cluster
 
 To create a cluster, please download the [CAPVCD][capvcd] `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
-that corresponds to your TKGm OVA file.
+that corresponds to your TKGm OVA file. For example, if your OVA file is `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`, you need
+to download `cluster-template-v1.22.9.yaml`.
 
-Then, we need to read it with the `templatefile` function and put all the required values, that are the following:
+In the [CAPVCD][capvcd] `yaml` you can see the following placeholders:
 
 - `CLUSTER_NAME` (Required): The name to give to the cluster that will be created.
 - `TARGET_NAMESPACE` (Required): The name to give to the namespace that the cluster will use to place its resources.
@@ -331,9 +332,6 @@ this [Organization][org] was `cluster_org`.
 - `VCD_REFRESH_TOKEN_B64` (Required): The cluster requires a [User][user] with `Kubernetes Cluster Author`. You need to create it prior to cluster creation. To create an API token
   for the user, you need to go to UI (in user preferences at the top right > API token) or provide one through the API. API tokens can't be generated with Terraform.
 - `VCD_PASSWORD_B64` (Optional): Password for the [User][user] with `Kubernetes Cluster Author` role. **You should provide an API token in `VCD_REFRESH_TOKEN_B64` instead**.
-
--> You can encode the above values to Base 64 with the Terraform function `base64encode`.
-
 - `SSH_PUBLIC_KEY` (Optional): Allows accessing the Kubernetes nodes with SSH key pairs.
 - `CONTROL_PLANE_MACHINE_COUNT` (Required): Number of VMs for the control plane. **Must be an odd number and more than 0**.
 - `VCD_CONTROL_PLANE_SIZING_POLICY` (Optional): Sizing policy for the control plane VMs.
@@ -351,7 +349,8 @@ this [Organization][org] was `cluster_org`.
 - `POD_CIDR` (Required): The CIDR to use for [Pod](https://kubernetes.io/docs/concepts/workloads/pods/) IPs.
 - `SERVICE_CIDR` (Required): The CIDR to use for [Service](https://kubernetes.io/docs/concepts/services-networking/service/) IPs.
 
-An example configuration snippet would be:
+Then, we need to read it with the `templatefile` Terraform function and put all the required values. Here is an example
+that saves the rendered result into the `capvcd_yaml_rendered` [local value](https://developer.hashicorp.com/terraform/language/values/locals):
 
 ```hcl
 locals {
@@ -389,23 +388,42 @@ locals {
 }
 ```
 
+The `capvcd_yaml_rendered` local value can then be used in our [RDE Instance][rde] definition. It must be embedded in the
+final JSON payload used to create the TKGm cluster. The JSON can be found [here](https://github.com/vmware/terraform-provider-vcd/blob/main/examples/container-service-extension-4.0/entities/tkgmcluster-template.json)
+and it makes use of the following placeholders:
+
+- `vcd_url`: The VCD url (example: `https://vcd.my-company.com`).
+- `name`: The cluster name, must match with `CLUSTER_NAME` in the CAPVCD contents.
+- `org`: The [Organization][org] that will host the cluster, must match with `VCD_ORGANIZATION` in CAPVCD contents.
+- `vdc`: The [VDC][vdc] that will host the cluster, must match with `VCD_ORGANIZATION_VDC` in CAPVCD contents.
+- `delete`: A day 2 operation, should be `false` on creation. It tells the CSE Server that the cluster must be deleted.
+- `force_delete`: A day 2 operation, should be `false` on creation. It tells the CSE Server that the cluster must be forcefully deleted.
+- `auto_repair_on_errors`: You can set this to `true` if you need to troubleshoot possible errors on cluster creation. This way, CSE Server
+  won't delete any VM on errors.
+- `capi_yaml`: The CAPVCD yaml that describes the cluster to create. Here we must set the `capvcd_yaml_rendered` local value that
+  was set above. In order to make it an inline property, we must escape `\n` and double quotes `"` to avoid breaking the JSON structure.
+
 The [RDE Instance][rde] that creates the cluster would then look like:
 
 ```hcl
 resource "vcd_rde" "k8s_cluster_instance" {
   org                = "cluster_org"
   name               = "my-cluster"
-  rde_type_vendor    = vcd_rde_type.capvcd_cluster_type.vendor
-  rde_type_nss       = vcd_rde_type.capvcd_cluster_type.nss
-  rde_type_version   = vcd_rde_type.capvcd_cluster_type.version
-  resolve            = false # MUST be false as it is resolved by CSE appliance
-  resolve_on_destroy = true  # MUST be true as it won't be resolved by Terraform
+  rde_type_vendor    = vcd_rde_type.capvcd_cluster_type.vendor  # This must reference the CAPVCD RDE Type vendor
+  rde_type_nss       = vcd_rde_type.capvcd_cluster_type.nss     # This must reference the CAPVCD RDE Type nss
+  rde_type_version   = vcd_rde_type.capvcd_cluster_type.version # This must reference the CAPVCD RDE Type version
+  resolve            = false                                    # MUST be false as it is resolved by CSE Server
+  resolve_on_destroy = true                                     # MUST be true as it won't be resolved by Terraform
+  
+  # Read the RDE template present in this repository
   input_entity       = templatefile("../../entities/tkgmcluster-template.json", {
-    vcd_url   = "https://vcd.my-company.com"
-    name      = "my-cluster"
-    org       = "cluster_org"
-    vdc       = "cluster_vdc"
+    vcd_url = "https://vcd.my-company.com"
+    name    = "my-cluster"
+    org     = "cluster_org"
+    vdc     = "cluster_vdc"
+    
     capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
+    
     delete                = false # Make this true to delete the cluster
     force_delete          = false # Make this true to forcefully delete the cluster
     auto_repair_on_errors = false # Change this to true to troubleshoot possible issues
