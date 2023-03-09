@@ -398,7 +398,7 @@ and it makes use of the following placeholders:
 - `vdc`: The [VDC][vdc] that will host the cluster, must match with `VCD_ORGANIZATION_VDC` in CAPVCD contents.
 - `delete`: A day 2 operation, should be `false` on creation. It tells the CSE Server that the cluster must be deleted.
 - `force_delete`: A day 2 operation, should be `false` on creation. It tells the CSE Server that the cluster must be forcefully deleted.
-- `auto_repair_on_errors`: You can set this to `true` if you need to troubleshoot possible errors on cluster creation. This way, CSE Server
+- `auto_repair_on_errors`: You can set this to `false` if you need to troubleshoot possible errors on cluster creation. This way, CSE Server
   won't delete any VM on errors.
 - `capi_yaml`: The CAPVCD yaml that describes the cluster to create. Here we must set the `capvcd_yaml_rendered` local value that
   was set above. In order to make it an inline property, we must escape `\n` and double quotes `"` to avoid breaking the JSON structure.
@@ -426,7 +426,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
     
     delete                = false # Make this true to delete the cluster
     force_delete          = false # Make this true to forcefully delete the cluster
-    auto_repair_on_errors = false # Change this to true to troubleshoot possible issues
+    auto_repair_on_errors = true  # Change this to false to troubleshoot possible issues
   })
 }
 ```
