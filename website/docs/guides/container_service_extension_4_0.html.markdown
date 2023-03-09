@@ -192,24 +192,24 @@ In order to do so, the [proposed configuration][step2] asks for the following va
 - `alb_controller_username`: Username to access the ALB controller. See the [ALB guide][alb] for more info.
 - `alb_controller_password`: Password of the username used to access the ALB controller. See the [ALB guide][alb] for more info.
 - `alb_importable_cloud_name`: Name of the existing ALB Cloud defined in the ALB controller that will be imported to create an ALB Cloud in VCD. See the [ALB guide][alb] for more info.
-- `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] that will be created in the Solutions Organization.
-- `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed] that will be created in the Solutions Organization.
-- `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed] that will be created in the Solutions Organization will have a pool of usable IPs, this field
+- `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Solutions Organization.
+- `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Solutions Organization.
+- `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed] that will be created in the Solutions Organization will have a pool of usable IPs, this field
+- `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the end usable IP.
 - `solutions_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Solutions
-  Organization [Routed network][routed].
-- `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed]. It can be left blank if it's not needed.
-- `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed] that will be created in the Cluster Organization.
-- `cluster_routed_network_prefix_length`: The prefix length of the [Routed network][routed] that will be created in the Cluster Organization.
-- `cluster_routed_network_ip_pool_start_address`: The [Routed network][routed] that will be created in the Cluster Organization will have a pool of usable IPs, this field
+  Organization [Routed network][routed_network].
+- `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed_network]. It can be left blank if it's not needed.
+- `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Cluster Organization.
+- `cluster_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Cluster Organization.
+- `cluster_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Cluster Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed] that will be created in the Cluster Organization will have a pool of usable IPs, this field
+- `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Cluster Organization will have a pool of usable IPs, this field
   defines the end usable IP.
 - `cluster_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Cluster
-  Organization [Routed network][routed].
-- `cluster_routed_network_dns`: DNS Server for the Cluster Organization [Routed network][routed]. It can be left blank if it's not needed.
+  Organization [Routed network][routed_network].
+- `cluster_routed_network_dns`: DNS Server for the Cluster Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 
 If you wish to have a different networking setup, please modify the [proposed configuration][step2].
 
@@ -243,10 +243,10 @@ to learn how to monitor the logs and troubleshoot possible problems.
 
 ### Update Configuration
 
-To make changes to the existing server configuration, you should find the `vcdkeconfig_instance` [RDE instance][rde]
-in the [proposed configuration][step2] that was created during the installation process. To update its parameters, you can simply
-**change the variable values that are referenced**. For this, go to **"CSE Server"** section in the Installation process to
-check them.
+To make changes to the existing server configuration, you should be able to locate the [`vcd_rde`][rde] resource named `vcdkeconfig_instance`
+in the [proposed configuration][step2] that was created during the installation process. To update its configuration, you can
+**change the variable values that are referenced**. For this, you can review the **"CSE Server"** section in the Installation process to
+see how this can be done.
 
 After variables are changed, the CSE Server VM needs to be rebooted. You can trigger a reboot changing the CSE Server configuration
 as follows:
@@ -302,57 +302,86 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 ## Cluster operations
 
-~> WORK IN PROGRESS
-
 The TKGm clusters that will be created and managed with Terraform are [RDE Instances][rde] of the `capvcdCluster` [RDE Type][rde_type]
 created during the installation process.
 
 These [RDE Instances][rde] require a JSON input that describes the cluster with properties such as name, schema version, metadata, extra options and the
-CAPVCD `yaml` that must be embedded in the JSON content.
+[CAPVCD][capvcd] `yaml` that must be embedded in the JSON content.
 
-This example will make use of the CAPVCD `yaml` templates present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates),
+This example will make use of the [CAPVCD][capvcd] `yaml` templates present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates),
 as they allow to customise several values that need to be replaced with other resource references, such as Organization names, network names, etc.
-
-
-that will be embedded in the JSON structure present [in this repository]( https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/tkgmcluster-template.json).
 
 ### Create a cluster
 
-~> WORK IN PROGRESS
-
-To create a cluster, please download the CAPVCD `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
+To create a cluster, please download the [CAPVCD][capvcd] `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
 that corresponds to your TKGm OVA file.
 
-Then, we need to read it with the `templatefile` function and put all the required values:
+Then, we need to read it with the `templatefile` function and put all the required values, that are the following:
+
+- `CLUSTER_NAME` (Required): The name to give to the cluster that will be created.
+- `TARGET_NAMESPACE` (Required): The name to give to the namespace that the cluster will use to place its resources.
+- `VCD_SITE` (Required): The VCD url (example: `https://vcd.my-company.com`).
+- `VCD_ORGANIZATION` (Required): The [Organization][org] that will host the clusters. In the [proposed configuration][step2] shown during the installation process above,
+this [Organization][org] was `cluster_org`.
+- `VCD_ORGANIZATION_VDC` (Required): The [VDC][vdc] that will host the clusters. In the [proposed configuration][step2] shown during the installation process above,
+  this [VDC][vdc] was `cluster_vdc`.
+- `VCD_ORGANIZATION_VDC_NETWORK` (Required): The network that will be used by the clusters. In the [proposed configuration][step2] shown during the installation process above,
+  this network was a [Routed network][routed_network] called `cluster_routed_network`.
+- `VCD_USERNAME_B64` (Required): The cluster requires a [User][user] with `Kubernetes Cluster Author` role. You need to create it prior to cluster creation.
+- `VCD_REFRESH_TOKEN_B64` (Required): The cluster requires a [User][user] with `Kubernetes Cluster Author`. You need to create it prior to cluster creation. To create an API token
+  for the user, you need to go to UI (in user preferences at the top right > API token) or provide one through the API. API tokens can't be generated with Terraform.
+- `VCD_PASSWORD_B64` (Optional): Password for the [User][user] with `Kubernetes Cluster Author` role. **You should provide an API token in `VCD_REFRESH_TOKEN_B64` instead**.
+
+-> You can encode the above values to Base 64 with the Terraform function `base64encode`.
+
+- `SSH_PUBLIC_KEY` (Optional): Allows accessing the Kubernetes nodes with SSH key pairs.
+- `CONTROL_PLANE_MACHINE_COUNT` (Required): Number of VMs for the control plane. **Must be an odd number and more than 0**.
+- `VCD_CONTROL_PLANE_SIZING_POLICY` (Optional): Sizing policy for the control plane VMs.
+- `VCD_CONTROL_PLANE_PLACEMENT_POLICY` (Optional): Placement policy for the control plane VMs.
+- `VCD_CONTROL_PLANE_STORAGE_PROFILE` (Optional): Storage profile for the control plane VMs.
+- `WORKER_MACHINE_COUNT` (Required): Number of VMs for the worker nodes. **Must be more than 0**.
+- `VCD_WORKER_SIZING_POLICY` (Optional): Sizing policy for the worker VMs.
+- `VCD_WORKER_PLACEMENT_POLICY` (Optional): Placement policy for the worker VMs.
+- `VCD_WORKER_STORAGE_PROFILE` (Optional): Storage profile for the worker VMs.
+- `DISK_SIZE` (Required): Disk size (with units, like `10Gi` for 10 Gibibytes, `10G` for 10 Gigabytes, etc) for the created VMs.
+- `VCD_CATALOG` (Required): The [Catalog][catalog] that contains the TKGm OVAs. In the [proposed configuration][step2] shown during the installation process above,
+  this [Catalog][catalog] was `tkgm_catalog`.
+- `VCD_TEMPLATE_NAME` (Required): The TKGm [vApp Template][catalog_vapp_template] (OVA). In the [proposed configuration][step2] shown during the installation process above,
+  this [vApp Template][catalog_vapp_template] was `tkgm_ova`.
+- `POD_CIDR` (Required): The CIDR to use for [Pod](https://kubernetes.io/docs/concepts/workloads/pods/) IPs.
+- `SERVICE_CIDR` (Required): The CIDR to use for [Service](https://kubernetes.io/docs/concepts/services-networking/service/) IPs.
+
+An example configuration snippet would be:
 
 ```hcl
 locals {
-  capvcd_yaml_rendered = templatefile("/users/bob/capvcd-templates/cluster-template-v1.22.9.yaml", {
-    CLUSTER_NAME     = var.k8s_cluster_name
-    TARGET_NAMESPACE = "${var.k8s_cluster_name}-ns"
+  capvcd_yaml_rendered = templatefile("./cluster-template-v1.22.9.yaml", {
+    CLUSTER_NAME     = "my-cluster"
+    TARGET_NAMESPACE = "my-cluster-ns"
 
-    VCD_SITE                     = replace(var.vcd_api_endpoint, "/api", "")
-    VCD_ORGANIZATION             = vcd_org.cluster_organization.name
-    VCD_ORGANIZATION_VDC         = vcd_org_vdc.cluster_vdc.name
-    VCD_ORGANIZATION_VDC_NETWORK = vcd_network_routed_v2.cluster_routed_network.name
+    VCD_SITE                     = "https://vcd.my-company.com"
+    VCD_ORGANIZATION             = "cluster_org"
+    VCD_ORGANIZATION_VDC         = "cluster_vdc"
+    VCD_ORGANIZATION_VDC_NETWORK = "cluster_routed_network"
 
-    VCD_USERNAME_B64      = base64encode(var.k8s_cluster_user)
-    VCD_REFRESH_TOKEN_B64 = base64encode(var.k8s_cluster_api_token)
+    VCD_USERNAME_B64      = base64encode("bob_cluster_author")
+    VCD_PASSWORD_B64      = ""                                         # We use an API token, which is recommended
+    VCD_REFRESH_TOKEN_B64 = base64encode(var.cluster_author_api_token) # This should come from a variable marked as sensitive
     SSH_PUBLIC_KEY        = ""
 
     CONTROL_PLANE_MACHINE_COUNT        = 1
-    VCD_CONTROL_PLANE_SIZING_POLICY    = vcd_vm_sizing_policy.default_policy.name
+    VCD_CONTROL_PLANE_SIZING_POLICY    = "TKG small"
     VCD_CONTROL_PLANE_PLACEMENT_POLICY = ""
     VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
 
-    VCD_WORKER_STORAGE_PROFILE  = ""
-    VCD_WORKER_SIZING_POLICY    = vcd_vm_sizing_policy.default_policy.name
-    VCD_WORKER_PLACEMENT_POLICY = ""
     WORKER_MACHINE_COUNT        = 1
-
+    VCD_WORKER_SIZING_POLICY    = "TKG small"
+    VCD_WORKER_PLACEMENT_POLICY = ""
+    VCD_WORKER_STORAGE_PROFILE  = ""
+    
     DISK_SIZE         = "20Gi"
-    VCD_CATALOG       = vcd_catalog.cse_catalog.name
-    VCD_TEMPLATE_NAME = replace(var.tkgm_ova_name, ".ova", "")
+    VCD_CATALOG       = "tkgm_catalog"
+    VCD_TEMPLATE_NAME = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova"
 
     POD_CIDR     = "100.96.0.0/11"
     SERVICE_CIDR = "100.64.0.0/13"
@@ -364,23 +393,22 @@ The [RDE Instance][rde] that creates the cluster would then look like:
 
 ```hcl
 resource "vcd_rde" "k8s_cluster_instance" {
-  org                = vcd_org.cluster_organization.name       # References the Cluster Organization created during installation
-  name               = var.k8s_cluster_name
+  org                = "cluster_org"
+  name               = "my-cluster"
   rde_type_vendor    = vcd_rde_type.capvcd_cluster_type.vendor
   rde_type_nss       = vcd_rde_type.capvcd_cluster_type.nss
   rde_type_version   = vcd_rde_type.capvcd_cluster_type.version
   resolve            = false # MUST be false as it is resolved by CSE appliance
   resolve_on_destroy = true  # MUST be true as it won't be resolved by Terraform
   input_entity       = templatefile("../../entities/tkgmcluster-template.json", {
-    vcd_url   = replace(var.vcd_api_endpoint, "/api", "")
-    name      = var.k8s_cluster_name
-    org       = vcd_org.cluster_organization.name
-    vdc       = vcd_org_vdc.cluster_vdc.name
-    capi_yaml = replace(replace(data.template_file.k8s_cluster_yaml_template.rendered, "\n", "\\n"), "\"", "\\\"")
-
+    vcd_url   = "https://vcd.my-company.com"
+    name      = "my-cluster"
+    org       = "cluster_org"
+    vdc       = "cluster_vdc"
+    capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
     delete                = false # Make this true to delete the cluster
     force_delete          = false # Make this true to forcefully delete the cluster
-    auto_repair_on_errors = false
+    auto_repair_on_errors = false # Change this to true to troubleshoot possible issues
   })
 }
 ```
@@ -418,6 +446,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [alb]: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/nsxt_alb
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
+[capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
