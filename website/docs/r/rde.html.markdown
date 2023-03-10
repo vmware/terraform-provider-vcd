@@ -10,6 +10,10 @@ description: |-
 
 Provides the capability of creating, updating, and deleting Runtime Defined Entities in VMware Cloud Director.
 
+-> VCD allows to have multiple RDEs of the same [RDE Type](/providers/vmware/vcd/latest/docs/resources/rde_type) with
+the same name, meaning that they would be only distinguishable by their ID. This could lead to potential issues when fetching
+a unique RDE with the data source, so take this trait into account when creating them.
+
 Supported in provider *v3.9+*
 
 ## Example Usage with a JSON file
