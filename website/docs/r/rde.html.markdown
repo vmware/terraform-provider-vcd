@@ -129,6 +129,8 @@ The following arguments are supported:
 The following attributes are supported:
 
 * `computed_entity` - The real state of this RDE in VCD.
+* `entity_in_sync` - It's `true` when `computed_entity` is equal to either `input_entity` or the contents of `input_entity_url`,
+  meaning that the computed RDE retrieved from VCD is synchronized with the input RDE.
 * `owner_id` - The ID of the owner of this Runtime Defined Entity, corresponds to a [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user).
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
 * `state` - If the specified JSON in either `input_entity` or `entity_url` is correct, the state will be `RESOLVED`, otherwise it will be `RESOLUTION_ERROR`. If an input_entity in an `RESOLUTION_ERROR` state, it will require to be updated to a correct JSON to be usable.
