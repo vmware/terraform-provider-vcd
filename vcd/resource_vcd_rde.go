@@ -91,10 +91,12 @@ func resourceVcdRde() *schema.Resource {
 				Optional:    true,
 			},
 			"state": {
-				Type:        schema.TypeString,
-				Description: "If the specified JSON in either `entity` or `entity_url` is correct, the state will be RESOLVED, otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
+				Type: schema.TypeString,
+				// Todo: Add PRE_CREATED
+				Description: "If the specified JSON in either `input_entity` or `input_entity_url` is correct, the state will be RESOLVED, otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
 				Computed:    true,
 			},
+			// TODO: entity_in_sync
 			"metadata_entry": getOpenApiMetadataEntrySchema("Runtime Defined Entity", false),
 		},
 	}
