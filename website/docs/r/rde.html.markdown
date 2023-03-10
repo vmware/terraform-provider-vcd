@@ -37,20 +37,10 @@ output "computed_rde" {
 
 ## Example Usage with a JSON template
 
-Using the [`template_file`](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) data source will
+Using the [`templatefile`](https://developer.hashicorp.com/terraform/language/functions/templatefile) Terraform function will
 allow you to parameterize RDE creation with custom inputs, as follows:
 
 ```hcl
-data "template_file" "json_template" {
-  template = file("${path.module}/entities/custom-rde.json")
-  vars = {
-    name          = var.name
-    custom_field  = "This one is hardcoded"
-    another_field = var.anoter_field
-    replicas      = 2
-  }
-}
-
 data "vcd_rde_type" "my-type" {
   vendor    = "bigcorp"
   namespace = "tech1"
@@ -58,11 +48,17 @@ data "vcd_rde_type" "my-type" {
 }
 
 resource "vcd_rde" "my_rde" {
-  org          = "my-org"
-  rde_type_id  = data.vcd_rde_type.my-type.id
-  name         = "My custom RDE"
-  resolve      = true
-  input_entity = data.template_file.json_template.rendered # Use the rendered JSON as input
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
+  # Functions are evaluated eagerly, so the file must exist and not be a reference to a created Terraform resource
+  input_entity = templatefile("${path.module}/entities/custom-rde.json", {
+    name          = var.name
+    custom_field  = "This one is hardcoded"
+    another_field = var.anoter_field
+    replicas      = 2
+  })
 }
 
 output "computed_rde" {
@@ -80,11 +76,11 @@ data "vcd_rde_type" "my-type" {
 }
 
 resource "vcd_rde" "my-rde" {
-  org          = "my-org"
-  rde_type_id  = data.vcd_rde_type.my-type.id
-  name         = "My custom RDE"
-  resolve      = true
-  entity_url   = "https://just.an-example.com/entities/custom-rde.json"
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
+  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
 }
 ```
 
