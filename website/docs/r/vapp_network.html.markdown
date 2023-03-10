@@ -15,6 +15,7 @@ Supported in provider *v2.1+*
 ## Example Usage
 
 ```hcl
+# IPv4 example
 resource "vcd_vapp_network" "vappNet" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
@@ -22,7 +23,7 @@ resource "vcd_vapp_network" "vappNet" {
   name               = "my-net"
   vapp_name          = "my-vapp"
   gateway            = "192.168.2.1"
-  netmask            = "255.255.255.0"
+  prefix_length      = "24"
   dns1               = "192.168.2.1"
   dns2               = "192.168.2.2"
   dns_suffix         = "mybiz.biz"
@@ -38,6 +39,31 @@ resource "vcd_vapp_network" "vappNet" {
     end_address   = "192.168.2.50"
   }
 }
+
+# IPv6 example
+resource "vcd_vapp_network" "vappNet_ipv6" {
+  org = "my-org" # Optional
+  vdc = "my-vdc" # Optional
+
+  name               = "my-net-ipv6"
+  vapp_name          = "my-vapp"
+  gateway            = "fe80:0:0:0:0:0:0:aaaa"
+  prefix_length      = "24"
+  dns1               = "2001:4860:4860:0:0:0:0:8888"
+  dns2               = "2001:4860:4860:0:0:0:0:8844"
+  dns_suffix         = "mybiz.biz"
+  guest_vlan_allowed = true
+
+  static_ip_pool {
+    start_address = "fe80:0:0:0:0:0:0:aacc"
+    end_address   = "fe80:0:0:0:0:0:0:aadd"
+  }
+
+  dhcp_pool {
+    start_address = "fe80:0:0:0:0:0:0:aaaa"
+    end_address   = "fe80:0:0:0:0:0:0:aabb"
+  }
+}
 ```
 
 ## Argument Reference
@@ -51,11 +77,13 @@ The following arguments are supported:
 * `description` - (Optional; *v2.7+*, *vCD 9.5+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this network belongs to.
 * `netmask` - (Deprecated) Use `prefix_length` instead. The netmask for the new network.
-
-~> **Note:** VCD returns Ipv6 addresses in extended-shortened format e.g `fe80:0:a:ab:0:abc:abcd:aaaa`, it is up to the user
-to match it, otherwise Terraform will return an inconsistent plan
+~> **Warning:** In `v3.9.0`, field `netmask` no longer has a `default` value of  `255.255.255.0` so that IPv6 can be supported using the new `prefix_length` field. 
+This change makes `terraform validate` fail if the user didn't provide a value earlier and relied on default `255.255.255.0`.
+In case that happens, a user needs to add `"netmask" = "255.255.255.0"` to existing vApp networks.
 * `prefix_length` - (Optional) The subnet prefix length for the network.
 * `gateway` - (Required) The gateway for this network.
+~> **Note:** VCD returns IPv6 addresses in extended-shortened format e.g `fe80:0:a:ab:0:abc:abcd:aaaa`, it is up to the user
+to match it, otherwise Terraform will return an inconsistent plan.
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.

@@ -82,7 +82,7 @@ func TestAccVcdVappNetwork_Isolated_ipv6(t *testing.T) {
 
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
-		"Vdc":          testConfig.VCD.Vdc,
+		"Vdc":          testConfig.Nsxt.Vdc,
 		"resourceName": t.Name(),
 		// we can't change network name as this results in ID (HREF) change
 		"vappNetworkName":           t.Name(),
@@ -98,22 +98,12 @@ func TestAccVcdVappNetwork_Isolated_ipv6(t *testing.T) {
 		"dnsSuffixForUpdate":        "updated",
 		"guestVlanAllowed":          guestVlanAllowed,
 		"guestVlanAllowedForUpdate": "false",
-		"startAddress":              "fe80:0:0:0:0:0:0:a",
-		"startAddressForUpdate":     "fe80:0:0:0:0:0:0:b",
-		"endAddress":                "fe80:0:0:0:0:0:0:c",
-		"endAddressForUpdate":       "fe80:0:0:0:0:0:0:d",
+		"startAddress":              "fe80:0:0:0:0:0:0:aa",
+		"startAddressForUpdate":     "fe80:0:0:0:0:0:0:bb",
+		"endAddress":                "fe80:0:0:0:0:0:0:ab",
+		"endAddressForUpdate":       "fe80:0:0:0:0:0:0:bc",
 		"vappName":                  t.Name(),
-		"maxLeaseTime":              "7200",
-		"maxLeaseTimeForUpdate":     "7300",
-		"defaultLeaseTime":          "3600",
-		"defaultLeaseTimeForUpdate": "3500",
-		"dhcpStartAddress":          "fe80:0:0:0:0:0:0:aa",
-		"dhcpStartAddressForUpdate": "fe80:0:0:0:0:0:0:bb",
-		"dhcpEndAddress":            "fe80:0:0:0:0:0:0:cc",
-		"dhcpEndAddressForUpdate":   "fe80:0:0:0:0:0:0:dd",
-		"EdgeGateway":               testConfig.Networking.EdgeGateway,
-		"dhcpEnabled":               "true",
-		"dhcpEnabledForUpdate":      "false",
+		"vappVmName":                t.Name(),
 		"NetworkName":               "TestAccVcdVAppNet",
 		// adding space to allow pass validation in testParamsNotEmpty which skips the test if param value is empty
 		// to avoid running test when test data is missing
@@ -331,13 +321,6 @@ func runVappNetworkTestPrefixLength(t *testing.T, params StringMap) {
 						"start_address": params["startAddress"].(string),
 						"end_address":   params["endAddress"].(string),
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "dhcp_pool.*", map[string]string{
-						"start_address":      params["dhcpStartAddress"].(string),
-						"end_address":        params["dhcpEndAddress"].(string),
-						"enabled":            params["dhcpEnabled"].(string),
-						"default_lease_time": params["defaultLeaseTime"].(string),
-						"max_lease_time":     params["maxLeaseTime"].(string),
-					}),
 					resource.TestCheckResourceAttr(
 						resourceName, "org_network_name", strings.TrimSpace(params["orgNetwork"].(string))),
 					resource.TestCheckResourceAttr(
@@ -368,19 +351,13 @@ func runVappNetworkTestPrefixLength(t *testing.T, params StringMap) {
 						"start_address": params["startAddressForUpdate"].(string),
 						"end_address":   params["endAddressForUpdate"].(string),
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "dhcp_pool.*", map[string]string{
-						"start_address":      params["dhcpStartAddressForUpdate"].(string),
-						"end_address":        params["dhcpEndAddressForUpdate"].(string),
-						"enabled":            params["dhcpEnabledForUpdate"].(string),
-						"default_lease_time": params["defaultLeaseTimeForUpdate"].(string),
-						"max_lease_time":     params["maxLeaseTimeForUpdate"].(string),
-					}),
 					resource.TestCheckResourceAttr(
 						resourceName, "org_network_name", strings.TrimSpace(params["orgNetworkForUpdate"].(string))),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 				),
 			},
+<<<<<<< Updated upstream
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
@@ -389,10 +366,16 @@ func runVappNetworkTestPrefixLength(t *testing.T, params StringMap) {
 				// These fields can't be retrieved from user data.
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
+=======
+>>>>>>> Stashed changes
 		},
 	})
 }
 
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -438,7 +421,7 @@ func testAccCheckVappNetworkDestroy(s *terraform.State) error {
 }
 
 func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin string) (bool, error) {
-	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
 	if err != nil {
 		return false, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
@@ -525,6 +508,11 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 const testAccCheckVappNetwork_basic_ipv6 = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -532,6 +520,32 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.Vdc}}"
 }
 
+<<<<<<< Updated upstream
+=======
+resource "vcd_vapp_vm" "{{.vappVmName}}" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  vapp_name = "{{.vappName}}"
+  name      = "{{.vappVmName}}"
+  computer_name = "emptyVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.{{.resourceName}}.name
+    ip_allocation_mode = "POOL"
+  }
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  depends_on = [vcd_vapp.{{.vappName}}, vcd_vapp_network.{{.resourceName}}]
+}
+
+>>>>>>> Stashed changes
 resource "vcd_vapp_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
@@ -550,6 +564,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     end_address   = "{{.endAddress}}"
   }
 
+<<<<<<< Updated upstream
   dhcp_pool {
     max_lease_time     = "{{.maxLeaseTime}}"
     default_lease_time = "{{.defaultLeaseTime}}"
@@ -558,6 +573,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
+=======
+>>>>>>> Stashed changes
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetwork}}{{.quotationChar}}
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
@@ -566,6 +583,10 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 const testAccCheckVappNetwork_update = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -632,6 +653,11 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 const testAccCheckVappNetwork_update_ipv6 = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -639,6 +665,32 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.Vdc}}"
 }
 
+<<<<<<< Updated upstream
+=======
+resource "vcd_vapp_vm" "{{.vappVmName}}" {
+	org  = "{{.Org}}"
+	vdc  = "{{.Vdc}}"
+  
+	vapp_name = "{{.vappName}}"
+	name      = "{{.vappVmName}}"
+	computer_name = "emptyVM"
+	memory        = 2048
+	cpus          = 2
+	cpu_cores     = 1
+  
+	network {
+	  type               = "vapp"
+	  name               = vcd_vapp_network.{{.resourceName}}.name
+	  ip_allocation_mode = "POOL"
+	}
+  
+	os_type          = "sles10_64Guest"
+	hardware_version = "vmx-14"
+  
+	depends_on = ["vcd_vapp.{{.vappName}}", "vcd_vapp_network.{{.resourceName}}"]
+  }
+
+>>>>>>> Stashed changes
 resource "vcd_vapp_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
@@ -656,6 +708,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     end_address   = "{{.endAddressForUpdate}}"
   }
 
+<<<<<<< Updated upstream
   dhcp_pool {
     max_lease_time     = "{{.maxLeaseTimeForUpdate}}"
     default_lease_time = "{{.defaultLeaseTimeForUpdate}}"
@@ -664,6 +717,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabledForUpdate}}"
   }
 
+=======
+>>>>>>> Stashed changes
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
@@ -672,6 +727,10 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 // TestAccVcdNsxtVappNetworks checks that NSX-T Org networks can be attached to vApp, given that
 // NSX-T Edge Cluster is specified in NSX-T VDC
 func TestAccVcdNsxtVappNetworks(t *testing.T) {
