@@ -98,7 +98,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 					},
 				},
 			},
-			"auto_subnet": {
+			"subnet_with_total_ip_count": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "Exposes IP allocation subnet for this Edge Gateway",
@@ -122,7 +122,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 					},
 				},
 			},
-			"auto_allocated_subnet": {
+			"subnet_with_ip_count": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "Exposes IP allocation subnet for this Edge Gateway including allocated IP count",
