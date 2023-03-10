@@ -6,7 +6,7 @@ description: |-
    Provides the capability of creating, updating, and deleting Runtime Defined Entities in VMware Cloud Director.
 ---
 
-# vcd\_rde\_type
+# vcd\_rde
 
 Provides the capability of creating, updating, and deleting Runtime Defined Entities in VMware Cloud Director.
 Requires system administrator privileges.
