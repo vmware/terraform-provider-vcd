@@ -1,0 +1,3 @@
+* Removed disk update steps from `TestAccVcdIndependentDiskBasic`, as it was sometimes failing due to a bug in VCD. Created a new one `TestAccVcdIndependentDiskBasicWithUpdates` which will be run only on new releases of VCD (>=v10.4.1) [GH-1014]
+* Increased sleep in between testing steps in `TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms` from 15s to 25s to let VMs get created [GH-1014]
+* Added skipping of `TestAccVcdVsphereSubscriber` and `TestAccVcdSubscribedCatalog` if VCD version is older than v10.4.0 as there was a bug with catalog sharing rights that caused the tests to fail [GH-1014] 
