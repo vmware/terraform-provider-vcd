@@ -357,7 +357,6 @@ func runVappNetworkTestPrefixLength(t *testing.T, params StringMap) {
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 				),
 			},
-<<<<<<< Updated upstream
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
@@ -366,16 +365,10 @@ func runVappNetworkTestPrefixLength(t *testing.T, params StringMap) {
 				// These fields can't be retrieved from user data.
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
-=======
->>>>>>> Stashed changes
 		},
 	})
 }
 
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -508,11 +501,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 const testAccCheckVappNetwork_basic_ipv6 = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -520,8 +508,6 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.Vdc}}"
 }
 
-<<<<<<< Updated upstream
-=======
 resource "vcd_vapp_vm" "{{.vappVmName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
@@ -545,7 +531,6 @@ resource "vcd_vapp_vm" "{{.vappVmName}}" {
   depends_on = [vcd_vapp.{{.vappName}}, vcd_vapp_network.{{.resourceName}}]
 }
 
->>>>>>> Stashed changes
 resource "vcd_vapp_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
@@ -564,17 +549,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     end_address   = "{{.endAddress}}"
   }
 
-<<<<<<< Updated upstream
-  dhcp_pool {
-    max_lease_time     = "{{.maxLeaseTime}}"
-    default_lease_time = "{{.defaultLeaseTime}}"
-    start_address      = "{{.dhcpStartAddress}}"
-    end_address        = "{{.dhcpEndAddress}}"
-    enabled            = "{{.dhcpEnabled}}"
-  }
-
-=======
->>>>>>> Stashed changes
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetwork}}{{.quotationChar}}
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
@@ -583,10 +557,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 const testAccCheckVappNetwork_update = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -653,11 +623,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 const testAccCheckVappNetwork_update_ipv6 = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -665,8 +630,6 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.Vdc}}"
 }
 
-<<<<<<< Updated upstream
-=======
 resource "vcd_vapp_vm" "{{.vappVmName}}" {
 	org  = "{{.Org}}"
 	vdc  = "{{.Vdc}}"
@@ -690,7 +653,6 @@ resource "vcd_vapp_vm" "{{.vappVmName}}" {
 	depends_on = ["vcd_vapp.{{.vappName}}", "vcd_vapp_network.{{.resourceName}}"]
   }
 
->>>>>>> Stashed changes
 resource "vcd_vapp_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
@@ -708,17 +670,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     end_address   = "{{.endAddressForUpdate}}"
   }
 
-<<<<<<< Updated upstream
-  dhcp_pool {
-    max_lease_time     = "{{.maxLeaseTimeForUpdate}}"
-    default_lease_time = "{{.defaultLeaseTimeForUpdate}}"
-    start_address      = "{{.dhcpStartAddressForUpdate}}"
-    end_address        = "{{.dhcpEndAddressForUpdate}}"
-    enabled            = "{{.dhcpEnabledForUpdate}}"
-  }
-
-=======
->>>>>>> Stashed changes
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
 
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
@@ -727,10 +678,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 // TestAccVcdNsxtVappNetworks checks that NSX-T Org networks can be attached to vApp, given that
 // NSX-T Edge Cluster is specified in NSX-T VDC
 func TestAccVcdNsxtVappNetworks(t *testing.T) {
