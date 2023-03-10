@@ -10,8 +10,6 @@ description: |-
 
 Provides the capability of creating, updating, and deleting Runtime Defined Entities in VMware Cloud Director.
 
-Requires system administrator privileges.
-
 Supported in provider *v3.9+*
 
 ## Example Usage with a JSON file
