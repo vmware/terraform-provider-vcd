@@ -86,7 +86,7 @@ The following arguments are supported:
 * `netmask` - (Deprecated) Use `prefix_length` instead. The netmask for the new network.
 
 ~> **Warning:** In `v3.9.0`, field `netmask` no longer has a `default` value of  `255.255.255.0` so that IPv6 can be supported using the new `prefix_length` field. 
-This change makes `terraform validate` fail if the user didn't provide a value earlier and relied on default `255.255.255.0`.
+This change makes `terraform validate|plan` fail if the user didn't provide a value earlier and relied on default `255.255.255.0`.
 In case that happens, a user needs to add `"netmask" = "255.255.255.0"` to existing vApp networks.
 * `prefix_length` - (Optional) The subnet prefix length for the network.
 * `gateway` - (Required) The gateway for this network.
