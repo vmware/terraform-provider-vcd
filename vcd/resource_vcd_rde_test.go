@@ -114,6 +114,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
 					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestMatchResourceAttr(rdeFromFile, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeFromUrl, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromUrl, "name", t.Name()+"url"),
@@ -122,14 +123,16 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeFromUrl, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttr(rdeFromUrl, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeWrong, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeWrong, "name", t.Name()+"naughty"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "rde_type_id", rdeType, "id"),
 					resource.TestCheckResourceAttr(rdeWrong, "computed_entity", "{\"this_json_is_bad\":\"yes\"}"),
 					resource.TestCheckResourceAttr(rdeWrong, "state", "PRE_CREATED"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "org_id", rdeFromFile, "org_id"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttr(rdeWrong, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeTenant, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeTenant, "name", t.Name()+"tenant"),
@@ -138,6 +141,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "org_id", rdeFromFile, "org_id"),
 					resource.TestMatchResourceAttr(rdeTenant, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
+					resource.TestCheckResourceAttr(rdeTenant, "entity_in_sync", "true"),
 				),
 			},
 			// Delete the RDE that has wrong JSON. It should fail because the RDE is not resolved.
@@ -185,6 +189,7 @@ func TestAccVcdRde(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(rdeFromFile, "input_entity", rdeWrong, "input_entity"),
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile(`.*stringValueChanged.*`)),
+					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "false"),
 				),
 			},
 			{

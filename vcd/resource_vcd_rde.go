@@ -215,7 +215,7 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 
 	dSet(d, "entity_in_sync", false)
 	// These fields can be empty on imports
-	if d.Get("input_entity_url") != "" && d.Get("input_entity") != "" {
+	if d.Get("input_entity_url") != "" || d.Get("input_entity") != "" {
 		inputJson, err := getRdeJson(vcdClient, d)
 		if err != nil {
 			return diag.Errorf("error getting JSON from configuration: %s", err)
