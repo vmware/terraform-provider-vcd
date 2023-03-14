@@ -1,7 +1,10 @@
 package vcd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -216,6 +219,42 @@ func contains(sliceToSearch []string, searched string) bool {
 		}
 	}
 	return found
+}
+
+// jsonToCompactString transforms an unmarshalled JSON in form of a map of string->any to a plain string without any spacing.
+func jsonToCompactString(inputJson map[string]interface{}) (string, error) {
+	rawJson, err := json.Marshal(inputJson)
+	if err != nil {
+		return "", err
+	}
+	compactedJson := new(bytes.Buffer)
+	err = json.Compact(compactedJson, rawJson)
+	if err != nil {
+		return "", err
+	}
+	return compactedJson.String(), nil
+}
+
+// areMarshaledJsonEqual compares that two marshaled JSON strings are equal or not. Returns an error if something
+// wrong happens during the comparison process.
+func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
+	if !json.Valid(json1) {
+		return false, fmt.Errorf("first JSON is not valid: '%s'", json1)
+	}
+	if !json.Valid(json2) {
+		return false, fmt.Errorf("second JSON is not valid: '%s'", json2)
+	}
+
+	var unmarshaledJson1, unmarshaledJson2 interface{}
+	err := json.Unmarshal(json1, &unmarshaledJson1)
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal first JSON '%s': %s", json1, err)
+	}
+	err = json.Unmarshal(json2, &unmarshaledJson2)
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal second JSON '%s': %s", json2, err)
+	}
+	return reflect.DeepEqual(unmarshaledJson1, unmarshaledJson2), nil
 }
 
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name

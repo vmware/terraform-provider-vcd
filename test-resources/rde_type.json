@@ -1,0 +1,41 @@
+{
+  "definitions": {
+    "foo": {
+      "description": "Foo definition",
+      "properties": {
+        "key": {
+          "description": "Key for foo",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "bar": {
+      "description": "Bar",
+      "type": "string"
+    },
+    "foo": {
+      "$ref": "#/definitions/foo"
+    },
+    "prop2": {
+      "properties": {
+        "subprop1": {
+          "type": "string"
+        },
+        "subprop2": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "foo"
+  ],
+  "type": "object"
+}

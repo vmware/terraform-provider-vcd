@@ -4,6 +4,7 @@ package vcd
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -185,4 +186,10 @@ func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {
 
 		return
 	}
+}
+
+// validateAlphanumericWithUnderscoresAndHyphens returns a SchemaValidateFunc that tests whether the target attribute
+// only contains alphanumeric characters, allowing also underscores and hyphens.
+func validateAlphanumericWithUnderscoresAndHyphens() schema.SchemaValidateFunc {
+	return validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed")
 }
