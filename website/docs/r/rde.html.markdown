@@ -19,7 +19,7 @@ Supported in provider *v3.9+*
 ## Example Usage with a JSON file
 
 ```hcl
-data "vcd_rde_type" "my-type" {
+data "vcd_rde_type" "my_type" {
   vendor    = "bigcorp"
   namespace = "tech1"
   version   = "1.2.3"
@@ -44,7 +44,7 @@ Using the [`templatefile`](https://developer.hashicorp.com/terraform/language/fu
 allow you to parameterize RDE creation with custom inputs, as follows:
 
 ```hcl
-data "vcd_rde_type" "my-type" {
+data "vcd_rde_type" "my_type" {
   vendor    = "bigcorp"
   namespace = "tech1"
   version   = "1.2.3"
@@ -72,7 +72,7 @@ output "computed_rde" {
 ## Example Usage with a URL that contains a schema file
 
 ```hcl
-data "vcd_rde_type" "my-type" {
+data "vcd_rde_type" "my_type" {
   vendor    = "bigcorp"
   namespace = "tech1"
   version   = "1.2.3"
