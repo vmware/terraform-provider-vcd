@@ -27,6 +27,167 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	}
 
 	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.Nsxt.Vdc,
+		"name":               name,
+		"description":        "independent disk description",
+		"secondName":         name + "second",
+		"size":               "5000",
+		"busType":            "SCSI",
+		"busSubType":         "lsilogicsas",
+		"storageProfileName": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ResourceName":       resourceName,
+		"secondResourceName": resourceNameSecond,
+		"thirdResourceName":  resourceNameThird,
+		"Tags":               "disk",
+		"sizeUpdate":         "6000",
+		"busTypeNvme":        "NVME",
+		"busSubTypeNvme":     "nvmecontroller",
+		"VmName":             t.Name(),
+		"Catalog":            testSuiteCatalogName,
+		"CatalogItem":        testSuiteCatalogOVAItem,
+		"metadataKey":        "key1",
+		"metadataValue":      "value1",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "-Compatibility"
+	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
+	params["FuncName"] = t.Name() + "-WithoutOptionals"
+	configTextWithoutOptionals := templateFill(testAccCheckVcdIndependentDiskWithoutOptionals, params)
+	params["FuncName"] = t.Name() + "-Nvme"
+	configTextNvme := templateFill(testAccCheckVcdIndependentDiskNvmeType, params)
+	params["FuncName"] = t.Name() + "-attachedToVm"
+	configTextAttachedToVm := templateFill(testAccCheckVcdIndependentDiskAttachedToVm, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForCompatibility)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testDiskResourcesDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: configTextForCompatibility,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "bus_type", params["busType"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "bus_sub_type", params["busSubType"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "name", params["name"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "description", params["description"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "storage_profile", params["storageProfileName"].(string)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", "None"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "metadata."+params["metadataKey"].(string), params["metadataValue"].(string)),
+				),
+			},
+			{
+				ResourceName:            "vcd_independent_disk." + resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
+				ImportStateVerifyIgnore: []string{"org", "vdc"},
+			},
+			{
+				Config: configTextWithoutOptionals,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceNameSecond),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "bus_type", "SCSI"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "bus_sub_type", "lsilogic"),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameSecond, "owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameSecond, "datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameSecond, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "is_attached", "false"),
+				),
+			},
+			{
+				Config: configTextNvme,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "bus_type", params["busTypeNvme"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "bus_sub_type", params["busSubTypeNvme"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "name", params["name"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "description", params["description"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "storage_profile", params["storageProfileName"].(string)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", "None"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
+				),
+			},
+			{
+				Config: configTextAttachedToVm,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "bus_type", params["busType"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "bus_sub_type", params["busSubType"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "name", params["name"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "description", params["description"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "storage_profile", params["storageProfileName"].(string)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "uuid", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "sharing_type", "None"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "attached_vm_ids.#", "0"),
+
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "datastore_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "bus_type", params["busType"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "bus_sub_type", params["busSubType"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "size_in_mb", params["size"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "name", resourceNameThird),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "description", params["description"].(string)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "storage_profile", params["storageProfileName"].(string)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameThird, "uuid", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "sharing_type", "None"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "encrypted", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameThird, "attached_vm_ids.#", "0"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+// TestAccVcdIndependentDiskBasicWithUpdates is very similar to TestAccVcdIndependentDiskBasic, but also tests updating the disks.
+func TestAccVcdIndependentDiskBasicWithUpdates(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	// The test is being skipped due to a known bug in the current versions of VCD
+	// when updating the disk resources, thus the test will only be run on versions
+	// released after v10.4.1.
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("<= 37.1") {
+		t.Skip("This test may fail on versions up to VCD 10.4.1 (API V37.1) because of a known bug. Skipping.")
+	}
+
+	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" || testConfig.VCD.NsxtProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	}
+
+	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,
 		"Vdc":                      testConfig.Nsxt.Vdc,
 		"name":                     name,

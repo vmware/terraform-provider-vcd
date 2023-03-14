@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -229,7 +230,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["vappNetworkName"].(string)),
 				// These fields can't be retrieved from user data.
-				ImportStateVerifyIgnore: []string{"org", "vdc"},
+				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_removal"},
 			},
 		},
 	})
@@ -711,6 +712,7 @@ resource "vcd_vapp_org_network" "with-routed" {
   ]
 }
 `
+
 const testAccVcdNsxtVappNetworkDS = testAccVcdNsxtVappNetwork + `
 # skip-binary-test: Data Source test
 data "vcd_vapp_network" "routed-attached" {
@@ -745,3 +747,202 @@ data "vcd_vapp_org_network" "with-routed" {
   org_network_name = vcd_vapp_org_network.with-routed.org_network_name
 }
 `
+
+// TestAccVcdNsxtVappNetworkRemoval checks the following:
+// * Creates a vApp with two networks (vcd_vapp_network and vcd_vapp_org_network), both having
+// reboot_vapp_on_removal = true
+// * Removes everything, except vApp to check that its power state remains POWERED_ON (int status 4)
+// after network removal
+func TestAccVcdNsxtVappNetworkRemoval(t *testing.T) {
+	preTestChecks(t)
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"VdcName":                   testConfig.Nsxt.Vdc,
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"EdgeCluster":               testConfig.Nsxt.NsxtEdgeCluster,
+		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
+		"TestName":                  t.Name(),
+		"ExistingRoutedNetwork":     testConfig.Nsxt.RoutedNetwork,
+		"RebootVappOnRemoval":       "true",
+
+		"Tags": "network vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtVappNetworkRemoval, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccVcdNsxtVappNetworkRemovalVApp, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{ // Create setup
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
+				),
+			},
+			{ // Delete everything, except vApp to check that its power state is still powered on
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttr("vcd_vapp.test", "status", "4"), // 4 is POWERED_ON
+					resource.TestCheckResourceAttr("vcd_vapp.test", "status_text", "POWERED_ON"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtVappNetworkRemovalVApp = `
+resource "vcd_vapp" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.VdcName}}"
+  name = "{{.TestName}}"
+}
+`
+
+const testAccVcdNsxtVappNetworkRemoval = testAccVcdNsxtVappNetworkRemovalVApp + `
+resource "vcd_vapp_network" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.VdcName}}"
+
+  name      = "{{.TestName}}"
+  vapp_name = vcd_vapp.test.name
+  gateway   = "192.168.2.1"
+  netmask   = "255.255.255.0"
+
+  static_ip_pool {
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
+  }
+
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
+}
+
+resource "vcd_vapp_org_network" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.VdcName}}"
+
+  vapp_name        = vcd_vapp.test.name
+  org_network_name = "{{.ExistingRoutedNetwork}}"
+
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
+}
+
+resource "vcd_vapp_vm" "test" {
+  vapp_name     = vcd_vapp.test.name
+  name          = "{{.TestName}}"
+  computer_name = "emptyVM"
+  memory        = 1048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  
+  power_on = true
+  
+  depends_on = [vcd_vapp_network.test, vcd_vapp_org_network.test]
+}
+`
+
+// TestAccVcdNsxtVappNetworkRemovalFails does the following:
+// * Attempts to replicate a user process of removing vApp networks without reboot_vapp_on_removal
+// * Checks that user gets a clear error message with a hint to use reboot_vapp_on_removal
+// * Checks that one can update the value and destroy whole environment afterwards
+func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
+	preTestChecks(t)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"VdcName":                   testConfig.Nsxt.Vdc,
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"EdgeCluster":               testConfig.Nsxt.NsxtEdgeCluster,
+		"ExternalNetwork":           testConfig.Nsxt.ExternalNetwork,
+		"TestName":                  t.Name(),
+		"ExistingRoutedNetwork":     testConfig.Nsxt.RoutedNetwork,
+		"RebootVappOnRemoval":       "false",
+
+		"Tags": "network vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtVappNetworkRemoval, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["RebootVappOnRemoval"] = "true"
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccVcdNsxtVappNetworkRemoval, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVappNetworkDestroy,
+		),
+		Steps: []resource.TestStep{
+			{ // Create setup
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
+				),
+			},
+			{ // Explicitly attempt to destroy the vApp with reboot_vapp_on_removal = false (default value)
+				Config:  configText1,
+				Destroy: true,
+				// Test that enriched error message with hint for 'reboot_vapp_on_removal' is
+				// returned. This is to validate that error catching mechanism is working as VCD API
+				// evolves.
+				ExpectError: regexp.MustCompile("reboot_vapp_on_removal"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
+				),
+			},
+			{ // Set the flag reboot_vapp_on_removal=true so that vApp can be destroyed
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
