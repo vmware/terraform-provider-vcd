@@ -85,14 +85,21 @@ func resourceVcdRde() *schema.Resource {
 				Required: true,
 			},
 			"resolve_on_removal": {
-				Type:        schema.TypeBool,
-				Description: "If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved.",
-				Default:     false,
-				Optional:    true,
+				Type: schema.TypeBool,
+				Description: "If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it." +
+					"Otherwise, destroy will fail if it is not resolved.",
+				Default:  false,
+				Optional: true,
 			},
 			"state": {
-				Type:        schema.TypeString,
-				Description: "If the specified JSON in either `entity` or `entity_url` is correct, the state will be RESOLVED, otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
+				Type: schema.TypeString,
+				Description: "When created it will be in PRE_CREATED state. If the specified JSON in either `input_entity` or `input_entity_url` is correct, the state will be RESOLVED," +
+					"otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
+				Computed: true,
+			},
+			"entity_in_sync": {
+				Type:        schema.TypeBool,
+				Description: "If true, `computed_entity` is equal to either `input_entity` or the contents of `input_entity_url`",
 				Computed:    true,
 			},
 			"metadata_entry": getOpenApiMetadataEntrySchema("Runtime Defined Entity", false),
@@ -216,6 +223,20 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 	if rde.DefinedEntity.Owner != nil {
 		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
 	}
+
+	inputJson, err := getRdeJson(vcdClient, d)
+	if err != nil {
+		return diag.Errorf("error getting JSON from configuration: %s", err)
+	}
+	inputJsonMarshaled, err := json.Marshal(inputJson)
+	if err != nil {
+		return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
+	}
+	areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
+	if err != nil {
+		return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
+	}
+	dSet(d, "entity_in_sync", areJsonEqual)
 
 	// Metadata is only available since API v37.0
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {

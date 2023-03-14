@@ -1,4 +1,4 @@
-//go:build catalog || disk || network || nsxt || vdc || org || vapp || vm || functional || ALL
+//go:build catalog || disk || network || nsxt || vdc || org || vapp || vm || functional || rde || ALL
 
 package vcd
 

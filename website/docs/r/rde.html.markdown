@@ -6,10 +6,13 @@ description: |-
    Provides the capability of creating, updating, and deleting Runtime Defined Entities in VMware Cloud Director.
 ---
 
-# vcd\_rde\_type
+# vcd\_rde
 
 Provides the capability of creating, updating, and deleting Runtime Defined Entities in VMware Cloud Director.
-Requires system administrator privileges.
+
+-> VCD allows to have multiple RDEs of the same [RDE Type](/providers/vmware/vcd/latest/docs/resources/rde_type) with
+the same name, meaning that they would be only distinguishable by their ID. This could lead to potential issues when fetching
+a unique RDE with the data source, so take this trait into account when creating them.
 
 Supported in provider *v3.9+*
 
@@ -87,26 +90,38 @@ resource "vcd_rde" "my-rde" {
 ## Input entity vs Computed entity
 
 There is a common use case for RDEs where they are used by 3rd party components that perform continuous updates on them,
-which are expected and desired. This conflicts with Terraform way of working, as doing a `terraform plan` would reveal 
-the required actions to remove every single change done by those 3rd party tools, which we don't want in this case.
+which are expected and desired. This conflicts with Terraform way of working, as doing a `terraform apply` would then
+perform actions to remove every single change done by those 3rd party tools, which we don't want in this case.
 
-To add compatibility with this scenario, there are two important arguments, `input_entity` and `input_entity_url`,
-and one important computed attribute, `computed_entity`.
+To add compatibility with this scenario, there are two important arguments, `input_entity`/`input_entity_url`,
+and two important computed attribute, `computed_entity` and `entity_in_sync`.
 
-If your RDE is intended to be managed **only and exclusively** by Terraform, the contents of the input JSON should always match with
-those retrieved into `computed_entity`. Otherwise, only `computed_entity` will reflect the current state of the RDE in VCD, whereas
-`input_entity` and `input_entity_url` will only specify the RDE contents that are needed either on creation or in a deliberate
+If your RDE is intended to be managed **only and exclusively** by Terraform, the contents of the input JSON should
+always match with those retrieved into `computed_entity`, and this will be reflected in the `entity_in_sync` attribute,
+which should be always `true`.
+
+Otherwise, only `computed_entity` will reflect the current state of the RDE in VCD and `entity_in_sync` will be `false`, whereas
+`input_entity` and `input_entity_url` will only specify the RDE contents that were used either on creation or in a deliberate
 update that will cause the RDE contents to be **completely overridden**.
 
 As per this last point, one needs to be careful when updating `input_entity` or `input_entity_url`, as Terraform will apply
 whatever changes were done, ignoring the real state from `computed_entity`. To perform a real update, one
 needs to check the contents of the `computed_entity` and do some diff with the original input.
 
+In other words:
+
+~> When you want to update an RDE and `entity_in_sync` is `false`, you should always merge the contents
+of `computed_entity` and `input_entity` to avoid overriding the whole entity by mistake with an old value. 
+
 ## RDE resolution
 
-RDEs must be resolved to be used or deleted, and this operation can be done either by Terraform with `resolve=true`, or by a 3rd party
-actor that will do it behind the scenes (`resolve=false`).
-In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can destroy the RDE if it is not
+When a RDE is created, its `state` will be `PRE_CREATED`, which means that the entity JSON was not validated against the
+[RDE Type](/providers/vmware/vcd/latest/docs/resources/rde_type) schema. After resolution, `state` should be either `RESOLVED`
+or `RESOLUTION_ERROR` if the input JSON doesn't match the schema.
+
+The RDE must be resolved at some point to be used or deleted, and this operation can be done either by Terraform with
+`resolve=true`, or by a 3rd party actor that will do it behind the scenes (`resolve=false`).
+In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can delete the RDE even if it was not
 resolved by anyone.
 
 ## Argument Reference
@@ -130,6 +145,8 @@ The following arguments are supported:
 The following attributes are supported:
 
 * `computed_entity` - The real state of this RDE in VCD.
+* `entity_in_sync` - It's `true` when `computed_entity` is equal to either `input_entity` or the contents of `input_entity_url`,
+  meaning that the computed RDE retrieved from VCD is synchronized with the input RDE.
 * `owner_id` - The ID of the owner of this Runtime Defined Entity, corresponds to a [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user).
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
 * `state` - If the specified JSON in either `input_entity` or `entity_url` is correct, the state will be `RESOLVED`, otherwise it will be `RESOLUTION_ERROR`. If an input_entity in an `RESOLUTION_ERROR` state, it will require to be updated to a correct JSON to be usable.

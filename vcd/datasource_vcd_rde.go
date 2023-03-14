@@ -1,0 +1,118 @@
+package vcd
+
+import (
+	"context"
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/util"
+)
+
+func datasourceVcdRde() *schema.Resource {
+	return &schema.Resource{
+		ReadContext: datasourceVcdRdeRead,
+		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Required: true,
+				Description: "The name of organization that owns this Runtime Defined Entity, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the Runtime Defined Entity",
+			},
+			"rde_type_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The Runtime Defined Entity Type ID",
+			},
+			"external_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
+			},
+			"entity": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A JSON representation of the Runtime Defined Entity",
+			},
+			"owner_id": {
+				Type:        schema.TypeString,
+				Description: "The owner of the Runtime Defined Entity",
+				Computed:    true,
+			},
+			"org_id": {
+				Type:        schema.TypeString,
+				Description: "The organization of the Runtime Defined Entity",
+				Computed:    true,
+			},
+			"state": {
+				Type:        schema.TypeString,
+				Description: "One of PRE_CREATED, RESOLVED or RESOLUTION_ERROR",
+				Computed:    true,
+			},
+			"metadata_entry": getOpenApiMetadataEntrySchema("Runtime Defined Entity", true),
+		},
+	}
+}
+
+func datasourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+	rde, err := getRde(d, vcdClient)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	dSet(d, "name", rde.DefinedEntity.Name)
+	dSet(d, "external_id", rde.DefinedEntity.ExternalId)
+	dSet(d, "state", rde.DefinedEntity.State)
+
+	if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State != "RESOLVED" {
+		util.Logger.Printf("[DEBUG] RDE %s is not in RESOLVED state", rde.DefinedEntity.Name)
+	}
+
+	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
+	if err != nil {
+		return diag.Errorf("could not save the Runtime Defined Entity JSON into state: %s", err)
+	}
+	err = d.Set("computed_entity", jsonEntity)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if rde.DefinedEntity.Org != nil {
+		dSet(d, "org_id", rde.DefinedEntity.Org.ID)
+	}
+	if rde.DefinedEntity.Owner != nil {
+		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
+	}
+
+	inputJson, err := getRdeJson(vcdClient, d)
+	if err != nil {
+		return diag.Errorf("error getting JSON from configuration: %s", err)
+	}
+	inputJsonMarshaled, err := json.Marshal(inputJson)
+	if err != nil {
+		return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
+	}
+	areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
+	if err != nil {
+		return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
+	}
+	dSet(d, "entity_in_sync", areJsonEqual)
+
+	// Metadata is only available since API v37.0
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
+		err = updateOpenApiMetadataInState(d, rde)
+		if err != nil {
+			return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
+		}
+	}
+
+	d.SetId(rde.DefinedEntity.ID)
+
+	return nil
+}
