@@ -190,7 +190,7 @@ func getRdeJson(vcdClient *VCDClient, d *schema.ResourceData) (map[string]interf
 
 func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	rde, err := getRde(d, vcdClient)
+	rde, err := getRde(d, vcdClient, "resource")
 	if govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] Runtime Defined Entity no longer exists. Removing from tfstate")
 		d.SetId("")
@@ -224,19 +224,23 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
 	}
 
-	inputJson, err := getRdeJson(vcdClient, d)
-	if err != nil {
-		return diag.Errorf("error getting JSON from configuration: %s", err)
+	dSet(d, "entity_in_sync", false)
+	// These fields can be empty on imports
+	if d.Get("input_entity_url") != "" && d.Get("input_entity") != "" {
+		inputJson, err := getRdeJson(vcdClient, d)
+		if err != nil {
+			return diag.Errorf("error getting JSON from configuration: %s", err)
+		}
+		inputJsonMarshaled, err := json.Marshal(inputJson)
+		if err != nil {
+			return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
+		}
+		areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
+		if err != nil {
+			return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
+		}
+		dSet(d, "entity_in_sync", areJsonEqual)
 	}
-	inputJsonMarshaled, err := json.Marshal(inputJson)
-	if err != nil {
-		return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
-	}
-	areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
-	if err != nil {
-		return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
-	}
-	dSet(d, "entity_in_sync", areJsonEqual)
 
 	// Metadata is only available since API v37.0
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
@@ -252,7 +256,7 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // getRde retrieves a Runtime Defined Entity from VCD with the required attributes from the Terraform config.
-func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity, error) {
+func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.DefinedEntity, error) {
 	if d.Id() != "" {
 		return vcdClient.GetRdeById(d.Id())
 	}
@@ -267,17 +271,52 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.DefinedEntity,
 
 	rdes, err := rdeType.GetRdesByName(name)
 	if err != nil {
-		return nil, fmt.Errorf("could not get RDE with name %s and RDE Type ID %s", name, rdeTypeId)
+		return nil, fmt.Errorf("could not get RDE with name %s and RDE Type ID %s: %s", name, rdeTypeId, err)
 	}
 
-	// We perform another GET by ID to retrieve the ETag of the RDE.
-	// We pick the first retrieved RDE from the result above.
-	return vcdClient.GetRdeById(rdes[0].DefinedEntity.ID)
+	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
+	// but at least we try to filter a bit with things we know, like Organization.
+	var filteredRdes []*govcd.DefinedEntity
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the Organization of the RDE: %s", err)
+	}
+	for _, rde := range rdes {
+		if rde.DefinedEntity.Org != nil && org.Org.ID == rde.DefinedEntity.Org.ID {
+			filteredRdes = append(filteredRdes, rde)
+		}
+	}
+
+	if len(filteredRdes) == 0 {
+		return nil, fmt.Errorf("no RDEs found with name %s and RDE Type ID %s in Organization %s: %s", name, rdeTypeId, org.Org.Name, govcd.ErrorEntityNotFound)
+	}
+
+	// If there is more than one RDE, we retrieve the IDs to give the user some feedback.
+	var filteredRdesIds []string
+	if len(filteredRdes) > 1 {
+		for _, rde := range filteredRdes {
+			filteredRdesIds = append(filteredRdesIds, rde.DefinedEntity.ID)
+		}
+	}
+
+	err = fmt.Errorf("there are %d RDEs with name %s and RDE Type ID %s in Organization %s: %v", len(filteredRdes), name, rdeTypeId, org.Org.Name, filteredRdesIds)
+	// We end early with the data source if there is more than one RDE found.
+	if origin == "datasource" && len(filteredRdes) > 1 {
+		return nil, err
+	}
+
+	if len(filteredRdes) > 1 {
+		util.Logger.Printf("[WARN] %s: Choosing the first one", err.Error())
+	}
+	// We just perform another GET by ID to retrieve the ETag of the RDE (it is only returned when we get a specific and unique ID).
+	// We pick the first retrieved RDE from the result above. This doesn't guarantee that is the RDE we want, but it's
+	// how VCD works.
+	return vcdClient.GetRdeById(filteredRdes[0].DefinedEntity.ID)
 }
 
 func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	rde, err := getRde(d, vcdClient)
+	rde, err := getRde(d, vcdClient, "resource")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -317,7 +356,7 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	rde, err := getRde(d, vcdClient)
+	rde, err := getRde(d, vcdClient, "resource")
 	if err != nil {
 		return diag.FromErr(err)
 	}
