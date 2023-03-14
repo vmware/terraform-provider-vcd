@@ -283,7 +283,7 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway allocated IP count: %s", err)
 	}
 
-	updatedEdge, err := getNsxtEdgeGatewayType(d, vcdClient, false, allocatedIpCount, edge)
+	updatedEdge, err := getNsxtEdgeGatewayType(d, vcdClient, false, &allocatedIpCount, edge)
 	if err != nil {
 		return diag.Errorf("error updating NSX-T Edge Gateway type: %s", err)
 	}
@@ -899,7 +899,7 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	if err != nil {
 		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count: %s", err)
 	}
-	err = d.Set("total_allocated_ip_count", *totalAllocatedIpCount)
+	err = d.Set("total_allocated_ip_count", totalAllocatedIpCount)
 	if err != nil {
 		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count: %s", err)
 	}
