@@ -115,6 +115,11 @@ func TestAccVcdNsxtEdgeGatewayAutoSubnetAllocation(t *testing.T) {
 }
 
 const testAccNsxtEdgeGatewayAutoAllocationPrerequisites = `
+data "vcd_org_vdc" "test" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
 data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
 }
@@ -167,9 +172,9 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 
 const testAccVcdNsxtEdgeGatewayAutoSubnetAllocation = testAccNsxtEdgeGatewayAutoAllocationPrerequisites + `
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.NsxtEdgeGatewayVcd}}"
+  org       = "{{.Org}}"
+  owner_id  = data.vcd_org_vdc.test.id
+  name      = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 
@@ -304,9 +309,10 @@ func TestAccVcdNsxtEdgeGatewayAutoAllocatedSubnet(t *testing.T) {
 
 const testAccNsxtEdgeGatewayAutoAllocatedSubnet = testAccNsxtEdgeGatewayAutoAllocationPrerequisites + `
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.NsxtEdgeGatewayVcd}}"
+  org       = "{{.Org}}"
+  owner_id  = data.vcd_org_vdc.test.id
+  name      = "{{.NsxtEdgeGatewayVcd}}"
+
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 
@@ -314,8 +320,8 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
 
-	primary_ip         = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
-	allocated_ip_count = "{{.Subnet1Count}}"
+    primary_ip         = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+    allocated_ip_count = "{{.Subnet1Count}}"
   }
 
   subnet_with_ip_count {
@@ -387,6 +393,11 @@ data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
 }
 
+data "vcd_org_vdc" "test" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
 data "vcd_nsxt_tier0_router" "router" {
   name            = "{{.NsxtTier0Router}}"
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
@@ -414,9 +425,9 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 }
 
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.NsxtEdgeGatewayVcd}}"
+  org       = "{{.Org}}"
+  owner_id  = data.vcd_org_vdc.test.id
+  name      = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 

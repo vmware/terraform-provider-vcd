@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -165,6 +166,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description:   "Total number of IP addresses allocated for this gateway. Can be set with 'subnet_with_total_ip_count' definitions only",
 				RequiredWith:  []string{"subnet_with_total_ip_count"},
 				ConflictsWith: []string{"subnet", "subnet_with_ip_count"},
+				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"subnet_with_total_ip_count": {
 				Type:          schema.TypeSet,
@@ -508,10 +510,6 @@ func getNsxtEdgeGatewayUplinksTypeForUpdate(d *schema.ResourceData, currentlyAll
 		uplinks := []types.EdgeGatewayUplinks{{}}
 		uplinks[0].Subnets = types.OpenAPIEdgeGatewaySubnets{Values: subnetValues}
 		if desiredtotalIpCount, isSetTotalIpCount := d.GetOk("total_allocated_ip_count"); isSetTotalIpCount {
-			if desiredtotalIpCount.(int) < 1 {
-				return nil, fmt.Errorf("total_allocated_ip_count must be greater than 0")
-			}
-
 			// Allocation and deallocation of IPs are distinct operations due to API limitations
 			// To decide whether to allocate or deallocate IPs, we need to calculate the balance.
 			// Balance is the difference between desired and current total allocated IP count
