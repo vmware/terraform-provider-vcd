@@ -46,6 +46,8 @@ func TestAccVcdRde(t *testing.T) {
 	stepFixWrongRde := templateFill(testAccVcdRde3, params)
 	params["FuncName"] = t.Name() + "-Duplicate"
 	stepCreateDuplicate := templateFill(testAccVcdRde4, params)
+	params["FuncName"] = t.Name() + "-DS"
+	stepDataSource := templateFill(testAccVcdRdeDS, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -56,6 +58,7 @@ func TestAccVcdRde(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION resolve: %s\n", stepResolve)
 	debugPrintf("#[DEBUG] CONFIGURATION fix wrong RDE: %s\n", stepFixWrongRde)
 	debugPrintf("#[DEBUG] CONFIGURATION duplicate: %s\n", stepCreateDuplicate)
+	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", stepDataSource)
 
 	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Nss"].(string))
 	rdeType := "vcd_rde_type.rde_type"
@@ -63,6 +66,8 @@ func TestAccVcdRde(t *testing.T) {
 	rdeFromUrl := "vcd_rde.rde_url"
 	rdeWrong := "vcd_rde.rde_naughty"
 	rdeTenant := "vcd_rde.rde_tenant"
+	rdeDataSource1 := "data.vcd_rde.existing_rde1"
+	rdeDataSource2 := "data.vcd_rde.existing_rde2"
 
 	// We will cache an RDE identifier, so we can use it later for importing
 	cachedId := &testCachedFieldValue{}
@@ -182,6 +187,24 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile(`.*stringValueChanged.*`)),
 				),
 			},
+			{
+				Config: stepDataSource,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "id", rdeFromFile, "id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "external_id", rdeFromFile, "external_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "entity", rdeFromFile, "computed_entity"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "state", rdeFromFile, "state"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "org_id", rdeFromFile, "org_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "id", rdeFromFile, "id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "external_id", rdeFromFile, "external_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "entity", rdeFromFile, "computed_entity"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "state", rdeFromFile, "state"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "org_id", rdeFromFile, "org_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "owner_id", rdeFromFile, "owner_id"),
+				),
+			},
+
 			// Import by vendor + nss + version + name + position
 			{
 				ResourceName:            rdeFromFile,
@@ -388,6 +411,23 @@ resource "vcd_rde" "rde_naughty-clone" {
   resolve_on_removal = false
 
   depends_on = [vcd_rights_bundle.rde_type_bundle]
+}
+`
+
+const testAccVcdRdeDS = testAccVcdRde3 + `
+# skip-binary-test - Contains data source referencing a resource
+data "vcd_rde" "existing_rde1" {
+  provider = {{.ProviderSystem}}
+
+  rde_type_id        = vcd_rde_type.rde_type.id
+  name               = "{{.Name}}file-updated"
+}
+
+data "vcd_rde" "existing_rde2" {
+  provider = {{.ProviderOrg1}}
+
+  rde_type_id        = vcd_rde_type.rde_type.id
+  name               = "{{.Name}}file-updated"
 }
 `
 

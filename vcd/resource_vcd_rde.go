@@ -224,19 +224,23 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
 	}
 
-	inputJson, err := getRdeJson(vcdClient, d)
-	if err != nil {
-		return diag.Errorf("error getting JSON from configuration: %s", err)
+	dSet(d, "entity_in_sync", false)
+	// These fields can be empty on imports
+	if d.Get("input_entity_url") != "" && d.Get("input_entity") != "" {
+		inputJson, err := getRdeJson(vcdClient, d)
+		if err != nil {
+			return diag.Errorf("error getting JSON from configuration: %s", err)
+		}
+		inputJsonMarshaled, err := json.Marshal(inputJson)
+		if err != nil {
+			return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
+		}
+		areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
+		if err != nil {
+			return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
+		}
+		dSet(d, "entity_in_sync", areJsonEqual)
 	}
-	inputJsonMarshaled, err := json.Marshal(inputJson)
-	if err != nil {
-		return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
-	}
-	areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
-	if err != nil {
-		return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
-	}
-	dSet(d, "entity_in_sync", areJsonEqual)
 
 	// Metadata is only available since API v37.0
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
@@ -271,17 +275,20 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	}
 
 	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
-	// but at least we try to filter a bit with things we know, like Organization name.
+	// but at least we try to filter a bit with things we know, like Organization.
 	var filteredRdes []*govcd.DefinedEntity
-	orgName := d.Get("org")
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the Organization of the RDE: %s", err)
+	}
 	for _, rde := range rdes {
-		if rde.DefinedEntity.Org != nil && orgName == rde.DefinedEntity.Org.Name {
+		if rde.DefinedEntity.Org != nil && org.Org.ID == rde.DefinedEntity.Org.ID {
 			filteredRdes = append(filteredRdes, rde)
 		}
 	}
 
 	if len(filteredRdes) == 0 {
-		return nil, fmt.Errorf("no RDEs found with name %s and RDE Type ID %s in Organization %s: %s", name, rdeTypeId, orgName, govcd.ErrorEntityNotFound)
+		return nil, fmt.Errorf("no RDEs found with name %s and RDE Type ID %s in Organization %s: %s", name, rdeTypeId, org.Org.Name, govcd.ErrorEntityNotFound)
 	}
 
 	// If there is more than one RDE, we retrieve the IDs to give the user some feedback.
@@ -292,7 +299,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 		}
 	}
 
-	err = fmt.Errorf("there are %d RDEs with name %s and RDE Type ID %s in Organization %s: %v", len(filteredRdes), name, rdeTypeId, orgName, filteredRdesIds)
+	err = fmt.Errorf("there are %d RDEs with name %s and RDE Type ID %s in Organization %s: %v", len(filteredRdes), name, rdeTypeId, org.Org.Name, filteredRdesIds)
 	// We end early with the data source if there is more than one RDE found.
 	if origin == "datasource" && len(filteredRdes) > 1 {
 		return nil, err
