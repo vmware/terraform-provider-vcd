@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || ALL
 
 package vcd
 
@@ -136,21 +136,23 @@ type TestConfig struct {
 		} `json:"peer"`
 	} `json:"networking"`
 	Nsxt struct {
-		Manager             string `json:"manager"`
-		Tier0router         string `json:"tier0router"`
-		Tier0routerVrf      string `json:"tier0routervrf"`
-		Vdc                 string `json:"vdc"`
-		ExternalNetwork     string `json:"externalNetwork"`
-		EdgeGateway         string `json:"edgeGateway"`
-		VdcGroup            string `json:"vdcGroup"`
-		VdcGroupEdgeGateway string `json:"vdcGroupEdgeGateway"`
-		NsxtImportSegment   string `json:"nsxtImportSegment"`
-		NsxtEdgeCluster     string `json:"nsxtEdgeCluster"`
-
+		Manager                   string `json:"manager"`
+		Tier0router               string `json:"tier0router"`
+		Tier0routerVrf            string `json:"tier0routervrf"`
+		Vdc                       string `json:"vdc"`
+		ExternalNetwork           string `json:"externalNetwork"`
+		EdgeGateway               string `json:"edgeGateway"`
+		VdcGroup                  string `json:"vdcGroup"`
+		VdcGroupEdgeGateway       string `json:"vdcGroupEdgeGateway"`
+		NsxtImportSegment         string `json:"nsxtImportSegment"`
+		NsxtEdgeCluster           string `json:"nsxtEdgeCluster"`
 		NsxtAlbControllerUrl      string `json:"nsxtAlbControllerUrl"`
 		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
 		NsxtAlbControllerPassword string `json:"nsxtAlbControllerPassword"`
 		NsxtAlbImportableCloud    string `json:"nsxtAlbImportableCloud"`
+		RoutedNetwork             string `json:"routedNetwork"`
+		IsolatedNetwork           string `json:"isolatedNetwork"`
+		DirectNetwork             string `json:"directNetwork"`
 	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
