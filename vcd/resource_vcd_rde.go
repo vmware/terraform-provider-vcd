@@ -114,14 +114,14 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return diag.Errorf("could not retrieve RDE Type with ID %s", rdeTypeId)
+		return diag.Errorf("could not create RDE with name '%s', could not retrieve RDE Type with ID '%s': %s", name, rdeTypeId, err)
 	}
 
 	tenantContext := govcd.TenantContext{}
 	if vcdClient.Client.IsSysAdmin {
 		org, err := vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
-			return diag.Errorf("error retrieving org %s: %s", d.Get("org").(string), err)
+			return diag.Errorf("could not create RDE with name '%s', error retrieving Org '%s': %s", name, d.Get("org").(string), err)
 		}
 		tenantContext.OrgId = org.AdminOrg.ID
 		tenantContext.OrgName = org.AdminOrg.Name
@@ -138,7 +138,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		Entity:     jsonSchema,
 	}, &tenantContext)
 	if err != nil {
-		return diag.Errorf("could not create the Runtime Defined Entity: %s", err)
+		return diag.Errorf("could not create the Runtime Defined Entity '%s' of type '%s': %s", name, rdeTypeId, err)
 	}
 
 	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
@@ -148,7 +148,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.Get("resolve").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' of type '%s': %s", name, rdeTypeId, err)
 		}
 	}
 
@@ -194,7 +194,7 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 	dSet(d, "state", rde.DefinedEntity.State)
 
 	if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State != "RESOLVED" {
-		util.Logger.Printf("[DEBUG] RDE %s is not in RESOLVED state", rde.DefinedEntity.Name)
+		util.Logger.Printf("[DEBUG] RDE '%s' is not in RESOLVED state", rde.DefinedEntity.Name)
 	}
 
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
@@ -247,12 +247,12 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return nil, fmt.Errorf("could not get RDE Type with ID %s", rdeTypeId)
+		return nil, fmt.Errorf("could not get RDE Type with ID '%s'", rdeTypeId)
 	}
 
 	rdes, err := rdeType.GetRdesByName(name)
 	if err != nil {
-		return nil, fmt.Errorf("could not get RDE with name %s and RDE Type ID %s: %s", name, rdeTypeId, err)
+		return nil, fmt.Errorf("could not get RDEs with name '%s' and RDE Type ID '%s': %s", name, rdeTypeId, err)
 	}
 
 	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
@@ -260,7 +260,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	var filteredRdes []*govcd.DefinedEntity
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the Organization of the RDE: %s", err)
+		return nil, fmt.Errorf("could not retrieve the Organization of the RDE '%s': %s", name, err)
 	}
 	for _, rde := range rdes {
 		if rde.DefinedEntity.Org != nil && org.Org.ID == rde.DefinedEntity.Org.ID {
@@ -269,7 +269,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	}
 
 	if len(filteredRdes) == 0 {
-		return nil, fmt.Errorf("no RDEs found with name %s and RDE Type ID %s in Organization %s: %s", name, rdeTypeId, org.Org.Name, govcd.ErrorEntityNotFound)
+		return nil, fmt.Errorf("no RDEs found with name '%s' and RDE Type ID '%s' in Org '%s': %s", name, rdeTypeId, org.Org.Name, govcd.ErrorEntityNotFound)
 	}
 
 	// If there is more than one RDE, we retrieve the IDs to give the user some feedback.
@@ -280,7 +280,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 		}
 	}
 
-	err = fmt.Errorf("there are %d RDEs with name %s and RDE Type ID %s in Organization %s: %v", len(filteredRdes), name, rdeTypeId, org.Org.Name, filteredRdesIds)
+	err = fmt.Errorf("there are %d RDEs with name '%s' and RDE Type ID '%s' in Org '%s': %v", len(filteredRdes), name, rdeTypeId, org.Org.Name, filteredRdesIds)
 	// We end early with the data source if there is more than one RDE found.
 	if origin == "datasource" && len(filteredRdes) > 1 {
 		return nil, err
@@ -312,13 +312,13 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		Entity:     jsonEntity,
 	})
 	if err != nil {
-		return diag.Errorf("could not update the Runtime Defined Entity: %s", err)
+		return diag.Errorf("could not update the Runtime Defined Entity '%s': %s", rde.DefinedEntity.Name, err)
 	}
 
 	if d.Get("resolve").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.Errorf("could not resolve the Runtime Defined Entity: %s", err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity '%s': %s", rde.DefinedEntity.Name, err)
 		}
 	}
 
