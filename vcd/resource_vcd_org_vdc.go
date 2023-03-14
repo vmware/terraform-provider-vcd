@@ -277,6 +277,12 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
 			},
+			"enable_nsxv_distributed_firewall": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to enable distributed firewall - Only applies to NSX-V VDCs",
+			},
 		},
 	}
 }
@@ -345,6 +351,17 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 			return diag.Errorf("error setting Edge Cluster: %s", err)
 		}
 	}
+	if d.Get("enable_nsxv_distributed_firewall").(bool) {
+		if !vdc.IsNsxv() {
+			return diag.Errorf("VDC '%s' is not a NSX-V VDC and the property 'enable_nsxv_distributed_firewall' can't be used", orgVdcName)
+		}
+		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, vdc.Vdc.ID)
+		err = dfw.Enable()
+		if err != nil {
+			return diag.Errorf("error enabling NSX-V distributed firewall for VDC '%s': %s", orgVdcName, err)
+		}
+		dSet(d, "enable_nsxv_distributed_firewall", true)
+	}
 
 	return resourceVcdVdcRead(ctx, d, meta)
 }
@@ -380,7 +397,15 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	dSet(d, "enable_nsxv_distributed_firewall", false)
+	if adminVdc.IsNsxv() {
+		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
+		enabled, err := dfw.IsEnabled()
+		if err != nil {
+			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+		}
+		dSet(d, "enable_nsxv_distributed_firewall", enabled)
+	}
 	return nil
 }
 
@@ -621,6 +646,20 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 			return diag.Errorf("error updating 'edge_cluster_id': %s", err)
 		}
 
+	}
+
+	if adminVdc.IsNsxv() && d.HasChange("enable_nsxv_distributed_firewall") {
+		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
+		enablementState := d.Get("enable_nsxv_distributed_firewall").(bool)
+		if enablementState {
+			err = dfw.Enable()
+		} else {
+			err = dfw.Disable()
+		}
+		if err != nil {
+			return diag.Errorf("error setting NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+		}
+		dSet(d, "enable_nsxv_distributed_firewall", enablementState)
 	}
 
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)

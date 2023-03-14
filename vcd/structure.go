@@ -56,6 +56,16 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 	return temp
 }
 
+// filterVdcId returns a bare UUID if the initial value contains a VDC ID
+// otherwise it returns the initial value
+func filterVdcId(i interface{}) string {
+	s := i.(string)
+	if strings.HasPrefix(s, "urn:vcloud:vdc:") {
+		return extractUuid(s)
+	}
+	return s
+}
+
 // convertSchemaSetToSliceOfStrings accepts Terraform's *schema.Set object and converts it to slice
 // of strings.
 // This is useful for extracting values from a set of strings
@@ -89,6 +99,14 @@ func takeBoolPointer(value bool) *bool {
 // takeIntPointer accepts an int and returns a pointer to this value.
 func takeIntPointer(x int) *int {
 	return &x
+}
+
+// stringPtrOrNil takes a string and returns a pointer to it, but if the string is empty, returns nil
+func stringPtrOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 // takeInt64Pointer accepts an int64 and returns a pointer to this value.
@@ -238,4 +256,13 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible,
 		}
 	}
 	return nil
+}
+
+// stringOnNotNil returns the contents of a string pointer
+// if the pointer is nil, returns an empty string
+func stringOnNotNil(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
 }

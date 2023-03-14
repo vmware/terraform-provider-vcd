@@ -130,6 +130,75 @@ if err != nil {
 ...
 ```
 
+## Documenting your changes
+
+The documentation of every contribution is as important as the code and related tests. Their combined information
+makes it possible for maintainers to understand the changes and expand on them.
+
+The documentation comes in three flavors:
+
+* One [article per resource](#documenting-data-sources-and-resources), located in the directory `./website/docs/r`, and one for the corresponding data source, located 
+  in `./website/docs/d`.
+* One article about [topics that involve more than one resource](#documenting-broad-topics-guides), and need a wider breadth of documentation to be properly
+  explained, located in `./website/guides` (for example: the article **roles management** includes operations with **Roles**,
+  **Global Roles**, **Rights**, and **Rights bundles**)
+* One or more [**entries for the change log**](#documenting-each-pull-request-for-the-changelog), explaining what each pull request has contributed.
+
+### Documenting data sources and resources
+
+Each entity, be it a resource or a data source, needs to have its documentation page, containing at least the following information:
+
+* A **metadata header**, containing information related to the page location, and a summary of its contents.
+* The resource or data source **name**
+* An optional indication about when it started to be available (such as `Supported in provider *v3.9+*.`)
+* At least one **Usage example**
+* The list of **Arguments**, i.e. the properties that the user needs to fill, with the indication of whether they are
+  *Required* or *Optional*
+* The list of **Attributes**, i.e. the properties that are computed by Terraform and exposed in the resource or data source state
+* Resources should also include a section about **importing**, explaining how an existing resource could be imported into
+  Terraform state
+
+Each page must then be linked appropriately in the file `./website/docs/vcd.erb`
+
+### Documenting broad topics (guides)
+
+When a topic is too wide to be comprised in the description of one resource or data source, we can make a **Guide**, which
+is a free-form article that explains operations including several resources and data sources.
+Such articles should include explanations and examples of workflows, relationship between resources, common cases, and
+troubleshooting methods, when applicable.
+
+Each guide page must also be linked in `./website/docs/vcd.erb`.
+
+### Documenting each Pull Request for the CHANGELOG
+
+Each pull request (PR) should include some information to be included in the CHANGELOG.
+We could modify directly the file `CHANGELOG.md`, but this means that almost every PR will have conflicts, which need
+to be resolved manually, with the risk of losing or mangling valuable information. (It has happened)
+
+To avoid conflicts, but still keep recording detailed information about the changes, we adopt a cumulative system.
+
+1. When a cycle starts (immediately after a release), we put a note in `CHANGELOG.md`, informing readers that the changes,
+   until the next release, are provisionally stored in the directory `./.changes/v#.#.#` where `#.#.#` is the version
+   currently being developed.
+2. Each PR will include one or more of the following files in `./.changes/v#.#.#`
+   * `###-features.md` containing information about new resources and data sources
+   * `###-improvements.md` containing information about enhancements to existing resources and data sources
+   * `###-bug-fixes.md` containing reference to one or more bugs being fixed
+   * `###-deprecations.md` containing the list of resources, data sources, or properties being deprecated
+   * `###-removals.md` containing the list of resources, data sources, or properties that have been removed
+   * `###-notes.md`, containing changes that don't fit into the above categories
+
+In the above list, the placeholder `###` stands for the PR number. Each line in each file will have at its end the 
+indication of the PR itself, with the format `[GH-###]`.
+
+Before the release, we use two scripts:
+* `./scripts/make-changelog.sh`, which collects all the files in `./.changes/v#.#.#` and produces a nicely formatted text
+  that we paste into `CHANGELOG.md`
+* `./scripts/changelog-links.sh`, which parses `CHANGELOG.md` and produces the URLs that replace every occurrence of `[GH-###]`
+
+As a last operation before the release, we open a PR with the updated `CHANGELOG.md`, giving the team a final chance to review
+the text of what will mostly constitute the release notes.
+
 ### References:
 * https://github.com/vmware/terraform-provider-vcd/pull/800#discussion_r825335060
 * https://github.com/vmware/terraform-provider-vcd/issues/855
