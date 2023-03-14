@@ -99,6 +99,13 @@ func Test_areMarshaledJsonEqual(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "compared JSON components in different order",
+			input1:  `{"foo":"bar", "abc": "xyz"}`,
+			input2:  `{"abc":"xyz", "foo":"bar"}`,
+			want:    true,
+			wantErr: false,
+		},
+		{
 			name:    "second JSON contains trailing spaces",
 			input1:  "{\"foo\":\"bar\"}",
 			input2:  "{  \"foo\" :  \"bar\" }   ",
