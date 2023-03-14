@@ -1,0 +1,5 @@
+* **New Resource:** `vcd_nsxv_distributed_firewall` to create and manage NSX-V distributed firewall [GH-988]
+* **New Data Source:** `vcd_nsxv_distributed_firewall` to fetch existing NSX-V distributed firewall [GH-988]
+* **New Data Source:** `vcd_nsxv_application_finder` to search applications and application groups to use with a NSX-V distributed firewall [GH-988]
+* **New Data Source:** `vcd_nsxv_application` to fetch existing application to use with a NSX-V distributed firewall [GH-988]
+* **New Data Source:** `vcd_nsxv_application_group` to fetch existing application_group to use with a NSX-V distributed firewall [GH-988]

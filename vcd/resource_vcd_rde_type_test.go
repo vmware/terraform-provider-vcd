@@ -27,7 +27,7 @@ func TestAccVcdRdeType(t *testing.T) {
 		"Description":         "Created by " + t.Name(),
 		"InterfaceReferences": "vcd_rde_interface.rde_interface1.id",
 		"SchemaPath":          getCurrentDir() + "/../test-resources/rde_type.json",
-		"SchemaUrl":           "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-2/test-resources/rde_type.json", // FIXME
+		"SchemaUrl":           "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/test-resources/rde_type.json",
 	}
 	testParamsNotEmpty(t, params)
 

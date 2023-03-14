@@ -81,6 +81,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						resourceDef, "enabled", "true"),
 					resource.TestCheckResourceAttr(
 						resourceDef, "enable_thin_provisioning", "true"),
+					// All VDCs in this test should be NSX-T, and as such the property enable_nsxv_distributed_firewall is false
+					resource.TestCheckResourceAttr(
+						resourceDef, "enable_nsxv_distributed_firewall", "false"),
 					resource.TestCheckResourceAttr(
 						resourceDef, "enable_fast_provisioning", "true"),
 					resource.TestCheckResourceAttr(
