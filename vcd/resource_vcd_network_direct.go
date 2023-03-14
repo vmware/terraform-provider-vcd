@@ -95,7 +95,7 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", false, true),
+			"metadata_entry": getMetadataEntrySchema("Network", false),
 		},
 	}
 }

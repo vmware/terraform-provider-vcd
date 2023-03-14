@@ -70,7 +70,7 @@ func datasourceVcdCatalog() *schema.Resource {
 				Description: "Key and value pairs for catalog metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog", true, true),
+			"metadata_entry": getMetadataEntrySchema("Catalog", true),
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,

@@ -19,7 +19,7 @@ Supported in provider *v3.9+*
 ## Example Usage with a JSON file
 
 ```hcl
-data "vcd_rde_type" "my-type" {
+data "vcd_rde_type" "my_type" {
   vendor    = "bigcorp"
   namespace = "tech1"
   version   = "1.2.3"
@@ -44,7 +44,7 @@ Using the [`templatefile`](https://developer.hashicorp.com/terraform/language/fu
 allow you to parameterize RDE creation with custom inputs, as follows:
 
 ```hcl
-data "vcd_rde_type" "my-type" {
+data "vcd_rde_type" "my_type" {
   vendor    = "bigcorp"
   namespace = "tech1"
   version   = "1.2.3"
@@ -72,7 +72,7 @@ output "computed_rde" {
 ## Example Usage with a URL that contains a schema file
 
 ```hcl
-data "vcd_rde_type" "my-type" {
+data "vcd_rde_type" "my_type" {
   vendor    = "bigcorp"
   namespace = "tech1"
   version   = "1.2.3"
@@ -138,7 +138,6 @@ The following arguments are supported:
 * `input_entity` - (Optional) A string that specifies a valid JSON for the RDE. It can be retrieved with functions such as `file`, `templatefile`... Either `input_entity` or `input_entity_url` is required.
 * `input_entity_url` - (Optional) The URL that points to a valid JSON for the RDE. Either `input_entity` or `input_entity_url` is required.
 * `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
-* `metadata_entry` - (Optional) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 
@@ -150,45 +149,6 @@ The following attributes are supported:
 * `owner_id` - The ID of the owner of this Runtime Defined Entity, corresponds to a [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user).
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
 * `state` - If the specified JSON in either `input_entity` or `entity_url` is correct, the state will be `RESOLVED`, otherwise it will be `RESOLUTION_ERROR`. If an input_entity in an `RESOLUTION_ERROR` state, it will require to be updated to a correct JSON to be usable.
-
-<a id="metadata"></a>
-## Metadata
-
-The `metadata_entry` is a set of metadata entries that have the following structure:
-
-* `key` - (Required) Key of this metadata entry.
-* `value` - (Required) Value of this metadata entry.
-* `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
-* `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
-* `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.
-
-Example:
-
-```hcl
-resource "vcd_rde" "my-rde" {
-  org         = "my-org"
-  rde_type_id = data.vcd_rde_type.my-type.id
-  name        = "My custom RDE"
-  resolve     = true
-  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
-
-  metadata_entry {
-    key      = "foo"
-    type     = "StringEntry"
-    value    = "bar"
-    domain   = "TENANT"
-    readonly = true
-  }
-
-  metadata_entry {
-    key      = "bar"
-    type     = "NumberEntry"
-    value    = "42"
-    domain   = "TENANT"
-    readonly = true
-  }
-}
-```
 
 ## Importing
 

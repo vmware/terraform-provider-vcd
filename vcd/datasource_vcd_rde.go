@@ -52,7 +52,6 @@ func datasourceVcdRde() *schema.Resource {
 				Description: "One of PRE_CREATED, RESOLVED or RESOLUTION_ERROR",
 				Computed:    true,
 			},
-			"metadata_entry": getOpenApiMetadataEntrySchema("Runtime Defined Entity", true),
 		},
 	}
 }
@@ -82,14 +81,6 @@ func datasourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interf
 	}
 	if rde.DefinedEntity.Owner != nil {
 		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
-	}
-
-	// Metadata is only available since API v37.0
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
-		err = updateOpenApiMetadataInState(d, rde)
-		if err != nil {
-			return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
-		}
 	}
 
 	d.SetId(rde.DefinedEntity.ID)

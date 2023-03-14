@@ -48,17 +48,13 @@ func metadataEntryDatasourceSchema(objectNameInDescription string) *schema.Schem
 
 // metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
 // The description will refer to the object name given as input.
-func metadataEntryResourceSchema(objectNameInDescription string, hasOldMetadata bool) *schema.Schema {
-	var conflictsWith []string
-	if hasOldMetadata {
-		conflictsWith = []string{"metadata"}
-	}
+func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
 		Computed:      true, // This is required for `metadata_entry` to live together with deprecated `metadata`.
 		Description:   fmt.Sprintf("Metadata entries for the given %s", objectNameInDescription),
-		ConflictsWith: conflictsWith,
+		ConflictsWith: []string{"metadata"},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"key": {
@@ -99,11 +95,11 @@ func metadataEntryResourceSchema(objectNameInDescription string, hasOldMetadata 
 // getMetadataEntrySchema returns a schema for the "metadata_entry" attribute, that can be used to
 // build data sources (isDatasource=true) or resources (isDatasource=false). The description of the
 // attribute will refer to the input resource name.
-func getMetadataEntrySchema(resourceNameInDescription string, isDatasource, hasOldMetadataAttribute bool) *schema.Schema {
+func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool) *schema.Schema {
 	if isDatasource {
 		return metadataEntryDatasourceSchema(resourceNameInDescription)
 	}
-	return metadataEntryResourceSchema(resourceNameInDescription, hasOldMetadataAttribute)
+	return metadataEntryResourceSchema(resourceNameInDescription)
 }
 
 // metadataCompatible allows to consider all structs that implement metadata handling to be the same type
