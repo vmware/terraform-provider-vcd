@@ -71,12 +71,12 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 	resourceName := "vcd_vapp_org_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVappNetworkDestroy,
+		CheckDestroy:      testAccCheckVappNetworkDestroyNsxv,
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists(resourceName),
+					testAccCheckVappNetworkExists(resourceName, testConfig.VCD.Vdc),
 					resource.TestCheckResourceAttr(
 						resourceName, "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
@@ -90,7 +90,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists(resourceName),
+					testAccCheckVappNetworkExists(resourceName, testConfig.VCD.Vdc),
 					resource.TestCheckResourceAttr(
 						resourceName, "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
@@ -105,7 +105,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["orgNetwork"].(string)),
+				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["orgNetwork"].(string), testConfig.VCD.Vdc),
 				// These fields can't be retrieved from user data.
 				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_removal"},
 			},

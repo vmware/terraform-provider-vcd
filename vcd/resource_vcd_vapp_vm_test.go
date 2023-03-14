@@ -81,7 +81,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 				ResourceName:      "vcd_vapp_vm." + vmName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdVappObject(vappName2, vmName),
+				ImportStateIdFunc: importStateIdVappObject(vappName2, vmName, testConfig.VCD.Vdc),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
 					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
