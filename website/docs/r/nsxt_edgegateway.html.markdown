@@ -51,7 +51,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 ```
-
 <a id="subnet-example"></a>
 ## Example Usage (Using custom Edge Cluster and multiple subnets)
 
@@ -216,7 +215,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 ```
-
 <a id="subnet-with-ip-count-example"></a>
 ## Example Usage (Automatic IP allocation per subnet)
 
@@ -287,14 +285,12 @@ can be used to lookup ID by name.
   allocation modes](#ip-allocation-modes) section.
 * `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `subnet_with_total_ip_count`. It is
   **read-only** attribute with other other allocation models `subnet` and `subnet_with_ip_count`.
-
-
 <a id="ip-allocation-modes"></a>
 
 ## IP allocation modes
 
-~> Starting with `v3.9.0` of Terraform provider for VCD, NSX-T Edge Gateway IP allocations got
-revamped to support automatic IP allocation. More details in this section.
+~> Starting with `v3.9.0` of Terraform Provider for VCD, NSX-T Edge Gateway supports automatic IP
+allocations. More details in this section.
 
 There are three ways to handle IP allocations, but it's important to note that _due to Terraform
 schema limitations_, only **one of the three** methods can be utilized:
@@ -304,8 +300,6 @@ schema limitations_, only **one of the three** methods can be utilized:
   `total_allocated_ip_count`](#edgegateway-total-ip-count-allocation)
 * [_Automatic_ IP allocation mode with _per subnet IP count_  using
   `subnet_with_ip_count`](#edgegateway-per-subnet-ip-count-allocation)
-
-
 <a id="edgegateway-subnet"></a>
 
 ### Manual IP allocation using `subnet` and `allocated_ips` ranges
@@ -320,15 +314,12 @@ into `allocated_ips` block range as otherwise `plan` will not be clean with a ne
 that particular block. There __can only be one__ `primary_ip` defined for edge gateway.
 * `allocated_ips` (Required) - One or more blocks of [ip ranges](#edgegateway-subnet-ip-allocation)
 in the subnet to be allocated
-
 <a id="edgegateway-subnet-ip-allocation"></a>
 
 Each `subnet` must have on or more `allocated_ips` blocks that consist of IP range definitions:
 
 * `start_address` - (Required) - Start IP address of a range
 * `end_address` - (Required) - End IP address of a range
-
-
 <a id="edgegateway-total-ip-count-allocation"></a>
 
 ### Automatic IP allocation mode with total IP count using `subnet_with_total_ip_count` and `total_allocated_ip_count`
@@ -346,8 +337,6 @@ Each `subnet_with_total_ip_count` has these attributes:
 
 ~> Only network definitions are required and IPs are allocated automatically, based on
 `total_allocated_ip_count` parameter
-
-
 <a id="edgegateway-per-subnet-ip-count-allocation"></a>
 
 ### Automatic IP allocation mode with per subnet IP count using `subnet_with_ip_count`
@@ -370,7 +359,6 @@ The following attributes are exported on this resource:
 * `primary_ip` - Primary IP address exposed for an easy access without nesting.
 * `used_ip_count` - Unused IP count in this Edge Gateway
 * `unused_ip_count` Used IP count in this Edge Gateway
-
 
 ## Importing
 
