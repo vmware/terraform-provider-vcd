@@ -84,6 +84,7 @@ The following arguments are supported:
 * `description` - (Optional; *v2.7+*, *vCD 9.5+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this network belongs to.
 * `netmask` - (Deprecated) Use `prefix_length` instead. The netmask for the new network.
+
 ~> **Warning:** In `v3.9.0`, field `netmask` no longer has a `default` value of  `255.255.255.0` so that IPv6 can be supported using the new `prefix_length` field. 
 This change makes `terraform validate` fail if the user didn't provide a value earlier and relied on default `255.255.255.0`.
 In case that happens, a user needs to add `"netmask" = "255.255.255.0"` to existing vApp networks.
