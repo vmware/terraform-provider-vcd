@@ -24,7 +24,6 @@ func datasourceVcdRde() *schema.Resource {
 			"rde_type_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The Runtime Defined Entity Type ID",
 			},
 			"external_id": {
