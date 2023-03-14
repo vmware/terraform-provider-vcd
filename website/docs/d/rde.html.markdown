@@ -11,7 +11,8 @@ description: |-
 Provides the capability of reading an existing Runtime Defined Entity in VMware Cloud Director.
 
 -> VCD allows to have multiple RDEs of the same [RDE Type](/providers/vmware/vcd/latest/docs/resources/rde_type) with
-the same name, meaning that the data source will not be able to fetch a RDE in this situation.
+the same name, meaning that the data source will not be able to fetch a RDE in this situation, as this data source
+can only retrieve **unique RDEs**.
 
 Supported in provider *v3.9+*
 
