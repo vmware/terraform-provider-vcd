@@ -78,7 +78,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
 			}
-		// vcd_resource_list and vcd_resource_schema don't search for real entities
+		// vcd_resource_list, vcd_resource_schema, and vcd_nsxv_service_finder don't produce a single entity
 		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema" ||
 			dataSourceName == "vcd_nsxv_service_finder":
 			t.Skip(`not a real data source`)
