@@ -373,7 +373,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					Type:    source["type"].(string),
 					IsValid: true,
 				}
-				// TODO: find why sourceSet.List() returns an extra empty item
+				// if the source is empty, we skip it
 				if inputSource.Name == "" && inputSource.Type == "" {
 					continue
 				}
@@ -403,7 +403,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					Type:    destination["type"].(string),
 					IsValid: true,
 				}
-				// TODO: find why inputDestination.List() returns an extra empty item
+				// if the destination is empty, we skip it
 				if inputDestination.Name == "" && inputDestination.Type == "" {
 					continue
 				}
@@ -433,7 +433,7 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					Type:    apply["type"].(string),
 					IsValid: true,
 				}
-				// TODO: find why inputApplyTo.List() returns an extra empty item
+				// if the apply-to is empty, we skip it
 				if inputApplyTo.Name == "" && inputApplyTo.Type == "" {
 					continue
 				}
@@ -447,10 +447,10 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 		if ok && rawApplications != nil {
 			var applications []types.Service
 			applicationSet := rawApplications.(*schema.Set)
-			for j, s := range applicationSet.List() {
-				application, ok := s.(map[string]interface{})
+			for j, a := range applicationSet.List() {
+				application, ok := a.(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - application %d - expected map[string]interface{} - got %T", i, j, s)
+					return nil, fmt.Errorf("[resourceToDfwRules] rule %d - application %d - expected map[string]interface{} - got %T", i, j, a)
 				}
 				sourcePort := application["source_port"].(string)
 				destinationPort := application["destination_port"].(string)
@@ -464,6 +464,14 @@ func resourceToDfwRules(d *schema.ResourceData) ([]types.NsxvDistributedFirewall
 					DestinationPort: stringPtrOrNil(destinationPort),
 					Protocol:        getDfwProtocolCode(protocol),
 					IsValid:         true,
+				}
+				// if the application is empty, we skip it
+				if inputApplication.Name == "" && inputApplication.Value == "" &&
+					inputApplication.Type == "" &&
+					inputApplication.SourcePort == nil &&
+					inputApplication.DestinationPort == nil &&
+					inputApplication.Protocol == nil {
+					continue
 				}
 				applications = append(applications, inputApplication)
 			}
