@@ -77,6 +77,10 @@ func TestAccVcdRde(t *testing.T) {
 		t.Errorf("could not get a VCD connection to add rights to tenant user")
 	}
 
+	// addRightsToTenantUser needs to happen before the client has been created, otherwise retrieving
+	// RDEs will fail. Thus, we need to invalidate existing client cache and start a new one
+	cachedVCDClients.reset()
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
@@ -101,6 +105,8 @@ func TestAccVcdRde(t *testing.T) {
 			{
 				Config: stepInit,
 				PreConfig: func() {
+					// This function needs to be called with fresh clients (no cached ones), as it modifies
+					// rights of the tenant user.
 					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -495,6 +501,8 @@ func importStateIdRde(vendor, nss, version, name, position string, list bool) re
 // on RDEs.
 // NOTE: We don't need to remove the added rights after the test is run, because the RDE Type and the Rights Bundle
 // are destroyed and the rights disappear with them gone.
+// NOTE 2: This function needs to be called with fresh clients (no cached ones), as it modifies
+// rights of the tenant user.
 func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {

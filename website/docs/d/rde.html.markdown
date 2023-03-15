@@ -26,9 +26,9 @@ data "vcd_rde_type" "my_type" {
 }
 
 data "vcd_rde" "my_rde" {
-  org          = "my-org"
-  rde_type_id  = data.vcd_rde_type.my-type.id
-  name         = "My custom RDE"
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
 }
 
 output "rde_output" {
