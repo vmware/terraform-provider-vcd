@@ -247,7 +247,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return nil, fmt.Errorf("could not get RDE Type with ID '%s'", rdeTypeId)
+		return nil, fmt.Errorf("could not get RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 
 	rdes, err := rdeType.GetRdesByName(name)
