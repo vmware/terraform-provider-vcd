@@ -91,7 +91,7 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  name        = "cert-tunnel"
+  name = "cert-tunnel"
 
   authentication_mode = "CERTIFICATE"
   certificate_id      = data.vcd_library_certificate.cert.id
@@ -106,8 +106,8 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   # The remote ID must match the certificate SAN (Subject Alternative Name), 
   # if available, or the distinguished name of the certificate used to secure 
   # the remote endpoint.
-  remote_id         = "cert-san"
-  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+  remote_id       = "cert-san"
+  remote_networks = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
 }
 ```
 
