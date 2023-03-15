@@ -263,3 +263,4 @@ vcd.TestAccVcdVAppVmMulti.tf v3.7.0 "vApp network removal from powered on vApp i
 vcd.ResourceSchema-vcd_nsxt_alb_settings.tf v3.8.2 "New fields to support latest ALB features"
 vcd.ResourceSchema-vcd_vapp_org_network.tf v3.8.2 "New field 'reboot_vapp_on_removal'"
 vcd.ResourceSchema-vcd_vapp_network.tf v3.8.2 "New field 'reboot_vapp_on_removal'"
+vcd.ResourceSchema-vcd_nsxt_ipsec_vpn_tunnel.tf v3.8.2 "New fields 'authentication_mode', 'remote_id', 'certificate_id', 'ca_certificate_id'"
