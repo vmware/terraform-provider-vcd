@@ -87,7 +87,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 			"remote_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Remote ID",
+				Description: "ID of the remote peer site",
 			},
 			"remote_networks": {
 				Type:        schema.TypeSet,

@@ -112,7 +112,7 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Custom remote ID. 'remote_ip_address' is used by default",
+				Description: "Custom remote ID of the peer site. 'remote_ip_address' is used by default",
 			},
 			"remote_networks": {
 				Type:        schema.TypeSet,
