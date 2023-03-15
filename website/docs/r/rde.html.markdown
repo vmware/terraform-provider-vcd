@@ -119,8 +119,9 @@ When a RDE is created, its `state` will be `PRE_CREATED`, which means that the e
 [RDE Type](/providers/vmware/vcd/latest/docs/resources/rde_type) schema. After resolution, `state` should be either `RESOLVED`
 or `RESOLUTION_ERROR` if the input JSON doesn't match the schema.
 
-The RDE must be resolved at some point to be used or deleted, and this operation can be done either by Terraform with
-`resolve=true`, or by a 3rd party actor that will do it behind the scenes (`resolve=false`).
+The RDE must be eventually resolved to be used or deleted, and this operation can be done either by Terraform with
+`resolve=true`, or by a 3rd party actor that will do it behind the scenes at some point (in this case, the Terraform resource
+should have `resolve=false` to avoid being resolved).
 In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can delete the RDE even if it was not
 resolved by anyone.
 

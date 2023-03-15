@@ -69,8 +69,8 @@ func TestAccVcdRde(t *testing.T) {
 	rdeDataSource1 := "data.vcd_rde.existing_rde1"
 	rdeDataSource2 := "data.vcd_rde.existing_rde2"
 
-	// We will cache an RDE identifier, so we can use it later for importing
-	cachedId := &testCachedFieldValue{}
+	// We will cache some RDE identifiers, so we can use it later for importing and other steps
+	cachedIds := make([]testCachedFieldValue, 2)
 
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient == nil || vcdClient.VCDClient == nil {
@@ -104,8 +104,9 @@ func TestAccVcdRde(t *testing.T) {
 					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// We cache the ID to use it on later steps
-					cachedId.cacheTestResourceFieldValue(rdeFromFile, "id"),
+					// We cache some IDs to use it on later steps
+					cachedIds[0].cacheTestResourceFieldValue(rdeFromFile, "id"),
+					cachedIds[1].cacheTestResourceFieldValue(rdeFromUrl, "id"),
 
 					resource.TestMatchResourceAttr(rdeFromFile, "id", regexp.MustCompile(rdeUrnRegexp)),
 					resource.TestCheckResourceAttr(rdeFromFile, "name", t.Name()+"file"),
@@ -184,12 +185,14 @@ func TestAccVcdRde(t *testing.T) {
 			{
 				Config: stepFixWrongRde,
 				PreConfig: func() {
-					manipulateRde(t, vcdClient, cachedId.fieldValue)
+					manipulateRde(t, vcdClient, cachedIds[0].fieldValue) // Changes the RDE from file
+					manipulateRde(t, vcdClient, cachedIds[1].fieldValue) // Changes the RDE from URL
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrPair(rdeFromFile, "input_entity", rdeWrong, "input_entity"),
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile(`.*stringValueChanged.*`)),
 					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "false"),
+					resource.TestMatchResourceAttr(rdeFromUrl, "computed_entity", regexp.MustCompile(`.*stringValueChanged.*`)),
+					resource.TestCheckResourceAttr(rdeFromUrl, "entity_in_sync", "false"),
 				),
 			},
 			{
@@ -224,7 +227,7 @@ func TestAccVcdRde(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
-					return cachedId.fieldValue, nil
+					return cachedIds[0].fieldValue, nil
 				},
 				ImportStateVerifyIgnore: []string{"resolve", "input_entity", "input_entity_url"},
 			},
@@ -233,7 +236,7 @@ func TestAccVcdRde(t *testing.T) {
 				ResourceName:      rdeFromFile,
 				ImportState:       true,
 				ImportStateIdFunc: importStateIdRde(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), t.Name()+"file-updated", "1", true),
-				ExpectError:       regexp.MustCompile(`.*` + cachedId.fieldValue + `.*`),
+				ExpectError:       regexp.MustCompile(`.*` + cachedIds[0].fieldValue + `.*`),
 			},
 		},
 	})
