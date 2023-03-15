@@ -131,7 +131,8 @@ the same on the other end of the IPSec VPN tunnel and `authentication_mode` must
   not set, it will default to the remote IP address
 * `remote_networks` - (Optional) Set of remote networks in CIDR format. Leaving it empty is interpreted as 0.0.0.0/0
 * `logging` - (Optional) Sets whether logging for the tunnel is enabled or not. (default - `false`)
-* `authentication_mode` - (Optional, *v3.9+*) `PSK` or `CERTIFICATE` (default - `PSK`)
+* `authentication_mode` - (Optional, *v3.9+*) `PSK` (pre-shared key) or `CERTIFICATE` (default -
+  `PSK`)
 * `certificate_id` - (Optional, *v3.9+*) Certificate ID (can be handled by `vcd_library_certificate`
   resource or datasource). *Note* `authentication_mode` must be set to `CERTIFICATE`
 * `ca_certificate_id` - (Optional, *v3.9+*) CA Certificate ID (can be handled by
