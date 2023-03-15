@@ -519,11 +519,11 @@ resource "vcd_vapp" "{{.vappName}}" {
 }
 
 resource "vcd_vapp_vm" "{{.vappVmName}}" {
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-  vapp_name = "{{.vappName}}"
-  name      = "{{.vappVmName}}"
+  vapp_name     = "{{.vappName}}"
+  name          = "{{.vappVmName}}"
   computer_name = "emptyVM"
   memory        = 2048
   cpus          = 2
@@ -641,27 +641,27 @@ resource "vcd_vapp" "{{.vappName}}" {
 }
 
 resource "vcd_vapp_vm" "{{.vappVmName}}" {
-	org  = "{{.Org}}"
-	vdc  = "{{.Vdc}}"
-  
-	vapp_name = "{{.vappName}}"
-	name      = "{{.vappVmName}}"
-	computer_name = "emptyVM"
-	memory        = 2048
-	cpus          = 2
-	cpu_cores     = 1
-  
-	network {
-	  type               = "vapp"
-	  name               = vcd_vapp_network.{{.resourceName}}.name
-	  ip_allocation_mode = "POOL"
-	}
-  
-	os_type          = "sles10_64Guest"
-	hardware_version = "vmx-14"
-  
-	depends_on = ["vcd_vapp.{{.vappName}}", "vcd_vapp_network.{{.resourceName}}"]
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "{{.vappName}}"
+  name          = "{{.vappVmName}}"
+  computer_name = "emptyVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.{{.resourceName}}.name
+    ip_allocation_mode = "POOL"
   }
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_vapp_network.{{.resourceName}}"]
+}
 
 resource "vcd_vapp_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
@@ -682,7 +682,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
 
-  retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
+  retain_ip_mac_enabled  = "{{.retainIpMacEnabledForUpdate}}"
   reboot_vapp_on_removal = true
 
   depends_on = ["vcd_vapp.{{.vappName}}"]

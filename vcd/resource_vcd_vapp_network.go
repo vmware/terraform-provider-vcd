@@ -64,7 +64,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 				ForceNew:     true,
 				Deprecated:   "Use prefix_length instead which supports both IPv4 and IPv6",
 				Description:  "Netmask address for a subnet.",
-				ExactlyOneOf: []string{"prefix_length"},
+				ExactlyOneOf: []string{"prefix_length", "netmask"},
 			},
 			"prefix_length": {
 				Type:         schema.TypeString,
@@ -72,7 +72,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				Description:  "Prefix length for a subnet",
-				ExactlyOneOf: []string{"netmask"},
+				ExactlyOneOf: []string{"netmask", "prefix_length"},
 				ValidateFunc: IsIntAndAtLeast(0),
 			},
 			"gateway": {
