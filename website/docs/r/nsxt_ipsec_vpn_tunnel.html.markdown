@@ -102,7 +102,7 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
   # That is a fake remote IP address
   remote_ip_address = "1.2.3.4"
-  
+
   # The remote ID must match the certificate SAN (Subject Alternative Name), 
   # if available, or the distinguished name of the certificate used to secure 
   # the remote endpoint.
