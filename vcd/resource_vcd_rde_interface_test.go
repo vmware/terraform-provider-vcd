@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
 	"testing"
 )
 
@@ -133,3 +134,55 @@ func importStateIdDefinedInterface(vendor, nss, version string) resource.ImportS
 			version, nil
 	}
 }
+
+// TestAccVcdRdeInterfaceValidation tests the validation rules for the RDE Interface resource
+func TestAccVcdRdeInterfaceValidation(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Nss":     "wrong%%%%",
+		"Version": "1.0.0",
+		"Vendor":  "Vendor_0-9",
+		"Name":    t.Name(),
+	}
+	testParamsNotEmpty(t, params)
+
+	config1 := templateFill(testAccVcdRdeInterfaceWrongFields, params)
+	params["FuncName"] = t.Name() + "2"
+	params["Nss"] = "Nss_0-9"
+	params["Vendor"] = "wrong%%%%"
+	config2 := templateFill(testAccVcdRdeInterfaceWrongFields, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", config1)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", config2)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      config1,
+				ExpectError: regexp.MustCompile(".*only alphanumeric characters, underscores and hyphens allowed.*"),
+			},
+			{
+				Config:      config2,
+				ExpectError: regexp.MustCompile(".*only alphanumeric characters, underscores and hyphens allowed.*"),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdRdeInterfaceWrongFields = `
+# skip-binary: This test checks early failure validations
+resource "vcd_rde_interface" "rde_interface_validation" {
+  nss           = "{{.Nss}}"
+  version       = "{{.Version}}"
+  vendor        = "{{.Vendor}}"
+  name          = "{{.Name}}"
+}
+`
