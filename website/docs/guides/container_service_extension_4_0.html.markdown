@@ -313,6 +313,8 @@ as they allow to customise several values that need to be replaced with other re
 
 ### Create a cluster
 
+~> WORK IN PROGRESS
+
 To create a cluster, please download the [CAPVCD][capvcd] `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
 that corresponds to your TKGm OVA file. For example, if your OVA file is `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`, you need
 to download `cluster-template-v1.22.9.yaml`.
@@ -428,6 +430,8 @@ resource "vcd_rde" "k8s_cluster_instance" {
   })
 }
 ```
+
+~> WORK IN PROGRESS
 
 ### Retrieve a cluster Kubeconfig
 
