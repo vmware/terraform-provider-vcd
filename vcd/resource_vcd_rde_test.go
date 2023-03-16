@@ -415,15 +415,15 @@ const testAccVcdRdeDS = testAccVcdRde3 + `
 data "vcd_rde" "existing_rde1" {
   provider = {{.ProviderSystem}}
 
-  rde_type_id        = vcd_rde_type.rde_type.id
-  name               = "{{.Name}}file-updated"
+  rde_type_id = vcd_rde_type.rde_type.id
+  name        = "{{.Name}}file-updated"
 }
 
 data "vcd_rde" "existing_rde2" {
   provider = {{.ProviderOrg1}}
 
-  rde_type_id        = vcd_rde_type.rde_type.id
-  name               = "{{.Name}}file-updated"
+  rde_type_id = vcd_rde_type.rde_type.id
+  name        = "{{.Name}}file-updated"
 }
 `
 
