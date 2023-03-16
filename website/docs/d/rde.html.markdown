@@ -49,6 +49,6 @@ The following arguments are supported:
 The following attributes are supported:
 
 * `entity` - The entity JSON.
-* `owner_id` - The ID of the owner of this Runtime Defined Entity, corresponds to a [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user).
+* `owner_user_id` - The ID of the [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user) that owns this Runtime Defined Entity.
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
 * `state` - It can be `RESOLVED`, `RESOLUTION_ERROR` or `PRE_CREATED`.

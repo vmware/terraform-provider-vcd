@@ -138,6 +138,8 @@ The following arguments are supported:
 * `resolve_on_removal` - (Optional) If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it. Otherwise, destroy will fail if it is not resolved. It is `false` by default.
 * `input_entity` - (Optional) A string that specifies a valid JSON for the RDE. It can be retrieved with functions such as `file`, `templatefile`... Either `input_entity` or `input_entity_url` is required.
 * `input_entity_url` - (Optional) The URL that points to a valid JSON for the RDE. Either `input_entity` or `input_entity_url` is required.
+  The referenced JSON will be downloaded on every read operation, and it will break Terraform operations if these contents are no longer present on the remote site.
+  If you can't guarantee this, it is safer to use `input_entity`.
 * `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
 
 ## Attribute Reference
@@ -147,7 +149,7 @@ The following attributes are supported:
 * `computed_entity` - The real state of this RDE in VCD.
 * `entity_in_sync` - It's `true` when `computed_entity` is equal to either `input_entity` or the contents of `input_entity_url`,
   meaning that the computed RDE retrieved from VCD is synchronized with the input RDE.
-* `owner_id` - The ID of the owner of this Runtime Defined Entity, corresponds to a [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user).
+* `owner_user_id` - The ID of the [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user) that owns this Runtime Defined Entity.
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
 * `state` - If the specified JSON in either `input_entity` or `entity_url` is correct, the state will be `RESOLVED`, otherwise it will be `RESOLUTION_ERROR`. If an input_entity in an `RESOLUTION_ERROR` state, it will require to be updated to a correct JSON to be usable.
 

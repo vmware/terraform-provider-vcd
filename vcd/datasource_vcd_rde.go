@@ -36,7 +36,7 @@ func datasourceVcdRde() *schema.Resource {
 				Description: "A JSON representation of the Runtime Defined Entity",
 				Computed:    true,
 			},
-			"owner_id": {
+			"owner_user_id": {
 				Type:        schema.TypeString,
 				Description: "The owner of the Runtime Defined Entity",
 				Computed:    true,
@@ -79,7 +79,7 @@ func datasourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interf
 		dSet(d, "org_id", rde.DefinedEntity.Org.ID)
 	}
 	if rde.DefinedEntity.Owner != nil {
-		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
+		dSet(d, "owner_user_id", rde.DefinedEntity.Owner.ID)
 	}
 
 	d.SetId(rde.DefinedEntity.ID)

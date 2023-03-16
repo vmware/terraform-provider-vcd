@@ -67,7 +67,7 @@ func resourceVcdRde() *schema.Resource {
 				Computed:    true,
 				Description: "A computed representation of the actual Runtime Defined Entity JSON retrieved from VCD. Useful to see the actual entity contents if it is being changed by a third party in VCD",
 			},
-			"owner_id": {
+			"owner_user_id": {
 				Type:        schema.TypeString,
 				Description: "The owner of the Runtime Defined Entity",
 				Computed:    true,
@@ -210,7 +210,7 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "org_id", rde.DefinedEntity.Org.ID)
 	}
 	if rde.DefinedEntity.Owner != nil {
-		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
+		dSet(d, "owner_user_id", rde.DefinedEntity.Owner.ID)
 	}
 
 	dSet(d, "entity_in_sync", false)

@@ -120,7 +120,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile("{.*\"stringValue\".*}")),
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
 					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr(rdeFromFile, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(rdeFromFile, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeFromUrl, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -129,7 +129,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_user_id", rdeFromFile, "owner_user_id"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeWrong, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -138,7 +138,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeWrong, "computed_entity", "{\"this_json_is_bad\":\"yes\"}"),
 					resource.TestCheckResourceAttr(rdeWrong, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeWrong, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "owner_user_id", rdeFromFile, "owner_user_id"),
 					resource.TestCheckResourceAttr(rdeWrong, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeTenant, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -147,7 +147,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTenant, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "org_id", rdeFromFile, "org_id"),
-					resource.TestMatchResourceAttr(rdeTenant, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
+					resource.TestMatchResourceAttr(rdeTenant, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
 					resource.TestCheckResourceAttr(rdeTenant, "entity_in_sync", "true"),
 				),
 			},
@@ -209,13 +209,13 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeDataSource1, "entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttrPair(rdeDataSource1, "state", rdeFromFile, "state"),
 					resource.TestCheckResourceAttrPair(rdeDataSource1, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeDataSource1, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "owner_user_id", rdeFromFile, "owner_user_id"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "id", rdeFromFile, "id"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "external_id", rdeFromFile, "external_id"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "state", rdeFromFile, "state"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeDataSource2, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "owner_user_id", rdeFromFile, "owner_user_id"),
 				),
 			},
 
