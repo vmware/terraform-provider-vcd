@@ -136,7 +136,7 @@ testextnetwork: fmtcheck
 # vets all .go files
 vet:
 	@echo "go vet ."
-	@go vet $$(go list ./... ) ; if [ $$? -ne 0 ]; then \
+	@go vet -tags ALL $$(go list ./... ) ; if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
