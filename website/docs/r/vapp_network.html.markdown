@@ -99,6 +99,7 @@ This change makes `terraform validate|plan` fail if the user didn't provide a va
 In case that happens, a user needs to add `"netmask" = "255.255.255.0"` to existing vApp networks.
 * `prefix_length` - (Optional) The subnet prefix length for the network.
 * `gateway` - (Required) The gateway for this network.
+
 ~> **Note:** VCD returns IPv6 addresses in extended-shortened format e.g `fe80:0:a:ab:0:abc:abcd:aaaa`, it is up to the user
 to match it, otherwise Terraform will return an inconsistent plan.
 * `dns1` - (Optional) First DNS server to use.
