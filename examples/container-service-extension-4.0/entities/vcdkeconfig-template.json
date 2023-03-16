@@ -48,11 +48,11 @@
                 "capiEcosystem": {
                     "infraProvider": {
                         "name": "capvcd",
-                        "version": "main",
+                        "version": "${capvcd_version}",
                         "capvcdRde": {
                             "nss": "capvcdCluster",
                             "vendor": "vmware",
-                            "version": "${capvcd_version}"
+                            "version": "1.1.0"
                         }
                     },
                     "coreCapiVersion": "v1.1.3",
