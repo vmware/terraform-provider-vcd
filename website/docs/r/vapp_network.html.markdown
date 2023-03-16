@@ -12,10 +12,9 @@ description: |-
 
 Supported in provider *v2.1+*
 
-## Example Usage
+## Example Usage (IPv4)
 
 ```hcl
-# IPv4 example
 resource "vcd_vapp_network" "vappNet" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
@@ -46,8 +45,11 @@ resource "vcd_vapp_network" "vappNet" {
     end_address   = "192.168.2.50"
   }
 }
+```
 
-# IPv6 example
+## Example (IPv6)
+
+```hcl
 resource "vcd_vapp_network" "vappNet_ipv6" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
@@ -60,6 +62,13 @@ resource "vcd_vapp_network" "vappNet_ipv6" {
   dns2               = "2001:4860:4860:0:0:0:0:8844"
   dns_suffix         = "mybiz.biz"
   guest_vlan_allowed = true
+
+  # VCD 10.4.1+ API does not allow to remove vApp network from
+  # a powered on vApp. Setting reboot_vapp_on_removal to true
+  # will allow to power off parent vApp for network removal.
+  # Note. It will power on the vApp if it was not powered off 
+  # before the operation.
+  # reboot_vapp_on_removal = true
 
   static_ip_pool {
     start_address = "fe80:0:0:0:0:0:0:aacc"
