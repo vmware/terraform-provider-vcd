@@ -67,7 +67,7 @@ func TestAccVcdRde(t *testing.T) {
 	rdeDataSource1 := "data.vcd_rde.existing_rde1"
 	rdeDataSource2 := "data.vcd_rde.existing_rde2"
 
-	// We will cache some RDE identifiers, so we can use it later for importing and other steps
+	// We will cache some RDE identifiers, so we can use them later for importing and other steps
 	cachedIds := make([]testCachedFieldValue, 2)
 
 	vcdClient := createTemporaryVCDConnection(true)
