@@ -44,8 +44,6 @@ func TestAccVcdRde(t *testing.T) {
 	stepResolve := templateFill(testAccVcdRde1, params)
 	params["FuncName"] = t.Name() + "-FixWrongRde"
 	stepFixWrongRde := templateFill(testAccVcdRde3, params)
-	params["FuncName"] = t.Name() + "-Duplicate"
-	stepCreateDuplicate := templateFill(testAccVcdRde4, params)
 	params["FuncName"] = t.Name() + "-DS"
 	stepDataSource := templateFill(testAccVcdRdeDS, params)
 
@@ -57,7 +55,6 @@ func TestAccVcdRde(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION init: %s\n", stepInit)
 	debugPrintf("#[DEBUG] CONFIGURATION resolve: %s\n", stepResolve)
 	debugPrintf("#[DEBUG] CONFIGURATION fix wrong RDE: %s\n", stepFixWrongRde)
-	debugPrintf("#[DEBUG] CONFIGURATION duplicate: %s\n", stepCreateDuplicate)
 	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", stepDataSource)
 
 	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Nss"].(string))
@@ -405,21 +402,6 @@ resource "vcd_rde" "rde_tenant" {
 
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}tenant-updated" # Updated name
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
-  resolve_on_removal = false
-
-  depends_on = [vcd_rights_bundle.rde_type_bundle]
-}
-`
-
-const testAccVcdRde4 = testAccVcdRde3 + `
-# skip-binary-test - This should fail
-resource "vcd_rde" "rde_naughty-clone" {
-  provider = {{.ProviderSystem}}
-
-  rde_type_id        = vcd_rde_type.rde_type.id
-  name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
   input_entity       = file("{{.EntityPath}}")
   resolve_on_removal = false
