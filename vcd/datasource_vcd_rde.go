@@ -28,8 +28,8 @@ func datasourceVcdRde() *schema.Resource {
 			},
 			"external_id": {
 				Type:        schema.TypeString,
-				Computed:    true,
 				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
+				Computed:    true,
 			},
 			"entity": {
 				Type:        schema.TypeString,
@@ -38,7 +38,7 @@ func datasourceVcdRde() *schema.Resource {
 			},
 			"owner_user_id": {
 				Type:        schema.TypeString,
-				Description: "The owner of the Runtime Defined Entity",
+				Description: "The ID of the user that owns the Runtime Defined Entity",
 				Computed:    true,
 			},
 			"org_id": {
