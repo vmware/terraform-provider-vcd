@@ -45,7 +45,7 @@ func resourceVcdRde() *schema.Resource {
 			"external_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
+				Computed:    true, // It can be populated by a 3rd party
 				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
 			},
 			"input_entity_url": {
@@ -335,7 +335,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	if d.Get("resolve_on_removal").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity before removal '%s': %s", rde.DefinedEntity.Name, err)
 		}
 	}
 
