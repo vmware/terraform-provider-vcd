@@ -41,7 +41,7 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 	rde3Tenant := "vcd_rde.rde3_tenant"
 	fetchedSystem := "data.vcd_rde.fetch_rde_system"
 
-	// We will cache some RDE identifiers, so we can use it later for importing and other steps
+	// We will cache some RDE identifiers, so we can use it later
 	cachedIds := make([]testCachedFieldValue, 2)
 
 	resource.Test(t, resource.TestCase{
