@@ -1,0 +1,1 @@
+* Deprecate `netmask` in `resourceVcdVappNetwork` [GH-1007]
