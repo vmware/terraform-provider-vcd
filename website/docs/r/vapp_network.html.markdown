@@ -47,7 +47,7 @@ resource "vcd_vapp_network" "vappNet" {
 }
 ```
 
-## Example (IPv6)
+## Example Usage (IPv6)
 
 ```hcl
 resource "vcd_vapp_network" "vappNet_ipv6" {
