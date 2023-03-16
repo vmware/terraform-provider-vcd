@@ -140,8 +140,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not create the Runtime Defined Entity '%s' of type '%s': %s", name, rdeTypeId, err)
 	}
 
-	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
-	// it should go to the Update operation instead.
+	// We save the ID immediately as the Resolve operation can fail but the RDE is already created.
 	d.SetId(rde.DefinedEntity.ID)
 
 	if d.Get("resolve").(bool) {
