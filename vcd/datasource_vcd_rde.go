@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -28,17 +29,17 @@ func datasourceVcdRde() *schema.Resource {
 			},
 			"external_id": {
 				Type:        schema.TypeString,
-				Computed:    true,
 				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
+				Computed:    true,
 			},
 			"entity": {
 				Type:        schema.TypeString,
 				Description: "A JSON representation of the Runtime Defined Entity",
 				Computed:    true,
 			},
-			"owner_id": {
+			"owner_user_id": {
 				Type:        schema.TypeString,
-				Description: "The owner of the Runtime Defined Entity",
+				Description: "The ID of the user that owns the Runtime Defined Entity",
 				Computed:    true,
 			},
 			"org_id": {
@@ -79,7 +80,7 @@ func datasourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interf
 		dSet(d, "org_id", rde.DefinedEntity.Org.ID)
 	}
 	if rde.DefinedEntity.Owner != nil {
-		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
+		dSet(d, "owner_user_id", rde.DefinedEntity.Owner.ID)
 	}
 
 	d.SetId(rde.DefinedEntity.ID)

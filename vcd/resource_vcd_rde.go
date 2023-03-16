@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strconv"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
-	"log"
-	"strconv"
-	"strings"
 )
 
 func resourceVcdRde() *schema.Resource {
@@ -45,7 +46,7 @@ func resourceVcdRde() *schema.Resource {
 			"external_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
+				Computed:    true, // It can be populated by a 3rd party
 				Description: "An external entity's ID that this Runtime Defined Entity may have a relation to",
 			},
 			"input_entity_url": {
@@ -67,9 +68,9 @@ func resourceVcdRde() *schema.Resource {
 				Computed:    true,
 				Description: "A computed representation of the actual Runtime Defined Entity JSON retrieved from VCD. Useful to see the actual entity contents if it is being changed by a third party in VCD",
 			},
-			"owner_id": {
+			"owner_user_id": {
 				Type:        schema.TypeString,
-				Description: "The owner of the Runtime Defined Entity",
+				Description: "The ID of the user that owns the Runtime Defined Entity",
 				Computed:    true,
 			},
 			"org_id": {
@@ -118,14 +119,12 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	tenantContext := govcd.TenantContext{}
-	if vcdClient.Client.IsSysAdmin {
-		org, err := vcdClient.GetAdminOrgFromResource(d)
-		if err != nil {
-			return diag.Errorf("could not create RDE with name '%s', error retrieving Org '%s': %s", name, d.Get("org").(string), err)
-		}
-		tenantContext.OrgId = org.AdminOrg.ID
-		tenantContext.OrgName = org.AdminOrg.Name
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf("could not create RDE with name '%s', error retrieving Org '%s': %s", name, d.Get("org").(string), err)
 	}
+	tenantContext.OrgId = org.Org.ID
+	tenantContext.OrgName = org.Org.Name
 
 	jsonSchema, err := getRdeJson(vcdClient, d)
 	if err != nil {
@@ -141,8 +140,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("could not create the Runtime Defined Entity '%s' of type '%s': %s", name, rdeTypeId, err)
 	}
 
-	// We save the ID immediately as the Resolve operation can fail, but the RDE is already created. If this happens,
-	// it should go to the Update operation instead.
+	// We save the ID immediately as the Resolve operation can fail but the RDE is already created.
 	d.SetId(rde.DefinedEntity.ID)
 
 	if d.Get("resolve").(bool) {
@@ -210,7 +208,7 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "org_id", rde.DefinedEntity.Org.ID)
 	}
 	if rde.DefinedEntity.Owner != nil {
-		dSet(d, "owner_id", rde.DefinedEntity.Owner.ID)
+		dSet(d, "owner_user_id", rde.DefinedEntity.Owner.ID)
 	}
 
 	dSet(d, "entity_in_sync", false)
@@ -335,7 +333,7 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	if d.Get("resolve_on_removal").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity before removal '%s': %s", rde.DefinedEntity.Name, err)
 		}
 	}
 

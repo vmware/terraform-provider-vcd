@@ -300,7 +300,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		case "rde_type_id":
 			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:donotexist:donotexist:9.9.9"` + "\n"
 		}
-
 	}
 
 	// Inject NSX-V VDC for resources that are known to require it

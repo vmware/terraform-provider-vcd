@@ -4,13 +4,14 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"regexp"
-	"strings"
-	"testing"
 )
 
 // TestAccVcdRde tests the behaviour of RDE instances.
@@ -44,8 +45,6 @@ func TestAccVcdRde(t *testing.T) {
 	stepResolve := templateFill(testAccVcdRde1, params)
 	params["FuncName"] = t.Name() + "-FixWrongRde"
 	stepFixWrongRde := templateFill(testAccVcdRde3, params)
-	params["FuncName"] = t.Name() + "-Duplicate"
-	stepCreateDuplicate := templateFill(testAccVcdRde4, params)
 	params["FuncName"] = t.Name() + "-DS"
 	stepDataSource := templateFill(testAccVcdRdeDS, params)
 
@@ -57,7 +56,6 @@ func TestAccVcdRde(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION init: %s\n", stepInit)
 	debugPrintf("#[DEBUG] CONFIGURATION resolve: %s\n", stepResolve)
 	debugPrintf("#[DEBUG] CONFIGURATION fix wrong RDE: %s\n", stepFixWrongRde)
-	debugPrintf("#[DEBUG] CONFIGURATION duplicate: %s\n", stepCreateDuplicate)
 	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", stepDataSource)
 
 	rdeUrnRegexp := fmt.Sprintf(`urn:vcloud:entity:%s:%s:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`, params["Vendor"].(string), params["Nss"].(string))
@@ -69,13 +67,17 @@ func TestAccVcdRde(t *testing.T) {
 	rdeDataSource1 := "data.vcd_rde.existing_rde1"
 	rdeDataSource2 := "data.vcd_rde.existing_rde2"
 
-	// We will cache some RDE identifiers, so we can use it later for importing and other steps
+	// We will cache some RDE identifiers, so we can use them later for importing and other steps
 	cachedIds := make([]testCachedFieldValue, 2)
 
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient == nil || vcdClient.VCDClient == nil {
 		t.Errorf("could not get a VCD connection to add rights to tenant user")
 	}
+
+	// addRightsToTenantUser needs to happen before the client has been created, otherwise retrieving
+	// RDEs will fail. Thus, we need to invalidate existing client cache and start a new one
+	cachedVCDClients.reset()
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
@@ -101,6 +103,8 @@ func TestAccVcdRde(t *testing.T) {
 			{
 				Config: stepInit,
 				PreConfig: func() {
+					// This function needs to be called with fresh clients (no cached ones), as it modifies
+					// rights of the tenant user.
 					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -114,7 +118,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile("{.*\"stringValue\".*}")),
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
 					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr(rdeFromFile, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(rdeFromFile, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeFromUrl, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -123,7 +127,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeFromUrl, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeFromUrl, "owner_user_id", rdeFromFile, "owner_user_id"),
 					resource.TestCheckResourceAttr(rdeFromUrl, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeWrong, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -132,7 +136,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeWrong, "computed_entity", "{\"this_json_is_bad\":\"yes\"}"),
 					resource.TestCheckResourceAttr(rdeWrong, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeWrong, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeWrong, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeWrong, "owner_user_id", rdeFromFile, "owner_user_id"),
 					resource.TestCheckResourceAttr(rdeWrong, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeTenant, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -141,7 +145,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTenant, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "org_id", rdeFromFile, "org_id"),
-					resource.TestMatchResourceAttr(rdeTenant, "owner_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
+					resource.TestMatchResourceAttr(rdeTenant, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
 					resource.TestCheckResourceAttr(rdeTenant, "entity_in_sync", "true"),
 				),
 			},
@@ -203,13 +207,13 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeDataSource1, "entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttrPair(rdeDataSource1, "state", rdeFromFile, "state"),
 					resource.TestCheckResourceAttrPair(rdeDataSource1, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeDataSource1, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource1, "owner_user_id", rdeFromFile, "owner_user_id"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "id", rdeFromFile, "id"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "external_id", rdeFromFile, "external_id"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "state", rdeFromFile, "state"),
 					resource.TestCheckResourceAttrPair(rdeDataSource2, "org_id", rdeFromFile, "org_id"),
-					resource.TestCheckResourceAttrPair(rdeDataSource2, "owner_id", rdeFromFile, "owner_id"),
+					resource.TestCheckResourceAttrPair(rdeDataSource2, "owner_user_id", rdeFromFile, "owner_user_id"),
 				),
 			},
 
@@ -407,35 +411,20 @@ resource "vcd_rde" "rde_tenant" {
 }
 `
 
-const testAccVcdRde4 = testAccVcdRde3 + `
-# skip-binary-test - This should fail
-resource "vcd_rde" "rde_naughty-clone" {
-  provider = {{.ProviderSystem}}
-
-  rde_type_id        = vcd_rde_type.rde_type.id
-  name               = "{{.Name}}naughty"
-  resolve            = {{.Resolve}}
-  input_entity       = file("{{.EntityPath}}")
-  resolve_on_removal = false
-
-  depends_on = [vcd_rights_bundle.rde_type_bundle]
-}
-`
-
 const testAccVcdRdeDS = testAccVcdRde3 + `
 # skip-binary-test - Contains data source referencing a resource
 data "vcd_rde" "existing_rde1" {
   provider = {{.ProviderSystem}}
 
-  rde_type_id        = vcd_rde_type.rde_type.id
-  name               = "{{.Name}}file-updated"
+  rde_type_id = vcd_rde_type.rde_type.id
+  name        = "{{.Name}}file-updated"
 }
 
 data "vcd_rde" "existing_rde2" {
   provider = {{.ProviderOrg1}}
 
-  rde_type_id        = vcd_rde_type.rde_type.id
-  name               = "{{.Name}}file-updated"
+  rde_type_id = vcd_rde_type.rde_type.id
+  name        = "{{.Name}}file-updated"
 }
 `
 
@@ -495,6 +484,8 @@ func importStateIdRde(vendor, nss, version, name, position string, list bool) re
 // on RDEs.
 // NOTE: We don't need to remove the added rights after the test is run, because the RDE Type and the Rights Bundle
 // are destroyed and the rights disappear with them gone.
+// NOTE 2: This function needs to be called with fresh clients (no cached ones), as it modifies
+// rights of the tenant user.
 func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
