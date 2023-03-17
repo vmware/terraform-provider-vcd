@@ -1,0 +1,1 @@
+* `vcd_org_group` adds `OAUTH` as an option to argument `provider_type` [GH-1013]
