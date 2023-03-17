@@ -25,7 +25,7 @@ func datasourceVcdOrgGroup() *schema.Resource {
 			"provider_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Identity provider type - 'SAML' or 'INTEGRATED' for local or LDAP",
+				Description: "Identity provider type for this this group. One of: 'INTEGRATED', 'SAML', 'OAUTH'.",
 			},
 			"description": {
 				Type:     schema.TypeString,

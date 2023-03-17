@@ -9,12 +9,12 @@ description: |-
 # vcd\_org\_group
 
 Provides a VMware Cloud Director Organization group. This can be used to create, update, and delete
-organization groups defined in `SAML` or `LDAP`.
+organization groups defined in `SAML`, `OAUTH` or `LDAP`.
 
 Supported in provider *v2.9+*
 
 ~> **Note:** This operation requires the rights included in the predefined `Organization
-Administrator` role or an equivalent set of rights. `SAML` or `LDAP` must be configured as vCD
+Administrator` role or an equivalent set of rights. `SAML`, `OAUTH` or `LDAP` must be configured as vCD
 does not support local groups and will return HTTP error 403 "This operation is denied." if selected
 `provider_type` is not configured.
 
@@ -25,6 +25,18 @@ resource "vcd_org_group" "org1" {
   org = "org1"
 
   provider_type = "SAML"
+  name          = "Org1-AdminGroup"
+  role          = "Organization Administrator"
+}
+```
+
+## Example Usage to add OAUTH group
+
+```hcl
+resource "vcd_org_group" "org1" {
+  org = "org1"
+
+  provider_type = "OAUTH"
   name          = "Org1-AdminGroup"
   role          = "Organization Administrator"
 }
@@ -50,7 +62,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `name` - (Required) A unique name for the group.
 * `description` - (Optional) The description of Organization group
-* `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or
+* `provider_type` - (Required) Identity provider type for this this group. One of `SAML`, `OAUTH` or
   `INTEGRATED`. **Note** `LDAP` must be configured to create `INTEGRATED` groups and names must
   match `LDAP` group names. If LDAP is not configured - it will return 403 errors.
 * `role` - (Required) The role of the group. Role names can be retrieved from the organization. Both built-in roles and
