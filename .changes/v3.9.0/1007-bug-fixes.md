@@ -1,3 +1,2 @@
-* Add `prefix_length` field to `resourceVcdVappNetwork` to support creating IPv6 vApp networks [GH-1007]
-* Deprecate `netmask` in `resourceVcdVappNetwork` [GH-1007]
-* Remove `netmask` field's `Default` value which, if not provided before, will result in a Terraform error. The user would then need to add a `"netmask" = "255.255.255.0"` to their existing vApp networks [GH-1007] 
+* Add `prefix_length` field to `vcd_vapp_network` as creating IPv6 vApp networks was not supported due to the lack of a suitable subnet representation (Issue #999) [GH-1007]
+* Remove `vcd_vapp_network` `netmask` field's `Default` value as due to Terraform's limitation, wouldn't allow for using only  `netmask` or `prefix_length` which is required for IPv6 networks. If no value was provided before, running the configuration will result in a Terraform error. The user would then need to add a `"netmask" = "255.255.255.0"` to their existing vApp networks [GH-1007] 

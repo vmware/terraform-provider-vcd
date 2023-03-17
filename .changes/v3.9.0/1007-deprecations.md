@@ -1,1 +1,1 @@
-* Deprecate `netmask` in `resourceVcdVappNetwork` [GH-1007]
+* Deprecate `netmask` in `vcd_vapp_network` [GH-1007]
