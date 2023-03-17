@@ -154,6 +154,11 @@ The configuration will create the following:
 - An [Edge Gateway][edge_gateway] per Organization.
 - Configure ALB with a shared Service Engine Group.
 - A [Routed network][routed_network] per Organization.
+- Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways
+of providing outbound access.
+
+~> SNAT rules is just a proposal to give the CSE installation and the clusters outbound access. Please review the [proposed configuration][step2]
+first.
 
 In order to do so, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
@@ -475,6 +480,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
 [global_role]: /providers/vmware/vcd/latest/docs/resources/global_role
+[nat_rule]: /providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule
 [nsxt_manager]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_manager
 [nsxt_tier0_router]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router
 [org]: /providers/vmware/vcd/latest/docs/resources/org
