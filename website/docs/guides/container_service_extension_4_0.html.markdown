@@ -157,7 +157,7 @@ The configuration will create the following:
 - Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways
 of providing outbound access.
 
-~> SNAT rules is just a proposal to give the CSE installation and the clusters outbound access. Please review the [proposed configuration][step2]
+~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [proposed configuration][step2]
 first.
 
 In order to create all the items listed above, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
