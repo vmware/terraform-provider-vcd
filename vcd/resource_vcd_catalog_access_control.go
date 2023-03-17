@@ -41,11 +41,16 @@ func resourceVcdCatalogAccessControl() *schema.Resource {
 				Description: "Whether the Catalog is shared with everyone",
 			},
 			"everyone_access_level": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validation.StringInSlice([]string{types.ControlAccessReadOnly}, true),
-				ConflictsWith: []string{"shared_with"},
-				Description:   "Access level when the Catalog is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly}, true),
+				Description:  "Access level when the catalog is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set",
+			},
+			"read_only_shared_with_other_orgs": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "If true, the catalog is shared as read-only with all organizations",
 			},
 			"shared_with": {
 				Type:          schema.TypeSet,
@@ -90,6 +95,7 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 	vcdClient := meta.(*VCDClient)
 
 	var accessSettings []*types.AccessSetting
+	readOnlySharedwithOtherOrgs := d.Get("read_only_shared_with_other_orgs").(bool)
 	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
 	everyoneAccessLevel := getStringAttributeAsPointer(d, "everyone_access_level")
 	isEveryoneAccessLevelSet := everyoneAccessLevel != nil
@@ -135,7 +141,11 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 		EveryoneAccessLevel: everyoneAccessLevel,
 		AccessSettings:      accessSettingsList,
 	}
-	err = catalog.SetAccessControl(&accessControlParams, true)
+	if readOnlySharedwithOtherOrgs {
+		err = catalog.SetReadOnlyAccessControl(true)
+	} else {
+		err = catalog.SetAccessControl(&accessControlParams, true)
+	}
 	if err != nil {
 		return diag.Errorf("error when setting Catalog control access parameters - %s", err)
 	}
@@ -161,6 +171,12 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 			return diag.Errorf("error while reading Catalog - %s", err)
 		}
 	}
+
+	sharedReadOnly, err := catalog.IsSharedReadOnly()
+	if err != nil {
+		return diag.Errorf("error checking catalog read-only sharing status: %s", err)
+	}
+	dSet(d, "read_only_shared_with_other_orgs", sharedReadOnly)
 
 	controlAccessParams, err := catalog.GetAccessControl(true)
 	if err != nil {
@@ -193,16 +209,29 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 	// When deleting Catalog access control, Catalog won't be shared with anyone
 	vcdClient := meta.(*VCDClient)
 
-	org, err := vcdClient.GetOrgFromResource(d)
+	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		diag.Errorf("error when retrieving Org - %s", err)
 	}
 
-	catalog, err := org.GetCatalogById(d.Id(), false)
+	catalog, err := org.GetAdminCatalogById(d.Id(), false)
 	if err != nil {
 		diag.Errorf("error when retrieving Catalog - %s", err)
 	}
 
+	sharedReadOnly, err := catalog.IsSharedReadOnly()
+	if err != nil {
+		return diag.Errorf("error checking catalog read-only sharing status: %s", err)
+	}
+
+	if sharedReadOnly {
+		err = catalog.SetReadOnlyAccessControl(false)
+		if err != nil {
+			return diag.Errorf("error removing catalog read-only access control: %s", err)
+		}
+		d.SetId("")
+		return nil
+	}
 	err = catalog.RemoveAccessControl(true)
 	if err != nil {
 		return diag.Errorf("error when deleting Catalog access control - %s", err)
