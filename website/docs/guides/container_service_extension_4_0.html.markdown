@@ -198,7 +198,9 @@ In order to do so, the [proposed configuration][step2] asks for the following va
   defines the first usable IP.
 - `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the end usable IP.
-- `solutions_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Solutions
+- `solutions_snat_external_ip`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The external IP should be one available IP of the Solutions
+  [Provider Gateway][provider_gateway].
+- `solutions_snat_internal_subnet`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
   Organization [Routed network][routed_network].
 - `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 - `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Cluster Organization.
@@ -207,7 +209,9 @@ In order to do so, the [proposed configuration][step2] asks for the following va
   defines the first usable IP.
 - `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Cluster Organization will have a pool of usable IPs, this field
   defines the end usable IP.
-- `cluster_routed_network_advertised_subnet`: This enables route advertisement on the specified subnet, which should correspond to the Cluster
+- `cluster_snat_external_ip`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The external IP should be one available IP of the Cluster
+  [Provider Gateway][provider_gateway].
+- `cluster_snat_internal_subnet`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Cluster
   Organization [Routed network][routed_network].
 - `cluster_routed_network_dns`: DNS Server for the Cluster Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 

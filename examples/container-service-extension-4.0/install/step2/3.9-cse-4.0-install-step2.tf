@@ -478,7 +478,6 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
 
   name                      = "solutions_edgegateway"
   external_network_id       = vcd_external_network_v2.solutions_tier0.id
-  dedicate_external_network = true
 
   # TODO: Change to automatic allocation!!!
   subnet {
@@ -510,7 +509,6 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
 
   name                      = "cluster_edgegateway"
   external_network_id       = vcd_external_network_v2.cluster_tier0.id
-  dedicate_external_network = true
 
   # TODO: Change to automatic allocation!!!
   subnet {
@@ -636,17 +634,31 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
   dns1 = var.solutions_routed_network_dns
 }
 
-# We need route advertisement in both networks to provide with Internet connectivity.
-resource "vcd_nsxt_route_advertisement" "solutions_routing_advertisement" {
+# We need SNAT rules in both networks to provide with Internet connectivity.
+resource "vcd_nsxt_nat_rule" "solutions_nat" {
+  org             = vcd_org.solutions_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
-  enabled         = true
-  subnets         = [var.solutions_routed_network_advertised_subnet]
+
+  name        = "Solutions SNAT rule"
+  rule_type   = "SNAT"
+  description = "Solutions SNAT rule"
+
+  external_address = var.solutions_snat_external_ip
+  internal_address = var.solutions_snat_internal_subnet
+  logging          = true
 }
 
-resource "vcd_nsxt_route_advertisement" "cluster_routing_advertisement" {
+resource "vcd_nsxt_nat_rule" "cluster_nat" {
+  org             = vcd_org.solutions_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.cluster_edgegateway.id
-  enabled         = true
-  subnets         = [var.cluster_routed_network_advertised_subnet]
+
+  name        = "Cluster SNAT rule"
+  rule_type   = "SNAT"
+  description = "Cluster SNAT rule"
+
+  external_address = var.cluster_snat_external_ip
+  internal_address = var.cluster_snat_internal_subnet
+  logging          = true
 }
 
 # WARNING: Please adjust this rule to your needs. The CSE Server requires Internet access to be configured.

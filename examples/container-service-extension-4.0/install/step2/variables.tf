@@ -158,8 +158,13 @@ variable "solutions_routed_network_ip_pool_end_address" {
   type        = string
 }
 
-variable "solutions_routed_network_advertised_subnet" {
-  description = "Advertised subnet, to have internet access"
+variable "solutions_snat_external_ip" {
+  description = "Used to create a SNAT rule to allow connectivity. This specifies the external IP, which should be one of the Provider Gateway available IPs"
+  type        = string
+}
+
+variable "solutions_snat_internal_subnet" {
+  description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
   type        = string
 }
 
@@ -189,8 +194,13 @@ variable "cluster_routed_network_ip_pool_end_address" {
   type        = string
 }
 
-variable "cluster_routed_network_advertised_subnet" {
-  description = "Advertised subnet, to have internet access"
+variable "cluster_snat_external_ip" {
+  description = "Used to create a SNAT rule to allow connectivity. This specifies the external IP, which should be one of the Provider Gateway available IPs"
+  type        = string
+}
+
+variable "cluster_snat_internal_subnet" {
+  description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
   type        = string
 }
 
