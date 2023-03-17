@@ -476,8 +476,8 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   org      = vcd_org.solutions_organization.name
   owner_id = vcd_org_vdc.solutions_vdc.id
 
-  name                      = "solutions_edgegateway"
-  external_network_id       = vcd_external_network_v2.solutions_tier0.id
+  name                = "solutions_edgegateway"
+  external_network_id = vcd_external_network_v2.solutions_tier0.id
 
   # TODO: Change to automatic allocation!!!
   subnet {
@@ -507,8 +507,8 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   org      = vcd_org.cluster_organization.name
   owner_id = vcd_org_vdc.cluster_vdc.id
 
-  name                      = "cluster_edgegateway"
-  external_network_id       = vcd_external_network_v2.cluster_tier0.id
+  name                = "cluster_edgegateway"
+  external_network_id = vcd_external_network_v2.cluster_tier0.id
 
   # TODO: Change to automatic allocation!!!
   subnet {
@@ -696,10 +696,10 @@ data "vcd_rde_type" "existing_vcdkeconfig_type" {
 
 # This RDE should be applied as it is.
 resource "vcd_rde" "vcdkeconfig_instance" {
-  org          = var.administrator_org
-  name         = "vcdKeConfig"
-  rde_type_id  = data.vcd_rde_type.existing_vcdkeconfig_type.id
-  resolve      = true
+  org         = var.administrator_org
+  name        = "vcdKeConfig"
+  rde_type_id = data.vcd_rde_type.existing_vcdkeconfig_type.id
+  resolve     = true
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     capvcd_version                  = var.capvcd_version
     cpi_version                     = var.cpi_version
