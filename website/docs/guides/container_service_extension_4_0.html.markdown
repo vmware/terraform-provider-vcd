@@ -160,7 +160,7 @@ of providing outbound access.
 ~> SNAT rules is just a proposal to give the CSE installation and the clusters outbound access. Please review the [proposed configuration][step2]
 first.
 
-In order to do so, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
+In order to create all the items listed above, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
 - `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager], which is needed in order to create the [Provider Gateways][provider_gateway].
   If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration.
