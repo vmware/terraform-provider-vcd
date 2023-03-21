@@ -102,6 +102,9 @@ func TestAccVcdRde(t *testing.T) {
 					// This function needs to be called with fresh clients (no cached ones), as it modifies
 					// rights of the tenant user.
 					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
+					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hece
+					// we can't reuse existing sessions
+					cachedVCDClients.reset()
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// We cache some IDs to use it on later steps
@@ -506,10 +509,6 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 	if err != nil {
 		t.Errorf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
 	}
-
-	// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hece
-	// we can't reuse existing sessions
-	cachedVCDClients.reset()
 }
 
 // manipulateRde mimics a 3rd party member that changes an RDE in VCD side. This is a common use-case in RDEs
