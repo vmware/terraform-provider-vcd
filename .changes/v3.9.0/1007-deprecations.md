@@ -1,0 +1,1 @@
+* Deprecate `netmask` in `vcd_vapp_network` [GH-1007]
