@@ -1,7 +1,10 @@
 package vcd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -56,6 +59,16 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 	return temp
 }
 
+// filterVdcId returns a bare UUID if the initial value contains a VDC ID
+// otherwise it returns the initial value
+func filterVdcId(i interface{}) string {
+	s := i.(string)
+	if strings.HasPrefix(s, "urn:vcloud:vdc:") {
+		return extractUuid(s)
+	}
+	return s
+}
+
 // convertSchemaSetToSliceOfStrings accepts Terraform's *schema.Set object and converts it to slice
 // of strings.
 // This is useful for extracting values from a set of strings
@@ -89,6 +102,14 @@ func takeBoolPointer(value bool) *bool {
 // takeIntPointer accepts an int and returns a pointer to this value.
 func takeIntPointer(x int) *int {
 	return &x
+}
+
+// stringPtrOrNil takes a string and returns a pointer to it, but if the string is empty, returns nil
+func stringPtrOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 // takeInt64Pointer accepts an int64 and returns a pointer to this value.
@@ -200,6 +221,42 @@ func contains(sliceToSearch []string, searched string) bool {
 	return found
 }
 
+// jsonToCompactString transforms an unmarshalled JSON in form of a map of string->any to a plain string without any spacing.
+func jsonToCompactString(inputJson map[string]interface{}) (string, error) {
+	rawJson, err := json.Marshal(inputJson)
+	if err != nil {
+		return "", err
+	}
+	compactedJson := new(bytes.Buffer)
+	err = json.Compact(compactedJson, rawJson)
+	if err != nil {
+		return "", err
+	}
+	return compactedJson.String(), nil
+}
+
+// areMarshaledJsonEqual compares that two marshaled JSON strings are equal or not. Returns an error if something
+// wrong happens during the comparison process.
+func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
+	if !json.Valid(json1) {
+		return false, fmt.Errorf("first JSON is not valid: '%s'", json1)
+	}
+	if !json.Valid(json2) {
+		return false, fmt.Errorf("second JSON is not valid: '%s'", json2)
+	}
+
+	var unmarshaledJson1, unmarshaledJson2 interface{}
+	err := json.Unmarshal(json1, &unmarshaledJson1)
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal first JSON '%s': %s", json1, err)
+	}
+	err = json.Unmarshal(json2, &unmarshaledJson2)
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal second JSON '%s': %s", json2, err)
+	}
+	return reflect.DeepEqual(unmarshaledJson1, unmarshaledJson2), nil
+}
+
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 // TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataEntryInVcd`
 // once "metadata" field is removed.
@@ -238,4 +295,13 @@ func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible,
 		}
 	}
 	return nil
+}
+
+// stringOnNotNil returns the contents of a string pointer
+// if the pointer is nil, returns an empty string
+func stringOnNotNil(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
 }
