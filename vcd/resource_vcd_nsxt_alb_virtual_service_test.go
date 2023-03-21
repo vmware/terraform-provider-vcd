@@ -6,12 +6,22 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(4 * time.Minute)
+		fmt.Println("finished sleeping")
+		return nil
+	}
+}
 
 func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 	preTestChecks(t)
@@ -27,6 +37,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
+		"TestName":           t.Name(),
 		"VirtualServiceName": t.Name(),
 		"ControllerName":     t.Name(),
 		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
@@ -119,6 +130,7 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 						"end_port":   "81",
 						"type":       "TCP_PROXY",
 					}),
+					sleepTester(),
 				),
 			},
 			{
@@ -747,3 +759,229 @@ func testAccCheckVcdAlbVirtualServiceDestroy(resource string) resource.TestCheck
 		return nil
 	}
 }
+
+// TestAccVcdNsxtAlbVirtualServiceTransparentMode tests two explicitly 10.4.1+ features:
+// * Transparent mode (uses Legacy Active-Standby Service Engine Group in AVI as it is the only way
+// to support Transparent mode)
+// * ALB Pools with member groups (IP Set)
+func TestAccVcdNsxtAlbVirtualServiceTransparentMode(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
+	skipNoNsxtAlbConfiguration(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"IpSetName":          t.Name(),
+		"VirtualServiceName": t.Name(),
+		"ControllerName":     t.Name(),
+		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
+		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
+		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
+		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
+		// A Service Engine Group in Legacy Active Standby mode must be used
+		// so that Transparent mode can be tested
+		"ServiceEngineGroupName": testConfig.Nsxt.NsxtAlbServiceEngineGroup,
+		"ReservationModel":       "DEDICATED",
+		"Org":                    testConfig.VCD.Org,
+		"NsxtVdc":                testConfig.Nsxt.Vdc,
+		"EdgeGw":                 testConfig.Nsxt.EdgeGateway,
+		"IsActive":               "true",
+		"AliasPrivate":           t.Name() + "-cert",
+		"Certificate1Path":       testConfig.Certificates.Certificate1Path,
+		"CertPrivateKey1":        testConfig.Certificates.Certificate1PrivateKeyPath,
+		"CertPassPhrase1":        testConfig.Certificates.Certificate1Pass,
+		"Tags":                   "nsxt alb",
+	}
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdNsxtAlbVirtualServiceTransparentMode1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdNsxtAlbVirtualServiceTransparentMode1DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
+			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
+			testAccCheckVcdAlbVirtualServiceDestroy("vcd_nsxt_alb_virtual_service.test"),
+		),
+
+		Steps: []resource.TestStep{
+			{
+				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "application_profile_type", "HTTP"),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "pool_id", regexp.MustCompile(`^urn:vcloud:`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "service_engine_group_id", regexp.MustCompile(`^urn:vcloud:`)),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_virtual_service.test", "virtual_ip_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "service_port.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_virtual_service.test", "service_port.*", map[string]string{
+						"start_port": "80",
+						"end_port":   "81",
+						"type":       "TCP_PROXY",
+					}),
+				),
+			},
+			{
+				Config: configText2, // Setup prerequisites - configure NSX-T ALB in Provider
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_alb_virtual_service.test", "vcd_nsxt_alb_virtual_service.test", nil),
+					resourceFieldsEqual("data.vcd_nsxt_alb_pool.test", "vcd_nsxt_alb_pool.test", nil),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtAlbVirtualServiceTransparentMode1 = `
+# Provider configuration
+
+resource "vcd_nsxt_alb_controller" "first" {
+  name         = "{{.ControllerName}}"
+  description  = "first alb controller"
+  url          = "{{.ControllerUrl}}"
+  username     = "{{.ControllerUsername}}"
+  password     = "{{.ControllerPassword}}"
+  {{.LicenseType}}
+}
+
+resource "vcd_nsxt_alb_cloud" "first" {
+  name        = "nsxt-cloud"
+  description = "first alb cloud"
+
+  controller_id       = vcd_nsxt_alb_controller.first.id
+  importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cld.id
+  network_pool_id     = data.vcd_nsxt_alb_importable_cloud.cld.network_pool_id
+}
+
+resource "vcd_nsxt_alb_service_engine_group" "first" {
+  name                                 = "first-se"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
+  importable_service_engine_group_name = "{{.ServiceEngineGroupName}}"
+  reservation_model                    = "{{.ReservationModel}}"
+  {{.SupportedFeatureSet}}
+}
+
+# Tenant Configuration
+
+data "vcd_nsxt_edgegateway" "existing" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_alb_settings" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id             = data.vcd_nsxt_edgegateway.existing.id
+  is_active                   = {{.IsActive}}
+  is_transparent_mode_enabled = true
+  {{.SupportedFeatureSet}}
+
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [vcd_nsxt_alb_service_engine_group.first]
+}
+
+# Local variable is used to avoid direct reference and cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
+# Even changing NSX-T ALB Controller name in UI, plan will cause to recreate all resources depending 
+# on vcd_nsxt_alb_importable_cloud data source if this indirect reference (via local) variable is not used.
+locals {
+  controller_id = vcd_nsxt_alb_controller.first.id
+}
+
+data "vcd_nsxt_alb_importable_cloud" "cld" {
+  name          = "{{.ImportableCloud}}"
+  controller_id = local.controller_id
+}
+
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
+  service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+}
+
+
+resource "vcd_nsxt_ip_set" "pool-members" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
+
+  name        = "{{.IpSetName}}"
+  description = "IP Set for NSX-T ALB Pool with Transparent Virtual Service"
+
+  ip_addresses = [
+    "10.10.10.0/24",
+  ]
+}
+
+resource "vcd_nsxt_alb_pool" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name            = "{{.VirtualServiceName}}-pool"
+  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
+  member_group_id = vcd_nsxt_ip_set.pool-members.id
+}
+
+resource "vcd_nsxt_alb_virtual_service" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name                        = "{{.VirtualServiceName}}"
+  edge_gateway_id             = vcd_nsxt_alb_settings.test.edge_gateway_id
+  is_transparent_mode_enabled = true
+
+  pool_id                  = vcd_nsxt_alb_pool.test.id
+  service_engine_group_id  = vcd_nsxt_alb_edgegateway_service_engine_group.assignment.service_engine_group_id
+  virtual_ip_address       = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  application_profile_type = "HTTP"
+  service_port {
+    start_port = 80
+    end_port   = 81
+    type       = "TCP_PROXY"
+  }
+}
+`
+
+const testAccVcdNsxtAlbVirtualServiceTransparentMode1DS = testAccVcdNsxtAlbVirtualServiceTransparentMode1 + `
+# skip-binary-test: data source test
+data "vcd_nsxt_alb_virtual_service" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id 
+  name = vcd_nsxt_alb_virtual_service.test.name
+}
+
+data "vcd_nsxt_alb_pool" "test" {
+  org             = "{{.Org}}"
+  vdc             = "{{.NsxtVdc}}"
+  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
+  name            = vcd_nsxt_alb_pool.test.name
+}
+`

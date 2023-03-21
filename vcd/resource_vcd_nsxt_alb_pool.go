@@ -90,10 +90,17 @@ func resourceVcdAlbPool() *schema.Resource {
 				Default: 1,
 			},
 			"member": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        nsxtAlbPoolMember,
-				Description: "ALB Pool Members",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Elem:          nsxtAlbPoolMember,
+				Description:   "ALB Pool Members",
+				ConflictsWith: []string{"member_group_id"},
+			},
+			"member_group_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "ID of Firewall Group to use for pool Membership (VCD 10.4.1+)",
+				ConflictsWith: []string{"member"},
 			},
 			"health_monitor": {
 				Type:     schema.TypeSet,
@@ -399,6 +406,11 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 	}
 	albPoolConfig.Members = poolMembers
 
+	// Member group
+	if memberGroupId := d.Get("member_group_id").(string); memberGroupId != "" {
+		albPoolConfig.MemberGroupRef = &types.OpenApiReference{ID: memberGroupId}
+	}
+
 	persistenceProfile, err := getNsxtAlbPoolPersistenceProfileType(d)
 	if err != nil {
 		return nil, fmt.Errorf("error defining persistence profile: %s", err)
@@ -434,6 +446,10 @@ func setNsxtAlbPoolData(d *schema.ResourceData, albPool *types.NsxtAlbPool) erro
 	err := setNsxtAlbPoolMemberData(d, albPool.Members)
 	if err != nil {
 		return fmt.Errorf("error storing ALB Pool Members: %s", err)
+	}
+
+	if albPool.MemberGroupRef != nil {
+		dSet(d, "member_group_id", albPool.MemberGroupRef.ID)
 	}
 
 	err = setNsxtAlbPoolPersistenceProfileData(d, albPool.PersistenceProfile)

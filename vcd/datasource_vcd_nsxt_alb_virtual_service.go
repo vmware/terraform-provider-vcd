@@ -100,6 +100,11 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 					},
 				},
 			},
+			"is_transparent_mode_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Preserves Client IP on a Virtual Service when enabled",
+			},
 		},
 	}
 }

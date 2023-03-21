@@ -114,8 +114,11 @@ The following arguments are supported:
 * `domain_names` - (Optional) A set of domain names which will be used to verify the common names or subject alternative
   names presented by the pool member certificates. It is performed only when common name check `cn_check_enabled` is
   enabled
-* `member` - (Optional) A block to define pool members. Multiple can be used. See [Member](#member-block) and example
-  for usage details.
+* `member` - (Optional) A block to define pool members. Multiple can be used. See
+  [Member](#member-block) and example for usage details. **Note** only one of `member`,
+  `member_group_id` can be specified.
+* `member_group_id` - (Optional, **VCD 10.4.1+**) A reference to Security Group. **Note** only one
+  of `member`, `member_group_id` can be specified.
 * `persistence_profile` - (Optional) Persistence profile will ensure that the same user sticks to the same server for a
   desired duration of time. If the persistence profile is unmanaged by Cloud Director, updates that leave the values
   unchanged will continue to use the same unmanaged profile. Any changes made to the persistence profile will cause

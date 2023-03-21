@@ -129,6 +129,42 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
 }
 ```
 
+## Example Usage (VCD 10.4.1+ - Virtual Service Transparent mode and Pool Group Membership)
+```hcl
+data "vcd_nsxt_ip_set" "frontend" {
+  org             = "my-org" # Optional
+  edge_gateway_id = data.vcd_nsxt_edgegateway.main.id
+  name            = "frontend-servers"
+}
+
+resource "vcd_nsxt_alb_pool" "test" {
+  org             = "my-org"
+  name            = "test-pool"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  member_group_id = data.vcd_nsxt_ip_set.frontend.id
+}
+
+resource "vcd_nsxt_alb_virtual_service" "test" {
+  org = "my-org"
+
+  name            = "new-virtual-service"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+
+  # Preserve Client IP - can only be enabled in VCD 10.4.1+ (must also be enabled in `vcd_nsxt_alb_settings`)
+  is_transparent_mode_enabled = true
+
+  pool_id                  = vcd_nsxt_alb_pool.test.id
+  service_engine_group_id  = vcd_nsxt_alb_edgegateway_service_engine_group.assignment.service_engine_group_id
+  virtual_ip_address       = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  application_profile_type = "HTTP"
+  service_port {
+    start_port = 80
+    type       = "TCP_PROXY"
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -149,7 +185,10 @@ The following arguments are supported:
   or `L4_TLS`
 * `service_port` - (Required) A block to define port, port range and traffic type. Multiple can be used. See
   [service_port](#service-port-block) and example for usage details.
-
+* `is_transparent_mode_enabled` - (Optional; *v3.9+*, *VCD 10.4.1+*) Preserves Client IP on a
+  Virtual Service. **Note** - the following criteria must be matched to make transparent mode work:
+  * ALB Pool membership must be configured in Group mode
+  * Backing AVI Service Engine Group must be in Legacy Active Standby mode
 
 <a id="service-port-block"></a>
 ## Service Port
