@@ -285,7 +285,7 @@ func TestAccVcdRdeTypeValidation(t *testing.T) {
 }
 
 const testAccVcdRdeTypeWrongFields = `
-# skip-binary: This test checks early failure validations
+# skip-binary-test - This test checks early failure validations
 resource "vcd_rde_type" "rde_type_validation" {
   nss           = "{{.Nss}}"
   version       = "{{.Version}}"

@@ -75,16 +75,12 @@ func TestAccVcdRde(t *testing.T) {
 		t.Errorf("could not get a VCD connection to add rights to tenant user")
 	}
 
-	// addRightsToTenantUser needs to happen before the client has been created, otherwise retrieving
-	// RDEs will fail. Thus, we need to invalidate existing client cache and start a new one
-	cachedVCDClients.reset()
-
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
 		Steps: []resource.TestStep{
 			// Preconfigure the test: We fetch an existing interface and create an RDE Type.
-			// Creating an RDE Type creates an associated Rights Bundle that is NOT published to all tenants by default.
+			// Creating an RDE Type results in the creation of an associated Rights Bundle that is NOT published to all tenants by default.
 			// To move forward we need these rights published, so we create a new published bundle with the same rights.
 			{
 				Config: preReqsConfig,
@@ -288,6 +284,7 @@ resource "vcd_rights_bundle" "rde_type_bundle" {
 `
 
 const testAccVcdRde1 = testAccVcdRdePrerequisites + `
+# skip-binary-test - This would require additional rights in tenant user
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -336,6 +333,7 @@ resource "vcd_rde" "rde_tenant" {
 `
 
 const testAccVcdRde2 = testAccVcdRdePrerequisites + `
+# skip-binary-test - Deletion should fail
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -362,6 +360,7 @@ resource "vcd_rde" "rde_url" {
 `
 
 const testAccVcdRde3 = testAccVcdRdePrerequisites + `
+# skip-binary-test - This would require additional rights in tenant user
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -430,30 +429,21 @@ data "vcd_rde" "existing_rde2" {
 
 // testAccCheckRdeDestroy checks that the RDE instances defined by their identifiers no longer
 // exist in VCD.
-func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.TestCheckFunc {
+func testAccCheckRdeDestroy(rdeId string, identifiers ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		for _, identifier := range identifiers {
-			rdeTypeRes, ok := s.RootModule().Resources[rdeTypeId]
+			rde, ok := s.RootModule().Resources[rdeId]
 			if !ok {
 				return fmt.Errorf("not found: %s", identifier)
 			}
 
-			if rdeTypeRes.Primary.ID == "" {
-				return fmt.Errorf("no RDE type ID is set")
+			if rde.Primary.ID == "" {
+				return fmt.Errorf("no RDE ID is set")
 			}
 
 			conn := testAccProvider.Meta().(*VCDClient)
 
-			rdeType, err := conn.VCDClient.GetRdeTypeById(rdeTypeRes.Primary.ID)
-
-			if err != nil {
-				if govcd.ContainsNotFound(err) {
-					continue
-				}
-				return fmt.Errorf("error getting the RDE type %s to be able to destroy its instances: %s", rdeTypeRes.Primary.ID, err)
-			}
-
-			_, err = rdeType.GetRdeById(identifier)
+			_, err := conn.VCDClient.GetRdeById(rde.Primary.ID)
 
 			if err == nil || !govcd.ContainsNotFound(err) {
 				return fmt.Errorf("RDE %s not deleted yet", identifier)
@@ -484,8 +474,6 @@ func importStateIdRde(vendor, nss, version, name, position string, list bool) re
 // on RDEs.
 // NOTE: We don't need to remove the added rights after the test is run, because the RDE Type and the Rights Bundle
 // are destroyed and the rights disappear with them gone.
-// NOTE 2: This function needs to be called with fresh clients (no cached ones), as it modifies
-// rights of the tenant user.
 func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
@@ -518,6 +506,10 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 	if err != nil {
 		t.Errorf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
 	}
+
+	// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hece
+	// we can't reuse existing sessions
+	cachedVCDClients.reset()
 }
 
 // manipulateRde mimics a 3rd party member that changes an RDE in VCD side. This is a common use-case in RDEs

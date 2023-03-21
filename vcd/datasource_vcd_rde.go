@@ -49,7 +49,7 @@ func datasourceVcdRde() *schema.Resource {
 			},
 			"state": {
 				Type:        schema.TypeString,
-				Description: "One of PRE_CREATED, RESOLVED or RESOLUTION_ERROR",
+				Description: "Specifies whether the entity is correctly resolved or not. One of PRE_CREATED, RESOLVED or RESOLUTION_ERROR",
 				Computed:    true,
 			},
 		},

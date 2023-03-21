@@ -35,7 +35,7 @@ func resourceVcdRde() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the Runtime Defined Entity",
+				Description: "The name of the Runtime Defined Entity. It can be non-unique",
 			},
 			"rde_type_id": {
 				Type:        schema.TypeString,
@@ -81,21 +81,21 @@ func resourceVcdRde() *schema.Resource {
 			"resolve": {
 				Type: schema.TypeBool,
 				Description: "If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be" +
-					"resolved and must be either done by an external component or with an update. The Runtime Defined Entity can't be" +
+					"resolved and must be done either by an external component action or by an update. The Runtime Defined Entity can't be" +
 					"deleted until the entity is resolved.",
 				Required: true,
 			},
 			"resolve_on_removal": {
 				Type: schema.TypeBool,
-				Description: "If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to forcefully delete it." +
-					"Otherwise, destroy will fail if it is not resolved.",
+				Description: "If `true`, the Runtime Defined Entity will be resolved before it gets deleted, to ensure forced deletion." +
+					"Destroy will fail if it is not resolved.",
 				Default:  false,
 				Optional: true,
 			},
 			"state": {
 				Type: schema.TypeString,
-				Description: "When created it will be in PRE_CREATED state. If the specified JSON in either `input_entity` or `input_entity_url` is correct, the state will be RESOLVED," +
-					"otherwise it will be RESOLUTION_ERROR. If an entity in an RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
+				Description: "Specifies whether the entity is correctly resolved or not. When created it will be in PRE_CREATED state. If the entity is correctly validated against its RDE Type schema, the state will be RESOLVED," +
+					"otherwise it will be RESOLUTION_ERROR. If an entity resolution ends in a RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
 				Computed: true,
 			},
 			"entity_in_sync": {
@@ -348,8 +348,8 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
-// 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in state file
+// 3. The function splits the dot-formatted path and tries to look up the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in state file
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.
@@ -402,7 +402,7 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return nil, err
 		}
-	case 4: // ie: list@vendor.nss.1.2.3.name
+	case 4: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_nss_1.2.3_name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
@@ -413,7 +413,7 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return nil, err
 		}
-	case 6: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_nss_1.2.3_name
+	case 6: // ie: list@vendor.nss.1.2.3.name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
