@@ -60,11 +60,11 @@ var ancestors = map[string]string{
 // Data needed to create test vApp templates
 var vAppTemplateBaseName = "catItemQuery"
 var vAppTemplateRequestData = []govcd.VappTemplateData{
-	{vAppTemplateBaseName + "1", "", "", govcd.StringMap{"one": "first", "two": "second"}, false},
-	{vAppTemplateBaseName + "2", "", "", govcd.StringMap{"abc": "first", "def": "dummy"}, false},
-	{vAppTemplateBaseName + "3", "", "", govcd.StringMap{"one": "first", "two": "second"}, false},
-	{vAppTemplateBaseName + "4", "", "", govcd.StringMap{"abc": "first", "def": "second", "xyz": "final"}, false},
-	{vAppTemplateBaseName + "5", "", "", govcd.StringMap{"ghj": "first", "klm": "second"}, false},
+	{Name: vAppTemplateBaseName + "1", ItemCreationDate: "", VappTemplateCreationDate: "", Metadata: govcd.StringMap{"one": "first", "two": "second"}, Created: false},
+	{Name: vAppTemplateBaseName + "2", ItemCreationDate: "", VappTemplateCreationDate: "", Metadata: govcd.StringMap{"abc": "first", "def": "dummy"}, Created: false},
+	{Name: vAppTemplateBaseName + "3", ItemCreationDate: "", VappTemplateCreationDate: "", Metadata: govcd.StringMap{"one": "first", "two": "second"}, Created: false},
+	{Name: vAppTemplateBaseName + "4", ItemCreationDate: "", VappTemplateCreationDate: "", Metadata: govcd.StringMap{"abc": "first", "def": "second", "xyz": "final"}, Created: false},
+	{Name: vAppTemplateBaseName + "5", ItemCreationDate: "", VappTemplateCreationDate: "", Metadata: govcd.StringMap{"ghj": "first", "klm": "second"}, Created: false},
 }
 
 // getFiltersForAvailableEntities collects data from existing resources and creates filters for each of them

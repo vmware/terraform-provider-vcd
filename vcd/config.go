@@ -82,6 +82,11 @@ const (
 // When the Client() function is called with the same parameters, it will return
 // a cached value instead of connecting again.
 // This makes the Client() function both deterministic and fast.
+//
+// WARNING: Cached clients need to be evicted by calling cacheStorage.reset() after the rights of the associated
+// logged user change. Otherwise, retrieving or manipulating objects that require the new rights could return 403
+// forbidden errors. For example, adding read rights of a RDE Type to a specific user requires a cacheStorage.reset()
+// afterwards, to force a re-authentication. If this is not done, the cached client won't be able to read this RDE Type.
 type cachedConnection struct {
 	initTime   time.Time
 	connection *VCDClient

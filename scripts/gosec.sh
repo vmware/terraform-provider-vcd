@@ -39,7 +39,14 @@ function get_gosec {
         exit_code=$?
         if [ "$exit_code" != "0" ]
         then
+          echo "Error downloading gosec installer"
+          exit $exit_code
+        fi
+        sh -x gosec_install.sh > gosec_install.log 2>&1
+        if [ "$exit_code" != "0" ]
+        then
           echo "Error installing gosec"
+          cat gosec_install.log
           exit $exit_code
         fi
         gosec=$PWD/bin/gosec
