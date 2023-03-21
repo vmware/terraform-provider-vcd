@@ -903,7 +903,18 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 	fmt.Println("# Cleaning up")
 	var err error
 	if catalog != (govcd.AdminCatalog{}) {
-		err = catalog.Delete(true, true)
+		timeout := 30 * time.Second
+		start := time.Now()
+		attempts := 0
+		for time.Since(start) < timeout {
+			err = catalog.Delete(true, true)
+			if err == nil {
+				break
+			}
+			attempts++
+			fmt.Printf("## deletion attempt %d - error: %s - elapsed: %s\n", attempts, err, time.Since(start))
+			time.Sleep(200 * time.Millisecond)
+		}
 		if err != nil {
 			t.Errorf("error cleaning up catalog: %s", err)
 		}
