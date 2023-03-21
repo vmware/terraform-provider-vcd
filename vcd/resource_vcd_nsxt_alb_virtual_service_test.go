@@ -6,22 +6,12 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
-
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(4 * time.Minute)
-		fmt.Println("finished sleeping")
-		return nil
-	}
-}
 
 func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 	preTestChecks(t)
@@ -130,7 +120,6 @@ func TestAccVcdNsxtAlbVirtualService(t *testing.T) {
 						"end_port":   "81",
 						"type":       "TCP_PROXY",
 					}),
-					sleepTester(),
 				),
 			},
 			{
