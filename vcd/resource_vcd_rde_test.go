@@ -75,16 +75,12 @@ func TestAccVcdRde(t *testing.T) {
 		t.Errorf("could not get a VCD connection to add rights to tenant user")
 	}
 
-	// addRightsToTenantUser needs to happen before the client has been created, otherwise retrieving
-	// RDEs will fail. Thus, we need to invalidate existing client cache and start a new one
-	cachedVCDClients.reset()
-
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
 		CheckDestroy:      testAccCheckRdeDestroy(rdeType, rdeFromFile, rdeFromUrl),
 		Steps: []resource.TestStep{
 			// Preconfigure the test: We fetch an existing interface and create an RDE Type.
-			// Creating an RDE Type creates an associated Rights Bundle that is NOT published to all tenants by default.
+			// Creating an RDE Type results in the creation of an associated Rights Bundle that is NOT published to all tenants by default.
 			// To move forward we need these rights published, so we create a new published bundle with the same rights.
 			{
 				Config: preReqsConfig,
@@ -478,8 +474,6 @@ func importStateIdRde(vendor, nss, version, name, position string, list bool) re
 // on RDEs.
 // NOTE: We don't need to remove the added rights after the test is run, because the RDE Type and the Rights Bundle
 // are destroyed and the rights disappear with them gone.
-// NOTE 2: This function needs to be called with fresh clients (no cached ones), as it modifies
-// rights of the tenant user.
 func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
@@ -512,6 +506,10 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 	if err != nil {
 		t.Errorf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
 	}
+
+	// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hece
+	// we can't reuse existing sessions
+	cachedVCDClients.reset()
 }
 
 // manipulateRde mimics a 3rd party member that changes an RDE in VCD side. This is a common use-case in RDEs

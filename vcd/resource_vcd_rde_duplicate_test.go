@@ -62,8 +62,8 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 				),
 			},
 			// We use a data source to fetch the RDE that belongs to System.
-			// Despite it is duplicated (it has same name, type, etc), it should work as we can unequivocally fetch it
-			// thanks that is the only one present in the System organization.
+			// Despite being duplicated (it has same name, type, etc), it should work as we can unequivocally fetch it
+			// since it is the only one present in the System organization.
 			{
 				Config: step2,
 				Check: resource.ComposeAggregateTestCheckFunc(
