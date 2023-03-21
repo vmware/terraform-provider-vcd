@@ -430,30 +430,21 @@ data "vcd_rde" "existing_rde2" {
 
 // testAccCheckRdeDestroy checks that the RDE instances defined by their identifiers no longer
 // exist in VCD.
-func testAccCheckRdeDestroy(rdeTypeId string, identifiers ...string) resource.TestCheckFunc {
+func testAccCheckRdeDestroy(rdeId string, identifiers ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		for _, identifier := range identifiers {
-			rdeTypeRes, ok := s.RootModule().Resources[rdeTypeId]
+			rde, ok := s.RootModule().Resources[rdeId]
 			if !ok {
 				return fmt.Errorf("not found: %s", identifier)
 			}
 
-			if rdeTypeRes.Primary.ID == "" {
-				return fmt.Errorf("no RDE type ID is set")
+			if rde.Primary.ID == "" {
+				return fmt.Errorf("no RDE ID is set")
 			}
 
 			conn := testAccProvider.Meta().(*VCDClient)
 
-			rdeType, err := conn.VCDClient.GetRdeTypeById(rdeTypeRes.Primary.ID)
-
-			if err != nil {
-				if govcd.ContainsNotFound(err) {
-					continue
-				}
-				return fmt.Errorf("error getting the RDE type %s to be able to destroy its instances: %s", rdeTypeRes.Primary.ID, err)
-			}
-
-			_, err = rdeType.GetRdeById(identifier)
+			_, err := conn.VCDClient.GetRdeById(rde.Primary.ID)
 
 			if err == nil || !govcd.ContainsNotFound(err) {
 				return fmt.Errorf("RDE %s not deleted yet", identifier)
