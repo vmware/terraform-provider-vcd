@@ -74,7 +74,51 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	runVappNetworkTest(t, params)
+	runVappNetworkTestNetmask(t, params)
+	postTestChecks(t)
+}
+
+func TestAccVcdVappNetwork_Isolated_ipv6(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"Org":          testConfig.VCD.Org,
+		"Vdc":          testConfig.Nsxt.Vdc,
+		"resourceName": t.Name(),
+		// we can't change network name as this results in ID (HREF) change
+		"vappNetworkName":           t.Name(),
+		"description":               "network description",
+		"descriptionForUpdate":      "update",
+		"gateway":                   "fe80:0:0:0:0:0:0:aaaa",
+		"prefix_length":             "100",
+		"dns1":                      "ab:ab:ab:ab:ab:ab:ab:ab",
+		"dns1ForUpdate":             "ab:ab:ab:ab:ab:ab:ab:ac",
+		"dns2":                      "bb:bb:bb:bb:bb:bb:bb:bb",
+		"dns2ForUpdate":             "bb:bb:bb:bb:bb:bb:bb:bc",
+		"dnsSuffix":                 dnsSuffix,
+		"dnsSuffixForUpdate":        "updated",
+		"guestVlanAllowed":          guestVlanAllowed,
+		"guestVlanAllowedForUpdate": "false",
+		"startAddress":              "fe80:0:0:0:0:0:0:aa",
+		"startAddressForUpdate":     "fe80:0:0:0:0:0:0:bb",
+		"endAddress":                "fe80:0:0:0:0:0:0:ab",
+		"endAddressForUpdate":       "fe80:0:0:0:0:0:0:bc",
+		"vappName":                  vappNameForNetworkTest,
+		"vappVmName":                t.Name(),
+		"NetworkName":               "TestAccVcdVAppNet",
+		// adding space to allow pass validation in testParamsNotEmpty which skips the test if param value is empty
+		// to avoid running test when test data is missing
+		"OrgNetworkKey":               " ",
+		"equalsChar":                  " ",
+		"quotationChar":               " ",
+		"orgNetwork":                  " ",
+		"orgNetworkForUpdate":         " ",
+		"retainIpMacEnabled":          "false",
+		"retainIpMacEnabledForUpdate": "false",
+	}
+	testParamsNotEmpty(t, params)
+
+	runVappNetworkTestPrefixLength(t, params)
 	postTestChecks(t)
 }
 
@@ -129,11 +173,12 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	runVappNetworkTest(t, params)
+	runVappNetworkTestNetmask(t, params)
 	postTestChecks(t)
 }
 
-func runVappNetworkTest(t *testing.T, params StringMap) {
+// TODO leave only one test, runVappNetworkTestPrefixLength after Netmask is fully deprecated
+func runVappNetworkTestNetmask(t *testing.T, params StringMap) {
 	configText := templateFill(testAccCheckVappNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	params["FuncName"] = t.Name() + "-Update"
@@ -148,12 +193,12 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 	resourceName := "vcd_vapp_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVappNetworkDestroy,
+		CheckDestroy:      testAccCheckVappNetworkDestroyNsxv,
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists(resourceName),
+					testAccCheckVappNetworkExists(resourceName, testConfig.VCD.Vdc),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
@@ -190,7 +235,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 			{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists(resourceName),
+					testAccCheckVappNetworkExists(resourceName, testConfig.VCD.Vdc),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
@@ -228,7 +273,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["vappNetworkName"].(string)),
+				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["vappNetworkName"].(string), testConfig.VCD.Vdc),
 				// These fields can't be retrieved from user data.
 				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_removal"},
 			},
@@ -236,7 +281,96 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 	})
 }
 
-func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
+func runVappNetworkTestPrefixLength(t *testing.T, params StringMap) {
+	configText := templateFill(testAccCheckVappNetwork_basic_ipv6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	params["FuncName"] = t.Name() + "-Update"
+	updateConfigText := templateFill(testAccCheckVappNetwork_update_ipv6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateConfigText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := "vcd_vapp_network." + params["resourceName"].(string)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVappNetworkDestroyNsxt,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVappNetworkExists(resourceName, testConfig.Nsxt.Vdc),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", params["vappNetworkName"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "description", params["description"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "gateway", params["gateway"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "prefix_length", params["prefix_length"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "dns1", params["dns1"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "dns2", params["dns2"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "dns_suffix", dnsSuffix),
+					resource.TestCheckResourceAttr(
+						resourceName, "guest_vlan_allowed", guestVlanAllowed),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "static_ip_pool.*", map[string]string{
+						"start_address": params["startAddress"].(string),
+						"end_address":   params["endAddress"].(string),
+					}),
+					resource.TestCheckResourceAttr(
+						resourceName, "org_network_name", strings.TrimSpace(params["orgNetwork"].(string))),
+					resource.TestCheckResourceAttr(
+						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
+				),
+			},
+			{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVappNetworkExists(resourceName, testConfig.Nsxt.Vdc),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", params["vappNetworkName"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "description", params["descriptionForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "gateway", params["gateway"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "prefix_length", params["prefix_length"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "dns1", params["dns1ForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "dns2", params["dns2ForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "dns_suffix", params["dnsSuffixForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						resourceName, "guest_vlan_allowed", params["guestVlanAllowedForUpdate"].(string)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "static_ip_pool.*", map[string]string{
+						"start_address": params["startAddressForUpdate"].(string),
+						"end_address":   params["endAddressForUpdate"].(string),
+					}),
+					resource.TestCheckResourceAttr(
+						resourceName, "org_network_name", strings.TrimSpace(params["orgNetworkForUpdate"].(string))),
+					resource.TestCheckResourceAttr(
+						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdVappObject(params["vappName"].(string), params["vappNetworkName"].(string), testConfig.Nsxt.Vdc),
+				// These fields can't be retrieved from user data.
+				ImportStateVerifyIgnore: []string{"org", "vdc", "reboot_vapp_on_removal"},
+			},
+		},
+	})
+}
+
+func testAccCheckVappNetworkExists(n, vdc string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -247,9 +381,7 @@ func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("no vapp network ID is set")
 		}
 
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		found, err := isVappNetworkFound(conn, rs, "exist")
+		found, err := doesVappNetworkExist(rs, vdc)
 		if err != nil {
 			return err
 		}
@@ -264,14 +396,13 @@ func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 
 // TODO: In future this can be improved to check if network delete only,
 // when test suite will create vApp which can be reused
-func testAccCheckVappNetworkDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
+func testAccCheckVappNetworkDestroyNsxv(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
 
-		_, err := isVappNetworkFound(conn, rs, "destroy")
+		_, err := doesVappNetworkExist(rs, testConfig.VCD.Vdc)
 		if err == nil {
 			return fmt.Errorf("vapp %s still exists", vappNameForNetworkTest)
 		}
@@ -280,8 +411,24 @@ func testAccCheckVappNetworkDestroy(s *terraform.State) error {
 	return nil
 }
 
-func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin string) (bool, error) {
-	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+func testAccCheckVappNetworkDestroyNsxt(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "vcd_vapp" {
+			continue
+		}
+
+		_, err := doesVappNetworkExist(rs, testConfig.Nsxt.Vdc)
+		if err == nil {
+			return fmt.Errorf("vapp %s still exists", vappNameForNetworkTest)
+		}
+	}
+
+	return nil
+}
+
+func doesVappNetworkExist(rs *terraform.ResourceState, testVdc string) (bool, error) {
+	conn := testAccProvider.Meta().(*VCDClient)
+	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testVdc)
 	if err != nil {
 		return false, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
@@ -291,10 +438,6 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin str
 		return false, fmt.Errorf("error retrieving vApp: %s, %#v", rs.Primary.ID, err)
 	}
 
-	// Avoid looking for network when the purpose is only finding whether the vApp exists
-	if origin == "destroy" {
-		return true, nil
-	}
 	networkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
 		return false, fmt.Errorf("error retrieving network config from vApp: %#v", err)
@@ -368,6 +511,62 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 }
 `
 
+const testAccCheckVappNetwork_basic_ipv6 = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vappVmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "{{.vappName}}"
+  name          = "{{.vappVmName}}"
+  computer_name = "emptyVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.{{.resourceName}}.name
+    ip_allocation_mode = "POOL"
+  }
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  depends_on = [vcd_vapp.{{.vappName}}, vcd_vapp_network.{{.resourceName}}]
+}
+
+resource "vcd_vapp_network" "{{.resourceName}}" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  name               = "{{.vappNetworkName}}"
+  description        = "{{.description}}"
+  vapp_name          = "{{.vappName}}"
+  gateway            = "{{.gateway}}"
+  prefix_length      = "{{.prefix_length}}"
+  dns1               = "{{.dns1}}"
+  dns2               = "{{.dns2}}"
+  dns_suffix         = "{{.dnsSuffix}}"
+  guest_vlan_allowed = {{.guestVlanAllowed}}
+
+  static_ip_pool {
+    start_address = "{{.startAddress}}"
+    end_address   = "{{.endAddress}}"
+  }
+
+  {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetwork}}{{.quotationChar}}
+  
+  retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+
+  depends_on = ["vcd_vapp.{{.vappName}}"]
+}
+`
+
 const testAccCheckVappNetwork_update = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
@@ -431,6 +630,62 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}", "vcd_network_routed.{{.NetworkName2}}"]
+}
+`
+
+const testAccCheckVappNetwork_update_ipv6 = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vappVmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "{{.vappName}}"
+  name          = "{{.vappVmName}}"
+  computer_name = "emptyVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.{{.resourceName}}.name
+    ip_allocation_mode = "POOL"
+  }
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_vapp_network.{{.resourceName}}"]
+}
+
+resource "vcd_vapp_network" "{{.resourceName}}" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  name               = "{{.vappNetworkName}}"
+  description        = "{{.descriptionForUpdate}}"
+  vapp_name          = "{{.vappName}}"
+  gateway            = "{{.gateway}}"
+  prefix_length      = "{{.prefix_length}}"
+  dns1               = "{{.dns1ForUpdate}}"
+  dns2               = "{{.dns2ForUpdate}}"
+  dns_suffix         = "{{.dnsSuffixForUpdate}}"
+  guest_vlan_allowed = {{.guestVlanAllowedForUpdate}}
+  static_ip_pool {
+    start_address = "{{.startAddressForUpdate}}"
+    end_address   = "{{.endAddressForUpdate}}"
+  }
+
+  {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
+
+  retain_ip_mac_enabled  = "{{.retainIpMacEnabledForUpdate}}"
+  reboot_vapp_on_removal = true
+
+  depends_on = ["vcd_vapp.{{.vappName}}"]
 }
 `
 
@@ -907,7 +1162,7 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-			testAccCheckVappNetworkDestroy,
+			testAccCheckVappNetworkDestroyNsxv,
 		),
 		Steps: []resource.TestStep{
 			{ // Create setup

@@ -58,11 +58,22 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Description: "Optional description for the network",
 			},
 			"netmask": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "255.255.255.0",
-				Description: "Netmask address for a subnet. Default is 255.255.255.0",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				Deprecated:   "Use prefix_length instead which supports both IPv4 and IPv6",
+				Description:  "Netmask address for a subnet.",
+				ExactlyOneOf: []string{"prefix_length", "netmask"},
+			},
+			"prefix_length": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				Description:  "Prefix length for a subnet",
+				ExactlyOneOf: []string{"netmask", "prefix_length"},
+				ValidateFunc: IsIntAndAtLeast(0),
 			},
 			"gateway": {
 				Type:        schema.TypeString,
@@ -194,6 +205,7 @@ func resourceVappNetworkCreate(ctx context.Context, d *schema.ResourceData, meta
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),
+		SubnetPrefixLength: d.Get("prefix_length").(string),
 		DNS1:               d.Get("dns1").(string),
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
@@ -318,6 +330,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 		if config.IPScopes != nil {
 			dSet(d, "gateway", config.IPScopes.IPScope[0].Gateway)
 			dSet(d, "netmask", config.IPScopes.IPScope[0].Netmask)
+			dSet(d, "prefix_length", config.IPScopes.IPScope[0].SubnetPrefixLength)
 			dSet(d, "dns1", config.IPScopes.IPScope[0].DNS1)
 			dSet(d, "dns2", config.IPScopes.IPScope[0].DNS2)
 			dSet(d, "dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
@@ -401,6 +414,7 @@ func resourceVappNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),
+		SubnetPrefixLength: d.Get("prefix_length").(string),
 		DNS1:               d.Get("dns1").(string),
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),

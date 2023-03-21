@@ -30,7 +30,7 @@ func TestAccVcdRde(t *testing.T) {
 		"Resolve":        false,
 		"SchemaPath":     getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath":     getCurrentDir() + "/../test-resources/rde_instance.json",
-		"EntityUrl":      "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-rde-support-3/test-resources/rde_instance.json", // FIXME
+		"EntityUrl":      "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/test-resources/rde_instance.json",
 	}
 	testParamsNotEmpty(t, params)
 
