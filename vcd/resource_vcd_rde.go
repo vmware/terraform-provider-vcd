@@ -402,7 +402,7 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return nil, err
 		}
-	case 4: // ie: list@vendor.nss.1.2.3.name
+	case 4: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_nss_1.2.3_name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
@@ -413,7 +413,7 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return nil, err
 		}
-	case 6: // ie: VCD_IMPORT_SEPARATOR="_" list@vendor_nss_1.2.3_name
+	case 6: // ie: list@vendor.nss.1.2.3.name
 		listAndVendorSplit := strings.Split(resourceURI[0], "@")
 		if len(listAndVendorSplit) != 2 {
 			return nil, helpError
