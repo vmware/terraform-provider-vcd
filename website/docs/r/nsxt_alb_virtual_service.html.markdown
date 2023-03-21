@@ -150,7 +150,6 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
   name            = "new-virtual-service"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-
   # Preserve Client IP - can only be enabled in VCD 10.4.1+ (must also be enabled in `vcd_nsxt_alb_settings`)
   is_transparent_mode_enabled = true
 
