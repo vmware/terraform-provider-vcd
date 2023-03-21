@@ -288,6 +288,7 @@ resource "vcd_rights_bundle" "rde_type_bundle" {
 `
 
 const testAccVcdRde1 = testAccVcdRdePrerequisites + `
+# skip-binary-test - This would require additional rights in tenant user
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -336,6 +337,7 @@ resource "vcd_rde" "rde_tenant" {
 `
 
 const testAccVcdRde2 = testAccVcdRdePrerequisites + `
+# skip-binary-test - Deletion should fail
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
@@ -362,6 +364,7 @@ resource "vcd_rde" "rde_url" {
 `
 
 const testAccVcdRde3 = testAccVcdRdePrerequisites + `
+# skip-binary-test - This would require additional rights in tenant user
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 

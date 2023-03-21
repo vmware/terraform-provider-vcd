@@ -150,7 +150,7 @@ resource "vcd_rde" "rde3_tenant" {
 `
 
 const testAccVcdRdeDuplicateStep2 = testAccVcdRdeDuplicateStep1 + `
-# skip-binary: Using a data source that references a resource created in same config
+# skip-binary-test: Using a data source that references a resource created in same config
 data "vcd_rde" "fetch_rde_system" {
   org         = "System"
   rde_type_id = vcd_rde.rde1_system.rde_type_id
@@ -159,7 +159,7 @@ data "vcd_rde" "fetch_rde_system" {
 `
 
 const testAccVcdRdeDuplicateStep3 = testAccVcdRdeDuplicateStep2 + `
-# skip-binary: Using a data source that references a resource created in same config
+# skip-binary-test: Using a data source that references a resource created in same config
 data "vcd_rde" "fetch_rde_tenant" {
   rde_type_id = vcd_rde.rde2_tenant.rde_type_id
   name        = vcd_rde.rde2_tenant.name
