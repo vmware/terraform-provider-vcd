@@ -93,7 +93,7 @@ The following arguments are supported:
 
 * `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
 * `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
-* `name` - (Required) The name of the Runtime Defined Entity.
+* `name` - (Required) The name of the Runtime Defined Entity. It can be non-unique.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be done either by an external component action or by an update. The Runtime Defined Entity can't be
   deleted until the input_entity is resolved by either party, unless `resolve_on_removal=true`. See [RDE resolution](#rde-resolution) for more details.
