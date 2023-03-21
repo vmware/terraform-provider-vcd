@@ -2,10 +2,12 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // This file contains routines that clean up the test suite after failed tests
@@ -81,22 +83,33 @@ var alsoDelete = entityList{
 	{Type: "vcd_vapp", Name: "Vapp-AC-2", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-2"},
 	{Type: "vcd_vapp", Name: "Vapp-AC-3", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-3"},
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
+	// {Type: "vcd_nsxt_alb_service_engine_group", Name: "first-se", Comment: "from many ALB tests"},
+	// {Type: "vcd_nsxt_alb_edgegateway_service_engine_group", Name: "first-se", Comment: "from many ALB tests"},
+	// {Type: "vcd_nsxt_alb_settings", Name: "first-se", Comment: "from many ALB tests"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc"}
+var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
 		fmt.Printf("Start leftovers removal\n")
 	}
+
+	// NSX-T ALB configuration Hierarchical cleanup is separate from main hierarchy as even if the
+	// Org is going to be deleted - NSX-T ALB configuration must be cleaned up first
+	err := removeLeftoversNsxtAlb(govcdClient, verbose)
+	if err != nil {
+		return fmt.Errorf("error removing NSX-T ALB leftovers: %s", err)
+	}
+
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
 	if err != nil {
-		return fmt.Errorf("error retrieving orgs list: %s", err)
+		return fmt.Errorf("error retrieving Orgs list: %s", err)
 	}
 	// --------------------------------------------------------------
 	// organizations
@@ -255,7 +268,202 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				}
 			}
 		}
+
 	}
+
+	return nil
+}
+
+// removeLeftoversNsxtAlb is responsible for cleanup up NSX-T ALB leftovers
+// Note. Due to the fact that we need to test Controller creation and deletion - there should never
+// remain any NSX-T ALB leftovers after the test.
+//
+// Hierarchy of NSX-T ALB Configurations is:
+// Provider part (Infrastructure configuration)
+// 1. NSX-T ALB Controller (vcd_nsxt_alb_controller)
+// 2. NSX-T Clouds (vcd_nsxt_alb_cloud)
+// 3. NSX-T Service Engine Groups (vcd_nsxt_alb_service_engine_group)
+// Tenant part (Edge Gateway children)
+// 4. Edge Gateway settings (vcd_nsxt_alb_settings)
+// 5. Edge Gateway Service Engine Group assignment (vcd_nsxt_alb_edgegateway_service_engine_group)
+// 6. NSX-T ALB Pools (vcd_nsxt_alb_pool)
+// 7. NSX-T ALB Virtual Services (vcd_nsxt_alb_virtual_service)
+// This structure must be cleaned up in reverse order (starting from 7 and ending
+// with 1) so that no dependency constraints are violated
+func removeLeftoversNsxtAlb(govcdClient *govcd.VCDClient, verbose bool) error {
+	// --------------------------------------------------------------
+	// vcd_nsxt_alb_controller
+	// --------------------------------------------------------------
+	albControllers, err := govcdClient.GetAllAlbControllers(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving NSX-T ALB Controllers list: %s", err)
+	}
+	for _, albController := range albControllers {
+		albControllertoBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, albController.NsxtAlbController.Name, "vcd_nsxt_alb_controller", 0, verbose)
+
+		// --------------------------------------------------------------
+		// vcd_nsxt_alb_cloud
+		// --------------------------------------------------------------
+		albClouds, err := govcdClient.GetAllAlbClouds(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving NSX-T ALB Clouds list: %s", err)
+		}
+		for _, albCloud := range albClouds {
+			albCloudToBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, albCloud.NsxtAlbCloud.Name, "vcd_nsxt_alb_cloud", 1, verbose)
+
+			// --------------------------------------------------------------
+			// vcd_nsxt_alb_service_engine_group
+			// --------------------------------------------------------------
+			albServiceEngineGroups, err := govcdClient.GetAllAlbServiceEngineGroups("", nil)
+
+			if err != nil {
+				return fmt.Errorf("error retrieving NSX-T ALB Service Engine Groups list: %s", err)
+			}
+			for _, albServiceEngineGroup := range albServiceEngineGroups {
+				albServiceEngineGroupToBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, albServiceEngineGroup.NsxtAlbServiceEngineGroup.Name, "vcd_nsxt_alb_service_engine_group", 2, verbose)
+				if albServiceEngineGroupToBeDeleted {
+
+					// Trigger tenant part cleanup inside Edge Gateways
+					err = removeLeftoversNsxtAlbTenant(govcdClient, verbose)
+					if err != nil {
+						return fmt.Errorf("error removing NSX-T ALB Tenant leftovers: %s", err)
+					}
+
+					// vcd_nsxt_alb_service_engine_group deletion
+					err = albServiceEngineGroup.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting NSX-T ALB Service Engine Group '%s': %s", albServiceEngineGroup.NsxtAlbServiceEngineGroup.Name, err)
+					}
+				}
+			}
+
+			// vcd_nsxt_alb_cloud deletion
+			if albCloudToBeDeleted {
+				err = albCloud.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting NSX-T ALB Cloud '%s': %s", albCloud.NsxtAlbCloud.Name, err)
+				}
+			}
+		}
+
+		// vcd_nsxt_alb_controller deletion
+		if albControllertoBeDeleted {
+			err = albController.Delete()
+			if err != nil {
+				return fmt.Errorf("error deleting NSX-T ALB Controller '%s': %s", albController.NsxtAlbController.Name, err)
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// NSX-T ALB Provider Configuration cleanup
+	// --------------------------------------------------------------
+
+	return nil
+}
+
+// removeLeftoversNsxtAlbTenant is responsible for cleanup up NSX-T ALB leftovers in Edge Gateways
+// (tenant configuration)
+// 1. Edge Gateway settings (vcd_nsxt_alb_settings)
+// 2. Edge Gateway Service Engine Group assignment (vcd_nsxt_alb_edgegateway_service_engine_group)
+// 3. NSX-T ALB Pools (vcd_nsxt_alb_pool)
+// 4. NSX-T ALB Virtual Services (vcd_nsxt_alb_virtual_service)
+func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) error {
+	// Iterate over Edge Gateways and ensure no tenant ALB configurations remain
+	edgeGateways, err := govcdClient.GetAllNsxtEdgeGateways(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving NSX-T Edge Gateway list: %s", err)
+	}
+
+	for _, edgeGateway := range edgeGateways {
+
+		// --------------------------------------------------------------
+		// vcd_nsxt_alb_settings
+		// --------------------------------------------------------------
+		albSetting, err := edgeGateway.GetAlbSettings()
+		if err != nil {
+			return fmt.Errorf("error retrieving NSX-T ALB Edge Gateway settings: %s", err)
+		}
+
+		if albSetting.Enabled {
+			// Real name of Edge Gateway would not be matched, but ALB needs to be deleted therefore adding a prefix Test
+			edgeNameWithPrefix := "Test" + edgeGateway.EdgeGateway.Name
+			toBeDisabledAlbSettings := shouldDeleteEntity(alsoDelete, doNotDelete, edgeNameWithPrefix, "vcd_nsxt_alb_settings", 3, verbose)
+
+			// --------------------------------------------------------------
+			// vcd_nsxt_alb_edgegateway_service_engine_group
+			// --------------------------------------------------------------
+			filterOnEdgeGateway := url.Values{}
+			filterOnEdgeGateway.Add("filter", fmt.Sprintf("(gatewayRef.id==%s)", edgeGateway.EdgeGateway.ID))
+			albEdgeGatewayServiceEngineGroups, err := govcdClient.GetAllAlbServiceEngineGroupAssignments(filterOnEdgeGateway)
+			if err != nil {
+				return fmt.Errorf("error retrieving NSX-T ALB Edge Gateway Service Engine Group assignments list: %s", err)
+			}
+
+			for _, albEdgeGatewayServiceEngineGroup := range albEdgeGatewayServiceEngineGroups {
+				// Edge Gateay Service Engine Group Assignment does not have names, therefore we use
+				// Service Engine Group name as a name for the resource
+				edgeServiceEngineGroupAssignmentName := albEdgeGatewayServiceEngineGroup.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef.Name
+				toBeDeletedAlbEdgeGatewayServiceEngineGroup := shouldDeleteEntity(alsoDelete, doNotDelete, edgeServiceEngineGroupAssignmentName, "vcd_nsxt_alb_edgegateway_service_engine_group", 4, verbose)
+
+				// --------------------------------------------------------------
+				// vcd_nsxt_alb_pool
+				// --------------------------------------------------------------
+				albPools, err := govcdClient.GetAllAlbPools(edgeGateway.EdgeGateway.ID, nil)
+				if err != nil {
+					return fmt.Errorf("error retrieving NSX-T ALB Pools list: %s", err)
+				}
+
+				for _, albPool := range albPools {
+					toBeDeletedAlbPool := shouldDeleteEntity(alsoDelete, doNotDelete, albPool.NsxtAlbPool.Name, "vcd_nsxt_alb_pool", 5, verbose)
+
+					// --------------------------------------------------------------
+					// vcd_nsxt_alb_virtual_service
+					// --------------------------------------------------------------
+					albVirtualServices, err := govcdClient.GetAllAlbVirtualServices(edgeGateway.EdgeGateway.ID, nil)
+					if err != nil {
+						return fmt.Errorf("error retrieving NSX-T ALB Virtual Services list: %s", err)
+					}
+
+					for _, albVs := range albVirtualServices {
+						toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, albVs.NsxtAlbVirtualService.Name, "vcd_nsxt_alb_virtual_service", 6, verbose)
+						if toBeDeleted {
+							err = albVs.Delete()
+							if err != nil {
+								return fmt.Errorf("error deleting NSX-T ALB Virtual Service '%s': %s", albVs.NsxtAlbVirtualService.Name, err)
+							}
+						}
+					}
+
+					// vcd_nsxt_alb_pool deletion
+					if toBeDeletedAlbPool {
+						err = albPool.Delete()
+						if err != nil {
+							return fmt.Errorf("error deleting NSX-T ALB Pool '%s': %s", albPool.NsxtAlbPool.Name, err)
+						}
+					}
+				}
+
+				// vcd_nsxt_alb_edgegateway_service_engine_group deletion
+				if toBeDeletedAlbEdgeGatewayServiceEngineGroup {
+					err = albEdgeGatewayServiceEngineGroup.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting NSX-T ALB Edge Gateway Service Engine Group assignment '%s': %s", edgeServiceEngineGroupAssignmentName, err)
+					}
+				}
+			}
+
+			// vcd_nsxt_alb_settings
+			if toBeDisabledAlbSettings {
+				err = edgeGateway.DisableAlb()
+				if err != nil {
+					return fmt.Errorf("error disabling NSX-T ALB Edge Gateway settings: %s", err)
+				}
+			}
+		}
+
+	}
+
 	return nil
 }
 
