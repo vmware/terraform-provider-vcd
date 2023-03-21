@@ -11,7 +11,7 @@ description: |-
 ## About
 
 This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v4.0, that
-will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using Terraform.
+will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using the UI.
 
 To know more about CSE v4.0, you can visit [the documentation][cse_docs].
 
@@ -309,166 +309,9 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 ```
 
-## Cluster operations
-
-The TKGm clusters that will be created and managed with Terraform are [RDE Instances][rde] of the `capvcdCluster` [RDE Type][rde_type]
-created during the installation process.
-
-These [RDE Instances][rde] require a JSON input that describes the cluster with properties such as name, schema version, metadata, extra options and the
-[CAPVCD][capvcd] `yaml` that must be embedded in the JSON content.
-
-This example will make use of the [CAPVCD][capvcd] `yaml` templates present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates),
-as they allow to customise several values that need to be replaced with other resource references, such as Organization names, network names, etc.
-
-### Create a cluster
-
-~> WORK IN PROGRESS
-
-To create a cluster, please download the [CAPVCD][capvcd] `yaml` template present [here](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates)
-that corresponds to your TKGm OVA file. For example, if your OVA file is `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`, you need
-to download `cluster-template-v1.22.9.yaml`.
-
-In the [CAPVCD][capvcd] `yaml` you can see the following placeholders:
-
-- `CLUSTER_NAME` (Required): The name to give to the cluster that will be created.
-- `TARGET_NAMESPACE` (Required): The name to give to the namespace that the cluster will use to place its resources.
-- `VCD_SITE` (Required): The VCD url (example: `https://vcd.my-company.com`).
-- `VCD_ORGANIZATION` (Required): The [Organization][org] that will host the clusters. In the [proposed configuration][step2] shown during the installation process above,
-this [Organization][org] was `cluster_org`.
-- `VCD_ORGANIZATION_VDC` (Required): The [VDC][vdc] that will host the clusters. In the [proposed configuration][step2] shown during the installation process above,
-  this [VDC][vdc] was `cluster_vdc`.
-- `VCD_ORGANIZATION_VDC_NETWORK` (Required): The network that will be used by the clusters. In the [proposed configuration][step2] shown during the installation process above,
-  this network was a [Routed network][routed_network] called `cluster_routed_network`.
-- `VCD_USERNAME_B64` (Required): The cluster requires a [User][user] with `Kubernetes Cluster Author` role. You need to create it prior to cluster creation.
-- `VCD_REFRESH_TOKEN_B64` (Required): The cluster requires a [User][user] with `Kubernetes Cluster Author`. You need to create it prior to cluster creation. To create an API token
-  for the user, you need to go to UI (in user preferences at the top right > API token) or provide one through the API. API tokens can't be generated with Terraform.
-- `VCD_PASSWORD_B64` (Optional): Password for the [User][user] with `Kubernetes Cluster Author` role. **You should provide an API token in `VCD_REFRESH_TOKEN_B64` instead**.
-- `SSH_PUBLIC_KEY` (Optional): Allows accessing the Kubernetes nodes with SSH key pairs.
-- `CONTROL_PLANE_MACHINE_COUNT` (Required): Number of VMs for the control plane. **Must be an odd number and more than 0**.
-- `VCD_CONTROL_PLANE_SIZING_POLICY` (Optional): Sizing policy for the control plane VMs.
-- `VCD_CONTROL_PLANE_PLACEMENT_POLICY` (Optional): Placement policy for the control plane VMs.
-- `VCD_CONTROL_PLANE_STORAGE_PROFILE` (Optional): Storage profile for the control plane VMs.
-- `WORKER_MACHINE_COUNT` (Required): Number of VMs for the worker nodes. **Must be more than 0**.
-- `VCD_WORKER_SIZING_POLICY` (Optional): Sizing policy for the worker VMs.
-- `VCD_WORKER_PLACEMENT_POLICY` (Optional): Placement policy for the worker VMs.
-- `VCD_WORKER_STORAGE_PROFILE` (Optional): Storage profile for the worker VMs.
-- `DISK_SIZE` (Required): Disk size (with units, like `10Gi` for 10 Gibibytes, `10G` for 10 Gigabytes, etc) for the created VMs.
-- `VCD_CATALOG` (Required): The [Catalog][catalog] that contains the TKGm OVAs. In the [proposed configuration][step2] shown during the installation process above,
-  this [Catalog][catalog] was `tkgm_catalog`.
-- `VCD_TEMPLATE_NAME` (Required): The TKGm [vApp Template][catalog_vapp_template] (OVA). In the [proposed configuration][step2] shown during the installation process above,
-  this [vApp Template][catalog_vapp_template] was `tkgm_ova`.
-- `POD_CIDR` (Required): The CIDR to use for [Pod](https://kubernetes.io/docs/concepts/workloads/pods/) IPs.
-- `SERVICE_CIDR` (Required): The CIDR to use for [Service](https://kubernetes.io/docs/concepts/services-networking/service/) IPs.
-
-Then, we need to read it with the `templatefile` Terraform function and put all the required values. Here is an example
-that saves the rendered result into the `capvcd_yaml_rendered` [local value](https://developer.hashicorp.com/terraform/language/values/locals):
-
-```hcl
-locals {
-  capvcd_yaml_rendered = templatefile("./cluster-template-v1.22.9.yaml", {
-    CLUSTER_NAME     = "my-cluster"
-    TARGET_NAMESPACE = "my-cluster-ns"
-
-    VCD_SITE                     = "https://vcd.my-company.com"
-    VCD_ORGANIZATION             = "cluster_org"
-    VCD_ORGANIZATION_VDC         = "cluster_vdc"
-    VCD_ORGANIZATION_VDC_NETWORK = "cluster_routed_network"
-
-    VCD_USERNAME_B64      = base64encode("bob_cluster_author")
-    VCD_PASSWORD_B64      = ""                                         # We use an API token, which is recommended
-    VCD_REFRESH_TOKEN_B64 = base64encode(var.cluster_author_api_token) # This should come from a variable marked as sensitive
-    SSH_PUBLIC_KEY        = ""
-
-    CONTROL_PLANE_MACHINE_COUNT        = 1
-    VCD_CONTROL_PLANE_SIZING_POLICY    = "TKG small"
-    VCD_CONTROL_PLANE_PLACEMENT_POLICY = ""
-    VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
-
-    WORKER_MACHINE_COUNT        = 1
-    VCD_WORKER_SIZING_POLICY    = "TKG small"
-    VCD_WORKER_PLACEMENT_POLICY = ""
-    VCD_WORKER_STORAGE_PROFILE  = ""
-    
-    DISK_SIZE         = "20Gi"
-    VCD_CATALOG       = "tkgm_catalog"
-    VCD_TEMPLATE_NAME = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova"
-
-    POD_CIDR     = "100.96.0.0/11"
-    SERVICE_CIDR = "100.64.0.0/13"
-  })
-}
-```
-
-The `capvcd_yaml_rendered` local value can then be used in our [RDE Instance][rde] definition. It must be embedded in the
-final JSON payload used to create the TKGm cluster. The JSON can be found [here](https://github.com/vmware/terraform-provider-vcd/blob/main/examples/container-service-extension-4.0/entities/tkgmcluster-template.json)
-and it makes use of the following placeholders:
-
-- `vcd_url`: The VCD url (example: `https://vcd.my-company.com`).
-- `name`: The cluster name, must match with `CLUSTER_NAME` in the CAPVCD contents.
-- `org`: The [Organization][org] that will host the cluster, must match with `VCD_ORGANIZATION` in CAPVCD contents.
-- `vdc`: The [VDC][vdc] that will host the cluster, must match with `VCD_ORGANIZATION_VDC` in CAPVCD contents.
-- `delete`: A day 2 operation, should be `false` on creation. It tells the CSE Server that the cluster must be deleted.
-- `force_delete`: A day 2 operation, should be `false` on creation. It tells the CSE Server that the cluster must be forcefully deleted.
-- `auto_repair_on_errors`: You can set this to `false` if you need to troubleshoot possible errors on cluster creation. This way, CSE Server
-  won't delete any VM on errors.
-- `capi_yaml`: The CAPVCD yaml that describes the cluster to create. Here we must set the `capvcd_yaml_rendered` local value that
-  was set above. In order to make it an inline property, we must escape `\n` and double quotes `"` to avoid breaking the JSON structure.
-
-The [RDE Instance][rde] that creates the cluster would then look like:
-
-```hcl
-resource "vcd_rde" "k8s_cluster_instance" {
-  org                = "cluster_org"
-  name               = "my-cluster"
-  rde_type_id        = vcd_rde_type.capvcd_cluster_type.id  # This must reference the CAPVCD RDE Type
-  resolve            = false                                # MUST be false as it is resolved by CSE Server
-  resolve_on_destroy = true                                 # MUST be true as it won't be resolved by Terraform
-  
-  # Read the RDE template present in this repository
-  input_entity       = templatefile("../../entities/tkgmcluster-template.json", {
-    vcd_url = "https://vcd.my-company.com"
-    name    = "my-cluster"
-    org     = "cluster_org"
-    vdc     = "cluster_vdc"
-    
-    capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
-    
-    delete                = false # Make this true to delete the cluster
-    force_delete          = false # Make this true to forcefully delete the cluster
-    auto_repair_on_errors = true  # Change this to false to troubleshoot possible issues
-  })
-}
-```
-
-~> WORK IN PROGRESS
-
-### Retrieve a cluster Kubeconfig
-
-~> WORK IN PROGRESS
-
-```hcl
-# output "kubeconfig" {  
-#   value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["capvcd"]["private"]["kubeConfig"]
-# }
-```
-
-### Upgrade a cluster
-
-~> WORK IN PROGRESS
-
-### Delete a cluster
-
-~> WORK IN PROGRESS
-
-~> Don't remove the resource from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
-Follow the mentioned steps instead.
-
 ## Uninstall CSE
 
-~> Before uninstalling CSE, make sure you perform an update operation to mark all clusters for deletion.
-
-~> Don't remove the K8s cluster resources from HCL as this will trigger a destroy operation, which will leave things behind in VCD.
-Follow the steps mentioned in **"Delete a cluster"** instead.
+~> Before uninstalling CSE, make sure you mark all clusters for deletion in VCD UI.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
 
