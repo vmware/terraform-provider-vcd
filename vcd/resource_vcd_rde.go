@@ -94,7 +94,7 @@ func resourceVcdRde() *schema.Resource {
 			},
 			"state": {
 				Type: schema.TypeString,
-				Description: "When created it will be in PRE_CREATED state. If the specified JSON in either `input_entity` or `input_entity_url` is correct, the state will be RESOLVED," +
+				Description: "Specifies whether the entity is correctly resolved or not. When created it will be in PRE_CREATED state. If the entity is correctly validated against its RDE Type schema, the state will be RESOLVED," +
 					"otherwise it will be RESOLUTION_ERROR. If an entity resolution ends in a RESOLUTION_ERROR state, it will require to be updated to a correct JSON to be usable",
 				Computed: true,
 			},
