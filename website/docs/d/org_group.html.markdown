@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_org\_group
 
-Provides a data source for VMware Cloud Director Organization Groups. This can be used to fetch organization groups already defined in `SAML` or `LDAP`.
+Provides a data source for VMware Cloud Director Organization Groups. This can be used to fetch organization groups already defined in `SAML`, `OAUTH` or `LDAP`.
 
 Supported in provider *v3.6+*
 
