@@ -74,7 +74,7 @@ alb_importable_cloud_name = "change-me"
 # CSE Server configuration
 # ------------------------------------------------
 vcdkeconfig_template_filepath = "../../entities/vcdkeconfig-template.json"
-capvcd_version                = "1.1.0"
+capvcd_version                = "1.0.0"
 cpi_version                   = "1.2.0"
 csi_version                   = "1.3.0"
 
