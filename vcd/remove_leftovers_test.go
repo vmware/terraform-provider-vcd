@@ -83,9 +83,6 @@ var alsoDelete = entityList{
 	{Type: "vcd_vapp", Name: "Vapp-AC-2", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-2"},
 	{Type: "vcd_vapp", Name: "Vapp-AC-3", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-3"},
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
-	// {Type: "vcd_nsxt_alb_service_engine_group", Name: "first-se", Comment: "from many ALB tests"},
-	// {Type: "vcd_nsxt_alb_edgegateway_service_engine_group", Name: "first-se", Comment: "from many ALB tests"},
-	// {Type: "vcd_nsxt_alb_settings", Name: "first-se", Comment: "from many ALB tests"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -323,7 +320,9 @@ func removeLeftoversNsxtAlb(govcdClient *govcd.VCDClient, verbose bool) error {
 				albServiceEngineGroupToBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, albServiceEngineGroup.NsxtAlbServiceEngineGroup.Name, "vcd_nsxt_alb_service_engine_group", 2, verbose)
 				if albServiceEngineGroupToBeDeleted {
 
-					// Trigger tenant part cleanup inside Edge Gateways
+					// --------------------------------------------------------------
+					// NSX-T ALB Tenant Configuration cleanup
+					// --------------------------------------------------------------
 					err = removeLeftoversNsxtAlbTenant(govcdClient, verbose)
 					if err != nil {
 						return fmt.Errorf("error removing NSX-T ALB Tenant leftovers: %s", err)
@@ -354,11 +353,6 @@ func removeLeftoversNsxtAlb(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
-
-	// --------------------------------------------------------------
-	// NSX-T ALB Provider Configuration cleanup
-	// --------------------------------------------------------------
-
 	return nil
 }
 
