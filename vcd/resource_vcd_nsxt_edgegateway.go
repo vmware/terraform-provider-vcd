@@ -531,8 +531,14 @@ func getNsxtEdgeGatewayUplinksTypeForUpdate(d *schema.ResourceData, currentlyAll
 			if ipBalance < 0 {
 				util.Logger.Printf("[TRACE] Edge Gateway Modifying structure to deallocate '%d' IPs", -ipBalance)
 				uplinks = edgeGateway.EdgeGateway.EdgeGatewayUplinks
-				edgeGatewayStructure := &types.OpenAPIEdgeGateway{
-					EdgeGatewayUplinks: uplinks,
+				// edgeGatewayStructure := &types.OpenAPIEdgeGateway{
+				// 	EdgeGatewayUplinks: uplinks,
+				// }
+
+				edgeGatewayStructure := &govcd.NsxtEdgeGateway{
+					EdgeGateway: &types.OpenAPIEdgeGateway{
+						EdgeGatewayUplinks: uplinks,
+					},
 				}
 
 				err := edgeGatewayStructure.DeallocateIpCount(-ipBalance)
