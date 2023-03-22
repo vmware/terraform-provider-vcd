@@ -71,7 +71,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"prefix_length": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Netmask address for a subnet (e.g. 24 for /24)",
+							Description: "Prefix length for a subnet (e.g. 24)",
 						},
 						"primary_ip": {
 							Type:        schema.TypeString,
@@ -98,6 +98,59 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 					},
 				},
 			},
+			"subnet_with_total_ip_count": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Exposes IP allocation subnet for this Edge Gateway",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"gateway": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Gateway address for a subnet",
+						},
+						"primary_ip": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Primary IP address for the Edge Gateway",
+						},
+						"prefix_length": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Prefix length for a subnet (e.g. 24)",
+						},
+					},
+				},
+			},
+			"subnet_with_ip_count": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Exposes IP allocation subnet for this Edge Gateway including allocated IP count",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"gateway": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Gateway address for a subnet",
+						},
+						"prefix_length": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Prefix length for a subnet (e.g. 24)",
+						},
+						"primary_ip": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Primary IP address for the Edge Gateway - will be auto-assigned if not defined",
+						},
+						"allocated_ip_count": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Number of IP addresses to allocate",
+						},
+					},
+				},
+			},
 			"primary_ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -107,6 +160,21 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "NSX-T Edge Cluster ID.",
+			},
+			"used_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of used IP addresses",
+			},
+			"unused_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of unused IP addresses",
+			},
+			"total_allocated_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Total number of IP addresses allocated for this Edge Gateway",
 			},
 		},
 	}
@@ -153,7 +221,7 @@ func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("error looking up Edge Gateway - switch did not match any cases")
 	}
 
-	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
+	err = setNsxtEdgeGatewayData(edge, d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error reading NSX-T Edge Gateway data: %s", err))
 	}
