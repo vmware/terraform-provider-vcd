@@ -265,7 +265,6 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				}
 			}
 		}
-
 	}
 	// --------------------------------------------------------------
 	// RDE Types
@@ -486,7 +485,6 @@ func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) er
 				}
 			}
 		}
-
 	}
 
 	return nil
