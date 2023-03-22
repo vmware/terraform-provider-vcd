@@ -4,8 +4,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccVcdRdeDefinedInterfaceDS tests the vcd_rde_interface as both System Administrator and tenant user.

@@ -983,14 +983,14 @@ func importStateIdOrgCatalogObject(objectName string) resource.ImportStateIdFunc
 }
 
 // Used by all entities that depend on Org + VDC + vApp (such as VM, vapp networks)
-func importStateIdVappObject(vappName, objectName string) resource.ImportStateIdFunc {
+func importStateIdVappObject(vappName, objectName, vdc string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappName == "" || objectName == "" {
+		if testConfig.VCD.Org == "" || vappName == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
 			ImportSeparator +
-			testConfig.VCD.Vdc +
+			vdc +
 			ImportSeparator +
 			vappName +
 			ImportSeparator +
