@@ -1,6 +1,53 @@
-## 3.9.0 (TBC)
+## 3.9.0-beta (March 23, 2023)
 
-Changes in progress for v3.9.0 are available at [.changes/v3.9.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.9.0) until the release.
+### FEATURES
+* **New Resource:** `vcd_rde_interface` to manage Runtime Defined Entity Interfaces
+  which are required for using Runtime Defined Entity (RDE) types ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
+* **New Data Source:** `vcd_rde_interface` to fetch existing Runtime Defined Entity Interfaces ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
+* **New Resource:** `vcd_rde_type` to manage Runtime Defined Entity Types
+  which are required for using Runtime Defined Entities (RDEs) ([#973](https://github.com/vmware/terraform-provider-vcd/pull/973))
+* **New Data Source:** `vcd_rde_type` to fetch existing Runtime Defined Entity Types ([#973](https://github.com/vmware/terraform-provider-vcd/pull/973))
+* **New Resource:** `vcd_rde` to manage Runtime Defined Entities ([#977](https://github.com/vmware/terraform-provider-vcd/pull/977))
+* **New Data Source:** `vcd_rde` to fetch existing Runtime Defined Entities ([#977](https://github.com/vmware/terraform-provider-vcd/pull/977))
+* **New Resource:** `vcd_nsxv_distributed_firewall` to create and manage NSX-V distributed firewall ([#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+* **New Data Source:** `vcd_nsxv_distributed_firewall` to fetch existing NSX-V distributed firewall ([#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+* **New Data Source:** `vcd_nsxv_application_finder` to search applications and application groups to use with a NSX-V distributed firewall ([#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+* **New Data Source:** `vcd_nsxv_application` to fetch existing application to use with a NSX-V distributed firewall ([#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+* **New Data Source:** `vcd_nsxv_application_group` to fetch existing application_group to use with a NSX-V distributed firewall ([#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+
+### IMPROVEMENTS
+* `vcd_external_network_v2` allows setting DNS fields `dns1`, `dns2` and `dns_suffix` for NSX-T
+  backed entities so that it can be inherited by direct Org VDC networks ([#984](https://github.com/vmware/terraform-provider-vcd/pull/984)]* `vcd_org_vdc` includes a property `enable_nsxv_distributed_firewall` to enable or disable a NSX-V distributed firewall [[#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+* `vcd_nsxt_edgegateway` resource and data source got automatic IP allocation support using new
+  configuration fields `subnet_with_total_ip_count`, `subnet_with_ip_count` and `total_allocated_ip_count` fields ([#991](https://github.com/vmware/terraform-provider-vcd/pull/991))
+* `vcd_nsxt_edgegateway` resource and data source expose `used_ip_count` and `unused_ip_count`
+  attributes ([#991](https://github.com/vmware/terraform-provider-vcd/pull/991))
+* `vcd_nsxt_alb_settings` resource and data source adds two new fields `is_transparent_mode_enabled`
+  and `ipv6_service_network_specification` ([#996](https://github.com/vmware/terraform-provider-vcd/pull/996))
+* Resources `vcd_vapp_network` and `vcd_vapp_org_network` add convenience flag
+  `reboot_vapp_on_removal`. When enabled, it will power off parent vApp (and power back on after
+  if it was before) during vApp network removal. This improves workflows with VCD 10.4.1+ which
+  returns an error when removing vApp networks from powered on vApps ([#1004](https://github.com/vmware/terraform-provider-vcd/pull/1004))
+* `vcd_org_group` adds `OAUTH` as an option to argument `provider_type` ([#1013](https://github.com/vmware/terraform-provider-vcd/pull/1013))
+* 
+### BUG FIXES
+* Fix a bug that prevented returning a specific error while authenticating provider with invalid
+  password ([#962](https://github.com/vmware/terraform-provider-vcd/pull/962))
+* Add `prefix_length` field to `vcd_vapp_network` as creating IPv6 vApp networks was not supported due to the lack of a suitable subnet representation (Issue #999) ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
+* Remove incorrect default value from `vcd_vapp_network` `netmask` field, as it prevents using IPV6 networks. Users of already defined resources need to add a `netmask = "255.255.255.0"` when using Ipv4 ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
+
+### DEPRECATIONS
+* Deprecate `netmask` in `vcd_vapp_network` ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
+* 
+### NOTES
+* Add missing test name fields for TestAccVcdNsxtEdgeBgpConfigIntegrationVdc and
+  TestAccVcdNsxtEdgeBgpConfigIntegrationVdcGroup ([#958](https://github.com/vmware/terraform-provider-vcd/pull/958))
+* Create `TestAccVcdCatalogRename`, which checks that renaming a catalog works correctly ([#992](https://github.com/vmware/terraform-provider-vcd/pull/992))
+* Bump `terraform-plugin-sdk` to v2.25.0 ([#1002](https://github.com/vmware/terraform-provider-vcd/pull/1002))
+* Bump `golang.org/x/net` to v0.7.0 to address vulnerability reports ([#1002](https://github.com/vmware/terraform-provider-vcd/pull/1002))
+* Removed disk update steps from `TestAccVcdIndependentDiskBasic`, as it was sometimes failing due to a bug in VCD. Created a new one `TestAccVcdIndependentDiskBasicWithUpdates` which will be run only on new releases of VCD (>=v10.4.1) ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014))
+* Increased sleep in between testing steps in `TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms` from 15s to 25s to let VMs get created ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014))
+* Added skipping of `TestAccVcdVsphereSubscriber` and `TestAccVcdSubscribedCatalog` if VCD version is older than v10.4.0 as there was a bug with catalog sharing rights that caused the tests to fail ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014)] * Update `CODING_GUIDELINES.md` with documentation notes [[#1015](https://github.com/vmware/terraform-provider-vcd/pull/1015))
 
 ## 3.8.2 (January 12th, 2023)
 
