@@ -425,7 +425,7 @@ func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) er
 			}
 
 			for _, albEdgeGatewayServiceEngineGroup := range albEdgeGatewayServiceEngineGroups {
-				// Edge Gateay Service Engine Group Assignment does not have names, therefore we use
+				// Edge Gateway Service Engine Group Assignment does not have names, therefore we use
 				// Service Engine Group name as a name for the resource
 				edgeServiceEngineGroupAssignmentName := albEdgeGatewayServiceEngineGroup.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef.Name
 				toBeDeletedAlbEdgeGatewayServiceEngineGroup := shouldDeleteEntity(alsoDelete, doNotDelete, edgeServiceEngineGroupAssignmentName, "vcd_nsxt_alb_edgegateway_service_engine_group", 4, verbose)
