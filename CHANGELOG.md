@@ -29,7 +29,7 @@
   if it was before) during vApp network removal. This improves workflows with VCD 10.4.1+ which
   returns an error when removing vApp networks from powered on vApps ([#1004](https://github.com/vmware/terraform-provider-vcd/pull/1004))
 * `vcd_org_group` adds `OAUTH` as an option to argument `provider_type` ([#1013](https://github.com/vmware/terraform-provider-vcd/pull/1013))
-* 
+
 ### BUG FIXES
 * Fix a bug that prevented returning a specific error while authenticating provider with invalid
   password ([#962](https://github.com/vmware/terraform-provider-vcd/pull/962))
@@ -38,7 +38,7 @@
 
 ### DEPRECATIONS
 * Deprecate `netmask` in `vcd_vapp_network` ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
-* 
+
 ### NOTES
 * Add missing test name fields for TestAccVcdNsxtEdgeBgpConfigIntegrationVdc and
   TestAccVcdNsxtEdgeBgpConfigIntegrationVdcGroup ([#958](https://github.com/vmware/terraform-provider-vcd/pull/958))
