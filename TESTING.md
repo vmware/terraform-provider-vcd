@@ -611,13 +611,12 @@ This function can pause test run in the middle which gives the chance to investi
 (UI, API calls, etc)
 
 ```go
-func sleepTester() resource.TestCheckFunc {
+func sleepTester(d time.Duration) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(4 * time.Minute)
+		fmt.Printf("sleeping %s\n", d.String())
+		time.Sleep(d)
 		fmt.Println("finished sleeping")
 		return nil
 	}
 }
 ```
-
