@@ -256,6 +256,38 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
+	// --------------------------------------------------------------
+	// RDE Types
+	// --------------------------------------------------------------
+	rdeTypes, err := govcdClient.GetAllRdeTypes(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving RDE Types: %s", err)
+	}
+	for _, rdeType := range rdeTypes {
+		rdes, err := rdeType.GetAllRdes(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving RDEs of type %s: %s", rdeType.DefinedEntityType.ID, err)
+		}
+		// --------------------------------------------------------------
+		// RDEs
+		// --------------------------------------------------------------
+		for _, rde := range rdes {
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, rde.DefinedEntity.Name, "vcd_rde", 2, verbose)
+			if toBeDeleted {
+				err = deleteRde(rde)
+				if err != nil {
+					return fmt.Errorf("error deleting RDE '%s' of type '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.EntityType, err)
+				}
+			}
+		}
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, rdeType.DefinedEntityType.Name, "vcd_rde_type", 1, verbose)
+		if toBeDeleted {
+			err = deleteRdeType(rdeType)
+			if err != nil {
+				return fmt.Errorf("error deleting RDE '%s': %s", rdeType.DefinedEntityType.ID, err)
+			}
+		}
+	}
 	return nil
 }
 
@@ -368,4 +400,28 @@ func deleteMediaItem(catalog *govcd.Catalog, mediaRec *types.MediaRecordType) er
 		return fmt.Errorf("error initiating media item '%s' deletion: %s", mediaRec.Name, err)
 	}
 	return task.WaitTaskCompletion()
+}
+
+func deleteRde(rde *govcd.DefinedEntity) error {
+	if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State == "PRE_CREATED" {
+		err := rde.Resolve()
+		if err != nil {
+			return fmt.Errorf("error resolving RDE '%s' before deletion: %s", rde.DefinedEntity.Name, err)
+		}
+	}
+	fmt.Printf("\t\t REMOVING RDE %s WITH TYPE %s\n", rde.DefinedEntity.Name, rde.DefinedEntity.EntityType)
+	err := rde.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting RDE '%s' with type '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.EntityType, err)
+	}
+	return nil
+}
+
+func deleteRdeType(rdeType *govcd.DefinedEntityType) error {
+	fmt.Printf("\t\t REMOVING RDE TYPE %s\n", rdeType.DefinedEntityType.ID)
+	err := rdeType.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting RDE type '%s': %s", rdeType.DefinedEntityType.ID, err)
+	}
+	return nil
 }

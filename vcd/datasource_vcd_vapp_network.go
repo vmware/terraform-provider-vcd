@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -40,6 +41,11 @@ func datasourceVcdVappNetwork() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Netmask address for a subnet",
+			},
+			"prefix_length": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Subnet prefix length",
 			},
 			"gateway": {
 				Type:        schema.TypeString,

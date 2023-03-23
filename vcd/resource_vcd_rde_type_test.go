@@ -4,13 +4,14 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"regexp"
-	"strings"
-	"testing"
 )
 
 func TestAccVcdRdeType(t *testing.T) {
@@ -284,7 +285,7 @@ func TestAccVcdRdeTypeValidation(t *testing.T) {
 }
 
 const testAccVcdRdeTypeWrongFields = `
-# skip-binary: This test checks early failure validations
+# skip-binary-test - This test checks early failure validations
 resource "vcd_rde_type" "rde_type_validation" {
   nss           = "{{.Nss}}"
   version       = "{{.Version}}"
