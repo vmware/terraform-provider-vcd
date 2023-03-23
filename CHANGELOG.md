@@ -2,7 +2,7 @@
 
 ### FEATURES
 * **New Resource:** `vcd_rde_interface` to manage Runtime Defined Entity Interfaces
-  which are required for using Runtime Defined Entity (RDE) types ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
+  which are required for using Runtime Defined Entity (RDE) Types ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
 * **New Data Source:** `vcd_rde_interface` to fetch existing Runtime Defined Entity Interfaces ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
 * **New Resource:** `vcd_rde_type` to manage Runtime Defined Entity Types
   which are required for using Runtime Defined Entities (RDEs) ([#973](https://github.com/vmware/terraform-provider-vcd/pull/973))
@@ -17,7 +17,8 @@
 
 ### IMPROVEMENTS
 * `vcd_external_network_v2` allows setting DNS fields `dns1`, `dns2` and `dns_suffix` for NSX-T
-  backed entities so that it can be inherited by direct Org VDC networks ([#984](https://github.com/vmware/terraform-provider-vcd/pull/984)]* `vcd_org_vdc` includes a property `enable_nsxv_distributed_firewall` to enable or disable a NSX-V distributed firewall [[#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
+  backed entities so that it can be inherited by direct Org VDC networks ([#984](https://github.com/vmware/terraform-provider-vcd/pull/984)]
+* `vcd_org_vdc` includes a property `enable_nsxv_distributed_firewall` to enable or disable a NSX-V distributed firewall [[#988](https://github.com/vmware/terraform-provider-vcd/pull/988))
 * `vcd_nsxt_edgegateway` resource and data source got automatic IP allocation support using new
   configuration fields `subnet_with_total_ip_count`, `subnet_with_ip_count` and `total_allocated_ip_count` fields ([#991](https://github.com/vmware/terraform-provider-vcd/pull/991))
 * `vcd_nsxt_edgegateway` resource and data source expose `used_ip_count` and `unused_ip_count`
@@ -47,7 +48,8 @@
 * Bump `golang.org/x/net` to v0.7.0 to address vulnerability reports ([#1002](https://github.com/vmware/terraform-provider-vcd/pull/1002))
 * Removed disk update steps from `TestAccVcdIndependentDiskBasic`, as it was sometimes failing due to a bug in VCD. Created a new one `TestAccVcdIndependentDiskBasicWithUpdates` which will be run only on new releases of VCD (>=v10.4.1) ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014))
 * Increased sleep in between testing steps in `TestAccVcdNsxtDynamicSecurityGroupVdcGroupCriteriaWithVms` from 15s to 25s to let VMs get created ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014))
-* Added skipping of `TestAccVcdVsphereSubscriber` and `TestAccVcdSubscribedCatalog` if VCD version is older than v10.4.0 as there was a bug with catalog sharing rights that caused the tests to fail ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014)] * Update `CODING_GUIDELINES.md` with documentation notes [[#1015](https://github.com/vmware/terraform-provider-vcd/pull/1015))
+* Added skipping of `TestAccVcdVsphereSubscriber` and `TestAccVcdSubscribedCatalog` if VCD version is older than v10.4.0 as there was a bug with catalog sharing rights that caused the tests to fail ([#1014](https://github.com/vmware/terraform-provider-vcd/pull/1014)]
+* Update `CODING_GUIDELINES.md` with documentation notes [[#1015](https://github.com/vmware/terraform-provider-vcd/pull/1015))
 
 ## 3.8.2 (January 12th, 2023)
 
