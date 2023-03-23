@@ -479,7 +479,6 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
   name                = "solutions_edgegateway"
   external_network_id = vcd_external_network_v2.solutions_tier0.id
 
-  # TODO: Change to automatic allocation!!!
   subnet {
     gateway       = var.solutions_provider_gateway_gateway_ip
     prefix_length = var.solutions_provider_gateway_gateway_prefix_length
@@ -494,12 +493,6 @@ resource "vcd_nsxt_edgegateway" "solutions_edgegateway" {
       }
     }
   }
-
-  #  auto_subnet {
-  #    gateway       = var.solutions_provider_gateway_gateway_ip
-  #    prefix_length = var.solutions_provider_gateway_gateway_prefix_length
-  #    primary_ip    = var.solutions_provider_gateway_static_ip_ranges[0][0]
-  #  }
 }
 
 # This Edge Gateway will consume automatically the available IPs from the Provider Gateway.
@@ -510,7 +503,6 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
   name                = "cluster_edgegateway"
   external_network_id = vcd_external_network_v2.cluster_tier0.id
 
-  # TODO: Change to automatic allocation!!!
   subnet {
     gateway       = var.cluster_provider_gateway_gateway_ip
     prefix_length = var.cluster_provider_gateway_gateway_prefix_length
@@ -525,12 +517,6 @@ resource "vcd_nsxt_edgegateway" "cluster_edgegateway" {
       }
     }
   }
-
-  #  auto_subnet {
-  #    gateway       = var.cluster_provider_gateway_gateway_ip
-  #    prefix_length = var.cluster_provider_gateway_gateway_prefix_length
-  #    primary_ip    = var.cluster_provider_gateway_static_ip_ranges[0][0]
-  #  }
 }
 
 # CSE requires ALB to be configured to support the LoadBalancers that are deployed by the CPI of VMware Cloud Director.
