@@ -5,7 +5,7 @@
 # ------------------------------------------------
 vcd_url                 = "https://vcd.my-awesome-corp.com"
 cluster_author_user     = "cluster-author"
-cluster_author_password = "cluster-author"
+cluster_author_password = "change-me"
 insecure_login          = "false"
 
 # ------------------------------------------------

@@ -36,12 +36,12 @@ locals {
 
     CONTROL_PLANE_MACHINE_COUNT        = 1
     VCD_CONTROL_PLANE_SIZING_POLICY    = var.cluster_sizing_policy
-    VCD_CONTROL_PLANE_PLACEMENT_POLICY = ""
+    VCD_CONTROL_PLANE_PLACEMENT_POLICY = "\"\"" # Not using any placement policy, but it is required in the template
     VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
 
     WORKER_MACHINE_COUNT        = 1
     VCD_WORKER_SIZING_POLICY    = var.cluster_sizing_policy
-    VCD_WORKER_PLACEMENT_POLICY = ""
+    VCD_WORKER_PLACEMENT_POLICY = "\"\"" # Not using any placement policy, but it is required in the template
     VCD_WORKER_STORAGE_PROFILE  = ""
 
     DISK_SIZE         = "20Gi"
