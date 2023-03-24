@@ -93,15 +93,15 @@ resource "vcd_rde" "k8s_cluster_instance" {
   org                = "cluster_org"
   name               = "my-cluster"
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
-  resolve            = false                              # MUST be false as it is resolved by CSE Server
-  resolve_on_removal = true                               # MUST be true as it won't be resolved by Terraform
+  resolve            = false                                   # MUST be false as it is resolved by CSE Server
+  resolve_on_removal = true                                    # MUST be true as it won't be resolved by Terraform
 
   # Read the RDE template present in this repository
   input_entity = templatefile("${path.module}/entities/tkgmcluster-template.json", {
-    vcd_url = replace(var.vcd_api_endpoint, "/api", "")
+    vcd_url = var.vcd_url
     name    = var.k8s_cluster_name
-    org     = vcd_org.cluster_organization.name
-    vdc     = vcd_org_vdc.cluster_vdc.name
+    org     = data.vcd_org.cluster_org.name
+    vdc     = data.vcd_org_vdc.cluster_vdc.name
 
     capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
 
@@ -109,10 +109,6 @@ resource "vcd_rde" "k8s_cluster_instance" {
     force_delete          = false # Make this true to forcefully delete the cluster
     auto_repair_on_errors = true  # Change this to false to troubleshoot possible issues
   })
-
-  depends_on = [
-    time_sleep.wait_120_seconds
-  ]
 }
 
 output "computed_k8s_cluster_id" {

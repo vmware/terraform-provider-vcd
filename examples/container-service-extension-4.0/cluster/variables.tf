@@ -34,8 +34,7 @@ variable "administrator_org" {
 # Kubernetes cluster configuration
 # ------------------------------------------------
 variable "k8s_cluster_name" {
-  description = "The name of the Kubernetes cluster. Name must contain only lowercase alphanumeric characters or '-'" +
-                "start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters (Example: 'MyCluster')"
+  description = "The name of the Kubernetes cluster. Name must contain only lowercase alphanumeric characters or '-' start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters (Example: 'MyCluster')"
   type        = string
 }
 
@@ -65,7 +64,7 @@ variable "cluster_author_user" {
 
 variable "cluster_author_api_token" {
   description = "API token of the Kubernetes cluster author"
-  sensitive = true
+  sensitive   = true
 }
 
 variable "tkgm_catalog" {
