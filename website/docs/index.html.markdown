@@ -6,7 +6,13 @@ description: |-
   The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware Cloud Director Provider 3.9
+# Beta Release of VMware Cloud Director Provider 3.9
+
+## Latest stable version 3.8.2 documentation is [here](3-8-2-docs)
+
+~> We encourage users to try the beta build, and to report errors in the code behavior or in the
+documentation, by opening [an issue][terraform-issues], making sure to indicate that the report is
+about the beta version.
 
 The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
@@ -326,3 +332,6 @@ Cloud Director connection calls can be expensive, and if a definition file conta
 multiple connections. There is a cache engine, disabled by default, which can be activated by the `VCD_CACHE` 
 environment variable. When enabled, the provider will not reconnect, but reuse an active connection for up to 20 
 minutes, and then connect again.
+
+[3-8-2-docs]:https://registry.terraform.io/providers/vmware/vcd/3.8.2/docs
+[terraform-issues]:https://github.com/vmware/terraform-provider-vcd/issues
