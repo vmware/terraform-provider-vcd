@@ -10,11 +10,10 @@ terraform {
 
 provider "vcd" {
   url                  = "${var.vcd_url}/api"
-  user                 = var.cse_admin_username
-  password             = var.cse_admin_password
+  user                 = var.cluster_author_user
+  password             = var.cluster_author_password
   auth_type            = "integrated"
-  sysorg               = var.administrator_org
-  org                  = var.administrator_org
+  org                  = var.cluster_organization
   allow_unverified_ssl = var.insecure_login
   logging              = true
   logging_file         = "cse_cluster_creation.log"
@@ -61,7 +60,6 @@ data "vcd_rde_type" "capvcdcluster_type" {
 }
 
 resource "vcd_rde" "k8s_cluster_instance" {
-  org                = "cluster_org"
   name               = var.k8s_cluster_name
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
   resolve            = false                                   # MUST be false as it is resolved by CSE Server

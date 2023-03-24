@@ -13,13 +13,12 @@ variable "insecure_login" {
   default     = false
 }
 
-variable "cse_admin_username" {
-  description = "The CSE administrator user"
-  type        = string
+variable "cluster_author_user" {
+  description = "Username of the Kubernetes cluster author"
 }
 
-variable "cse_admin_password" {
-  description = "The CSE administrator password"
+variable "cluster_author_password" {
+  description = "Password of the Kubernetes cluster author"
   type        = string
   sensitive   = true
 }
@@ -52,10 +51,6 @@ variable "cluster_routed_network" {
 
 variable "cluster_sizing_policy" {
   description = "The VM sizing policy used for the Kubernetes cluster"
-}
-
-variable "cluster_author_user" {
-  description = "Username of the Kubernetes cluster author"
 }
 
 variable "cluster_author_api_token" {
