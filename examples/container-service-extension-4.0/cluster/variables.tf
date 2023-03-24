@@ -43,6 +43,35 @@ variable "cluster_organization" {
   description = "The Organization that will host the Kubernetes cluster"
 }
 
+variable "solutions_organization" {
+  description = "The Organization that has the TKGm OVAs"
+}
+
 variable "cluster_vdc" {
   description = "The VDC that will host the Kubernetes cluster"
+}
+
+variable "cluster_routed_network" {
+  description = "The routed network used for the Kubernetes cluster"
+}
+
+variable "cluster_sizing_policy" {
+  description = "The VM sizing policy used for the Kubernetes cluster"
+}
+
+variable "cluster_author_user" {
+  description = "Username of the Kubernetes cluster author"
+}
+
+variable "cluster_author_api_token" {
+  description = "API token of the Kubernetes cluster author"
+  sensitive = true
+}
+
+variable "tkgm_catalog" {
+  description = "The TKGm Catalog used to pick the OVAs to create the Kubernetes cluster"
+}
+
+variable "tkgm_ova" {
+  description = "The TKGm OVA to create the Kubernetes cluster"
 }

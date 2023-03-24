@@ -24,9 +24,35 @@ data "vcd_org" "cluster_org" {
   name = var.cluster_organization
 }
 
-data "vcd_org_vdc" "cluster_org" {
-  org = data.vcd_org.cluster_org
+data "vcd_org_vdc" "cluster_vdc" {
+  org  = data.vcd_org.cluster_org
   name = var.cluster_vdc
+}
+
+data "vcd_external_network_v2" "cluster_routed_network" {
+  org  = data.vcd_org.cluster_org
+  name = var.cluster_routed_network
+}
+
+data "vcd_vm_sizing_policy" "tkg_s" {
+  name = var.cluster_routed_network
+}
+
+data "vcd_catalog" "tkgm_catalog" {
+  name = var.tkgm_catalog
+  org  = var.solutions_organization
+}
+
+data "vcd_catalog_vapp_template" "tkgm_ova" {
+  org        = var.solutions_organization
+  catalog_id = data.vcd_catalog.tkgm_catalog.id
+  name       = var.tkgm_ova
+}
+
+data "vcd_rde_type" "capvcdcluster_type" {
+  vendor  = "vmware"
+  nss     = "capvcdCluster"
+  version = "1.0.0"
 }
 
 locals {
@@ -36,45 +62,37 @@ locals {
 
     VCD_SITE                     = var.vcd_url
     VCD_ORGANIZATION             = data.vcd_org.cluster_org.name
-    VCD_ORGANIZATION_VDC         = vcd_org_vdc.cluster_vdc.name
-    VCD_ORGANIZATION_VDC_NETWORK = vcd_network_routed_v2.cluster_routed_network.name
+    VCD_ORGANIZATION_VDC         = data.vcd_org_vdc.cluster_vdc.name
+    VCD_ORGANIZATION_VDC_NETWORK = data.vcd_external_network_v2.cluster_routed_network.name
 
-    VCD_USERNAME_B64      = base64encode(var.k8s_cluster_user)
+    VCD_USERNAME_B64      = base64encode(var.cluster_author_user)
     VCD_PASSWORD_B64      = "" # We use an API token, which is recommended
-    VCD_REFRESH_TOKEN_B64 = base64encode(var.k8s_cluster_api_token)
+    VCD_REFRESH_TOKEN_B64 = base64encode(var.cluster_author_api_token)
     SSH_PUBLIC_KEY        = ""
 
     CONTROL_PLANE_MACHINE_COUNT        = 1
-    VCD_CONTROL_PLANE_SIZING_POLICY    = vcd_vm_sizing_policy.tkg_m.name
+    VCD_CONTROL_PLANE_SIZING_POLICY    = data.vcd_vm_sizing_policy.tkg_s.name
     VCD_CONTROL_PLANE_PLACEMENT_POLICY = ""
     VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
 
     WORKER_MACHINE_COUNT        = 1
-    VCD_WORKER_SIZING_POLICY    = vcd_vm_sizing_policy.tkg_m.name
+    VCD_WORKER_SIZING_POLICY    = data.vcd_vm_sizing_policy.tkg_s.name
     VCD_WORKER_PLACEMENT_POLICY = ""
     VCD_WORKER_STORAGE_PROFILE  = ""
 
     DISK_SIZE         = "20Gi"
-    VCD_CATALOG       = vcd_catalog.cse_catalog.name
-    VCD_TEMPLATE_NAME = replace(var.tkgm_ova_name, ".ova", "")
+    VCD_CATALOG       = data.vcd_catalog.tkgm_catalog.name
+    VCD_TEMPLATE_NAME = data.vcd_catalog_vapp_template.tkgm_ova.name
 
     POD_CIDR     = "100.96.0.0/11"
     SERVICE_CIDR = "100.64.0.0/13"
   })
 }
 
-# Wait until CSE VM is fully initialized
-resource "time_sleep" "wait_120_seconds" {
-  depends_on = [
-    vcd_vapp_vm.cse_appliance_vm, vcd_catalog_vapp_template.tkgm_ova
-  ]
-  create_duration = "120s"
-}
-
 resource "vcd_rde" "k8s_cluster_instance" {
   org                = "cluster_org"
   name               = "my-cluster"
-  rde_type_id        = vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
+  rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
   resolve            = false                              # MUST be false as it is resolved by CSE Server
   resolve_on_removal = true                               # MUST be true as it won't be resolved by Terraform
 

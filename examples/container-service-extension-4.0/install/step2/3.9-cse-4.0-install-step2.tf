@@ -298,7 +298,7 @@ resource "vcd_catalog_vapp_template" "cse_ova" {
 data "vcd_rde_type" "existing_capvcdcluster_type" {
   vendor  = "vmware"
   nss     = "capvcdCluster"
-  version = "1.1.0"
+  version = "1.0.0"
 }
 
 # This resource manages the Rights Bundle required by tenants to create and consume Kubernetes clusters.
