@@ -12,15 +12,15 @@
     "vcdKe": {
       "isVCDKECluster": true,
       "markForDelete": ${delete},
-"forceDelete": ${force_delete},
-"autoRepairOnErrors": ${auto_repair_on_errors},
-"defaultStorageClassOptions": {
-"filesystem": null,
-"k8sStorageClassName": null,
-"vcdStorageProfileName": null,
-"useDeleteReclaimPolicy": null
-}
-},
-"capiYaml": "${capi_yaml}"
-}
+      "forceDelete": ${force_delete},
+      "autoRepairOnErrors": ${auto_repair_on_errors},
+      "defaultStorageClassOptions": {
+      "filesystem": null,
+      "k8sStorageClassName": null,
+      "vcdStorageProfileName": null,
+      "useDeleteReclaimPolicy": null
+      }
+    },
+    "capiYaml": "${capi_yaml}"
+  }
 }
