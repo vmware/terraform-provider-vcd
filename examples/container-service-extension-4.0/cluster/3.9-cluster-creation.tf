@@ -30,7 +30,6 @@ data "vcd_org_vdc" "cluster_vdc" {
 }
 
 data "vcd_external_network_v2" "cluster_routed_network" {
-  org  = data.vcd_org.cluster_org
   name = var.cluster_routed_network
 }
 
@@ -97,7 +96,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
   resolve_on_removal = true                                    # MUST be true as it won't be resolved by Terraform
 
   # Read the RDE template present in this repository
-  input_entity = templatefile("${path.module}/entities/tkgmcluster-template.json", {
+  input_entity = templatefile("../entities/tkgmcluster-template.json", {
     vcd_url = var.vcd_url
     name    = var.k8s_cluster_name
     org     = data.vcd_org.cluster_org.name
