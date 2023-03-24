@@ -12,8 +12,8 @@ description: |-
 documentation, by opening [an issue](https://github.com/vmware/terraform-provider-vcd/issues),
 making sure to indicate that the report is about the beta version.
 
-To use **beta** version, it **must be selected by an exact version constraint** (the `=` operator
-or no operator). Prerelease versions do not match inexact operators such as >=, ~>, etc. as per
+To use **beta** version, it **must be selected by an exact version constraint** (the `=` operator or
+no operator). Prerelease versions do not match inexact operators such as `>=`, `~>`, etc. as per
 [Hashicorp
 documentation](https://developer.hashicorp.com/terraform/language/expressions/version-constraints#version-constraint-behavior).
 
