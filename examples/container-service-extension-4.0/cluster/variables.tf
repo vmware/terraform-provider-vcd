@@ -42,10 +42,6 @@ variable "cluster_organization" {
   description = "The Organization that will host the Kubernetes cluster"
 }
 
-variable "solutions_organization" {
-  description = "The Organization that has the TKGm OVAs"
-}
-
 variable "cluster_vdc" {
   description = "The VDC that will host the Kubernetes cluster"
 }

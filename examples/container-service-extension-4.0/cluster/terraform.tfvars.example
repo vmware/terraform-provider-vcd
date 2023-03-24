@@ -1,0 +1,24 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+
+# ------------------------------------------------
+# Provider config
+# ------------------------------------------------
+vcd_url            = "https://vcd.my-awesome-corp.com"
+cse_admin_username = "cse-admin"
+cse_admin_password = "change-me"
+administrator_org  = "System"
+insecure_login     = "false"
+
+# ------------------------------------------------
+# Kubernetes cluster configuration
+# ------------------------------------------------
+k8s_cluster_name         = "example1"
+cluster_organization     = "cluster_org"
+cluster_vdc              = "cluster_vdc"
+cluster_routed_network   = "cluster_net_routed"
+cluster_sizing_policy    = "tkg_s"
+cluster_author_user      = "cluster-author"
+cluster_author_api_token = "change-me"
+
+tkgm_catalog = "tkgm_catalog"
+tkgm_ova     = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933"
