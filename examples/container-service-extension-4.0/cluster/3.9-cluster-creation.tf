@@ -62,7 +62,7 @@ data "vcd_rde_type" "capvcdcluster_type" {
 
 resource "vcd_rde" "k8s_cluster_instance" {
   org                = "cluster_org"
-  name               = "my-cluster"
+  name               = var.k8s_cluster_name
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
   resolve            = false                                   # MUST be false as it is resolved by CSE Server
   resolve_on_removal = true                                    # MUST be true as it won't be resolved by Terraform

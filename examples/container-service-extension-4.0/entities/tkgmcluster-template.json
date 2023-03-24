@@ -1,5 +1,5 @@
 {
-  "apiVersion": "capvcd.vmware.com/v1.1",
+  "apiVersion": "capvcd.vmware.com/v1.0",
   "kind": "CAPVCDCluster",
   "name": "${name}",
   "metadata": {
