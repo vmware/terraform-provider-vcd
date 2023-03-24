@@ -9,8 +9,8 @@ description: |-
 # VMware Cloud Director Provider 3.9 (v3.9.0-beta.2)
 
 -> We encourage users to try the **beta** build, and to report errors in the code behavior or in the
-documentation, by opening [an issue](https://github.com/vmware/terraform-provider-vcd/issues),
-making sure to indicate that the report is about the beta version.
+documentation, by opening [an issue](https://github.com/vmware/terraform-provider-vcd/issues)
+and indicating that the report is about the beta version.
 
 To use **beta** version, it **must be selected by an exact version constraint** (the `=` operator or
 no operator). Prerelease versions do not match inexact operators such as `>=`, `~>`, etc. as per
