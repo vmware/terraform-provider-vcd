@@ -11,7 +11,7 @@ description: |-
 ## About
 
 This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v4.0, that
-will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using the UI.
+will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using Terraform.
 
 To know more about CSE v4.0, you can visit [the documentation][cse_docs].
 
@@ -311,7 +311,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 ## Uninstall CSE
 
-~> Before uninstalling CSE, make sure you mark all clusters for deletion in VCD UI.
+~> Before uninstalling CSE, make sure you mark all clusters for deletion in your Terraform configuration.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
 
