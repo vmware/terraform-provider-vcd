@@ -66,6 +66,8 @@ The following arguments are supported:
 * `schema` - (Optional) A string that specifies a valid JSON schema. It can be retrieved with Terraform functions such as `file`, `templatefile`, etc. Either `schema` or `schema_url` is required.
 * `schema_url` - (Optional) The URL that points to a valid JSON schema. Either `schema` or `schema_url` is required.
   If `schema_url` is used, the downloaded schema will be computed in the `schema` attribute.
+  The referenced JSON schema will be downloaded on every read operation, and it will break Terraform operations if these contents are no longer present on the remote site.
+  If you can't guarantee this, it is safer to use `schema`.
 * `external_id` - (Optional) An external entity's ID that this Runtime Defined Entity Type may apply to.
 * `inherited_version` - (Optional) To be used when creating a new version of a Runtime Defined Entity Type.
   Specifies the version of the type that will be the template for the authorization configuration of the new version.

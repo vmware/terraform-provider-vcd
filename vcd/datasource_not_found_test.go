@@ -78,9 +78,9 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			if !usingSysAdmin() {
 				t.Skip(`Works only with system admin privileges`)
 			}
-		// vcd_resource_list, vcd_resource_schema, and vcd_nsxv_service_finder don't produce a single entity
+		// vcd_resource_list, vcd_resource_schema, and vcd_nsxv_application_finder don't produce a single entity
 		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema" ||
-			dataSourceName == "vcd_nsxv_service_finder":
+			dataSourceName == "vcd_nsxv_application_finder":
 			t.Skip(`not a real data source`)
 		}
 
@@ -297,6 +297,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `nss = "notexisting"` + "\n"
 		case "version":
 			templateFields = templateFields + `version = "9.9.9"` + "\n"
+		case "rde_type_id":
+			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:donotexist:donotexist:9.9.9"` + "\n"
 		}
 	}
 

@@ -1,0 +1,13 @@
+{
+  "bar": "stringValue2",
+  "foo": {
+    "key": "stringValue"
+  },
+  "prop2": {
+    "subprop1": "stringValue3",
+    "subprop2": [
+      "stringValue4",
+      "stringValue5"
+    ]
+  }
+}
