@@ -80,12 +80,12 @@ function check_for_config_file {
 function unit_test {
     if [ -n "$VERBOSE" ]
     then
-        echo "go test -race -i ${TEST} || exit 1"
+        echo "go test -race -tags unit ${TEST} || exit 1"
         echo "go test -race -tags unit -v -timeout 5m"
     fi
     if [ -z "$DRY_RUN" ]
     then
-        go test -race -i ${TEST} || exit 1
+        go test -race -tags unit ${TEST} || exit 1
         go test -race -tags unit -v -timeout 5m
     fi
 }
@@ -99,12 +99,10 @@ function short_test {
     fi
     if [ -n "$VERBOSE" ]
     then
-        echo "go test -race  -i ${TEST} || exit 1"
-        echo "VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 5m"
+        echo "VCD_SHORT_TEST=1 go test -race -tags 'functional $MORE_TAGS' -v -timeout 5m"
     fi
     if [ -z "$DRY_RUN" ]
     then
-        go test -race -i ${TEST} || exit 1
         VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 5m
         check_exit_code
     fi
