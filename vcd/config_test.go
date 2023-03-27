@@ -150,6 +150,7 @@ type TestConfig struct {
 		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
 		NsxtAlbControllerPassword string `json:"nsxtAlbControllerPassword"`
 		NsxtAlbImportableCloud    string `json:"nsxtAlbImportableCloud"`
+		NsxtAlbServiceEngineGroup string `json:"nsxtAlbServiceEngineGroup"`
 		RoutedNetwork             string `json:"routedNetwork"`
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
