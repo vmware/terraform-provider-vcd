@@ -99,7 +99,7 @@ func resourceVcdAlbPool() *schema.Resource {
 			"member_group_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "ID of Firewall Group to use for pool Membership (VCD 10.4.1+)",
+				Description:   "ID of Firewall Group to use for Pool Membership (VCD 10.4.1+)",
 				ConflictsWith: []string{"member"},
 			},
 			"health_monitor": {

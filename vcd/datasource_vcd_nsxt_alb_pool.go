@@ -113,7 +113,7 @@ func datasourceVcdAlbPool() *schema.Resource {
 			"member_group_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of Firewall Group to use for pool Membership (VCD 10.4.1+)",
+				Description: "ID of Firewall Group to use for Pool Membership (VCD 10.4.1+)",
 			},
 			"health_monitor": {
 				Type:     schema.TypeSet,
