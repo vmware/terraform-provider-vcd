@@ -56,7 +56,7 @@ locals {
 data "vcd_rde_type" "capvcdcluster_type" {
   vendor  = "vmware"
   nss     = "capvcdCluster"
-  version = "1.0.0"
+  version = "1.1.0"
 }
 
 resource "vcd_rde" "k8s_cluster_instance" {
