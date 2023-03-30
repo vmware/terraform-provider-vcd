@@ -598,7 +598,8 @@ resource "vcd_network_routed_v2" "solutions_routed_network" {
     end_address   = var.solutions_routed_network_ip_pool_end_address
   }
 
-  dns1 = var.solutions_routed_network_dns
+  dns1       = var.solutions_routed_network_dns
+  dns_suffix = var.solutions_routed_network_dns_suffix
 }
 
 # We create a Routed network in the Cluster organization that will be used by the Kubernetes clusters.
@@ -617,7 +618,8 @@ resource "vcd_network_routed_v2" "cluster_routed_network" {
     end_address   = var.cluster_routed_network_ip_pool_end_address
   }
 
-  dns1 = var.solutions_routed_network_dns
+  dns1       = var.cluster_routed_network_dns
+  dns_suffix = var.cluster_routed_network_dns_suffix
 }
 
 # We need SNAT rules in both networks to provide with Internet connectivity.

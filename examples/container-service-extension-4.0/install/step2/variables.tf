@@ -174,6 +174,12 @@ variable "solutions_routed_network_dns" {
   default     = ""
 }
 
+variable "solutions_routed_network_dns_suffix" {
+  description = "Custom DNS suffix to use for the Solutions routed network"
+  type        = string
+  default     = ""
+}
+
 variable "cluster_routed_network_gateway_ip" {
   description = "Gateway IP for the Cluster routed network"
   type        = string
@@ -206,6 +212,12 @@ variable "cluster_snat_internal_subnet" {
 
 variable "cluster_routed_network_dns" {
   description = "Custom DNS server IP to use for the Cluster routed network"
+  type        = string
+  default     = ""
+}
+
+variable "cluster_routed_network_dns_suffix" {
+  description = "Custom DNS suffix to use for the Cluster routed network"
   type        = string
   default     = ""
 }
