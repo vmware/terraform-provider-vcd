@@ -133,6 +133,9 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
+~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
+on upload speed.
+
 If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
 ### "Kubernetes Cluster Author" global role
@@ -244,8 +247,13 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Final considerations
 
+To manage CSE clusters with the UI, you can [download the Kubernetes Container Clusters UI plug-in 4.0][cse_docs]
+and install it in your VCD appliance. If the old CSE 3.x plugin is installed, you will need to remove it first. The plugin
+will allow tenants to create Kubernetes clusters with the UI wizard. Providers should still use the proposed Terraform configuration
+to perform updates on the CSE Server (see sections below).
+
 To evaluate the correctness of the setup, you can look up the CSE logs present in the CSE Server VM.
-You can visit [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html)
+You can visit [the documentation][cse_docs]
 to learn how to monitor the logs and troubleshoot possible problems.
 
 ## Update CSE Server
