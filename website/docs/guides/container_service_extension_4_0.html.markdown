@@ -79,7 +79,7 @@ The [proposed configuration][step2] will create two new [Organizations][org], as
 
 - A Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Server.
   It should only be accessible to the CSE Administrator and Providers.
-- A Cluster [Organization][org]: This [Organization][org] will host the TKGm clusters for the users of this tenant to consume them.
+- A Tenant [Organization][org]: This [Organization][org] will host the TKGm clusters for the users of this tenant to consume them.
 
 If you already have these two [Organizations][org] created and you want to use them instead, you can leverage customising the [proposed configuration][step2]
 to use the Organization [data source][org_d] to fetch them.
@@ -93,12 +93,12 @@ The [proposed configuration][step2] will create four VM Sizing Policies:
 - `TKG medium`: 2 CPUs, 8GB RAM.
 - `TKG small`: 2 CPU, 4GB RAM.
 
-These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Cluster
+These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Tenant
 Organization's VDC to be able to dimension the created TKGm clusters (see section below).
 
 #### VDCs
 
-The [proposed configuration][step2] will create two [VDCs][vdc], one for the Solutions Organization and another one for the Cluster Organization.
+The [proposed configuration][step2] will create two [VDCs][vdc], one for the Solutions Organization and another one for the Tenant Organization.
 
 You need to specify the following values in `terraform.tfvars`:
 
@@ -111,7 +111,7 @@ You need to specify the following values in `terraform.tfvars`:
 - `network_pool_name`: This references an existing Network pool and it's used to create both VDCs.
   If you are going to use more than one Network pool, please consider modifying the proposed configuration.
 
-In the [proposed configuration][step2] the Cluster Organization's VDC has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
+In the [proposed configuration][step2] the Tenant Organization's VDC has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
 You can customise it to make any other TKG policy the default one.
 
 You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization. Also,
@@ -132,6 +132,9 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 - `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.0.1.ova`.
 
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
+
+~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
+on upload speed.
 
 If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
@@ -179,11 +182,11 @@ In order to create all the items listed above, the [proposed configuration][step
     ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
   ]
   ```
-- `cluster_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateways][provider_gateway] in the Cluster Organization.
+- `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateways][provider_gateway] in the Tenant Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
-- `cluster_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Cluster Organization.
-- `cluster_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
-- `cluster_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Cluster Organization.
+- `tenant_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Tenant Organization.
+- `tenant_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
+- `tenant_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Tenant Organization.
   At least one IP is required.
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
@@ -205,20 +208,20 @@ In order to create all the items listed above, the [proposed configuration][step
   defines the end usable IP.
 - `solutions_snat_external_ip`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The external IP should be one available IP of the Solutions
   [Provider Gateway][provider_gateway].
-- `solutions_snat_internal_subnet`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
+- `solutions_snat_internal_network_cidr`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
   Organization [Routed network][routed_network].
 - `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed_network]. It can be left blank if it's not needed.
-- `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Cluster Organization.
-- `cluster_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Cluster Organization.
-- `cluster_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Cluster Organization will have a pool of usable IPs, this field
+- `tenant_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Tenant Organization.
+- `tenant_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Tenant Organization.
+- `tenant_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Tenant Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `cluster_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Cluster Organization will have a pool of usable IPs, this field
+- `tenant_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Tenant Organization will have a pool of usable IPs, this field
   defines the end usable IP.
-- `cluster_snat_external_ip`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The external IP should be one available IP of the Cluster
+- `tenant_snat_external_ip`: This is used to create a SNAT rule on the Tenant Edge Gateway to provide Internet connectivity to the clusters. The external IP should be one available IP of the Tenant
   [Provider Gateway][provider_gateway].
-- `cluster_snat_internal_subnet`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Cluster
+- `tenant_snat_internal_network_cidr`: This is used to create a SNAT rule on the Tenant Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Tenant
   Organization [Routed network][routed_network].
-- `cluster_routed_network_dns`: DNS Server for the Cluster Organization [Routed network][routed_network]. It can be left blank if it's not needed.
+- `tenant_routed_network_dns`: DNS Server for the Tenant Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 
 If you wish to have a different networking setup, please modify the [proposed configuration][step2].
 
@@ -236,7 +239,7 @@ In order to do so, the [configuration][step2] asks for the following variables t
 - `cpi_version`: The version for CPI. It should be "1.2.0" for CSE v4.0.
 - `csi_version`: The version for CSI. It should be "1.3.0" for CSE v4.0.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
-  this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
+  this will avoid installation errors caused by GitHub rate limiting, as the TKGm tenant creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
 - `cse_admin_user`: This should reference the CSE Administrator [User][user] that was created in Step 1.
@@ -244,8 +247,13 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Final considerations
 
+To manage CSE clusters with the UI, you can [download the Kubernetes Container Clusters UI plug-in 4.0][cse_docs]
+and install it in your VCD appliance. If the old CSE 3.x plugin is installed, you will need to remove it first. The plugin
+will allow tenants to create Kubernetes clusters with the UI wizard. Providers should still use the proposed Terraform configuration
+to perform updates on the CSE Server (see sections below).
+
 To evaluate the correctness of the setup, you can look up the CSE logs present in the CSE Server VM.
-You can visit [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html)
+You can visit [the documentation][cse_docs]
 to learn how to monitor the logs and troubleshoot possible problems.
 
 ## Update CSE Server

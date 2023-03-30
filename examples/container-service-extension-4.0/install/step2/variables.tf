@@ -118,24 +118,24 @@ variable "solutions_provider_gateway_static_ip_ranges" {
   description = "List of pairs of public IPs for the Solutions Provider Gateway"
 }
 
-variable "cluster_nsxt_tier0_router_name" {
-  description = "Name of an existing NSX-T tier-0 router to create the Cluster Provider Gateway"
+variable "tenant_nsxt_tier0_router_name" {
+  description = "Name of an existing NSX-T tier-0 router to create the Tenant Provider Gateway"
   type        = string
 }
 
-variable "cluster_provider_gateway_gateway_ip" {
-  description = "Gateway IP for the Cluster Provider Gateway"
+variable "tenant_provider_gateway_gateway_ip" {
+  description = "Gateway IP for the Tenant Provider Gateway"
   type        = string
 }
 
-variable "cluster_provider_gateway_gateway_prefix_length" {
-  description = "Prefix length for the Cluster Provider Gateway"
+variable "tenant_provider_gateway_gateway_prefix_length" {
+  description = "Prefix length for the Tenant Provider Gateway"
   type        = string
 }
 
-variable "cluster_provider_gateway_static_ip_ranges" {
+variable "tenant_provider_gateway_static_ip_ranges" {
   type        = list(list(string))
-  description = "List of pairs of public IPs for the Solutions Provider Gateway"
+  description = "List of pairs of public IPs for the Tenant Provider Gateway"
 }
 
 variable "solutions_routed_network_gateway_ip" {
@@ -163,7 +163,7 @@ variable "solutions_snat_external_ip" {
   type        = string
 }
 
-variable "solutions_snat_internal_subnet" {
+variable "solutions_snat_internal_network_cidr" {
   description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
   type        = string
 }
@@ -174,38 +174,50 @@ variable "solutions_routed_network_dns" {
   default     = ""
 }
 
-variable "cluster_routed_network_gateway_ip" {
-  description = "Gateway IP for the Cluster routed network"
+variable "solutions_routed_network_dns_suffix" {
+  description = "Custom DNS suffix to use for the Solutions routed network"
+  type        = string
+  default     = ""
+}
+
+variable "tenant_routed_network_gateway_ip" {
+  description = "Gateway IP for the Tenant routed network"
   type        = string
 }
 
-variable "cluster_routed_network_prefix_length" {
-  description = "Prefix length for the Cluster routed network"
+variable "tenant_routed_network_prefix_length" {
+  description = "Prefix length for the Tenant routed network"
   type        = string
 }
 
-variable "cluster_routed_network_ip_pool_start_address" {
-  description = "Start address for the IP pool of the Cluster routed network"
+variable "tenant_routed_network_ip_pool_start_address" {
+  description = "Start address for the IP pool of the Tenant routed network"
   type        = string
 }
 
-variable "cluster_routed_network_ip_pool_end_address" {
-  description = "End address for the IP pool of the Cluster routed network"
+variable "tenant_routed_network_ip_pool_end_address" {
+  description = "End address for the IP pool of the Tenant routed network"
   type        = string
 }
 
-variable "cluster_snat_external_ip" {
+variable "tenant_snat_external_ip" {
   description = "Used to create a SNAT rule to allow connectivity. This specifies the external IP, which should be one of the Provider Gateway available IPs"
   type        = string
 }
 
-variable "cluster_snat_internal_subnet" {
+variable "tenant_snat_internal_network_cidr" {
   description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
   type        = string
 }
 
-variable "cluster_routed_network_dns" {
-  description = "Custom DNS server IP to use for the Cluster routed network"
+variable "tenant_routed_network_dns" {
+  description = "Custom DNS server IP to use for the Tenant routed network"
+  type        = string
+  default     = ""
+}
+
+variable "tenant_routed_network_dns_suffix" {
+  description = "Custom DNS suffix to use for the Tenant routed network"
   type        = string
   default     = ""
 }
