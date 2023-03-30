@@ -163,7 +163,7 @@ variable "solutions_snat_external_ip" {
   type        = string
 }
 
-variable "solutions_snat_internal_subnet" {
+variable "solutions_snat_internal_network_cidr" {
   description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
   type        = string
 }
@@ -205,7 +205,7 @@ variable "cluster_snat_external_ip" {
   type        = string
 }
 
-variable "cluster_snat_internal_subnet" {
+variable "cluster_snat_internal_network_cidr" {
   description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
   type        = string
 }

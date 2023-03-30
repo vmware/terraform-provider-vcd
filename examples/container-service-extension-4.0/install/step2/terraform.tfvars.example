@@ -58,7 +58,7 @@ solutions_routed_network_prefix_length         = "24"             # Required. Pr
 solutions_routed_network_ip_pool_start_address = "192.168.0.2"    # Required. First IP for the Routed network pool
 solutions_routed_network_ip_pool_end_address   = "192.168.0.254"  # Required. Last IP for the Routed network pool
 solutions_snat_external_ip                     = "10.20.30.25"    # Required. For example, pick the last IP from solutions_provider_gateway_static_ip_ranges
-solutions_snat_internal_subnet                 = "192.168.0.0/24" # Required. It should match the Routed network IP addresses
+solutions_snat_internal_network_cidr           = "192.168.0.0/24" # Required. It should match the Routed network IP addresses
 solutions_routed_network_dns                   = ""               # Optional, if you need DNS
 solutions_routed_network_dns_suffix            = ""               # Optional, if you need DNS
 
@@ -67,7 +67,7 @@ cluster_routed_network_prefix_length         = "16"           # Required. Prefix
 cluster_routed_network_ip_pool_start_address = "10.0.0.2"     # Required. First IP for the Routed network pool
 cluster_routed_network_ip_pool_end_address   = "10.0.255.254" # Required. Last IP for the Routed network pool
 cluster_snat_external_ip                     = "10.30.20.37"  # Required. For example, pick the last IP from cluster_provider_gateway_static_ip_ranges
-cluster_snat_internal_subnet                 = "10.0.0.0/16"  # Required. It should match the Routed network IP addresses
+cluster_snat_internal_network_cidr           = "10.0.0.0/16"  # Required. It should match the Routed network IP addresses
 cluster_routed_network_dns                   = ""             # Optional, if you need DNS
 cluster_routed_network_dns_suffix            = ""             # Optional, if you need DNS
 

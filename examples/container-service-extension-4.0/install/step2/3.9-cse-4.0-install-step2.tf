@@ -632,7 +632,7 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
   description = "Solutions SNAT rule"
 
   external_address = var.solutions_snat_external_ip
-  internal_address = var.solutions_snat_internal_subnet
+  internal_address = var.solutions_snat_internal_network_cidr
   logging          = true
 }
 
@@ -645,7 +645,7 @@ resource "vcd_nsxt_nat_rule" "cluster_nat" {
   description = "Cluster SNAT rule"
 
   external_address = var.cluster_snat_external_ip
-  internal_address = var.cluster_snat_internal_subnet
+  internal_address = var.cluster_snat_internal_network_cidr
   logging          = true
 }
 

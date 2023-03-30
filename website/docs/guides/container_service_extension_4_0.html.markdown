@@ -205,7 +205,7 @@ In order to create all the items listed above, the [proposed configuration][step
   defines the end usable IP.
 - `solutions_snat_external_ip`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The external IP should be one available IP of the Solutions
   [Provider Gateway][provider_gateway].
-- `solutions_snat_internal_subnet`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
+- `solutions_snat_internal_network_cidr`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
   Organization [Routed network][routed_network].
 - `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 - `cluster_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Cluster Organization.
@@ -216,7 +216,7 @@ In order to create all the items listed above, the [proposed configuration][step
   defines the end usable IP.
 - `cluster_snat_external_ip`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The external IP should be one available IP of the Cluster
   [Provider Gateway][provider_gateway].
-- `cluster_snat_internal_subnet`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Cluster
+- `cluster_snat_internal_network_cidr`: This is used to create a SNAT rule on the Cluster Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Cluster
   Organization [Routed network][routed_network].
 - `cluster_routed_network_dns`: DNS Server for the Cluster Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 
