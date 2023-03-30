@@ -22,7 +22,8 @@ network_pool_name      = "change-me" # An existing network pool that can be used
 # ------------------------------------------------
 # Catalog and OVAs
 # ------------------------------------------------
-# These variables are required to upload the necessary OVAs to the Solutions Organization shared catalog
+# These variables are required to upload the necessary OVAs to the Solutions Organization shared catalog.
+# You can find the download links in the guide referenced at the top of this file.
 tkgm_ova_folder = "/home/changeme/tkgm-folder"                                                   # An existing absolute path to a folder containing TKGm OVAs
 tkgm_ova_file   = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova" # An existing TKGm OVA
 cse_ova_folder  = "/home/changeme/cse-folder"                                                    # An existing absolute path to a folder containing CSE Server OVAs
@@ -45,10 +46,10 @@ solutions_provider_gateway_static_ip_ranges = [
 ]
 
 # These are all required to create the Tenant Organization Provider Gateway
-cluster_nsxt_tier0_router_name                 = "change-me"
-cluster_provider_gateway_gateway_ip            = "10.30.20.150"
-cluster_provider_gateway_gateway_prefix_length = "19"
-cluster_provider_gateway_static_ip_ranges = [
+tenant_nsxt_tier0_router_name                 = "change-me"
+tenant_provider_gateway_gateway_ip            = "10.30.20.150"
+tenant_provider_gateway_gateway_prefix_length = "19"
+tenant_provider_gateway_static_ip_ranges = [
   ["10.30.20.14", "10.30.20.14"], # Single IP
   ["10.30.20.30", "10.30.20.37"], # Many IPs
 ]
@@ -62,14 +63,14 @@ solutions_snat_internal_network_cidr           = "192.168.0.0/24" # Required. It
 solutions_routed_network_dns                   = ""               # Optional, if you need DNS
 solutions_routed_network_dns_suffix            = ""               # Optional, if you need DNS
 
-cluster_routed_network_gateway_ip            = "10.0.0.1"     # Required. Gateway IP for the Routed network inside the Cluster Organization
-cluster_routed_network_prefix_length         = "16"           # Required. Prefix length for the Routed network inside the Cluster Organization
-cluster_routed_network_ip_pool_start_address = "10.0.0.2"     # Required. First IP for the Routed network pool
-cluster_routed_network_ip_pool_end_address   = "10.0.255.254" # Required. Last IP for the Routed network pool
-cluster_snat_external_ip                     = "10.30.20.37"  # Required. For example, pick the last IP from cluster_provider_gateway_static_ip_ranges
-cluster_snat_internal_network_cidr           = "10.0.0.0/16"  # Required. It should match the Routed network IP addresses
-cluster_routed_network_dns                   = ""             # Optional, if you need DNS
-cluster_routed_network_dns_suffix            = ""             # Optional, if you need DNS
+tenant_routed_network_gateway_ip            = "10.0.0.1"     # Required. Gateway IP for the Routed network inside the Tenant Organization
+tenant_routed_network_prefix_length         = "16"           # Required. Prefix length for the Routed network inside the Tenant Organization
+tenant_routed_network_ip_pool_start_address = "10.0.0.2"     # Required. First IP for the Routed network pool
+tenant_routed_network_ip_pool_end_address   = "10.0.255.254" # Required. Last IP for the Routed network pool
+tenant_snat_external_ip                     = "10.30.20.37"  # Required. For example, pick the last IP from tenant_provider_gateway_static_ip_ranges
+tenant_snat_internal_network_cidr           = "10.0.0.0/16"  # Required. It should match the Routed network IP addresses
+tenant_routed_network_dns                   = ""             # Optional, if you need DNS
+tenant_routed_network_dns_suffix            = ""             # Optional, if you need DNS
 
 # ------------------------------------------------
 # Values to create ALB setup
