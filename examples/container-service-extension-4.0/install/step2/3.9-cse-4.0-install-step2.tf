@@ -767,5 +767,5 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 
 output "publish_ui_plugin" {
-  value = "When CSE Server ${vcd_vapp_vm.cse_server_vm.name} is ready, please install the Kubernetes Container Clusters UI plug-in 4.0 for VCD that you can download from https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html"
+  value = "When CSE Server '${vcd_vapp_vm.cse_server_vm.name}' is ready, please install the Kubernetes Container Clusters UI plug-in 4.0 for VCD that you can download from https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html"
 }
