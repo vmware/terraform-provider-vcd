@@ -326,13 +326,13 @@ func getOpenApiOrgVdcNetworkDhcpBindingType(d *schema.ResourceData) (*types.Open
 }
 
 func setOpenApiOrgVdcNetworkDhcpBindingData(d *schema.ResourceData, dhcpBinding *types.OpenApiOrgVdcNetworkDhcpBinding) error {
-	d.Set("name", dhcpBinding.Name)
-	d.Set("description", dhcpBinding.Description)
-	d.Set("binding_type", dhcpBinding.BindingType)
-	d.Set("mac_address", dhcpBinding.MacAddress)
-	d.Set("ip_address", dhcpBinding.IpAddress)
+	dSet(d, "name", dhcpBinding.Name)
+	dSet(d, "description", dhcpBinding.Description)
+	dSet(d, "binding_type", dhcpBinding.BindingType)
+	dSet(d, "mac_address", dhcpBinding.MacAddress)
+	dSet(d, "ip_address", dhcpBinding.IpAddress)
 	if dhcpBinding.LeaseTime != nil {
-		d.Set("lease_time", *dhcpBinding.LeaseTime)
+		dSet(d, "lease_time", *dhcpBinding.LeaseTime)
 	}
 
 	if len(dhcpBinding.DnsServers) > 0 {
@@ -347,7 +347,10 @@ func setOpenApiOrgVdcNetworkDhcpBindingData(d *schema.ResourceData, dhcpBinding 
 		dhcpV4Config := make(map[string]string)
 		dhcpV4Config["gateway_ip_address"] = dhcpBinding.DhcpV4BindingConfig.GatewayIPAddress
 		dhcpV4Config["hostname"] = dhcpBinding.DhcpV4BindingConfig.HostName
-		d.Set("dhcp_v4_config", []map[string]string{dhcpV4Config})
+		err := d.Set("dhcp_v4_config", []map[string]string{dhcpV4Config})
+		if err != nil {
+			return fmt.Errorf("error setting DHCPv4 configuration: %s", err)
+		}
 	}
 
 	// IPv6 configuration specifics
@@ -355,7 +358,10 @@ func setOpenApiOrgVdcNetworkDhcpBindingData(d *schema.ResourceData, dhcpBinding 
 		dhcpV6Config := make(map[string]interface{})
 		dhcpV6Config["domain_names"] = dhcpBinding.DhcpV6BindingConfig.DomainNames
 		dhcpV6Config["sntp_servers"] = dhcpBinding.DhcpV6BindingConfig.SntpServers
-		d.Set("dhcp_v6_config", []map[string]interface{}{dhcpV6Config})
+		err := d.Set("dhcp_v6_config", []map[string]interface{}{dhcpV6Config})
+		if err != nil {
+			return fmt.Errorf("error setting DHCPv6 configuration: %s", err)
+		}
 	}
 
 	return nil
