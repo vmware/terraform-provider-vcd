@@ -131,7 +131,10 @@ func resourceVcdOpenApiDhcpCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("[NSX-T DHCP pool set] error setting DHCP pool for Org VDC network ID '%s': %s",
 			orgNetworkId, err)
 	}
-	// ID is in fact Org VDC network ID because DHCP pools do not have their own ID, only Org Network ID in API path
+	// ID is in fact Org VDC network ID because DHCP pools do not have their own ID, only Org
+	// Network ID in API path Do not change this ID to something else, because it is convenient to
+	// use it in vcd_nsxt_network_dhcp_binding resource (because DHCP bindings require DHCP to be
+	// enabled)
 	d.SetId(orgNetworkId)
 
 	return resourceVcdOpenApiDhcpRead(ctx, d, meta)
@@ -259,11 +262,7 @@ func getOpenAPIOrgVdcNetworkDhcpType(d *schema.ResourceData) *types.OpenApiOrgVd
 
 	dnsServers, ok := d.GetOk("dns_servers")
 	if ok {
-		dnsServerSet := make([]string, len(dnsServers.([]interface{})))
-		for i, v := range dnsServers.([]interface{}) {
-			dnsServerSet[i] = v.(string)
-		}
-		orgVdcNetDhcp.DnsServers = dnsServerSet
+		orgVdcNetDhcp.DnsServers = convertTypeListToSliceOfStrings(dnsServers.([]interface{}))
 	}
 
 	if leaseTime, isLeaseTimeSet := d.GetOk("lease_time"); isLeaseTimeSet {

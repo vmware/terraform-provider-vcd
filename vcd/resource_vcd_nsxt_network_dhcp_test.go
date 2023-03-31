@@ -18,6 +18,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
+		"TestName":    t.Name(),
 		"Tags":        "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
@@ -51,6 +52,9 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 	configText2 = templateFill(testAccRoutedNetDhcpStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	cacheDhcpBinding1dId := &testCachedFieldValue{}
+	cacheDhcpBinding2dId := &testCachedFieldValue{}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
@@ -66,6 +70,35 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 						"start_address": "7.1.1.100",
 						"end_address":   "7.1.1.110",
 					}),
+
+					// DHCP binding checks
+					cacheDhcpBinding1dId.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp_binding.binding1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp_binding.binding1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "name", t.Name()+"-dhcp-binding-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "lease_time", "60"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "binding_type", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "dns_servers.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "dhcp_v4_config.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "ip_address", "7.1.1.189"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "mac_address", "00:11:22:33:44:55"),
+
+					cacheDhcpBinding2dId.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp_binding.binding2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp_binding.binding2", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "name", t.Name()+"-dhcp-binding-2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "description", "DHCP binding description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "binding_type", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "lease_time", "3600"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "dns_servers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "dns_servers.0", "7.1.1.242"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "dns_servers.1", "7.1.1.243"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "dhcp_v4_config.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp_binding.binding2", "dhcp_v4_config.*", map[string]string{
+						"gateway_ip_address": "7.1.1.233",
+						"hostname":           "non-existent",
+					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "ip_address", "7.1.1.190"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "mac_address", "00:11:22:33:44:66"),
 				),
 			},
 			{
@@ -83,6 +116,28 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 						"start_address": "7.1.1.130",
 						"end_address":   "7.1.1.140",
 					}),
+
+					// DHCP binding checks
+					cacheDhcpBinding1dId.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp_binding.binding1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "name", t.Name()+"-dhcp-binding-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "lease_time", "60"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "binding_type", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "dns_servers.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "dhcp_v4_config.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "ip_address", "7.1.1.167"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "mac_address", "00:11:22:33:33:55"),
+
+					cacheDhcpBinding2dId.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp_binding.binding2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp_binding.binding2", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "name", t.Name()+"-dhcp-binding-2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "binding_type", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "lease_time", "3600"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "dns_servers.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "dhcp_v4_config.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "ip_address", "7.1.1.190"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding2", "mac_address", "00:11:22:33:44:66"),
 				),
 			},
 			{
@@ -155,6 +210,40 @@ resource "vcd_nsxt_network_dhcp" "pools" {
     end_address   = "7.1.1.110"
   }
 }
+
+resource "vcd_nsxt_network_dhcp_binding" "binding1" {
+  org  = "{{.Org}}"
+
+  # org_network_id = vcd_network_routed_v2.net1.id
+  org_network_id = vcd_nsxt_network_dhcp.pools.id
+  
+  name         = "{{.TestName}}-dhcp-binding-1"
+  binding_type = "IPV4"
+  ip_address   = "7.1.1.189"
+  lease_time   = 60
+  mac_address  = "00:11:22:33:44:55"
+}
+
+resource "vcd_nsxt_network_dhcp_binding" "binding2" {
+  org  = "{{.Org}}"
+
+  # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
+  # DHCP service must be enabled on the network before DHCP bindings can be created
+  org_network_id = vcd_nsxt_network_dhcp.pools.id
+  
+  name         = "{{.TestName}}-dhcp-binding-2"
+  description  = "DHCP binding description"
+  binding_type = "IPV4"
+  ip_address   = "7.1.1.190"
+  lease_time   = 3600
+  mac_address  = "00:11:22:33:44:66"
+  dns_servers  = ["7.1.1.242", "7.1.1.243"]
+
+  dhcp_v4_config {
+	gateway_ip_address = "7.1.1.233"
+	hostname           = "non-existent"
+  }
+}
 `
 
 const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
@@ -175,6 +264,32 @@ resource "vcd_nsxt_network_dhcp" "pools" {
     start_address = "7.1.1.130"
     end_address   = "7.1.1.140"
   }
+}
+
+resource "vcd_nsxt_network_dhcp_binding" "binding1" {
+  org  = "{{.Org}}"
+
+  org_network_id = vcd_nsxt_network_dhcp.pools.id
+  
+  name         = "{{.TestName}}-dhcp-binding-1"
+  binding_type = "IPV4"
+  ip_address   = "7.1.1.167"
+  lease_time   = 60
+  mac_address  = "00:11:22:33:33:55"
+}
+
+resource "vcd_nsxt_network_dhcp_binding" "binding2" {
+  org  = "{{.Org}}"
+
+  # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
+  # DHCP service must be enabled on the network before DHCP bindings can be created
+  org_network_id = vcd_nsxt_network_dhcp.pools.id
+  
+  name         = "{{.TestName}}-dhcp-binding-2"
+  binding_type = "IPV4"
+  lease_time   = 3600
+  ip_address   = "7.1.1.190"
+  mac_address  = "00:11:22:33:44:66"
 }
 `
 
