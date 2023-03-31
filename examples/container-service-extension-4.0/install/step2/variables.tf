@@ -36,12 +36,12 @@ variable "administrator_org" {
 # ------------------------------------------------
 
 variable "cse_admin_user" {
-  description = "The CSE administrator user (Example: 'cse-admin')"
+  description = "The CSE administrator user created in previous step (Example: 'cse-admin')"
   type        = string
 }
 
 variable "cse_admin_api_token" {
-  description = "The CSE administrator API token"
+  description = "The CSE administrator API token that should have been created before running this installation step"
   type        = string
   sensitive   = true
 }
@@ -70,22 +70,22 @@ variable "network_pool_name" {
 # ------------------------------------------------
 
 variable "tkgm_ova_folder" {
-  description = "Path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
+  description = "Absolute path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
   type        = string
 }
 
 variable "tkgm_ova_file" {
-  description = "TKGm file name, with no path (Example: 'ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova')"
+  description = "TKGm OVA file name, with no path (Example: 'ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova')"
   type        = string
 }
 
 variable "cse_ova_folder" {
-  description = "Path to the CSE OVA file, with no file name (Example: '/home/bob/Downloads/cse')"
+  description = "Absolute path to the CSE OVA file, with no file name (Example: '/home/bob/Downloads/cse')"
   type        = string
 }
 
 variable "cse_ova_file" {
-  description = "CSE file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
+  description = "CSE OVA file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
   type        = string
 }
 
@@ -94,7 +94,7 @@ variable "cse_ova_file" {
 # ------------------------------------------------
 
 variable "nsxt_manager_name" {
-  description = "NSX-T manager name"
+  description = "NSX-T manager name, required to create the Provider Gateways"
   type        = string
 }
 
@@ -164,7 +164,7 @@ variable "solutions_snat_external_ip" {
 }
 
 variable "solutions_snat_internal_network_cidr" {
-  description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
+  description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet CIDR, which should correspond to the routed network IPs"
   type        = string
 }
 
@@ -206,7 +206,7 @@ variable "tenant_snat_external_ip" {
 }
 
 variable "tenant_snat_internal_network_cidr" {
-  description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet, which should correspond to the routed network IPs"
+  description = "Used to create a SNAT rule to allow connectivity. This specifies the internal subnet CIDR, which should correspond to the routed network IPs"
   type        = string
 }
 
