@@ -192,6 +192,33 @@ resource "vcd_network_routed" "net1" {
 
 Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
+### Connecting with a Service Account API token
+
+With VCD 10.4.0+, you can connect using a service account API token, as defined in the [documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). Because a new API token is provided on every authentication request, the user is required to provide a file in `json` format with the current API key. e.g:
+```json
+{"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+```
+
+~> **NOTE:** The service account needs to be in `Active Stage` and it's up to the user to provide the initial API token.
+
+
+```hcl
+provider "vcd" {
+  user                 = "none"
+  password             = "none"
+  auth_type            = "service_account"
+  api_token            = "token.json"
+  sysorg               = "System"
+  org                  = var.vcd_org # Default for resources
+  vdc                  = var.vcd_vdc # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
+}
+```
+
+
+
 ### Shell script to obtain a bearer token
 To obtain a bearer token you can use this sample shell script:
 
