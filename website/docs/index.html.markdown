@@ -201,7 +201,6 @@ With VCD 10.4.0+, you can connect using a service account API token, as defined 
 
 ~> **NOTE:** The service account needs to be in `Active Stage` and it's up to the user to provide the initial API token.
 
-
 ```hcl
 provider "vcd" {
   user                 = "none"
@@ -216,8 +215,6 @@ provider "vcd" {
   allow_unverified_ssl = var.vcd_allow_unverified_ssl
 }
 ```
-
-
 
 ### Shell script to obtain a bearer token
 To obtain a bearer token you can use this sample shell script:
