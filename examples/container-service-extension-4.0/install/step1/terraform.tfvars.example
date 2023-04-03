@@ -18,3 +18,9 @@ insecure_login         = "false"
 # customise what its username and password will be.
 cse_admin_username = "cse-admin"
 cse_admin_password = "change-me"
+
+# ------------------------------------------------
+# CSE components versions
+# ------------------------------------------------
+# Version of CAPVCD to use in the installation
+capvcd_version = 1.1.0

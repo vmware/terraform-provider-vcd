@@ -45,3 +45,12 @@ variable "cse_admin_password" {
   type        = string
   sensitive   = true
 }
+
+# ------------------------------------------------
+# CSE versions
+# ------------------------------------------------
+variable "capvcd_version" {
+  type        = string
+  description = "CAPVCD version"
+  default     = "1.1.0"
+}

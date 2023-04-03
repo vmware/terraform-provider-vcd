@@ -51,7 +51,7 @@ and change the values present there to the ones that fit with your needs.
 This step will create the following:
 
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type].
-- The required `capvcdCluster` [RDE Type][rde_type].
+- The required `capvcdCluster` [RDE Type][rde_type]. The version is specified by the `capvcd_version` variable, that should be 1.1.0 for CSE v4.0.
 - The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-sided elements of VCD.
 - The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
   Feel free to add more attributes like `description` or `full_name` if needed.
@@ -235,7 +235,7 @@ In order to do so, the [configuration][step2] asks for the following variables t
 - `vcdkeconfig_template_filepath`: This references a local file that corresponds with the `VCDKEConfig` [RDE][rde] contents specified as a JSON template.
   You can find this template [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
   (Note: In `terraform.tfvars.example` the correct path is already provided).
-- `capvcd_version`: The version for CAPVCD schema. It should be "1.1.0" for CSE v4.0.
+- `capvcd_version`: The version for CAPVCD schema. It should match the value used in the Step 1.
 - `cpi_version`: The version for CPI. It should be "1.2.0" for CSE v4.0.
 - `csi_version`: The version for CSI. It should be "1.3.0" for CSE v4.0.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
