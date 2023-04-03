@@ -222,8 +222,8 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
-				Description:  "'integrated', 'saml_adfs', 'token', and 'api_token' are the only ones supported now. 'integrated' is default.",
-				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token"}, false),
+				Description:  "'integrated', 'saml_adfs', 'token', 'api_token' and 'service_account' are the only ones supported now. 'integrated' is default.",
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "service_account"}, false),
 			},
 			"saml_adfs_rpt_id": {
 				Type:        schema.TypeString,
@@ -244,6 +244,13 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_TOKEN", nil),
 				Description: "The API token used instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
+			},
+
+			"service_account": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_SA_TOKEN_FILE", nil),
+				Description: "The Service Account API token file instead of username/password for VCD API operations. (Requires VCD 10.4.0+)",
 			},
 
 			"sysorg": {
@@ -329,16 +336,17 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	}
 
 	config := Config{
-		User:            d.Get("user").(string),
-		Password:        d.Get("password").(string),
-		Token:           d.Get("token").(string),
-		ApiToken:        d.Get("api_token").(string),
-		SysOrg:          connectOrg,            // Connection org
-		Org:             d.Get("org").(string), // Default org for operations
-		Vdc:             d.Get("vdc").(string), // Default vdc
-		Href:            d.Get("url").(string),
-		MaxRetryTimeout: maxRetryTimeout,
-		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
+		User:                    d.Get("user").(string),
+		Password:                d.Get("password").(string),
+		Token:                   d.Get("token").(string),
+		ApiToken:                d.Get("api_token").(string),
+		ServiceAccountTokenFile: d.Get("service_account").(string),
+		SysOrg:                  connectOrg,            // Connection org
+		Org:                     d.Get("org").(string), // Default org for operations
+		Vdc:                     d.Get("vdc").(string), // Default vdc
+		Href:                    d.Get("url").(string),
+		MaxRetryTimeout:         maxRetryTimeout,
+		InsecureFlag:            d.Get("allow_unverified_ssl").(bool),
 	}
 
 	// auth_type dependent configuration
@@ -354,6 +362,10 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	case "api_token":
 		if config.ApiToken == "" {
 			return nil, diag.Errorf("empty API token detected with 'auth_type' == 'api_token'")
+		}
+	case "service_account":
+		if config.ServiceAccountTokenFile == "" {
+			return nil, diag.Errorf("service account token file not provided with 'auth_type' == 'service_account'")
 		}
 	default:
 		if config.ApiToken != "" || config.Token != "" {
