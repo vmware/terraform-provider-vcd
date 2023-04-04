@@ -165,7 +165,9 @@
     "//": "relative path to private key pem file",
     "certificate2PrivateKeyPath": "../test-resources/key2.pem",
     "//": "pass phrase for private key",
-    "certificate2Pass": "test"
+    "certificate2Pass": "test",
+    "//": "Root CA certificate",
+    "rootCertificatePath": "../test-resources/rootCA.pem"
   },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",
