@@ -10,12 +10,13 @@ description: |-
 
 Provides a resource to manage NSX-T Org VDC network DHCP bindings.
 
+This resource requires VCD 10.3.1+.
 
 ## Example Usage
 
 ```hcl
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "cloud"
+  org = "cloud"
 
   org_network_id      = vcd_network_isolated_v2.net1.id
   mode                = "NETWORK"
@@ -28,7 +29,7 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org  = "cloud"
+  org = "cloud"
 
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_isolated_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created and it makes

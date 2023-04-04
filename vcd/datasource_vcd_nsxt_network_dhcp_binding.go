@@ -30,7 +30,6 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 				Required:    true,
 				Description: "Name of DHCP binding",
 			},
-
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -54,7 +53,7 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 			"dns_servers": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The DNS server IPs to be assigned . 2 values maximum.",
+				Description: "DNS server IPs",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -62,6 +61,7 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 			"lease_time": {
 				Type:     schema.TypeInt,
 				Computed: true,
+				Description: ,
 			},
 			"dhcp_v4_config": {
 				Type:        schema.TypeList,
@@ -72,12 +72,12 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 						"gateway_ip_address": {
 							Computed:    true,
 							Type:        schema.TypeString,
-							Description: "",
+							Description: "Gateway IP address to be used by the DHCP client",
 						},
 						"hostname": {
 							Computed:    true,
 							Type:        schema.TypeString,
-							Description: "",
+							Description: "Hostname to be used by the DHCP client",
 						},
 					},
 				},
@@ -91,7 +91,7 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 						"sntp_servers": {
 							Computed:    true,
 							Type:        schema.TypeSet,
-							Description: "",
+							Description: "List of SNTP servers to be used by the DHCP client",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -99,7 +99,7 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 						"dns_servers": {
 							Computed:    true,
 							Type:        schema.TypeSet,
-							Description: "IP address, CIDR, an IP range, or the keyword 'any'",
+							Description: "List of DNS servers to be used by the DHCP client",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -119,20 +119,17 @@ func datasourceVcdNsxtDhcpBindingRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
-
-	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
 	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding DS read] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
 
-	bindingName := d.Get("name").(string)
-	dhcpBinding, err := orgVdcNet.GetOpenApiOrgVdcNetworkDhcpBindingByName(bindingName)
+	dhcpBindingName := d.Get("name").(string)
+	dhcpBinding, err := orgVdcNet.GetOpenApiOrgVdcNetworkDhcpBindingByName(dhcpBindingName)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP binding DS read] error retrieving DHCP binding with ID '%s' for Org VDC network with ID '%s': %s",
-			bindingName, orgNetworkId, err)
+		return diag.Errorf("[NSX-T DHCP binding DS read] error retrieving DHCP binding with Name '%s' for Org VDC network with ID '%s': %s",
+			dhcpBindingName, orgNetworkId, err)
 	}
-
 	d.SetId(dhcpBinding.OpenApiOrgVdcNetworkDhcpBinding.ID)
 
 	if err := setOpenApiOrgVdcNetworkDhcpBindingData(d, dhcpBinding.OpenApiOrgVdcNetworkDhcpBinding); err != nil {

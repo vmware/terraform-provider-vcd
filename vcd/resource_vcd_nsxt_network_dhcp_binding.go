@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -145,12 +144,7 @@ func resourceVcdNsxtDhcpBindingCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[NSX-T DHCP binding create] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
 
-	dhcpEnabled, err := isNsxtRoutedDhcpEnabled(orgVdcNet)
-	if err != nil {
-		return diag.Errorf("[NSX-T DHCP binding create] error checking if DHCP is enabled: %s", err)
-	}
-
-	if !dhcpEnabled {
+	if !orgVdcNet.IsDhcpEnabled() {
 		return diag.Errorf("[NSX-T DHCP binding create] DHCP is not enabled for Org VDC network with ID '%s'. Please use 'vcd_nsxt_network_dhcp resource to enable DHCP", orgNetworkId)
 	}
 
@@ -199,7 +193,7 @@ func resourceVcdNsxtDhcpBindingUpdate(ctx context.Context, d *schema.ResourceDat
 
 	bindingConfig.ID = d.Id()
 
-	_, err = dhcpBinding.UpdateOpenApiOrgVdcNetworkDhcpBinding(bindingConfig)
+	_, err = dhcpBinding.Update(bindingConfig)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding update] error updating DHCP binding for Org VDC network with ID '%s', binding Name '%s', ID '%s': %s", orgNetworkId,
 			bindingConfig.Name, bindingConfig.ID, err)
@@ -257,7 +251,7 @@ func resourceVcdNsxtDhcpBindingDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[NSX-T DHCP binding delete] error retrieving DHCP binding with ID '%s' for Org VDC network with ID '%s': %s", d.Id(), orgNetworkId, err)
 	}
 
-	err = dhcpBinding.DeleteOpenApiOrgVdcNetworkDhcpBinding()
+	err = dhcpBinding.Delete()
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding delete] error deleting DHCP binding with ID '%s' for Org VDC network with ID '%s': %s", d.Id(), orgNetworkId, err)
 	}
@@ -302,19 +296,6 @@ func resourceVcdNsxtDhcpBindingImport(ctx context.Context, d *schema.ResourceDat
 	d.SetId(dhcpBinding.OpenApiOrgVdcNetworkDhcpBinding.ID)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func isNsxtRoutedDhcpEnabled(orgVdcNet *govcd.OpenApiOrgVdcNetwork) (bool, error) {
-	dhcpConfig, err := orgVdcNet.GetOpenApiOrgVdcNetworkDhcp()
-	if err != nil {
-		return false, fmt.Errorf("[NSX-T DHCP pool create] error retrieving DHCP configuration for Org VDC network with ID '%s': %s", orgVdcNet.OpenApiOrgVdcNetwork.ID, err)
-	}
-
-	if dhcpConfig == nil || dhcpConfig.OpenApiOrgVdcNetworkDhcp == nil || dhcpConfig.OpenApiOrgVdcNetworkDhcp.Enabled == nil || !*dhcpConfig.OpenApiOrgVdcNetworkDhcp.Enabled {
-		return false, fmt.Errorf("[NSX-T DHCP pool create] DHCP is not enabled for Org VDC network with ID '%s'. Please use 'vcd_nsxt_network_dhcp resource to enable DHCP", orgVdcNet.OpenApiOrgVdcNetwork.ID)
-	}
-
-	return true, nil
 }
 
 func getOpenApiOrgVdcNetworkDhcpBindingType(d *schema.ResourceData) (*types.OpenApiOrgVdcNetworkDhcpBinding, error) {
