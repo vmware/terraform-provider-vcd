@@ -51,6 +51,12 @@ variable "cse_admin_password" {
 # ------------------------------------------------
 variable "capvcd_version" {
   type        = string
-  description = "CAPVCD version"
+  description = "Version of CAPVCD"
+  default     = "1.0.0"
+}
+
+variable "capvcd_rde_version" {
+  type        = string
+  description = "Version of the CAPVCD Runtime Defined Entity Type"
   default     = "1.1.0"
 }

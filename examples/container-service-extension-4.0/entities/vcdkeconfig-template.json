@@ -11,7 +11,7 @@
             "K8Config": {
                 "cni": {
                     "name": "antrea",
-                    "version": "v0.13.1"
+                    "version": ""
                 },
                 "cpi": {
                     "name": "cpi for cloud director",
@@ -52,7 +52,7 @@
                         "capvcdRde": {
                             "nss": "capvcdCluster",
                             "vendor": "vmware",
-                            "version": "1.0.0"
+                            "version": "${capvcd_rde_version}"
                         }
                     },
                     "coreCapiVersion": "v1.1.3",
