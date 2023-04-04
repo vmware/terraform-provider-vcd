@@ -148,13 +148,13 @@ func resourceVcdNsxtDhcpBindingCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[NSX-T DHCP binding create] DHCP is not enabled for Org VDC network with ID '%s'. Please use 'vcd_nsxt_network_dhcp resource to enable DHCP", orgNetworkId)
 	}
 
-	// get DHCP binding config
-	binding, err := getOpenApiOrgVdcNetworkDhcpBindingType(d)
+	// get DHCP dhcpBindingConfig config
+	dhcpBindingConfig, err := getOpenApiOrgVdcNetworkDhcpBindingType(d)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding create] error getting DHCP binding configuration: %s", err)
 	}
 
-	createdDhcpBinding, err := orgVdcNet.CreateOpenApiOrgVdcNetworkDhcpBinding(binding)
+	createdDhcpBinding, err := orgVdcNet.CreateOpenApiOrgVdcNetworkDhcpBinding(dhcpBindingConfig)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding create] error creating DHCP binding for Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
@@ -185,18 +185,17 @@ func resourceVcdNsxtDhcpBindingUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[NSX-T DHCP binding update] error retrieving DHCP binding with ID '%s' for Org VDC network with ID '%s': %s", d.Id(), orgNetworkId, err)
 	}
 
-	// get DHCP bindingConfig config
-	bindingConfig, err := getOpenApiOrgVdcNetworkDhcpBindingType(d)
+	// get DHCP binding config
+	dhcpBindingConfig, err := getOpenApiOrgVdcNetworkDhcpBindingType(d)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding update] error getting DHCP binding configuration: %s", err)
 	}
+	dhcpBindingConfig.ID = d.Id()
 
-	bindingConfig.ID = d.Id()
-
-	_, err = dhcpBinding.Update(bindingConfig)
+	_, err = dhcpBinding.Update(dhcpBindingConfig)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding update] error updating DHCP binding for Org VDC network with ID '%s', binding Name '%s', ID '%s': %s", orgNetworkId,
-			bindingConfig.Name, bindingConfig.ID, err)
+			dhcpBindingConfig.Name, dhcpBindingConfig.ID, err)
 	}
 
 	return resourceVcdNsxtDhcpBindingRead(ctx, d, meta)
@@ -210,7 +209,6 @@ func resourceVcdNsxtDhcpBindingRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
-
 	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
 	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
@@ -239,7 +237,6 @@ func resourceVcdNsxtDhcpBindingDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
-
 	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
 	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
@@ -273,7 +270,7 @@ func resourceVcdNsxtDhcpBindingImport(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if !vdcOrVdcGroup.IsNsxt() {
-		return nil, fmt.Errorf("[NSX-T DHCP binding import] DHCP configuration is only supported for Routed NSX-T networks: %s", err)
+		return nil, fmt.Errorf("[NSX-T DHCP binding import] DHCP configuration is only supported for NSX-T networks: %s", err)
 	}
 
 	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
@@ -299,7 +296,6 @@ func resourceVcdNsxtDhcpBindingImport(ctx context.Context, d *schema.ResourceDat
 }
 
 func getOpenApiOrgVdcNetworkDhcpBindingType(d *schema.ResourceData) (*types.OpenApiOrgVdcNetworkDhcpBinding, error) {
-
 	bindingConfig := &types.OpenApiOrgVdcNetworkDhcpBinding{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),

@@ -59,9 +59,9 @@ func datasourceVcdNsxtDhcpBinding() *schema.Resource {
 				},
 			},
 			"lease_time": {
-				Type:     schema.TypeInt,
-				Computed: true,
-				Description: ,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Lease time in seconds",
 			},
 			"dhcp_v4_config": {
 				Type:        schema.TypeList,
