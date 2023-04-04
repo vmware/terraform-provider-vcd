@@ -20,8 +20,7 @@ cse_admin_username = "cse-admin"
 cse_admin_password = "change-me"
 
 # ------------------------------------------------
-# CSE components versions
+# # CSE Runtime Defined Entities setup
 # ------------------------------------------------
-# Version of CAPVCD to use in the installation
-capvcd_version     = 1.0.0
+# Version of CAPVCD Runtime Defined Entity Type to use in the installation
 capvcd_rde_version = 1.1.0

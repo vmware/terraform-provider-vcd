@@ -47,14 +47,8 @@ variable "cse_admin_password" {
 }
 
 # ------------------------------------------------
-# CSE versions
+# CSE Runtime Defined Entities setup
 # ------------------------------------------------
-variable "capvcd_version" {
-  type        = string
-  description = "Version of CAPVCD"
-  default     = "1.0.0"
-}
-
 variable "capvcd_rde_version" {
   type        = string
   description = "Version of the CAPVCD Runtime Defined Entity Type"
