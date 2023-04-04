@@ -265,3 +265,5 @@ vcd.ResourceSchema-vcd_nsxt_alb_settings.tf v3.8.2 "New fields to support latest
 vcd.ResourceSchema-vcd_vapp_org_network.tf v3.8.2 "New field 'reboot_vapp_on_removal'"
 vcd.ResourceSchema-vcd_vapp_network.tf v3.8.2 "New field 'reboot_vapp_on_removal'"
 vcd.ResourceSchema-vcd_nsxt_ipsec_vpn_tunnel.tf v3.8.2 "New fields 'authentication_mode', 'remote_id', 'certificate_id', 'ca_certificate_id'"
+vcd.ResourceSchema-vcd_nsxt_alb_virtual_service.tf v3.8.2 "New field 'is_transparent_mode_enabled'"
+vcd.ResourceSchema-vcd_nsxt_alb_pool.tf v3.8.2 "New field 'member_group_id'"
