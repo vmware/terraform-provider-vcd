@@ -194,7 +194,7 @@ Note that when connecting with API tokens you can't create or modify users, role
 
 ### Connecting with a Service Account API token
 
-With VCD 10.4.0+, you can connect using a service account API token, as defined in the [documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). Because a new API token is provided on every authentication request, the user is required to provide a file in `json` format with the current API key. e.g:
+With VCD 10.4.0+, you can connect using a service account API token, as defined in the [documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). Because a new API token is provided on every authentication request, the user is required to provide a readable+writable file in `json` format with the current API key. e.g:
 ```json
 {"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
 ```

@@ -223,7 +223,7 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
 				Description:  "'integrated', 'saml_adfs', 'token', 'api_token' and 'service_account' are the only ones supported now. 'integrated' is default.",
-				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "service_account"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "service_account_token_file"}, false),
 			},
 			"saml_adfs_rpt_id": {
 				Type:        schema.TypeString,
@@ -246,7 +246,7 @@ func Provider() *schema.Provider {
 				Description: "The API token used instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
 			},
 
-			"service_account": {
+			"service_account_token_file": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_SA_TOKEN_FILE", nil),
@@ -340,7 +340,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		Password:                d.Get("password").(string),
 		Token:                   d.Get("token").(string),
 		ApiToken:                d.Get("api_token").(string),
-		ServiceAccountTokenFile: d.Get("service_account").(string),
+		ServiceAccountTokenFile: d.Get("service_account_token_file").(string),
 		SysOrg:                  connectOrg,            // Connection org
 		Org:                     d.Get("org").(string), // Default org for operations
 		Vdc:                     d.Get("vdc").(string), // Default vdc
@@ -365,7 +365,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		}
 	case "service_account":
 		if config.ServiceAccountTokenFile == "" {
-			return nil, diag.Errorf("service account token file not provided with 'auth_type' == 'service_account'")
+			return nil, diag.Errorf("service account token file not provided with 'auth_type' == 'service_account_token_file'")
 		}
 	default:
 		if config.ApiToken != "" || config.Token != "" {
