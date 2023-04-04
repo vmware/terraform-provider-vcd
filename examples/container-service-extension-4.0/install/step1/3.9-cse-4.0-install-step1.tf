@@ -69,7 +69,7 @@ data "vcd_rde_interface" "kubernetes_interface" {
 resource "vcd_rde_type" "capvcdcluster_type" {
   vendor        = "vmware"
   nss           = "capvcdCluster"
-  version       = "1.1.0"
+  version       = var.capvcd_rde_version
   name          = "CAPVCD Cluster"
   schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]

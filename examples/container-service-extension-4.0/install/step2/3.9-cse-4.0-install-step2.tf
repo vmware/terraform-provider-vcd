@@ -298,7 +298,7 @@ resource "vcd_catalog_vapp_template" "cse_ova" {
 data "vcd_rde_type" "existing_capvcdcluster_type" {
   vendor  = "vmware"
   nss     = "capvcdCluster"
-  version = "1.1.0"
+  version = var.capvcd_rde_version
 }
 
 # This resource manages the Rights Bundle required by tenants to create and consume Kubernetes clusters.
@@ -690,6 +690,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
   resolve     = true
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     capvcd_version                  = var.capvcd_version
+    capvcd_rde_version              = var.capvcd_rde_version
     cpi_version                     = var.cpi_version
     csi_version                     = var.csi_version
     github_personal_access_token    = var.github_personal_access_token
@@ -767,5 +768,5 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 
 output "publish_ui_plugin" {
-  value = "When CSE Server ${vcd_vapp_vm.cse_server_vm.name} is ready, please install the Kubernetes Container Clusters UI plug-in 4.0 for VCD that you can download from https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html"
+  value = "When CSE Server '${vcd_vapp_vm.cse_server_vm.name}' is ready, please install the Kubernetes Container Clusters UI plug-in 4.0 for VCD that you can download from https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html"
 }

@@ -36,12 +36,21 @@ variable "administrator_org" {
 # ------------------------------------------------
 
 variable "cse_admin_username" {
-  description = "The CSE administrator user (Example: 'cse-admin')"
+  description = "The CSE administrator user that will be created (Example: 'cse-admin')"
   type        = string
 }
 
 variable "cse_admin_password" {
-  description = "The CSE administrator password"
+  description = "The password to set for the CSE administrator to be created"
   type        = string
   sensitive   = true
+}
+
+# ------------------------------------------------
+# CSE Runtime Defined Entities setup
+# ------------------------------------------------
+variable "capvcd_rde_version" {
+  type        = string
+  description = "Version of the CAPVCD Runtime Defined Entity Type"
+  default     = "1.1.0"
 }
