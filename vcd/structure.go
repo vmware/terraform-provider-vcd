@@ -105,8 +105,11 @@ func convertStringsToTypeSet(param []string) *schema.Set {
 }
 
 // addrOf is a generic function to return the address of a variable
-// Note. It is mainly meant for converting literal values to pointers (e.g. `addrOf(true)`)
-// and not getting the address of a variable (e.g. `addrOf(variable)`)
+// Note. It is mainly meant for converting literal values to pointers (e.g. `addrOf(true)`) or cases
+// for converting variables coming out straight from Terraform schema (e.g.
+// `addrOf(d.Get("name").(string))`).
+// Note. It would cost additional allocation when used with so `addrOf(variable)` instead of
+// `&variable`
 func addrOf[T any](variable T) *T {
 	return &variable
 }

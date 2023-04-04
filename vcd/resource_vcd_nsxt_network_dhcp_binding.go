@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -196,12 +197,12 @@ func resourceVcdNsxtDhcpBindingUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[NSX-T DHCP binding update] error getting DHCP binding configuration: %s", err)
 	}
 
-	// Inject ID for update
 	bindingConfig.ID = d.Id()
 
 	_, err = dhcpBinding.UpdateOpenApiOrgVdcNetworkDhcpBinding(bindingConfig)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP binding update] error creating DHCP binding for Org VDC network with ID '%s': %s", orgNetworkId, err)
+		return diag.Errorf("[NSX-T DHCP binding update] error updating DHCP binding for Org VDC network with ID '%s', binding Name '%s', ID '%s': %s", orgNetworkId,
+			bindingConfig.Name, bindingConfig.ID, err)
 	}
 
 	return resourceVcdNsxtDhcpBindingRead(ctx, d, meta)
@@ -265,6 +266,41 @@ func resourceVcdNsxtDhcpBindingDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceVcdNsxtDhcpBindingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-org-vdc-group-name.org_network_name.my-binding-name")
+	}
+	orgName, vdcOrVdcGroupName, orgVdcNetworkName, bindingName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !vdcOrVdcGroup.IsNsxt() {
+		return nil, fmt.Errorf("[NSX-T DHCP binding import] DHCP configuration is only supported for Routed NSX-T networks: %s", err)
+	}
+
+	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
+	orgVdcNet, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(orgVdcNetworkName)
+	if err != nil {
+		return nil, fmt.Errorf("[NSX-T DHCP binding import] error retrieving Org VDC network with name '%s': %s", orgVdcNetworkName, err)
+	}
+
+	if !orgVdcNet.IsDhcpEnabled() {
+		return nil, fmt.Errorf("[NSX-T DHCP binding import] DHCP is not enabled for Org VDC network with name '%s'", orgVdcNetworkName)
+	}
+
+	dhcpBinding, err := orgVdcNet.GetOpenApiOrgVdcNetworkDhcpBindingByName(bindingName)
+	if err != nil {
+		return nil, fmt.Errorf("[NSX-T DHCP binding import] error retrieving DHCP binding with name '%s' for Org VDC network with name '%s': %s", bindingName, orgVdcNetworkName, err)
+	}
+
+	dSet(d, "org", orgName)
+	dSet(d, "org_network_id", orgVdcNet.OpenApiOrgVdcNetwork.ID)
+	d.SetId(dhcpBinding.OpenApiOrgVdcNetworkDhcpBinding.ID)
+
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -311,7 +347,6 @@ func getOpenApiOrgVdcNetworkDhcpBindingType(d *schema.ResourceData) (*types.Open
 	// IPv6 configuration specifics
 	dhcpV6Config := d.Get("dhcp_v6_config").([]interface{})
 	if len(dhcpV6Config) > 0 {
-
 		dhcpConfig := dhcpV6Config[0].(map[string]interface{})
 		domainNames := convertSchemaSetToSliceOfStrings(dhcpConfig["domain_names"].(*schema.Set))
 		sntpServers := convertSchemaSetToSliceOfStrings(dhcpConfig["sntp_servers"].(*schema.Set))

@@ -958,6 +958,13 @@ func importStateIdOrgNsxtVdcGroupObject(vdcGroupName, objectName string) resourc
 	}
 }
 
+// importCustomObject accepts a path and joins it using ImportSeparator
+func importCustomObject(path []string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return strings.Join(path, ImportSeparator), nil
+	}
+}
+
 // importStateIdNsxtManagerObject can be used by all entities that depend on NSX-T manager name + objectName
 func importStateIdNsxtManagerObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
