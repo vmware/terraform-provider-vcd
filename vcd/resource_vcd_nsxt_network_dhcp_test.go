@@ -14,21 +14,22 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
-		"NetworkName": t.Name(),
-		"TestName":    t.Name(),
-		"Tags":        "network nsxt",
+		"Org":          testConfig.VCD.Org,
+		"NsxtVdc":      testConfig.Nsxt.Vdc,
+		"EdgeGw":       testConfig.Nsxt.EdgeGateway,
+		"NetworkName":  t.Name(),
+		"TestName":     t.Name(),
+		"Binding1Name": t.Name() + "-dhcp-binding-1",
+		"Tags":         "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccRoutedNetDhcpStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
+	configText1 := templateFill(testAccRoutedNetDhcpStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configText1 := templateFill(testAccRoutedNetDhcpStep2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+	configText2 := templateFill(testAccRoutedNetDhcpStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -44,13 +45,18 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 	}
 
 	// This case is specific for VCD 10.3.1 onwards since dns servers are not present in previous versions
-	var configText2 string
+	var configText3 string
+	var configText4 string
 	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36.1") {
 		params["SkipTest"] = "# skip-binary-test: VCD 10.3.1 onwards dns servers are not present in previous versions"
 	}
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 = templateFill(testAccRoutedNetDhcpStep3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	configText3 = templateFill(testAccRoutedNetDhcpStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText3)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configText4 = templateFill(testAccRoutedNetDhcpStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText4)
 
 	cacheDhcpBinding1dId := &testCachedFieldValue{}
 	cacheDhcpBinding2dId := &testCachedFieldValue{}
@@ -60,7 +66,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "lease_time", "86400"),
@@ -70,11 +76,55 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 						"start_address": "7.1.1.100",
 						"end_address":   "7.1.1.110",
 					}),
-
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "lease_time", "4294967295"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "mode", "EDGE"),
+					resource.TestCheckNoResourceAttr("vcd_nsxt_network_dhcp.pools", "listener_ip_address"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
+						"start_address": "7.1.1.100",
+						"end_address":   "7.1.1.110",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
+						"start_address": "7.1.1.130",
+						"end_address":   "7.1.1.140",
+					}),
+				),
+			},
+			{
+				ResourceName:            "vcd_nsxt_network_dhcp.pools",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+			{
+				Config:   configText3,
+				SkipFunc: vcdVersionIsLowerThan1031,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "lease_time", "4294967295"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "mode", "EDGE"),
+					resource.TestCheckNoResourceAttr("vcd_nsxt_network_dhcp.pools", "listener_ip_address"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
+						"start_address": "7.1.1.100",
+						"end_address":   "7.1.1.110",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
+						"start_address": "7.1.1.130",
+						"end_address":   "7.1.1.140",
+					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.0", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.1", "1.0.0.1"),
 					// DHCP binding checks
 					cacheDhcpBinding1dId.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp_binding.binding1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp_binding.binding1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "name", t.Name()+"-dhcp-binding-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "name", params["Binding1Name"].(string)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "lease_time", "60"),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "binding_type", "IPV4"),
@@ -102,7 +152,8 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 				),
 			},
 			{
-				Config: configText1,
+				Config:   configText4,
+				SkipFunc: vcdVersionIsLowerThan1031,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "lease_time", "4294967295"),
@@ -116,10 +167,13 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 						"start_address": "7.1.1.130",
 						"end_address":   "7.1.1.140",
 					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.0", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.1", "1.0.0.1"),
 
 					// DHCP binding checks
 					cacheDhcpBinding1dId.cacheTestResourceFieldValue("vcd_nsxt_network_dhcp_binding.binding1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "name", t.Name()+"-dhcp-binding-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "name", params["Binding1Name"].(string)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "lease_time", "60"),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.binding1", "binding_type", "IPV4"),
@@ -141,32 +195,11 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "vcd_nsxt_network_dhcp.pools",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject("nsxt-routed-dhcp"),
-				ImportStateVerifyIgnore: []string{"vdc"},
-			},
-			{
-				Config:   configText2,
-				SkipFunc: vcdVersionIsLowerThan1031,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "lease_time", "4294967295"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "mode", "EDGE"),
-					resource.TestCheckNoResourceAttr("vcd_nsxt_network_dhcp.pools", "listener_ip_address"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
-						"start_address": "7.1.1.100",
-						"end_address":   "7.1.1.110",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.pools", "pool.*", map[string]string{
-						"start_address": "7.1.1.130",
-						"end_address":   "7.1.1.140",
-					}),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.0", "1.1.1.1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "dns_servers.1", "1.0.0.1"),
-				),
+				SkipFunc:          vcdVersionIsLowerThan1031,
+				ResourceName:      "vcd_nsxt_network_dhcp_binding.binding1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importCustomObject([]string{params["Org"].(string), params["NsxtVdc"].(string), params["NetworkName"].(string), params["Binding1Name"].(string)}),
 			},
 		},
 	})
@@ -183,7 +216,7 @@ data "vcd_nsxt_edgegateway" "existing" {
 resource "vcd_network_routed_v2" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
-  name = "nsxt-routed-dhcp"
+  name = "{{.NetworkName}}"
   description = "NSX-T routed network for DHCP testing"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -209,6 +242,48 @@ resource "vcd_nsxt_network_dhcp" "pools" {
     start_address = "7.1.1.100"
     end_address   = "7.1.1.110"
   }
+}
+`
+
+const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  org_network_id = vcd_network_routed_v2.net1.id
+  mode           = "EDGE"
+  lease_time     = 4294967295 # maximum allowed lease time in seconds (~49 days)
+  
+  pool {
+    start_address = "7.1.1.100"
+    end_address   = "7.1.1.110"
+  }
+
+  pool {
+    start_address = "7.1.1.130"
+    end_address   = "7.1.1.140"
+  }
+}
+`
+
+const testAccRoutedNetDhcpStep3 = testAccRoutedNetDhcpConfig + `
+resource "vcd_nsxt_network_dhcp" "pools" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  org_network_id = vcd_network_routed_v2.net1.id
+  
+  pool {
+    start_address = "7.1.1.100"
+    end_address   = "7.1.1.110"
+  }
+
+  pool {
+    start_address = "7.1.1.130"
+    end_address   = "7.1.1.140"
+  }
+
+  dns_servers = ["1.1.1.1", "1.0.0.1"]
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
@@ -246,14 +321,12 @@ resource "vcd_nsxt_network_dhcp_binding" "binding2" {
 }
 `
 
-const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
+const testAccRoutedNetDhcpStep4 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
-  mode           = "EDGE"
-  lease_time     = 4294967295 # maximum allowed lease time in seconds (~49 days)
   
   pool {
     start_address = "7.1.1.100"
@@ -264,6 +337,8 @@ resource "vcd_nsxt_network_dhcp" "pools" {
     start_address = "7.1.1.130"
     end_address   = "7.1.1.140"
   }
+
+  dns_servers = ["1.1.1.1", "1.0.0.1"]
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
@@ -290,27 +365,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding2" {
   lease_time   = 3600
   ip_address   = "7.1.1.190"
   mac_address  = "00:11:22:33:44:66"
-}
-`
-
-const testAccRoutedNetDhcpStep3 = testAccRoutedNetDhcpConfig + `
-resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-
-  org_network_id = vcd_network_routed_v2.net1.id
-  
-  pool {
-    start_address = "7.1.1.100"
-    end_address   = "7.1.1.110"
-  }
-
-  pool {
-    start_address = "7.1.1.130"
-    end_address   = "7.1.1.140"
-  }
-
-  dns_servers = ["1.1.1.1", "1.0.0.1"]
 }
 `
 

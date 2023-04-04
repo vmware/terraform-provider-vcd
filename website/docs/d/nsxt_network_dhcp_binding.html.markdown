@@ -6,9 +6,11 @@ description: |-
   Provides a data source to read NSX-T Org VDC network DHCP bindings.
 ---
 
-# vcd\_nsxt\network\_dhcp\_binding
+# vcd\_nsxt\_network\_dhcp\_binding
 
 Provides a data source to read NSX-T Org VDC network DHCP bindings.
+
+-> This data source requires VCD 10.3.1+
 
 ## Example Usage
 

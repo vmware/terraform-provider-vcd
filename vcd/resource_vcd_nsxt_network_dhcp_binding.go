@@ -209,7 +209,6 @@ func resourceVcdNsxtDhcpBindingRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
-	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
 	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
 		return diag.Errorf("[NSX-T DHCP binding read] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)

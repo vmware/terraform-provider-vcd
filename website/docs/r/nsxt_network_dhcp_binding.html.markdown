@@ -10,7 +10,7 @@ description: |-
 
 Provides a resource to manage NSX-T Org VDC network DHCP bindings.
 
-This resource requires VCD 10.3.1+.
+-> This resource requires VCD 10.3.1+
 
 ## Example Usage
 
@@ -87,7 +87,7 @@ below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_network_dhcp.imported my-org.my-org-vdc-or-vdc-group.my-nsxt-vdc-network-name.my-binding-name
+terraform import vcd_nsxt_network_dhcp_binding.imported my-org.my-org-vdc-or-vdc-group.my-nsxt-vdc-network-name.my-binding-name
 ```
 
 The above would import the `my-binding-name` NSX-T DHCP Binding configuration
