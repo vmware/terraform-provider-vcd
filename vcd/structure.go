@@ -108,8 +108,6 @@ func convertStringsToTypeSet(param []string) *schema.Set {
 // Note. It is mainly meant for converting literal values to pointers (e.g. `addrOf(true)`) or cases
 // for converting variables coming out straight from Terraform schema (e.g.
 // `addrOf(d.Get("name").(string))`).
-// Note. It would cost additional allocation when used with so `addrOf(variable)` instead of
-// `&variable`
 func addrOf[T any](variable T) *T {
 	return &variable
 }
