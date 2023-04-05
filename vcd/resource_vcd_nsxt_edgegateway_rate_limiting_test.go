@@ -23,12 +23,12 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
-	qosPolicyName, err := findQosProfile(vcdClient)
+	qosProfileName, err := findQosProfile(vcdClient)
 	if err != nil {
 		t.Fatalf("error finding QoS profile: %s", err)
 	}
 
-	if qosPolicyName == "" {
+	if qosProfileName == "" {
 		t.Skip("No QoS profile found. Skipping test")
 	}
 
@@ -41,7 +41,7 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 		"NsxtEdgeGw":           testConfig.Nsxt.EdgeGateway,
 		"TestName":             t.Name(),
 		"NsxtManager":          testConfig.Nsxt.Manager,
-		"NsxtQosPolicyName":    qosPolicyName,
+		"NsxtQosProfileName":   qosProfileName,
 
 		"Tags": "network nsxt",
 	}
@@ -109,7 +109,7 @@ data "vcd_nsxt_manager" "nsxt" {
 
 data "vcd_nsxt_edgegateway_qos_profile" "qos-1" {
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
-  name = "{{.NsxtQosPolicyName}}"
+  name = "{{.NsxtQosProfileName}}"
 }
 
 data "vcd_vdc_group" "g1" {
@@ -182,17 +182,17 @@ func testAccCheckNsxtEdgeRateLimitDestroy(vdcOrVdcGroupName, edgeGatewayName str
 			return fmt.Errorf(errorUnableToFindEdgeGateway, edgeGatewayName)
 		}
 
-		qosPolicy, err := edge.GetQoS()
+		qosConfig, err := edge.GetQoS()
 		if err != nil {
 			return fmt.Errorf("unable to get Qos profile: %s", err)
 		}
 
-		if qosPolicy.EgressProfile != nil && qosPolicy.EgressProfile.ID != "" {
-			return fmt.Errorf("QoS Egress policy still exists")
+		if qosConfig.EgressProfile != nil && qosConfig.EgressProfile.ID != "" {
+			return fmt.Errorf("QoS Egress profile still exists")
 		}
 
-		if qosPolicy.IngressProfile != nil && qosPolicy.IngressProfile.ID != "" {
-			return fmt.Errorf("QoS Ingress policy still exists")
+		if qosConfig.IngressProfile != nil && qosConfig.IngressProfile.ID != "" {
+			return fmt.Errorf("QoS Ingress profile still exists")
 		}
 
 		return nil
@@ -211,14 +211,14 @@ func findQosProfile(vcdClient *VCDClient) (string, error) {
 		return "", fmt.Errorf("could not construct URN from id '%s': %s", id, err)
 	}
 
-	allQosPolicies, err := vcdClient.GetAllNsxtEdgeGatewayQosProfiles(nsxtManagerUrn, nil)
+	allQosProfiles, err := vcdClient.GetAllNsxtEdgeGatewayQosProfiles(nsxtManagerUrn, nil)
 	if err != nil {
 		return "", fmt.Errorf("unable to find Qos profile: %s", err)
 	}
 
-	if len(allQosPolicies) == 0 {
+	if len(allQosProfiles) == 0 {
 		return "", nil
 	}
 
-	return allQosPolicies[0].NsxtEdgeGatewayQosProfile.DisplayName, nil
+	return allQosProfiles[0].NsxtEdgeGatewayQosProfile.DisplayName, nil
 }

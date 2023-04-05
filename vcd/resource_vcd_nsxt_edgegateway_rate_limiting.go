@@ -79,14 +79,14 @@ func resourceVcdNsxtEdgegatewayRateLimitingCreateUpdate(ctx context.Context, d *
 		return diag.Errorf("[rate limiting (qos) create/update] error retrieving Edge Gateway: %s", err)
 	}
 
-	qosPolicy, err := getNsxtEdgeGatewayQosType(d)
+	qosConfig, err := getNsxtEdgeGatewayQosType(d)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) create/update] error getting QoS Policy: %s", err)
+		return diag.Errorf("[rate limiting (qos) create/update] error getting QoS configuration: %s", err)
 	}
 
-	_, err = nsxtEdge.UpdateQoS(qosPolicy)
+	_, err = nsxtEdge.UpdateQoS(qosConfig)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) create/update] error updating QoS Policy: %s", err)
+		return diag.Errorf("[rate limiting (qos) create/update] error updating QoS configuration: %s", err)
 	}
 
 	d.SetId(edgeGatewayId)
@@ -111,12 +111,12 @@ func resourceVcdNsxtEdgegatewayRateLimitingRead(ctx context.Context, d *schema.R
 		return diag.Errorf("[rate limiting (qos) read] error retrieving NSX-T Edge Gateway rate limiting (qos): %s", err)
 	}
 
-	qosPolicy, err := nsxtEdge.GetQoS()
+	qosConfig, err := nsxtEdge.GetQoS()
 	if err != nil {
 		return diag.Errorf("[rate limiting (qos) read] error retrieving NSX-T Edge Gateway rate limiting (qos): %s", err)
 	}
 
-	setNsxtEdgeGatewayQosData(d, qosPolicy)
+	setNsxtEdgeGatewayQosData(d, qosConfig)
 
 	return nil
 }
@@ -150,10 +150,10 @@ func resourceVcdNsxtEdgegatewayRateLimitingDelete(ctx context.Context, d *schema
 		return diag.Errorf("[rate limiting (qos) delete] error retrieving Edge Gateway: %s", err)
 	}
 
-	// There is no real "delete" for QoS Policy. It can only be updated to empty values (unlimited)
+	// There is no real "delete" for QoS. It can only be updated to empty values (unlimited)
 	_, err = nsxtEdge.UpdateQoS(&types.NsxtEdgeGatewayQos{})
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) delete] error updating QoS Policy: %s", err)
+		return diag.Errorf("[rate limiting (qos) delete] error updating QoS Profile: %s", err)
 	}
 
 	return nil
@@ -195,18 +195,18 @@ func resourceVcdNsxtEdgegatewayRateLimitingImport(ctx context.Context, d *schema
 func getNsxtEdgeGatewayQosType(d *schema.ResourceData) (*types.NsxtEdgeGatewayQos, error) {
 
 	qosType := &types.NsxtEdgeGatewayQos{}
-	ingressPolicyId := d.Get("ingress_profile_id").(string)
-	egressPolicyId := d.Get("egress_profile_id").(string)
+	ingressProfileId := d.Get("ingress_profile_id").(string)
+	egressProfileId := d.Get("egress_profile_id").(string)
 
-	if ingressPolicyId != "" {
+	if ingressProfileId != "" {
 		qosType.IngressProfile = &types.OpenApiReference{
-			ID: ingressPolicyId,
+			ID: ingressProfileId,
 		}
 	}
 
-	if egressPolicyId != "" {
+	if egressProfileId != "" {
 		qosType.EgressProfile = &types.OpenApiReference{
-			ID: egressPolicyId,
+			ID: egressProfileId,
 		}
 	}
 
