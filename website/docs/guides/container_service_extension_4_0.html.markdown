@@ -248,10 +248,14 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Final considerations
 
+#### Install the UI plugin
+
 To manage CSE clusters with the UI, you can [download the Kubernetes Container Clusters UI plug-in 4.0][cse_docs]
 and install it in your VCD appliance. If the old CSE 3.x plugin is installed, you will need to remove it first. The plugin
 will allow tenants to create Kubernetes clusters with the UI wizard. Providers should still use the proposed Terraform configuration
 to perform updates on the CSE Server (see sections below).
+
+#### Troubleshooting
 
 To evaluate the correctness of the setup, you can look up the CSE logs present in the CSE Server VM.
 You can visit [the documentation][cse_docs]

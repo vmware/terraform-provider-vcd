@@ -3,7 +3,7 @@
 # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
 
 # ------------------------------------------------
-# Provider config
+# VCD Provider config
 # ------------------------------------------------
 vcd_url                = "https://vcd.my-awesome-corp.com"
 administrator_user     = "administrator"
@@ -22,5 +22,6 @@ cse_admin_password = "change-me"
 # ------------------------------------------------
 # # CSE Runtime Defined Entities setup
 # ------------------------------------------------
-# Version of CAPVCD Runtime Defined Entity Type to use in the installation
+# Version that the CAPVCD Runtime Defined Entity Type will have when created.
+# For CSE v4.0 it should be 1.1.0
 capvcd_rde_version = 1.1.0
