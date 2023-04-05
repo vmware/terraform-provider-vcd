@@ -8,9 +8,9 @@ description: |-
 
 # vcd\_nsxt\_edgegateway\_qos\_profile
 
-Provides a data source to read NSX-T Edge Gateway QoS profiles.
+Supported in provider *v3.9+* and VCD 10.3.2+ with NSX-T.
 
--> Supported in provider *v3.9+* and VCD 10.3.2+ with NSX-T
+Provides a data source to read NSX-T Edge Gateway QoS profiles.
 
 ## Example Usage
 

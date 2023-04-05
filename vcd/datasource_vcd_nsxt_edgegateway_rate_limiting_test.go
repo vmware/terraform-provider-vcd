@@ -44,12 +44,12 @@ func TestAccVcdDataSourceNsxtEdgeRateLimiting(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "id"),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "ingress_policy_id", ""),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "egress_policy_id", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "ingress_profile_id", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "egress_profile_id", ""),
 
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "id"),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "ingress_policy_id", ""),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "egress_policy_id", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "ingress_profile_id", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "egress_profile_id", ""),
 				),
 			},
 		},

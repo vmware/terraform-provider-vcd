@@ -36,12 +36,12 @@ func resourceVcdNsxtEdgegatewayRateLimiting() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway ID for rate limiting Configuration",
 			},
-			"ingress_policy_id": {
+			"ingress_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Ingress policy ID for rate limiting Configuration",
 			},
-			"egress_policy_id": {
+			"egress_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Egress policy ID for rate limiting Configuration",
@@ -195,8 +195,8 @@ func resourceVcdNsxtEdgegatewayRateLimitingImport(ctx context.Context, d *schema
 func getNsxtEdgeGatewayQosType(d *schema.ResourceData) (*types.NsxtEdgeGatewayQos, error) {
 
 	qosType := &types.NsxtEdgeGatewayQos{}
-	ingressPolicyId := d.Get("ingress_policy_id").(string)
-	egressPolicyId := d.Get("egress_policy_id").(string)
+	ingressPolicyId := d.Get("ingress_profile_id").(string)
+	egressPolicyId := d.Get("egress_profile_id").(string)
 
 	if ingressPolicyId != "" {
 		qosType.IngressProfile = &types.OpenApiReference{
@@ -215,14 +215,14 @@ func getNsxtEdgeGatewayQosType(d *schema.ResourceData) (*types.NsxtEdgeGatewayQo
 
 func setNsxtEdgeGatewayQosData(d *schema.ResourceData, qosType *types.NsxtEdgeGatewayQos) {
 	if qosType.IngressProfile != nil {
-		dSet(d, "ingress_policy_id", qosType.IngressProfile.ID)
+		dSet(d, "ingress_profile_id", qosType.IngressProfile.ID)
 	} else {
-		dSet(d, "ingress_policy_id", "")
+		dSet(d, "ingress_profile_id", "")
 	}
 
 	if qosType.EgressProfile != nil {
-		dSet(d, "egress_policy_id", qosType.EgressProfile.ID)
+		dSet(d, "egress_profile_id", qosType.EgressProfile.ID)
 	} else {
-		dSet(d, "egress_policy_id", "")
+		dSet(d, "egress_profile_id", "")
 	}
 }

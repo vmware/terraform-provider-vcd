@@ -140,16 +140,16 @@ resource "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  ingress_policy_id = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
-  egress_policy_id  = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
+  ingress_profile_id = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
+  egress_profile_id  = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
 }
 
 resource "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc-group" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
 
-  ingress_policy_id = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
-  egress_policy_id  = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
+  ingress_profile_id = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
+  egress_profile_id  = data.vcd_nsxt_edgegateway_qos_profile.qos-1.id
 }
 `
 
