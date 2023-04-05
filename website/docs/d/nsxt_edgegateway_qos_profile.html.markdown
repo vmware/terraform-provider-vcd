@@ -15,11 +15,14 @@ Provides a data source to read NSX-T Edge Gateway QoS profiles.
 ## Example Usage
 
 ```hcl
+data "vcd_nsxt_manager" "first" {
+  name = "nsxt-manager-name"
+}
+
 data "vcd_nsxt_edgegateway_qos_profile" "qos-1" {
   nsxt_manager_id = data.nsxt_manager_id.first.id
   name = "qos-policy-1"
 }
-
 ```
 
 ## Argument Reference

@@ -1,1 +1,1 @@
-// https://atl1-vcd-static-105-104.eng.vmware.com/cloudapi/1.0.0/nsxTResources/gatewayQoSProfiles?page=1&pageSize=128&filterEncoded=true&filter=(nsxTManagerRef.id==urn:vcloud:nsxtmanager:0d16637d-5adc-4a6e-85e5-90e655c62516)
+package vcd
