@@ -38,6 +38,7 @@ cse_ova_file    = "VMware_Cloud_Director_Container_Service_Extension-4.0.1.ova" 
 nsxt_manager_name = "change-me" # Name of an existing NSX-T manager, required to create the Provider Gateways
 
 # These are all required to create the Solutions Organization Provider Gateway.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
 solutions_nsxt_tier0_router_name                 = "change-me"    # The name of an existing NSX-T Tier 0 router
 solutions_provider_gateway_gateway_ip            = "10.20.30.250" # Gateway IP to use in the Solutions Provider Gateway
 solutions_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Solutions Provider Gateway
@@ -46,7 +47,8 @@ solutions_provider_gateway_static_ip_ranges = [                   # IP ranges to
   ["10.20.30.20", "10.20.30.25"], # Many IPs
 ]
 
-# These are all required to create the Tenant Organization Provider Gateway
+# These are all required to create the Tenant Organization Provider Gateway.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
 tenant_nsxt_tier0_router_name                 = "change-me"    # The name of an existing NSX-T Tier 0 router
 tenant_provider_gateway_gateway_ip            = "10.30.20.150" # Gateway IP to use in the Tenant Provider Gateway
 tenant_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Tenant Provider Gateway
@@ -55,6 +57,8 @@ tenant_provider_gateway_static_ip_ranges = [                   # IP ranges to us
   ["10.30.20.30", "10.30.20.37"], # Many IPs
 ]
 
+# These will configure the Routed network for the Solutions Organization VDC.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
 solutions_routed_network_gateway_ip            = "192.168.0.1"    # Required. Gateway IP for the Routed network inside the Solutions Organization
 solutions_routed_network_prefix_length         = "24"             # Required. Prefix length for the Routed network inside the Solutions Organization
 solutions_routed_network_ip_pool_start_address = "192.168.0.2"    # Required. First IP for the Routed network pool
@@ -64,6 +68,8 @@ solutions_snat_internal_network_cidr           = "192.168.0.0/24" # Required. It
 solutions_routed_network_dns                   = ""               # Optional, if you need DNS
 solutions_routed_network_dns_suffix            = ""               # Optional, if you need DNS
 
+# These will configure the Routed network for the Tenant Organization VDC.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
 tenant_routed_network_gateway_ip            = "10.0.0.1"     # Required. Gateway IP for the Routed network inside the Tenant Organization
 tenant_routed_network_prefix_length         = "16"           # Required. Prefix length for the Routed network inside the Tenant Organization
 tenant_routed_network_ip_pool_start_address = "10.0.0.2"     # Required. First IP for the Routed network pool
@@ -77,7 +83,7 @@ tenant_routed_network_dns_suffix            = ""             # Optional, if you 
 # Values to create ALB setup
 # ------------------------------------------------
 # These are required to create a new ALB setup in VCD that will be used by TKGm clusters.
-# Your VCD should have an existing ALB deployment that will be imported, the values below correspond to
+# Your VCD should have an existing ALB deployment that will be imported, the values below must correspond to
 # the existing controller to be imported into VCD:
 alb_controller_username   = "admin"                                # Username to access the ALB Controller
 alb_controller_password   = "change-me"                            # Password to access the ALB Controller
