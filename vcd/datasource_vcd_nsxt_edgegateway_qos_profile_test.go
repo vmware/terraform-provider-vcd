@@ -9,8 +9,24 @@ import (
 )
 
 func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
-
 	skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 36.2") {
+		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
+	}
+
+	qosPolicyName, err := findQosPolicy(vcdClient)
+	if err != nil {
+		t.Fatalf("error finding QoS profile: %s", err)
+	}
+
+	if qosPolicyName == "" {
+		t.Skip("No QoS profile found. Skipping test")
+	}
 
 	var params = StringMap{
 		"FuncName":          t.Name(),

@@ -14,30 +14,30 @@ func datasourceVcdNsxtEdgeGatewayQosProfile() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "ID of NSX-T manager",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of QoS profile in NSX-T manager",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of QoS profile in NSX-T manager",
 			},
-			"committed_bandwidth": &schema.Schema{
+			"committed_bandwidth": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Committed bandwidth in Kbps",
 			},
-			"burst_size": &schema.Schema{
+			"burst_size": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Burst size in Kbps",
 			},
-			"excess_action": &schema.Schema{
+			"excess_action": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Excess action",
