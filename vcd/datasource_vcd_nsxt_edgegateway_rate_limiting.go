@@ -26,12 +26,12 @@ func datasourceVcdNsxtEdgegatewayRateLimiting() *schema.Resource {
 			"ingress_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Ingress policy ID for rate limiting Configuration",
+				Description: "Ingress profile ID for rate limiting Configuration",
 			},
 			"egress_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Egress policy ID for rate limiting Configuration",
+				Description: "Egress profile ID for rate limiting Configuration",
 			},
 		},
 	}
@@ -48,14 +48,14 @@ func datasourceVcdNsxtEdgegatewayRateLimitingRead(ctx context.Context, d *schema
 		return diag.Errorf("[rate limiting (qos) DS read] error retrieving NSX-T Edge Gateway rate limiting (qos): %s", err)
 	}
 
-	qosPolicy, err := nsxtEdge.GetQoS()
+	qosProfile, err := nsxtEdge.GetQoS()
 	if err != nil {
 		return diag.Errorf("[rate limiting (qos) DS read] error retrieving NSX-T Edge Gateway rate limiting (qos): %s", err)
 	}
 
 	// Rate limiting does not have its own ID - it is a part of Edge Gateway
 	d.SetId(edgeGatewayId)
-	setNsxtEdgeGatewayQosData(d, qosPolicy)
+	setNsxtEdgeGatewayQosData(d, qosProfile)
 
 	return nil
 }

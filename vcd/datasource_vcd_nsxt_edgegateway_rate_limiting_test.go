@@ -9,7 +9,7 @@ import (
 )
 
 // TestAccVcdDataSourceNsxtEdgeRateLimiting is a test for datasource
-// vcd_nsxt_edgegateway_rate_limiting It only check if ingress and egress policy IDs are empty
+// vcd_nsxt_edgegateway_rate_limiting It only check if ingress and egress profile IDs are empty
 // ("unlimited" rate). Other values are tested in resource test.
 func TestAccVcdDataSourceNsxtEdgeRateLimiting(t *testing.T) {
 	preTestChecks(t)

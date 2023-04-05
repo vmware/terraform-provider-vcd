@@ -19,7 +19,7 @@ func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
-	qosPolicyName, err := findQosPolicy(vcdClient)
+	qosPolicyName, err := findQosProfile(vcdClient)
 	if err != nil {
 		t.Fatalf("error finding QoS profile: %s", err)
 	}
@@ -29,9 +29,9 @@ func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"FuncName":          t.Name(),
-		"NsxtManager":       testConfig.Nsxt.Manager,
-		"NsxtQosPolicyName": "qos-policy-1", // TODO - MUST BE PRECREATED on NSXT Manager
+		"FuncName":           t.Name(),
+		"NsxtManager":        testConfig.Nsxt.Manager,
+		"NsxtQosProfileName": qosPolicyName,
 
 		"Tags": "nsxt gateway",
 	}
@@ -70,6 +70,6 @@ data "vcd_nsxt_manager" "nsxt" {
 
 data "vcd_nsxt_edgegateway_qos_profile" "qos-1" {
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
-  name = "{{.NsxtQosPolicyName}}"
+  name            = "{{.NsxtQosProfileName}}"
 }
 `

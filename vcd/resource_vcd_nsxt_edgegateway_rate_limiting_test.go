@@ -23,7 +23,7 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
-	qosPolicyName, err := findQosPolicy(vcdClient)
+	qosPolicyName, err := findQosProfile(vcdClient)
 	if err != nil {
 		t.Fatalf("error finding QoS profile: %s", err)
 	}
@@ -199,7 +199,7 @@ func testAccCheckNsxtEdgeRateLimitDestroy(vdcOrVdcGroupName, edgeGatewayName str
 	}
 }
 
-func findQosPolicy(vcdClient *VCDClient) (string, error) {
+func findQosProfile(vcdClient *VCDClient) (string, error) {
 	nsxtManagers, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 	if err != nil {
 		return "", fmt.Errorf("unable to find NSX-T manager: %s", err)

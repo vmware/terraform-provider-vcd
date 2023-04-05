@@ -39,12 +39,12 @@ func resourceVcdNsxtEdgegatewayRateLimiting() *schema.Resource {
 			"ingress_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Ingress policy ID for rate limiting Configuration",
+				Description: "Ingress profile ID for rate limiting Configuration",
 			},
 			"egress_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Egress policy ID for rate limiting Configuration",
+				Description: "Egress profile ID for rate limiting Configuration",
 			},
 		},
 	}
