@@ -134,7 +134,7 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
-on upload speed.
+on upload speed. You can tune the `upload_piece_size` to speed up the upload.
 
 If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
