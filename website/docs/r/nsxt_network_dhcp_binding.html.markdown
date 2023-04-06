@@ -31,7 +31,7 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
   org = "cloud"
 
-  # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_isolated_v2.net1.id because
+  # Referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_isolated_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created and it makes
   # implicit dependencies work. One can reference `vcd_network_isolated_v2.net1.id` here and use
   # depends_on = [vcd_nsxt_network_dhcp.pools]
@@ -61,7 +61,7 @@ The following arguments are supported:
   `vcd_network_isolated_v2`, `vcd_network_routed_v2` and `vcd_nsxt_network_dhcp` suite here. It is
   more convenient to use reference to `vcd_nsxt_network_dhcp` ID because it makes sure that DHCP is
   enabled before configuring pools
-* `binding_type` - (Required) One of `IPV4`, `IPV6`
+* `binding_type` - (Required) One of `IPV4` or `IPV6`
 * `ip_address` - (Required) IP address used for binding
 * `mac_address` - (Required) MAC address used for binding
 * `lease_time` - (Required) Lease time in seconds. Minimum `3600` seconds

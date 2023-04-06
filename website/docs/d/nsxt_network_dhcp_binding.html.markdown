@@ -32,8 +32,9 @@ data "vcd_nsxt_network_dhcp_binding" "binding1" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization. Optional if defined at provider level
-* `org_network_id` - (Required) The ID of an Org VDC network. **Note**  (`.id` field) of
-  `vcd_network_isolated_v2`, `vcd_network_routed_v2` and `vcd_nsxt_network_dhcp` suite here
+* `org_network_id` - (Required) The ID of an Org VDC network. **Note**  `.id` field of
+  `vcd_network_isolated_v2`, `vcd_network_routed_v2` or `vcd_nsxt_network_dhcp` can be referenced
+  here
 * `name` - (Required) A name of DHCP binding
 
 ## Attribute Reference
