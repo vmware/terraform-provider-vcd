@@ -112,6 +112,8 @@
     "tier0routervrf": "tier-0-2",
     "//": "Existing External Network with correct configuration",
     "externalNetwork": "tier-0-backed-external-network",
+    "//":"Gateway QoS Profile used for NSX-T Edge Gateway Rate Limiting (defined in NSX-T Manager)",
+    "gatewayQosProfile":"Gateway QoS Profile 1",
     "//": "Existing NSX-T based VDC",
     "vdc": "nsxt-vdc-dainius",
     "//": "Existing NSX-T Edge Gateway",

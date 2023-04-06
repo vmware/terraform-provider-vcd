@@ -3,16 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_rate_limiting"
 sidebar_current: "docs-vcd-resource-nsxt-edge-rate-limiting"
 description: |-
-  Provides a resource to manage NSX-T Edge Gateway Rate Limiting configuration.
+  Provides a resource to manage NSX-T Edge Gateway Rate Limiting (QoS) configuration.
 ---
 
 # vcd\_nsxt\_edgegateway\_rate\_limiting
 
 Supported in provider *v3.9+* and VCD 10.3.2+ with NSX-T.
 
-Provides a resource to manage NSX-T Edge Gateway Rate Limiting configuration.
-
-~> Only `System Administrator` can create this resource.
+Provides a resource to manage NSX-T Edge Gateway Rate Limiting (QoS) configuration.
 
 ## Example Usage
 
@@ -53,10 +51,10 @@ The following arguments are supported:
 
 * `org` - (Required) Org in which the NSX-T Edge Gateway is located
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
-* `ingress_profile_id` - (Optional) A QoS profile to apply for ingress traffic. *Note* it will be
-  `unlimited` if not set.
-* `egress_profile_id` - (Optional) A QoS profile to apply for egress traffic. *Note* it will be
-  `unlimited` if not set.
+* `ingress_profile_id` - (Optional) A QoS profile to apply for ingress traffic. *Note* leaving empty
+  means `unlimited`.
+* `egress_profile_id` - (Optional) A QoS profile to apply for egress traffic. *Note* leaving empty
+  means `unlimited`.
 
 -> Ingress and Egress profile IDs can be looked up using
   [`vcd_nsxt_edgegateway_qos_profile`](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway_qos_profile)

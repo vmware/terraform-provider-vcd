@@ -34,17 +34,17 @@ func resourceVcdNsxtEdgegatewayRateLimiting() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway ID for rate limiting Configuration",
+				Description: "Edge gateway ID for Rate limiting (QoS) configuration",
 			},
 			"ingress_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Ingress profile ID for rate limiting Configuration",
+				Description: "Ingress profile ID for Rate limiting (QoS) configuration",
 			},
 			"egress_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Egress profile ID for rate limiting Configuration",
+				Description: "Egress profile ID for Rate limiting (QoS) configuration",
 			},
 		},
 	}
@@ -53,14 +53,14 @@ func resourceVcdNsxtEdgegatewayRateLimiting() *schema.Resource {
 func resourceVcdNsxtEdgegatewayRateLimitingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// Handling locks is conditional. There are two scenarios:
 	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
 	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
 	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[rate limiting (QoS) create/update] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -76,17 +76,17 @@ func resourceVcdNsxtEdgegatewayRateLimitingCreateUpdate(ctx context.Context, d *
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) create/update] error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[rate limiting (QoS) create/update] error retrieving Edge Gateway: %s", err)
 	}
 
-	qosConfig, err := getNsxtEdgeGatewayQosType(d)
+	qosConfig, err := getNsxtEdgeGatewayRateLimitingType(d)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) create/update] error getting QoS configuration: %s", err)
+		return diag.Errorf("[rate limiting (QoS) create/update] error getting QoS configuration: %s", err)
 	}
 
 	_, err = nsxtEdge.UpdateQoS(qosConfig)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) create/update] error updating QoS configuration: %s", err)
+		return diag.Errorf("[rate limiting (QoS) create/update] error updating QoS configuration: %s", err)
 	}
 
 	d.SetId(edgeGatewayId)
@@ -108,15 +108,15 @@ func resourceVcdNsxtEdgegatewayRateLimitingRead(ctx context.Context, d *schema.R
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("[rate limiting (qos) read] error retrieving NSX-T Edge Gateway rate limiting (qos): %s", err)
+		return diag.Errorf("[rate limiting (QoS) read] error retrieving NSX-T Edge Gateway rate limiting (QoS): %s", err)
 	}
 
 	qosConfig, err := nsxtEdge.GetQoS()
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) read] error retrieving NSX-T Edge Gateway rate limiting (qos): %s", err)
+		return diag.Errorf("[rate limiting (QoS) read] error retrieving NSX-T Edge Gateway rate limiting (QoS): %s", err)
 	}
 
-	setNsxtEdgeGatewayQosData(d, qosConfig)
+	setNsxtEdgeGatewayRateLimitingData(d, qosConfig)
 
 	return nil
 }
@@ -124,14 +124,14 @@ func resourceVcdNsxtEdgegatewayRateLimitingRead(ctx context.Context, d *schema.R
 func resourceVcdNsxtEdgegatewayRateLimitingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks on for BGP configuration is conditional. There are two scenarios:
+	// Handling locks is conditional. There are two scenarios:
 	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
 	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
 	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
 	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) delete] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[rate limiting (QoS) delete] error finding parent Edge Gateway: %s", err)
 	}
 
 	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
@@ -147,20 +147,20 @@ func resourceVcdNsxtEdgegatewayRateLimitingDelete(ctx context.Context, d *schema
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) delete] error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[rate limiting (QoS) delete] error retrieving Edge Gateway: %s", err)
 	}
 
 	// There is no real "delete" for QoS. It can only be updated to empty values (unlimited)
 	_, err = nsxtEdge.UpdateQoS(&types.NsxtEdgeGatewayQos{})
 	if err != nil {
-		return diag.Errorf("[rate limiting (qos) delete] error updating QoS Profile: %s", err)
+		return diag.Errorf("[rate limiting (QoS) delete] error updating QoS Profile: %s", err)
 	}
 
 	return nil
 }
 
 func resourceVcdNsxtEdgegatewayRateLimitingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	log.Printf("[TRACE] NSX-T Edge Gateway Rate Limiting (QoS) import initiated")
+	log.Printf("[TRACE] NSX-T Edge Gateway Rate limiting (QoS) import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
@@ -192,8 +192,7 @@ func resourceVcdNsxtEdgegatewayRateLimitingImport(ctx context.Context, d *schema
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNsxtEdgeGatewayQosType(d *schema.ResourceData) (*types.NsxtEdgeGatewayQos, error) {
-
+func getNsxtEdgeGatewayRateLimitingType(d *schema.ResourceData) (*types.NsxtEdgeGatewayQos, error) {
 	qosType := &types.NsxtEdgeGatewayQos{}
 	ingressProfileId := d.Get("ingress_profile_id").(string)
 	egressProfileId := d.Get("egress_profile_id").(string)
@@ -213,16 +212,16 @@ func getNsxtEdgeGatewayQosType(d *schema.ResourceData) (*types.NsxtEdgeGatewayQo
 	return qosType, nil
 }
 
-func setNsxtEdgeGatewayQosData(d *schema.ResourceData, qosType *types.NsxtEdgeGatewayQos) {
+func setNsxtEdgeGatewayRateLimitingData(d *schema.ResourceData, qosType *types.NsxtEdgeGatewayQos) {
 	if qosType.IngressProfile != nil {
 		dSet(d, "ingress_profile_id", qosType.IngressProfile.ID)
 	} else {
-		dSet(d, "ingress_profile_id", "")
+		dSet(d, "ingress_profile_id", "") // Empty means `unlimited`
 	}
 
 	if qosType.EgressProfile != nil {
 		dSet(d, "egress_profile_id", qosType.EgressProfile.ID)
 	} else {
-		dSet(d, "egress_profile_id", "")
+		dSet(d, "egress_profile_id", "") // Empty means `unlimited`
 	}
 }

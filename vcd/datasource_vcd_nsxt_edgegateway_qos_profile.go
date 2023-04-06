@@ -10,7 +10,6 @@ import (
 func datasourceVcdNsxtEdgeGatewayQosProfile() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdNsxtEdgeGatewayQosProfileRead,
-
 		Schema: map[string]*schema.Schema{
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
@@ -47,14 +46,13 @@ func datasourceVcdNsxtEdgeGatewayQosProfile() *schema.Resource {
 }
 
 func datasourceVcdNsxtEdgeGatewayQosProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	vcdClient := meta.(*VCDClient)
 	nsxtManagerId := d.Get("nsxt_manager_id").(string)
 	qosProfileName := d.Get("name").(string)
 
 	qosProfile, err := vcdClient.GetNsxtEdgeGatewayQosProfileByDisplayName(nsxtManagerId, qosProfileName)
 	if err != nil {
-		return diag.Errorf("could not find NSX-T QoS profile by name '%s' in NSX-T manager %s: %s",
+		return diag.Errorf("could not find NSX-T QoS profile by Name '%s' in NSX-T manager %s: %s",
 			qosProfileName, nsxtManagerId, err)
 	}
 

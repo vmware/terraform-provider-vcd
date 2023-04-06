@@ -3,14 +3,16 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_qos_profile"
 sidebar_current: "docs-vcd-data-source-nsxt-qos-profile"
 description: |-
-  Provides a data source to read NSX-T Edge Gateway QoS profiles.
+  Provides a data source to read NSX-T Edge Gateway QoS profiles. Which can be used to modify NSX-T 
+  Edge Gateway Rate Limiting (QoS) configuration.
 ---
 
 # vcd\_nsxt\_edgegateway\_qos\_profile
 
 Supported in provider *v3.9+* and VCD 10.3.2+ with NSX-T.
 
-Provides a data source to read NSX-T Edge Gateway QoS profiles.
+Provides a data source to read NSX-T Edge Gateway QoS profiles. Which can be used to modify NSX-T
+Edge Gateway Rate Limiting (QoS) configuration.
 
 ## Example Usage
 
@@ -31,7 +33,7 @@ The following arguments are supported:
 
 * `nsxt_manager_id` - (Required) NSX-T Manager where the QoS profile is defined in (can be looked up
 using `vcd_nsxt_manager` data source)
-* `nsxt_manager_id` - (Required) QoS Profile Name
+* `name` - (Required) QoS Profile Name
 
 
 ## Attribute Reference

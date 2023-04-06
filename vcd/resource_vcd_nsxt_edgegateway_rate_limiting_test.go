@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
@@ -23,15 +22,6 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
-	qosProfileName, err := findQosProfile(vcdClient)
-	if err != nil {
-		t.Fatalf("error finding QoS profile: %s", err)
-	}
-
-	if qosProfileName == "" {
-		t.Skip("No QoS profile found. Skipping test")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                  testConfig.VCD.Org,
@@ -41,7 +31,7 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 		"NsxtEdgeGw":           testConfig.Nsxt.EdgeGateway,
 		"TestName":             t.Name(),
 		"NsxtManager":          testConfig.Nsxt.Manager,
-		"NsxtQosProfileName":   qosProfileName,
+		"NsxtQosProfileName":   testConfig.Nsxt.GatewayQosProfile,
 
 		"Tags": "network nsxt",
 	}
@@ -53,6 +43,10 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2"
 	configText2DS := templateFill(testAccVcdNsxtEdgeRateLimitingStep2DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2DS)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccVcdNsxtEdgeRateLimitingStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -70,9 +64,12 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_edgegateway_qos_profile.qos-1", "id"),
-
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "ingress_profile_id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "egress_profile_id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "ingress_profile_id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "egress_profile_id"),
 				),
 			},
 			{
@@ -98,11 +95,24 @@ func TestAccVcdNsxtEdgeRateLimiting(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", nil),
 				),
 			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.vcd_nsxt_edgegateway_qos_profile.qos-1", "id"),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "ingress_profile_id", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc", "egress_profile_id", ""),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "ingress_profile_id", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_rate_limiting.testing-in-vdc-group", "egress_profile_id", ""),
+				),
+			},
 		},
 	})
 }
 
-const testAccVcdNsxtEdgeRateLimitingStep1 = `
+const testAccVcdNsxtEdgeRateLimitingShared = `
 data "vcd_nsxt_manager" "nsxt" {
   name = "{{.NsxtManager}}"
 }
@@ -135,7 +145,9 @@ data "vcd_nsxt_edgegateway" "testing-in-vdc" {
 
   name = "{{.NsxtEdgeGw}}"
 }
+`
 
+const testAccVcdNsxtEdgeRateLimitingStep1 = testAccVcdNsxtEdgeRateLimitingShared + `
 resource "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
@@ -161,6 +173,18 @@ data "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc" {
 }
 
 data "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc-group" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
+}
+`
+
+const testAccVcdNsxtEdgeRateLimitingStep3 = testAccVcdNsxtEdgeRateLimitingShared + `
+resource "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
+}
+
+resource "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc-group" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
 }
@@ -197,28 +221,4 @@ func testAccCheckNsxtEdgeRateLimitDestroy(vdcOrVdcGroupName, edgeGatewayName str
 
 		return nil
 	}
-}
-
-func findQosProfile(vcdClient *VCDClient) (string, error) {
-	nsxtManagers, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
-	if err != nil {
-		return "", fmt.Errorf("unable to find NSX-T manager: %s", err)
-	}
-
-	id := extractUuid(nsxtManagers[0].HREF)
-	nsxtManagerUrn, err := govcd.BuildUrnWithUuid("urn:vcloud:nsxtmanager:", id)
-	if err != nil {
-		return "", fmt.Errorf("could not construct URN from id '%s': %s", id, err)
-	}
-
-	allQosProfiles, err := vcdClient.GetAllNsxtEdgeGatewayQosProfiles(nsxtManagerUrn, nil)
-	if err != nil {
-		return "", fmt.Errorf("unable to find Qos profile: %s", err)
-	}
-
-	if len(allQosProfiles) == 0 {
-		return "", nil
-	}
-
-	return allQosProfiles[0].NsxtEdgeGatewayQosProfile.DisplayName, nil
 }

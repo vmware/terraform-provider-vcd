@@ -19,19 +19,10 @@ func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
-	qosProfileName, err := findQosProfile(vcdClient)
-	if err != nil {
-		t.Fatalf("error finding QoS profile: %s", err)
-	}
-
-	if qosProfileName == "" {
-		t.Skip("No QoS profile found. Skipping test")
-	}
-
 	var params = StringMap{
 		"FuncName":           t.Name(),
 		"NsxtManager":        testConfig.Nsxt.Manager,
-		"NsxtQosProfileName": qosProfileName,
+		"NsxtQosProfileName": testConfig.Nsxt.GatewayQosProfile,
 
 		"Tags": "nsxt gateway",
 	}
