@@ -21,7 +21,7 @@ data "vcd_nsxt_manager" "nsxt" {
 
 data "vcd_nsxt_edgegateway_qos_profile" "qos-1" {
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
-  name = "qos-policy-1"
+  name            = "qos-profile-1"
 }
 
 data "vcd_org_vdc" "v1" {

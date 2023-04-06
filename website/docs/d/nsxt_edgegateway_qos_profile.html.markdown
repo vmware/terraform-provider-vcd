@@ -23,7 +23,7 @@ data "vcd_nsxt_manager" "first" {
 
 data "vcd_nsxt_edgegateway_qos_profile" "qos-1" {
   nsxt_manager_id = data.nsxt_manager_id.first.id
-  name = "qos-policy-1"
+  name            = "qos-profile-1"
 }
 ```
 
