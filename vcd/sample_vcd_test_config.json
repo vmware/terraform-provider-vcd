@@ -112,6 +112,8 @@
     "tier0routervrf": "tier-0-2",
     "//": "Existing External Network with correct configuration",
     "externalNetwork": "tier-0-backed-external-network",
+    "//": "Distributed Virtual Port Group",
+    "dvpg": "test-nsxt-dvpg-no-uplink",
     "//": "Existing NSX-T based VDC",
     "vdc": "nsxt-vdc-dainius",
     "//": "Existing NSX-T Edge Gateway",
