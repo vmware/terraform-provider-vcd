@@ -29,12 +29,12 @@ func datasourceVcdNsxtEdgeGatewayQosProfile() *schema.Resource {
 			"committed_bandwidth": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Committed bandwidth in Kbps",
+				Description: "Committed bandwidth in Mb/s",
 			},
 			"burst_size": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Burst size in Kbps",
+				Description: "Burst size in bytes",
 			},
 			"excess_action": {
 				Type:        schema.TypeString,

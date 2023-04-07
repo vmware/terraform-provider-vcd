@@ -119,7 +119,7 @@ data "vcd_nsxt_manager" "nsxt" {
 
 data "vcd_nsxt_edgegateway_qos_profile" "qos-1" {
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
-  name = "{{.NsxtQosProfileName}}"
+  name            = "{{.NsxtQosProfileName}}"
 }
 
 data "vcd_vdc_group" "g1" {

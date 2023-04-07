@@ -90,12 +90,12 @@ data "vcd_nsxt_edgegateway" "testing-in-vdc" {
 }
 
 data "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc" {
-  org               = "{{.Org}}"
-  edge_gateway_id   = data.vcd_nsxt_edgegateway.testing-in-vdc.id
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 }
 
 data "vcd_nsxt_edgegateway_rate_limiting" "testing-in-vdc-group" {
-  org               = "{{.Org}}"
-  edge_gateway_id   = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
 }
 `
