@@ -45,17 +45,15 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 	}
 
 	// This case is specific for VCD 10.3.1 onwards since dns servers are not present in previous versions
-	var configText3 string
-	var configText4 string
 	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36.1") {
 		params["SkipTest"] = "# skip-binary-test: VCD 10.3.1 onwards dns servers are not present in previous versions"
 	}
 	params["FuncName"] = t.Name() + "-step2"
-	configText3 = templateFill(testAccRoutedNetDhcpStep3, params)
+	configText3 := templateFill(testAccRoutedNetDhcpStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText3)
 
 	params["FuncName"] = t.Name() + "-step3"
-	configText4 = templateFill(testAccRoutedNetDhcpStep4, params)
+	configText4 := templateFill(testAccRoutedNetDhcpStep4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText4)
 
 	cacheDhcpBinding1dId := &testCachedFieldValue{}
@@ -300,7 +298,7 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org  = "{{.Org}}"
+  org = "{{.Org}}"
 
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created

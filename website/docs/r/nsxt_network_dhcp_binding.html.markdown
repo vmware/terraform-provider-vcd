@@ -58,9 +58,9 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization. Optional if defined at provider level
 * `org_network_id` - (Required) The ID of an Org VDC network. **Note**  (`.id` field) of
-  `vcd_network_isolated_v2`, `vcd_network_routed_v2` and `vcd_nsxt_network_dhcp` suite here. It is
-  more convenient to use reference to `vcd_nsxt_network_dhcp` ID because it makes sure that DHCP is
-  enabled before configuring pools
+  `vcd_network_isolated_v2`, `vcd_network_routed_v2` or `vcd_nsxt_network_dhcp` can be referenced
+  here. It is more convenient to use reference to `vcd_nsxt_network_dhcp` ID because it makes sure
+  that DHCP is enabled before configuring pools
 * `binding_type` - (Required) One of `IPV4` or `IPV6`
 * `ip_address` - (Required) IP address used for binding
 * `mac_address` - (Required) MAC address used for binding
@@ -70,7 +70,7 @@ The following arguments are supported:
 
 <a id="ipv4-block"></a>
 
-## dhcp_v4_config
+## IPv4 block (dhcp_v4_config)
 
 * `gateway_ip_address` - (Optional) Gateway IP address to use for the client
 * `hostname` - (Optional) Hostname to be set for client
