@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNsxtNetworkImported(t *testing.T) {
+func TestAccVcdNsxtNetworkImportedNsxtLogicalSwitch(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -125,6 +125,152 @@ resource "vcd_nsxt_network_imported" "net1" {
   description = "Updated NSX-T imported network test OpenAPI"
 
   nsxt_logical_switch_name = "{{.NsxtImportSegment}}"
+
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+	start_address = "1.1.1.10"
+	end_address   = "1.1.1.20"
+  }
+
+  static_ip_pool {
+	start_address = "1.1.1.40"
+	end_address   = "1.1.1.50"
+  }
+}
+`
+
+// TestAccVcdNsxtNetworkImportedNsxtDvpg tests an imported NSX-T network backed by Distributed
+// Virtual Port Group (DVPG)
+// Note. It can only be created in VDC scope (not VDC Group)
+func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"NsxtVdc":     testConfig.Nsxt.Vdc,
+		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
+		"NetworkName": t.Name(),
+		"Dvpg":        testConfig.Nsxt.Dvpg,
+		"TestName":    t.Name(),
+		"Tags":        "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdNetworkImportedDvpgStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccVcdNetworkImportedDvpgStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// Ensure the resource is never recreated - ID stays the same
+	cachedId := &testCachedFieldValue{}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		Steps: []resource.TestStep{
+			{ // step 1
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "dvpg_id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "name", params["TestName"].(string)),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "gateway", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "static_ip_pool.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.net1", "static_ip_pool.*", map[string]string{
+						"start_address": "1.1.1.10",
+						"end_address":   "1.1.1.20",
+					}),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "owner_id"),
+				),
+			},
+			{ // step 2
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "dvpg_id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "name", params["TestName"].(string)+"-updated"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "gateway", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "static_ip_pool.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.net1", "static_ip_pool.*", map[string]string{
+						"start_address": "1.1.1.10",
+						"end_address":   "1.1.1.20",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.net1", "static_ip_pool.*", map[string]string{
+						"start_address": "1.1.1.40",
+						"end_address":   "1.1.1.50",
+					}),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "owner_id"),
+				),
+			},
+			// Check that import works
+			{ // step 3
+				ResourceName:      "vcd_nsxt_network_imported.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// It is impossible to read 'dvpg_name' for already consumed DVPG (API returns only
+				// unused ones) therefore this field cannot be set during read operations.
+				ImportStateVerifyIgnore: []string{"dvpg_name"},
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["TestName"].(string) + "-updated"),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNetworkImportedDvpgStep1 = `
+data "vcd_org_vdc" "nsxtVdc" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
+resource "vcd_nsxt_network_imported" "net1" {
+  org  = "{{.Org}}"
+
+  owner_id = data.vcd_org_vdc.nsxtVdc.id
+
+  name = "{{.TestName}}"
+
+  dvpg_name = "{{.Dvpg}}"
+
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+	start_address = "1.1.1.10"
+	end_address   = "1.1.1.20"
+  }
+}
+`
+
+const testAccVcdNetworkImportedDvpgStep2 = `
+data "vcd_org_vdc" "nsxtVdc" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
+resource "vcd_nsxt_network_imported" "net1" {
+  org  = "{{.Org}}"
+
+  owner_id = data.vcd_org_vdc.nsxtVdc.id
+
+  name = "{{.TestName}}-updated"
+
+  dvpg_name = "{{.Dvpg}}"
 
   gateway       = "1.1.1.1"
   prefix_length = 24

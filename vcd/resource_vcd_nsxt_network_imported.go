@@ -56,15 +56,28 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 				Description: "Network description",
 			},
 			"nsxt_logical_switch_name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Name of existing NSX-T Logical Switch",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"nsxt_logical_switch_name", "dvpg_name"},
+				Description:  "Name of existing NSX-T Logical Switch",
 			},
 			"nsxt_logical_switch_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of existing NSX-T Logical Switch",
+				Description: "ID of used NSX-T Logical Switch",
+			},
+			"dvpg_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"nsxt_logical_switch_name", "dvpg_name"},
+				Description:  "Name of existing Distributed Virtual Port Group",
+			},
+			"dvpg_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "DVPG ID of used Distributed Virtual Port Group",
 			},
 			"gateway": {
 				Type:        schema.TypeString,
@@ -282,12 +295,20 @@ func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.Resourc
 }
 
 func setOpenApiOrgVdcImportedNetworkData(d *schema.ResourceData, orgVdcNetwork *types.OpenApiOrgVdcNetwork) error {
-	// Note. VCD does not export `nsxt_logical_switch_name` and there is no API to retrieve it once
-	// consumed (assigned to imported network) therefore there is no way to read name once it is set
+	// Note. VCD does not export `nsxt_logical_switch_name` and `dvpg_name`. There are no APIs to
+	// retrieve it once consumed (assigned to imported network) therefore there is no way to read
+	// these names once they are consumed.
+	// For the same reason we are asking for user to provide these names in the configuration of
+	// this resource instead of references using data source.
 
 	dSet(d, "name", orgVdcNetwork.Name)
 	dSet(d, "description", orgVdcNetwork.Description)
-	dSet(d, "nsxt_logical_switch_id", orgVdcNetwork.BackingNetworkId)
+	if orgVdcNetwork.BackingNetworkType == types.OrgVdcNetworkBackingTypeDvPortgroup {
+		dSet(d, "dvpg_id", orgVdcNetwork.BackingNetworkId)
+	} else {
+		dSet(d, "nsxt_logical_switch_id", orgVdcNetwork.BackingNetworkId)
+	}
+
 	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
 	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
 
@@ -355,7 +376,7 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 
 	// Lookup NSX-T logical switch in Create phase only, because there is no API to return the
 	// network after it is consumed
-	if isCreate {
+	if isCreate && d.Get("nsxt_logical_switch_name").(string) != "" {
 		org, err := vcdClient.GetOrgFromResource(d)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Org: %s", err)
@@ -372,6 +393,39 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 		}
 
 		orgVdcNetworkConfig.BackingNetworkId = nsxtImportableSwitch.NsxtImportableSwitch.ID
+	}
+
+	// Distributed Virtual Port Group backed imported network can only be created in a VDC and not VDC Group.
+	if isCreate && d.Get("dvpg_name").(string) != "" {
+		if !govcd.OwnerIsVdc(ownerId) {
+			return nil, fmt.Errorf("a Distributed Virtual Port Group backed imported network can only be created in a VDC and not VDC Group")
+		}
+
+		org, err := vcdClient.GetOrgFromResource(d)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Org: %s", err)
+		}
+
+		vdc, err := org.GetVDCById(ownerId, false)
+		// vdcOrVdcGroup, err := getVdcOrVdcGroupVerifierByOwnerId(org, ownerId)
+		if err != nil {
+			return nil, fmt.Errorf("error identifying getting VDC by Owner ID '%s' :%s", ownerId, err)
+		}
+
+		// nsxtImportableSwitch, err := vdcOrVdcGroup.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
+		// if err != nil {
+		// 	return nil, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
+		// }
+
+		dvPortGroup, err := vdc.GetVcenterImportableDvpgByName(d.Get("dvpg_name").(string), "")
+		if err != nil {
+			return nil, fmt.Errorf("unable to find Distributed Virtual Port Group: %s", err)
+		}
+
+		orgVdcNetworkConfig.BackingNetworkId = dvPortGroup.VcenterImportableDvpg.BackingRef.ID
+		// Explicitly setting network backing type to Distributed Virtual Port Group
+		orgVdcNetworkConfig.BackingNetworkType = types.OrgVdcNetworkBackingTypeDvPortgroup
+
 	}
 
 	return orgVdcNetworkConfig, nil
