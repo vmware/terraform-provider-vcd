@@ -292,8 +292,25 @@ to perform updates on the CSE Server (see sections below).
 
 #### Troubleshooting
 
-To evaluate the correctness of the setup, you can look up the CSE logs present in the CSE Server VM.
-You can visit [the documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
+To evaluate the correctness of the setup, you can check the _"Verifying that the setup works"_ section above.
+
+-> You can visit [the documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
+
+The most common issues are:
+
+- Lack of internet connectivity:
+  - Verify that the IPs specified in your Provider Gateways are correct.
+  - Verify that the IPs specified in your Edge Gateways are correct.
+  - Verify that your Firewall setup is not blocking outbound connectivity.
+  - Verify that the Routed network has the DNS correctly set and working.
+
+- OVA upload is taking too long:
+  - Verify your Internet connectivity is not having any issues.
+  - OVAs are quite big, you could tune `upload_piece_size` to speed up the upload process.
+  - Verify that there's not a huge latency between your VCD and the place where Terraform configuration is run.
+
+- Cluster creation is failing:
+  - Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
 ## Update CSE Server
 
