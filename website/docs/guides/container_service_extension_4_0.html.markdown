@@ -23,7 +23,7 @@ In order to complete the steps described in this guide, please be aware:
 
 * CSE v4.0 is supported from VCD v10.4.0 or above, make sure your VCD appliance matches the criteria.
 * Terraform provider needs to be v3.9.0 or above.
-* Both CSE Server and the Bootstrap clusters require outbound internet connectivity.
+* Both CSE Server and the Bootstrap clusters require outbound Internet connectivity.
 * CSE v4.0 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
 
 ## Installation process
@@ -298,7 +298,7 @@ To evaluate the correctness of the setup, you can check the _"Verifying that the
 
 The most common issues are:
 
-- Lack of internet connectivity in CSE Server:
+- Lack of Internet connectivity in CSE Server:
   - Verify that the IPs specified in your Provider Gateways are correct.
   - Verify that the IPs specified in your Edge Gateways are correct.
   - Verify that your Firewall setup is not blocking outbound connectivity.
