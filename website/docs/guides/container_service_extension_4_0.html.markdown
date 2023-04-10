@@ -298,7 +298,7 @@ To evaluate the correctness of the setup, you can check the _"Verifying that the
 
 The most common issues are:
 
-- Lack of internet connectivity:
+- Lack of internet connectivity in CSE Server:
   - Verify that the IPs specified in your Provider Gateways are correct.
   - Verify that the IPs specified in your Edge Gateways are correct.
   - Verify that your Firewall setup is not blocking outbound connectivity.
