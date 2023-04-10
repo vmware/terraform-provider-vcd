@@ -1,4 +1,4 @@
-## 3.9.0-beta.1 (March 23, 2023)
+## 3.9.0-beta.2 (March 24, 2023)
 
 ### FEATURES
 * **New Resource:** `vcd_rde_interface` to manage Runtime Defined Entity Interfaces

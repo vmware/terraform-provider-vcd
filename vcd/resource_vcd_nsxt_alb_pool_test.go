@@ -28,6 +28,7 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
+		"TestName":           t.Name(),
 		"PoolName":           t.Name(),
 		"ControllerName":     t.Name(),
 		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
@@ -685,7 +686,7 @@ resource "vcd_nsxt_alb_controller" "first" {
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {
-  name        = "nsxt-cloud"
+  name        = "{{.TestName}}-alb-cloud"
   description = "first alb cloud"
 
   controller_id       = vcd_nsxt_alb_controller.first.id
@@ -694,7 +695,7 @@ resource "vcd_nsxt_alb_cloud" "first" {
 }
 
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                                 = "first-se"
+  name                                 = "{{.TestName}}-se-group"
   alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
   importable_service_engine_group_name = "Default-Group"
   reservation_model                    = "{{.ReservationModel}}"

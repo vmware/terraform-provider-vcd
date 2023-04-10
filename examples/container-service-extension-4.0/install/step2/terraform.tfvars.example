@@ -3,7 +3,7 @@
 # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
 
 # ------------------------------------------------
-# Provider config
+# VCD Provider config
 # ------------------------------------------------
 vcd_url                = "https://vcd.my-awesome-corp.com"
 administrator_user     = "administrator"
@@ -15,9 +15,10 @@ insecure_login         = "false"
 # NSX-T VDC setup
 # ------------------------------------------------
 # These variables are required to create both the Solutions NSX-T VDC and Tenant NSX-T VDC
-provider_vdc_name      = "change-me" # An existing PVDC that can be used to create VDCs
-nsxt_edge_cluster_name = "change-me" # An existing NSX-T Edge Cluster that can be used to create VDCs
-network_pool_name      = "change-me" # An existing network pool that can be used to create VDCs
+# The values here need to exist already in your VCD appliance.
+provider_vdc_name      = "change-me" # Name of an existing PVDC that can be used to create VDCs
+nsxt_edge_cluster_name = "change-me" # Name of an existing NSX-T Edge Cluster that can be used to create VDCs
+network_pool_name      = "change-me" # Name of an existing network pool that can be used to create VDCs
 
 # ------------------------------------------------
 # Catalog and OVAs
@@ -34,26 +35,30 @@ cse_ova_file    = "VMware_Cloud_Director_Container_Service_Extension-4.0.1.ova" 
 # ------------------------------------------------
 # These variables are used to build a basic networking setup to run the CSE Server
 # and the TKGm clusters
-nsxt_manager_name = "change-me" # This is required to create the Provider Gateways
+nsxt_manager_name = "change-me" # Name of an existing NSX-T manager, required to create the Provider Gateways
 
-# These are all required to create the Solutions Organization Provider Gateway
-solutions_nsxt_tier0_router_name                 = "change-me"
-solutions_provider_gateway_gateway_ip            = "10.20.30.250"
-solutions_provider_gateway_gateway_prefix_length = "19"
-solutions_provider_gateway_static_ip_ranges = [
+# These are all required to create the Solutions Organization Provider Gateway.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
+solutions_nsxt_tier0_router_name                 = "change-me"    # The name of an existing NSX-T Tier 0 router
+solutions_provider_gateway_gateway_ip            = "10.20.30.250" # Gateway IP to use in the Solutions Provider Gateway
+solutions_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Solutions Provider Gateway
+solutions_provider_gateway_static_ip_ranges = [                   # IP ranges to use in the Solutions Provider Gateway
   ["10.20.30.16", "10.20.30.16"], # Single IP
   ["10.20.30.20", "10.20.30.25"], # Many IPs
 ]
 
-# These are all required to create the Tenant Organization Provider Gateway
-tenant_nsxt_tier0_router_name                 = "change-me"
-tenant_provider_gateway_gateway_ip            = "10.30.20.150"
-tenant_provider_gateway_gateway_prefix_length = "19"
-tenant_provider_gateway_static_ip_ranges = [
+# These are all required to create the Tenant Organization Provider Gateway.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
+tenant_nsxt_tier0_router_name                 = "change-me"    # The name of an existing NSX-T Tier 0 router
+tenant_provider_gateway_gateway_ip            = "10.30.20.150" # Gateway IP to use in the Tenant Provider Gateway
+tenant_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Tenant Provider Gateway
+tenant_provider_gateway_static_ip_ranges = [                   # IP ranges to use in the Tenant Provider Gateway
   ["10.30.20.14", "10.30.20.14"], # Single IP
   ["10.30.20.30", "10.30.20.37"], # Many IPs
 ]
 
+# These will configure the Routed network for the Solutions Organization VDC.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
 solutions_routed_network_gateway_ip            = "192.168.0.1"    # Required. Gateway IP for the Routed network inside the Solutions Organization
 solutions_routed_network_prefix_length         = "24"             # Required. Prefix length for the Routed network inside the Solutions Organization
 solutions_routed_network_ip_pool_start_address = "192.168.0.2"    # Required. First IP for the Routed network pool
@@ -63,6 +68,8 @@ solutions_snat_internal_network_cidr           = "192.168.0.0/24" # Required. It
 solutions_routed_network_dns                   = ""               # Optional, if you need DNS
 solutions_routed_network_dns_suffix            = ""               # Optional, if you need DNS
 
+# These will configure the Routed network for the Tenant Organization VDC.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
 tenant_routed_network_gateway_ip            = "10.0.0.1"     # Required. Gateway IP for the Routed network inside the Tenant Organization
 tenant_routed_network_prefix_length         = "16"           # Required. Prefix length for the Routed network inside the Tenant Organization
 tenant_routed_network_ip_pool_start_address = "10.0.0.2"     # Required. First IP for the Routed network pool
@@ -75,7 +82,9 @@ tenant_routed_network_dns_suffix            = ""             # Optional, if you 
 # ------------------------------------------------
 # Values to create ALB setup
 # ------------------------------------------------
-# These are required to create a new ALB setup that will be used by TKGm clusters
+# These are required to create a new ALB setup in VCD that will be used by TKGm clusters.
+# Your VCD should have an existing ALB deployment that will be imported, the values below must correspond to
+# the existing controller to be imported into VCD:
 alb_controller_username   = "admin"                                # Username to access the ALB Controller
 alb_controller_password   = "change-me"                            # Password to access the ALB Controller
 alb_controller_url        = "https://alb-ctrl.my-awesome-corp.com" # URL of the ALB Controller
@@ -85,13 +94,16 @@ alb_importable_cloud_name = "change-me"                            # Name of the
 # CSE Server configuration
 # ------------------------------------------------
 # These are required to create the Runtime Defined Entity that will contain the CSE Server configuration (vcdKeConfig)
+# To know more about the specific versions, please refer to the CSE documentation.
+# The values set here correspond to CSE v4.0:
 vcdkeconfig_template_filepath = "../../entities/vcdkeconfig-template.json"
 capvcd_version                = "1.0.0"
 capvcd_rde_version            = "1.1.0" # Should be the same as the capvcd_rde_version used in Step 1
 cpi_version                   = "1.2.0"
 csi_version                   = "1.3.0"
 
-# Optional but recommended: Create this one in https://github.com/settings/tokens
+# Optional but recommended to avoid rate limiting when configuring the TKGm clusters.
+# Create this one in https://github.com/settings/tokens
 github_personal_access_token = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # This user was created in Step 1. You need to provide a valid API token for it
