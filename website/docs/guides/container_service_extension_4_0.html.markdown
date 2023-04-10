@@ -50,8 +50,10 @@ and change the values present there to the ones that fit with your needs.
 
 This step will create the following:
 
-- The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type].
-- The required `capvcdCluster` [RDE Type][rde_type]. Its version is specified by the `capvcd_rde_version` variable, that should be "1.1.0" for CSE v4.0.
+- The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the CSE Server
+  configuration (called "VCDKEConfig") that will be instantiated in next step with a [RDE][rde].
+- The required `capvcdCluster` [RDE Type][rde_type]. Its version is specified by the `capvcd_rde_version` variable, that **must be "1.1.0" for CSE v4.0**.
+  This resource specifies the schema of the TKGm clusters.
 - The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-sided elements of VCD.
 - The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
   Feel free to add more attributes like `description` or `full_name` if needed.
@@ -111,7 +113,7 @@ You need to specify the following values in `terraform.tfvars`:
 - `network_pool_name`: This references an existing Network pool and it's used to create both VDCs.
   If you are going to use more than one Network pool, please consider modifying the proposed configuration.
 
-In the [proposed configuration][step2] the Tenant Organization's VDC has all the VM Sizing Policies assigned, with the `TKG small` being the default one.
+In the [proposed configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies assigned, with the `TKG small` being the default one.
 You can customise it to make any other TKG policy the default one.
 
 You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization. Also,
@@ -121,8 +123,9 @@ if you already have usable [VDCs][vdc], you can change the configuration to fetc
 
 The [proposed configuration][step2] will create two catalogs:
 
-- A catalog to host CSE OVA files, only accessible to CSE Administrators.
-- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants.
+- A catalog to host CSE Server OVA files, only accessible to CSE Administrators. This catalog will allow CSE Administrators to organise and manage
+  all the CSE Server OVAs that are required to run and upgrade the CSE Server.
+- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create TKGm clusters.
 
 Then it will upload the required OVAs to them. The OVAs can be specified in `terraform.tfvars`:
 
@@ -134,9 +137,11 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
-on upload speed. You can tune the `upload_piece_size` to speed up the upload.
+on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI and
+using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
 
-If you need to upload more than one OVA, please modify the [proposed configuration][step2].
+If you need to upload more than one OVA, please modify the [proposed configuration][step2], or if you want to use existing OVAs you can also leverage
+using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
 
 ### "Kubernetes Cluster Author" global role
 
@@ -153,12 +158,15 @@ recommended that you review the code and adapt the different parts to your needs
 
 The configuration will create the following:
 
-- A [Provider Gateway][provider_gateway] per Organization.
-- An [Edge Gateway][edge_gateway] per Organization.
-- Configure ALB with a shared Service Engine Group.
-- A [Routed network][routed_network] per Organization.
-- Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways
-of providing outbound access.
+- A [Provider Gateway][provider_gateway] per Organization. You can learn more about Provider Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-E6BAC24B-9628-495A-BA67-6DE6C5CF70F2.html).
+  In this configuration we just expose some static IPs to the two Organizations, so they can consume them.
+- An [Edge Gateway][edge_gateway] per Organization. You can learn more about Edge Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-45C0FEDF-84F2-4487-8DB8-3BC281EB25CD.html).
+  In this configuration we create two that act as a router for each Organization that we created.
+- Configure ALB with a shared Service Engine Group. You can learn more about Advanced Load Balancers [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92A0563D-A272-4958-B732-9C35901D9DB8.html).
+  In this setup, we provide a virtual service pool that CSE Server uses to provide load balancing capabilities to the TKGm clusters.
+- A [Routed network][routed_network] per Organization. You can learn more about Routed networks [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-74C4D27F-9E2A-4EB2-BBE1-CDD45C80E270.html).
+  In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the TKGm clusters network.
+- Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways of providing outbound access.
 
 ~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [proposed configuration][step2]
 first.
@@ -248,6 +256,33 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Final considerations
 
+### Verifying that the setup works
+
+To validate that the CSE Server is working correctly, you can either do it programmatically with a [SNAT rules][nat_rule] that maps
+one available IP to the CSE Server, or using the UI:
+
+- With a [SNAT rules][nat_rule] you could connect to the CSE Server VM through `ssh` and the credentials that are stores in the `terraform.tfstate` file,
+  with a resource similar to this:
+```
+resource "vcd_nsxt_nat_rule" "solutions_nat" {
+  org             = vcd_org.solutions_organization.name
+  edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
+
+  name        = "CSE Server SNAT rule"
+  rule_type   = "SNAT"
+  description = "CSE Server SNAT rule"
+
+  external_address = "One available IP from Solutions Provider Gateway"
+  internal_address = "CSE Server IP"
+  logging          = true
+}
+```
+
+- With the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in the _Guest customization properties Edit view_.
+
+Once you gain access to the CSE Server, you can check the `cse.log` file, the configuration file or check Internet connectivity.
+If something does not work, please check the **Troubleshooting** section below.
+
 #### Install the UI plugin
 
 To manage CSE clusters with the UI, you can [download the Kubernetes Container Clusters UI plug-in 4.0][cse_docs]
@@ -258,8 +293,7 @@ to perform updates on the CSE Server (see sections below).
 #### Troubleshooting
 
 To evaluate the correctness of the setup, you can look up the CSE logs present in the CSE Server VM.
-You can visit [the documentation][cse_docs]
-to learn how to monitor the logs and troubleshoot possible problems.
+You can visit [the documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
 ## Update CSE Server
 
@@ -331,6 +365,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [alb]: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/nsxt_alb
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
+[catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
 [capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
