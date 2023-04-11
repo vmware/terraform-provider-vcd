@@ -620,7 +620,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"security_tags": {
 			Type:        schema.TypeSet,
 			Optional:    true,
-			Computed:    false,
+			Computed:    true,
 			Description: "Security tags to assign to this VM",
 			Elem:        &schema.Schema{Type: schema.TypeString},
 		},
