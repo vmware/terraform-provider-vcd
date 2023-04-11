@@ -167,6 +167,10 @@ func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
 	configText2 := templateFill(testAccVcdNetworkImportedDvpgStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	params["FuncName"] = t.Name() + "-step3"
+	configText3DS := templateFill(testAccVcdNetworkImportedDvpgStep3DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3DS)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -179,7 +183,7 @@ func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
-			{ // step 1
+			{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
@@ -196,7 +200,7 @@ func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "owner_id"),
 				),
 			},
-			{ // step 2
+			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
@@ -218,7 +222,7 @@ func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
 				),
 			},
 			// Check that import works
-			{ // step 3
+			{
 				ResourceName:      "vcd_nsxt_network_imported.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -226,6 +230,13 @@ func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
 				// unused ones) therefore this field cannot be set during read operations.
 				ImportStateVerifyIgnore: []string{"dvpg_name"},
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["TestName"].(string) + "-updated"),
+			},
+			{
+				Config: configText3DS,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
+					resourceFieldsEqual("vcd_nsxt_network_imported.net1", "data.vcd_nsxt_network_imported.net1", []string{"%", "dvpg_name"}),
+				),
 			},
 		},
 	})
@@ -280,6 +291,16 @@ resource "vcd_nsxt_network_imported" "net1" {
 	start_address = "1.1.1.40"
 	end_address   = "1.1.1.50"
   }
+}
+`
+
+const testAccVcdNetworkImportedDvpgStep3DS = testAccVcdNetworkImportedDvpgStep2 + `
+# skip-binary-test: Data Source test
+data "vcd_nsxt_network_imported" "net1" {
+  org      = "{{.Org}}"
+  owner_id = data.vcd_org_vdc.nsxtVdc.id
+
+  name = "{{.TestName}}-updated"
 }
 `
 
