@@ -239,12 +239,10 @@ data "vcd_org_vdc" "nsxtVdc" {
 }
 
 resource "vcd_nsxt_network_imported" "net1" {
-  org  = "{{.Org}}"
-
+  org      = "{{.Org}}"
   owner_id = data.vcd_org_vdc.nsxtVdc.id
 
-  name = "{{.TestName}}"
-
+  name      = "{{.TestName}}"
   dvpg_name = "{{.Dvpg}}"
 
   gateway       = "1.1.1.1"
@@ -264,12 +262,10 @@ data "vcd_org_vdc" "nsxtVdc" {
 }
 
 resource "vcd_nsxt_network_imported" "net1" {
-  org  = "{{.Org}}"
-
+  org      = "{{.Org}}"
   owner_id = data.vcd_org_vdc.nsxtVdc.id
 
-  name = "{{.TestName}}-updated"
-
+  name      = "{{.TestName}}-updated"
   dvpg_name = "{{.Dvpg}}"
 
   gateway       = "1.1.1.1"
