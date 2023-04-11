@@ -379,7 +379,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
 
-[alb]: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/nsxt_alb
+[alb]: /providers/vmware/vcd/latest/docs/guides/nsxt_alb
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
