@@ -64,7 +64,7 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 			"dvpg_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "DVPG ID of used Distributed Virtual Port Group",
+				Description: "ID of used Distributed Virtual Port Group",
 			},
 			"description": {
 				Type:        schema.TypeString,

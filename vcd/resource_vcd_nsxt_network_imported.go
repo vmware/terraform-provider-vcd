@@ -77,7 +77,7 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 			"dvpg_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "DVPG ID of used Distributed Virtual Port Group",
+				Description: "ID of used Distributed Virtual Port Group",
 			},
 			"gateway": {
 				Type:        schema.TypeString,
@@ -176,7 +176,7 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 	}
 
 	orgNetwork, err := org.GetOpenApiOrgVdcNetworkById(d.Id())
-	// If object is not found -
+	// If object is not found - remove it from statefile
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
 		return nil
@@ -190,8 +190,10 @@ func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	// Feed in backing network ID, because it cannot be looked up after assignment to importable network
+	// Feed in backing network ID and type, because it cannot be looked up after assignment to
+	// importable network
 	networkType.BackingNetworkId = orgNetwork.OpenApiOrgVdcNetwork.BackingNetworkId
+	networkType.BackingNetworkType = orgNetwork.OpenApiOrgVdcNetwork.BackingNetworkType
 
 	// Explicitly add ID to the new type because function `getOpenApiOrgVdcNetworkType` only sets other fields
 	networkType.ID = d.Id()
@@ -407,17 +409,11 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 		}
 
 		vdc, err := org.GetVDCById(ownerId, false)
-		// vdcOrVdcGroup, err := getVdcOrVdcGroupVerifierByOwnerId(org, ownerId)
 		if err != nil {
 			return nil, fmt.Errorf("error identifying getting VDC by Owner ID '%s' :%s", ownerId, err)
 		}
 
-		// nsxtImportableSwitch, err := vdcOrVdcGroup.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
-		// if err != nil {
-		// 	return nil, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
-		// }
-
-		dvPortGroup, err := vdc.GetVcenterImportableDvpgByName(d.Get("dvpg_name").(string), "")
+		dvPortGroup, err := vdc.GetVcenterImportableDvpgByName(d.Get("dvpg_name").(string))
 		if err != nil {
 			return nil, fmt.Errorf("unable to find Distributed Virtual Port Group: %s", err)
 		}
@@ -425,7 +421,6 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 		orgVdcNetworkConfig.BackingNetworkId = dvPortGroup.VcenterImportableDvpg.BackingRef.ID
 		// Explicitly setting network backing type to Distributed Virtual Port Group
 		orgVdcNetworkConfig.BackingNetworkType = types.OrgVdcNetworkBackingTypeDvPortgroup
-
 	}
 
 	return orgVdcNetworkConfig, nil
