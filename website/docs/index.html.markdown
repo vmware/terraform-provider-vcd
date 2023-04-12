@@ -325,8 +325,7 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) This is the file that contains a Service Account API token. The
    path to the file could be provided as absolute or relative to the working directory. It is used instead of username
    and password (in combination with `auth_type=service_account_token_file`. The file can also be specified with the 
-   `VCD_SA_TOKEN_FILE` environment variable. This option requires at least VCD 10.4.0. 
-   There are restrictions to its use, as defined in 
+   `VCD_SA_TOKEN_FILE` environment variable. There are restrictions to its use, as defined in 
    [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-8CD3C8BE-3187-4769-B960-3E3315492C16.html)
 
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used
