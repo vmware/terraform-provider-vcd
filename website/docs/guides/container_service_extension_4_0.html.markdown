@@ -307,7 +307,7 @@ The most common issues are:
 - OVA upload is taking too long:
   - Verify your Internet connectivity is not having any issues.
   - OVAs are quite big, you could tune `upload_piece_size` to speed up the upload process.
-  - If upload fails, or you need to replace the OVA, you can do a `terraform apply -replace=vcd_catalog_vapp_template.cse_ova`.
+  - If upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.cse_ova`.
   - Verify that there's not a huge latency between your VCD and the place where Terraform configuration is run.
 
 - Cluster creation is failing:

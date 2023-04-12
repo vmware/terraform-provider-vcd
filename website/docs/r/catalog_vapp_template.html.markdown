@@ -47,6 +47,8 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
 }
 ```
 
+-> If vApp Template upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.myNewVappTemplate`.
+
 ## Argument Reference
 
 The following arguments are supported:
