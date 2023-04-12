@@ -23,7 +23,7 @@ fi
 
 auth=$(echo -n "$user@$org:$password" |base64 $options)
 
-bearer=$(curl -I -k --header "Accept: application/*;version=37.0" \
+bearer=$(curl -I -s -k --header "Accept: application/*;version=37.0" \
     --header "Authorization: Basic $auth" \
     --request POST https://$IP/api/login | grep 'x-vmware-vcloud-access-token' \
     | awk -F":" '{print $2}' | sed 's/^ *//g')
@@ -57,14 +57,14 @@ json="{
 }"
 
 echo "Creating service account..."
-client_id=$(echo $json | curl -k --http1.1 \
+client_id=$(echo $json | curl -k -s --http1.1 \
     -H "Content-Type: application/json" \
     -H "Accept: application/json" \
     -H "$auth_header" -X POST --data-binary @- \
     https://$IP/oauth/provider/register | jq -r '.client_id')
 
 echo "Authorizing service account..."
-authorization_details=$(curl -k --http1.1 \
+authorization_details=$(curl -k -s --http1.1 \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -H "Accept: application/json" -H "$auth_header" \
     -d "client_id=$client_id" \
@@ -87,7 +87,7 @@ do
 done
 
 # get the access token
-api_token=$(curl -k --http1.1 \
+api_token=$(curl -k -s --http1.1 \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -H "Accept: application/json" \
     -d "client_id=$client_id" \

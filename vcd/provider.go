@@ -222,7 +222,7 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
-				Description:  "'integrated', 'saml_adfs', 'token', 'api_token' and 'service_account' are the only ones supported now. 'integrated' is default.",
+				Description:  "'integrated', 'saml_adfs', 'token', 'api_token' and 'service_account_token_file' are supported. 'integrated' is default.",
 				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "service_account_token_file"}, false),
 			},
 			"saml_adfs_rpt_id": {
@@ -363,7 +363,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		if config.ApiToken == "" {
 			return nil, diag.Errorf("empty API token detected with 'auth_type' == 'api_token'")
 		}
-	case "service_account":
+	case "service_account_token_file":
 		if config.ServiceAccountTokenFile == "" {
 			return nil, diag.Errorf("service account token file not provided with 'auth_type' == 'service_account_token_file'")
 		}

@@ -601,6 +601,7 @@ func (cli *VCDClient) GetOrgName(orgName string) (string, error) {
 	return orgName, nil
 }
 
+// TODO Look into refactoring this into a method of *Config
 func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, saToken string) error {
 	var err error
 	if saToken != "" {
