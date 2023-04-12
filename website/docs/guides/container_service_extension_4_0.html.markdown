@@ -176,7 +176,7 @@ In order to create all the items listed above, the [proposed configuration][step
 - `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager], which is needed in order to create the [Provider Gateways][provider_gateway].
   If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration.
   In UI, [NSX-T Managers][nsxt_manager] can be found in the Provider view, inside _Infrastructure Resources > NSX-T_.
-- `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateways][provider_gateway] in the Solutions Organization.
+- `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Solutions Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
 - `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
 - `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
@@ -190,7 +190,7 @@ In order to create all the items listed above, the [proposed configuration][step
     ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
   ]
   ```
-- `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateways][provider_gateway] in the Tenant Organization.
+- `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Tenant Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
 - `tenant_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Tenant Organization.
 - `tenant_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
@@ -307,6 +307,7 @@ The most common issues are:
 - OVA upload is taking too long:
   - Verify your Internet connectivity is not having any issues.
   - OVAs are quite big, you could tune `upload_piece_size` to speed up the upload process.
+  - If upload fails, or you need to replace the OVA, you can do a `terraform apply -replace=vcd_catalog_vapp_template.cse_ova`.
   - Verify that there's not a huge latency between your VCD and the place where Terraform configuration is run.
 
 - Cluster creation is failing:
