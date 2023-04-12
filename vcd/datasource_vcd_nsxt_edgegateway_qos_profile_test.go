@@ -9,12 +9,13 @@ import (
 )
 
 func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
-	skipIfNotSysAdmin(t)
-
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
+	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
+		return
 	}
+
+	skipIfNotSysAdmin(t)
+	vcdClient := createTemporaryVCDConnection(false)
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.2") {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
@@ -29,11 +30,6 @@ func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdDatasourceNsxtGatewayQosProfile, params)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
