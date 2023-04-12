@@ -299,12 +299,13 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `password` - (Required) This is the password for Cloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
 
-* `auth_type` - (Optional) `integrated`, `token`, `api_token`, `service_account_token_file` or `saml_adfs`. Default is `integrated`.
+* `auth_type` - (Optional) `integrated`, `token`, `api_token`, `service_account_token_file` or `saml_adfs`. 
+  Default is `integrated`. Can also be set with `VCD_AUTH_TYPE` environment variable. 
   * `integrated` - VCD local users and LDAP users (provided LDAP is configured for Organization).
   * `saml_adfs` allows to use SAML login flow with Active Directory Federation
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
-  credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
-  set with `VCD_AUTH_TYPE` environment variable.
+  credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. 
+  `saml_adfs_rpt_id` can be used to specify a different RPT ID.
   * `token` allows to specify token in [`token`](#token) field.
   * `api_token` allows to specify an API token.
   * `service_account_token_file` allows to specify a file containing a service account's token file.
