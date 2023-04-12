@@ -103,6 +103,9 @@ and inherited from provider configuration)
 * `dvpg_name` - (Optional) Unique name of an existing Distributed Virtual Port Group (DVPG). 
   **Note** it will never be refreshed because API does not allow reading this name after it is
   consumed. Instead ID will be stored in `dvpg_id` attribute.
+
+-> One of `nsxt_logical_switch_name` or `dvpg_name` must be provided.
+
 * `description` - (Optional) An optional description of the network
 * `gateway` - (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
