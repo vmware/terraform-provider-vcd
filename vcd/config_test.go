@@ -139,6 +139,7 @@ type TestConfig struct {
 		Manager                   string `json:"manager"`
 		Tier0router               string `json:"tier0router"`
 		Tier0routerVrf            string `json:"tier0routervrf"`
+		GatewayQosProfile         string `json:"gatewayQosProfile"`
 		Vdc                       string `json:"vdc"`
 		ExternalNetwork           string `json:"externalNetwork"`
 		EdgeGateway               string `json:"edgeGateway"`
@@ -963,6 +964,13 @@ func importStateIdOrgNsxtVdcGroupObject(vdcGroupName, objectName string) resourc
 			vdcGroupName +
 			ImportSeparator +
 			objectName, nil
+	}
+}
+
+// importCustomObject accepts a path and joins it using ImportSeparator
+func importCustomObject(path []string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return strings.Join(path, ImportSeparator), nil
 	}
 }
 
