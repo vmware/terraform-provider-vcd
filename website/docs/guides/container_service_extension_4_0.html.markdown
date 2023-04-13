@@ -53,15 +53,15 @@ This step will create the following:
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the CSE Server
   configuration (called "VCDKEConfig") that will be instantiated in next step with a [RDE][rde].
 - The required `capvcdCluster` [RDE Type][rde_type]. Its version is specified by the `capvcd_rde_version` variable, that **must be "1.1.0" for CSE v4.0**.
-  This resource specifies the schema of the TKGm clusters.
-- The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-sided elements of VCD.
+  This resource specifies the schema of the [TKGm clusters][tkgm_docs].
+- The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-side elements of VCD.
 - The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
   Feel free to add more attributes like `description` or `full_name` if needed.
 
 Once reviewed and applied with `terraform apply`, one **must login with the created CSE Administrator user to
 generate an API token** that will be used in the next step. In UI, the API tokens can be generated in the CSE Administrator
 user preferences in the top right, then go to the API tokens section, add a new one.
-Or you can visit `/provider/administration/settings/user-preferences` from your VCD url as CSE Administrator.
+Or you can visit `/provider/administration/settings/user-preferences` at your VCD URL as CSE Administrator.
 
 ### Step 2: Install CSE
 
@@ -79,12 +79,12 @@ and change the values present there to the correct ones. You can also modify the
 
 The [proposed configuration][step2] will create two new [Organizations][org], as specified in the [CSE documentation][cse_docs]:
 
-- A Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Server.
+- A Solutions [Organization][org], which will host all provider-scoped items, such as the CSE Server.
   It should only be accessible to the CSE Administrator and Providers.
-- A Tenant [Organization][org]: This [Organization][org] will host the TKGm clusters for the users of this tenant to consume them.
+- A Tenant [Organization][org], which will host the [TKGm clusters][tkgm_docs] for the users of this tenant to consume them.
 
-If you already have these two [Organizations][org] created and you want to use them instead, you can leverage customising the [proposed configuration][step2]
-to use the Organization [data source][org_d] to fetch them.
+-> If you already have these two [Organizations][org] created and you want to use them instead,
+you can leverage customising the [proposed configuration][step2] to use the Organization [data source][org_d] to fetch them.
 
 #### VM Sizing Policies
 
@@ -95,8 +95,9 @@ The [proposed configuration][step2] will create four VM Sizing Policies:
 - `TKG medium`: 2 CPUs, 8GB RAM.
 - `TKG small`: 2 CPU, 4GB RAM.
 
-These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Tenant
-Organization's VDC to be able to dimension the created TKGm clusters (see section below).
+These VM Sizing Policies should be applied as they are, so nothing should be changed here as these are the exact same
+VM Sizing Policies created during CSE installation in UI. They will be assigned to the Tenant
+Organization's VDC to be able to dimension the created [TKGm clusters][tkgm_docs] (see section below).
 
 #### VDCs
 
@@ -125,7 +126,7 @@ The [proposed configuration][step2] will create two catalogs:
 
 - A catalog to host CSE Server OVA files, only accessible to CSE Administrators. This catalog will allow CSE Administrators to organise and manage
   all the CSE Server OVAs that are required to run and upgrade the CSE Server.
-- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create TKGm clusters.
+- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create [TKGm clusters][tkgm_docs].
 
 Then it will upload the required OVAs to them. The OVAs can be specified in `terraform.tfvars`:
 
@@ -146,7 +147,7 @@ using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source inst
 ### "Kubernetes Cluster Author" global role
 
 Apart from the role to administrate the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
-for the TKGm clusters consumers (it would be similar to the concept of "vApp Author" but for TKGm clusters).
+for the [TKGm clusters][tkgm_docs] consumers (it would be similar to the concept of "vApp Author" but for [TKGm clusters][tkgm_docs]).
 
 In order to create this [Global Role][global_role], the [proposed configuration][step2] first
 creates a new [Rights Bundle][rights_bundle] and publishes it to all the tenants, then creates the [Global Role][global_role].
@@ -163,9 +164,9 @@ The configuration will create the following:
 - An [Edge Gateway][edge_gateway] per Organization. You can learn more about Edge Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-45C0FEDF-84F2-4487-8DB8-3BC281EB25CD.html).
   In this configuration we create two that act as a router for each Organization that we created.
 - Configure ALB with a shared Service Engine Group. You can learn more about Advanced Load Balancers [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92A0563D-A272-4958-B732-9C35901D9DB8.html).
-  In this setup, we provide a virtual service pool that CSE Server uses to provide load balancing capabilities to the TKGm clusters.
+  In this setup, we provide a virtual service pool that CSE Server uses to provide load balancing capabilities to the [TKGm clusters][tkgm_docs].
 - A [Routed network][routed_network] per Organization. You can learn more about Routed networks [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-74C4D27F-9E2A-4EB2-BBE1-CDD45C80E270.html).
-  In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the TKGm clusters network.
+  In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the [TKGm clusters][tkgm_docs] network.
 - Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways of providing outbound access.
 
 ~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [proposed configuration][step2]
@@ -405,6 +406,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [sizing]: /providers/vmware/vcd/latest/docs/resources/vm_sizing_policy
 [step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 [step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step2
+[tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
 [catalog_vapp_template]: /providers/vmware/vcd/latest/docs/resources/catalog_vapp_template
 [vdc]: /providers/vmware/vcd/latest/docs/resources/org_vdc
