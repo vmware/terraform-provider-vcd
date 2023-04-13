@@ -114,6 +114,8 @@
     "externalNetwork": "tier-0-backed-external-network",
     "//":"Gateway QoS Profile used for NSX-T Edge Gateway Rate Limiting (defined in NSX-T Manager)",
     "gatewayQosProfile":"Gateway QoS Profile 1",
+    "//": "Distributed Virtual Port Group",
+    "nsxtDvpg": "test-nsxt-dvpg-no-uplink",
     "//": "Existing NSX-T based VDC",
     "vdc": "nsxt-vdc-dainius",
     "//": "Existing NSX-T Edge Gateway",
