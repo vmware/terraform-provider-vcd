@@ -194,10 +194,17 @@ Note that when connecting with API tokens you can't create or modify users, role
 
 ### Connecting with a Service Account API token
 
-With VCD 10.4.0+, you can connect using a service account API token, as defined in the [documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). Because a new API token is provided on every authentication request, the user is required to provide a readable+writable file in `json` format with the current API key. e.g:
+With VCD 10.4.0+, you can connect using a service account API token, as 
+defined in the 
+[documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). 
+Because a new API token is provided on every authentication request, 
+the user is required to provide a readable+writable file in `json` 
+format with the current API key. e.g:
 ```json
 {"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
 ```
+
+The API token file is **sensitive data** and it's up to the user to secure it.
 
 ~> **NOTE:** The service account needs to be in `Active Stage` and 
 it's up to the user to provide the initial API token. A sample shell 
@@ -206,8 +213,6 @@ can be found in the [repository](https://github.com/vmware/terraform-provider-vc
 
 ```hcl
 provider "vcd" {
-  user                       = "none"
-  password                   = "none"
   auth_type                  = "service_account_token_file"
   service_account_token_file = "token.json"
   sysorg                     = "System"

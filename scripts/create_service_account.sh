@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script will connect to the vCD using username and password,
-# and show the headers that contain a bearer or authorization token.
-#
+# and go through the steps to create/authorize/activate a service account.
+
 user=$1
 password=$2
 org=$3
@@ -100,4 +100,6 @@ token_file="{\"refresh_token\":\"$api_token\"}"
 
 echo $token_file > ./token.json 
 echo "Service account created successfully and saved as token.json in the current directory."
+echo "The client_name is: $client_name"
+
 

@@ -1,1 +1,1 @@
-* Support provider authentication using Service Accounts [GH-1040]
+* Support provider authentication using Active Service Accounts [GH-1040]
