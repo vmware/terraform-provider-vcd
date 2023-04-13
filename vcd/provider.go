@@ -117,6 +117,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface":                             datasourceVcdRdeInterface(),                     // 3.9
 	"vcd_rde_type":                                  datasourceVcdRdeType(),                          // 3.9
 	"vcd_rde":                                       datasourceVcdRde(),                              // 3.9
+	"vcd_nsxt_edgegateway_qos_profile":              datasourceVcdNsxtEdgeGatewayQosProfile(),        // 3.9
+	"vcd_nsxt_edgegateway_rate_limiting":            datasourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 datasourceVcdNsxtDhcpBinding(),                  // 3.9
 }
 
@@ -200,6 +202,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface":                             resourceVcdRdeInterface(),                     // 3.9
 	"vcd_rde_type":                                  resourceVcdRdeType(),                          // 3.9
 	"vcd_rde":                                       resourceVcdRde(),                              // 3.9
+	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 resourceVcdNsxtDhcpBinding(),                  // 3.9
 }
 
