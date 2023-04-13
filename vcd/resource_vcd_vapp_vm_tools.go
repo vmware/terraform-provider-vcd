@@ -1221,20 +1221,15 @@ func createOrUpdateVmSecurityTags(d *schema.ResourceData, vm *govcd.VM) error {
 	var err error
 	entitySecurityTags := &types.EntitySecurityTags{}
 
-	if entitySecurityTagsFromSchema, ok := d.GetOk("security_tags"); ok {
-		entitySecurityTagsSlice := convertSchemaSetToSliceOfStrings(entitySecurityTagsFromSchema.(*schema.Set))
-		entitySecurityTags.Tags = entitySecurityTagsSlice
-		_, err = vm.UpdateVMSecurityTags(entitySecurityTags)
-		log.Printf("[DEBUG] security_tags are set %s", entitySecurityTags)
-		if err != nil {
-			return fmt.Errorf("error setting VM Security Tags: %s", err)
-		}
-	} else {
-		_, err = vm.UpdateVMSecurityTags(entitySecurityTags)
-		log.Printf("[DEBUG] security_tags are NOT set %s", entitySecurityTags)
-		if err != nil {
-			return fmt.Errorf("error setting VM Security Tags: %s", err)
-		}
+	entitySecurityTagsFromSchema, _ := d.GetOk("security_tags")
+	entitySecurityTagsSlice := convertSchemaSetToSliceOfStrings(entitySecurityTagsFromSchema.(*schema.Set))
+	entitySecurityTags.Tags = entitySecurityTagsSlice
+	log.Printf("[DEBUG] Setting security_tags %s", entitySecurityTags)
+	_, err = vm.UpdateVMSecurityTags(entitySecurityTags)
+
+	if err != nil {
+		return err
 	}
+
 	return nil
 }

@@ -1079,12 +1079,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
-	// Handle VM Security Tags settings
-	err = createOrUpdateVmSecurityTags(d, vm)
-	if err != nil {
-		return nil, fmt.Errorf("[VM create] error creating security tags for VM %s : %s", vm.VM.Name, err)
-	}
-
 	// Template VMs require CPU/Memory setting
 	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
 	// inherited from template
@@ -1420,12 +1414,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	err = newVm.UpdateNetworkConnectionSection(&networkConnectionSection)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
-	}
-
-	// Handle VM Security Tags settings
-	err = createOrUpdateVmSecurityTags(d, newVm)
-	if err != nil {
-		return nil, fmt.Errorf("[VM create] error creating security tags for VM %s : %s", newVm.VM.Name, err)
 	}
 
 	return newVm, nil
