@@ -141,8 +141,7 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI.
 In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source (instead of the resource).
 
-If you need to upload more than one OVA, please modify the [proposed configuration][step2], or if you want to use existing OVAs you can also leverage
-using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
+If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
 ### "Kubernetes Cluster Author" global role
 
