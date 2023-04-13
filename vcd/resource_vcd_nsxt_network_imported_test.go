@@ -154,7 +154,7 @@ func TestAccVcdNsxtNetworkImportedNsxtDvpg(t *testing.T) {
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
-		"Dvpg":        testConfig.Nsxt.Dvpg,
+		"Dvpg":        testConfig.Nsxt.NsxtDvpg,
 		"TestName":    t.Name(),
 		"Tags":        "network nsxt",
 	}

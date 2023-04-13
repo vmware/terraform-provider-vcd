@@ -140,7 +140,7 @@ type TestConfig struct {
 		Tier0router               string `json:"tier0router"`
 		Tier0routerVrf            string `json:"tier0routervrf"`
 		GatewayQosProfile         string `json:"gatewayQosProfile"`
-		Dvpg                      string `json:"dvpg"`
+		NsxtDvpg                  string `json:"nsxtDvpg"`
 		Vdc                       string `json:"vdc"`
 		ExternalNetwork           string `json:"externalNetwork"`
 		EdgeGateway               string `json:"edgeGateway"`
