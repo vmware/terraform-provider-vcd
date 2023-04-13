@@ -111,8 +111,8 @@ You need to specify the following values in `terraform.tfvars`:
 - `nsxt_edge_cluster_name`: This is used to fetch an existing [Edge Cluster][edge_cluster], that will be used to create the two VDCs.
   If you are going to use more than one [Edge Cluster][edge_cluster], please consider modifying the proposed configuration.
   In UI, [Edge Clusters][edge_cluster] can be found in the NSX-T manager web UI.
-- `network_pool_name`: This references an existing Network pool and it's used to create both VDCs.
-  If you are going to use more than one Network pool, please consider modifying the proposed configuration.
+- `network_pool_name`: This references an existing Network Pool, which is used to create both VDCs.
+  If you are going to use more than one Network Pool, please consider modifying the proposed configuration.
 
 In the [proposed configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies assigned, with the `TKG small` being the default one.
 You can customise it to make any other TKG policy the default one.
@@ -138,15 +138,15 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
-on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI and
-using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
+on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI.
+In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source (instead of the resource).
 
 If you need to upload more than one OVA, please modify the [proposed configuration][step2], or if you want to use existing OVAs you can also leverage
 using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
 
 ### "Kubernetes Cluster Author" global role
 
-Apart from the role to administrate the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
+Apart from the role to manage the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
 for the [TKGm clusters][tkgm_docs] consumers (it would be similar to the concept of "vApp Author" but for [TKGm clusters][tkgm_docs]).
 
 In order to create this [Global Role][global_role], the [proposed configuration][step2] first
@@ -154,7 +154,7 @@ creates a new [Rights Bundle][rights_bundle] and publishes it to all the tenants
 
 ### Networking
 
-The [proposed configuration][step2] configures a basic networking layout that will make CSE v4.0 work. However, it is
+The [proposed configuration][step2] prepares a basic networking layout that will make CSE v4.0 work. However, it is
 recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
 
 The configuration will create the following:
@@ -241,8 +241,8 @@ The generated VM makes use of the uploaded CSE OVA and some required guest prope
 
 In order to do so, the [configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
-- `vcdkeconfig_template_filepath`: This references a local file that corresponds with the `VCDKEConfig` [RDE][rde] contents specified as a JSON template.
-  You can find this template [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
+- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents. It should be a JSON template, like
+  [the one used in the configuration](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
   (Note: In `terraform.tfvars.example` the correct path is already provided).
 - `capvcd_version`: The version for CAPVCD. It should be "1.0.0" for CSE v4.0.
 - `capvcd_rde_version`: The version for the CAPVCD [RDE Type][rde_type]. It should be the same version used in Step 1.
@@ -295,7 +295,7 @@ to perform updates on the CSE Server (see sections below).
 
 To evaluate the correctness of the setup, you can check the _"Verifying that the setup works"_ section above.
 
--> You can visit [the documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
+-> You can visit [the CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
 The most common issues are:
 
@@ -379,7 +379,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 ~> Before uninstalling CSE, make sure you mark all clusters for deletion in VCD UI.
 
-Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
+Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure with Terraform command.
 
 [alb]: /providers/vmware/vcd/latest/docs/guides/nsxt_alb
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
