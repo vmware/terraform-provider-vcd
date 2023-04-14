@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script will connect to the vCD using username and password,
+# This script will connect to VCD using username and password,
 # and go through the steps to create/authorize/activate a service account.
 
 user=$1
@@ -10,6 +10,13 @@ IP=$4
 if [ -z "$IP" ]
 then
     echo "Syntax $0 user password organization hostname_or_IP_address"
+    exit 1
+fi
+
+# Check if jq is installed with which and exit if not
+if ! which jq > /dev/null
+then
+    echo "jq is not installed. Please install jq and try again."
     exit 1
 fi
 

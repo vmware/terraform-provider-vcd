@@ -310,12 +310,10 @@ func TestAccAuth(t *testing.T) {
 		})
 	}
 
-	// Testing sending an invalid API token
+	// Testing sending an invalid Service Account token
 	createTestTokenFile(t)
 	testCases = append(testCases, authTestCase{
 		name:        "ServiceAccountTokenFile,AuthType=service_account_token_file",
-		skip:        testConfig.Provider.UseSamlAdfs,
-		skipReason:  "testConfig.Provider.UseSamlAdfs must be false",
 		expectError: regexp.MustCompile("Invalid refresh token"),
 		configText: `
 			provider "vcd" {
