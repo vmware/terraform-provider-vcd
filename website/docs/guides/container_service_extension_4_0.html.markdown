@@ -258,18 +258,18 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Verifying that the setup works
 
-To validate that the CSE Server is working correctly, you can either do it programmatically with a [SNAT rules][nat_rule] that maps
+To validate that the CSE Server is working correctly, you can either do it programmatically with a [DNAT rule][nat_rule] that maps
 one available IP to the CSE Server, or using the UI:
 
-- With a [SNAT rules][nat_rule] you could connect to the CSE Server VM through `ssh` and the credentials that are stores in the `terraform.tfstate` file,
+- With a [DNAT rule][nat_rule] you would be able to connect to the CSE Server VM through `ssh` and the credentials that are stored in the `terraform.tfstate` file,
   with a resource similar to this:
 ```
 resource "vcd_nsxt_nat_rule" "solutions_nat" {
   org             = vcd_org.solutions_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
 
-  name        = "CSE Server SNAT rule"
-  rule_type   = "SNAT"
+  name        = "CSE Server DNAT rule"
+  rule_type   = "DNAT"
   description = "CSE Server SNAT rule"
 
   external_address = "One available IP from Solutions Provider Gateway"
@@ -278,7 +278,7 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
 }
 ```
 
-- With the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in the _Guest customization properties Edit view_.
+- Using the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in _Guest customization properties_ > _Edit.
 
 Once you gain access to the CSE Server, you can check the `cse.log` file, the configuration file or check Internet connectivity.
 If something does not work, please check the **Troubleshooting** section below.
