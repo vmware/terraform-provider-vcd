@@ -270,7 +270,7 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
 
   name        = "CSE Server DNAT rule"
   rule_type   = "DNAT"
-  description = "CSE Server SNAT rule"
+  description = "CSE Server DNAT rule"
 
   external_address = "One available IP from Solutions Provider Gateway"
   internal_address = "CSE Server IP"
