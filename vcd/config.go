@@ -619,6 +619,7 @@ func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, a
 		if err != nil {
 			return fmt.Errorf("error during token-based authentication: %s", err)
 		}
+		return nil
 	}
 
 	return client.Authenticate(user, password, org)
