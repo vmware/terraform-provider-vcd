@@ -1216,3 +1216,20 @@ func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error 
 	}
 	return nil
 }
+
+func createOrUpdateVmSecurityTags(d *schema.ResourceData, vm *govcd.VM) error {
+	var err error
+	entitySecurityTags := &types.EntitySecurityTags{}
+
+	entitySecurityTagsFromSchema, _ := d.GetOk("security_tags")
+	entitySecurityTagsSlice := convertSchemaSetToSliceOfStrings(entitySecurityTagsFromSchema.(*schema.Set))
+	entitySecurityTags.Tags = entitySecurityTagsSlice
+	log.Printf("[DEBUG] Setting security_tags %s", entitySecurityTags)
+	_, err = vm.UpdateVMSecurityTags(entitySecurityTags)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
