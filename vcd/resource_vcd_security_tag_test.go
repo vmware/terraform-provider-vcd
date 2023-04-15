@@ -222,9 +222,6 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 					testAccCheckSecurityTagCreated(tag1),
 					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
 					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
-					testAccCheckSecurityTagCreated(tag2),
-					testAccCheckSecurityTagOnVMCreated(tag2, vAppName, vmName),
-					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
 				),
 			},
 			{
@@ -233,12 +230,17 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 					testAccCheckSecurityTagCreated(tag1),
 					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
 					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
-					testAccCheckSecurityTagDestroy(tag2),
+					testAccCheckSecurityTagCreated(tag2),
+					testAccCheckSecurityTagOnVMCreated(tag2, vAppName, vmName),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
 				),
 			},
 			{
 				Config: configText2,
-				Check:  testAccCheckSecurityTagDestroy(tag1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecurityTagDestroy(tag1),
+					testAccCheckSecurityTagDestroy(tag2),
+				),
 			},
 		},
 	})
@@ -246,6 +248,37 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 }
 
 const testAccVappVmWithSecurityTags = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.vappName}}.name
+  name          = "{{.vmName}}"
+  computer_name = "{{.computerName}}"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  depends_on       = [vcd_vapp.{{.vappName}}]
+
+  security_tags = ["{{.securityTag1}}"]
+}
+
+resource "vcd_security_tag" "{{.securityTag1}}" {
+	name   = "{{.securityTag1}}"
+	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+}
+`
+
+const testAccVappVmWithMixedSecurityTags = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -277,37 +310,6 @@ resource "vcd_security_tag" "{{.securityTag1}}" {
 
 resource "vcd_security_tag" "{{.securityTag2}}" {
 	name   = "{{.securityTag2}}"
-	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
-}
-`
-
-const testAccVappVmWithMixedSecurityTags = `
-resource "vcd_vapp" "{{.vappName}}" {
-  name = "{{.vappName}}"
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-}
-
-resource "vcd_vapp_vm" "{{.vmName}}" {
-  org = "{{.Org}}"
-  vdc = "{{.Vdc}}"
-
-  vapp_name     = vcd_vapp.{{.vappName}}.name
-  name          = "{{.vmName}}"
-  computer_name = "{{.computerName}}"
-  memory        = 2048
-  cpus          = 2
-  cpu_cores     = 1
-
-  os_type          = "sles10_64Guest"
-  hardware_version = "vmx-14"
-  depends_on       = [vcd_vapp.{{.vappName}}]
-
-  security_tags = ["{{.securityTag1}}"]
-}
-
-resource "vcd_security_tag" "{{.securityTag1}}" {
-	name   = "{{.securityTag1}}"
 	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
 }
 `
