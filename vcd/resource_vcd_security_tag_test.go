@@ -213,7 +213,7 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckSecurityTagDestroy(tag1),
 			testAccCheckSecurityTagDestroy(tag2),
-			testAccCheckVcdVAppVmDestroy(vAppName),
+			testAccCheckVcdNsxtVAppVmDestroy(vmName),
 		),
 		Steps: []resource.TestStep{
 			{
