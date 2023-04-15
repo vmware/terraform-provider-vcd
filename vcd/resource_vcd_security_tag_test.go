@@ -173,6 +173,169 @@ resource "vcd_security_tag" "{{.SecurityTag2}}" {
 }
 `
 
+// TestAccVcdVappVmWithSecurityTags tests security_tags field of a vcd_vapp_vm
+// There is still a vcd_security_tag resource which is responsible for managing
+// the tag in VCD as security_tags field only creates and doesn't remove the
+// tag itself if it is removed from a VM to not break other VMs.
+func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
+	tag1 := strings.ToLower(t.Name() + "-tag1") // security tags are always lowercase in serverside
+	tag2 := strings.ToLower(t.Name() + "-tag2")
+	vAppName := t.Name() + "-vapp"
+	vmName := t.Name() + "-vm"
+
+	var params = StringMap{
+		"Org":          testConfig.VCD.Org,
+		"Vdc":          testConfig.Nsxt.Vdc,
+		"vappName":     vAppName,
+		"vmName":       vmName,
+		"computerName": t.Name() + "-vm",
+		"securityTag1": tag1,
+		"securityTag2": tag2,
+		"FuncName":     t.Name(),
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVappVmWithSecurityTags, params)
+	params["FuncName"] = t.Name() + "-mixsecuritytags"
+	configText1 := templateFill(testAccVappVmWithMixedSecurityTags, params)
+	params["FuncName"] = t.Name() + "-onesecuritytag"
+	configText2 := templateFill(testAccVappVmWithOneSecurityTag, params)
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := "vcd_vapp_vm." + vmName
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckSecurityTagDestroy(tag1),
+			testAccCheckSecurityTagDestroy(tag2),
+			testAccCheckVcdVAppVmDestroy(vAppName),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecurityTagCreated(tag1),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
+					testAccCheckSecurityTagCreated(tag2),
+					testAccCheckSecurityTagOnVMCreated(tag2, vAppName, vmName),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
+				),
+			},
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecurityTagCreated(tag1),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
+					testAccCheckSecurityTagDestroy(tag2),
+				),
+			},
+			{
+				Config: configText2,
+				Check:  testAccCheckSecurityTagDestroy(tag1),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVappVmWithSecurityTags = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.vappName}}.name
+  name          = "{{.vmName}}"
+  computer_name = "{{.computerName}}"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  depends_on       = [vcd_vapp.{{.vappName}}]
+
+  security_tags = ["{{.securityTag1}}", "{{.securityTag2}}"]
+}
+
+resource "vcd_security_tag" "{{.securityTag1}}" {
+	name   = "{{.securityTag1}}"
+	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+}
+
+resource "vcd_security_tag" "{{.securityTag2}}" {
+	name   = "{{.securityTag2}}"
+	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+}
+`
+
+const testAccVappVmWithMixedSecurityTags = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.vappName}}.name
+  name          = "{{.vmName}}"
+  computer_name = "{{.computerName}}"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  depends_on       = [vcd_vapp.{{.vappName}}]
+
+  security_tags = ["{{.securityTag1}}"]
+}
+
+resource "vcd_security_tag" "{{.securityTag1}}" {
+	name   = "{{.securityTag1}}"
+	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+}
+`
+
+const testAccVappVmWithOneSecurityTag = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.{{.vappName}}.name
+  name          = "{{.vmName}}"
+  computer_name = "{{.computerName}}"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  depends_on       = [vcd_vapp.{{.vappName}}]
+}
+`
+
 func testAccCheckSecurityTagDestroy(securityTags ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
