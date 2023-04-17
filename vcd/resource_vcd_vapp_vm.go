@@ -2098,6 +2098,12 @@ func resourceVcdVAppVmDelete(_ context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
+	// Pass an empty struct to clear all security tags before deletion
+	_, err = vm.UpdateVMSecurityTags(&types.EntitySecurityTags{})
+	if err != nil {
+		return diag.Errorf("error removing security tags: %s", err)
+	}
+
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
 	err = vapp.RemoveVM(*vm)
 	if err != nil {

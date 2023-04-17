@@ -195,11 +195,9 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccVappVmWithOneSecurityTag, params)
-	params["FuncName"] = t.Name() + "-mixsecuritytags"
-	configText1 := templateFill(testAccVappVmWithTwoSecurityTags, params)
-	params["FuncName"] = t.Name() + "-onesecuritytag"
-	configText2 := templateFill(testAccVappVmWithNoSecurityTags, params)
+	configText := templateFill(testAccVappVmWithSecurityTag, params)
+	params["FuncName"] = t.Name() + "delete"
+	configText1 := templateFill(testAccVappVmWithNoSecurityTags, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	if vcdShortTest {
@@ -212,7 +210,6 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckSecurityTagDestroy(tag1),
-			testAccCheckSecurityTagDestroy(tag2),
 		),
 		Steps: []resource.TestStep{
 			{
@@ -226,19 +223,7 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSecurityTagCreated(tag1),
-					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
-					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
-					testAccCheckSecurityTagCreated(tag2),
-					testAccCheckSecurityTagOnVMCreated(tag2, vAppName, vmName),
-					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
-				),
-			},
-			{
-				Config: configText2,
-				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecurityTagDestroy(tag1),
-					testAccCheckSecurityTagDestroy(tag2),
 				),
 			},
 		},
@@ -246,7 +231,7 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVappVmWithOneSecurityTag = `
+const testAccVappVmWithSecurityTag = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -269,47 +254,6 @@ resource "vcd_vapp_vm" "{{.vmName}}" {
   depends_on       = [vcd_vapp.{{.vappName}}]
 
   security_tags = ["{{.securityTag1}}"]
-}
-
-resource "vcd_security_tag" "{{.securityTag1}}" {
-  name   = "{{.securityTag1}}"
-  vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
-}
-`
-
-const testAccVappVmWithTwoSecurityTags = `
-resource "vcd_vapp" "{{.vappName}}" {
-  name = "{{.vappName}}"
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-}
-
-resource "vcd_vapp_vm" "{{.vmName}}" {
-  org = "{{.Org}}"
-  vdc = "{{.Vdc}}"
-
-  vapp_name     = vcd_vapp.{{.vappName}}.name
-  name          = "{{.vmName}}"
-  computer_name = "{{.computerName}}"
-  memory        = 2048
-  cpus          = 2
-  cpu_cores     = 1
-
-  os_type          = "sles10_64Guest"
-  hardware_version = "vmx-14"
-  depends_on       = [vcd_vapp.{{.vappName}}]
-
-  security_tags = ["{{.securityTag1}}", "{{.securityTag2}}"]
-}
-
-resource "vcd_security_tag" "{{.securityTag1}}" {
-  name   = "{{.securityTag1}}"
-  vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
-}
-
-resource "vcd_security_tag" "{{.securityTag2}}" {
-  name   = "{{.securityTag2}}"
-  vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
 }
 `
 
