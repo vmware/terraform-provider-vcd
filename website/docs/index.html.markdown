@@ -333,6 +333,10 @@ The following arguments are used to configure the VMware Cloud Director Provider
    `VCD_SA_TOKEN_FILE` environment variable. There are restrictions to its use, as defined in 
    [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-8CD3C8BE-3187-4769-B960-3E3315492C16.html)
 
+* `allow_service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) When using `auth_type=service_account_token_file`,
+  if set to `false`, will print a warning to the user about the service account token file containing *sensitive information*.
+  Can also be set with `VCD_ALLOW_SA_TOKEN_FILE`.
+
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used
   as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
   set it using this field. It can also be set with `VCD_SAML_ADFS_RPT_ID` environment variable.
