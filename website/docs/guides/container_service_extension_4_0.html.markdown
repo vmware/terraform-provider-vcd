@@ -256,7 +256,7 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Final considerations
 
-### Verifying that the setup works
+#### Verifying that the setup works
 
 To validate that the CSE Server is working correctly, you can either do it programmatically with a [DNAT rule][nat_rule] that maps
 one available IP to the CSE Server, or using the UI:
