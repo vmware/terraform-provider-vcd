@@ -388,15 +388,12 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	if config.ServiceAccountTokenFile != "" && !config.AllowSATokenFile {
 		providerDiagnostics = append(providerDiagnostics, diag.Diagnostic{
 			Severity: diag.Warning,
-			Summary:  "The Service Account Token File can be a security threat",
-			Detail: "The current implementation of service accounts reads a " +
-				"refresh token from the provided file, gets a bearer token and " +
-				"overwrites the file with a new refresh token, as the old one is invalidated. " +
-				"As the service account refresh tokens do not expire, having that information " +
-				"in a file is a security threat and it's up to the user to guarantee the file's " +
-				"safety. If you understand that and would like to suppress this warning, you can add\n\n" +
-				"	allow_service_account_token_file = true" +
-				"\n\nto your provider configuration.",
+			Summary:  "The file " + config.ServiceAccountTokenFile + " should be considered sensitive information.",
+			Detail: "The file " + config.ServiceAccountTokenFile + " containing the initial service account API " +
+				"**has been updated** with a freshly generated token. The initial token was invalidated and the " +
+				"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
+				"usable by anyone to run operations to the current VCD. As such, it should be considered **sensitive information**." +
+				"If you would like to remove this warning, add\n\n" + "	allow_service_account_token_file = true\n\nto the provider settings.",
 		})
 	}
 
