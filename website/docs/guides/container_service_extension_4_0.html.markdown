@@ -181,7 +181,7 @@ In order to create all the items listed above, the [proposed configuration][step
 - `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
 - `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
-  At least one IP is required.
+  At least one IP is required. You can check the minimum amount of IPs required in [CSE documentation][cse_docs].
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
   ```
@@ -195,7 +195,7 @@ In order to create all the items listed above, the [proposed configuration][step
 - `tenant_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Tenant Organization.
 - `tenant_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `tenant_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Tenant Organization.
-  At least one IP is required.
+  At least one IP is required. You can check the minimum amount of IPs required in [CSE documentation][cse_docs].
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
   ```
