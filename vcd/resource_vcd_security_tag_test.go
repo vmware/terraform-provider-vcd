@@ -195,11 +195,11 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccVappVmWithSecurityTags, params)
+	configText := templateFill(testAccVappVmWithOneSecurityTag, params)
 	params["FuncName"] = t.Name() + "-mixsecuritytags"
-	configText1 := templateFill(testAccVappVmWithMixedSecurityTags, params)
+	configText1 := templateFill(testAccVappVmWithTwoSecurityTags, params)
 	params["FuncName"] = t.Name() + "-onesecuritytag"
-	configText2 := templateFill(testAccVappVmWithOneSecurityTag, params)
+	configText2 := templateFill(testAccVappVmWithNoSecurityTags, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	if vcdShortTest {
@@ -246,7 +246,7 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVappVmWithSecurityTags = `
+const testAccVappVmWithOneSecurityTag = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -272,12 +272,12 @@ resource "vcd_vapp_vm" "{{.vmName}}" {
 }
 
 resource "vcd_security_tag" "{{.securityTag1}}" {
-	name   = "{{.securityTag1}}"
-	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+  name   = "{{.securityTag1}}"
+  vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
 }
 `
 
-const testAccVappVmWithMixedSecurityTags = `
+const testAccVappVmWithTwoSecurityTags = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -303,17 +303,17 @@ resource "vcd_vapp_vm" "{{.vmName}}" {
 }
 
 resource "vcd_security_tag" "{{.securityTag1}}" {
-	name   = "{{.securityTag1}}"
-	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+  name   = "{{.securityTag1}}"
+  vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
 }
 
 resource "vcd_security_tag" "{{.securityTag2}}" {
-	name   = "{{.securityTag2}}"
-	vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
+  name   = "{{.securityTag2}}"
+  vm_ids = [vcd_vapp_vm.{{.vmName}}.id]
 }
 `
 
-const testAccVappVmWithOneSecurityTag = `
+const testAccVappVmWithNoSecurityTags = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
