@@ -310,6 +310,30 @@ func TestAccAuth(t *testing.T) {
 		})
 	}
 
+	saTokenFile := os.Getenv("TEST_VCD_SA_TOKEN_FILE")
+	if saTokenFile != "" {
+		testOrg := os.Getenv("TEST_VCD_ORG")
+		// If sysOrg is not defined in an environment variable, the API token must be one created for the
+		// organization stated in testConfig.VCD.Org
+		if testOrg == "" {
+			testOrg = testConfig.VCD.Org
+		}
+		testCases = append(testCases, authTestCase{
+			name: "ServiceAccountTokenFile,AuthType=service_account_token_file",
+			configText: `
+			provider "vcd" {
+			  user                       = "invalidUser"
+		      password                   = "invalidPassword"
+			  service_account_token_file = "` + saTokenFile + `"
+		      auth_type                  = "service_account_token_file"
+		      org                        = "` + testOrg + `"
+		      url                        = "` + testConfig.Provider.Url + `"
+		      allow_unverified_ssl       = true
+			}
+		  `,
+		})
+	}
+
 	// Testing sending an invalid Service Account token
 	createTestTokenFile(t)
 	testCases = append(testCases, authTestCase{
