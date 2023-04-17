@@ -253,6 +253,13 @@ func Provider() *schema.Provider {
 				Description: "The Service Account API token file instead of username/password for VCD API operations. (Requires VCD 10.4.0+)",
 			},
 
+			"allow_service_account_token_file": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Set this to true if you understand the security risks of using Service Account token files and would like to suppress the warnings",
+			},
+
 			"sysorg": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -341,6 +348,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		Token:                   d.Get("token").(string),
 		ApiToken:                d.Get("api_token").(string),
 		ServiceAccountTokenFile: d.Get("service_account_token_file").(string),
+		AllowSATokenFile:        d.Get("allow_service_account_token_file").(bool),
 		SysOrg:                  connectOrg,            // Connection org
 		Org:                     d.Get("org").(string), // Default org for operations
 		Vdc:                     d.Get("vdc").(string), // Default vdc
@@ -376,6 +384,22 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		return nil, diag.Errorf("only one of 'token' or 'api_token' should be set")
 	}
 
+	var providerDiagnostics diag.Diagnostics
+	if config.ServiceAccountTokenFile != "" && !config.AllowSATokenFile {
+		providerDiagnostics = append(providerDiagnostics, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "The Service Account Token File can be a security threat",
+			Detail: "The current implementation of service accounts reads a " +
+				"refresh token from the provided file, gets a bearer token and " +
+				"overwrites the file with a new refresh token, as the old one is invalidated. " +
+				"As the service account refresh tokens do not expire, having that information " +
+				"in a file is a security threat and it's up to the user to guarantee the file's " +
+				"safety. If you understand that and would like to suppress this warning, you can add\n\n" +
+				"	allow_service_account_token_file = true" +
+				"\n\nto your provider configuration.",
+		})
+	}
+
 	// If the provider includes logging directives,
 	// it will activate logging from upstream go-vcloud-director
 	logging := d.Get("logging").(bool)
@@ -400,7 +424,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
-	return vcdClient, nil
+	return vcdClient, providerDiagnostics
 }
 
 // vcdSchemaFilter is a function which allows to filters and export type 'map[string]*schema.Resource' which may hold

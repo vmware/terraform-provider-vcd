@@ -30,6 +30,7 @@ type Config struct {
 	Token                   string // Token used instead of user and password
 	ApiToken                string // User generated token used instead of user and password
 	ServiceAccountTokenFile string // File containing the Service Account API token
+	AllowSATokenFile        bool   // Setting to suppress Service Account Token File security warnings
 	SysOrg                  string // Org used for authentication
 	Org                     string // Default Org used for API operations
 	Vdc                     string // Default (optional) VDC for API operations
