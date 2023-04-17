@@ -3,6 +3,8 @@
 package vcd
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -333,14 +335,29 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 `
 
 // TestAccVcdNsxtEdgeGatewayAutoAllocationUsedAndUnusedIps tests that unused and used IPs are
-// calculated correctly when having a huge subnet allocated to Edge Gateway. A subnet of 1.0.0.1/8
-// that makes up a total of 16777213 IPs. It should be way bigger than any Edge Gateway can
-// handle.
+// calculated correctly
+// By default it uses quite a small subnet /16 with 65533 IPs.
+//
+// One can optionally use 'TEST_VCD_HIGH_MEM' environment variable to enable allocation of 16777213
+// IPs. It should be way bigger than any Edge Gateway can handle, but consumes roughly 2GB per Read
+// operation therefore it might hit out of memory (OOM) if the machine does not have sufficient
+// memory.
 func TestAccVcdNsxtEdgeGatewayAutoAllocationUsedAndUnusedIps(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	skipNoConfiguration(t, StringMap{"Nsxt.ExternalNetwork": testConfig.Nsxt.ExternalNetwork})
+	totalAllocatedIpCount := "65533"
+	totalUnusedCount := "65532"
+
+	// Env variable to enable /8 subnet size IP allocation to Edge Gateway.
+	if os.Getenv("TEST_VCD_HIGH_MEM") != "" {
+		totalAllocatedIpCount = "16777213"
+		totalUnusedCount = "16777212"
+		if vcdTestVerbose {
+			fmt.Printf("TEST_VCD_HIGH_MEM set, will allocate '%s' IPs to Edge Gateway\n", totalAllocatedIpCount)
+		}
+	}
 
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
@@ -350,6 +367,8 @@ func TestAccVcdNsxtEdgeGatewayAutoAllocationUsedAndUnusedIps(t *testing.T) {
 		"NsxtManager":         testConfig.Nsxt.Manager,
 		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
 		"ExternalNetworkName": t.Name(),
+
+		"TotalAllocatedIpCount": totalAllocatedIpCount,
 
 		"Tags": "gateway nsxt",
 	}
@@ -373,10 +392,10 @@ func TestAccVcdNsxtEdgeGatewayAutoAllocationUsedAndUnusedIps(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "16777213"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", params["TotalAllocatedIpCount"].(string)),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ip_count", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "16777212"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", totalUnusedCount),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet_with_total_ip_count.*", map[string]string{
 						"gateway":       "1.0.0.1",
 						"prefix_length": "8",
@@ -431,7 +450,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 
-  total_allocated_ip_count = 16777213 
+  total_allocated_ip_count = {{.TotalAllocatedIpCount}}
   subnet_with_total_ip_count {
     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
