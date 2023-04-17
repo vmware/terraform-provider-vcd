@@ -35,6 +35,26 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
+
+		// Skip subtest based on versions
+		type skipOnVersion struct {
+			skipVersionConstraint string
+			datasourceName        string
+		}
+
+		skipOnVersionsVersionsOlderThan := []skipOnVersion{
+			{
+				skipVersionConstraint: "< 36.2",
+				datasourceName:        "vcd_nsxt_edgegateway_qos_profile",
+			},
+		}
+
+		for _, constraintSkip := range skipOnVersionsVersionsOlderThan {
+			if dataSourceName == constraintSkip.datasourceName && vcdClient.Client.APIVCDMaxVersionIs(constraintSkip.skipVersionConstraint) {
+				t.Skipf("This test does not work on API versions %s", constraintSkip.skipVersionConstraint)
+			}
+		}
+
 		// Skip sub-test if conditions are not met
 		dataSourcesRequiringSysAdmin := []string{
 			"vcd_external_network",
