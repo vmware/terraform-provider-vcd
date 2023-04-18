@@ -51,6 +51,17 @@ bearer=$(curl -I -s -k --header "Accept: application/*;version=37.0" \
     | awk -F":" '{print $2}' | sed 's/^ *//g')
 
 auth_header="Authorization: Bearer $bearer"
+if [ "$org" != "System" ]
+then
+    orgjson=$(curl -s -k --http1.1 \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json;version=37.0" \
+    -H "$auth_header" \
+    https://$IP/cloudapi/1.0.0/orgs)
+
+    # iterate over orgjson values with jq and get the id of the org that matches the org name
+    org_id=$(echo $orgjson | jq -r '.values[] | select(.name=="'"$org"'") | .id')
+fi
 
 json="{
     \"client_name\":\"$client_name\",
@@ -99,11 +110,17 @@ activate_json="{
     \"userCode\":\"$user_code\"
 }"
 
+if [ -n "$org_id" ]
+then
+    org_header="X-VMWARE-VCLOUD-TENANT-CONTEXT: $org_id" 
+fi
+
 echo "Activating service account..."
 
 echo $activate_json | curl -k -s --http1.1 \
     -H "Content-Type: application/json" \
-    -H "Accept: application/*;version=37.0" \
+    -H "Accept: application/json;version=37.0" \
+    -H "$org_header" \
     -H "$auth_header" -X POST --data-binary @- \
     -X POST https://$IP/cloudapi/1.0.0/deviceLookup/grant
 
