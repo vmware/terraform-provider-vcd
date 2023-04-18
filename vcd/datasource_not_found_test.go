@@ -35,7 +35,6 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
-
 		// Skip subtest based on versions
 		type skipOnVersion struct {
 			skipVersionConstraint string

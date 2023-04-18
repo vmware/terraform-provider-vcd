@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -194,6 +195,12 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	if err != nil {
 		log.Printf("[DEBUG] Error creating Org: %s", err)
+		// Some 10.4 VCD versions have a bug that fail when creating a disabled Org
+		if !isEnabled && strings.Contains(err.Error(), "com.vmware.vcloud.common.model.oauth.oidc.OidcAuthorizationModel") {
+			err = fmt.Errorf("%s\n\nThis version of VCD has a bug which prevents creating a disabled Org\n"+
+				"If you need to disable, please create an enabled Org and then disable it using update", err)
+		}
+
 		return diag.Errorf("[org creation] error creating Org %s: %s", orgName, err)
 	}
 

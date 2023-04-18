@@ -64,6 +64,15 @@ func TestAccVcdOrgFull(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
+
+	createEnabledOrg := false
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("> 37.1") {
+		// TODO revisit once bug is fixed in VCD
+		fmt.Println("Some VCD 10.4 versions have a bug that prevents creating a disabled Org")
+		createEnabledOrg = true
+	}
+
 	type testOrgData struct {
 		name                         string
 		enabled                      bool
@@ -101,7 +110,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		},
 		{
 			name:                         "org2",
-			enabled:                      false,
+			enabled:                      createEnabledOrg,
 			canPublishCatalogs:           true,
 			canPublishExternalCatalogs:   true,
 			canSubscribeExternalCatalogs: true,
@@ -135,7 +144,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		},
 		{
 			name:                         "org4",
-			enabled:                      false,
+			enabled:                      createEnabledOrg,
 			canPublishCatalogs:           false,
 			canPublishExternalCatalogs:   true,
 			canSubscribeExternalCatalogs: true,
@@ -171,7 +180,6 @@ func TestAccVcdOrgFull(t *testing.T) {
 	willSkip := false
 
 	for _, od := range orgList {
-
 		var params = StringMap{
 			"FuncName":                     "TestAccVcdOrgFull" + "_" + od.name,
 			"OrgName":                      od.name,
