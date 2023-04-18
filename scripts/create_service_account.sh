@@ -96,15 +96,16 @@ fi
 # Send a grant request to cloudapi/1.0.0/deviceLookup/grant
 #
 activate_json="{
-    \"userCode\":\"$user_code\",
+    \"userCode\":\"$user_code\"
 }"
 
 echo "Activating service account..."
+
 echo $activate_json | curl -k -s --http1.1 \
     -H "Content-Type: application/json" \
-    -H "Accept: application/json" \
+    -H "Accept: application/*;version=37.0" \
     -H "$auth_header" -X POST --data-binary @- \
-    -X POST https://$IP/oauth/"$tenant"/token
+    -X POST https://$IP/cloudapi/1.0.0/deviceLookup/grant
 
 # get the access token
 api_token=$(curl -k -s --http1.1 \
