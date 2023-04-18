@@ -506,7 +506,6 @@ example for usage details.
 * `security_tags` - (Optional; *v3.9+*) Set of security tags to be managed by the `vcd_vapp_vm` resource.
   Removing `security_tags` will not remove the security tags themselves. They remain unchanged and just stop being managed by `security_tags` in the `vcd_vapp_vm` resource.
   This is to keep backwards compatibility with existing security tags that were created by the `vcd_security_tags` resource.
-  Setting `security_tags` to `[]` will remove the security tags.
 
 ~> **Note:** Either `security_tags` attribute or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag) resource
   should be used as they would cause a behavioral conflict with each other.
