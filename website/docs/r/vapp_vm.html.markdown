@@ -504,7 +504,7 @@ example for usage details.
   In this case, if the placement policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
 * `security_tags` - (Optional; *v3.9+*) Set of security tags to be managed by the `vcd_vapp_vm` resource.
-  Removing `security_tags` will not remove the security tags themselves. They remain unchanged and just stop being managed by `security_tags` in the `vcd_vapp_vm` resource.
+  To remove `security_tags` you must set `security_tags = []` and do not remove the attribute. Removing the attribute will cause that the tags remain unchanged and just stop being managed by this resource.
   This is to keep backwards compatibility with existing security tags that were created by the `vcd_security_tags` resource.
 
 ~> **Note:** Either `security_tags` attribute or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag) resource
