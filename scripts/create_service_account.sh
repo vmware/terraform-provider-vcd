@@ -93,18 +93,18 @@ then
     exit 1
 fi
 
+# Send a grant request to cloudapi/1.0.0/deviceLookup/grant
+#
+activate_json="{
+    \"userCode\":\"$user_code\",
+}"
 
-
-echo "Please accept the service account access request at $verification_uri"
-echo "The user code is: $user_code"
-
-# Ask the user to write yes to continue
-# If user enters anything other than yes, ask again
-while [ "$answer" != "yes" ]
-do
-    echo "Please enter 'yes' when the service account access was granted: "
-    read answer
-done
+echo "Activating service account..."
+echo $activate_json | curl -k -s --http1.1 \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    -H "$auth_header" -X POST --data-binary @- \
+    -X POST https://$IP/oauth/"$tenant"/token
 
 # get the access token
 api_token=$(curl -k -s --http1.1 \
