@@ -503,7 +503,14 @@ example for usage details.
   using `vcd_org_vdc.vm_placement_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default).
   In this case, if the placement policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
-* `security_tags` - (Optional; *v3.9+*) Set of security tags to be managed by the `vcd_vapp_vm` resource. Removing `security_tags` will not remove the security tags themselves. They remain unchanged and just stop being managed by `security_tags` in the `vcd_vapp_vm` resource. This is to keep backwards compatibility with existing security tags that were created by the `vcd_security_tags` resource. Setting `security_tags` to `[]` will remove the security tags.
+* `security_tags` - (Optional; *v3.9+*) Set of security tags to be managed by the `vcd_vapp_vm` resource.
+  Removing `security_tags` will not remove the security tags themselves. They remain unchanged and just stop being managed by `security_tags` in the `vcd_vapp_vm` resource.
+  This is to keep backwards compatibility with existing security tags that were created by the `vcd_security_tags` resource.
+  Setting `security_tags` to `[]` will remove the security tags.
+
+~> **Note:** Either `security_tags` or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag)
+  should be used as they would cause a behavioral conflict with each other.
+
 * `catalog_name` - (Deprecated; *v2.9+*) Use a [`vcd_catalog`](/providers/vmware/vcd/latest/docs/data-sources/catalog) data source along with `vapp_template_id` or `boot_image_id` instead. The catalog name in which to find the given vApp Template or media for `boot_image`.
 * `template_name` - (Deprecated; *v2.9+*) Use `vapp_template_id` instead. The name of the vApp Template to use
 * `boot_image` - (Deprecated; *v2.9+*) Use `boot_image_id` instead. Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media).
