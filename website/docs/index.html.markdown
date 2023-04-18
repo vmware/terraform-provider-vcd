@@ -203,6 +203,15 @@ format with the current API key. e.g:
 ```json
 {"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
 ```
+Note that the file will be rewritten at every usage, and the updated file will have additional fields, such as
+```json
+{
+  "token_type": "Service Account",
+  "refresh_token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "updated_by": "terraform-provider-vcd/v3.9.0 (darwin/arm64; isProvider:true)",
+  "updated_on": "2023-04-18T14:33:07+02:00"
+ }
+```
 
 The API token file is **sensitive data** and it's up to the user to secure it.
 
@@ -334,7 +343,7 @@ The following arguments are used to configure the VMware Cloud Director Provider
    [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-8CD3C8BE-3187-4769-B960-3E3315492C16.html)
 
 * `allow_service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) When using `auth_type=service_account_token_file`,
-  if set to `false`, will print a warning to the user about the service account token file containing *sensitive information*.
+  if set to `true`, will suppress a warning to the user about the service account token file containing *sensitive information*.
   Can also be set with `VCD_ALLOW_SA_TOKEN_FILE`.
 
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used

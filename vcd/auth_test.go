@@ -337,7 +337,7 @@ func TestAccAuth(t *testing.T) {
 	// Testing sending an invalid Service Account token
 	createTestTokenFile(t)
 	testCases = append(testCases, authTestCase{
-		name:        "ServiceAccountTokenFile,AuthType=service_account_token_file",
+		name:        "ServiceAccountTokenFile,AuthType=invalid_service_account_token_file",
 		expectError: regexp.MustCompile("Invalid refresh token"),
 		configText: `
 			provider "vcd" {

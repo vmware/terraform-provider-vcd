@@ -27,7 +27,7 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 	if err != nil {
 		t.Skipf("unable to get vcdClient: %s", err)
 	}
-	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ServiceAccountToken)
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ServiceAccountTokenFile)
 	if err != nil {
 		t.Skipf("authentication error: %s", err)
 	}
