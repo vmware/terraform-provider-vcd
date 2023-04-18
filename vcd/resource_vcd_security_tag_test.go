@@ -1,4 +1,4 @@
-//go:build network || nsxt || ALL || functional
+//go:build network || nsxt || vm || ALL || functional
 
 package vcd
 
@@ -170,6 +170,108 @@ resource "vcd_security_tag" "{{.SecurityTag1}}" {
 resource "vcd_security_tag" "{{.SecurityTag2}}" {
   name = "{{.SecurityTag2}}"
   vm_ids = [vcd_vapp_vm.{{.VmName}}.id]
+}
+`
+
+// TestAccVcdVappVmWithSecurityTags tests security_tags field of a vcd_vapp_vm
+// There is still a vcd_security_tag resource which is responsible for managing
+// the tag in VCD as security_tags field only creates and doesn't remove the
+// tag itself if it is removed from a VM to not break other VMs.
+func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
+	tag1 := strings.ToLower(t.Name() + "-tag1") // security tags are always lowercase in serverside
+	tag2 := strings.ToLower(t.Name() + "-tag2")
+	vAppName := t.Name() + "-vapp"
+	vmName := t.Name() + "-vm"
+
+	var params = StringMap{
+		"Org":          testConfig.VCD.Org,
+		"Vdc":          testConfig.Nsxt.Vdc,
+		"vappName":     vAppName,
+		"vmName":       vmName,
+		"computerName": t.Name() + "-vm",
+		"securityTag1": tag1,
+		"securityTag2": tag2,
+		"FuncName":     t.Name(),
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVappVmWithSecurityTag, params)
+	params["FuncName"] = t.Name() + "delete"
+	configText1 := templateFill(testAccVappVmWithNoSecurityTags, params)
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := "vcd_vapp_vm." + vmName
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckSecurityTagDestroy(tag1),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecurityTagCreated(tag1),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
+				),
+			},
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecurityTagDestroy(tag1),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVappVmWithSecurityTag = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.{{.vappName}}.name
+  name          = "{{.vmName}}"
+  computer_name = "{{.computerName}}"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  depends_on       = [vcd_vapp.{{.vappName}}]
+  security_tags = ["{{.securityTag1}}"]
+}
+`
+
+const testAccVappVmWithNoSecurityTags = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.{{.vappName}}.name
+  name          = "{{.vmName}}"
+  computer_name = "{{.computerName}}"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  depends_on       = [vcd_vapp.{{.vappName}}]
 }
 `
 
