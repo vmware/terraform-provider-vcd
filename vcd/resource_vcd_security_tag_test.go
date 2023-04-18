@@ -197,7 +197,7 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 
 	configText := templateFill(testAccVappVmWithSecurityTag, params)
 	params["FuncName"] = t.Name() + "delete"
-	configText1 := templateFill(testAccVappVmWithNoSecurityTags, params)
+	configText1 := templateFill(testAccVappVmUpdateSecurityTags, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	if vcdShortTest {
@@ -208,22 +208,23 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	resourceName := "vcd_vapp_vm." + vmName
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckSecurityTagDestroy(tag1),
-		),
+		// We don't use CheckDestroy to assert that tags are destroyed because VCD takes some time
+		// to clean up orphaned tags
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckSecurityTagCreated(tag1),
 					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
 				),
 			},
 			{
 				Config: configText1,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSecurityTagDestroy(tag1),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
 				),
 			},
 		},
@@ -237,6 +238,7 @@ resource "vcd_vapp" "{{.vappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 }
+
 resource "vcd_vapp_vm" "{{.vmName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -248,17 +250,17 @@ resource "vcd_vapp_vm" "{{.vmName}}" {
   cpu_cores     = 1
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  depends_on       = [vcd_vapp.{{.vappName}}]
   security_tags = ["{{.securityTag1}}"]
 }
 `
 
-const testAccVappVmWithNoSecurityTags = `
+const testAccVappVmUpdateSecurityTags = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 }
+
 resource "vcd_vapp_vm" "{{.vmName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -271,7 +273,7 @@ resource "vcd_vapp_vm" "{{.vmName}}" {
   cpu_cores     = 1
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  depends_on       = [vcd_vapp.{{.vappName}}]
+  security_tags = ["{{.securityTag2}}"]
 }
 `
 
