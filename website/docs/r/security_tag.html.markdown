@@ -14,6 +14,9 @@ used to assign security tag to VMs.
 
 Supported in provider *v3.7+* and requires VCD 10.3.0+
 
+~> **Note:** Either `vcd_security_tag` resource or [`security_tags` attribute from `vcd_vapp_vm`](/providers/vmware/vcd/latest/docs/resources/vapp_vm)
+should be used as they would cause a behavioral conflict with each other.
+
 -> **Note:** This resource requires either system or org administrator privileges.
 
 ## Example Usage

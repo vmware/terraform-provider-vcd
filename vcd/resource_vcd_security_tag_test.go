@@ -195,11 +195,30 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccVappVmWithSecurityTag, params)
-	params["FuncName"] = t.Name() + "delete"
-	configText1 := templateFill(testAccVappVmWithNoSecurityTags, params)
+	configText1 := templateFill(testAccVappVmWithSecurityTagsStep1, params)
 
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVappVmUpdateSecurityTagsStep2, params)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccVappVmUpdateSecurityTagsStep3, params)
+
+	params["FuncName"] = t.Name() + "step4DS"
+	configText4DS := templateFill(testAccVappVmUpdateSecurityTagsStep4DS, params)
+
+	params["FuncName"] = t.Name() + "step5"
+	configText5 := templateFill(testAccVappVmUpdateSecurityTagsStep5, params)
+
+	params["FuncName"] = t.Name() + "step6"
+	configText6 := templateFill(testAccVappVmUpdateSecurityTagsStep6, params)
+
+	debugPrintf("#[DEBUG] CONFIGURATION step 1: %s\n", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION step 2: %s\n", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION step 3: %s\n", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION step 4: %s\n", configText4DS)
+	debugPrintf("#[DEBUG] CONFIGURATION step 5: %s\n", configText5)
+	debugPrintf("#[DEBUG] CONFIGURATION step 6: %s\n", configText6)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -208,22 +227,67 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	resourceName := "vcd_vapp_vm." + vmName
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckSecurityTagDestroy(tag1),
-		),
+		// We don't use CheckDestroy to assert that tags are destroyed because VCD takes some time
+		// to clean up orphaned tags
 		Steps: []resource.TestStep{
-			{
-				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+			{ // VM with tag
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckSecurityTagCreated(tag1),
 					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
 				),
 			},
-			{
-				Config: configText1,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSecurityTagDestroy(tag1),
+			{ // VM tag changed
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
+				),
+			},
+			{ // Standalone VM with 1 tag and vApp VM with 2 security tags
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
+					// Standalone VM
+					resource.TestCheckResourceAttr("vcd_vm.standalone", "security_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_vm.standalone", "security_tags.*", tag2),
+				),
+			},
+			{ // Test that standalone and vApp VM data sources report tags correctly
+				Config: configText4DS,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
+					resource.TestCheckResourceAttr("data.vcd_vapp_vm.with-tags", "security_tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr("data.vcd_vapp_vm.with-tags", "security_tags.*", tag1),
+					resource.TestCheckTypeSetElemAttr("data.vcd_vapp_vm.with-tags", "security_tags.*", tag2),
+					resourceFieldsEqual("data.vcd_vapp_vm.with-tags", resourceName, []string{"%"}),
+
+					// Standalone VM
+					resource.TestCheckResourceAttr("data.vcd_vm.with-tags", "security_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr("data.vcd_vm.with-tags", "security_tags.*", tag2),
+					resourceFieldsEqual("data.vcd_vm.with-tags", "vcd_vm.standalone", []string{"%"}),
+				),
+			},
+			{ // stop managing `security_tags` - tags from previous setting should still be available
+				Config: configText5,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag1),
+					resource.TestCheckTypeSetElemAttr(resourceName, "security_tags.*", tag2),
+					testAccCheckSecurityTagOnVMCreated(tag1, vAppName, vmName),
+					testAccCheckSecurityTagOnVMCreated(tag2, vAppName, vmName),
+				),
+			},
+			{ // Removing security tags using `security_tags = []` notation
+				Config: configText6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "security_tags.#", "0"),
 				),
 			},
 		},
@@ -231,7 +295,8 @@ func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVappVmWithSecurityTag = `
+const testAccVappVmWithSecurityTagsStep1 = `
+# skip-binary-test: Too similar to step 3
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -241,23 +306,20 @@ resource "vcd_vapp" "{{.vappName}}" {
 resource "vcd_vapp_vm" "{{.vmName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
-
-  vapp_name     = vcd_vapp.{{.vappName}}.name
-  name          = "{{.vmName}}"
-  computer_name = "{{.computerName}}"
-  memory        = 2048
-  cpus          = 2
-  cpu_cores     = 1
-
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  name             = "{{.vmName}}"
+  computer_name    = "{{.computerName}}"
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  depends_on       = [vcd_vapp.{{.vappName}}]
-
-  security_tags = ["{{.securityTag1}}"]
+  security_tags    = ["{{.securityTag1}}"]
 }
 `
 
-const testAccVappVmWithNoSecurityTags = `
+const testAccVappVmUpdateSecurityTagsStep2 = `
+# skip-binary-test: Too similar to step 3
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -268,16 +330,116 @@ resource "vcd_vapp_vm" "{{.vmName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
   
-  vapp_name     = vcd_vapp.{{.vappName}}.name
-  name          = "{{.vmName}}"
-  computer_name = "{{.computerName}}"
-  memory        = 2048
-  cpus          = 2
-  cpu_cores     = 1
-
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  name             = "{{.vmName}}"
+  computer_name    = "{{.computerName}}"
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
-  depends_on       = [vcd_vapp.{{.vappName}}]
+  security_tags    = ["{{.securityTag2}}"]
+}
+`
+
+const testAccVappVmUpdateSecurityTagsStep3 = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  name             = "{{.vmName}}"
+  computer_name    = "{{.computerName}}"
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  security_tags    = ["{{.securityTag1}}","{{.securityTag2}}"]
+}
+
+
+resource "vcd_vm" "standalone" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name             = "{{.vmName}}-standalone"
+  computer_name    = "{{.computerName}}"
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  security_tags    = ["{{.securityTag2}}"]
+}
+`
+const testAccVappVmUpdateSecurityTagsStep4DS = testAccVappVmUpdateSecurityTagsStep3 + `
+# skip-binary-test: Data Source test
+data "vcd_vapp_vm" "with-tags" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name = vcd_vapp.{{.vappName}}.name
+  name      = "{{.vmName}}"
+}
+
+data "vcd_vm" "with-tags" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  name = "{{.vmName}}-standalone"
+}
+`
+
+const testAccVappVmUpdateSecurityTagsStep5 = `
+# skip-binary-test: only useful for update
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  name             = "{{.vmName}}"
+  computer_name    = "{{.computerName}}"
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+`
+
+const testAccVappVmUpdateSecurityTagsStep6 = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.vmName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  vapp_name        = vcd_vapp.{{.vappName}}.name
+  name             = "{{.vmName}}"
+  computer_name    = "{{.computerName}}"
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  security_tags    = []
 }
 `
 
