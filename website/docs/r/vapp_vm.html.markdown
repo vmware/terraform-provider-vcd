@@ -508,7 +508,7 @@ example for usage details.
   This is to keep backwards compatibility with existing security tags that were created by the `vcd_security_tags` resource.
   Setting `security_tags` to `[]` will remove the security tags.
 
-~> **Note:** Either `security_tags` or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag)
+~> **Note:** Either `security_tags` attribute or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag) resource
   should be used as they would cause a behavioral conflict with each other.
 
 * `catalog_name` - (Deprecated; *v2.9+*) Use a [`vcd_catalog`](/providers/vmware/vcd/latest/docs/data-sources/catalog) data source along with `vapp_template_id` or `boot_image_id` instead. The catalog name in which to find the given vApp Template or media for `boot_image`.
