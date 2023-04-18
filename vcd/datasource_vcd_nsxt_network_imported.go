@@ -61,6 +61,11 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 				Computed:    true,
 				Description: "ID of existing NSX-T Logical Switch",
 			},
+			"dvpg_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of used Distributed Virtual Port Group",
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -375,6 +375,16 @@ func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(edgeGtwIdValue)
 }
 
+func (cli *VCDClient) lockParentOrgNetwork(d *schema.ResourceData) {
+	orgNetworkId := d.Get("org_network_id").(string)
+	vcdMutexKV.kvLock(orgNetworkId)
+}
+
+func (cli *VCDClient) unLockParentOrgNetwork(d *schema.ResourceData) {
+	orgNetworkId := d.Get("org_network_id").(string)
+	vcdMutexKV.kvUnlock(orgNetworkId)
+}
+
 func (cli *VCDClient) getOrgName(d *schema.ResourceData) string {
 	orgName := d.Get("org").(string)
 	if orgName == "" {

@@ -71,6 +71,24 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Sensitive:   true,
 				Description: "Pre-Shared Key (PSK)",
 			},
+			"authentication_mode": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "PSK",
+				Description: "One of 'PSK' (default), 'CERTIFICATE'",
+			},
+			"certificate_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Optional certificate ID to use for authentication",
+				RequiredWith: []string{"ca_certificate_id"},
+			},
+			"ca_certificate_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Optional CA certificate ID to use for authentication",
+				RequiredWith: []string{"certificate_id"},
+			},
 			"local_ip_address": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -89,6 +107,12 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Public IPv4 Address of the remote device terminating the VPN connection",
+			},
+			"remote_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Custom remote ID of the peer site. 'remote_ip_address' is used by default",
 			},
 			"remote_networks": {
 				Type:        schema.TypeSet,
@@ -524,12 +548,37 @@ func getNsxtIpSecVpnTunnelType(d *schema.ResourceData) (*types.NsxtIpSecVpnTunne
 			LocalNetworks: convertSchemaSetToSliceOfStrings(d.Get("local_networks").(*schema.Set)),
 		},
 		RemoteEndpoint: types.NsxtIpSecVpnTunnelRemoteEndpoint{
-			RemoteId:       d.Get("remote_ip_address").(string),
 			RemoteAddress:  d.Get("remote_ip_address").(string),
 			RemoteNetworks: convertSchemaSetToSliceOfStrings(d.Get("remote_networks").(*schema.Set)),
 		},
-		PreSharedKey: d.Get("pre_shared_key").(string),
-		Logging:      d.Get("logging").(bool),
+		PreSharedKey:       d.Get("pre_shared_key").(string),
+		Logging:            d.Get("logging").(bool),
+		AuthenticationMode: d.Get("authentication_mode").(string),
+	}
+
+	// If remote_id is not set, use remote_ip_address for backwards compatibility and this is the
+	// default behavior of VCD, but user can explicitly specify 'remote_id' value
+	//
+	// Using d.GetRawConfig() instead of d.Get because d.Get would return a previous computed value
+	// of "remote_id" field even if it is not specified in HCL
+	if !d.GetRawConfig().GetAttr("remote_id").IsNull() {
+		ipSecVpnConfig.RemoteEndpoint.RemoteId = d.GetRawConfig().GetAttr("remote_id").AsString()
+	} else {
+		ipSecVpnConfig.RemoteEndpoint.RemoteId = d.Get("remote_ip_address").(string)
+	}
+
+	// Handle Certificate authentication mode
+	certificateId := d.Get("certificate_id").(string)
+	if certificateId != "" {
+		ipSecVpnConfig.CertificateRef = &types.OpenApiReference{
+			ID: certificateId,
+		}
+	}
+	caCertificateId := d.Get("ca_certificate_id").(string)
+	if caCertificateId != "" {
+		ipSecVpnConfig.CaCertificateRef = &types.OpenApiReference{
+			ID: caCertificateId,
+		}
 	}
 
 	return ipSecVpnConfig, nil
@@ -544,6 +593,8 @@ func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.Nsx
 	dSet(d, "enabled", ipSecVpnConfig.Enabled)
 	dSet(d, "logging", ipSecVpnConfig.Logging)
 	dSet(d, "security_profile", ipSecVpnConfig.SecurityType)
+	dSet(d, "remote_id", ipSecVpnConfig.RemoteEndpoint.RemoteId)
+	dSet(d, "authentication_mode", ipSecVpnConfig.AuthenticationMode)
 
 	localNetworksSet := convertStringsToTypeSet(ipSecVpnConfig.LocalEndpoint.LocalNetworks)
 	err := d.Set("local_networks", localNetworksSet)
@@ -556,6 +607,13 @@ func setNsxtIpSecVpnTunnelData(d *schema.ResourceData, ipSecVpnConfig *types.Nsx
 	err = d.Set("remote_networks", remoteNetworksSet)
 	if err != nil {
 		return fmt.Errorf("error storing 'remote_networks': %s", err)
+	}
+
+	if ipSecVpnConfig.CertificateRef != nil {
+		dSet(d, "certificate_id", ipSecVpnConfig.CertificateRef.ID)
+	}
+	if ipSecVpnConfig.CaCertificateRef != nil {
+		dSet(d, "ca_certificate_id", ipSecVpnConfig.CaCertificateRef.ID)
 	}
 
 	return nil

@@ -21,7 +21,7 @@ guide](/providers/vmware/vcd/latest/docs/guides/vdc_groups).
 network** in NSX-T VDC. Read more about Imported Network in [official VCD
 documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-FB303D62-67EA-4209-BE4D-C3746481BCC8.html).
 
-## Example Usage (NSX-T backed imported Org VDC network)
+## Example Usage (NSX-T backed imported Org VDC network backed by NSX-T logical switch)
 ```hcl
 data "vcd_org_vdc" "main" {
   org  = "my-org"
@@ -52,6 +52,36 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
 }
 ```
 
+## Example Usage (NSX-T backed imported Org VDC network backed by Distributed Virtual Port Group - DVPG)
+
+```hcl
+data "vcd_org_vdc" "main" {
+  org  = "my-org"
+  name = "my-nsxt-org-vdc"
+}
+
+resource "vcd_nsxt_network_imported" "nsxt-backed" {
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.main.id
+
+  name      = "nsxt-imported"
+  dvpg_name = "vc-dvpg"
+
+  gateway       = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+
+  static_ip_pool {
+    start_address = "1.1.1.100"
+    end_address   = "1.1.1.103"
+  }
+}
+```
+
 
 ## Argument Reference
 
@@ -64,12 +94,18 @@ and inherited from provider configuration)
 * `vdc` - (Deprecated; Optional) The name of VDC to use. **Deprecated**  in favor of new field
   `owner_id` which supports VDC and VDC Group IDs.
 * `name` - (Required) A unique name for the network
-* `nsxt_logical_switch_name` - (Required) Unique name of an existing NSX-T segment. 
+* `nsxt_logical_switch_name` - (Optional) Unique name of an existing NSX-T segment. 
   **Note** it will never be refreshed because API does not allow reading this name after it is
   consumed. Instead ID will be stored in `nsxt_logical_switch_id` attribute.
   
   This resource **will fail** if multiple segments with the same name are available. One can rename 
   them in NSX-T manager to make them unique.
+* `dvpg_name` - (Optional) Unique name of an existing Distributed Virtual Port Group (DVPG). 
+  **Note** it will never be refreshed because API does not allow reading this name after it is
+  consumed. Instead ID will be stored in `dvpg_id` attribute.
+
+-> One of `nsxt_logical_switch_name` or `dvpg_name` must be provided.
+
 * `description` - (Optional) An optional description of the network
 * `gateway` - (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
@@ -88,12 +124,13 @@ Static IP Pools  support the following attributes:
 * `end_address` - (Required) The final address in the IP Range
 
 ## Attribute Reference
-* `nsxt_logical_switch_id` - ID of an existing NSX-T segment
+* `nsxt_logical_switch_id` - ID of NSX-T logical switch used by this network
+* `dvpg_id` - ID of Distributed Virtual Port Group used by this network
 
 ## Importing
 
-~> After import the field `nsxt_logical_switch_name` will remain empty because it is
-impossible to read it in API once it is consumed by network.
+~> After import the fields `nsxt_logical_switch_name` and `dvpg_name` will remain empty because it
+is impossible to read them in API once it is consumed by network.
 
 ~> The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
