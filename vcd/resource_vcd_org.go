@@ -201,7 +201,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 			// retrieved to avoid unnecessary failure path
 			// The error itself is SQL message therefore we override it
 			vcdVersion, _, _ := vcdClient.Client.GetVcdVersion()
-			err = fmt.Errorf("\nthis version of VCD (%s) has a bug that prevents creating a disabled Org\n"+
+			err = fmt.Errorf("\nthis version of VCD (%s) has a bug that prevents creating a disabled Org.\n"+
 				"If you need to disable it, please create an enabled Org and then disable it using update", vcdVersion)
 		}
 
