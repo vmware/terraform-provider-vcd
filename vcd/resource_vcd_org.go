@@ -88,6 +88,28 @@ func resourceOrg() *schema.Resource {
 				Default:     false,
 				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
+			"number_of_catalogs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of catalogs, owned or shared, available to this organization",
+			},
+			"list_of_catalogs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        schema.Schema{Type: schema.TypeString},
+				Description: "List of catalogs, owned or shared, available to this organization",
+			},
+			"number_of_vdcs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of VDCs, owned or shared, available to this organization",
+			},
+			"list_of_vdcs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        schema.Schema{Type: schema.TypeString},
+				Description: "List of VDCs, owned or shared, available to this organization",
+			},
 			"vapp_lease": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -421,6 +443,36 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	dSet(d, "can_publish_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally)
 	dSet(d, "can_subscribe_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe)
 	dSet(d, "delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
+	numberOfCatalogs := 0
+	numberOfVdcs := 0
+	if adminOrg.AdminOrg.Catalogs != nil {
+		numberOfCatalogs = len(adminOrg.AdminOrg.Catalogs.Catalog)
+	}
+	if adminOrg.AdminOrg.Vdcs != nil {
+		numberOfVdcs = len(adminOrg.AdminOrg.Vdcs.Vdcs)
+	}
+	dSet(d, "number_of_catalogs", numberOfCatalogs)
+	dSet(d, "number_of_vdcs", numberOfVdcs)
+	if numberOfCatalogs > 0 {
+		var availableCatalogs []interface{}
+		for _, c := range adminOrg.AdminOrg.Catalogs.Catalog {
+			availableCatalogs = append(availableCatalogs, c)
+		}
+		err := d.Set("list_of_catalogs", availableCatalogs)
+		if err != nil {
+			return fmt.Errorf("error setting list of catalogs: %s", err)
+		}
+	}
+	if numberOfVdcs > 0 {
+		var availableVdcs []interface{}
+		for _, v := range adminOrg.AdminOrg.Vdcs.Vdcs {
+			availableVdcs = append(availableVdcs, v)
+		}
+		err := d.Set("list_of_vdcs", availableVdcs)
+		if err != nil {
+			return fmt.Errorf("error setting list of VDCs: %s", err)
+		}
+	}
 	var err error
 
 	vappLeaseSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings
