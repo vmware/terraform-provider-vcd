@@ -35,6 +35,25 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
+		// Skip subtest based on versions
+		type skipOnVersion struct {
+			skipVersionConstraint string
+			datasourceName        string
+		}
+
+		skipOnVersionsVersionsOlderThan := []skipOnVersion{
+			{
+				skipVersionConstraint: "< 36.2",
+				datasourceName:        "vcd_nsxt_edgegateway_qos_profile",
+			},
+		}
+
+		for _, constraintSkip := range skipOnVersionsVersionsOlderThan {
+			if dataSourceName == constraintSkip.datasourceName && vcdClient.Client.APIVCDMaxVersionIs(constraintSkip.skipVersionConstraint) {
+				t.Skipf("This test does not work on API versions %s", constraintSkip.skipVersionConstraint)
+			}
+		}
+
 		// Skip sub-test if conditions are not met
 		dataSourcesRequiringSysAdmin := []string{
 			"vcd_external_network",
@@ -165,7 +184,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		}
 
 		if (dataSourceName == "vcd_nsxt_edgegateway_bgp_configuration" || dataSourceName == "vcd_nsxt_alb_settings" ||
-			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement") &&
+			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement" ||
+			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting") &&
 			mandatoryFields[fieldIndex] == "edge_gateway_id" {
 			// injecting fake Edge Gateway ID
 			templateFields = templateFields + `edge_gateway_id = "urn:vcloud:gateway:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"

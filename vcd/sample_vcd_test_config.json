@@ -112,6 +112,10 @@
     "tier0routervrf": "tier-0-2",
     "//": "Existing External Network with correct configuration",
     "externalNetwork": "tier-0-backed-external-network",
+    "//":"Gateway QoS Profile used for NSX-T Edge Gateway Rate Limiting (defined in NSX-T Manager)",
+    "gatewayQosProfile":"Gateway QoS Profile 1",
+    "//": "Distributed Virtual Port Group",
+    "nsxtDvpg": "test-nsxt-dvpg-no-uplink",
     "//": "Existing NSX-T based VDC",
     "vdc": "nsxt-vdc-dainius",
     "//": "Existing NSX-T Edge Gateway",
@@ -165,7 +169,9 @@
     "//": "relative path to private key pem file",
     "certificate2PrivateKeyPath": "../test-resources/key2.pem",
     "//": "pass phrase for private key",
-    "certificate2Pass": "test"
+    "certificate2Pass": "test",
+    "//": "Root CA certificate",
+    "rootCertificatePath": "../test-resources/rootCA.pem"
   },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",

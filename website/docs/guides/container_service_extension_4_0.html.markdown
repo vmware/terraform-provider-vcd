@@ -53,15 +53,15 @@ This step will create the following:
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the CSE Server
   configuration (called "VCDKEConfig") that will be instantiated in next step with a [RDE][rde].
 - The required `capvcdCluster` [RDE Type][rde_type]. Its version is specified by the `capvcd_rde_version` variable, that **must be "1.1.0" for CSE v4.0**.
-  This resource specifies the schema of the TKGm clusters.
-- The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-sided elements of VCD.
+  This resource specifies the schema of the [TKGm clusters][tkgm_docs].
+- The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-side elements of VCD.
 - The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
   Feel free to add more attributes like `description` or `full_name` if needed.
 
 Once reviewed and applied with `terraform apply`, one **must login with the created CSE Administrator user to
 generate an API token** that will be used in the next step. In UI, the API tokens can be generated in the CSE Administrator
 user preferences in the top right, then go to the API tokens section, add a new one.
-Or you can visit `/provider/administration/settings/user-preferences` from your VCD url as CSE Administrator.
+Or you can visit `/provider/administration/settings/user-preferences` at your VCD URL as CSE Administrator.
 
 ### Step 2: Install CSE
 
@@ -79,12 +79,12 @@ and change the values present there to the correct ones. You can also modify the
 
 The [proposed configuration][step2] will create two new [Organizations][org], as specified in the [CSE documentation][cse_docs]:
 
-- A Solutions [Organization][org]: This [Organization][org] will host all provider-scoped items, such as the CSE Server.
+- A Solutions [Organization][org], which will host all provider-scoped items, such as the CSE Server.
   It should only be accessible to the CSE Administrator and Providers.
-- A Tenant [Organization][org]: This [Organization][org] will host the TKGm clusters for the users of this tenant to consume them.
+- A Tenant [Organization][org], which will host the [TKGm clusters][tkgm_docs] for the users of this tenant to consume them.
 
-If you already have these two [Organizations][org] created and you want to use them instead, you can leverage customising the [proposed configuration][step2]
-to use the Organization [data source][org_d] to fetch them.
+-> If you already have these two [Organizations][org] created and you want to use them instead,
+you can leverage customising the [proposed configuration][step2] to use the Organization [data source][org_d] to fetch them.
 
 #### VM Sizing Policies
 
@@ -95,8 +95,9 @@ The [proposed configuration][step2] will create four VM Sizing Policies:
 - `TKG medium`: 2 CPUs, 8GB RAM.
 - `TKG small`: 2 CPU, 4GB RAM.
 
-These VM Sizing Policies should be applied as they are. Nothing should be changed here. They will be assigned to the Tenant
-Organization's VDC to be able to dimension the created TKGm clusters (see section below).
+These VM Sizing Policies should be applied as they are, so nothing should be changed here as these are the exact same
+VM Sizing Policies created during CSE installation in UI. They will be assigned to the Tenant
+Organization's VDC to be able to dimension the created [TKGm clusters][tkgm_docs] (see section below).
 
 #### VDCs
 
@@ -110,8 +111,8 @@ You need to specify the following values in `terraform.tfvars`:
 - `nsxt_edge_cluster_name`: This is used to fetch an existing [Edge Cluster][edge_cluster], that will be used to create the two VDCs.
   If you are going to use more than one [Edge Cluster][edge_cluster], please consider modifying the proposed configuration.
   In UI, [Edge Clusters][edge_cluster] can be found in the NSX-T manager web UI.
-- `network_pool_name`: This references an existing Network pool and it's used to create both VDCs.
-  If you are going to use more than one Network pool, please consider modifying the proposed configuration.
+- `network_pool_name`: This references an existing Network Pool, which is used to create both VDCs.
+  If you are going to use more than one Network Pool, please consider modifying the proposed configuration.
 
 In the [proposed configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies assigned, with the `TKG small` being the default one.
 You can customise it to make any other TKG policy the default one.
@@ -125,7 +126,7 @@ The [proposed configuration][step2] will create two catalogs:
 
 - A catalog to host CSE Server OVA files, only accessible to CSE Administrators. This catalog will allow CSE Administrators to organise and manage
   all the CSE Server OVAs that are required to run and upgrade the CSE Server.
-- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create TKGm clusters.
+- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create [TKGm clusters][tkgm_docs].
 
 Then it will upload the required OVAs to them. The OVAs can be specified in `terraform.tfvars`:
 
@@ -137,23 +138,22 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
-on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI and
-using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
+on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI.
+In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source (instead of the resource).
 
-If you need to upload more than one OVA, please modify the [proposed configuration][step2], or if you want to use existing OVAs you can also leverage
-using the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source instead.
+If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
 ### "Kubernetes Cluster Author" global role
 
-Apart from the role to administrate the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
-for the TKGm clusters consumers (it would be similar to the concept of "vApp Author" but for TKGm clusters).
+Apart from the role to manage the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
+for the [TKGm clusters][tkgm_docs] consumers (it would be similar to the concept of "vApp Author" but for [TKGm clusters][tkgm_docs]).
 
 In order to create this [Global Role][global_role], the [proposed configuration][step2] first
 creates a new [Rights Bundle][rights_bundle] and publishes it to all the tenants, then creates the [Global Role][global_role].
 
 ### Networking
 
-The [proposed configuration][step2] configures a basic networking layout that will make CSE v4.0 work. However, it is
+The [proposed configuration][step2] prepares a basic networking layout that will make CSE v4.0 work. However, it is
 recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
 
 The configuration will create the following:
@@ -163,9 +163,9 @@ The configuration will create the following:
 - An [Edge Gateway][edge_gateway] per Organization. You can learn more about Edge Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-45C0FEDF-84F2-4487-8DB8-3BC281EB25CD.html).
   In this configuration we create two that act as a router for each Organization that we created.
 - Configure ALB with a shared Service Engine Group. You can learn more about Advanced Load Balancers [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92A0563D-A272-4958-B732-9C35901D9DB8.html).
-  In this setup, we provide a virtual service pool that CSE Server uses to provide load balancing capabilities to the TKGm clusters.
+  In this setup, we provide a virtual service pool that CSE Server uses to provide load balancing capabilities to the [TKGm clusters][tkgm_docs].
 - A [Routed network][routed_network] per Organization. You can learn more about Routed networks [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-74C4D27F-9E2A-4EB2-BBE1-CDD45C80E270.html).
-  In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the TKGm clusters network.
+  In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the [TKGm clusters][tkgm_docs] network.
 - Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways of providing outbound access.
 
 ~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [proposed configuration][step2]
@@ -176,12 +176,12 @@ In order to create all the items listed above, the [proposed configuration][step
 - `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager], which is needed in order to create the [Provider Gateways][provider_gateway].
   If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration.
   In UI, [NSX-T Managers][nsxt_manager] can be found in the Provider view, inside _Infrastructure Resources > NSX-T_.
-- `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateways][provider_gateway] in the Solutions Organization.
+- `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Solutions Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
 - `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
 - `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
-  At least one IP is required.
+  At least one IP is required. You can check the minimum amount of IPs required in [CSE documentation][cse_docs].
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
   ```
@@ -190,12 +190,12 @@ In order to create all the items listed above, the [proposed configuration][step
     ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
   ]
   ```
-- `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateways][provider_gateway] in the Tenant Organization.
+- `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Tenant Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
 - `tenant_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Tenant Organization.
 - `tenant_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
 - `tenant_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Tenant Organization.
-  At least one IP is required.
+  At least one IP is required. You can check the minimum amount of IPs required in [CSE documentation][cse_docs].
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
   ```
@@ -240,15 +240,15 @@ The generated VM makes use of the uploaded CSE OVA and some required guest prope
 
 In order to do so, the [configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
-- `vcdkeconfig_template_filepath`: This references a local file that corresponds with the `VCDKEConfig` [RDE][rde] contents specified as a JSON template.
-  You can find this template [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
+- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents. It should be a JSON template, like
+  [the one used in the configuration](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
   (Note: In `terraform.tfvars.example` the correct path is already provided).
 - `capvcd_version`: The version for CAPVCD. It should be "1.0.0" for CSE v4.0.
 - `capvcd_rde_version`: The version for the CAPVCD [RDE Type][rde_type]. It should be the same version used in Step 1.
 - `cpi_version`: The version for CPI. It should be "1.2.0" for CSE v4.0.
 - `csi_version`: The version for CSI. It should be "1.3.0" for CSE v4.0.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
-  this will avoid installation errors caused by GitHub rate limiting, as the TKGm tenant creation process requires downloading
+  this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
 - `cse_admin_user`: This should reference the CSE Administrator [User][user] that was created in Step 1.
@@ -256,21 +256,21 @@ In order to do so, the [configuration][step2] asks for the following variables t
 
 ### Final considerations
 
-### Verifying that the setup works
+#### Verifying the CSE Server
 
-To validate that the CSE Server is working correctly, you can either do it programmatically with a [SNAT rules][nat_rule] that maps
+To validate that the CSE Server is working correctly, you can either do it programmatically with a [DNAT rule][nat_rule] that maps
 one available IP to the CSE Server, or using the UI:
 
-- With a [SNAT rules][nat_rule] you could connect to the CSE Server VM through `ssh` and the credentials that are stores in the `terraform.tfstate` file,
+- With a [DNAT rule][nat_rule] you would be able to connect to the CSE Server VM through `ssh` and the credentials that are stored in the `terraform.tfstate` file,
   with a resource similar to this:
 ```
 resource "vcd_nsxt_nat_rule" "solutions_nat" {
   org             = vcd_org.solutions_organization.name
   edge_gateway_id = vcd_nsxt_edgegateway.solutions_edgegateway.id
 
-  name        = "CSE Server SNAT rule"
-  rule_type   = "SNAT"
-  description = "CSE Server SNAT rule"
+  name        = "CSE Server DNAT rule"
+  rule_type   = "DNAT"
+  description = "CSE Server DNAT rule"
 
   external_address = "One available IP from Solutions Provider Gateway"
   internal_address = "CSE Server IP"
@@ -278,12 +278,12 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
 }
 ```
 
-- With the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in the _Guest customization properties Edit view_.
+- Using the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in _Guest customization properties_ > _Edit_.
 
 Once you gain access to the CSE Server, you can check the `cse.log` file, the configuration file or check Internet connectivity.
 If something does not work, please check the **Troubleshooting** section below.
 
-#### Install the UI plugin
+#### Kubernetes Container Clusters UI plug-in
 
 To manage CSE clusters with the UI, you can [download the Kubernetes Container Clusters UI plug-in 4.0][cse_docs]
 and install it in your VCD appliance. If the old CSE 3.x plugin is installed, you will need to remove it first. The plugin
@@ -294,7 +294,7 @@ to perform updates on the CSE Server (see sections below).
 
 To evaluate the correctness of the setup, you can check the _"Verifying that the setup works"_ section above.
 
--> You can visit [the documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
+-> You can visit [the CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
 The most common issues are:
 
@@ -307,6 +307,7 @@ The most common issues are:
 - OVA upload is taking too long:
   - Verify your Internet connectivity is not having any issues.
   - OVAs are quite big, you could tune `upload_piece_size` to speed up the upload process.
+  - If upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.cse_ova`.
   - Verify that there's not a huge latency between your VCD and the place where Terraform configuration is run.
 
 - Cluster creation is failing:
@@ -373,17 +374,34 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 ```
 
+## TKGm clusters operations
+
+This section explains how to perform CRUD (Create, Read, Update and Delete) operations with TKGm clusters using
+Terraform.
+
+~> This section assumes that your CSE installation was done following the [section above](#installation-process).
+That is, CSE Server should be up and running and all elements must be working.
+
+### Creating a Kubernetes cluster
+
+-> You can have a look at a working example of a TKGm cluster [here][cluster].
+
+### Updating a Kubernetes cluster
+
+### Deleting a Kubernetes cluster
+
 ## Uninstall CSE
 
-~> Before uninstalling CSE, make sure you mark all clusters for deletion in your Terraform configuration.
+~> Before uninstalling CSE, make sure you mark all clusters for deletion in VCD UI.
 
-Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure.
+Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure with Terraform command.
 
-[alb]: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/nsxt_alb
+[alb]: /providers/vmware/vcd/latest/docs/guides/nsxt_alb
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
 [capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
+[cluster]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/cluster
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
@@ -404,6 +422,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [sizing]: /providers/vmware/vcd/latest/docs/resources/vm_sizing_policy
 [step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 [step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step2
+[tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
 [catalog_vapp_template]: /providers/vmware/vcd/latest/docs/resources/catalog_vapp_template
 [vdc]: /providers/vmware/vcd/latest/docs/resources/org_vdc

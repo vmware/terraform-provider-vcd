@@ -73,6 +73,44 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 }
 ```
 
+## Example Usage (IPsec VPN Tunnel with Certificate auth and custom remote ID)
+
+```hcl
+data "vcd_library_certificate" "cert" {
+  org   = "myOrg"
+  alias = "certificate"
+}
+
+data "vcd_library_certificate" "ca-cert" {
+  org   = "myOrg"
+  alias = "ca-certificate"
+}
+
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "my-org"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  name = "cert-tunnel"
+
+  authentication_mode = "CERTIFICATE"
+  certificate_id      = data.vcd_library_certificate.cert.id
+  ca_certificate_id   = data.vcd_library_certificate.ca-cert.id
+
+  # Primary IP address of Edge Gateway pulled from data source
+  local_ip_address = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks   = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address
+  remote_ip_address = "1.2.3.4"
+
+  # The remote ID must match the certificate SAN (Subject Alternative Name), 
+  # if available, or the distinguished name of the certificate used to secure 
+  # the remote endpoint.
+  remote_id       = "cert-san"
+  remote_networks = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -84,13 +122,22 @@ The following arguments are supported:
 * `name` - (Required) A name for NSX-T IPsec VPN Tunnel
 * `description` - (Optional) An optional description of the NSX-T IPsec VPN Tunnel
 * `enabled` - (Optional) Enables or disables IPsec VPN Tunnel (default `true`)
-* `pre_shared_key` - (Required) Pre-shared key for negotiation. **Note** the pre-shared key must be the same on the 
-other end of the IPSec VPN tunnel.
+* `pre_shared_key` - (Required) Pre-shared key for negotiation. **Note** the pre-shared key must be
+the same on the other end of the IPSec VPN tunnel and `authentication_mode` must be `PSK`
 * `local_ip_address` - (Required) IPv4 Address for the endpoint. This has to be a suballocated IP on the Edge Gateway.
 * `local_networks` - (Required) A set of local networks in CIDR format. At least one value required
 * `remote_ip_address` - (Required) Public IPv4 Address of the remote device terminating the VPN connection
+* `remote_id` - (Optional, *v3.9+*) Remote ID uniquely identifies the peer site. If the remote ID is
+  not set, it will default to the remote IP address
 * `remote_networks` - (Optional) Set of remote networks in CIDR format. Leaving it empty is interpreted as 0.0.0.0/0
 * `logging` - (Optional) Sets whether logging for the tunnel is enabled or not. (default - `false`)
+* `authentication_mode` - (Optional, *v3.9+*) `PSK` (pre-shared key) or `CERTIFICATE` (default -
+  `PSK`)
+* `certificate_id` - (Optional, *v3.9+*) Certificate ID (can be handled by `vcd_library_certificate`
+  resource or datasource). *Note* `authentication_mode` must be set to `CERTIFICATE`
+* `ca_certificate_id` - (Optional, *v3.9+*) CA Certificate ID (can be handled by
+  `vcd_library_certificate` resource or datasource) *Note* `authentication_mode` must be set to
+  `CERTIFICATE`
 * `security_profile_customization` - (Optional) a block allowing to
 [customize default security profile](#security-profile) parameters
 

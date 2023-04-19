@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_edgegateway"
 sidebar_current: "docs-vcd-resource-edgegateway"
 description: |-
-  Provides a VMware Cloud Director edge gateway. This can be used to create and delete edge gateways connected to one or more external networks.
+  Provides a VMware Cloud Director NSX-V edge gateway. This can be used to create and delete edge gateways connected to one or more external networks.
 ---
 
 # vcd\_edgegateway
 
-Provides a VMware Cloud Director edge gateway directly connected to one or more external networks. This can be used to create
+Provides a VMware Cloud Director NSX-V edge gateway directly connected to one or more external networks. This can be used to create
 and delete edge gateways for Org VDC networks to connect.
 
 Supported in provider *v2.4+*
