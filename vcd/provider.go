@@ -397,7 +397,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 			Detail: "The file " + config.ServiceAccountTokenFile + " containing the initial service account API " +
 				"**has been updated** with a freshly generated token. The initial token was invalidated and the " +
 				"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
-				"usable by anyone to run operations to the current VCD. As such, it should be considered **sensitive information**." +
+				"usable by anyone to run operations to the current VCD. As such, it should be considered **sensitive information**. " +
 				"If you would like to remove this warning, add\n\n" + "	allow_service_account_token_file = true\n\nto the provider settings.",
 		})
 	}
