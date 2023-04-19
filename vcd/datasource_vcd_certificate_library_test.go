@@ -89,7 +89,7 @@ func TestAccVcdLibraryCertificateDS(t *testing.T) {
 
 // getAvailableCertificate fetches one available certificate to use in data source tests
 func getAvailableCertificate(vcdClient *VCDClient) ([]*govcd.Certificate, error) {
-	err := ProviderAuthenticate(vcdClient.VCDClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
+	err := ProviderAuthenticate(vcdClient.VCDClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ServiceAccountTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("authentication error: %v", err)
 	}

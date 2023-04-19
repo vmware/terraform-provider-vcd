@@ -61,10 +61,11 @@ func init() {
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
-		User     string `json:"user"`
-		Password string `json:"password"`
-		Token    string `json:"token,omitempty"`
-		ApiToken string `json:"api_token,omitempty"`
+		User                    string `json:"user"`
+		Password                string `json:"password"`
+		Token                   string `json:"token,omitempty"`
+		ApiToken                string `json:"api_token,omitempty"`
+		ServiceAccountTokenFile string `json:"service_account_token_file,omitempty"`
 
 		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
 		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
@@ -754,7 +755,7 @@ func getVcdVersion(config TestConfig) (string, error) {
 	if vcdClient == nil || err != nil {
 		return "", err
 	}
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken, config.Provider.ServiceAccountTokenFile)
 	if err != nil {
 		return "", err
 	}
@@ -873,7 +874,7 @@ func TestMain(m *testing.M) {
 		fmt.Printf("error getting a govcd client: %s\n", err)
 		exitCode = 1
 	} else {
-		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
+		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ServiceAccountTokenFile)
 		if err != nil {
 			fmt.Printf("error authenticating provider: %s\n", err)
 			exitCode = 1
