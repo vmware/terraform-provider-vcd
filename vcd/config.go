@@ -25,16 +25,18 @@ func init() {
 }
 
 type Config struct {
-	User            string
-	Password        string
-	Token           string // Token used instead of user and password
-	ApiToken        string // User generated token used instead of user and password
-	SysOrg          string // Org used for authentication
-	Org             string // Default Org used for API operations
-	Vdc             string // Default (optional) VDC for API operations
-	Href            string
-	MaxRetryTimeout int
-	InsecureFlag    bool
+	User                    string
+	Password                string
+	Token                   string // Token used instead of user and password
+	ApiToken                string // User generated token used instead of user and password
+	ServiceAccountTokenFile string // File containing the Service Account API token
+	AllowSATokenFile        bool   // Setting to suppress Service Account Token File security warnings
+	SysOrg                  string // Org used for authentication
+	Org                     string // Default Org used for API operations
+	Vdc                     string // Default (optional) VDC for API operations
+	Href                    string
+	MaxRetryTimeout         int
+	InsecureFlag            bool
 
 	// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
 	// The following conditions must be met so that authentication SAML authentication works:
@@ -610,25 +612,28 @@ func (cli *VCDClient) GetOrgName(orgName string) (string, error) {
 	return orgName, nil
 }
 
-func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken string) error {
+// TODO Look into refactoring this into a method of *Config
+func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, saToken string) error {
 	var err error
-	if apiToken != "" {
-		err = client.SetToken(org, govcd.ApiTokenHeader, apiToken)
-	} else {
-		if token != "" {
-			if len(token) > 32 {
-				err = client.SetToken(org, govcd.BearerTokenHeader, token)
-			} else {
-				err = client.SetToken(org, govcd.AuthorizationHeader, token)
-			}
-			if err != nil {
-				err = fmt.Errorf("error during token-based authentication: %s", err)
-			}
-		} else {
-			err = client.Authenticate(user, password, org)
-		}
+	if saToken != "" {
+		return client.SetServiceAccountApiToken(org, saToken)
 	}
-	return err
+	if apiToken != "" {
+		return client.SetToken(org, govcd.ApiTokenHeader, apiToken)
+	}
+	if token != "" {
+		if len(token) > 32 {
+			err = client.SetToken(org, govcd.BearerTokenHeader, token)
+		} else {
+			err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		}
+		if err != nil {
+			return fmt.Errorf("error during token-based authentication: %s", err)
+		}
+		return nil
+	}
+
+	return client.Authenticate(user, password, org)
 }
 
 func (c *Config) Client() (*VCDClient, error) {
@@ -636,6 +641,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Password + "#" +
 		c.Token + "#" +
 		c.ApiToken + "#" +
+		c.ServiceAccountTokenFile + "#" +
 		c.SysOrg + "#" +
 		c.Vdc + "#" +
 		c.Href
@@ -680,7 +686,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
 
-	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken)
+	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken, c.ServiceAccountTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}

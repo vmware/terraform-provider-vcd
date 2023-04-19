@@ -227,8 +227,8 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
-				Description:  "'integrated', 'saml_adfs', 'token', and 'api_token' are the only ones supported now. 'integrated' is default.",
-				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token"}, false),
+				Description:  "'integrated', 'saml_adfs', 'token', 'api_token' and 'service_account_token_file' are supported. 'integrated' is default.",
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "service_account_token_file"}, false),
 			},
 			"saml_adfs_rpt_id": {
 				Type:        schema.TypeString,
@@ -249,6 +249,20 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_TOKEN", nil),
 				Description: "The API token used instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
+			},
+
+			"service_account_token_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_SA_TOKEN_FILE", nil),
+				Description: "The Service Account API token file instead of username/password for VCD API operations. (Requires VCD 10.4.0+)",
+			},
+
+			"allow_service_account_token_file": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Set this to true if you understand the security risks of using Service Account token files and would like to suppress the warnings",
 			},
 
 			"sysorg": {
@@ -334,16 +348,18 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	}
 
 	config := Config{
-		User:            d.Get("user").(string),
-		Password:        d.Get("password").(string),
-		Token:           d.Get("token").(string),
-		ApiToken:        d.Get("api_token").(string),
-		SysOrg:          connectOrg,            // Connection org
-		Org:             d.Get("org").(string), // Default org for operations
-		Vdc:             d.Get("vdc").(string), // Default vdc
-		Href:            d.Get("url").(string),
-		MaxRetryTimeout: maxRetryTimeout,
-		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
+		User:                    d.Get("user").(string),
+		Password:                d.Get("password").(string),
+		Token:                   d.Get("token").(string),
+		ApiToken:                d.Get("api_token").(string),
+		ServiceAccountTokenFile: d.Get("service_account_token_file").(string),
+		AllowSATokenFile:        d.Get("allow_service_account_token_file").(bool),
+		SysOrg:                  connectOrg,            // Connection org
+		Org:                     d.Get("org").(string), // Default org for operations
+		Vdc:                     d.Get("vdc").(string), // Default vdc
+		Href:                    d.Get("url").(string),
+		MaxRetryTimeout:         maxRetryTimeout,
+		InsecureFlag:            d.Get("allow_unverified_ssl").(bool),
 	}
 
 	// auth_type dependent configuration
@@ -360,6 +376,10 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		if config.ApiToken == "" {
 			return nil, diag.Errorf("empty API token detected with 'auth_type' == 'api_token'")
 		}
+	case "service_account_token_file":
+		if config.ServiceAccountTokenFile == "" {
+			return nil, diag.Errorf("service account token file not provided with 'auth_type' == 'service_account_token_file'")
+		}
 	default:
 		if config.ApiToken != "" || config.Token != "" {
 			return nil, diag.Errorf("to use a token, the appropriate 'auth_type' (either 'token' or 'api_token') must be set")
@@ -367,6 +387,19 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	}
 	if config.ApiToken != "" && config.Token != "" {
 		return nil, diag.Errorf("only one of 'token' or 'api_token' should be set")
+	}
+
+	var providerDiagnostics diag.Diagnostics
+	if config.ServiceAccountTokenFile != "" && !config.AllowSATokenFile {
+		providerDiagnostics = append(providerDiagnostics, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "The file " + config.ServiceAccountTokenFile + " should be considered sensitive information.",
+			Detail: "The file " + config.ServiceAccountTokenFile + " containing the initial service account API " +
+				"HAS BEEN UPDATED with a freshly generated token. The initial token was invalidated and the " +
+				"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
+				"usable by anyone to run operations to the current VCD. As such, it should be considered SENSITIVE INFORMATION. " +
+				"If you would like to remove this warning, add\n\n" + "	allow_service_account_token_file = true\n\nto the provider settings.",
+		})
 	}
 
 	// If the provider includes logging directives,
@@ -393,7 +426,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
-	return vcdClient, nil
+	return vcdClient, providerDiagnostics
 }
 
 // vcdSchemaFilter is a function which allows to filters and export type 'map[string]*schema.Resource' which may hold

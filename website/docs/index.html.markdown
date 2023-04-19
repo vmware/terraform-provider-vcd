@@ -192,6 +192,47 @@ resource "vcd_network_routed" "net1" {
 
 Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
+### Connecting with a Service Account API token
+
+With VCD 10.4.0+, you can connect using a service account API token, as 
+defined in the 
+[documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). 
+Because a new API token is provided on every authentication request, 
+the user is required to provide a readable+writable file in `json` 
+format with the current API key. e.g:
+```json
+{"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+```
+Note that the file will be rewritten at every usage, and the updated file will have additional fields, such as
+```json
+{
+  "token_type": "Service Account",
+  "refresh_token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "updated_by": "terraform-provider-vcd/v3.9.0 (darwin/arm64; isProvider:true)",
+  "updated_on": "2023-04-18T14:33:07+02:00"
+ }
+```
+
+The API token file is **sensitive data** and it's up to the user to secure it.
+
+~> **NOTE:** The service account needs to be in `Active Stage` and 
+it's up to the user to provide the initial API token. A sample shell 
+script for creating, authorizing and activating a VCD Service Account
+can be found in the [repository](https://github.com/vmware/terraform-provider-vcd/blob/service_accounts/scripts/create_service_account.sh)
+
+```hcl
+provider "vcd" {
+  auth_type                  = "service_account_token_file"
+  service_account_token_file = "token.json"
+  sysorg                     = "System"
+  org                        = var.vcd_org # Default for resources
+  vdc                        = var.vcd_vdc # Default for resources
+  url                        = var.vcd_url
+  max_retry_timeout          = var.vcd_max_retry_timeout
+  allow_unverified_ssl       = var.vcd_allow_unverified_ssl
+}
+```
+
 ### Shell script to obtain a bearer token
 To obtain a bearer token you can use this sample shell script:
 
@@ -272,14 +313,16 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `password` - (Required) This is the password for Cloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
 
-* `auth_type` - (Optional) `integrated`, `token`, `api_token`, or `saml_adfs`. Default is `integrated`.
+* `auth_type` - (Optional) `integrated`, `token`, `api_token`, `service_account_token_file` or `saml_adfs`. 
+  Default is `integrated`. Can also be set with `VCD_AUTH_TYPE` environment variable. 
   * `integrated` - VCD local users and LDAP users (provided LDAP is configured for Organization).
   * `saml_adfs` allows to use SAML login flow with Active Directory Federation
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
-  credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
-  set with `VCD_AUTH_TYPE` environment variable.
+  credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. 
+  `saml_adfs_rpt_id` can be used to specify a different RPT ID.
   * `token` allows to specify token in [`token`](#token) field.
   * `api_token` allows to specify an API token.
+  * `service_account_token_file` allows to specify a file containing a service account's token file.
   
 * `token` - (Optional; *v2.6+*) This is the bearer token that can be used instead of username
    and password (in combination with field `auth_type=token`). When this is set, username and
@@ -292,6 +335,16 @@ The following arguments are used to configure the VMware Cloud Director Provider
    this field is filled, username and password are ignored. An API token can also be specified with the `VCD_API_TOKEN`
    environment variable. This token requires at least VCD 10.3.1. There are restrictions to its use, as defined in
    [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html)
+
+* `service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) This is the file that contains a Service Account API token. The
+   path to the file could be provided as absolute or relative to the working directory. It is used instead of username
+   and password (in combination with `auth_type=service_account_token_file`. The file can also be specified with the 
+   `VCD_SA_TOKEN_FILE` environment variable. There are restrictions to its use, as defined in 
+   [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-8CD3C8BE-3187-4769-B960-3E3315492C16.html)
+
+* `allow_service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) When using `auth_type=service_account_token_file`,
+  if set to `true`, will suppress a warning to the user about the service account token file containing *sensitive information*.
+  Can also be set with `VCD_ALLOW_SA_TOKEN_FILE`.
 
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used
   as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
