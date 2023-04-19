@@ -16,7 +16,7 @@ client_uri=$9
 
 if [ -z "$software_id" ]
 then
-    echo -e "Syntax $0 user password organization hostname_or_IP_address 
+    echo -e "Syntax $0 sys_admin_user sys_admin_password organization hostname_or_IP_address 
     client_name role(in URN format) software_id(in UUID) [software_version client_uri]\n"
     echo "Example: $0 admin password my-org my-vcd.com serviceAccount1 urn:vcloud:role:vApp%20Author f0359776-67ec-4198-a70d-14ce2abba232"
     exit 1
