@@ -10,7 +10,7 @@
 #   information.
 #
 # * Some resources and data sources from this HCL are run as System administrator, as it involves creating provider
-#   elements such as Organizations, VDCs or Tier 0 Gateways. CSE items are created by the CSE service account defined
+#   elements such as Organizations, VDCs or Provider Gateways. CSE items are created by the CSE service account defined
 #   below.
 #
 # * Please customize the values present in this file to your needs. Also check `terraform.tfvars.example`
@@ -231,7 +231,7 @@ resource "vcd_org_vdc" "cse_vdc" {
   delete_recursive         = true
 }
 
-# Create a Tier 0 Gateway connected to the outside world network. This will be used to download software
+# Create a Provider Gateway connected to the outside world network. This will be used to download software
 # for the Kubernetes nodes and access the cluster.
 
 data "vcd_nsxt_manager" "main" {

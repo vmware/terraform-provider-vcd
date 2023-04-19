@@ -1,0 +1,322 @@
+{
+    "type": "object",
+    "required": [
+        "kind",
+        "spec",
+        "metadata",
+        "apiVersion"
+    ],
+    "properties": {
+        "kind": {
+            "enum": [
+                "CAPVCDCluster"
+            ],
+            "type": "string",
+            "description": "The kind of the Kubernetes cluster."
+        },
+        "spec": {
+            "type": "object",
+            "properties": {
+                "yamlSet": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "capiYaml": {
+                    "type": "string"
+                }
+            }
+        },
+        "status": {
+            "type": "object",
+            "properties": {
+                "capvcd": {
+                    "type": "object",
+                    "properties": {
+                        "uid": {
+                            "type": "string"
+                        },
+                        "phase": {
+                            "type": "string"
+                        },
+                        "private": {
+                            "type": "object",
+                            "properties": {
+                                "kubeConfig": {
+                                    "type": "string",
+                                    "description": "Admin kube config to access the Kubernetes cluster."
+                                }
+                            },
+                            "description": "Placeholder for the properties invisible to non-admin users.",
+                            "x-vcloud-restricted": "private"
+                        },
+                        "upgrade": {
+                            "type": "object",
+                            "properties": {
+                                "ready": {
+                                    "type": "boolean",
+                                    "description": "boolean indicating the status of the cluster upgrade."
+                                },
+                                "current": {
+                                    "type": "object",
+                                    "properties": {
+                                        "tkgVersion": {
+                                            "type": "string",
+                                            "description": "current TKG version of the cluster. If being upgraded, will represent the tarkget TKG version of the cluster."
+                                        },
+                                        "kubernetesVersion": {
+                                            "type": "string",
+                                            "description": "current kubernetes version of the cluster. If being upgraded, will represent target kubernetes version of the cluster."
+                                        }
+                                    }
+                                },
+                                "previous": {
+                                    "type": "object",
+                                    "properties": {
+                                        "tkgVersion": {
+                                            "type": "string",
+                                            "description": "the TKG version from which the cluster was upgraded from. If cluster upgrade is still in progress, the field will represent the source TKG versoin from which the cluster is being upgraded."
+                                        },
+                                        "kubernetesVersion": {
+                                            "type": "string",
+                                            "description": "the kubernetes version from which the cluster was upgraded from. If cluster upgrade is still in progress, the field will represent the source kubernetes version from which the cluster is being upgraded."
+                                        }
+                                    }
+                                }
+                            },
+                            "description": "determines the state of upgrade. If no upgrade is issued, only the existing version is stored."
+                        },
+                        "errorSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "eventSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "nodePool": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "name of the node pool"
+                                    },
+                                    "diskSizeMb": {
+                                        "type": "integer",
+                                        "description": "disk size of the VMs in the node pool in MB"
+                                    },
+                                    "sizingPolicy": {
+                                        "type": "string",
+                                        "description": "name of the sizing policy used by the node pool"
+                                    },
+                                    "storageProfile": {
+                                        "type": "string",
+                                        "description": "storage profile used by the node pool"
+                                    },
+                                    "desiredReplicas": {
+                                        "type": "integer",
+                                        "description": "desired replica count of the nodes in the node pool"
+                                    },
+                                    "placementPolicy": {
+                                        "type": "string",
+                                        "description": "name of the sizing policy used by the node pool"
+                                    },
+                                    "nvidiaGpuEnabled": {
+                                        "type": "boolean",
+                                        "description": "boolean indicating if the node pools have nvidia GPU enabled"
+                                    },
+                                    "availableReplicas": {
+                                        "type": "integer",
+                                        "description": "number of available replicas in the node pool"
+                                    }
+                                }
+                            }
+                        },
+                        "parentUid": {
+                            "type": "string"
+                        },
+                        "k8sNetwork": {
+                            "$ref": "#/definitions/k8sNetwork"
+                        },
+                        "kubernetes": {
+                            "type": "string"
+                        },
+                        "capvcdVersion": {
+                            "type": "string"
+                        },
+                        "vcdProperties": {
+                            "type": "object",
+                            "properties": {
+                                "site": {
+                                    "type": "string"
+                                },
+                                "orgVdcs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "ovdcNetworkName": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "organizations": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "vcdResourceSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "clusterApiStatus": {
+                            "type": "object",
+                            "properties": {
+                                "phase": {
+                                    "type": "string",
+                                    "description": "The phase describing the control plane infrastructure deployment."
+                                },
+                                "apiEndpoints": {
+                                    "type": "array",
+                                    "items": {
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "description": "Control Plane load balancer endpoints"
+                                }
+                            }
+                        },
+                        "createdByVersion": {
+                            "type": "string",
+                            "description": "CAPVCD version used to create the cluster"
+                        },
+                        "clusterResourceSet": {
+                            "properties": {}
+                        },
+                        "useAsManagementCluster": {
+                            "type": "boolean"
+                        },
+                        "clusterResourceSetBindings": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "applied": {
+                                        "type": "boolean"
+                                    },
+                                    "lastAppliedTime": {
+                                        "type": "string"
+                                    },
+                                    "clusterResourceSetName": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "x-vcloud-restricted": "protected"
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the cluster."
+                },
+                "site": {
+                    "type": "string",
+                    "description": "Fully Qualified Domain Name of the VCD site in which the cluster is deployed"
+                },
+                "orgName": {
+                    "type": "string",
+                    "description": "The name of the Organization in which cluster needs to be created or managed."
+                },
+                "virtualDataCenterName": {
+                    "type": "string",
+                    "description": "The name of the Organization data center in which the cluster need to be created or managed."
+                }
+            }
+        },
+        "apiVersion": {
+            "type": "string",
+            "default": "capvcd.vmware.com/v1.0",
+            "description": "The version of the payload format"
+        }
+    },
+    "definitions": {
+        "k8sNetwork": {
+            "type": "object",
+            "properties": {
+                "pods": {
+                    "type": "object",
+                    "properties": {
+                        "cidrBlocks": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Specifies a range of IP addresses to use for Kubernetes pods."
+                        }
+                    },
+                    "description": "The network settings for Kubernetes pods."
+                },
+                "services": {
+                    "type": "object",
+                    "properties": {
+                        "cidrBlocks": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "The range of IP addresses to use for Kubernetes services"
+                        }
+                    },
+                    "description": "The network settings for Kubernetes services"
+                }
+            },
+            "description": "The network-related settings for the cluster."
+        }
+    }
+}

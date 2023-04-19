@@ -3,11 +3,8 @@
 package vcd
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -99,7 +96,12 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "storage_profile", storageProfile),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "allow_vm_reboot", "false"),
-					testCheckInternalDiskNonStringOutputs(internalDiskSize),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "internal_disk[0].size_in_mb", "20000"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.TestInternalDiskVm", "internal_disk[0].iops"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "internal_disk[0].bus_type", "paravirtual"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.TestInternalDiskVm", "internal_disk[0].bus_number"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.TestInternalDiskVm", "internal_disk[0].unit_number"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.TestInternalDiskVm", "internal_disk[0].storage_profile", "*"),
 				),
 			},
 			{
@@ -153,38 +155,6 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
-}
-
-func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		outputs := s.RootModule().Outputs
-
-		if outputs["internal_disk_size"].Value != fmt.Sprintf("%d", internalDiskSize) {
-			return fmt.Errorf("internal disk size value didn't match")
-		}
-
-		if outputs["internal_disk_iops"].Value != 0 {
-			return fmt.Errorf("internal disk iops value didn't match")
-		}
-
-		if outputs["internal_disk_bus_type"].Value != "paravirtual" {
-			return fmt.Errorf("internal disk bus type value didn't match")
-		}
-
-		if outputs["internal_disk_bus_number"].Value != 0 {
-			return fmt.Errorf("internal disk bus number value didn't match")
-		}
-
-		if outputs["internal_disk_unit_number"].Value != 0 {
-			return fmt.Errorf("internal disk unit number value didn't match")
-		}
-
-		if outputs["internal_disk_storage_profile"].Value != "*" {
-			return fmt.Errorf("internal disk storage profile value didn't match")
-		}
-
-		return nil
-	}
 }
 
 // we need VDC with disabled fast provisioning to edit disks
@@ -266,30 +236,6 @@ resource "vcd_independent_disk" "IndependentDisk1" {
   bus_type        = "SCSI"
   bus_sub_type    = "lsilogicsas"
   storage_profile = "{{.StorageProfileName}}"
-}
-
-output "internal_disk_size" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].size_in_mb
-}
-
-output "internal_disk_iops" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].iops
-}
-
-output "internal_disk_bus_type" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_type
-}
-
-output "internal_disk_bus_number" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_number
-}
-
-output "internal_disk_unit_number" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].unit_number
-}
-
-output "internal_disk_storage_profile" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].storage_profile
 }
 `
 

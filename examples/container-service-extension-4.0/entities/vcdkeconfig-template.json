@@ -1,0 +1,73 @@
+{
+    "profiles": [
+        {
+            "name": "production",
+            "active": true,
+            "serverConfig": {
+                "rdePollIntervalInMin": 1,
+                "heartbeatWatcherTimeoutInMin": 20,
+                "staleHeartbeatIntervalInMin": 60
+            },
+            "K8Config": {
+                "cni": {
+                    "name": "antrea",
+                    "version": ""
+                },
+                "cpi": {
+                    "name": "cpi for cloud director",
+                    "version": "${cpi_version}"
+                },
+                "csi": [
+                    {
+                        "name": "csi for cloud director",
+                        "version": "main"
+                    }
+                ]
+            },
+            "vcdConfig": {
+                "sysLogger": {
+                    "host": "${syslog_host}",
+                    "port": "${syslog_port}"
+                }
+            },
+            "githubConfig": {
+                "githubPersonalAccessToken": "${github_personal_access_token}"
+            },
+            "bootstrapClusterConfig": {
+                "clusterctl": {
+                    "version": "v1.1.3",
+                    "clusterctlyaml": ""
+                },
+                "kindVersion": "v0.14.0",
+                "proxyConfig": {
+                    "noProxy": "${no_proxy}",
+                    "httpProxy": "${http_proxy}",
+                    "httpsProxy": "${https_proxy}"
+                },
+                "sizingPolicy": "${bootstrap_cluster_sizing_policy}",
+                "capiEcosystem": {
+                    "infraProvider": {
+                        "name": "capvcd",
+                        "version": "${capvcd_version}",
+                        "capvcdRde": {
+                            "nss": "capvcdCluster",
+                            "vendor": "vmware",
+                            "version": "${capvcd_rde_version}"
+                        }
+                    },
+                    "coreCapiVersion": "v1.1.3",
+                    "bootstrapProvider": {
+                        "name": "CAPBK",
+                        "version": "v1.1.3"
+                    },
+                    "controlPlaneProvider": {
+                        "name": "KCP",
+                        "version": "v1.1.3"
+                    }
+                },
+                "dockerVersion": "",
+                "kubectlVersion": ""
+            }
+        }
+    ]
+}

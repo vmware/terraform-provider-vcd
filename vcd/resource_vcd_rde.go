@@ -137,7 +137,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		Entity:     jsonSchema,
 	}, &tenantContext)
 	if err != nil {
-		return diag.Errorf("could not create the Runtime Defined Entity '%s' of type '%s': %s", name, rdeTypeId, err)
+		return diag.Errorf("could not create the Runtime Defined Entity '%s' of type '%s' in Organization '%s': %s", name, rdeTypeId, org.Org.Name, err)
 	}
 
 	// We save the ID immediately as the Resolve operation can fail but the RDE is already created.
@@ -146,7 +146,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.Get("resolve").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' of type '%s': %s", name, rdeTypeId, err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' of type '%s' in Organization '%s': %s", name, rdeTypeId, org.Org.Name, err)
 		}
 	}
 
@@ -192,12 +192,12 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 	dSet(d, "state", rde.DefinedEntity.State)
 
 	if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State != "RESOLVED" {
-		util.Logger.Printf("[DEBUG] RDE '%s' is not in RESOLVED state", rde.DefinedEntity.Name)
+		util.Logger.Printf("[DEBUG] RDE '%s' is not in RESOLVED state", rde.DefinedEntity.ID)
 	}
 
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
 	if err != nil {
-		return diag.Errorf("could not save the Runtime Defined Entity JSON into state: %s", err)
+		return diag.Errorf("could not save the RDE '%s' JSON into state: %s", rde.DefinedEntity.ID, err)
 	}
 	err = d.Set("computed_entity", jsonEntity)
 	if err != nil {
@@ -216,15 +216,15 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 	if d.Get("input_entity_url") != "" || d.Get("input_entity") != "" {
 		inputJson, err := getRdeJson(vcdClient, d)
 		if err != nil {
-			return diag.Errorf("error getting JSON from configuration: %s", err)
+			return diag.Errorf("error getting JSON from RDE '%s' configuration: %s", rde.DefinedEntity.ID, err)
 		}
 		inputJsonMarshaled, err := json.Marshal(inputJson)
 		if err != nil {
-			return diag.Errorf("error marshaling JSON retrieved from configuration: %s", err)
+			return diag.Errorf("error marshaling JSON retrieved from RDE '%s' configuration: %s", rde.DefinedEntity.ID, err)
 		}
 		areJsonEqual, err := areMarshaledJsonEqual([]byte(jsonEntity), inputJsonMarshaled)
 		if err != nil {
-			return diag.Errorf("error comparing %s with %s: %s", jsonEntity, inputJsonMarshaled, err)
+			return diag.Errorf("error comparing %s with %s of RDE '%s': %s", jsonEntity, inputJsonMarshaled, rde.DefinedEntity.ID, err)
 		}
 		dSet(d, "entity_in_sync", areJsonEqual)
 	}
@@ -310,13 +310,13 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		Entity:     jsonEntity,
 	})
 	if err != nil {
-		return diag.Errorf("could not update the Runtime Defined Entity '%s': %s", rde.DefinedEntity.Name, err)
+		return diag.Errorf("could not update the Runtime Defined Entity '%s' with ID '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.ID, err)
 	}
 
 	if d.Get("resolve").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.Errorf("could not resolve the Runtime Defined Entity '%s': %s", rde.DefinedEntity.Name, err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' with ID '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.ID, err)
 		}
 	}
 
@@ -333,13 +333,13 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	if d.Get("resolve_on_removal").(bool) {
 		err = rde.Resolve()
 		if err != nil {
-			return diag.Errorf("could not resolve the Runtime Defined Entity before removal '%s': %s", rde.DefinedEntity.Name, err)
+			return diag.Errorf("could not resolve the Runtime Defined Entity before removal '%s' with ID '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.ID, err)
 		}
 	}
 
 	err = rde.Delete()
 	if err != nil {
-		return diag.Errorf("could not delete the Runtime Defined Entity: %s", err)
+		return diag.Errorf("could not delete the Runtime Defined Entity '%s' with ID '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.ID, err)
 	}
 	return nil
 }

@@ -1,0 +1,249 @@
+{
+    "type": "object",
+    "required": [
+        "profiles"
+    ],
+    "properties": {
+        "profiles": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "active"
+                    ],
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "active": {
+                            "type": "boolean"
+                        },
+                        "K8Config": {
+                            "type": "object",
+                            "required": [
+                                "csi",
+                                "cpi",
+                                "cni"
+                            ],
+                            "properties": {
+                                "cni": {
+                                    "type": "object",
+                                    "required": [
+                                        "name",
+                                        "version"
+                                    ],
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "cpi": {
+                                    "type": "object",
+                                    "required": [
+                                        "name",
+                                        "version"
+                                    ],
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "csi": {
+                                    "type": "array",
+                                    "items": [
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "name",
+                                                "version"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "vcdConfig": {
+                            "type": "object",
+                            "properties": {
+                                "sysLogger": {
+                                    "type": "object",
+                                    "required": [
+                                        "host",
+                                        "port"
+                                    ],
+                                    "properties": {
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "githubConfig": {
+                            "type": "object",
+                            "properties": {
+                                "githubPersonalAccessToken": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "serverConfig": {
+                            "type": "object",
+                            "properties": {
+                                "rdePollIntervalInMin": {
+                                    "type": "integer",
+                                    "description": "Server polls and processes the RDEs for every #rdePollIntervalInMin minutes."
+                                },
+                                "staleHeartbeatIntervalInMin": {
+                                    "type": "integer",
+                                    "description": "New worker waits for about #staleHeartbeatIntervalinMin before it calls the current heartbeat stale and picks up the RDE. The value must always be greater than #heartbeatWatcherTimeoutInmin"
+                                },
+                                "heartbeatWatcherTimeoutInMin": {
+                                    "type": "integer",
+                                    "description": "The watcher thread kills itself if it does not receive heartbeat with in #heartbeatWatcherTimeoutInMin from the associated worker thread. Eventually worker also dies off as it can no longer post to the already closed heartbeat channel."
+                                }
+                            }
+                        },
+                        "vcdKeInstances": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "vcdKeInstanceId": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "bootstrapClusterConfig": {
+                            "type": "object",
+                            "properties": {
+                                "clusterctl": {
+                                    "type": "object",
+                                    "properties": {
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "clusterctlyaml": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "kindVersion": {
+                                    "type": "string"
+                                },
+                                "proxyConfig": {
+                                    "type": "object",
+                                    "properties": {
+                                        "noProxy": {
+                                            "type": "string"
+                                        },
+                                        "httpProxy": {
+                                            "type": "string"
+                                        },
+                                        "httpsProxy": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "sizingPolicy": {
+                                    "type": "string"
+                                },
+                                "capiEcosystem": {
+                                    "type": "object",
+                                    "properties": {
+                                        "infraProvider": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string"
+                                                },
+                                                "capvcdRde": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "nss": {
+                                                            "type": "string"
+                                                        },
+                                                        "vendor": {
+                                                            "type": "string"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "coreCapiVersion": {
+                                            "type": "string"
+                                        },
+                                        "bootstrapProvider": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "controlPlaneProvider": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "dockerVersion": {
+                                    "type": "string"
+                                },
+                                "kubectlVersion": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
