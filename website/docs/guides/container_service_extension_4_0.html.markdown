@@ -248,7 +248,7 @@ In order to do so, the [configuration][step2] asks for the following variables t
 - `cpi_version`: The version for CPI. It should be "1.2.0" for CSE v4.0.
 - `csi_version`: The version for CSI. It should be "1.3.0" for CSE v4.0.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
-  this will avoid installation errors caused by GitHub rate limiting, as the TKGm tenant creation process requires downloading
+  this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
 - `cse_admin_user`: This should reference the CSE Administrator [User][user] that was created in Step 1.
