@@ -801,9 +801,11 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// Handle VM Security Tags settings
 	// Such schema fields are processed:
 	// * security_tags
-	err = createOrUpdateVmSecurityTags(d, vm)
-	if err != nil {
-		return diag.Errorf("[VM create] error creating security tags for VM %s : %s", vm.VM.Name, err)
+	if _, isSet := d.GetOk("security_tags"); isSet {
+		err = createOrUpdateVmSecurityTags(d, vm)
+		if err != nil {
+			return diag.Errorf("[VM create] error creating security tags for VM %s : %s", vm.VM.Name, err)
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
