@@ -197,8 +197,12 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		log.Printf("[DEBUG] Error creating Org: %s", err)
 		// Some 10.4 VCD versions have a bug that fail when creating a disabled Org
 		if !isEnabled && strings.Contains(err.Error(), "com.vmware.vcloud.common.model.oauth.oidc.OidcAuthorizationModel") {
-			err = fmt.Errorf("%s\n\nThis version of VCD has a bug which prevents creating a disabled Org\n"+
-				"If you need to disable, please create an enabled Org and then disable it using update", err)
+			// getting VCD version for error message but not explicitly failing if it cannot be
+			// retrieved to avoid unnecessary failure path
+			// The error itself is SQL message therefore we override it
+			vcdVersion, _, _ := vcdClient.Client.GetVcdVersion()
+			err = fmt.Errorf("\nthis version of VCD (%s) has a bug that prevents creating a disabled Org\n"+
+				"If you need to disable, please create an enabled Org and then disable it using update", vcdVersion)
 		}
 
 		return diag.Errorf("[org creation] error creating Org %s: %s", orgName, err)
