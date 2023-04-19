@@ -838,7 +838,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_nsxt_network_imported.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "vdc", testConfig.Nsxt.Vdc),
-					resourceFieldsEqual("data.vcd_nsxt_network_imported.net1", "vcd_nsxt_network_imported.net1", nil),
+					resourceFieldsEqual("data.vcd_nsxt_network_imported.net1", "vcd_nsxt_network_imported.net1", []string{"%"}),
 				),
 			},
 			{
@@ -866,7 +866,7 @@ func TestAccVcdNetworkImportedV2InheritedVdc(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
 					resource.TestMatchResourceAttr("vcd_nsxt_network_imported.net1", "owner_id", regexp.MustCompile(`^urn:vcloud:vdc:`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "vdc", testConfig.Nsxt.Vdc),
-					resourceFieldsEqual("data.vcd_nsxt_network_imported.net1", "vcd_nsxt_network_imported.net1", nil),
+					resourceFieldsEqual("data.vcd_nsxt_network_imported.net1", "vcd_nsxt_network_imported.net1", []string{"%"}),
 				),
 			},
 		},
