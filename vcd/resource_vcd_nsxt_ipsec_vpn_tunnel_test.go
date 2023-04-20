@@ -740,6 +740,7 @@ func testAccCheckNsxtIpSecVpnTunnelDestroy(ipSecVpnTunnelIdentifier string) reso
 
 func TestAccVcdNsxtIpSecVpnTunnelCertAuth(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
 		testConfig.Certificates.Certificate1PrivateKeyPath == "" || testConfig.Certificates.Certificate1Pass == "" {
