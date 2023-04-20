@@ -268,5 +268,5 @@ vcd.ResourceSchema-vcd_nsxt_ipsec_vpn_tunnel.tf v3.8.2 "New fields 'authenticati
 vcd.ResourceSchema-vcd_nsxt_alb_virtual_service.tf v3.8.2 "New field 'is_transparent_mode_enabled'"
 vcd.ResourceSchema-vcd_nsxt_alb_pool.tf v3.8.2 "New field 'member_group_id'"
 vcd.ResourceSchema-vcd_nsxt_network_imported.tf v3.8.2 "New field dvpg_id"
-vcd.ResourceSchema-vcd_vapp_vm.tf v3.9.0 "New field security_tags"
-vcd.ResourceSchema-vcd_vm.tf v3.9.0 "New field security_tags"
+vcd.ResourceSchema-vcd_vapp_vm.tf v3.8.2 "New field security_tags"
+vcd.ResourceSchema-vcd_vm.tf v3.8.2 "New field security_tags"
