@@ -48,8 +48,8 @@ auth=$(echo -n "$user"@System:"$password" |base64 $options)
 
 bearer=$(curl -I -s -k --header "Accept: application/*;version=37.0" \
     --header "Authorization: Basic $auth" \
-    --request POST https://$IP/api/login | grep 'x-vmware-vcloud-access-token' \
-    | awk -F":" '{print $2}' | sed 's/^ *//g')
+    --request POST https://$IP/api/login | grep -i 'x-vmware-vcloud-access-token' \
+    | awk -F":" '{print $2}' | sed 's/^ *//g' | tr -d '\n' | tr -d '\r' )
 
 auth_header="Authorization: Bearer $bearer"
 if [ "$org" != "System" ]
@@ -72,14 +72,17 @@ json="{
     \"client_uri\":\"$client_uri\"
 }"
 
+headers=()
+headers+=("-H" "Content-Type: application/json")
+headers+=("-H" "Accept: application/json")
+headers+=("-H" "$auth_header")
+headers+=("--data-binary" "@-")
+headers+=("--http1.1")
+
 echo "Creating service account..."
-client_id=$(echo $json | curl -s -k --http1.1 \
-    -H "Content-Type: application/json" \
-    -H "Accept: application/json" \
-    -H "$auth_header" -X POST --data-binary @- \
-    https://$IP/oauth/"$tenant"/register | jq -r '.client_id')
-
-
+client_id=$(echo $json| curl -k -s \
+    "${headers[@]}" \
+    https://"$IP"/oauth/"$tenant"/register | jq -r .client_id  | tr -d '\n' | tr -d '\r' )
 
 if [ "$client_id" = "null" ]
 then
@@ -92,8 +95,9 @@ authorization_details=$(curl -k -s --http1.1 \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -H "Accept: application/json" -H "$auth_header" \
     -d "client_id=$client_id" \
-    -X POST https://$IP/oauth/"$tenant"/device_authorization \
-    | jq -r '.user_code, .device_code, .verification_uri')
+    -X POST https://$IP/oauth/"$tenant"/device_authorization | jq -r '.user_code, .device_code, .verification_uri') 
+
+
 
 user_code=$(echo $authorization_details | awk '{print $1}')
 device_code=$(echo $authorization_details | awk '{print $2}')
