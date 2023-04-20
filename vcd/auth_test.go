@@ -310,6 +310,10 @@ func TestAccAuth(t *testing.T) {
 		})
 	}
 
+	// Conditional test on API tokens. This subtest will run only if an API token is defined
+	// in an environment variable
+	// Note: since this test has a manual input, there is no skip for VCD version. This test will fail if
+	// run on VCD < 10.4.0
 	saTokenFile := os.Getenv("TEST_VCD_SA_TOKEN_FILE")
 	if saTokenFile != "" {
 		testOrg := os.Getenv("TEST_VCD_ORG")
@@ -332,25 +336,25 @@ func TestAccAuth(t *testing.T) {
 			}
 		  `,
 		})
-	}
 
-	// Testing sending an invalid Service Account token
-	createTestTokenFile(t)
-	testCases = append(testCases, authTestCase{
-		name:        "ServiceAccountTokenFile,AuthType=invalid_service_account_token_file",
-		expectError: regexp.MustCompile("Invalid refresh token"),
-		configText: `
-			provider "vcd" {
-				auth_type                  = "service_account_token_file" 
-				service_account_token_file = "` + testTokenFile + `"
-				sysorg                     = "` + testConfig.Provider.SysOrg + `" 
-				org                        = "` + testConfig.VCD.Org + `"
-				vdc                        = "` + testConfig.VCD.Vdc + `"
-				url                        = "` + testConfig.Provider.Url + `"
-				allow_unverified_ssl       = true
-			}
-	  `,
-	})
+		// Testing sending an invalid Service Account token
+		createTestTokenFile(t)
+		testCases = append(testCases, authTestCase{
+			name:        "ServiceAccountTokenFile,AuthType=invalid_service_account_token_file",
+			expectError: regexp.MustCompile(".*(Invalid refresh token|server_error)"),
+			configText: `
+				provider "vcd" {
+					auth_type                  = "service_account_token_file" 
+					service_account_token_file = "` + testTokenFile + `"
+					sysorg                     = "` + testConfig.Provider.SysOrg + `" 
+					org                        = "` + testConfig.VCD.Org + `"
+					vdc                        = "` + testConfig.VCD.Vdc + `"
+					url                        = "` + testConfig.Provider.Url + `"
+					allow_unverified_ssl       = true
+				}
+		`,
+		})
+	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
