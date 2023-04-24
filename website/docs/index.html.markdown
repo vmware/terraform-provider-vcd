@@ -6,7 +6,7 @@ description: |-
   The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware Cloud Director Provider 3.9 (v3.9.0-beta.2)
+# VMware Cloud Director Provider 3.9.0
 
 -> We encourage users to try the **beta** build, and to report errors in the code behavior or in the
 documentation, by opening [an issue](https://github.com/vmware/terraform-provider-vcd/issues)
