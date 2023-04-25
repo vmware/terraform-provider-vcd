@@ -339,7 +339,7 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 		DnatExternalPort:         d.Get("dnat_external_port").(string),
 		Type:                     d.Get("rule_type").(string),
 		FirewallMatch:            d.Get("firewall_match").(string),
-		Priority:                 takeIntPointer(d.Get("priority").(int)),
+		Priority:                 addrOf(d.Get("priority").(int)),
 	}
 
 	if appPortProf, ok := d.GetOk("app_port_profile_id"); ok {

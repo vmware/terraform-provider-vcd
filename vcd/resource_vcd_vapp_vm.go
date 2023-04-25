@@ -1298,7 +1298,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 				},
 				VmSpecSection: &types.VmSpecSection{
-					Modified:          takeBoolPointer(true),
+					Modified:          addrOf(true),
 					Info:              "Virtual Machine specification",
 					OsType:            osType.(string),
 					CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
@@ -1350,7 +1350,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				Description:               d.Get("description").(string),
 				GuestCustomizationSection: customizationSection,
 				VmSpecSection: &types.VmSpecSection{
-					Modified:          takeBoolPointer(true),
+					Modified:          addrOf(true),
 					Info:              "Virtual Machine specification",
 					OsType:            osType.(string),
 					NumCpus:           cpuCores,

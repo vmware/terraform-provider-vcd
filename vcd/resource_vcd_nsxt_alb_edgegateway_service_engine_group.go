@@ -219,7 +219,7 @@ func getAlbServiceEngineGroupAssignmentType(d *schema.ResourceData) *types.NsxtA
 	// Max Virtual Services and Reserved Virtual Services only work with SHARED Service Engine Group, but validation
 	// enforcement is left for VCD API.
 	if maxServicesInterface, isSet := d.GetOk("max_virtual_services"); isSet {
-		edgeAlbServiceEngineAssignmentConfig.MaxVirtualServices = takeIntPointer(maxServicesInterface.(int))
+		edgeAlbServiceEngineAssignmentConfig.MaxVirtualServices = addrOf(maxServicesInterface.(int))
 	}
 
 	if reservedServicesInterface, isSet := d.GetOk("reserved_virtual_services"); isSet {

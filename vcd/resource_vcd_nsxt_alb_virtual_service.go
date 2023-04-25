@@ -251,7 +251,7 @@ func getNsxtAlbVirtualServiceType(d *schema.ResourceData, vcdClient *VCDClient) 
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
 		ApplicationProfile:    types.NsxtAlbVirtualServiceApplicationProfile{Type: d.Get("application_profile_type").(string)},
-		Enabled:               takeBoolPointer(d.Get("enabled").(bool)),
+		Enabled:               addrOf(d.Get("enabled").(bool)),
 		GatewayRef:            types.OpenApiReference{ID: d.Get("edge_gateway_id").(string)},
 		ServiceEngineGroupRef: types.OpenApiReference{ID: d.Get("service_engine_group_id").(string)},
 		LoadBalancerPoolRef:   types.OpenApiReference{ID: d.Get("pool_id").(string)},
@@ -268,7 +268,7 @@ func getNsxtAlbVirtualServiceType(d *schema.ResourceData, vcdClient *VCDClient) 
 			return nil, fmt.Errorf("setting 'is_transparent_mode_enabled' is only supported in VCD 10.4.1+ (37.1+)")
 		}
 		transparentModeValue := d.Get("is_transparent_mode_enabled")
-		albVirtualServiceConfig.TransparentModeEnabled = takeBoolPointer(transparentModeValue.(bool))
+		albVirtualServiceConfig.TransparentModeEnabled = addrOf(transparentModeValue.(bool))
 	}
 
 	servicePorts, err := getNsxtAlbVirtualServicePortType(d)
@@ -287,8 +287,8 @@ func getNsxtAlbVirtualServicePortType(d *schema.ResourceData) ([]types.NsxtAlbVi
 	for hmIndex, healthMonitor := range servicePortSet.List() {
 		servicePortMap := healthMonitor.(map[string]interface{})
 		singleVirtualServicePort := types.NsxtAlbVirtualServicePort{
-			PortStart:  takeIntPointer(servicePortMap["start_port"].(int)),
-			SslEnabled: takeBoolPointer(servicePortMap["ssl_enabled"].(bool)),
+			PortStart:  addrOf(servicePortMap["start_port"].(int)),
+			SslEnabled: addrOf(servicePortMap["ssl_enabled"].(bool)),
 			TcpUdpProfile: &types.NsxtAlbVirtualServicePortTcpUdpProfile{
 				SystemDefined: true,
 				Type:          servicePortMap["type"].(string),
@@ -297,7 +297,7 @@ func getNsxtAlbVirtualServicePortType(d *schema.ResourceData) ([]types.NsxtAlbVi
 
 		// End port is optional for single ports
 		if servicePortMap["end_port"].(int) != 0 {
-			singleVirtualServicePort.PortEnd = takeIntPointer(servicePortMap["end_port"].(int))
+			singleVirtualServicePort.PortEnd = addrOf(servicePortMap["end_port"].(int))
 		}
 
 		servicePortSlice[hmIndex] = singleVirtualServicePort
