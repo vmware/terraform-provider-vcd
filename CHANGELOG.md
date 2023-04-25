@@ -55,7 +55,7 @@
 * Remove incorrect default value from `vcd_vapp_network` `netmask` field, as it prevents using IPV6 networks. Users of already defined resources need to add a `netmask = "255.255.255.0"` when using Ipv4 ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
 
 ### DEPRECATIONS
-* Deprecate `netmask` in `vcd_vapp_network` ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
+* Deprecate `netmask` in favor of `prefix_length` for `vcd_vapp_network` ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
 
 ### NOTES
 * Add missing test name fields for `TestAccVcdNsxtEdgeBgpConfigIntegrationVdc` and
