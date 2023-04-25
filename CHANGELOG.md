@@ -20,7 +20,7 @@
 * **New Data Source:** `vcd_nsxt_edgegateway_rate_limiting` to read NSX-T Edge Gateway Rate Limiting ([#1042](https://github.com/vmware/terraform-provider-vcd/pull/1042))
 * **New Data Source:** `vcd_nsxt_edgegateway_qos_profile` to read QoS profiles available for
   `vcd_nsxt_edgegateway_rate_limiting` resource ([#1042](https://github.com/vmware/terraform-provider-vcd/pull/1042))
-* New guide to install **Container Service Extension (CSE)** v4.0 in VCD 10.4+ ([#1003](https://github.com/vmware/terraform-provider-vcd/pull/1003))
+* New guide to install **Container Service Extension (CSE)** v4.0 in VCD 10.4+ ([#1003](https://github.com/vmware/terraform-provider-vcd/pull/1003), [#1053](https://github.com/vmware/terraform-provider-vcd/pull/1053))
 
 ### IMPROVEMENTS
 * `vcd_external_network_v2` allows setting DNS fields `dns1`, `dns2` and `dns_suffix` for NSX-T
