@@ -8,28 +8,6 @@ description: |-
 
 # VMware Cloud Director Provider 3.9.0
 
--> We encourage users to try the **beta** build, and to report errors in the code behavior or in the
-documentation, by opening [an issue](https://github.com/vmware/terraform-provider-vcd/issues)
-and indicating that the report is about the beta version.
-
-To use **beta** version, it **must be selected by an exact version constraint** (the `=` operator or
-no operator). Prerelease versions do not match inexact operators such as `>=`, `~>`, etc. as per
-[Hashicorp
-documentation](https://developer.hashicorp.com/terraform/language/expressions/version-constraints#version-constraint-behavior).
-
-```
-terraform {
-  required_providers {
-    vcd = {
-      source = "vmware/vcd"
-      version = "3.9.0-beta.2"
-    }
-  }
-}
-```
-
-## Latest stable version 3.8.2 documentation is [here](https://registry.terraform.io/providers/vmware/vcd/3.8.2/docs)
-
 The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
 Use the navigation to the left to read about the available resources. Please refer to
