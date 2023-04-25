@@ -1,6 +1,7 @@
 ## 3.9.0 (April XX, 2023)
 
 ### FEATURES
+* New guide to install **Container Service Extension (CSE)** v4.0 in VCD 10.4+ ([#1003](https://github.com/vmware/terraform-provider-vcd/pull/1003), [#1053](https://github.com/vmware/terraform-provider-vcd/pull/1053))
 * **New Resource:** `vcd_rde_interface` to manage Runtime Defined Entity Interfaces
   which are required for using Runtime Defined Entity (RDE) types ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
 * **New Data Source:** `vcd_rde_interface` to fetch existing Runtime Defined Entity Interfaces ([#965](https://github.com/vmware/terraform-provider-vcd/pull/965))
@@ -20,7 +21,6 @@
 * **New Data Source:** `vcd_nsxt_edgegateway_rate_limiting` to read NSX-T Edge Gateway Rate Limiting ([#1042](https://github.com/vmware/terraform-provider-vcd/pull/1042))
 * **New Data Source:** `vcd_nsxt_edgegateway_qos_profile` to read QoS profiles available for
   `vcd_nsxt_edgegateway_rate_limiting` resource ([#1042](https://github.com/vmware/terraform-provider-vcd/pull/1042))
-* New guide to install **Container Service Extension (CSE)** v4.0 in VCD 10.4+ ([#1003](https://github.com/vmware/terraform-provider-vcd/pull/1003), [#1053](https://github.com/vmware/terraform-provider-vcd/pull/1053))
 
 ### IMPROVEMENTS
 * `vcd_external_network_v2` allows setting DNS fields `dns1`, `dns2` and `dns_suffix` for NSX-T
@@ -44,9 +44,9 @@
   10.4.1+ via field `is_transparent_mode_enabled` ([#1024](https://github.com/vmware/terraform-provider-vcd/pull/1024))
 * Resource and data source `vcd_nsxt_alb_pool` add support for Pool Group Membership via field
   `member_group_id` ([#1024](https://github.com/vmware/terraform-provider-vcd/pull/1024))
-* Support provider authentication using Active Service Accounts ([#1040](https://github.com/vmware/terraform-provider-vcd/pull/1040))
 * Resource and data source `vcd_nsxt_network_imported` support Distributed Virtual Port Group (DVPG)
   backed Org VDC network ([#1043](https://github.com/vmware/terraform-provider-vcd/pull/1043))
+* Support provider authentication using Active Service Accounts ([#1040](https://github.com/vmware/terraform-provider-vcd/pull/1040))
 
 ### BUG FIXES
 * Fix a bug that prevented returning a specific error while authenticating provider with invalid
