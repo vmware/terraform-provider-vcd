@@ -276,3 +276,8 @@ vcd.TestAccVcdSubscribedCatalog-no-local-copy-subscriber-update.tf v3.8.2 "Org p
 vcd.TestAccVcdSubscribedCatalog-with-local-copy-subscriber-update.tf v3.8.2 "Org permissions are fragile until VCD 10.4"
 vcd.TestAccVcdVsphereSubscriber.tf v3.8.2 "Org permissions are fragile until VCD 10.4"
 vcd.TestAccVcdStandaloneVmTemplate.tf v3.8.2 "output field shows diff for a computed value security_tags"
+vcd.TestAccVcdOrgFull_org1_updated.tf v3.8.2 "Cannot create disabled Orgs in 10.4.2"
+vcd.TestAccVcdOrgFull_org2.tf v3.8.2 "Cannot create disabled Orgs in 10.4.2"
+vcd.TestAccVcdOrgFull_org3_updated.tf v3.8.2 "Cannot create disabled Orgs in 10.4.2"
+vcd.TestAccVcdOrgFull_org4.tf v3.8.2 "Cannot create disabled Orgs in 10.4.2"
+vcd.TestAccVcdOrgFull_org5_updated.tf v3.8.2 "Cannot create disabled Orgs in 10.4.2"

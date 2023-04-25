@@ -720,6 +720,8 @@ resource "vcd_vapp_org_network" "cse_server_network" {
 
   vapp_name        = vcd_vapp.cse_server_vapp.name
   org_network_name = vcd_network_routed_v2.solutions_routed_network.name
+
+  reboot_vapp_on_removal = true
 }
 
 resource "vcd_vapp_vm" "cse_server_vm" {
