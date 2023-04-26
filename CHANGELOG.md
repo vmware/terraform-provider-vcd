@@ -1,4 +1,4 @@
-## 3.9.0 (April XX, 2023)
+## 3.9.0 (April 27, 2023)
 
 ### FEATURES
 * New guide to install **Container Service Extension (CSE)** v4.0 in VCD 10.4+ ([#1003](https://github.com/vmware/terraform-provider-vcd/pull/1003), [#1053](https://github.com/vmware/terraform-provider-vcd/pull/1053))
