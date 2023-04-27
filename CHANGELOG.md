@@ -1,3 +1,8 @@
+## 3.10.0 (TBC)
+
+Changes in progress for v3.10.0 are available at [.changes/v3.10.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.10.0) until the release.
+
+
 ## 3.9.0 (April 27, 2023)
 
 ### FEATURES
