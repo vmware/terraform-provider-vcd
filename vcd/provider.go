@@ -204,6 +204,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde":                                       resourceVcdRde(),                              // 3.9
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 resourceVcdNsxtDhcpBinding(),                  // 3.9
+	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 }
 
 // Provider returns a terraform.ResourceProvider.
