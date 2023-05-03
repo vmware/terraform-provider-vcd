@@ -42,8 +42,10 @@ func resourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 				Description: "Status of DHCP Forwarding for the Edge Gateway",
 			},
 			"dhcp_servers": {
-				Type:        schema.TypeSet,
-				Required:    true,
+				Type:     schema.TypeSet,
+				Required: true,
+				// DHCP forwarding supports up to 8 IP addresses
+				MaxItems:    8,
 				Description: "IP addresses of the DHCP servers",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -162,7 +164,7 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingDelete(ctx context.Context, d *sche
 		return diag.Errorf("[DHCP forwarding delete] error retrieving Edge Gateway: %s", err)
 	}
 
-	// There is no real "delete" for QoS. It can only be updated to empty values (unlimited)
+	// There is no "delete" for DHCP forwarding. It can only be updated to empty values (disabled)
 	_, err = nsxtEdge.UpdateDhcpForwarder(&types.NsxtEdgeGatewayDhcpForwarder{})
 	if err != nil {
 		return diag.Errorf("[DHCP forwarding delete] error updating QoS Profile: %s", err)
@@ -171,9 +173,10 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingDelete(ctx context.Context, d *sche
 	return nil
 }
 
+// resourceVcdNsxtEdgegatewayDhcpForwardingImport imports DHCP forwarding configuration for NSX-T
 // Edge Gateway.
-// The import path for this resource is Edge Gateway. ID of the field is also Edge Gateway ID as it
-// rate limiting is a property of Edge Gateway, not a separate entity.
+// The import path for this resource is Edge Gateway. ID of the field is also Edge Gateway ID as
+// DHCP forwarding is a property of Edge Gateway, not a separate entity.
 func resourceVcdNsxtEdgegatewayDhcpForwardingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway DHCP forwarding import initiated")
 

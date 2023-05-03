@@ -161,7 +161,7 @@ func resourceVcdNsxtEdgegatewayRateLimitingDelete(ctx context.Context, d *schema
 
 // resourceVcdNsxtEdgegatewayRateLimitingImport imports rate limiting (QoS) configuration for NSX-T
 // Edge Gateway.
-// The import path for this resource is Edge Gateway. ID of the field is also Edge Gateway ID as it
+// The import path for this resource is Edge Gateway. ID of the field is also Edge Gateway ID as
 // rate limiting is a property of Edge Gateway, not a separate entity.
 func resourceVcdNsxtEdgegatewayRateLimitingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway Rate limiting (QoS) import initiated")
