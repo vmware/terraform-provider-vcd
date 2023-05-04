@@ -3,6 +3,13 @@ kind: Cluster
 metadata:
   name: ${CLUSTER_NAME}
   namespace: ${TARGET_NAMESPACE}
+  labels:
+    cluster-role.tkg.tanzu.vmware.com/management: ""
+    tanzuKubernetesRelease: ${TKGR}
+    tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
+  annotations:
+    osInfo: ${OS_INFO}
+    TKGVERSION:
 spec:
   clusterNetwork:
     pods:

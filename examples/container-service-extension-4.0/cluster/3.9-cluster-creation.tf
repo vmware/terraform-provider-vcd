@@ -3,7 +3,7 @@ terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.9"
+      version = ">= 3.10"
     }
   }
 }
@@ -50,6 +50,13 @@ locals {
 
     POD_CIDR     = var.pod_cidr
     SERVICE_CIDR = var.service_cidr
+
+    # Extra required information. You can visit
+    # https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html
+    # to obtain these required parameters
+    TKGR       = var.tkgr
+    OS_INFO    = var.os_info
+    TKGVERSION = var.tkg_version
   })
 }
 
@@ -58,6 +65,7 @@ data "vcd_rde_type" "capvcdcluster_type" {
   nss     = "capvcdCluster"
   version = var.capvcd_rde_version
 }
+
 
 resource "vcd_rde" "k8s_cluster_instance" {
   name               = var.k8s_cluster_name
@@ -74,9 +82,9 @@ resource "vcd_rde" "k8s_cluster_instance" {
 
     capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
 
-    delete                = false # Make this true to delete the cluster
-    force_delete          = false # Make this true to forcefully delete the cluster
-    auto_repair_on_errors = true  # Change this to false to troubleshoot possible issues
+    delete                = true # Make this true to delete the cluster
+    force_delete          = true # Make this true to forcefully delete the cluster
+    auto_repair_on_errors = true # Change this to false to troubleshoot possible issues
   })
 }
 

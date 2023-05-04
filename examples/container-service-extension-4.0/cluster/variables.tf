@@ -88,3 +88,15 @@ variable "service_cidr" {
   description = "The CIDR to use for the pods network"
   default     = "100.64.0.0/13"
 }
+
+variable "tkgr" {
+  description = "String that defines the TKG release inside the CAPVCD YAML template"
+}
+
+variable "os_info" {
+  description = "String that defines the OS information inside the CAPVCD YAML template"
+}
+
+variable "tkg_version" {
+  description = "String that defines the TKG version inside the CAPVCD YAML template"
+}
