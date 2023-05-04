@@ -48,15 +48,15 @@ locals {
     VCD_CATALOG       = var.tkgm_catalog
     VCD_TEMPLATE_NAME = var.tkgm_ova
 
-    POD_CIDR     = "100.96.0.0/11"
-    SERVICE_CIDR = "100.64.0.0/13"
+    POD_CIDR     = var.pod_cidr
+    SERVICE_CIDR = var.service_cidr
   })
 }
 
 data "vcd_rde_type" "capvcdcluster_type" {
   vendor  = "vmware"
   nss     = "capvcdCluster"
-  version = "1.1.0"
+  version = var.capvcd_rde_version
 }
 
 resource "vcd_rde" "k8s_cluster_instance" {

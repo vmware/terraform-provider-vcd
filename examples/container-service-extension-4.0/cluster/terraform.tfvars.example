@@ -4,19 +4,32 @@
 # Provider config
 # ------------------------------------------------
 vcd_url                 = "https://vcd.my-awesome-corp.com"
-cluster_author_user     = "cluster-author"
+cluster_author_user     = "cluster_author"
 cluster_author_password = "change-me"
 insecure_login          = "false"
 
 # ------------------------------------------------
+# CSE configuration
+# ------------------------------------------------
+capvcd_rde_version = "1.1.0" # Should be the same as the capvcd_rde_version used during CSE installation
+
+# ------------------------------------------------
 # Kubernetes cluster configuration
 # ------------------------------------------------
+# Name must contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric,
+# and contain at most 31 characters.
 k8s_cluster_name         = "example1"
-cluster_organization     = "cluster_org"
-cluster_vdc              = "cluster_vdc"
-cluster_routed_network   = "cluster_net_routed"
+
+# These specify the place where the cluster will be created. They were created
+# during the CSE installation phase, so they should exist already.
+cluster_organization     = "tenant_org"
+cluster_vdc              = "tenant_vdc"
+cluster_routed_network   = "tenant_net_routed"
+
+#
 cluster_sizing_policy    = "tkg_s"
-cluster_author_user      = "cluster-author"
 cluster_author_api_token = "change-me"
 tkgm_catalog             = "tkgm_catalog"
 tkgm_ova                 = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933"
+pod_cidr                 = "100.96.0.0/11"
+service_cidr             = "100.64.0.0/13"

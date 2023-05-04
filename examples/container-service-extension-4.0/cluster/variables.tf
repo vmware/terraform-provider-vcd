@@ -30,11 +30,24 @@ variable "administrator_org" {
 }
 
 # ------------------------------------------------
+# CSE configuration
+# ------------------------------------------------
+variable "capvcd_rde_version" {
+  type        = string
+  description = "Version of the CAPVCD Runtime Defined Entity Type"
+  default     = "1.1.0"
+}
+
+# ------------------------------------------------
 # Kubernetes cluster configuration
 # ------------------------------------------------
 variable "k8s_cluster_name" {
   description = "The name of the Kubernetes cluster. Name must contain only lowercase alphanumeric characters or '-' start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters (Example: 'MyCluster')"
   type        = string
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{0,29}[a-z0-9]$", var.k8s_cluster_name))
+    error_message = "Name must contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters."
+  }
 }
 
 variable "cluster_organization" {
@@ -64,4 +77,14 @@ variable "tkgm_catalog" {
 
 variable "tkgm_ova" {
   description = "The TKGm OVA to create the Kubernetes cluster"
+}
+
+variable "pod_cidr" {
+  description = "The CIDR to use for the pods network"
+  default     = "100.96.0.0/11"
+}
+
+variable "service_cidr" {
+  description = "The CIDR to use for the pods network"
+  default     = "100.64.0.0/13"
 }
