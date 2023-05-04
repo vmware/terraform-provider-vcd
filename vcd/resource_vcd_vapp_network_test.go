@@ -695,6 +695,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 // NSX-T Edge Cluster is specified in NSX-T VDC
 func TestAccVcdNsxtVappNetworks(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,

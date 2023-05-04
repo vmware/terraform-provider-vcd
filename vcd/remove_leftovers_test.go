@@ -98,9 +98,12 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 
 	// NSX-T ALB configuration Hierarchical cleanup is separate from main hierarchy as even if the
 	// Org is going to be deleted - NSX-T ALB configuration must be cleaned up first
-	err := removeLeftoversNsxtAlb(govcdClient, verbose)
-	if err != nil {
-		return fmt.Errorf("error removing NSX-T ALB leftovers: %s", err)
+	// Only System user can control ALB resources
+	if govcdClient.Client.IsSysAdmin {
+		err := removeLeftoversNsxtAlb(govcdClient, verbose)
+		if err != nil {
+			return fmt.Errorf("error removing NSX-T ALB leftovers: %s", err)
+		}
 	}
 
 	// traverses the VCD hierarchy, starting at the Org level

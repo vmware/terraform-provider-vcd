@@ -67,9 +67,9 @@ func TestAccVcdOrgFull(t *testing.T) {
 
 	createEnabledOrg := false
 	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("> 37.1") {
+	if vcdClient.Client.APIVCDMaxVersionIs("= 37.2") {
 		// TODO revisit once bug is fixed in VCD
-		fmt.Println("Some VCD 10.4 versions have a bug that prevents creating a disabled Org")
+		fmt.Println("VCD 10.4.2 has a bug that prevents creating a disabled Org")
 		createEnabledOrg = true
 	}
 
@@ -200,8 +200,13 @@ func TestAccVcdOrgFull(t *testing.T) {
 			"Tags":                         "org",
 			"MetadataKey":                  od.metadataKey,
 			"MetadataValue":                od.metadataValue,
+			"SkipDirective":                " ", // one whitespace to avoid skipping test in `testParamsNotEmpty()`
 		}
 		testParamsNotEmpty(t, params)
+
+		if createEnabledOrg && !params["IsEnabled"].(bool) {
+			params["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
+		}
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
 		// Prepare update
@@ -221,6 +226,10 @@ func TestAccVcdOrgFull(t *testing.T) {
 		updateParams["IsEnabled"] = !params["IsEnabled"].(bool)
 		updateParams["MetadataKey"] = params["MetadataKey"].(string) + "-updated"
 		updateParams["MetadataValue"] = params["MetadataValue"].(string) + "-updated"
+		updateParams["SkipDirective"] = " "
+		if createEnabledOrg && !updateParams["IsEnabled"].(bool) {
+			updateParams["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
+		}
 
 		configTextUpdated := templateFill(testAccCheckVcdOrgFull, updateParams)
 		if vcdShortTest {
@@ -385,6 +394,7 @@ resource "vcd_org" "{{.OrgName}}" {
 `
 
 const testAccCheckVcdOrgFull = `
+{{.SkipDirective}}
 resource "vcd_org" "{{.OrgName}}" {
   name                            = "{{.OrgName}}"
   full_name                       = "{{.FullName}}"
