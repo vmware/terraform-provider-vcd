@@ -995,7 +995,7 @@ func updateCustomizationSection(customizationInterface interface{}, d *schema.Re
 				// AdminAutoLogonEnabled=false if number_of_auto_logons == 0
 				// AdminAutoLogonEnabled=true if number_of_auto_logons > 0
 				isMoreThanZero := nrTimesForLogin.(int) > 0
-				customizationSection.AdminAutoLogonEnabled = addrOf(isMoreThanZero)
+				customizationSection.AdminAutoLogonEnabled = &isMoreThanZero
 
 				customizationSection.AdminAutoLogonCount = nrTimesForLogin.(int)
 			}

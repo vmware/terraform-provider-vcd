@@ -425,7 +425,7 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 
 	caCertificateRefs, commonNameCheckEnabled, domainNames := getCertificateTypes(d)
 	albPoolConfig.CaCertificateRefs = caCertificateRefs
-	albPoolConfig.CommonNameCheckEnabled = addrOf(commonNameCheckEnabled)
+	albPoolConfig.CommonNameCheckEnabled = &commonNameCheckEnabled
 	albPoolConfig.DomainNames = domainNames
 
 	return albPoolConfig, nil

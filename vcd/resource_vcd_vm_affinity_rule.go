@@ -131,8 +131,8 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 
 	var vmAffinityRuleDef = &types.VmAffinityRule{
 		Name:        name,
-		IsEnabled:   addrOf(enabled),
-		IsMandatory: addrOf(required),
+		IsEnabled:   &enabled,
+		IsMandatory: &required,
 		Polarity:    polarity,
 		VmReferences: []*types.VMs{
 			{

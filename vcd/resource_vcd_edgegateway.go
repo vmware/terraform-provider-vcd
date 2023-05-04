@@ -307,7 +307,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
 		fipsModeEnabledBool := fipsModeEnabled.(bool)
 		log.Printf("[TRACE] edge gateway creation. FIPS mode was set with value %t", fipsModeEnabledBool)
-		egwConfiguration.Configuration.FipsModeEnabled = addrOf(fipsModeEnabledBool)
+		egwConfiguration.Configuration.FipsModeEnabled = &fipsModeEnabledBool
 	}
 
 	edge, err := govcd.CreateAndConfigureEdgeGateway(vcdClient.VCDClient, orgName, vdcName, egwName, egwConfiguration)
