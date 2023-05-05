@@ -89,8 +89,8 @@ variable "service_cidr" {
   default     = "100.64.0.0/13"
 }
 
-variable "tkgr" {
-  description = "String that defines the TKG release inside the CAPVCD YAML template"
+variable "tkr_version" {
+  description = "String that defines the TK release version inside the CAPVCD YAML template"
 }
 
 variable "os_info" {

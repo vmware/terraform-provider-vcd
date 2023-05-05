@@ -377,14 +377,84 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 ## TKGm clusters operations
 
 This section explains how to perform CRUD (Create, Read, Update and Delete) operations with TKGm clusters using
-Terraform.
+Terraform. We will use the [`vcd_rde`][rde] resource for this purpose.
 
 ~> This section assumes that your CSE installation was done following the [section above](#installation-process).
 That is, CSE Server should be up and running and all elements must be working.
 
 ### Creating a Kubernetes cluster
 
--> You can have a look at a working example of a TKGm cluster [here][cluster].
+-> You can have a look at a working example of a TKGm cluster [here][cluster]. It is encouraged to read the following
+section to understand how it works.
+
+To be able to create your first TKGm cluster, a [CAPVCD][capvcd] YAML is required, which describes the TKGm cluster to be
+created. In order to craft it, we need to follow these steps:
+
+- First, we need to download a YAML template from [here][capvcd_templates].
+  You should choose the template that matches your TKGm OVA. For example, if you used the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`,
+  the template that you need to use corresponds with v1.22.9, that is `cluster-template-v1.22.9.yaml`.
+
+- This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
+  `annotations`, that are required by the CSE Server to be able to provision the cluster correctly.
+  You can find the snippet below:
+
+```yaml
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${TARGET_NAMESPACE}
+  labels: # This block should be added
+    cluster-role.tkg.tanzu.vmware.com/management: ""
+    tanzuKubernetesRelease: ${TKGR}
+    tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
+  annotations: # This block should be added
+    osInfo: ${OS_INFO}
+    TKGVERSION: ${TKGVERSION}
+# ...
+```
+
+- Now that the YAML template is ready, one needs to read it with the built-in Terraform function `templatefile` and replace
+  the values of all the placeholders. Below is the explanation of each one of them, you can also check
+  [the working example][cluster] to observe the final result.
+
+  - `CLUSTER_NAME`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
+  start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters.
+  - `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] you will see that the value is
+  "${var.k8s_cluster_name}-ns", this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
+  - `VCD_SITE`: The VCD URL, the same that was used during CSE installation.
+  - `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `"tenant_org"` and named
+  "Tenant Organization" during CSE installation phase.
+  - `VCD_ORGANIZATION_VDC`: The VDC in which the TKGm clusters will be created. In this guide it was created as `"tenant_vdc"` and named
+    "Tenant VDC" during CSE installation phase.
+  - `VCD_ORGANIZATION_VDC_NETWORK`: The VDC network that the TKGm clusters will use. In this guide it was created as a Routed
+    network called `"tenant_net_routed"`.
+  - `VCD_USERNAME_B64`: The name of a user with the "Kubernetes Cluster Author" role (`k8s_cluster_author`) that was created during CSE installation.
+  It must be encoded in Base64.
+  - `VCD_PASSWORD_B64`: (**Discouraged in favor of `VCD_REFRESH_TOKEN_B64`**) The password of the user above.
+    It must be encoded in Base64. Please do **not** use this value (by setting it to `""`) and use `VCD_REFRESH_TOKEN_B64` instead.
+  - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
+    in the top right, then go to the API tokens section, add a new one. Or you can visit `/provider/administration/settings/user-preferences`
+    at your VCD URL as CSE Administrator. It must be encoded in Base64.
+  - `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm clusters.
+  - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
+  - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.
+  - `VCD_CONTROL_PLANE_PLACEMENT_POLICY`: Name of an existing VM Placement Policy. Can be empty (`""`)
+  - `VCD_CONTROL_PLANE_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
+  - `WORKER_MACHINE_COUNT`: Number of worker nodes (VMs). **Must be higher than 0**.
+  - `VCD_WORKER_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.
+  - `VCD_WORKER_PLACEMENT_POLICY`: Name of an existing VM Placement Policy. Can be empty (`""`)
+  - `VCD_WORKER_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
+  - `DISK_SIZE`: Specifies the storage size for each node (VM). It uses the [same units as every other Kubernetes resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
+    for example `"1Gi"` to use 1 gibibyte (1024 MiB), or `"1G"` for 1 gigabyte (1000 MB).
+  - `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `"tkgm_catalog"`.
+  - `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `"ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933"`
+  - `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
+  - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
+
+  There are three additional variables that we added manually. To know their values, you can read [this article](https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html).
+  In summary, there's a relation between the chosen TKGm OVA and the values `TKR_VERSION`, `OS_INFO` and `TKGVERSION`.
+  In the article it explains how to obtain their values.
 
 ### Updating a Kubernetes cluster
 
@@ -401,6 +471,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
 [capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
+[capvcd_templates]: https://github.com/vmware/cluster-api-provider-cloud-director/tree/main/templates
 [cluster]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/cluster
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster

@@ -37,6 +37,6 @@ service_cidr             = "100.64.0.0/13"
 # Extra required information. You can visit
 # https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html
 # to obtain these required parameters
-tkgr        = "v1.22.9---vmware.1-tkg.1"
+tkr_version = "v1.22.9---vmware.1-tkg.1"
 os_info     = "ubuntu,20.04,amd64"
 tkg_version = "v1.5.4"
