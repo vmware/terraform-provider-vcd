@@ -3,10 +3,10 @@
 # ------------------------------------------------
 # Provider config
 # ------------------------------------------------
-vcd_url                  = "https://vcd.my-awesome-corp.com"
-cluster_author_user      = "cluster_author"
-cluster_author_password  = "change-me"
-insecure_login           = "false"
+vcd_url                 = "https://vcd.my-awesome-corp.com"
+cluster_author_user     = "cluster_author"
+cluster_author_password = "change-me"
+insecure_login          = "false"
 
 # ------------------------------------------------
 # CSE configuration
@@ -18,7 +18,7 @@ capvcd_rde_version = "1.1.0" # Should be the same as the capvcd_rde_version used
 # ------------------------------------------------
 # Name must contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric,
 # and contain at most 31 characters.
-k8s_cluster_name         = "example1"
+k8s_cluster_name = "example1"
 
 # These specify the place where the cluster will be created. They were created
 # during the CSE installation phase, so they should exist already.

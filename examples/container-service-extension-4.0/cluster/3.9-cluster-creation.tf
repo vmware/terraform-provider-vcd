@@ -84,7 +84,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
 
     delete                = false # Make this true to delete the cluster
     force_delete          = false # Make this true to forcefully delete the cluster
-    auto_repair_on_errors = true # Change this to false to troubleshoot possible issues
+    auto_repair_on_errors = true  # Change this to false to troubleshoot possible issues
   })
 }
 

@@ -68,13 +68,13 @@ variable "cluster_author_api_token" {
 }
 
 variable "ssh_public_key" {
-  description = "SSH public key to be able to debug cluster nodes"
-  default = ""
+  description = "SSH public key to be able to login to the cluster control plane nodes"
+  default     = ""
 }
 
 variable "control_plane_machine_count" {
   description = "Number of control plane nodes (VMs)"
-  type = number
+  type        = number
   validation {
     condition     = var.control_plane_machine_count > 0 && var.control_plane_machine_count % 2 != 0
     error_message = "Must be an odd number and higher than 0"
@@ -84,22 +84,22 @@ variable "control_plane_machine_count" {
 
 variable "control_plane_sizing_policy" {
   description = "The VM Sizing Policy used for the control plane"
-  default = "tkg_s"
+  default     = "tkg_s"
 }
 
 variable "control_plane_placement_policy" {
   description = "The VM Placement Policy used for the control plane"
-  default = ""
+  default     = ""
 }
 
 variable "control_plane_storage_profile" {
   description = "The Storage Profile used for the control plane"
-  default = "*"
+  default     = "*"
 }
 
 variable "worker_machine_count" {
   description = "Number of worker nodes (VMs)"
-  type = number
+  type        = number
   validation {
     condition     = var.worker_machine_count > 0
     error_message = "Must be higher than 0"
@@ -109,22 +109,22 @@ variable "worker_machine_count" {
 
 variable "worker_sizing_policy" {
   description = "The VM Sizing Policy used for the workers"
-  default = "tkg_s"
+  default     = "tkg_s"
 }
 
 variable "worker_placement_policy" {
   description = "The VM Placement Policy used for the workers"
-  default = ""
+  default     = ""
 }
 
 variable "worker_storage_profile" {
   description = "The Storage Profile used for the workers"
-  default = "*"
+  default     = "*"
 }
 
 variable "disk_size" {
   description = "Disk size of every node"
-  default = "20Gi"
+  default     = "20Gi"
 }
 
 variable "tkgm_catalog" {

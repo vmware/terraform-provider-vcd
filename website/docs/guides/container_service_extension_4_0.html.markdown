@@ -435,7 +435,7 @@ metadata:
   - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
     in the top right, then go to the API tokens section, add a new one. Or you can visit `/provider/administration/settings/user-preferences`
     at your VCD URL logged in as the target user. It must be encoded in Base64.
-  - `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm clusters.
+  - `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm control plane nodes.
   - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
   - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.
   - `VCD_CONTROL_PLANE_PLACEMENT_POLICY`: Name of an existing VM Placement Policy. Can be empty (`""`)

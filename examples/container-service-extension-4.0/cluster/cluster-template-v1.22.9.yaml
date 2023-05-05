@@ -3,11 +3,11 @@ kind: Cluster
 metadata:
   name: ${CLUSTER_NAME}
   namespace: ${TARGET_NAMESPACE}
-  labels:
+  labels: # This block was added manually, it was not present in the downloaded template
     cluster-role.tkg.tanzu.vmware.com/management: ""
     tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
-  annotations:
+  annotations: # This block was added manually, it was not present in the downloaded template
     osInfo: ${OS_INFO}
     TKGVERSION: ${TKGVERSION}
 spec:
