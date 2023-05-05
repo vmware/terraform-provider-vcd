@@ -38,9 +38,9 @@ control_plane_placement_policy = ""
 control_plane_storage_profile  = "*"
 
 # Worker dimensioning.
-worker_sizing_policy          = "tkg_s"
-worker_plane_placement_policy = ""
-worker_plane_storage_profile  = "*"
+worker_sizing_policy    = "tkg_s"
+worker_placement_policy = ""
+worker_storage_profile  = "*"
 
 # Storage and TKGm OVA.
 disk_size    = "20Gi"

@@ -396,7 +396,7 @@ created. In order to craft it, we need to follow these steps:
 
 - This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
   `annotations`, that are required by the CSE Server to be able to provision the cluster correctly.
-  You can find the snippet below:
+  You can find these extra elements below:
 
 ```yaml
 apiVersion: cluster.x-k8s.io/v1beta1
