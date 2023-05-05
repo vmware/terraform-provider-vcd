@@ -156,3 +156,31 @@ variable "os_info" {
 variable "tkg_version" {
   description = "String that defines the TKG version inside the CAPVCD YAML template"
 }
+
+variable "default_storage_class_filesystem" {
+  description = "Filesystem for the default storage class"
+  default     = "ext4"
+  validation {
+    condition     = var.default_storage_class_filesystem == "ext4" || var.default_storage_class_filesystem == "xfs"
+    error_message = "Must be 'ext4' or 'xfs'"
+  }
+}
+
+variable "default_storage_class_name" {
+  description = "Name for the default storage class"
+  default     = "default-storage-class-1"
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{0,62}[a-z0-9]$", var.default_storage_class_name))
+    error_message = "Name must contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric, and contain at most 63 characters."
+  }
+}
+
+variable "default_storage_class_storage_profile" {
+  description = "Storage Profile to use for the default storage class"
+  default     = "*"
+}
+
+variable "default_storage_class_delete_reclaim_policy" {
+  description = "Use a 'Delete' reclaim policy, that deletes the volume when the PersistentVolumeClaim is deleted"
+  default     = "true"
+}

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.10"
+      version = ">= 3.9"
     }
   }
 }
@@ -66,7 +66,6 @@ data "vcd_rde_type" "capvcdcluster_type" {
   version = var.capvcd_rde_version
 }
 
-
 resource "vcd_rde" "k8s_cluster_instance" {
   name               = var.k8s_cluster_name
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
@@ -79,6 +78,15 @@ resource "vcd_rde" "k8s_cluster_instance" {
     name    = var.k8s_cluster_name
     org     = var.cluster_organization
     vdc     = var.cluster_vdc
+    vdc     = var.cluster_vdc
+
+    # Configures a default Storage class for the TKGm cluster. If you don't want this,
+    # you can remove the variables below. Don't forget to delete the 'defaultStorageClassOptions' block from
+    # ../entities/tkgmcluster-template.json
+    default_storage_class_filesystem            = var.default_storage_class_filesystem
+    default_storage_class_name                  = var.default_storage_class_name
+    default_storage_class_storage_profile       = var.default_storage_class_storage_profile
+    default_storage_class_delete_reclaim_policy = var.default_storage_class_delete_reclaim_policy
 
     capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
 

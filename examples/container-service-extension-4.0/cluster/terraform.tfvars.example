@@ -57,3 +57,11 @@ service_cidr = "100.64.0.0/13"
 tkr_version = "v1.22.9---vmware.1-tkg.1"
 os_info     = "ubuntu,20.04,amd64"
 tkg_version = "v1.5.4"
+
+# Configures a default Storage class for the TKGm cluster. If you don't want this,
+# you can remove the variables below. Don't forget to delete them from 3.9-cluster-creation.tf as well,
+# and the 'defaultStorageClassOptions' block from ../entities/tkgmcluster-template.json
+default_storage_class_filesystem            = "ext4"
+default_storage_class_name                  = "default-storage-class-1"
+default_storage_class_storage_profile       = "*"
+default_storage_class_delete_reclaim_policy = "true"
