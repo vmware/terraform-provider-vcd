@@ -62,13 +62,69 @@ variable "cluster_routed_network" {
   description = "The routed network used for the Kubernetes cluster"
 }
 
-variable "cluster_sizing_policy" {
-  description = "The VM sizing policy used for the Kubernetes cluster"
-}
-
 variable "cluster_author_api_token" {
   description = "API token of the Kubernetes cluster author"
   sensitive   = true
+}
+
+variable "ssh_public_key" {
+  description = "SSH public key to be able to debug cluster nodes"
+  default = ""
+}
+
+variable "control_plane_machine_count" {
+  description = "Number of control plane nodes (VMs)"
+  type = number
+  validation {
+    condition     = var.control_plane_machine_count > 0 && var.control_plane_machine_count % 2 != 0
+    error_message = "Must be an odd number and higher than 0"
+  }
+  default = 3
+}
+
+variable "control_plane_sizing_policy" {
+  description = "The VM Sizing Policy used for the control plane"
+  default = "tkg_s"
+}
+
+variable "control_plane_placement_policy" {
+  description = "The VM Placement Policy used for the control plane"
+  default = ""
+}
+
+variable "control_plane_storage_profile" {
+  description = "The Storage Profile used for the control plane"
+  default = "*"
+}
+
+variable "worker_machine_count" {
+  description = "Number of worker nodes (VMs)"
+  type = number
+  validation {
+    condition     = var.worker_machine_count > 0
+    error_message = "Must be higher than 0"
+  }
+  default = 2
+}
+
+variable "worker_sizing_policy" {
+  description = "The VM Sizing Policy used for the workers"
+  default = "tkg_s"
+}
+
+variable "worker_placement_policy" {
+  description = "The VM Placement Policy used for the workers"
+  default = ""
+}
+
+variable "worker_storage_profile" {
+  description = "The Storage Profile used for the workers"
+  default = "*"
+}
+
+variable "disk_size" {
+  description = "Disk size of every node"
+  default = "20Gi"
 }
 
 variable "tkgm_catalog" {
@@ -90,7 +146,7 @@ variable "service_cidr" {
 }
 
 variable "tkr_version" {
-  description = "String that defines the TK release version inside the CAPVCD YAML template"
+  description = "String that defines the Tanzu Kubernetes release version inside the CAPVCD YAML template"
 }
 
 variable "os_info" {

@@ -406,7 +406,7 @@ metadata:
   namespace: ${TARGET_NAMESPACE}
   labels: # This block should be added
     cluster-role.tkg.tanzu.vmware.com/management: ""
-    tanzuKubernetesRelease: ${TKGR}
+    tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
   annotations: # This block should be added
     osInfo: ${OS_INFO}
@@ -414,14 +414,13 @@ metadata:
 # ...
 ```
 
-- Now that the YAML template is ready, one needs to read it with the built-in Terraform function `templatefile` and replace
-  the values of all the placeholders. Below is the explanation of each one of them, you can also check
-  [the working example][cluster] to observe the final result.
+- Now that the YAML template is ready, one needs to understand the meaning of all the placeholders.
+  Below is the explanation of each one of them, you can also check [the working example][cluster] to observe the final result.
 
   - `CLUSTER_NAME`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters.
   - `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] you will see that the value is
-  "${var.k8s_cluster_name}-ns", this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
+  `"${var.k8s_cluster_name}-ns"`, this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
   - `VCD_SITE`: The VCD URL, the same that was used during CSE installation.
   - `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `"tenant_org"` and named
   "Tenant Organization" during CSE installation phase.
@@ -435,7 +434,7 @@ metadata:
     It must be encoded in Base64. Please do **not** use this value (by setting it to `""`) and use `VCD_REFRESH_TOKEN_B64` instead.
   - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
     in the top right, then go to the API tokens section, add a new one. Or you can visit `/provider/administration/settings/user-preferences`
-    at your VCD URL as CSE Administrator. It must be encoded in Base64.
+    at your VCD URL logged in as the target user. It must be encoded in Base64.
   - `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm clusters.
   - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
   - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.

@@ -5,7 +5,7 @@ metadata:
   namespace: ${TARGET_NAMESPACE}
   labels:
     cluster-role.tkg.tanzu.vmware.com/management: ""
-    tanzuKubernetesRelease: ${TKGR}
+    tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
   annotations:
     osInfo: ${OS_INFO}

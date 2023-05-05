@@ -30,21 +30,21 @@ locals {
     VCD_ORGANIZATION_VDC_NETWORK = var.cluster_routed_network
 
     VCD_USERNAME_B64      = base64encode(var.cluster_author_user)
-    VCD_PASSWORD_B64      = "" # We use an API token, which is recommended
+    VCD_PASSWORD_B64      = "" # We use an API token instead, which is highly recommended
     VCD_REFRESH_TOKEN_B64 = base64encode(var.cluster_author_api_token)
-    SSH_PUBLIC_KEY        = ""
+    SSH_PUBLIC_KEY        = var.ssh_public_key
 
-    CONTROL_PLANE_MACHINE_COUNT        = 1
-    VCD_CONTROL_PLANE_SIZING_POLICY    = var.cluster_sizing_policy
-    VCD_CONTROL_PLANE_PLACEMENT_POLICY = "\"\"" # Not using any placement policy, but it is required in the template
-    VCD_CONTROL_PLANE_STORAGE_PROFILE  = ""
+    CONTROL_PLANE_MACHINE_COUNT        = var.control_plane_machine_count
+    VCD_CONTROL_PLANE_SIZING_POLICY    = var.control_plane_sizing_policy
+    VCD_CONTROL_PLANE_PLACEMENT_POLICY = var.control_plane_placement_policy
+    VCD_CONTROL_PLANE_STORAGE_PROFILE  = var.control_plane_storage_profile
 
-    WORKER_MACHINE_COUNT        = 1
-    VCD_WORKER_SIZING_POLICY    = var.cluster_sizing_policy
-    VCD_WORKER_PLACEMENT_POLICY = "\"\"" # Not using any placement policy, but it is required in the template
-    VCD_WORKER_STORAGE_PROFILE  = ""
+    WORKER_MACHINE_COUNT        = var.worker_machine_count
+    VCD_WORKER_SIZING_POLICY    = var.worker_sizing_policy
+    VCD_WORKER_PLACEMENT_POLICY = var.worker_placement_policy
+    VCD_WORKER_STORAGE_PROFILE  = var.worker_storage_profile
 
-    DISK_SIZE         = "20Gi"
+    DISK_SIZE         = var.disk_size
     VCD_CATALOG       = var.tkgm_catalog
     VCD_TEMPLATE_NAME = var.tkgm_ova
 
@@ -54,9 +54,9 @@ locals {
     # Extra required information. You can visit
     # https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html
     # to obtain these required parameters
-    TKGR       = var.tkgr
-    OS_INFO    = var.os_info
-    TKGVERSION = var.tkg_version
+    TKR_VERSION = var.tkr_version
+    OS_INFO     = var.os_info
+    TKGVERSION  = var.tkg_version
   })
 }
 
