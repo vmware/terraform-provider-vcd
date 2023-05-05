@@ -457,7 +457,35 @@ metadata:
 
 ### Updating a Kubernetes cluster
 
+You can perform a Terraform update to resize a TKGm cluster, for example. In order to do that, you must take into account how the
+[`vcd_rde`][rde] resource works. You can read [its documentation][rde_input_vs_computed] to better understand how updates work
+in this specific case.
+
+To accomplish a correct update, you need to take the contents of the `computed_entity` attribute, edit the properties that you want
+to modify, and place the final result inside `input_entity`. Then, you can apply the changes.
+
+~> Do **NOT** edit the original `input_entity` contents to perform an update, as the CSE Server puts vital information in
+the RDE contents (which is reflected in the `computed_entity` attribute) that were not in the original JSON payload.
+If this information is not sent back, the cluster will become unusable.
+
 ### Deleting a Kubernetes cluster
+
+~> Do **NOT** remove the cluster from your HCL configuration! This will leave dangling resources that the CSE Server creates
+when the TKGm cluster is created, such as vApps, networks, virtual services, etc. Please follow the procedure described in
+this section to destroy a cluster entirely.
+
+To delete an existing TKGm cluster, you need to mark it for deletion in the `vcd_rde` resource. In the [example configuration][cluster],
+there are two keys `delete` and `force_delete` that correspond to the CAPVCD [RDE Type][rde_type] schema fields `markForDelete`
+and `forceDelete` respectively.
+
+- Setting `delete = true` will make the CSE Server remove the cluster from VCD and eventually the RDE.
+- Setting also `force_delete = true` will force the CSE Server to delete the cluster, and their associated resources
+  that are not fully complete and that are in an unremovable state.
+
+!!!! TODO: Is it needed to update `input_entity` with the contents of `computed_entity`???
+
+You can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
+ask for creation again. You can now remove it from the HCL configuration.
 
 ## Uninstall CSE
 
@@ -485,6 +513,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [provider_vdc]: /providers/vmware/vcd/latest/docs/data-sources/provider_vdc
 [rights_bundle]: /providers/vmware/vcd/latest/docs/resources/rights_bundle
 [rde]: /providers/vmware/vcd/latest/docs/resources/rde
+[rde_input_vs_computed]: /providers/vmware/vcd/latest/docs/resources/rde#input-entity-vs-computed-entity
 [rde_interface]: /providers/vmware/vcd/latest/docs/resources/rde_interface
 [rde_type]: /providers/vmware/vcd/latest/docs/resources/rde_type
 [role]: /providers/vmware/vcd/latest/docs/resources/role
