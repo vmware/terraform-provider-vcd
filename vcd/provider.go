@@ -217,7 +217,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
 				Description: "The user name for VCD API operations.",
 			},
-
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,

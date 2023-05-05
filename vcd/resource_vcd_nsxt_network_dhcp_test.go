@@ -206,9 +206,9 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 
 const testAccRoutedNetDhcpConfig = `
 data "vcd_nsxt_edgegateway" "existing" {
-  org      = "{{.Org}}"
-  owner_id = "{{.NsxtVdc}}"
-  name     = "{{.EdgeGw}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.EdgeGw}}"
 }
 
 resource "vcd_network_routed_v2" "net1" {
@@ -781,9 +781,6 @@ data "vcd_nsxt_network_dhcp_binding" "binding2" {
 `
 
 // TestAccVcdOpenApiDhcpNsxtRoutedRelay tests RELAY mode for DHCP.
-// TODO we do not yet have a DHCP Forwarding resource (configured in Edge Gateway) therefore this
-// test was run with DHCP forwarding manually configured. Improve and and uncomment this test when
-// DHCP Forwarding resource is created and can be used here
 func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 	preTestChecks(t)
 
@@ -821,13 +818,15 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "mode", "RELAY"),
 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "pool.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "enabled", "true"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "1.2.3.4"),
 				),
 			},
 			{
 				ResourceName:            "vcd_nsxt_network_dhcp.pools",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject("nsxt-routed-dhcp"),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(t.Name()),
 				ImportStateVerifyIgnore: []string{"vdc"},
 			},
 		},
@@ -836,11 +835,8 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 }
 
 const testAccRoutedNetRelayDhcpStep1 = testAccRoutedNetDhcpConfig + `
- data "vcd_nsxt_edgegateway" "nsxt_edgegw" {
-   name = "{{.EdgeGw}}"
- }
-
- resource "vcd_nsxt_edgegateway_dhcp_forwarding" "{{.DhcpForwarding}}" {
+ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
+   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
    enabled      = "true"
    dhcp_servers = [
      "1.2.3.4", 
@@ -853,6 +849,7 @@ const testAccRoutedNetRelayDhcpStep1 = testAccRoutedNetDhcpConfig + `
 
    org_network_id = vcd_network_routed_v2.net1.id
    mode           = "RELAY"
+   depends_on     = [vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding]
  }
 
  `
