@@ -390,13 +390,14 @@ section to understand how it works.
 To be able to create your first TKGm cluster, a [CAPVCD][capvcd] YAML is required, which describes the TKGm cluster to be
 created. In order to craft it, we need to follow these steps:
 
-- First, we need to download a YAML template from [here][capvcd_templates].
-  You should choose the template that matches your TKGm OVA. For example, if you used the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`,
-  the template that you need to use corresponds with v1.22.9, that is `cluster-template-v1.22.9.yaml`.
+- First, we need to download a YAML template from the [CAPVCD repository][capvcd_templates].
+  You should choose the template that matches your TKGm OVA. For example, if you uploaded the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`
+  and you want to use it, the template that you need to obtain corresponds to v1.22.9, that is `cluster-template-v1.22.9.yaml`.
 
 - This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
-  `annotations`, that are required by the CSE Server to be able to provision the cluster correctly.
-  You can find these extra elements below:
+  `annotations`, that are required by the CSE Server to be able to provision the cluster correctly. In other words, **cluster creation will fail
+  if these are not added**.
+  You can find these extra items in the snippet displayed below:
 
 ```yaml
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -404,11 +405,11 @@ kind: Cluster
 metadata:
   name: ${CLUSTER_NAME}
   namespace: ${TARGET_NAMESPACE}
-  labels: # This block should be added
+  labels: # This `labels` block should be added, with its sub-items
     cluster-role.tkg.tanzu.vmware.com/management: ""
     tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
-  annotations: # This block should be added
+  annotations: # This `annotations` block should be added, with these two sub-items
     osInfo: ${OS_INFO}
     TKGVERSION: ${TKGVERSION}
 # ...
@@ -422,12 +423,12 @@ metadata:
   - `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] you will see that the value is
   `"${var.k8s_cluster_name}-ns"`, this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
   - `VCD_SITE`: The VCD URL, the same that was used during CSE installation.
-  - `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `"tenant_org"` and named
+  - `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `tenant_org` and named
   "Tenant Organization" during CSE installation phase.
-  - `VCD_ORGANIZATION_VDC`: The VDC in which the TKGm clusters will be created. In this guide it was created as `"tenant_vdc"` and named
+  - `VCD_ORGANIZATION_VDC`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
     "Tenant VDC" during CSE installation phase.
   - `VCD_ORGANIZATION_VDC_NETWORK`: The VDC network that the TKGm clusters will use. In this guide it was created as a Routed
-    network called `"tenant_net_routed"`.
+    network called `tenant_net_routed`.
   - `VCD_USERNAME_B64`: The name of a user with the "Kubernetes Cluster Author" role (`k8s_cluster_author`) that was created during CSE installation.
   It must be encoded in Base64.
   - `VCD_PASSWORD_B64`: (**Discouraged in favor of `VCD_REFRESH_TOKEN_B64`**) The password of the user above.
@@ -446,7 +447,7 @@ metadata:
   - `VCD_WORKER_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
   - `DISK_SIZE`: Specifies the storage size for each node (VM). It uses the [same units as every other Kubernetes resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
     for example `"1Gi"` to use 1 gibibyte (1024 MiB), or `"1G"` for 1 gigabyte (1000 MB).
-  - `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `"tkgm_catalog"`.
+  - `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `tkgm_catalog`.
   - `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `"ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933"`
   - `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
   - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
