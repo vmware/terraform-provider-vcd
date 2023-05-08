@@ -100,30 +100,37 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d
 }
 
 func resourceVcdNsxtEdgegatewayDhcpForwardingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNsxtEdgegatewayDhcpForwardingRead(ctx, d, meta, "resource")
+}
+
+func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
-	if err != nil {
+	if origin == "resource" && err != nil {
 		if govcd.ContainsNotFound(err) {
 			// When parent Edge Gateway is not found - this resource is also not found and should be
 			// removed from state
+			log.Printf("[DEBUG] Edge gateway no longer exists. Removing from tfstate")
 			d.SetId("")
-			return nil
+			return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway rate limiting (QoS): %s", err)
 		}
-		return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway rate limiting (QoS): %s", err)
 	}
 
-	dhcpForwardingConfig, err := nsxtEdge.GetDhcpForwarder()
+	dhcpForwardConfig, err := nsxtEdge.GetDhcpForwarder()
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway rate limiting (QoS): %s", err)
+		return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway DHCP forwarding: %s", err)
 	}
-	dSet(d, "enabled", dhcpForwardingConfig.Enabled)
-	dSet(d, "dhcp_servers", convertStringsToTypeSet(dhcpForwardingConfig.DhcpServers))
 
-	if !dhcpForwardingConfig.Enabled {
+	// DHCP forwarding does not have its own ID - it is a part of Edge Gateway
+	d.SetId(edgeGatewayId)
+	dSet(d, "enabled", dhcpForwardConfig.Enabled)
+	d.Set("dhcp_servers", convertStringsToTypeSet(dhcpForwardConfig.DhcpServers))
+
+	if !dhcpForwardConfig.Enabled {
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity: diag.Warning,
