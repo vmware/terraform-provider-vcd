@@ -30,7 +30,6 @@ func datasourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 			"dhcp_servers": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				MaxItems:    8,
 				Description: "IP addresses of the DHCP servers",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
