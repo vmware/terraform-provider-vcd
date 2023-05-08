@@ -180,7 +180,7 @@ func testAccCheckNsxtEdgeDhcpForwardDestroy(vdcOrVdcGroupName, edgeGatewayName s
 
 		dhcpForwardingConfig, err := edge.GetDhcpForwarder()
 		if err != nil {
-			return fmt.Errorf("unable to get Qos profile: %s", err)
+			return fmt.Errorf("unable to get DHCP forwarding config: %s", err)
 		}
 
 		if dhcpForwardingConfig.Enabled && dhcpForwardingConfig.DhcpServers != nil {

@@ -786,7 +786,11 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 
 	// Requires VCD 10.3.1+
 	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil && vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
 		t.Skipf("NSX-T Isolated network DHCP requires VCD 10.3.1+ (API v36.1+)")
 	}
 
