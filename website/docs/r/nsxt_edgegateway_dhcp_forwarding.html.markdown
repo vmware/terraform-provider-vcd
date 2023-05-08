@@ -31,7 +31,8 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
   org             = "datacloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  enabled      = "true"
+  enabled = "true"
+
   dhcp_servers = [
     "192.168.0.13",
     "fe80::aaaa",
