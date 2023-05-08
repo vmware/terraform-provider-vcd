@@ -469,6 +469,14 @@ to modify, and place the final result inside `input_entity`. Then, you can apply
 the RDE contents (which is reflected in the `computed_entity` attribute) that were not in the original JSON payload.
 If this information is not sent back, the cluster will become unusable.
 
+#### Resize a cluster
+
+TBD
+
+#### Upgrade a cluster
+
+TBD
+
 ### Deleting a Kubernetes cluster
 
 ~> Do **NOT** remove the cluster from your HCL configuration! This will leave dangling resources that the CSE Server creates
