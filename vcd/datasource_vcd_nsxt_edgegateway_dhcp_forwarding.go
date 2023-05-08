@@ -20,7 +20,7 @@ func datasourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Edge gateway ID for Rate limiting (QoS) configuration",
+				Description: "Edge gateway ID for DHCP forwarding configuration",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,

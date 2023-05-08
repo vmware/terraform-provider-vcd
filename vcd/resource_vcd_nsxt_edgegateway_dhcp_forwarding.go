@@ -34,7 +34,7 @@ func resourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway ID for Rate limiting (QoS) configuration",
+				Description: "Edge gateway ID for DHCP forwarding configuration",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
@@ -91,7 +91,7 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d
 
 	_, err = nsxtEdge.UpdateDhcpForwarder(dhcpForwardingConfig)
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding create/update] error updating QoS configuration: %s", err)
+		return diag.Errorf("[DHCP forwarding create/update] error updating DHCP forwarding configuration: %s", err)
 	}
 
 	d.SetId(edgeGatewayId)
@@ -116,7 +116,7 @@ func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.Re
 			// removed from state
 			log.Printf("[DEBUG] Edge gateway no longer exists. Removing from tfstate")
 			d.SetId("")
-			return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway rate limiting (QoS): %s", err)
+			return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway DHCP forwarding: %s", err)
 		}
 	}
 
@@ -178,7 +178,7 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingDelete(ctx context.Context, d *sche
 	// There is no "delete" for DHCP forwarding. It can only be updated to empty values (disabled)
 	_, err = nsxtEdge.UpdateDhcpForwarder(&types.NsxtEdgeGatewayDhcpForwarder{})
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding delete] error updating QoS Profile: %s", err)
+		return diag.Errorf("[DHCP forwarding delete] error updating DHCP forwarding: %s", err)
 	}
 
 	return nil
