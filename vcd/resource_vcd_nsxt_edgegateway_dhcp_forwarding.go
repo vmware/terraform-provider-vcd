@@ -128,7 +128,11 @@ func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.Re
 	// DHCP forwarding does not have its own ID - it is a part of Edge Gateway
 	d.SetId(edgeGatewayId)
 	dSet(d, "enabled", dhcpForwardConfig.Enabled)
-	d.Set("dhcp_servers", convertStringsToTypeSet(dhcpForwardConfig.DhcpServers))
+
+	err = d.Set("dhcp_servers", convertStringsToTypeSet(dhcpForwardConfig.DhcpServers))
+	if err != nil {
+		return diag.Errorf("error setting dhcp_servers attribute: %s", err)
+	}
 
 	if !dhcpForwardConfig.Enabled {
 		return diag.Diagnostics{
