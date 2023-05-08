@@ -27,7 +27,7 @@ data "vcd_nsxt_edgegateway" "testing-in-vdc" {
   name = "nsxt-gw-datacloud"
 }
 
-data "vcd_nsxt_edgegateway_dhcp forwarding" "testing-in-vdc" {
+data "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
   org             = "datacloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 }
