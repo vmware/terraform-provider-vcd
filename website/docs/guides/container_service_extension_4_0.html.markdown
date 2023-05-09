@@ -580,8 +580,6 @@ and `forceDelete` respectively.
 - Setting also `force_delete = true` will force the CSE Server to delete the cluster, and their associated resources
   that are not fully complete and that are in an unremovable state.
 
-!!!! TODO: Is it needed to update `input_entity` with the contents of `computed_entity`???
-
 You can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
 ask for creation again. You can now remove it from the HCL configuration.
 
