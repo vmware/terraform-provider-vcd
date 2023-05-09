@@ -507,6 +507,30 @@ JSON template.
 ~> Notice that we need to replace `\n` with `\\n` to avoid breaking the JSON contents when the YAML is set, and also `\"` to `\\\"` for
 the same reason. This is also done in [the TKGm cluster creation example][cluster].
 
+When you have set all the required values, a `terraform apply` should trigger a TKGm cluster creation. The operation is asynchronous, meaning that
+you need to monitor the RDE `computed_entity` value to see the status of the cluster provisioning. Some interesting output examples:
+
+```hcl
+# Outputs the TKGm Cluster creation status
+output "computed_k8s_cluster_status" {
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"]
+}
+
+# Outputs the TKGm Cluster creation events
+output "computed_k8s_cluster_events" {
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"]
+}
+```
+
+When the status displayed by `computed_k8s_cluster_status` is `provisioned`, it will mean that the Kubeconfig will be available.
+You can retrieve it with:
+
+```hcl
+output "kubeconfig" {
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["capvcd"]["private"]["kubeConfig"]
+}
+```
+
 ### Updating a Kubernetes cluster
 
 You can perform a Terraform update to resize a TKGm cluster, for example. In order to do that, you must take into account how the

@@ -99,10 +99,10 @@ output "computed_k8s_cluster_id" {
   value = vcd_rde.k8s_cluster_instance.id
 }
 
-output "computed_k8s_cluster_capvcdyaml" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["spec"]["capiYaml"]
+output "computed_k8s_cluster_status" {
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"]
 }
 
-# output "kubeconfig" {
-#   value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["capvcd"]["private"]["kubeConfig"]
-# }
+output "computed_k8s_cluster_events" {
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"]
+}
