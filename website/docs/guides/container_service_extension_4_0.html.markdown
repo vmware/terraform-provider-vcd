@@ -90,10 +90,10 @@ you can leverage customising the [proposed configuration][step2] to use the Orga
 
 The [proposed configuration][step2] will create four VM Sizing Policies:
 
-- `TKG extra_large`: 8 CPUs, 32GB RAM.
-- `TKG large`: 4 CPUs, 16GB RAM.
-- `TKG medium`: 2 CPUs, 8GB RAM.
-- `TKG small`: 2 CPU, 4GB RAM.
+- `TKG extra-large`: 8 CPU, 32GB memory.
+- `TKG large`: 4 CPU, 16GB memory.
+- `TKG medium`: 2 CPU, 8GB memory.
+- `TKG small`: 2 CPU, 4GB memory.
 
 These VM Sizing Policies should be applied as they are, so nothing should be changed here as these are the exact same
 VM Sizing Policies created during CSE installation in UI. They will be assigned to the Tenant
