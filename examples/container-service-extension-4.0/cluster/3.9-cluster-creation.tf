@@ -119,11 +119,9 @@ output "computed_k8s_cluster_id" {
 }
 
 output "computed_k8s_cluster_status" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"] ?
-    jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"] : null
+  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"] : null
 }
 
 output "computed_k8s_cluster_events" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"] ?
-    jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"] : null
+  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"] : null
 }

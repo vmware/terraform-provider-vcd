@@ -517,13 +517,14 @@ you need to monitor the RDE `computed_entity` value to see the status of the clu
 ```hcl
 # Outputs the TKGm Cluster creation status
 output "computed_k8s_cluster_status" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"]
+  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"] : null
 }
 
 # Outputs the TKGm Cluster creation events
 output "computed_k8s_cluster_events" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"]
+  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"] : null
 }
+
 ```
 
 When the status displayed by `computed_k8s_cluster_status` is `provisioned`, it will mean that the TKGm cluster is successfully provisioned and
@@ -531,7 +532,7 @@ the Kubeconfig is available and ready to use. You can retrieve it with:
 
 ```hcl
 output "kubeconfig" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["capvcd"]["private"]["kubeConfig"]
+  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
 ```
 
