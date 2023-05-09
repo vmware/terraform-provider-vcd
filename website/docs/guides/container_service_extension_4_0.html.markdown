@@ -537,7 +537,7 @@ the Kubeconfig is available and ready to use. You can retrieve it with:
 
 ```hcl
 locals {
-  is_k8s_cluster_provisioned = local.has_status && local.k8s_cluster_computed["status"]["vcdKe"]["state"] == "provisioned" && lookup(local.k8s_cluster_computed["status"], "capvcd", null) != null
+  is_k8s_cluster_provisioned = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] == "provisioned" ? lookup(local.k8s_cluster_computed["status"], "capvcd", null) != null : false : false
 }
 
 output "computed_k8s_cluster_kubeconfig" {
