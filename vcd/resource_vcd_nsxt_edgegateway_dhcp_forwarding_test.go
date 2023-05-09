@@ -33,19 +33,19 @@ func TestAccVcdNsxtEdgeDhcpForwarding(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s\n", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
 	configText2 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s\n", configText2)
 
 	params["FuncName"] = t.Name() + "step3"
 	configText3 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s\n", configText3)
 
 	params["FuncName"] = t.Name() + "step4"
 	configText4 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep4, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s\n", configText4)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

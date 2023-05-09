@@ -44,11 +44,11 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
 
 The following arguments are supported:
 
-* `org` - (Required) Org in which the NSX-T Edge Gateway is located
+* `org` - (Optional) Org in which the NSX-T Edge Gateway is located
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
 * `enabled` - (Required) DHCP Forwarding status. **If set to false, 
   currently set DHCP servers won't be removed, which will result in an inconsistent plan** 
-* `dhcp_servers` - (Required) IP addresses of DHCP servers 
+* `dhcp_servers` - (Required) IP addresses of DHCP servers. Maximum 8 can be specified.
 
 ## Importing
 

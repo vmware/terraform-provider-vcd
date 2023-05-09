@@ -780,7 +780,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 	// Requires VCD 10.3.1+
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient == nil {
-		t.Skip(acceptanceTestsSkipped)
+		t.Skipf(t.Name() + " requires a connection to set the tests")
 	}
 
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
@@ -798,7 +798,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccRoutedNetRelayDhcpStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s\n", configText1)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

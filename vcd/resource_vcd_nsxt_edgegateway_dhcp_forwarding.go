@@ -58,23 +58,12 @@ func resourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[DHCP forwarding create/update] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
@@ -110,14 +99,19 @@ func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.Re
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
-	if origin == "resource" && err != nil {
-		if govcd.ContainsNotFound(err) {
-			// When parent Edge Gateway is not found - this resource is also not found and should be
-			// removed from state
-			log.Printf("[DEBUG] Edge gateway no longer exists. Removing from tfstate")
-			d.SetId("")
-			return diag.Errorf("[DHCP forwarding read] error retrieving NSX-T Edge Gateway DHCP forwarding: %s", err)
+	if govcd.ContainsNotFound(err) {
+		// When parent Edge Gateway is not found - this resource is also not found and should be
+		// removed from state
+		d.SetId("")
+		if origin == "datasource" {
+			return diag.Errorf("[DHCP forwarding DS read] error retrieving NSX-T Edge Gateway DHCP forwarding: %s", err)
 		}
+		log.Printf("[DEBUG] Edge gateway no longer exists. Removing from tfstate")
+		return nil
+	}
+
+	if err != nil {
+		return diag.Errorf("[DHCP forwarding read] error: %s", err)
 	}
 
 	dhcpForwardConfig, err := nsxtEdge.GetDhcpForwarder()
@@ -149,23 +143,12 @@ func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.Re
 func resourceVcdNsxtEdgegatewayDhcpForwardingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding delete] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[DHCP forwarding delete] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
