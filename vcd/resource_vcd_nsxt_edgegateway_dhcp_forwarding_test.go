@@ -106,62 +106,59 @@ func TestAccVcdNsxtEdgeDhcpForwarding(t *testing.T) {
 }
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingData = `
- data "vcd_nsxt_edgegateway" "existing" {
-   org  = "{{.Org}}"
-   vdc  = "{{.NsxtVdc}}"
-   name = "{{.EdgeGw}}"
- }
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.EdgeGw}}"
+}
 `
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep1 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
- resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-
-   enabled      = "true"
-   dhcp_servers = [
-     "1.2.3.4", 
-   ]
- }
+resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  enabled      = "true"
+  dhcp_servers = [
+    "1.2.3.4", 
+  ]
+}
 `
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep2 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
- resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-
-   enabled      = "true"
-   dhcp_servers = [
-     "1.2.3.4", 
-	 "fe80::aaaa",
-	 "192.168.1.254",
-	 "0.0.0.0",
-   ]
- }
+resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  enabled      = "true"
+  dhcp_servers = [
+    "1.2.3.4", 
+    "fe80::aaaa",
+    "192.168.1.254",
+    "0.0.0.0",
+  ]
+}
 `
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep3 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
- resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-
-   enabled      = "false"
-   dhcp_servers = [
-     "1.2.3.4", 
-	 "fe80::aaaa",
-	 "192.168.1.254",
-	 "0.0.0.0",
-   ]
- }
+resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  enabled      = "false"
+  dhcp_servers = [
+    "1.2.3.4",
+    "fe80::aaaa",
+    "192.168.1.254",
+    "0.0.0.0",
+  ]
+}
 `
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep4 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
- resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-   enabled      = "true"
-   dhcp_servers = [
-     "1.2.3.4", 
-	 "fe80::aaaa",
-   ]
- }
+  enabled      = "true"
+  dhcp_servers = [
+    "1.2.3.4", 
+    "fe80::aaaa",
+  ]
+}
 `
 
 func testAccCheckNsxtEdgeDhcpForwardDestroy(vdcOrVdcGroupName, edgeGatewayName string) resource.TestCheckFunc {
