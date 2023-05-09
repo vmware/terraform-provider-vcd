@@ -90,8 +90,8 @@ resource "vcd_org" "tenant_organization" {
 # The VM Sizing Policies defined below MUST be created as they are specified in this HCL. These are the default
 # policies required by CSE to create TKGm clusters, hence nothing should be modified here.
 resource "vcd_vm_sizing_policy" "tkg_xl" {
-  name        = "TKG extra_large"
-  description = "Extra large VM sizing policy for a Kubernetes cluster node"
+  name        = "TKG extra-large"
+  description = "Extra-large VM sizing policy for a Kubernetes cluster node (8 CPU, 32GB memory)"
   cpu {
     count = 8
   }
@@ -102,7 +102,7 @@ resource "vcd_vm_sizing_policy" "tkg_xl" {
 
 resource "vcd_vm_sizing_policy" "tkg_l" {
   name        = "TKG large"
-  description = "Large VM sizing policy for a Kubernetes cluster node"
+  description = "Large VM sizing policy for a Kubernetes cluster node (4 CPU, 16GB memory)"
   cpu {
     count = 4
   }
@@ -113,7 +113,7 @@ resource "vcd_vm_sizing_policy" "tkg_l" {
 
 resource "vcd_vm_sizing_policy" "tkg_m" {
   name        = "TKG medium"
-  description = "Medium VM sizing policy for a Kubernetes cluster node"
+  description = "Medium VM sizing policy for a Kubernetes cluster node (2 CPU, 8GB memory)"
   cpu {
     count = 2
   }
@@ -124,7 +124,7 @@ resource "vcd_vm_sizing_policy" "tkg_m" {
 
 resource "vcd_vm_sizing_policy" "tkg_s" {
   name        = "TKG small"
-  description = "Small VM sizing policy for a Kubernetes cluster node"
+  description = "Small VM sizing policy for a Kubernetes cluster node (2 CPU, 4GB memory)"
   cpu {
     count = 2
   }
