@@ -587,7 +587,7 @@ ask for creation again. You can now remove it from the HCL configuration.
 
 ## Uninstall CSE
 
-~> Before uninstalling CSE, make sure you mark all clusters for deletion in VCD UI.
+~> Before uninstalling CSE, make sure you mark all clusters for deletion.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure with Terraform command.
 
