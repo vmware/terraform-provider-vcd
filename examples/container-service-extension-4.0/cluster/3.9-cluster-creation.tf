@@ -118,10 +118,19 @@ output "computed_k8s_cluster_id" {
   value = vcd_rde.k8s_cluster_instance.id
 }
 
+locals {
+  k8s_cluster_computed = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
+  has_status = lookup(local.k8s_cluster_computed, "status", null) != null
+  is_k8s_cluster_provisioned = local.has_status && local.k8s_cluster_computed["status"]["vcdKe"]["state"] == "provisioned" && lookup(local.k8s_cluster_computed["status"], "capvcd", null) != null
+}
 output "computed_k8s_cluster_status" {
-  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"] : null
+  value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] : null
 }
 
 output "computed_k8s_cluster_events" {
-  value = lookup(jsondecode(vcd_rde.k8s_cluster_instance.computed_entity), "status", null) != null ? jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"] : null
+  value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["eventSet"] : null
+}
+
+output "computed_k8s_cluster_kubeconfig" {
+  value = local.is_k8s_cluster_provisioned ? local.k8s_cluster_computed["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
