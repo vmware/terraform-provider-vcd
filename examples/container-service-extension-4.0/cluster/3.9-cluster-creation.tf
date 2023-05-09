@@ -114,10 +114,6 @@ resource "vcd_rde" "k8s_cluster_instance" {
 }
 
 # Some useful outputs to monitor TKGm cluster creation process.
-output "computed_k8s_cluster_id" {
-  value = vcd_rde.k8s_cluster_instance.id
-}
-
 locals {
   k8s_cluster_computed = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
   has_status = lookup(local.k8s_cluster_computed, "status", null) != null
