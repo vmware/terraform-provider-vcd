@@ -78,7 +78,6 @@ resource "vcd_rde" "k8s_cluster_instance" {
     name    = var.k8s_cluster_name
     org     = var.cluster_organization
     vdc     = var.cluster_vdc
-    vdc     = var.cluster_vdc
 
     # Configures a default Storage class for the TKGm cluster. If you don't want this,
     # you can remove the variables below. Don't forget to delete the 'defaultStorageClassOptions' block from

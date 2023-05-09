@@ -387,7 +387,44 @@ That is, CSE Server should be up and running and all elements must be working.
 -> You can have a look at a working example of a TKGm cluster [here][cluster]. It is encouraged to read the following
 section to understand how it works.
 
-To be able to create your first TKGm cluster, a [CAPVCD][capvcd] YAML is required, which describes the TKGm cluster to be
+To be able to create a TKGm cluster, one needs to prepare a [`vcd_rde`][rde] resource with the JSON template that
+you can find [here][tkgmcluster_template]. In the [proposed example][cluster], the RDE is `k8s_cluster_instance`. The important
+arguments to notice in the resource are:
+
+- **`resolve` must be always `false`**, because is the CSE Server the one in charge of performing the RDE resolution when the
+  TKGm cluster is completely provisioned, so Terraform should not interfere with this process.
+- **`resolve_on_removal` must be always `true`**, because the RDE is resolved by the CSE Server and not Terraform, if one
+  wants to execute a Terraform destroy without the RDE being resolved, the operation will fail. Being true assures that Terraform
+  can perform a Terraform destroy in every case.
+
+The `input_entity` takes the output of the Terraform built-in function `templatefile`, so we can change the JSON template placeholders
+with the correct values:
+
+- `vcd_url`: The VCD URL, the same that was used during CSE installation.
+- `name`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
+  start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters.
+- `org`: The Organization in which the TKGm clusters will be created. In this guide it was created as `tenant_org` and named
+  "Tenant Organization" during CSE installation phase.
+- `vdc`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
+  "Tenant VDC" during CSE installation phase.
+- `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML that will be explained below.
+- `delete`: This is used to delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
+  During creation it should be always `false`.
+- `force_delete`: This is used to forcefully delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
+  During creation it should be always `false`.
+- `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to constantly try to repair the TKGm cluster on any error. You can change
+  this to `false` if you want to troubleshoot any error by yourself.
+
+The following four placeholders are **only** needed if you want to provide a default storage class with your TKGm cluster.
+If you don't need this, please remove the whole `defaultStorageClassOptions` block from the JSON template:
+
+- `default_storage_class_filesystem`: Filesystem for the default storage class. Only `ext4` or `xfs` are valid.
+- `default_storage_class_name`: Name of the default storage class, it must contain only lowercase alphanumeric characters or '-',
+  start with an alphabetic character, end with an alphanumeric, and contain at most 63 characters.
+- `default_storage_class_storage_profile`: Storage profile to use for the default storage class, for example `*`.
+- `default_storage_class_delete_reclaim_policy`: Set this to `true` to use a "Delete" reclaim policy, that deletes the volume when the PersistentVolumeClaim is deleted.
+
+To create a valid input for the `capi_yaml` placeholder, a [CAPVCD][capvcd] YAML is required, which describes the TKGm cluster to be
 created. In order to craft it, we need to follow these steps:
 
 - First, we need to download a YAML template from the [CAPVCD repository][capvcd_templates].
@@ -448,13 +485,24 @@ metadata:
   - `DISK_SIZE`: Specifies the storage size for each node (VM). It uses the [same units as every other Kubernetes resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
     for example `"1Gi"` to use 1 gibibyte (1024 MiB), or `"1G"` for 1 gigabyte (1000 MB).
   - `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `tkgm_catalog`.
-  - `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `"ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933"`
+  - `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933`
   - `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
   - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
 
   There are three additional variables that we added manually. To know their values, you can read [this article](https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html).
   In summary, there's a relation between the chosen TKGm OVA and the values `TKR_VERSION`, `OS_INFO` and `TKGVERSION`.
-  In the article it explains how to obtain their values.
+  In the article it explains how to obtain their values. For example, for the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933` TKGm OVA,
+  they would be:
+  
+  ```
+  TKR_VERSION = "v1.22.9---vmware.1-tkg.1"
+  OS_INFO     = "ubuntu,20.04,amd64"
+  TKGVERSION  = "v1.5.4"
+  ```
+  
+In [the TKGm cluster creation example][cluster], the built-in Terraform function `templatefile` is used to substitute every placeholder
+mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be sent in the `capiYaml` property in the RDE
+JSON.
 
 ### Updating a Kubernetes cluster
 
@@ -531,6 +579,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 [step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step2
 [tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
+[tkgmcluster_template]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/tkgmcluster-template.json
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
 [catalog_vapp_template]: /providers/vmware/vcd/latest/docs/resources/catalog_vapp_template
 [vdc]: /providers/vmware/vcd/latest/docs/resources/org_vdc
