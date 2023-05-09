@@ -10,7 +10,6 @@ metadata:
     tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
   annotations: # This block was added manually, it was not present in the downloaded template
-    osInfo: ${OS_INFO}
     TKGVERSION: ${TKGVERSION}
 spec:
   clusterNetwork:

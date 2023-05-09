@@ -1,3 +1,17 @@
+# ------------------------------------------------------------------------------------------------------------
+# CSE 4.0 TKGm cluster creation:
+#
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+#   before applying this configuration.
+#
+# * Please be sure that you have CSE v4.0 installed in your VCD appliance and the CSE Server is correctly running.
+#
+# * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
+#
+# * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
+#   You can check the comments on each resource/data source for more help and context.
+# ------------------------------------------------------------------------------------------------------------
+
 # VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
 terraform {
   required_providers {
@@ -19,6 +33,14 @@ provider "vcd" {
   logging_file         = "cse_cluster_creation.log"
 }
 
+# Fetch the RDE Type corresponding to the CAPVCD clusters. This was created during CSE installation process.
+data "vcd_rde_type" "capvcdcluster_type" {
+  vendor  = "vmware"
+  nss     = "capvcdCluster"
+  version = var.capvcd_rde_version
+}
+
+# This local corresponds to a completely rendered YAML template that can be used inside the RDE resource below.
 locals {
   capvcd_yaml_rendered = templatefile("./cluster-template-v1.22.9.yaml", {
     CLUSTER_NAME     = var.k8s_cluster_name
@@ -51,21 +73,15 @@ locals {
     POD_CIDR     = var.pod_cidr
     SERVICE_CIDR = var.service_cidr
 
-    # Extra required information. You can visit
-    # https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html
-    # to obtain these required parameters
+    # Extra required information. Please read the guide at
+    # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+    # to know how to obtain these required parameters.
     TKR_VERSION = var.tkr_version
-    OS_INFO     = var.os_info
     TKGVERSION  = var.tkg_version
   })
 }
 
-data "vcd_rde_type" "capvcdcluster_type" {
-  vendor  = "vmware"
-  nss     = "capvcdCluster"
-  version = var.capvcd_rde_version
-}
-
+# This is the RDE that manages the TKGm cluster.
 resource "vcd_rde" "k8s_cluster_instance" {
   name               = var.k8s_cluster_name
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
@@ -87,6 +103,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
     default_storage_class_storage_profile       = var.default_storage_class_storage_profile
     default_storage_class_delete_reclaim_policy = var.default_storage_class_delete_reclaim_policy
 
+    # Insert the rendered CAPVCD YAML here. Notice that we need to escape special characters.
     capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
 
     delete                = false # Make this true to delete the cluster
@@ -95,6 +112,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
   })
 }
 
+# Some useful outputs to monitor TKGm cluster creation process.
 output "computed_k8s_cluster_id" {
   value = vcd_rde.k8s_cluster_instance.id
 }

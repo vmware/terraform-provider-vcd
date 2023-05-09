@@ -25,7 +25,7 @@ k8s_cluster_name = "example1"
 cluster_organization     = "tenant_org"
 cluster_vdc              = "tenant_vdc"
 cluster_routed_network   = "tenant_net_routed"
-cluster_author_api_token = "change-me"
+cluster_author_api_token = "change-me" # You can create this token logged as the cluster author user configured above, in its Preferences.
 ssh_public_key           = ""
 
 # Specifies the number of VMs that the TKGm cluster will have.
@@ -51,11 +51,10 @@ tkgm_ova     = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5
 pod_cidr     = "100.96.0.0/11"
 service_cidr = "100.64.0.0/13"
 
-# Extra required information. You can visit
-# https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html
-# to obtain these required parameters.
+# Extra required information. Please read the guide at
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# to know how to obtain these required parameters.
 tkr_version = "v1.22.9---vmware.1-tkg.1"
-os_info     = "ubuntu,20.04,amd64"
 tkg_version = "v1.5.4"
 
 # Configures a default Storage class for the TKGm cluster. If you don't want this,

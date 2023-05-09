@@ -447,7 +447,6 @@ metadata:
     tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
   annotations: # This `annotations` block should be added, with these two sub-items
-    osInfo: ${OS_INFO}
     TKGVERSION: ${TKGVERSION}
 # ...
 ```
@@ -471,8 +470,8 @@ metadata:
   - `VCD_PASSWORD_B64`: (**Discouraged in favor of `VCD_REFRESH_TOKEN_B64`**) The password of the user above.
     It must be encoded in Base64. Please do **not** use this value (by setting it to `""`) and use `VCD_REFRESH_TOKEN_B64` instead.
   - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
-    in the top right, then go to the API tokens section, add a new one. Or you can visit `/provider/administration/settings/user-preferences`
-    at your VCD URL logged in as the target user. It must be encoded in Base64.
+    in the top right, then go to the API tokens section, add a new one. Or you can visit `/tenant/<YOUR-TENANT-NAME>/administration/settings/user-preferences`
+    at your VCD URL logged in as the target user in your desired tenant. It must be encoded in Base64.
   - `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm control plane nodes.
   - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
   - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.
@@ -489,17 +488,22 @@ metadata:
   - `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
   - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
 
-  There are three additional variables that we added manually. To know their values, you can read [this article](https://blogs.vmware.com/cloudprovider/2023/02/api-guide-for-tanzu-kubernetes-clusters-for-vmware-cloud-director.html).
-  In summary, there's a relation between the chosen TKGm OVA and the values `TKR_VERSION`, `OS_INFO` and `TKGVERSION`.
-  In the article it explains how to obtain their values. For example, for the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933` TKGm OVA,
-  they would be:
-  
-  ```
-  TKR_VERSION = "v1.22.9---vmware.1-tkg.1"
-  OS_INFO     = "ubuntu,20.04,amd64"
-  TKGVERSION  = "v1.5.4"
-  ```
-  
+  There are three additional variables that we added manually: `TKR_VERSION` and `TKGVERSION`.
+  To know their values, you can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
+  or check the following table that gives some script outputs for you:
+
+| OVA name                                                 | TKR_VERSION               | TKGVERSION |
+|----------------------------------------------------------|---------------------------|------------|
+| v1.19.16+vmware.1-tkg.2-fba68db15591c15fcd5f26b512663a42 | v1.19.16---vmware.1-tkg.2 | v1.4.3     |
+| v1.20.14+vmware.1-tkg.2-5a5027ce2528a6229acb35b38ff8084e | v1.20.14---vmware.1-tkg.2 | v1.4.3     |
+| v1.20.15+vmware.1-tkg.2-839faf7d1fa7fa356be22b72170ce1a8 | v1.20.15---vmware.1-tkg.2 | v1.5.4     |
+| v1.21.8+vmware.1-tkg.2-ed3c93616a02968be452fe1934a1d37c  | v1.21.8---vmware.1-tkg.2  | v1.4.3     |
+| v1.21.11+vmware.1-tkg.2-d788dbbb335710c0a0d1a28670057896 | v1.21.11---vmware.1-tkg.2 | v1.5.4     |
+| v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933  | v1.22.9---vmware.1-tkg.1  | v1.5.4     |
+| v1.22.13+vmware.1-tkg.2-ea08b304658a6cf17f5e74dc0ab7544f | v1.22.13---vmware.1-tkg.1 | v1.6.1     |
+| v1.21.14+vmware.2-tkg.5-d793afae5aa18e50bd9175e339904496 | v1.21.14---vmware.2-tkg.5 | v1.6.1     |
+| v1.23.10+vmware.1-tkg.2-b53d41690f8742e7388f2c553fd9a181 | v1.23.10---vmware.1-tkg.1 | v1.6.1     |
+
 In [the TKGm cluster creation example][cluster], the built-in Terraform function `templatefile` is used to substitute every placeholder
 mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be set in the `capi_yaml` placeholder in the
 JSON template.

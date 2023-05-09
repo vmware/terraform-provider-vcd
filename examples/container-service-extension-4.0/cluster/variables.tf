@@ -149,10 +149,6 @@ variable "tkr_version" {
   description = "String that defines the Tanzu Kubernetes release version inside the CAPVCD YAML template"
 }
 
-variable "os_info" {
-  description = "String that defines the OS information inside the CAPVCD YAML template"
-}
-
 variable "tkg_version" {
   description = "String that defines the TKG version inside the CAPVCD YAML template"
 }
