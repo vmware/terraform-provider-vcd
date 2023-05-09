@@ -106,10 +106,13 @@ func TestAccVcdNsxtEdgeDhcpForwarding(t *testing.T) {
 }
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingData = `
+data "vcd_org_vdc" "{{.NsxtVdc}}" {
+  name = "{{.NsxtVdc}}"		
+}
+	
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.EdgeGw}}"
+  owner_id = data.vcd_org_vdc.{{.NsxtVdc}}.id
+  name     = "{{.EdgeGw}}"
 }
 `
 

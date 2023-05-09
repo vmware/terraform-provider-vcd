@@ -31,8 +31,6 @@ func TestAccVcdDataSourceNsxtEdgeDhcpForwarding(t *testing.T) {
 		"NsxtEdgeGwInVdcGroup": testConfig.Nsxt.VdcGroupEdgeGateway,
 		"NsxtEdgeGw":           testConfig.Nsxt.EdgeGateway,
 		"TestName":             t.Name(),
-
-		"Tags": "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
 

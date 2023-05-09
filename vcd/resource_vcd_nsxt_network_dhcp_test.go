@@ -98,7 +98,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
 			{
 				Config:   configText3,
@@ -205,15 +205,17 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 }
 
 const testAccRoutedNetDhcpConfig = `
+data "vcd_org_vdc" "{{.NsxtVdc}}" {
+  name = "{{.NsxtVdc}}"		
+}
+	
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.EdgeGw}}"
+  org      = "{{.Org}}"
+  owner_id = data.vcd_org_vdc.{{.NsxtVdc}}.id
+  name     = "{{.EdgeGw}}"
 }
 
 resource "vcd_network_routed_v2" "net1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
   name = "{{.NetworkName}}"
 
   description = "NSX-T routed network for DHCP testing"
