@@ -388,12 +388,12 @@ That is, CSE Server should be up and running and all elements must be working.
 section to understand how it works.
 
 To be able to create a TKGm cluster, one needs to prepare a [`vcd_rde`][rde] resource. In the [proposed example][cluster],
-this RDE is named `k8s_cluster_instance`. The important arguments to notice in the resource are:
+this RDE is named `k8s_cluster_instance`. The important arguments to take into account are:
 
-- **`resolve` must be always `false`**, because is the CSE Server the one in charge of performing the RDE resolution when the
+- **`resolve` must be always `false`**, because the CSE Server is the responsible for performing the RDE resolution when the
   TKGm cluster is completely provisioned, so Terraform should not interfere with this process.
 - **`resolve_on_removal` must be always `true`**, because the RDE is resolved by the CSE Server and not by Terraform. If one
-  wants to execute a Terraform destroy without the RDE being resolved, the operation will fail. Being true assures that Terraform
+  wants to execute a Terraform destroy without the RDE being resolved, the operation will fail. Being `true` assures that Terraform
   can perform a Terraform destroy in every case.
 
 The [`vcd_rde`][rde] argument `input_entity` is taking the output of the Terraform built-in function `templatefile`, that references
@@ -442,11 +442,11 @@ kind: Cluster
 metadata:
   name: ${CLUSTER_NAME}
   namespace: ${TARGET_NAMESPACE}
-  labels: # This `labels` block should be added, with its sub-items
+  labels: # This `labels` block should be added, with its nested elements
     cluster-role.tkg.tanzu.vmware.com/management: ""
     tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
-  annotations: # This `annotations` block should be added, with these two sub-items
+  annotations: # This `annotations` block should be added, with its nested element
     TKGVERSION: ${TKGVERSION}
 # ...
 ```

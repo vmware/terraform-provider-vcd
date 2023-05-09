@@ -81,6 +81,7 @@ locals {
   })
 }
 
+
 # This is the RDE that manages the TKGm cluster.
 resource "vcd_rde" "k8s_cluster_instance" {
   name               = var.k8s_cluster_name
@@ -118,9 +119,11 @@ output "computed_k8s_cluster_id" {
 }
 
 output "computed_k8s_cluster_status" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"]
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"] ?
+    jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["state"] : null
 }
 
 output "computed_k8s_cluster_events" {
-  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"]
+  value = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"] ?
+    jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)["status"]["vcdKe"]["eventSet"] : null
 }
