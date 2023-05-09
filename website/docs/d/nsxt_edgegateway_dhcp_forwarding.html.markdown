@@ -37,7 +37,8 @@ data "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
 
 The following arguments are supported:
 
-* `org` - (Required) Org in which the NSX-T Edge Gateway is located
+* `org` - (Optional) Org in which the NSX-T Edge Gateway is located, required
+  if not set in the provider section.
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
 
 ## Attribute Reference

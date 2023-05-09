@@ -16,7 +16,7 @@ func TestAccVcdNsxtEdgeDhcpForwarding(t *testing.T) {
 	// Requires VCD 10.3.1+
 	vcdClient := createTemporaryVCDConnection(true)
 	if vcdClient == nil {
-		t.Skip(acceptanceTestsSkipped)
+		t.Skipf(t.Name() + " requires a connection to set the tests")
 	}
 
 	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {

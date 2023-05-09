@@ -44,7 +44,8 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
 
 The following arguments are supported:
 
-* `org` - (Optional) Org in which the NSX-T Edge Gateway is located
+* `org` - (Optional) Org in which the NSX-T Edge Gateway is located, required
+  if not set in the provider section.
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
 * `enabled` - (Required) DHCP Forwarding status. **If set to false, 
   currently set DHCP servers won't be removed, which will result in an inconsistent plan** 
@@ -55,14 +56,32 @@ The following arguments are supported:
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T Edge Gateway DHCP forwarding configuration can be [imported][docs-import] into this
-resource via supplying path for it. An example is below:
 
-[docs-import]: https://www.terraform.io/docs/import/
+An existing Edge Gateway DHCP forwarding configuration can be 
+[imported][docs-import] into a resource via supplying the 
+full dot separated path. For example: 
+
+```hcl
+resource "vcd_nsxt_edgegateway_dhcp_forwarding" "imported" {
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  enabled = "true"
+  dhcp_servers = [
+    "192.168.0.2",
+  ]
+}
+```
+
+You can import such configuration into terraform state using this command
 
 ```
 terraform import vcd_nsxt_edgegateway_dhcp_forwarding.imported my-org.nsxt-vdc.nsxt-edge
 ```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+[docs-import]: https://www.terraform.io/docs/import/
+
 
 The above would import the `nsxt-edge` Edge Gateway DHCP forwarding configuration for this particular
 Edge Gateway.
