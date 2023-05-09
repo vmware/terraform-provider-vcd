@@ -234,7 +234,6 @@ resource "vcd_network_routed_v2" "net1" {
 
 const testAccRoutedNetDhcpStep1 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
@@ -248,7 +247,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
@@ -269,7 +267,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep3 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
@@ -324,7 +321,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding2" {
 
 const testAccRoutedNetDhcpStep4 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
   org_network_id = vcd_network_routed_v2.net1.id
@@ -621,7 +617,6 @@ resource "vcd_network_isolated_v2" "net1" {
 
 const testAccRoutedNetDhcpIsolatedStep1 = testAccRoutedNetDhcpIsolated + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
   vdc  = vcd_org_vdc.with-edge-cluster.name
 
   org_network_id      = vcd_network_isolated_v2.net1.id
@@ -635,8 +630,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
-  org  = "{{.Org}}"
-
   # org_network_id = vcd_network_routed_v2.net1.id
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
@@ -648,8 +641,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org  = "{{.Org}}"
-
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created
   org_network_id = vcd_nsxt_network_dhcp.pools.id
