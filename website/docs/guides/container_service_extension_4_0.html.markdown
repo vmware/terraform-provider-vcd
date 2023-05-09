@@ -387,17 +387,17 @@ That is, CSE Server should be up and running and all elements must be working.
 -> You can have a look at a working example of a TKGm cluster [here][cluster]. It is encouraged to read the following
 section to understand how it works.
 
-To be able to create a TKGm cluster, one needs to prepare a [`vcd_rde`][rde] resource with the JSON template that
-you can find [here][tkgmcluster_template]. In the [proposed example][cluster], the RDE is `k8s_cluster_instance`. The important
-arguments to notice in the resource are:
+To be able to create a TKGm cluster, one needs to prepare a [`vcd_rde`][rde] resource. In the [proposed example][cluster],
+this RDE is named `k8s_cluster_instance`. The important arguments to notice in the resource are:
 
 - **`resolve` must be always `false`**, because is the CSE Server the one in charge of performing the RDE resolution when the
   TKGm cluster is completely provisioned, so Terraform should not interfere with this process.
-- **`resolve_on_removal` must be always `true`**, because the RDE is resolved by the CSE Server and not Terraform, if one
+- **`resolve_on_removal` must be always `true`**, because the RDE is resolved by the CSE Server and not by Terraform. If one
   wants to execute a Terraform destroy without the RDE being resolved, the operation will fail. Being true assures that Terraform
   can perform a Terraform destroy in every case.
 
-The `input_entity` takes the output of the Terraform built-in function `templatefile`, so we can change the JSON template placeholders
+The [`vcd_rde`][rde] argument `input_entity` is taking the output of the Terraform built-in function `templatefile`, that references
+a JSON template that you can find [here][tkgmcluster_template]. It is needed to change the JSON template placeholders
 with the correct values:
 
 - `vcd_url`: The VCD URL, the same that was used during CSE installation.
@@ -407,7 +407,7 @@ with the correct values:
   "Tenant Organization" during CSE installation phase.
 - `vdc`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
   "Tenant VDC" during CSE installation phase.
-- `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML that will be explained below.
+- `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML, that will be explained next.
 - `delete`: This is used to delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
   During creation it should be always `false`.
 - `force_delete`: This is used to forcefully delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
@@ -505,7 +505,7 @@ mentioned above with its final value. The returned value is the CAPVCD YAML payl
 JSON template.
 
 ~> Notice that we need to replace `\n` with `\\n` to avoid breaking the JSON contents when the YAML is set, and also `\"` to `\\\"` for
-the same reason. This is also done in [the TKGm cluster creation example][cluster].
+the same reason. This is also done in [the mentioned example][cluster].
 
 When you have set all the required values, a `terraform apply` should trigger a TKGm cluster creation. The operation is asynchronous, meaning that
 you need to monitor the RDE `computed_entity` value to see the status of the cluster provisioning. Some interesting output examples:
@@ -522,8 +522,8 @@ output "computed_k8s_cluster_events" {
 }
 ```
 
-When the status displayed by `computed_k8s_cluster_status` is `provisioned`, it will mean that the Kubeconfig will be available.
-You can retrieve it with:
+When the status displayed by `computed_k8s_cluster_status` is `provisioned`, it will mean that the TKGm cluster is successfully provisioned and
+the Kubeconfig is available and ready to use. You can retrieve it with:
 
 ```hcl
 output "kubeconfig" {
