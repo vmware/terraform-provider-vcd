@@ -501,8 +501,11 @@ metadata:
   ```
   
 In [the TKGm cluster creation example][cluster], the built-in Terraform function `templatefile` is used to substitute every placeholder
-mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be sent in the `capiYaml` property in the RDE
-JSON.
+mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be set in the `capi_yaml` placeholder in the
+JSON template.
+
+~> Notice that we need to replace `\n` with `\\n` to avoid breaking the JSON contents when the YAML is set, and also `\"` to `\\\"` for
+the same reason. This is also done in [the TKGm cluster creation example][cluster].
 
 ### Updating a Kubernetes cluster
 
