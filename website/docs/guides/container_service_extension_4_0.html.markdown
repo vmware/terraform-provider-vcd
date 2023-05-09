@@ -558,13 +558,11 @@ to modify, and place the final result inside `input_entity`. Then, you can apply
 the RDE contents (which is reflected in the `computed_entity` attribute) that were not in the original JSON payload.
 If this information is not sent back, the cluster will become unusable.
 
-#### Resize a cluster
+Upgradeable items:
 
-TBD
-
-#### Upgrade a cluster
-
-TBD
+- TKGm OVA: If you have a newer version of TKGm, you can modify the referenced OVA.
+- Number of worker nodes. Remember this must be higher than 0.
+- Number of control plane nodes. Remember this must be an odd number and higher than 0.
 
 ### Deleting a Kubernetes cluster
 
