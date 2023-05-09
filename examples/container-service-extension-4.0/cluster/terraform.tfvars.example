@@ -33,12 +33,12 @@ control_plane_machine_count = "3" # MUST be an odd number and higher than 0
 worker_machine_count        = "1" # MUST higher than 0
 
 # Control plane dimensioning.
-control_plane_sizing_policy    = "TKG Small"
+control_plane_sizing_policy    = "TKG small"
 control_plane_placement_policy = ""
 control_plane_storage_profile  = "*"
 
 # Worker dimensioning.
-worker_sizing_policy    = "TKG Small"
+worker_sizing_policy    = "TKG small"
 worker_placement_policy = ""
 worker_storage_profile  = "*"
 
