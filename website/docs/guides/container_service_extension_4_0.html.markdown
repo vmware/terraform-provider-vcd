@@ -451,6 +451,34 @@ metadata:
 # ...
 ```
 
+- The downloaded template has a single worker pool. If you need to have **more than one worker pool**, you need
+  to duplicate the `VCDMachineTemplate`, `KubeadmConfigTemplate` and `MachineDeployment` objects. These look like this:
+
+```yaml
+# ...
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+# ...
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+  namespace: ${TARGET_NAMESPACE}
+# ...
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+  namespace: ${TARGET_NAMESPACE}
+```
+
+  To add extra worker pools, you need to duplicate these blocks and name them `${CLUSTER_NAME}-md-1`, `${CLUSTER_NAME}-md-2`, etc.
+  If you want to specify different number of worker nodes per worker pool, you need to modify the original template, otherwise
+  they will share the `${WORKER_MACHINE_COUNT}` placeholder. Same happens with the VM Sizing Policy, VM Placement Policy and Storage Profile.
+  See the explanation below for each placeholder to better understand how to adjust it.
+
 - Now that the YAML template is ready, one needs to understand the meaning of all the placeholders.
   Below is the explanation of each one of them, you can also check [the working example][cluster] to observe the final result.
 
