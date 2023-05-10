@@ -184,3 +184,66 @@ spec:
         name: ${CLUSTER_NAME}-md-0
         namespace: ${TARGET_NAMESPACE}
       version: v1.22.9+vmware.1
+---
+# Extra worker node pool. The three blocks below were added manually. The name on each kind of object is different
+# from the original pool.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-1
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      catalog: ${VCD_CATALOG}
+      template: ${VCD_TEMPLATE_NAME}
+      sizingPolicy: ${VCD_WORKER_SIZING_POLICY}
+      placementPolicy: ${VCD_WORKER_PLACEMENT_POLICY}
+      storageProfile: "${VCD_WORKER_STORAGE_PROFILE}"
+      diskSize: ${DISK_SIZE}
+      enableNvidiaGPU: false
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-1
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - "${SSH_PUBLIC_KEY}"
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${CLUSTER_NAME}-md-1
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  clusterName: ${CLUSTER_NAME}
+  replicas: ${WORKER_MACHINE_COUNT}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: ${CLUSTER_NAME}-md-1
+          namespace: ${TARGET_NAMESPACE}
+      clusterName: ${CLUSTER_NAME}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VCDMachineTemplate
+        name: ${CLUSTER_NAME}-md-1
+        namespace: ${TARGET_NAMESPACE}
+      version: v1.22.9+vmware.1
