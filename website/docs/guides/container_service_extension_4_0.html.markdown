@@ -374,12 +374,12 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 ```
 
-## TKGm clusters operations
+## Working with Kubernetes clusters
 
-This section explains how to perform CRUD (Create, Read, Update and Delete) operations with TKGm clusters using
-Terraform. We will use the [`vcd_rde`][rde] resource for this purpose.
+This section explains how to create, update and delete TKGm clusters using Terraform.
+We will use the [`vcd_rde`][rde] resource for this purpose.
 
-~> This section assumes that your CSE installation was done following the [section above](#installation-process).
+-> This section assumes that your CSE installation was done following the [section above](#installation-process).
 That is, CSE Server should be up and running and all elements must be working.
 
 ### Creating a Kubernetes cluster
