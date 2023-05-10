@@ -450,9 +450,9 @@ metadata:
 # ...
 ```
 
-- The downloaded template has a single worker pool. If you need to have **more than one worker pool**, you need
-  to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and `MachineDeployment`. In your downloaded
-  template, they look like this:
+- The downloaded template has a single worker pool (to see an example with **two** worker pools, please check the [proposed example][cluster]).
+  If you need to have **more than one worker pool**, you need to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and
+  `MachineDeployment`. In the downloaded template, they look like this:
 
 ```yaml
 # ...
