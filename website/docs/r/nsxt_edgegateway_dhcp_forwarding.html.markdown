@@ -63,6 +63,7 @@ full dot separated path. For example:
 
 ```hcl
 resource "vcd_nsxt_edgegateway_dhcp_forwarding" "imported" {
+  org             = "my-org"
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
 
   enabled = "true"
@@ -73,15 +74,13 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "imported" {
 ```
 
 You can import such configuration into terraform state using this command
-
 ```
 terraform import vcd_nsxt_edgegateway_dhcp_forwarding.imported my-org.nsxt-vdc.nsxt-edge
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
-[docs-import]: https://www.terraform.io/docs/import/
-
-
 The above would import the `nsxt-edge` Edge Gateway DHCP forwarding configuration for this particular
 Edge Gateway.
+
+[docs-import]: https://www.terraform.io/docs/import/
