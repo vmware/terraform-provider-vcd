@@ -109,14 +109,14 @@ resource "vcd_rde" "k8s_cluster_instance" {
 
     delete                = false # Make this true to delete the cluster
     force_delete          = false # Make this true to forcefully delete the cluster
-    auto_repair_on_errors = false  # Change this to true if you don't need to troubleshoot possible issues
+    auto_repair_on_errors = false # Change this to true if you don't need to troubleshoot possible issues
   })
 }
 
 # Some useful outputs to monitor TKGm cluster creation process.
 locals {
-  k8s_cluster_computed = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
-  has_status = lookup(local.k8s_cluster_computed, "status", null) != null
+  k8s_cluster_computed       = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
+  has_status                 = lookup(local.k8s_cluster_computed, "status", null) != null
   is_k8s_cluster_provisioned = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] == "provisioned" ? lookup(local.k8s_cluster_computed["status"], "capvcd", null) != null : false : false
 }
 output "computed_k8s_cluster_status" {

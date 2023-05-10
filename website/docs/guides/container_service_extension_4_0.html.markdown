@@ -547,7 +547,7 @@ you need to monitor the RDE `computed_entity` value to see the status of the clu
 ```hcl
 locals {
   k8s_cluster_computed = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
-  has_status = lookup(local.k8s_cluster_computed, "status", null) != null
+  has_status           = lookup(local.k8s_cluster_computed, "status", null) != null
 }
 
 # Outputs the TKGm Cluster creation status
