@@ -394,7 +394,7 @@ this RDE is named `k8s_cluster_instance`. The important arguments to take into a
   TKGm cluster is completely provisioned, so Terraform should not interfere with this process.
 - **`resolve_on_removal` must be always `true`**, because the RDE is resolved by the CSE Server and not by Terraform. If one
   wants to execute a Terraform destroy without the RDE being resolved, the operation will fail. Being `true` assures that Terraform
-  can perform a Terraform destroy in every case.
+  can perform a Terraform destroy in every case. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
 
 The [`vcd_rde`][rde] argument `input_entity` is taking the output of the Terraform built-in function `templatefile`, that references
 a JSON template that you can find [here][tkgmcluster_template]. It is needed to change the JSON template placeholders
@@ -412,7 +412,7 @@ with the correct values:
   During creation it should be always `false`.
 - `force_delete`: This is used to forcefully delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
   During creation it should be always `false`.
-- `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to constantly try to repair the TKGm cluster on any error. You can change
+- `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to repair the TKGm cluster on errors. You can change
   this to `false` if you want to troubleshoot any error by yourself.
 
 The following four placeholders are **only** needed if you want to provide a default storage class with your TKGm cluster.
@@ -433,8 +433,7 @@ created. In order to craft it, we need to follow these steps:
 
 - This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
   `annotations`, that are required by the CSE Server to be able to provision the cluster correctly. In other words, **cluster creation will fail
-  if these are not added**.
-  You can find these extra items in the snippet displayed below:
+  if these are not added**:
 
 ```yaml
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -452,7 +451,8 @@ metadata:
 ```
 
 - The downloaded template has a single worker pool. If you need to have **more than one worker pool**, you need
-  to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and `MachineDeployment`. These look like this:
+  to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and `MachineDeployment`. In your downloaded
+  template, they look like this:
 
 ```yaml
 # ...
@@ -474,10 +474,11 @@ metadata:
   namespace: ${TARGET_NAMESPACE}
 ```
 
-  To add an extra worker pool, you need to duplicate these blocks and name them differently, for example `name: ${CLUSTER_NAME}-md-1`.
+  Notice that the default worker pool is named `${CLUSTER_NAME}-md-0`. To add an extra one, you need to duplicate these
+  blocks and name them differently, for example `name: ${CLUSTER_NAME}-md-1`.
   If you want to specify a different number of worker nodes per worker pool, you need to modify the original template, otherwise
   they will share the `${WORKER_MACHINE_COUNT}` placeholder located in the `MachineDeployment` object.
-  The same happens with the VM Sizing Policy, VM Placement Policy and Storage Profile.
+  The same happens with the **VM Sizing Policy, VM Placement Policy and Storage Profile**.
   See the explanation below for every placeholder to better understand how to adjust them.
 
 - Now that the YAML template is ready, one needs to understand the meaning of all the placeholders.
@@ -608,7 +609,10 @@ and `forceDelete` respectively.
 - Setting also `force_delete = true` will force the CSE Server to delete the cluster, and their associated resources
   that are not fully complete and that are in an unremovable state.
 
-You can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
+Follow the instructions described in ["Updating a Kubernetes cluster"](#updating-a-kubernetes-cluster) to learn how to perform
+the update of these two properties.
+
+Once updated, you can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
 ask for creation again. You can now remove it from the HCL configuration.
 
 ## Uninstall CSE
