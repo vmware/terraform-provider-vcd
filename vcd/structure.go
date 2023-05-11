@@ -112,27 +112,12 @@ func addrOf[T any](variable T) *T {
 	return &variable
 }
 
-// takeBoolPointer accepts a boolean and returns a pointer to this value.
-func takeBoolPointer(value bool) *bool {
-	return &value
-}
-
-// takeIntPointer accepts an int and returns a pointer to this value.
-func takeIntPointer(x int) *int {
-	return &x
-}
-
 // stringPtrOrNil takes a string and returns a pointer to it, but if the string is empty, returns nil
 func stringPtrOrNil(s string) *string {
 	if s == "" {
 		return nil
 	}
 	return &s
-}
-
-// takeInt64Pointer accepts an int64 and returns a pointer to this value.
-func takeInt64Pointer(x int64) *int64 {
-	return &x
 }
 
 // getStringAttributeAsPointer returns a pointer to the value of the given attribute from the current resource data.

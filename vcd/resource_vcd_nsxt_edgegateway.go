@@ -795,7 +795,7 @@ func getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d *schema.ResourceData) []
 		}
 
 		singleSubnet.AutoAllocateIPRanges = true // required for allocated_ip_count
-		singleSubnet.TotalIPCount = takeIntPointer(subnetMap["allocated_ip_count"].(int))
+		singleSubnet.TotalIPCount = addrOf(subnetMap["allocated_ip_count"].(int))
 
 		subnetSlice[index] = singleSubnet
 	}

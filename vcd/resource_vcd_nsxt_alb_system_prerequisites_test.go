@@ -152,8 +152,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	serviceEngineGroupAssignmentConfig := &types.NsxtAlbServiceEngineGroupAssignment{
 		GatewayRef:            &types.OpenApiReference{ID: nsxtEdge.EdgeGateway.ID},
 		ServiceEngineGroupRef: &types.OpenApiReference{ID: createdSeGroup.NsxtAlbServiceEngineGroup.ID},
-		MaxVirtualServices:    takeIntPointer(89),
-		MinVirtualServices:    takeIntPointer(20),
+		MaxVirtualServices:    addrOf(89),
+		MinVirtualServices:    addrOf(20),
 	}
 	serviceEngineGroupAssignment, err := vcdClient.CreateAlbServiceEngineGroupAssignment(serviceEngineGroupAssignmentConfig)
 	if err != nil {
