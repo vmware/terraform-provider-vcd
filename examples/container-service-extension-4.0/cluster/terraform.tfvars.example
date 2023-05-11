@@ -52,7 +52,7 @@ pod_cidr     = "100.96.0.0/11" # Specifies the IPs that the Kubernetes Pods will
 service_cidr = "100.64.0.0/13" # Specifies the IPs that the Kubernetes Services will use
 
 # Extra required information. Please read the guide at
-# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
 # to know how to obtain these required parameters.
 tkr_version = "v1.22.9---vmware.1-tkg.1"
 tkg_version = "v1.5.4"
