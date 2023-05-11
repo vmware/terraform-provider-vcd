@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.0 installation, step 2:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container-service-extension-4.0-install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 #   before applying this configuration.
 #
 # * Please apply "3.9-cse-4.0-install-step1.tf" first, located at

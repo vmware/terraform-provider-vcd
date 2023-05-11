@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.0 TKGm cluster creation:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container-service-extension-4.0-install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 #   before applying this configuration.
 #
 # * Please be sure that you have CSE v4.0 installed in your VCD appliance and the CSE Server is correctly running.
@@ -74,7 +74,7 @@ locals {
     SERVICE_CIDR = var.service_cidr
 
     # Extra required information. Please read the guide at
-    # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container-service-extension-4.0-install
+    # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
     # to know how to obtain these required parameters.
     TKR_VERSION = var.tkr_version
     TKGVERSION  = var.tkg_version
