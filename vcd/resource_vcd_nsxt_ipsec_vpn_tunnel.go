@@ -424,7 +424,7 @@ func resourceVcdNsxtIpSecVpnTunnelDelete(_ context.Context, d *schema.ResourceDa
 
 	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel delete] %s", err)
 	}
 
 	defer unlock()

@@ -10,7 +10,7 @@ description: |-
 
 Supported in provider *v3.10+* and VCD 10.3.1+ with NSX-T.
 
-Provides a data source to manage NSX-T Edge Gateway DHCP forwarding configuration.
+Provides a data source to read NSX-T Edge Gateway DHCP forwarding configuration.
 
 ## Example Usage
 
@@ -39,10 +39,10 @@ The following arguments are supported:
 
 * `org` - (Optional) Org in which the NSX-T Edge Gateway is located, required
   if not set in the provider section.
-* `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
+* `edge_gateway_id` - (Required) NSX-T Edge Gateway ID.
 
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_edgegateway_rate_limiting`](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway_rate_limiting)
+[`vcd_nsxt_edgegateway_dhcp_forwarding`](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway_dhcp_forwarding)
 resource are available.

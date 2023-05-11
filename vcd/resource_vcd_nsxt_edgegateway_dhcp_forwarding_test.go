@@ -119,7 +119,7 @@ data "vcd_nsxt_edgegateway" "existing" {
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep1 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
 resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-  enabled      = "true"
+  enabled      = true
   dhcp_servers = [
     "1.2.3.4", 
   ]
@@ -129,7 +129,7 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep2 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
 resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-  enabled      = "true"
+  enabled      = true
   dhcp_servers = [
     "1.2.3.4", 
     "fe80::aaaa",
@@ -142,7 +142,7 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep3 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
 resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-  enabled      = "false"
+  enabled      = false
   dhcp_servers = [
     "1.2.3.4",
     "fe80::aaaa",
@@ -156,7 +156,7 @@ const testAccVcdNsxtEdgegatewayDhcpForwardingStep4 = testAccVcdNsxtEdgegatewayDh
 resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  enabled      = "true"
+  enabled      = true
   dhcp_servers = [
     "1.2.3.4", 
     "fe80::aaaa",

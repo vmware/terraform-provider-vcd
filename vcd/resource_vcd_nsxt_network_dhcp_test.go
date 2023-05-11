@@ -834,7 +834,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 const testAccRoutedNetRelayDhcpStep1 = testAccRoutedNetDhcpConfig + `
  resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
    edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-   enabled      = "true"
+   enabled      = true
    dhcp_servers = [
      "1.2.3.4", 
    ]
