@@ -22,7 +22,6 @@ func TestAccVcdOpenApiDhcpNsxtRoutedDS(t *testing.T) {
 	// String map to fill the template
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"VdcGroup":    testConfig.Nsxt.VdcGroup,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
