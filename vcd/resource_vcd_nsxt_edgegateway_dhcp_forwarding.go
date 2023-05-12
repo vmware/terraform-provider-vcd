@@ -14,8 +14,8 @@ import (
 
 func resourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate,
-		UpdateContext: resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate,
+		CreateContext: resourceVcdNsxtEdgegatewayDhcpForwardingCreate,
+		UpdateContext: resourceVcdNsxtEdgegatewayDhcpForwardingUpdate,
 		ReadContext:   resourceVcdNsxtEdgegatewayDhcpForwardingRead,
 		DeleteContext: resourceVcdNsxtEdgegatewayDhcpForwardingDelete,
 		Importer: &schema.ResourceImporter{
@@ -55,12 +55,20 @@ func resourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 	}
 }
 
-func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtEdgegatewayDhcpForwardingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx, d, meta, "create")
+}
+
+func resourceVcdNsxtEdgegatewayDhcpForwardingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx, d, meta, "update")
+}
+
+func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, method string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding create/update] %s", err)
+		return diag.Errorf("[DHCP forwarding %s] %s", method, err)
 	}
 
 	defer unlock()
@@ -70,7 +78,7 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding create/update] error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[DHCP forwarding %s] error retrieving Edge Gateway: %s", method, err)
 	}
 
 	dhcpForwardingConfig := &types.NsxtEdgeGatewayDhcpForwarder{
@@ -80,7 +88,7 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d
 
 	_, err = nsxtEdge.UpdateDhcpForwarder(dhcpForwardingConfig)
 	if err != nil {
-		return diag.Errorf("[DHCP forwarding create/update] error updating DHCP forwarding configuration: %s", err)
+		return diag.Errorf("[DHCP forwarding %s] error updating DHCP forwarding configuration: %s", method, err)
 	}
 
 	d.SetId(edgeGatewayId)
