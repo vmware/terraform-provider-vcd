@@ -234,8 +234,6 @@ resource "vcd_network_routed_v2" "net1" {
 
 const testAccRoutedNetDhcpStep1 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  vdc = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   
   pool {
@@ -247,8 +245,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  vdc = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   mode           = "EDGE"
   lease_time     = 4294967295 # maximum allowed lease time in seconds (~49 days)
@@ -267,8 +263,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep3 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  vdc = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   
   pool {
@@ -285,8 +279,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
-  org = "{{.Org}}"
-
   # org_network_id = vcd_network_routed_v2.net1.id
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
@@ -298,8 +290,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org = "{{.Org}}"
-
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created
   org_network_id = vcd_nsxt_network_dhcp.pools.id
@@ -321,8 +311,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding2" {
 
 const testAccRoutedNetDhcpStep4 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  vdc = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   
   pool {
@@ -339,8 +327,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
-  org = "{{.Org}}"
-
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
   name         = "{{.TestName}}-dhcp-binding-1"
@@ -351,8 +337,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org = "{{.Org}}"
-
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created
   org_network_id = vcd_nsxt_network_dhcp.pools.id

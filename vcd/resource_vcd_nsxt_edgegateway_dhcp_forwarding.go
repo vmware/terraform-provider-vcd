@@ -102,10 +102,10 @@ func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.Re
 	if govcd.ContainsNotFound(err) {
 		// When parent Edge Gateway is not found - this resource is also not found and should be
 		// removed from state
-		d.SetId("")
 		if origin == "datasource" {
 			return diag.Errorf("[DHCP forwarding DS read] error retrieving NSX-T Edge Gateway DHCP forwarding: %s", err)
 		}
+		d.SetId("")
 		log.Printf("[DEBUG] Edge gateway no longer exists. Removing from tfstate")
 		return nil
 	}
