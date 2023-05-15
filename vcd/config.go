@@ -376,7 +376,9 @@ func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 }
 
 // lockParentVdcGroupOrEdgeGateway handles lock of parent Edge Gateway or parent VDC group, depending
-// if the parent Edge Gateway is in a VDC or a VDC group
+// if the parent Edge Gateway is in a VDC or a VDC group. Returns a function that contains the needed
+// unlock function, so that it can be deferred and called after the work with the resource has been
+// done.
 func (cli *VCDClient) lockParentVdcGroupOrEdgeGateway(d *schema.ResourceData) (func(), error) {
 	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(cli, d)
 	if err != nil {

@@ -81,19 +81,30 @@ func resourceVcdNsxtEdgegatewayDhcpForwardingCreateUpdate(ctx context.Context, d
 		return diag.Errorf("[DHCP forwarding %s] error retrieving Edge Gateway: %s", method, err)
 	}
 
-	dhcpForwardingConfig := &types.NsxtEdgeGatewayDhcpForwarder{
+	dhcpForwardConfig := &types.NsxtEdgeGatewayDhcpForwarder{
 		Enabled:     d.Get("enabled").(bool),
 		DhcpServers: convertSchemaSetToSliceOfStrings(d.Get("dhcp_servers").(*schema.Set)),
 	}
 
-	_, err = nsxtEdge.UpdateDhcpForwarder(dhcpForwardingConfig)
+	_, err = nsxtEdge.UpdateDhcpForwarder(dhcpForwardConfig)
 	if err != nil {
 		return diag.Errorf("[DHCP forwarding %s] error updating DHCP forwarding configuration: %s", method, err)
 	}
 
 	d.SetId(edgeGatewayId)
 
-	return resourceVcdNsxtEdgegatewayDhcpForwardingRead(ctx, d, meta)
+	var diags diag.Diagnostics
+	if !dhcpForwardConfig.Enabled && d.HasChange("dhcp_servers") {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "DHCP forwarding IP addresses will not be changed if the service is disabled",
+		})
+	}
+
+	// As there may be warnings in the CreateUpdate function, we need to append them
+	// to the read function, as we don't want to exit the program if there is only
+	// a warning.
+	return append(diags, resourceVcdNsxtEdgegatewayDhcpForwardingRead(ctx, d, meta)...)
 }
 
 func resourceVcdNsxtEdgegatewayDhcpForwardingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -134,15 +145,6 @@ func genericVcdNsxtEdgegatewayDhcpForwardingRead(_ context.Context, d *schema.Re
 	err = d.Set("dhcp_servers", convertStringsToTypeSet(dhcpForwardConfig.DhcpServers))
 	if err != nil {
 		return diag.Errorf("error setting dhcp_servers attribute: %s", err)
-	}
-
-	if !dhcpForwardConfig.Enabled {
-		return diag.Diagnostics{
-			diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "DHCP forwarding IP addresses will not be changed if the service is disabled",
-			},
-		}
 	}
 
 	return nil
