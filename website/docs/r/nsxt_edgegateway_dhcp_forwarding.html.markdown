@@ -36,7 +36,7 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
   dhcp_servers = [
     "192.168.0.13",
     "fe80::aaaa",
-  ] 
+  ]
 }
 ```
 
