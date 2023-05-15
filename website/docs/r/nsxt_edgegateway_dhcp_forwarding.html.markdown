@@ -36,7 +36,7 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "testing-in-vdc" {
   dhcp_servers = [
     "192.168.0.13",
     "fe80::aaaa",
-  ]
+  ] 
 }
 ```
 
@@ -47,9 +47,10 @@ The following arguments are supported:
 * `org` - (Optional) Org in which the NSX-T Edge Gateway is located, required
   if not set in the provider section.
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID.
-* `enabled` - (Required) DHCP Forwarding status. **If set to false, 
-  currently set DHCP servers won't be removed, which will result in an inconsistent plan** 
+* `enabled` - (Required) DHCP Forwarding status.
 * `dhcp_servers` - (Required) IP addresses of DHCP servers. Maximum 8 can be specified.
+
+~> If the `enabled` field is set to `false`, modifications to `dhcp_servers` will not have an effect. 
 
 ## Importing
 
