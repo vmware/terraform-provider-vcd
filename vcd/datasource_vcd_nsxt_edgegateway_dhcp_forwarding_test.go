@@ -8,9 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdDataSourceNsxtEdgeRateLimiting is a test for datasource
-// vcd_nsxt_edgegateway_rate_limiting It only check if ingress and egress profile IDs are empty
-// ("unlimited" rate). Other values are tested in resource test.
+// TestAccVcdDataSourceNsxtEdgeDhcpForwarding is a test for datasource
+// vcd_nsxt_edgegateway_dhcp_forwarding It only check if the forwarder is disabled (enabled = false). Other values are tested in resource test.
 func TestAccVcdDataSourceNsxtEdgeDhcpForwarding(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
