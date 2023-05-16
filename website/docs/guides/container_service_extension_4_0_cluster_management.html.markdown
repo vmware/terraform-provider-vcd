@@ -43,8 +43,8 @@ this RDE is named `k8s_cluster_instance`. The important arguments to take into a
   can perform a Terraform destroy in every case. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
 
 The [`vcd_rde`][rde] argument `input_entity` is taking the output of the Terraform built-in function `templatefile`, that references
-a JSON template that you can find [here][tkgmcluster_template]. It is needed to change the JSON template placeholders
-with the correct values:
+a JSON template that you can find [here][tkgmcluster_template]. This function will set the correct values to the following
+placeholders that can be found in that file:
 
 - `vcd_url`: The VCD URL, the same that was used during CSE installation.
 - `name`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
@@ -61,7 +61,7 @@ with the correct values:
 - `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to repair the TKGm cluster on errors. You can change
   this to `false` if you want to troubleshoot any error by yourself.
 
-The following four placeholders are **only** needed if you want to provide a default storage class with your TKGm cluster.
+The following four placeholders are **only needed if you want to provide a default storage class** with your TKGm cluster.
 If you don't need this, please remove the whole `defaultStorageClassOptions` block from the JSON template:
 
 - `default_storage_class_filesystem`: Filesystem for the default storage class. Only `ext4` or `xfs` are valid.
