@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 scripts_dir=$(dirname $0)
 cd $scripts_dir
 scripts_dir=$PWD
