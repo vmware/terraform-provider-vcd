@@ -50,7 +50,7 @@ The following arguments are supported:
 * `enabled` - (Required) DHCP Forwarding status.
 * `dhcp_servers` - (Required) IP addresses of DHCP servers. Maximum 8 can be specified.
 
-~> Modification of the `dhcp_servers` field will not apply when `enabled = false` because VCD API ignores DHCP server changes when DHCP forwarding is disabled.
+~> Modification of the `dhcp_servers` field will not be changed in VCD when `enabled = false` because VCD API ignores DHCP server changes when DHCP forwarding is disabled.
 
 ## Importing
 
