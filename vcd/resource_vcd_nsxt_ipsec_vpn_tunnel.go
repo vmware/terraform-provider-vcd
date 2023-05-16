@@ -641,7 +641,7 @@ func getNsxtIpSecVpnProfileTunnelConfigurationType(d *schema.ResourceData) (*typ
 			EncryptionAlgorithms: convertSchemaSetToSliceOfStrings(tunnelMap["ike_encryption_algorithms"].(*schema.Set)),
 			DigestAlgorithms:     convertSchemaSetToSliceOfStrings(tunnelMap["ike_digest_algorithms"].(*schema.Set)),
 			DhGroups:             convertSchemaSetToSliceOfStrings(tunnelMap["ike_dh_groups"].(*schema.Set)),
-			SaLifeTime:           takeIntPointer(tunnelMap["ike_sa_lifetime"].(int)),
+			SaLifeTime:           addrOf(tunnelMap["ike_sa_lifetime"].(int)),
 		},
 		TunnelConfiguration: types.NsxtIpSecVpnTunnelProfileTunnelConfiguration{
 			PerfectForwardSecrecyEnabled: tunnelMap["tunnel_pfs_enabled"].(bool),
@@ -649,7 +649,7 @@ func getNsxtIpSecVpnProfileTunnelConfigurationType(d *schema.ResourceData) (*typ
 			EncryptionAlgorithms:         convertSchemaSetToSliceOfStrings(tunnelMap["tunnel_encryption_algorithms"].(*schema.Set)),
 			DigestAlgorithms:             convertSchemaSetToSliceOfStrings(tunnelMap["tunnel_digest_algorithms"].(*schema.Set)),
 			DhGroups:                     convertSchemaSetToSliceOfStrings(tunnelMap["tunnel_dh_groups"].(*schema.Set)),
-			SaLifeTime:                   takeIntPointer(tunnelMap["tunnel_sa_lifetime"].(int)),
+			SaLifeTime:                   addrOf(tunnelMap["tunnel_sa_lifetime"].(int)),
 		},
 		DpdConfiguration: types.NsxtIpSecVpnTunnelProfileDpdConfiguration{
 			ProbeInterval: tunnelMap["dpd_probe_internal"].(int),

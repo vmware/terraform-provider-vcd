@@ -3,8 +3,9 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -130,8 +131,8 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 
 	var vmAffinityRuleDef = &types.VmAffinityRule{
 		Name:        name,
-		IsEnabled:   takeBoolPointer(enabled),
-		IsMandatory: takeBoolPointer(required),
+		IsEnabled:   &enabled,
+		IsMandatory: &required,
 		Polarity:    polarity,
 		VmReferences: []*types.VMs{
 			{

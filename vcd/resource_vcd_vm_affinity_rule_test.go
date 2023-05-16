@@ -407,7 +407,7 @@ func makeEmptyVm(vapp *govcd.VApp, name string) (*govcd.VM, error) {
 		SizeMb:            int64(100),
 		BusNumber:         0,
 		UnitNumber:        0,
-		ThinProvisioned:   takeBoolPointer(true),
+		ThinProvisioned:   addrOf(true),
 		OverrideVmDefault: true}
 	requestDetails := &types.RecomposeVAppParamsForEmptyVm{
 		CreateItem: &types.CreateItem{
@@ -416,11 +416,11 @@ func makeEmptyVm(vapp *govcd.VApp, name string) (*govcd.VM, error) {
 			Description:               "created by makeEmptyVm",
 			GuestCustomizationSection: nil,
 			VmSpecSection: &types.VmSpecSection{
-				Modified:          takeBoolPointer(true),
+				Modified:          addrOf(true),
 				Info:              "Virtual Machine specification",
 				OsType:            "debian10Guest",
-				NumCpus:           takeIntPointer(1),
-				NumCoresPerSocket: takeIntPointer(1),
+				NumCpus:           addrOf(1),
+				NumCoresPerSocket: addrOf(1),
 				CpuResourceMhz:    &types.CpuResourceMhz{Configured: 1},
 				MemoryResourceMb:  &types.MemoryResourceMb{Configured: 512},
 				MediaSection:      nil,
