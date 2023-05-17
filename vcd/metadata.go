@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"regexp"
 )
 
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
@@ -191,18 +192,88 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 		return err
 	}
 
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
+	filteredMetadata, err := filterMetadata(d, metadata)
 	if err != nil {
 		return err
 	}
 
-	// Set deprecated metadata attribute, just for compatibility reasons
+	err = setMetadataEntryInState(d, filteredMetadata.MetadataEntry)
+	if err != nil {
+		return err
+	}
+
+	// Set deprecated metadata attribute, just for compatibility reasons.
+	// NOTE: We do not use the filtered metadata here, as one can use the `ignore_changes` lifecycle meta-argument to
+	// achieve this.
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func filterMetadata(d *schema.ResourceData, originalMetadata *types.Metadata) (*types.Metadata, error) {
+	metadataToIgnoreRaw, needsToIgnore := d.GetOk("metadata_entry_ignore")
+	if !needsToIgnore {
+		return originalMetadata, nil
+	}
+
+	metadataToIgnore := metadataToIgnoreRaw.(*schema.Set).List()
+	if len(metadataToIgnore) == 0 {
+		return originalMetadata, nil
+	}
+
+	hasToBeIgnored := func(originalEntry *types.MetadataEntry, ignoredEntry map[string]interface{}) (bool, error) {
+		toIgnore := true
+		key, keyOk := ignoredEntry["key"]
+		if keyOk {
+			keyRegex, err := regexp.Compile(key.(string))
+			if err != nil {
+				return false, fmt.Errorf("regular expression on metadata entry key to be ignored %s is incorrect: %s", key, err)
+			}
+			toIgnore = toIgnore && keyRegex.MatchString(originalEntry.Key)
+		}
+		value, valueOk := ignoredEntry["value"]
+		if valueOk {
+			valueRegex, err := regexp.Compile(value.(string))
+			if err != nil {
+				return false, fmt.Errorf("regular expression on metadata entry value to be ignored %s is incorrect: %s", value, err)
+			}
+			toIgnore = toIgnore && valueRegex.MatchString(originalEntry.TypedValue.Value)
+		}
+		metadataType, typeOk := ignoredEntry["type"]
+		if typeOk {
+			toIgnore = toIgnore && metadataType.(string) == originalEntry.TypedValue.XsiType
+		}
+		userAccess, accessOk := ignoredEntry["user_access"]
+		if accessOk {
+			toIgnore = toIgnore && userAccess.(string) == originalEntry.Domain.Visibility
+		}
+		isSystem, systemOk := ignoredEntry["is_system"]
+		if systemOk {
+			toIgnore = toIgnore && isSystem.(bool) == (originalEntry.Domain.Domain == "SYSTEM")
+		}
+		return toIgnore, nil
+	}
+
+	var filteredMetadataEntries []*types.MetadataEntry
+	for _, originalEntry := range originalMetadata.MetadataEntry {
+		for _, entryToIgnoreRaw := range metadataToIgnore {
+			entryToIgnore := entryToIgnoreRaw.(map[string]interface{})
+			toIgnore, err := hasToBeIgnored(originalEntry, entryToIgnore)
+			if err != nil {
+				return nil, err
+			}
+			if !toIgnore {
+				filteredMetadataEntries = append(filteredMetadataEntries, originalEntry)
+			}
+		}
+	}
+
+	filteredMetadata := &types.Metadata{}
+	filteredMetadata.MetadataEntry = filteredMetadataEntries
+	return filteredMetadata, nil
 }
 
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.

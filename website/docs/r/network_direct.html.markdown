@@ -119,7 +119,7 @@ resource "vcd_network_direct" "example" {
 }
 ```
 
-This will make Terraform ignore the metadata entries which key is `foo.*` AND the value is `bar` AND the user access is `PRIVATE`.
+This will make Terraform ignore the metadata entries which key matches `foo.*` AND the value is `bar` AND the user access is `PRIVATE`.
 
 ## Importing
 
