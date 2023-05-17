@@ -117,6 +117,7 @@ The following arguments are supported:
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
 * `metadata` - (Deprecated) Use `metadata_entry` instead. Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `metadata_entry_ignore` - (Optional; *3.10+*) A set of metadata entries that must be ignored by Terraform. See [Metadata](#metadata) section for details.
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
 * `lease` - (Optional *v3.5+*) the information about the vApp lease. It includes the fields below. When this section is 
    included, both fields are mandatory. If lease values are higher than the ones allowed for the whole Org, the values
@@ -133,7 +134,7 @@ The following arguments are supported:
 <a id="metadata"></a>
 ## Metadata
 
-The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
+The `metadata_entry` (*v3.8+*) attribute is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.
 * `value` - (Required) Value of this metadata entry.
@@ -178,6 +179,23 @@ The same applies also for deprecated `metadata` attribute:
 ```
 metadata = {}
 ```
+
+To ignore any metadata entry of your choice, you may use the `metadata_entry_ignore` (*v3.10+*) attribute.
+The structure is the same as `metadata_entry`, but both `key` and `value` support regular expressions for filtering.
+Each element of the structure will be combined with the others by using an `AND` logical operator. For example:
+
+```hcl
+resource "vcd_vapp" "example" {
+  # ...
+  metadata_entry_ignore {
+    key         = "foo.*"
+    value       = "bar"
+    user_access = "PRIVATE"
+  }
+}
+```
+
+This will make Terraform ignore the metadata entries which key is `foo.*` AND the value is `bar` AND the user access is `PRIVATE`.
 
 ## Importing
 

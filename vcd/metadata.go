@@ -92,14 +92,45 @@ func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema 
 	}
 }
 
-// getMetadataEntrySchema returns a schema for the "metadata_entry" attribute, that can be used to
-// build data sources (isDatasource=true) or resources (isDatasource=false). The description of the
-// attribute will refer to the input resource name.
-func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool) *schema.Schema {
-	if isDatasource {
-		return metadataEntryDatasourceSchema(resourceNameInDescription)
+// metadataEntryIgnoreSchema returns the schema associated to metadata_entry_ignore for a given resource.
+// The description will refer to the object name given as input.
+func metadataEntryIgnoreSchema(objectNameInDescription string) *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Optional:    true,
+		Description: fmt.Sprintf("Metadata entries to ignore for %s", objectNameInDescription),
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"key": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Metadata entry key to ignore. It can be a regular expression",
+				},
+				"value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Metadata entry value to ignore. It can be a regular expression",
+				},
+				"type": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Description:  fmt.Sprintf("Type of the metadata entry to ignore. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+				},
+				"user_access": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Description:  fmt.Sprintf("User access level of the metadata entry to ignore. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
+				},
+				"is_system": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Description: "Domain of the metadata entry to ignore. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+				},
+			},
+		},
 	}
-	return metadataEntryResourceSchema(resourceNameInDescription)
 }
 
 // metadataCompatible allows to consider all structs that implement metadata handling to be the same type

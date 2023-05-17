@@ -104,7 +104,7 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", true),
+			"metadata_entry": metadataEntryDatasourceSchema("Network"),
 		},
 	}
 }

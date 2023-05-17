@@ -192,7 +192,8 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Description: "Key and value pairs for Org VDC metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("VDC", false),
+			"metadata_entry":        metadataEntryResourceSchema("VDC"),
+			"metadata_entry_ignore": metadataEntryIgnoreSchema("VDC"),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
