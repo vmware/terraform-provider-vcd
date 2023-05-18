@@ -439,6 +439,7 @@ resource "vcd_org" "test-org" {
   delete_recursive = "true"
   delete_force     = "true"
   {{.Metadata}}
+  {{.MetadataIgnore}}
 }
 `
 
@@ -447,3 +448,11 @@ data "vcd_org" "test-org-ds" {
   name = vcd_org.test-org.name
 }
 `
+
+// TestAccVcdOrgMetadataIgnore tests metadata ignore functionality
+func TestAccVcdOrgMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	testMetadataIgnore(t,
+		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
+		nil)
+}
