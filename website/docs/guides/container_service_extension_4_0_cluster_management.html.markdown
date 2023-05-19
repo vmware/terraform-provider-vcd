@@ -36,7 +36,7 @@ section to understand how it works.
 To be able to create a TKGm cluster, one needs to prepare a [`vcd_rde`][rde] resource. In the [proposed example][cluster],
 this RDE is named `k8s_cluster_instance`. The important arguments to take into account are:
 
-- **`resolve` must be always `false`**, because the CSE Server is the responsible for performing the RDE resolution when the
+- **`resolve` must be always `false`**, because the CSE Server is responsible for performing the RDE resolution when the
   TKGm cluster is completely provisioned, so Terraform should not interfere with this process.
 - **`resolve_on_removal` must be always `true`**, because the RDE is resolved by the CSE Server and not by Terraform. If one
   wants to execute a Terraform destroy without the RDE being resolved, the operation will fail. Being `true` assures that Terraform
@@ -58,8 +58,7 @@ placeholders that can be found in that file:
   During creation it should be always `false`.
 - `force_delete`: This is used to forcefully delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
   During creation it should be always `false`.
-- `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to repair the TKGm cluster on errors. You can change
-  this to `false` if you want to troubleshoot any error by yourself.
+- `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to automatically repair the TKGm cluster on errors.
 
 The following four placeholders are **only needed if you want to provide a default storage class** with your TKGm cluster.
 If you don't need this, please remove the whole `defaultStorageClassOptions` block from the JSON template:
@@ -127,46 +126,46 @@ metadata:
   The same happens with the **VM Sizing Policy, VM Placement Policy and Storage Profile**.
   See the explanation below for every placeholder to better understand how to adjust them.
 
-- Now that the YAML template is ready, one needs to understand the meaning of all the placeholders.
-  Below is the explanation of each one of them, you can also check [the working example][cluster] to observe the final result.
+Now that the YAML template is ready, one needs to understand the meaning of all the placeholders.
+Below is the explanation of each one of them, you can also check [the working example][cluster] to observe the final result.
 
-  - `CLUSTER_NAME`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
-  start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters.
-  - `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] you will see that the value is
-  `"${var.k8s_cluster_name}-ns"`, this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
-  - `VCD_SITE`: The VCD URL, the same that was used during CSE installation.
-  - `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `tenant_org` and named
-  "Tenant Organization" during CSE installation phase.
-  - `VCD_ORGANIZATION_VDC`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
-    "Tenant VDC" during CSE installation phase.
-  - `VCD_ORGANIZATION_VDC_NETWORK`: The VDC network that the TKGm clusters will use. In this guide it was created as a Routed
-    network called `tenant_net_routed`.
-  - `VCD_USERNAME_B64`: The name of a user with the "Kubernetes Cluster Author" role (`k8s_cluster_author`) that was created during CSE installation.
-  It must be encoded in Base64.
-  - `VCD_PASSWORD_B64`: (**Discouraged in favor of `VCD_REFRESH_TOKEN_B64`**) The password of the user above.
-    It must be encoded in Base64. Please do **not** use this value (by setting it to `""`) and use `VCD_REFRESH_TOKEN_B64` instead.
-  - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
-    in the top right, then go to the API tokens section, add a new one. Or you can visit `/tenant/<YOUR-TENANT-NAME>/administration/settings/user-preferences`
-    at your VCD URL logged in as the target user in your desired tenant. It must be encoded in Base64.
-  - `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm control plane nodes.
-  - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
-  - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.
-  - `VCD_CONTROL_PLANE_PLACEMENT_POLICY`: Name of an existing VM Placement Policy. Can be empty (`""`)
-  - `VCD_CONTROL_PLANE_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
-  - `WORKER_MACHINE_COUNT`: Number of worker nodes (VMs). **Must be higher than 0**.
-  - `VCD_WORKER_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation.
-  - `VCD_WORKER_PLACEMENT_POLICY`: Name of an existing VM Placement Policy. Can be empty (`""`)
-  - `VCD_WORKER_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
-  - `DISK_SIZE`: Specifies the storage size for each node (VM). It uses the [same units as every other Kubernetes resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
-    for example `"1Gi"` to use 1 gibibyte (1024 MiB), or `"1G"` for 1 gigabyte (1000 MB).
-  - `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `tkgm_catalog`.
-  - `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933`
-  - `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
-  - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
+- `CLUSTER_NAME`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
+start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters.
+- `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] you will see that the value is
+`"${var.k8s_cluster_name}-ns"`, this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
+- `VCD_SITE`: The VCD URL, the same that was used during CSE installation.
+- `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `tenant_org` and named
+"Tenant Organization" during CSE installation phase.
+- `VCD_ORGANIZATION_VDC`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
+  "Tenant VDC" during CSE installation phase.
+- `VCD_ORGANIZATION_VDC_NETWORK`: The VDC network that the TKGm clusters will use. In this guide it was created as a Routed
+  network called `tenant_net_routed`.
+- `VCD_USERNAME_B64`: The name of a user with the "Kubernetes Cluster Author" role (`k8s_cluster_author`) that was created during CSE installation.
+It must be encoded in Base64.
+- `VCD_PASSWORD_B64` (**Discouraged in favor of `VCD_REFRESH_TOKEN_B64`**): The password of the user above.
+  It must be encoded in Base64. Please do **not** use this value (by setting it to `""`) and use `VCD_REFRESH_TOKEN_B64` instead.
+- `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
+  in the top right, then go to the API tokens section, add a new one. Or you can visit `/tenant/<YOUR-TENANT-NAME>/administration/settings/user-preferences`
+  at your VCD URL logged in as the target user in your desired tenant. It must be encoded in Base64.
+- `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm control plane nodes. Can be empty (`""`)
+- `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
+- `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation. Can be empty to use the VDC default (`""`)
+- `VCD_CONTROL_PLANE_PLACEMENT_POLICY` : Name of an existing VM Placement Policy. Can be empty (`""`)
+- `VCD_CONTROL_PLANE_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
+- `WORKER_MACHINE_COUNT`: Number of worker nodes (VMs). **Must be higher than 0**.
+- `VCD_WORKER_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation. Can be empty to use the VDC default (`""`)
+- `VCD_WORKER_PLACEMENT_POLICY`: Name of an existing VM Placement Policy. Can be empty (`""`)
+- `VCD_WORKER_STORAGE_PROFILE`: Name of an existing Storage Profile, for example `"*"` to use the default.
+- `DISK_SIZE`: Specifies the storage size for each node (VM). It uses the [same units as every other Kubernetes resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
+  for example `"1Gi"` to use 1 gibibyte (1024 MiB), or `"1G"` for 1 gigabyte (1000 MB).
+- `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `tkgm_catalog`.
+- `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933`
+- `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
+- `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
 
-  There are three additional variables that we added manually: `TKR_VERSION` and `TKGVERSION`.
-  To know their values, you can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
-  or check the following table that gives some script outputs for you:
+There are three additional variables that we added manually: `TKR_VERSION` and `TKGVERSION`.
+To know their values, you can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
+or check the following table that gives some script outputs for you:
 
 | OVA name                                                 | TKR_VERSION               | TKGVERSION |
 |----------------------------------------------------------|---------------------------|------------|
@@ -184,8 +183,8 @@ In [the TKGm cluster creation example][cluster], the built-in Terraform function
 mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be set in the `capi_yaml` placeholder in the
 JSON template.
 
-~> Notice that we need to replace `\n` with `\\n` to avoid breaking the JSON contents when the YAML is set, and also `\"` to `\\\"` for
-the same reason. This is also done in [the mentioned example][cluster].
+~> Notice that we need to replace `\n` with `\\n` and also `\"` to `\\\"` to avoid breaking the JSON contents when the YAML is set, as
+line breaks and double quotes would not be interpreted correctly otherwise. This is also done in [the mentioned example][cluster].
 
 When you have set all the required values, a `terraform apply` should trigger a TKGm cluster creation. The operation is asynchronous, meaning that
 you need to monitor the RDE `computed_entity` value to see the status of the cluster provisioning. Some interesting output examples:
@@ -227,7 +226,7 @@ You can perform a Terraform update to resize a TKGm cluster, for example. In ord
 [`vcd_rde`][rde] resource works. You can read [its documentation][rde_input_vs_computed] to better understand how updates work
 in this specific case.
 
-To accomplish a correct update, you need to take the most recent state of the TKGm cluster, which is reflected in the contents of
+To apply a correct update, you need to take the most recent state of the TKGm cluster, which is reflected in the contents of
 the `computed_entity` attribute. Copy the value of this attribute, edit the properties that you would like to modify, and place the
 final result inside `input_entity`. Now the changes can be applied with `terraform apply`.
 
