@@ -171,7 +171,7 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 
 	orgRefs, err := uiPlugin.GetPublishedTenants()
 	if err != nil {
-		return diag.Errorf("error retrieving the organizations where the plugin with ID '%s'", uiPlugin.UIPluginMetadata.ID, err)
+		return diag.Errorf("error retrieving the organizations where the plugin with ID '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
 	var orgIds = make([]string, len(orgRefs))
 	for i, orgRef := range orgRefs {
