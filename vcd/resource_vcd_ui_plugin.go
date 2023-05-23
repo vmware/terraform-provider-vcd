@@ -191,5 +191,29 @@ func resourceVcdUIPluginUpdate(_ context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceVcdUIPluginDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	var uiPlugin *govcd.UIPlugin
+	var err error
+	if d.Id() != "" {
+		uiPlugin, err = vcdClient.GetUIPluginById(d.Id())
+	} else {
+		uiPlugin, err = vcdClient.GetUIPlugin(d.Get("vendor").(string), d.Get("name").(string), d.Get("version").(string))
+	}
+
+	if govcd.ContainsNotFound(err) {
+		log.Printf("[DEBUG] UI Plugin no longer exists. Removing from tfstate")
+		d.SetId("")
+		return nil
+	}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = uiPlugin.Delete()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
