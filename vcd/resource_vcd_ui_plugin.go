@@ -132,6 +132,9 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
+	// We set the ID early so the read function can locate the plugin in VCD, as there's no identifying argument on Create,
+	// all identifying elements such as vendor, plugin name and version are inside the uploaded ZIP file.
+	d.SetId(uiPlugin.UIPluginMetadata.ID)
 	return resourceVcdUIPluginRead(ctx, d, meta)
 }
 
@@ -181,8 +184,8 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(uiPlugin.UIPluginMetadata.ID)
 
+	d.SetId(uiPlugin.UIPluginMetadata.ID)
 	return nil
 }
 
