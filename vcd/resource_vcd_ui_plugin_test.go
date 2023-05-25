@@ -19,58 +19,53 @@ func TestAccVcdUiPlugin(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Org1":                testConfig.VCD.Org,
-		"Org2":                testConfig.Provider.SysOrg,
-		"Enabled":             "true",
-		"PluginPath":          "../test-resources/ui_plugin.zip",
-		"PublishToAllTenants": "true",
-		"PublishedTenantIds":  "published_tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]",
-		"ProviderScoped":      " ",
-		"TenantScoped":        " ",
-		"SkipBinary":          "# skip-binary-test",
-		"FuncName":            t.Name() + "Fail",
+		"Org1":                  testConfig.VCD.Org,
+		"Org2":                  testConfig.Provider.SysOrg,
+		"Enabled":               "true",
+		"PluginPath":            "../test-resources/ui_plugin.zip",
+		"PublishedToAllTenants": "true",
+		"PublishedTenantIds":    " ",
+		"ProviderScoped":        " ",
+		"TenantScoped":          " ",
+		"FuncName":              t.Name(),
 	}
 	testParamsNotEmpty(t, params)
 
-	step1Config := templateFill(testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin, params)
+	step1Config := templateFill(testAccVcdUiPlugin, params)
 	params["FuncName"] = t.Name() + "Step2"
-	params["PublishedTenantIds"] = " "
-	params["SkipBinary"] = " "
+	params["PublishedToAllTenants"] = "false"
+	params["PublishedTenantIds"] = "published_tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]"
 	step2Config := templateFill(testAccVcdUiPlugin, params)
 	params["FuncName"] = t.Name() + "Step3"
-	params["PublishToAllTenants"] = "false"
-	params["PublishedTenantIds"] = "published_tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]"
+	params["Enabled"] = "false"
+	params["PublishedToAllTenants"] = "true"
+	params["PublishedTenantIds"] = " "
 	step3Config := templateFill(testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin, params)
 	params["FuncName"] = t.Name() + "Step4"
 	params["Enabled"] = "false"
-	params["PublishToAllTenants"] = "true"
-	params["PublishedTenantIds"] = " "
+	params["PublishedToAllTenants"] = "false"
+	params["PublishedTenantIds"] = "published_tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]"
 	step4Config := templateFill(testAccVcdUiPlugin, params)
 	params["FuncName"] = t.Name() + "Step5"
-	params["Enabled"] = "false"
-	params["PublishToAllTenants"] = "false"
-	params["PublishedTenantIds"] = "published_tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]"
-	step5Config := templateFill(testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin, params)
-	params["FuncName"] = t.Name() + "Step6"
 	params["Enabled"] = "true"
-	params["PublishToAllTenants"] = "true"
+	params["PublishedToAllTenants"] = "true"
 	params["PublishedTenantIds"] = " "
 	params["ProviderScoped"] = "provider_scoped = false"
 	params["TenantScoped"] = "tenant_scoped = false"
-	step6Config := templateFill(testAccVcdUiPlugin, params)
-	params["FuncName"] = t.Name() + "Step7"
+	step5Config := templateFill(testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin, params)
+	params["FuncName"] = t.Name() + "Step6"
 	params["Enabled"] = "false"
-	params["PublishToAllTenants"] = "false"
+	params["PublishedToAllTenants"] = "false"
 	params["PublishedTenantIds"] = "published_tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]"
 	params["ProviderScoped"] = "provider_scoped = true"
 	params["TenantScoped"] = "tenant_scoped = true"
-	step7Config := templateFill(testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin, params)
-	params["FuncName"] = t.Name() + "Step8"
+	step6Config := templateFill(testAccVcdUiPlugin, params)
+	params["FuncName"] = t.Name() + "Step7"
 	params["SkipBinary"] = "# skip-binary-test"
-	step8Config := templateFill(testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin+testAccVcdUiPluginDS, params)
+	step7Config := templateFill(testAccVcdUiPluginDS+testAccVcdUiPluginStepOrgs+testAccVcdUiPlugin, params)
 
 	resourceName := "vcd_ui_plugin.plugin"
-	dsName := "vcd_ui_plugin.pluginDS"
+	dsName := "data.vcd_ui_plugin.pluginDS"
 
 	debugPrintf("#[DEBUG] CONFIGURATION Step 1: %s\n", step1Config)
 	debugPrintf("#[DEBUG] CONFIGURATION Step 2: %s\n", step2Config)
@@ -101,24 +96,32 @@ func TestAccVcdUiPlugin(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckUIPluginDestroy(cachedId.fieldValue),
 		Steps: []resource.TestStep{
-			// Test UI Plugin error in configuration
-			{
-				Config:      step1Config,
-				ExpectError: regexp.MustCompile("`publish_to_all_tenants` can't be true if `published_tenant_ids` is also set"),
-			},
 			// Test UI Plugin creation with publish to all tenants and enabled
 			{
-				Config: step2Config,
+				Config: step1Config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testCheckResourceCommonUIPluginAsserts(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "publish_to_all_tenants", "true"),
+					resource.TestCheckResourceAttr(resourceName, "published_to_all_tenants", "true"),
 					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile(`^[1-9]+$`)),
 				),
 			},
 			// Test UI Plugin creation (we taint it for that) with publish to only specific tenants and enabled
+			{
+				Config: step2Config,
+				Taint:  []string{resourceName},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckResourceCommonUIPluginAsserts(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
+					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "published_to_all_tenants", "false"),
+					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile("2")),
+				),
+			},
+			// Test UI Plugin creation (we taint it for that) with publish to all tenants and disabled
 			{
 				Config: step3Config,
 				Taint:  []string{resourceName},
@@ -126,12 +129,12 @@ func TestAccVcdUiPlugin(t *testing.T) {
 					testCheckResourceCommonUIPluginAsserts(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
-					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "publish_to_all_tenants", "false"),
-					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile("2")),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "published_to_all_tenants", "true"),
+					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile(`^[1-9]+$`)),
 				),
 			},
-			// Test UI Plugin creation (we taint it for that) with publish to all tenants and disabled
+			// Test UI Plugin creation (we taint it for that) with publish only specific tenants and disabled
 			{
 				Config: step4Config,
 				Taint:  []string{resourceName},
@@ -140,21 +143,20 @@ func TestAccVcdUiPlugin(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceName, "publish_to_all_tenants", "true"),
-					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile(`^[1-9]+$`)),
+					resource.TestCheckResourceAttr(resourceName, "published_to_all_tenants", "false"),
+					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile("2")),
 				),
 			},
-			// Test UI Plugin creation (we taint it for that) with publish only specific tenants and disabled
+			// Test UI Plugin update
 			{
 				Config: step5Config,
-				Taint:  []string{resourceName},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testCheckResourceCommonUIPluginAsserts(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
-					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
-					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceName, "publish_to_all_tenants", "false"),
-					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile("2")),
+					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "false"),
+					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "false"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "published_to_all_tenants", "true"),
+					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile(`^[1-9]+$`)),
 				),
 			},
 			// Test UI Plugin update
@@ -162,28 +164,16 @@ func TestAccVcdUiPlugin(t *testing.T) {
 				Config: step6Config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testCheckResourceCommonUIPluginAsserts(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "false"),
-					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "false"),
-					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "publish_to_all_tenants", "true"),
-					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile(`^[1-9]+$`)),
-				),
-			},
-			// Test UI Plugin update
-			{
-				Config: step7Config,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testCheckResourceCommonUIPluginAsserts(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceName, "publish_to_all_tenants", "false"),
+					resource.TestCheckResourceAttr(resourceName, "published_to_all_tenants", "false"),
 					resource.TestMatchResourceAttr(resourceName, "published_tenant_ids.#", regexp.MustCompile("2")),
 				),
 			},
 			// Test UI Plugin data source
 			{
-				Config: step8Config,
+				Config: step7Config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testCheckResourceCommonUIPluginAsserts(resourceName),
 					resource.TestCheckResourceAttrPair(resourceName, "vendor", dsName, "vendor"),
@@ -205,11 +195,10 @@ func TestAccVcdUiPlugin(t *testing.T) {
 }
 
 const testAccVcdUiPlugin = `
-{{.SkipBinary}}
 resource "vcd_ui_plugin" "plugin" {
   plugin_path            = "{{.PluginPath}}"
   enabled                = {{.Enabled}}
-  publish_to_all_tenants = {{.PublishToAllTenants}}
+  published_to_all_tenants = {{.PublishedToAllTenants}}
   {{.ProviderScoped}}
   {{.TenantScoped}}
   {{.PublishedTenantIds}}
@@ -227,6 +216,7 @@ data "vcd_org" "org2" {
 `
 
 const testAccVcdUiPluginDS = `
+# skip-binary-test - Data source referencing the same resource
 data "vcd_ui_plugin" "pluginDS" {
   vendor  = "VMware"
   name    = "Test Plugin"

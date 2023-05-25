@@ -55,19 +55,22 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Description: "This value is calculated automatically on create by reading the UI Plugin ZIP file contents. You can update" +
 					"it to `true` to make it tenant scoped or `false` otherwise",
 			},
-			"publish_to_all_tenants": {
-				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "When `true`, publishes the UI Plugin to all tenants",
+			"published_to_all_tenants": {
+				Type:         schema.TypeBool,
+				Optional:     true,
+				Computed:     true,
+				Description:  "When `true`, the UI plugin is published in all tenants",
+				ExactlyOneOf: []string{"published_to_all_tenants", "published_tenant_ids"},
 			},
 			"published_tenant_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:    true,
-				Computed:    true,
-				Description: "Set of organization IDs to which this UI Plugin must be published",
+				Optional:     true,
+				Computed:     true,
+				Description:  "Set of organization IDs to which this UI Plugin must be published",
+				ExactlyOneOf: []string{"published_to_all_tenants", "published_tenant_ids"},
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -103,29 +106,7 @@ func resourceVcdUIPlugin() *schema.Resource {
 	}
 }
 
-// validateUIPluginAttributes is an auxiliary validation function that is similar to what ValidateDiagFunc would do,
-// but in this case we need to validate one attribute that depends on another.
-func validateUIPluginAttributes(d *schema.ResourceData) error {
-	publishToAllTenants := d.Get("publish_to_all_tenants").(bool)
-	rawConfig := d.GetRawConfig()
-	if rawConfig.IsNull() {
-		return nil
-	}
-	attr := rawConfig.GetAttr("published_tenant_ids")
-	if attr.IsNull() {
-		return nil
-	}
-	if !publishToAllTenants {
-		return nil
-	}
-	return fmt.Errorf("`publish_to_all_tenants` can't be true if `published_tenant_ids` is also set")
-}
-
 func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := validateUIPluginAttributes(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	vcdClient := meta.(*VCDClient)
 
 	uiPlugin, err := vcdClient.AddUIPlugin(d.Get("plugin_path").(string), d.Get("enabled").(bool))
@@ -147,10 +128,8 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
-	publishedOrgIds := d.Get("published_tenant_ids")
-
-	if d.HasChange("publish_to_all_tenants") {
-		if d.Get("publish_to_all_tenants").(bool) {
+	if d.HasChange("published_to_all_tenants") {
+		if d.Get("published_to_all_tenants").(bool) {
 			err := uiPlugin.PublishAll()
 			if err != nil {
 				return fmt.Errorf("could not publish the UI Plugin %s to all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
@@ -165,6 +144,7 @@ func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d 
 	}
 
 	if d.HasChange("published_tenant_ids") {
+		publishedOrgIds := d.Get("published_tenant_ids")
 		orgIds := publishedOrgIds.(*schema.Set).List()
 		if len(orgIds) == 0 {
 			return nil
@@ -248,15 +228,21 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error retrieving the organizations where the plugin with ID '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
-	if len(orgRefs) > 0 {
-		var orgIds = make([]string, len(orgRefs))
-		for i, orgRef := range orgRefs {
-			orgIds[i] = orgRef.ID
-		}
-		err = d.Set("published_tenant_ids", convertStringsToTypeSet(orgIds))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+
+	var orgIds = make([]string, len(orgRefs))
+	for i, orgRef := range orgRefs {
+		orgIds[i] = orgRef.ID
+	}
+	err = d.Set("published_tenant_ids", convertStringsToTypeSet(orgIds))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	orgs, err := vcdClient.GetOrgList()
+	if len(orgs.Org) == len(orgRefs) {
+		dSet(d, "published_to_all_tenants", true)
+	} else {
+		dSet(d, "published_to_all_tenants", false)
 	}
 
 	d.SetId(uiPlugin.UIPluginMetadata.ID)
@@ -264,11 +250,6 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVcdUIPluginUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := validateUIPluginAttributes(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	vcdClient := meta.(*VCDClient)
 	uiPlugin, err := getUIPlugin(vcdClient, d, "resource")
 	if err != nil {
