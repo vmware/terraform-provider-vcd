@@ -103,7 +103,29 @@ func resourceVcdUIPlugin() *schema.Resource {
 	}
 }
 
+// validateUIPluginAttributes is an auxiliary validation function that is similar to what ValidateDiagFunc would do,
+// but in this case we need to validate one attribute that depends on another.
+func validateUIPluginAttributes(d *schema.ResourceData) error {
+	publishToAllTenants := d.Get("publish_to_all_tenants").(bool)
+	rawConfig := d.GetRawConfig()
+	if rawConfig.IsNull() {
+		return nil
+	}
+	attr := rawConfig.GetAttr("published_tenant_ids")
+	if attr.IsNull() {
+		return nil
+	}
+	if !publishToAllTenants {
+		return nil
+	}
+	return fmt.Errorf("`publish_to_all_tenants` can't be true if `published_tenant_ids` is also set")
+}
+
 func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := validateUIPluginAttributes(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	vcdClient := meta.(*VCDClient)
 
 	uiPlugin, err := vcdClient.AddUIPlugin(d.Get("plugin_path").(string), d.Get("enabled").(bool))
@@ -125,12 +147,7 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
-	publishToAllTenants := d.Get("publish_to_all_tenants").(bool)
-	publishedOrgIds, isPublishedOrgIdsSet := d.GetOk("published_tenant_ids")
-
-	if publishToAllTenants && isPublishedOrgIdsSet {
-		return fmt.Errorf("`publish_to_all_tenants` can't be true if `published_tenant_ids` is also set")
-	}
+	publishedOrgIds := d.Get("published_tenant_ids")
 
 	if d.HasChange("publish_to_all_tenants") {
 		if d.Get("publish_to_all_tenants").(bool) {
@@ -247,6 +264,11 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVcdUIPluginUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := validateUIPluginAttributes(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	vcdClient := meta.(*VCDClient)
 	uiPlugin, err := getUIPlugin(vcdClient, d, "resource")
 	if err != nil {
