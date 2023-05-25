@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
+	"regexp"
 	"strings"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceVcdUIPlugin() *schema.Resource {
@@ -25,12 +25,12 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				ValidateDiagFunc: func(value interface{}, _ cty.Path) diag.Diagnostics {
-					valueString, ok := value.(string)
-					if !ok {
-						return diag.Errorf("expected type of %v to be string", value)
+					ok, err := regexp.MatchString(`^.+\.[z|Z][i|I][p|P]$`, value.(string))
+					if err != nil {
+						return diag.Errorf("could not validate %s", value.(string))
 					}
-					if !strings.HasSuffix(valueString, "zip") && !strings.HasSuffix(valueString, "ZIP") {
-						return diag.Errorf("the UI Plugin should be a ZIP bundle, but it is %s", valueString)
+					if !ok {
+						return diag.Errorf("the UI Plugin should be a ZIP bundle, but it is %s", value.(string))
 					}
 					return nil
 				},
@@ -56,21 +56,18 @@ func resourceVcdUIPlugin() *schema.Resource {
 					"it to `true` to make it tenant scoped or `false` otherwise",
 			},
 			"publish_to_all_tenants": {
-				Type:          schema.TypeBool,
-				Optional:      true,
-				Default:       false,
-				ConflictsWith: []string{"published_tenant_ids"},
-				Description:   "When `true`, publishes the UI Plugin to all tenants",
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "When `true`, publishes the UI Plugin to all tenants",
 			},
 			"published_tenant_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:      true,
-				Computed:      true,
-				ConflictsWith: []string{"publish_to_all_tenants"},
-				Description:   "Set of organization IDs to which this UI Plugin must be published",
+				Optional:    true,
+				Computed:    true,
+				Description: "Set of organization IDs to which this UI Plugin must be published",
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -128,17 +125,33 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
-	if d.HasChange("publish_to_all_tenants") && d.Get("publish_to_all_tenants").(bool) {
-		err := uiPlugin.PublishAll()
-		if err != nil {
-			return fmt.Errorf("could not publish the UI Plugin %s to all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
-		}
-		return nil // This return is needed despite this field conflicts with `published_tenant_ids`, as the latter is also computed.
+	publishToAllTenants := d.Get("publish_to_all_tenants").(bool)
+	publishedOrgIds, isPublishedOrgIdsSet := d.GetOk("published_tenant_ids")
+
+	if publishToAllTenants && isPublishedOrgIdsSet {
+		return fmt.Errorf("`publish_to_all_tenants` can't be true if `published_tenant_ids` is also set")
 	}
 
-	orgIdsRaw, isSet := d.GetOk("published_tenant_ids")
-	if isSet {
-		orgIds := orgIdsRaw.(*schema.Set).List()
+	if d.HasChange("publish_to_all_tenants") {
+		if d.Get("publish_to_all_tenants").(bool) {
+			err := uiPlugin.PublishAll()
+			if err != nil {
+				return fmt.Errorf("could not publish the UI Plugin %s to all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
+			}
+		} else {
+			err := uiPlugin.UnpublishAll()
+			if err != nil {
+				return fmt.Errorf("could not unpublish the UI Plugin %s from all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
+			}
+		}
+		return nil
+	}
+
+	if d.HasChange("published_tenant_ids") {
+		orgIds := publishedOrgIds.(*schema.Set).List()
+		if len(orgIds) == 0 {
+			return nil
+		}
 		orgList, err := vcdClient.GetOrgList()
 		if err != nil {
 			return fmt.Errorf("could not publish the UI Plugin %s to tenants '%v': %s", uiPlugin.UIPluginMetadata.ID, orgIds, err)
@@ -146,8 +159,10 @@ func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d 
 		var orgRefs types.OpenApiReferences
 		for _, org := range orgList.Org {
 			for _, orgId := range orgIds {
-				if orgId == org.ID {
-					orgRefs = append(orgRefs, types.OpenApiReference{ID: org.ID, Name: org.Name})
+				// We do this as org.ID is empty, so we need to re-build the URN with the HREF
+				uuid := extractUuid(orgId.(string))
+				if strings.Contains(org.HREF, uuid) {
+					orgRefs = append(orgRefs, types.OpenApiReference{ID: "urn:cloud:org:" + uuid, Name: org.Name})
 				}
 			}
 		}
@@ -216,13 +231,15 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error retrieving the organizations where the plugin with ID '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
-	var orgIds = make([]string, len(orgRefs))
-	for i, orgRef := range orgRefs {
-		orgIds[i] = orgRef.ID
-	}
-	err = d.Set("published_tenant_ids", orgIds)
-	if err != nil {
-		return diag.FromErr(err)
+	if len(orgRefs) > 0 {
+		var orgIds = make([]string, len(orgRefs))
+		for i, orgRef := range orgRefs {
+			orgIds[i] = orgRef.ID
+		}
+		err = d.Set("published_tenant_ids", convertStringsToTypeSet(orgIds))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId(uiPlugin.UIPluginMetadata.ID)
@@ -259,15 +276,6 @@ func resourceVcdUIPluginDelete(_ context.Context, d *schema.ResourceData, meta i
 	}
 	if uiPlugin == nil {
 		return nil
-	}
-
-	if govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] UI Plugin no longer exists. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-	if err != nil {
-		return diag.FromErr(err)
 	}
 
 	err = uiPlugin.Delete()
