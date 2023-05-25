@@ -55,12 +55,11 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Description: "This value is calculated automatically on create by reading the UI Plugin ZIP file contents. You can update" +
 					"it to `true` to make it tenant scoped or `false` otherwise",
 			},
-			"published_to_all_tenants": {
+			"publish_to_all_tenants": {
 				Type:         schema.TypeBool,
 				Optional:     true,
-				Computed:     true,
-				Description:  "When `true`, the UI plugin is published in all tenants",
-				ExactlyOneOf: []string{"published_to_all_tenants", "published_tenant_ids"},
+				Description:  "When `true`, publishes the UI Plugin to all tenants. When `false`, it unpublishes from all tenants",
+				ExactlyOneOf: []string{"publish_to_all_tenants", "published_tenant_ids"},
 			},
 			"published_tenant_ids": {
 				Type: schema.TypeSet,
@@ -70,7 +69,7 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				Description:  "Set of organization IDs to which this UI Plugin must be published",
-				ExactlyOneOf: []string{"published_to_all_tenants", "published_tenant_ids"},
+				ExactlyOneOf: []string{"publish_to_all_tenants", "published_tenant_ids"},
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -128,8 +127,8 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
-	if d.HasChange("published_to_all_tenants") {
-		if d.Get("published_to_all_tenants").(bool) {
+	if d.HasChange("publish_to_all_tenants") {
+		if d.Get("publish_to_all_tenants").(bool) {
 			err := uiPlugin.PublishAll()
 			if err != nil {
 				return fmt.Errorf("could not publish the UI Plugin %s to all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
@@ -140,10 +139,7 @@ func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d 
 				return fmt.Errorf("could not unpublish the UI Plugin %s from all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
 			}
 		}
-		return nil
-	}
-
-	if d.HasChange("published_tenant_ids") {
+	} else if d.HasChange("published_tenant_ids") {
 		publishedOrgIds := d.Get("published_tenant_ids")
 		orgIds := publishedOrgIds.(*schema.Set).List()
 		if len(orgIds) == 0 {
@@ -238,18 +234,11 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	orgs, err := vcdClient.GetOrgList()
-	if len(orgs.Org) == len(orgRefs) {
-		dSet(d, "published_to_all_tenants", true)
-	} else {
-		dSet(d, "published_to_all_tenants", false)
-	}
-
 	d.SetId(uiPlugin.UIPluginMetadata.ID)
 	return nil
 }
 
-func resourceVcdUIPluginUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdUIPluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	uiPlugin, err := getUIPlugin(vcdClient, d, "resource")
 	if err != nil {
@@ -258,16 +247,18 @@ func resourceVcdUIPluginUpdate(_ context.Context, d *schema.ResourceData, meta i
 	if uiPlugin == nil {
 		return nil
 	}
-
-	err = uiPlugin.Update(d.Get("enabled").(bool), d.Get("provider_scoped").(bool), d.Get("tenant_scoped").(bool))
-	if err != nil {
-		return diag.Errorf("could not update the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+	if d.HasChange("enabled") || d.HasChange("provider_scoped") || d.HasChange("tenant_scoped") {
+		err = uiPlugin.Update(d.Get("enabled").(bool), d.Get("provider_scoped").(bool), d.Get("tenant_scoped").(bool))
+		if err != nil {
+			return diag.Errorf("could not update the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+		}
 	}
+
 	err = publishUIPluginToTenants(vcdClient, uiPlugin, d, "update")
 	if err != nil {
 		return diag.Errorf("could not update the published tenants of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
-	return nil
+	return resourceVcdUIPluginRead(ctx, d, meta)
 }
 
 func resourceVcdUIPluginDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
