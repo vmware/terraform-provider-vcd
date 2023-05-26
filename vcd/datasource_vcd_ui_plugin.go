@@ -55,7 +55,12 @@ func datasourceVcdUIPlugin() *schema.Resource {
 				Computed:    true,
 				Description: "true if the UI Plugin is enabled. 'false' if not",
 			},
-			"published_tenant_ids": {
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the UI Plugin",
+			},
+			"tenant_ids": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

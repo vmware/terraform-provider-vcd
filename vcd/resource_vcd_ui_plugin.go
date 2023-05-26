@@ -41,6 +41,14 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Required:    true,
 				Description: "true to make the UI Plugin enabled. 'false' to make it disabled",
 			},
+			"tenant_ids": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Description: "Set of organization IDs to which this UI Plugin must be published",
+			},
 			"provider_scoped": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -54,22 +62,6 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Computed: true,
 				Description: "This value is calculated automatically on create by reading the UI Plugin ZIP file contents. You can update" +
 					"it to `true` to make it tenant scoped or `false` otherwise",
-			},
-			"publish_to_all_tenants": {
-				Type:         schema.TypeBool,
-				Optional:     true,
-				Description:  "When `true`, publishes the UI Plugin to all tenants. When `false`, it unpublishes from all tenants",
-				ExactlyOneOf: []string{"publish_to_all_tenants", "published_tenant_ids"},
-			},
-			"published_tenant_ids": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Optional:     true,
-				Computed:     true,
-				Description:  "Set of organization IDs to which this UI Plugin must be published",
-				ExactlyOneOf: []string{"publish_to_all_tenants", "published_tenant_ids"},
 			},
 			"vendor": {
 				Type:        schema.TypeString,
@@ -101,6 +93,11 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Computed:    true,
 				Description: "The description of the UI Plugin",
 			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The status of the UI Plugin",
+			},
 		},
 	}
 }
@@ -127,47 +124,31 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
-	if d.HasChange("publish_to_all_tenants") {
-		if d.Get("publish_to_all_tenants").(bool) {
-			err := uiPlugin.PublishAll()
-			if err != nil {
-				return fmt.Errorf("could not publish the UI Plugin %s to all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
-			}
-		} else {
-			err := uiPlugin.UnpublishAll()
-			if err != nil {
-				return fmt.Errorf("could not unpublish the UI Plugin %s from all tenants: %s", uiPlugin.UIPluginMetadata.ID, err)
-			}
-		}
-	} else if d.HasChange("published_tenant_ids") {
-		publishedOrgIds := d.Get("published_tenant_ids")
-		orgIds := publishedOrgIds.(*schema.Set).List()
-		if len(orgIds) == 0 {
-			return nil
-		}
-		orgList, err := vcdClient.GetOrgList()
+	if d.HasChange("tenant_ids") {
+		orgsToPublish := d.Get("tenant_ids").(*schema.Set).List()
+		existingOrgs, err := vcdClient.GetOrgList()
 		if err != nil {
-			return fmt.Errorf("could not publish the UI Plugin %s to tenants '%v': %s", uiPlugin.UIPluginMetadata.ID, orgIds, err)
+			return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToPublish, err)
 		}
-		var orgRefs types.OpenApiReferences
-		for _, org := range orgList.Org {
-			for _, orgId := range orgIds {
-				// We do this as org.ID is empty, so we need to re-build the URN with the HREF
+		var orgsToPubRefs types.OpenApiReferences
+		for _, org := range existingOrgs.Org {
+			for _, orgId := range orgsToPublish {
+				// We do this as org.ID is empty, so we need to reconstruct the URN with the HREF
 				uuid := extractUuid(orgId.(string))
 				if strings.Contains(org.HREF, uuid) {
-					orgRefs = append(orgRefs, types.OpenApiReference{ID: "urn:cloud:org:" + uuid, Name: org.Name})
+					orgsToPubRefs = append(orgsToPubRefs, types.OpenApiReference{ID: "urn:cloud:org:" + uuid, Name: org.Name})
 				}
 			}
 		}
 		if operation == "update" {
 			err = uiPlugin.UnpublishAll() // We need to clean up the already-published Orgs to put the new ones during an Update.
 			if err != nil {
-				return fmt.Errorf("could not publish the UI Plugin %s to tenants '%v': %s", uiPlugin.UIPluginMetadata.ID, orgIds, err)
+				return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToPublish, err)
 			}
 		}
-		err = uiPlugin.Publish(orgRefs)
+		err = uiPlugin.Publish(orgsToPubRefs)
 		if err != nil {
-			return fmt.Errorf("could not publish the UI Plugin %s to tenants '%v': %s", uiPlugin.UIPluginMetadata.ID, orgIds, err)
+			return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToPublish, err)
 		}
 	}
 	return nil
@@ -219,21 +200,21 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 	dSet(d, "provider_scoped", uiPlugin.UIPluginMetadata.ProviderScoped)
 	dSet(d, "enabled", uiPlugin.UIPluginMetadata.Enabled)
 	dSet(d, "description", uiPlugin.UIPluginMetadata.Description)
-
-	orgRefs, err := uiPlugin.GetPublishedTenants()
-	if err != nil {
-		return diag.Errorf("error retrieving the organizations where the plugin with ID '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+	dSet(d, "status", uiPlugin.UIPluginMetadata.PluginStatus)
+	if origin == "datasource" {
+		orgRefs, err := uiPlugin.GetPublishedTenants()
+		if err != nil {
+			return diag.Errorf("could not update the published Organizations of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+		}
+		var orgIds = make([]string, len(orgRefs))
+		for i, orgRef := range orgRefs {
+			orgIds[i] = orgRef.ID
+		}
+		err = d.Set("tenant_ids", convertStringsToTypeSet(orgIds))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
-
-	var orgIds = make([]string, len(orgRefs))
-	for i, orgRef := range orgRefs {
-		orgIds[i] = orgRef.ID
-	}
-	err = d.Set("published_tenant_ids", convertStringsToTypeSet(orgIds))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	d.SetId(uiPlugin.UIPluginMetadata.ID)
 	return nil
 }
@@ -256,7 +237,7 @@ func resourceVcdUIPluginUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	err = publishUIPluginToTenants(vcdClient, uiPlugin, d, "update")
 	if err != nil {
-		return diag.Errorf("could not update the published tenants of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+		return diag.Errorf("could not update the published Organizations of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
 	return resourceVcdUIPluginRead(ctx, d, meta)
 }
