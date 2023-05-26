@@ -68,6 +68,7 @@ func TestAccVcdUiPlugin(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION Step 2: %s\n", step2Config)
 	debugPrintf("#[DEBUG] CONFIGURATION Step 3: %s\n", step3Config)
 	debugPrintf("#[DEBUG] CONFIGURATION Step 4: %s\n", step4Config)
+	debugPrintf("#[DEBUG] CONFIGURATION Step 5: %s\n", step5Config)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -178,8 +179,9 @@ data "vcd_org" "org2" {
 }
 
 resource "vcd_ui_plugin" "plugin" {
-  plugin_path            = "{{.PluginPath}}"
-  enabled                = {{.Enabled}}
+  plugin_path = "{{.PluginPath}}"
+  enabled     = {{.Enabled}}
+
   {{.TenantIds}}
   {{.ProviderScoped}}
   {{.TenantScoped}}
