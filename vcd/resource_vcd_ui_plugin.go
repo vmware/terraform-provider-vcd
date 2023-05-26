@@ -28,7 +28,7 @@ func resourceVcdUIPlugin() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				ValidateDiagFunc: func(value interface{}, _ cty.Path) diag.Diagnostics {
-					ok, err := regexp.MatchString(`^.+\.[z|Z][i|I][p|P]$`, value.(string))
+					ok, err := regexp.MatchString(`(?i)^.+\.zip$`, value.(string))
 					if err != nil {
 						return diag.Errorf("could not validate %s", value.(string))
 					}
