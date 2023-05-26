@@ -4,7 +4,7 @@
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
 #   before applying this configuration.
 #
-# * Please apply "3.9-cse-4.0-install-step1.tf" first, located at
+# * Please apply "3.10-cse-4.0-install-step1.tf" first, located at
 #   https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
@@ -15,13 +15,13 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.10.0 and configured with a System administrator account.
 # This is needed to build the minimum setup for CSE v4.0 to work, like Organizations, VDCs, Provider Gateways, etc.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.9"
+      version = ">= 3.10"
     }
   }
 }
@@ -293,7 +293,7 @@ resource "vcd_catalog_vapp_template" "cse_ova" {
   ova_path    = format("%s/%s", var.cse_ova_folder, var.cse_ova_file)
 }
 
-# Fetch the RDE Type created in 3.9-cse-4.0-install-step1.tf. This is required to be able to create the following
+# Fetch the RDE Type created in 3.10-cse-4.0-install-step1.tf. This is required to be able to create the following
 # Rights Bundle.
 data "vcd_rde_type" "existing_capvcdcluster_type" {
   vendor  = "vmware"
@@ -675,7 +675,7 @@ resource "vcd_nsxt_firewall" "tenant_firewall" {
   }
 }
 
-# Fetch the RDE Type created in 3.9-cse-4.0-install-step1.tf, as we need to create the configuration instance.
+# Fetch the RDE Type created in 3.10-cse-4.0-install-step1.tf, as we need to create the configuration instance.
 data "vcd_rde_type" "existing_vcdkeconfig_type" {
   vendor  = "vmware"
   nss     = "VCDKEConfig"
@@ -766,6 +766,21 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
   depends_on = [
     vcd_rde.vcdkeconfig_instance
+  ]
+}
+
+data "vcd_org" "system_org" {
+  name = var.administrator_org
+}
+
+resource vcd_ui_plugin "k8s_container_clusters_ui_plugin" {
+  count = var.k8s_container_clusters_ui_plugin_path == "" ? 0 : 1
+  plugin_path = var.k8s_container_clusters_ui_plugin_path
+  enabled = true
+  tenant_ids = [
+    data.vcd_org.system_org.id,
+    vcd_org.solutions_organization.id,
+    vcd_org.tenant_organization.id,
   ]
 }
 

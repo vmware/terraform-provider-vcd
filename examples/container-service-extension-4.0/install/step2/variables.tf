@@ -313,3 +313,12 @@ variable "syslog_port" {
   description = "VCDKEConfig: Port for system logs"
   default     = ""
 }
+
+# ------------------------------------------------
+# Other configuration
+# ------------------------------------------------
+variable "k8s_container_clusters_ui_plugin_path" {
+  type        = string
+  description = "Path to the Kubernetes Container Clusters UI Plugin zip file"
+  default     = ""
+}
