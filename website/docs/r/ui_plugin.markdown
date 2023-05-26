@@ -79,3 +79,31 @@ The following arguments are supported:
 * `description` - The description of the UI Plugin
 * `status` - The status of the UI Plugin (for example, `ready`, `unavailable`, etc)
 
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing UI Plugin can be [imported][docs-import] into this resource via supplying its vendor, name and version, which
+unequivocally identifies it.
+For example, using this structure, representing an existing UI Plugin that was **not** created using Terraform:
+
+```hcl
+resource "vcd_ui_plugin" "my_existing_plugin" {
+  # `plugin_path` is not needed as it was already created
+  enabled = true
+}
+```
+
+For example, you can import the "Customize Portal" UI Plugin into Terraform state using this command
+
+```
+terraform import vcd_ui_plugin.my_plugin VMware."Customize Portal".3.1.4
+```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After that, you can expand the configuration file and either update or delete the UI Plugin as needed. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the UI Plugin's stored properties.

@@ -6,12 +6,25 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
 	"testing"
 )
 
 func init() {
 	testingTags["plugin"] = "resource_vcd_ui_plugin_test.go"
+}
+
+// This object is equivalent to the manifest.json that is inside the ../test-resources/ui_plugin.zip file
+var testUIPluginMetadata = &types.UIPluginMetadata{
+	Vendor:         "VMware",
+	License:        "BSD-2-Clause",
+	Link:           "http://www.vmware.com",
+	PluginName:     "Test Plugin",
+	Version:        "1.2.3",
+	Description:    "Test Plugin description",
+	ProviderScoped: true,
+	TenantScoped:   true,
 }
 
 func TestAccVcdUiPlugin(t *testing.T) {
@@ -64,12 +77,12 @@ func TestAccVcdUiPlugin(t *testing.T) {
 
 	testCheckResourceCommonUIPluginAsserts := func(resourcePath string) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
-			resource.TestCheckResourceAttr(resourcePath, "vendor", "VMware"),
-			resource.TestCheckResourceAttr(resourcePath, "name", "Test Plugin"),
-			resource.TestCheckResourceAttr(resourcePath, "version", "1.2.3"),
-			resource.TestCheckResourceAttr(resourcePath, "license", "BSD-2-Clause"),
-			resource.TestCheckResourceAttr(resourcePath, "description", "Test Plugin description"),
-			resource.TestCheckResourceAttr(resourcePath, "link", "http://www.vmware.com"),
+			resource.TestCheckResourceAttr(resourcePath, "vendor", testUIPluginMetadata.Vendor),
+			resource.TestCheckResourceAttr(resourcePath, "name", testUIPluginMetadata.PluginName),
+			resource.TestCheckResourceAttr(resourcePath, "version", testUIPluginMetadata.Version),
+			resource.TestCheckResourceAttr(resourcePath, "license", testUIPluginMetadata.License),
+			resource.TestCheckResourceAttr(resourcePath, "description", testUIPluginMetadata.Description),
+			resource.TestCheckResourceAttr(resourcePath, "link", testUIPluginMetadata.Link),
 			resource.TestMatchResourceAttr(resourcePath, "status", regexp.MustCompile("^ready|unavailable$")),
 		)
 	}
@@ -138,7 +151,17 @@ func TestAccVcdUiPlugin(t *testing.T) {
 					resource.TestCheckResourceAttrPair(resourceName, "enabled", dsName, "enabled"),
 					resource.TestCheckResourceAttrPair(resourceName, "link", dsName, "link"),
 					resource.TestCheckResourceAttrPair(resourceName, "tenant_ids.#", dsName, "tenant_ids.#"),
+					func(state *terraform.State) error {
+						return nil
+					},
 				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdUIPlugin(testUIPluginMetadata.Vendor, testUIPluginMetadata.PluginName, testUIPluginMetadata.Version),
+				ImportStateVerifyIgnore: []string{"plugin_path"},
 			},
 		},
 	})
@@ -180,5 +203,15 @@ func testAccCheckUIPluginDestroy(id string) resource.TestCheckFunc {
 			return fmt.Errorf("UI Plugin %s still exists", id)
 		}
 		return nil
+	}
+}
+
+func importStateIdUIPlugin(vendor, name, version string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return vendor +
+			ImportSeparator +
+			name +
+			ImportSeparator +
+			version, nil
 	}
 }

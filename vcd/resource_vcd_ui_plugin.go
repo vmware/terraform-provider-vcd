@@ -19,6 +19,9 @@ func resourceVcdUIPlugin() *schema.Resource {
 		ReadContext:   resourceVcdUIPluginRead,
 		UpdateContext: resourceVcdUIPluginUpdate,
 		DeleteContext: resourceVcdUIPluginDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdUIPluginImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"plugin_path": {
 				Type:     schema.TypeString,
@@ -201,22 +204,29 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 	dSet(d, "enabled", uiPlugin.UIPluginMetadata.Enabled)
 	dSet(d, "description", uiPlugin.UIPluginMetadata.Description)
 	dSet(d, "status", uiPlugin.UIPluginMetadata.PluginStatus)
-	if origin == "datasource" {
-		orgRefs, err := uiPlugin.GetPublishedTenants()
-		if err != nil {
-			return diag.Errorf("could not update the published Organizations of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
-		}
-		var orgIds = make([]string, len(orgRefs))
-		for i, orgRef := range orgRefs {
-			orgIds[i] = orgRef.ID
-		}
-		err = d.Set("tenant_ids", convertStringsToTypeSet(orgIds))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	err = setUIPluginTenantIds(uiPlugin, d, origin)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	d.SetId(uiPlugin.UIPluginMetadata.ID)
 	return nil
+}
+
+// setUIPluginTenantIds reads the published tenants for a given UI Plugin.
+func setUIPluginTenantIds(uiPlugin *govcd.UIPlugin, d *schema.ResourceData, origin string) error {
+	// tenant_ids is only Computed in a data source or during an import
+	if origin != "datasource" && origin != "import" {
+		return nil
+	}
+	orgRefs, err := uiPlugin.GetPublishedTenants()
+	if err != nil {
+		return fmt.Errorf("could not update the published Organizations of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+	}
+	var orgIds = make([]string, len(orgRefs))
+	for i, orgRef := range orgRefs {
+		orgIds[i] = orgRef.ID
+	}
+	return d.Set("tenant_ids", convertStringsToTypeSet(orgIds))
 }
 
 func resourceVcdUIPluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -259,4 +269,38 @@ func resourceVcdUIPluginDelete(_ context.Context, d *schema.ResourceData, meta i
 	}
 
 	return nil
+}
+
+// resourceVcdUIPluginImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in state file
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_ui_plugin.existing_ui_plugin
+// Example import path (_the_id_string_): VMware."Customize Portal".3.1.4
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+func resourceVcdUIPluginImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) < 3 {
+		return nil, fmt.Errorf("resource identifier must be specified as vendor.pluginName.version")
+	}
+	vendor, name, version := resourceURI[0], resourceURI[1], strings.Join(resourceURI[2:], ".")
+
+	vcdClient := meta.(*VCDClient)
+	uiPlugin, err := vcdClient.GetUIPlugin(vendor, name, version)
+	if err != nil {
+		return nil, fmt.Errorf("error finding UI Plugin with vendor %s, nss %s and version %s: %s", vendor, name, version, err)
+	}
+
+	err = setUIPluginTenantIds(uiPlugin, d, "import")
+	if err != nil {
+		return nil, err
+	}
+	d.SetId(uiPlugin.UIPluginMetadata.ID)
+	return []*schema.ResourceData{d}, nil
 }
