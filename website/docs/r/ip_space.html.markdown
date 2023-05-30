@@ -177,13 +177,6 @@ The following arguments are supported:
 * `start_address` - (Required) - Start IP address of a range
 * `end_address` - (Required) - End IP address of a range
 
-```hcl
-ip_range {
- start_address = "11.11.11.120"
- end_address   = "11.11.11.123"
-}
-```
-
 <a id="ipspace-ip-prefix"></a>
 
 ## ip_prefix block
@@ -201,25 +194,6 @@ IP ranges defined in `ip_range`
 * `first_ip` - (Required) - First IP of the prefix
 * `prefix_length` - (Required) - Prefix length
 * `prefix_count` - (Required) - Number of prefixes 
-
-```hcl
- ip_prefix {
-  default_quota = 2
-
-  prefix {
-    first_ip      = "192.168.1.100"
-    prefix_length = 30
-    prefix_count  = 4
-  }
-
-  prefix {
-    first_ip      = "192.168.1.200"
-    prefix_length = 30
-    prefix_count  = 4
-  }
-}
-```
-
 
 ## Importing
 
