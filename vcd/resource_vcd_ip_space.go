@@ -271,59 +271,9 @@ func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta 
 func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 
 	ipSpace := &types.IpSpace{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Type:        d.Get("type").(string),
-
-		// Utilization: types.Utilization{
-		// 	FloatingIPs: types.FloatingIPs{
-		// 		TotalCount:          "",
-		// 		AllocatedCount:      "",
-		// 		UsedCount:           "",
-		// 		UnusedCount:         "",
-		// 		AllocatedPercentage: 0,
-		// 		UsedPercentage:      0,
-		// 	},
-		// 	IPPrefixes: types.IPPrefixes{
-		// 		TotalCount:               "",
-		// 		AllocatedCount:           "",
-		// 		UsedCount:                "",
-		// 		UnusedCount:              "",
-		// 		AllocatedPercentage:      0,
-		// 		UsedPercentage:           0,
-		// 		PrefixLengthUtilizations: []types.PrefixLengthUtilizations{},
-		// 	},
-		// },
-		// IPSpaceRanges: types.IPSpaceRanges{
-		// 	IPRanges: []types.IpSpaceRangeValues{
-		// 		{
-		// 			ID:             "",
-		// 			StartIPAddress: "",
-		// 			EndIPAddress:   "",
-		// 			// TotalIPCount:          "",
-		// 			// AllocatedIPCount:      "",
-		// 			// AllocatedIPPercentage: 0,
-		// 		},
-		// 	},
-		// 	DefaultFloatingIPQuota: 0,
-		// },
-		// IPSpacePrefixes: []types.IPSpacePrefixes{
-		// 	{
-		// 		IPPrefixSequence: []types.IPPrefixSequence{
-		// 			{
-		// 				// ID:                        "",
-		// 				StartingPrefixIPAddress: "",
-		// 				PrefixLength:            0,
-		// 				TotalPrefixCount:        0,
-
-		// 				// AllocatedPrefixCount:      0,
-		// 				// AllocatedPrefixPercentage: 0,
-		// 			},
-		// 		},
-		// 		DefaultQuotaForPrefixLength: 0,
-		// 	},
-		// },
-
+		Name:                      d.Get("name").(string),
+		Description:               d.Get("description").(string),
+		Type:                      d.Get("type").(string),
 		IPSpaceInternalScope:      convertSchemaSetToSliceOfStrings(d.Get("internal_scope").(*schema.Set)),
 		IPSpaceExternalScope:      d.Get("external_scope").(string),
 		RouteAdvertisementEnabled: d.Get("route_advertisement_enabled").(bool),
@@ -348,20 +298,17 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 			ipSpace.IPSpaceRanges.IPRanges[ipRangeIndex].EndIPAddress = ipRangeStrings["end_address"]
 		}
 	}
-
 	// EOF IP Ranges
 
 	// IP Prefixes
 	ipPrefixes := d.Get("ip_prefix").(*schema.Set)
 	ipPrefixesSlice := ipPrefixes.List()
 
-	// Initialize structure
 	if len(ipPrefixesSlice) > 0 {
 		ipSpace.IPSpacePrefixes = []types.IPSpacePrefixes{}
 	}
 
 	for ipPrefixIndex := range ipPrefixesSlice {
-
 		singleIpPrefix := ipPrefixesSlice[ipPrefixIndex]
 		ipPrefixMap := singleIpPrefix.(map[string]interface{})
 		ipPrefixQuota := ipPrefixMap["default_quota"].(string)
@@ -371,8 +318,7 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 			DefaultQuotaForPrefixLength: ipPrefixQuotaInt,
 		}
 
-		// Extract IP prefixess
-
+		// Extract IP prefixes
 		// 'prefix'
 		ipPrefixPrefix := ipPrefixMap["prefix"].(*schema.Set)
 		ipPrefixPrefixSlice := ipPrefixPrefix.List()
@@ -392,17 +338,15 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 				TotalPrefixCount:        prefixLengthCountInt,
 			})
 		}
-
 		// EOF // Extract IP prefixess
 
 		// Add to the list
 		ipSpace.IPSpacePrefixes = append(ipSpace.IPSpacePrefixes, ipSpacePrefixType)
 
 	}
-
 	// EOF IP Prefixes
 
-	// only with
+	// only when `org_id` is set
 	orgId := d.Get("org_id").(string)
 	if orgId != "" {
 		ipSpace.OrgRef = &types.OpenApiReference{ID: orgId}
@@ -412,7 +356,6 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 }
 
 func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
-
 	dSet(d, "name", ipSpace.Name)
 	dSet(d, "description", ipSpace.Description)
 	dSet(d, "type", ipSpace.Type)
@@ -426,6 +369,7 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 	ipRangeQuotaStr := strconv.Itoa(ipSpace.IPSpaceRanges.DefaultFloatingIPQuota)
 	dSet(d, "ip_range_quota", ipRangeQuotaStr)
 
+	// ip_prefix
 	prefixesInterface := make([]interface{}, len(ipSpace.IPSpacePrefixes))
 	for i, val := range ipSpace.IPSpacePrefixes {
 		singlePrefix := make(map[string]interface{})
@@ -456,6 +400,7 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 	if err != nil {
 		return fmt.Errorf("error storing 'ip_prefix': %s", err)
 	}
+	// EOF ip_prefix
 
 	// IP ranges
 	ipRangesInterface := make([]interface{}, len(ipSpace.IPSpaceRanges.IPRanges))
@@ -471,11 +416,11 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 	if err != nil {
 		return fmt.Errorf("error storing 'ip_range': %s", err)
 	}
-	// IP ranges
+	// EOF IP ranges
 
 	// Internal scope
-	setOfStrs := convertStringsToTypeSet(ipSpace.IPSpaceInternalScope)
-	err = d.Set("internal_scope", setOfStrs)
+	setOfIps := convertStringsToTypeSet(ipSpace.IPSpaceInternalScope)
+	err = d.Set("internal_scope", setOfIps)
 	if err != nil {
 		return fmt.Errorf("error storing 'internal_scope': %s", err)
 	}

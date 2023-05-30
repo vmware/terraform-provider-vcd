@@ -25,44 +25,44 @@ resource "vcd_ip_space" "space1" {
   type        = "PRIVATE"
   org_id      = data.vcd_org.org1.id
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	  default_quota = -1 # unlimited
+    default_quota = -1 # unlimited
 
-	  prefix {
-	  	first_ip = "192.168.1.100"
-	  	prefix_length = 30
-	  	prefix_count = 4
-	  }
-  
-	  prefix {
-	  	first_ip = "192.168.1.200"
-	  	prefix_length = 30
-	  	prefix_count = 4
-	  }
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
+
+    prefix {
+      first_ip      = "192.168.1.200"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	  default_quota = -1 # unlimited
+    default_quota = -1 # unlimited
 
-	  prefix {
-	  	first_ip = "10.10.10.96"
-	  	prefix_length = 29
-	  	prefix_count = 4
-	  }
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 
   ip_range {
-	  start_address = "11.11.11.100"
-	  end_address   = "11.11.11.110"
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
   }
 
   ip_range {
-	  start_address = "11.11.11.120"
-	  end_address   = "11.11.11.123"
+    start_address = "11.11.11.120"
+    end_address   = "11.11.11.123"
   }
 }
 ```
@@ -71,36 +71,36 @@ resource "vcd_ip_space" "space1" {
 
 ```hcl
 resource "vcd_ip_space" "space1" {
-  name        = "Public-Tokyo"
-  type        = "PUBLIC"
+  name = "Public-Tokyo"
+  type = "PUBLIC"
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = true
 
   ip_prefix {
-	  default_quota = 2
+    default_quota = 2
 
-	  prefix {
-	  	first_ip = "192.168.1.100"
-	  	prefix_length = 30
-	  	prefix_count = 4
-	  }
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	  default_quota = -1
+    default_quota = -1
 
-	  prefix {
-	  	first_ip = "10.10.10.96"
-	  	prefix_length = 29
-	  	prefix_count = 4
-	  }
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 
   ip_range {
-	  start_address = "11.11.11.100"
-	  end_address   = "11.11.11.110"
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
   }
 }
 ```
@@ -113,31 +113,30 @@ resource "vcd_ip_space" "space1" {
   description = "Network used for backups"
   type        = "SHARED_SERVICES"
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	  default_quota = 0 # no quota
+    default_quota = 0 # no quota
 
-	  prefix {
-	  	first_ip = "192.168.1.100"
-	  	prefix_length = 30
-	  	prefix_count = 4
-	  }
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	  default_quota = 0 # no quota
+    default_quota = 0 # no quota
 
-	  prefix {
-	  	first_ip = "10.10.10.96"
-	  	prefix_length = 29
-	  	prefix_count = 4
-	  }
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 }
-
 ```
 
 ## Argument Reference

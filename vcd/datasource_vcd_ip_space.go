@@ -128,7 +128,7 @@ func datasourceVcdIpSpaceRead(ctx context.Context, d *schema.ResourceData, meta 
 	var ipSpace *govcd.IpSpace
 	var err error
 
-	if orgId != "" { //
+	if orgId != "" { // in case org_id is provided (PRIVATE IP Space)
 		ipSpace, err = vcdClient.GetIpSpaceByNameAndOrgId(ipSpaceName, orgId)
 		if err != nil {
 			return diag.Errorf("error retrieving IP Space '%s' in Org ID '%s': %s", ipSpaceName, orgId, err)
