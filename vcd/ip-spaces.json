@@ -1,0 +1,131 @@
+// Request (Public IP space):
+
+{
+    "name": "public222",
+    "type": "PUBLIC",
+    "ipSpaceInternalScope": [
+        "192.168.1.1/24"
+    ],
+    "ipSpaceRanges": {
+        "ipRanges": [
+            {
+                "startIpAddress": "192.168.1.10",
+                "endIpAddress": "192.168.1.20",
+                "id": null
+            }
+        ],
+        "defaultFloatingIpQuota": 1
+    },
+    "ipSpacePrefixes": [
+        {
+            "ipPrefixSequence": [
+                {
+                    "startingPrefixIpAddress": "192.168.1.180",
+                    "prefixLength": 29,
+                    "totalPrefixCount": 2,
+                    "id": null
+                }
+            ],
+            "defaultQuotaForPrefixLength": 0
+        },
+        {
+            "ipPrefixSequence": [
+                {
+                    "startingPrefixIpAddress": "192.168.1.100",
+                    "prefixLength": 32,
+                    "totalPrefixCount": 5,
+                    "id": null
+                }
+            ],
+            "defaultQuotaForPrefixLength": 0
+        }
+    ],
+    "description": "",
+    "routeAdvertisementEnabled": true,
+    "ipSpaceExternalScope": "0.0.0.0/0"
+}
+
+
+
+// Request Shared IP space (does not have external scope and does not have BGP setting)
+{
+    "name": "shared-2222",
+    "type": "SHARED_SERVICES",
+    "ipSpaceInternalScope": [
+        "99.99.99.1/24"
+    ],
+    "ipSpaceRanges": {
+        "ipRanges": [
+            {
+                "startIpAddress": "99.99.99.10",
+                "endIpAddress": "99.99.99.20",
+                "id": null
+            }
+        ],
+        "defaultFloatingIpQuota": -1
+    },
+    "ipSpacePrefixes": [
+        {
+            "ipPrefixSequence": [
+                {
+                    "startingPrefixIpAddress": "99.99.99.100",
+                    "prefixLength": 30,
+                    "totalPrefixCount": 3,
+                    "id": null
+                }
+            ],
+            "defaultQuotaForPrefixLength": 1
+        }
+    ],
+    "description": "",
+    "ipSpaceExternalScope": null
+}
+
+// Private don't have external scope and/or quotas. Have an Org reference
+
+{
+    "name": "private-v42-org-ip-space",
+    "type": "PRIVATE",
+    "ipSpaceInternalScope": [
+        "66.1.1.1/24"
+    ],
+    "ipSpaceRanges": {
+        "ipRanges": [
+            {
+                "startIpAddress": "66.1.1.12",
+                "endIpAddress": "66.1.1.24",
+                "id": null
+            }
+        ],
+        "defaultFloatingIpQuota": 1
+    },
+    "ipSpacePrefixes": [
+        {
+            "ipPrefixSequence": [
+                {
+                    "startingPrefixIpAddress": "66.1.1.200",
+                    "prefixLength": 32,
+                    "totalPrefixCount": 8,
+                    "id": null
+                }
+            ]
+        },
+        {
+            "ipPrefixSequence": [
+                {
+                    "startingPrefixIpAddress": "66.1.1.100",
+                    "prefixLength": 28,
+                    "totalPrefixCount": 3,
+                    "id": null
+                }
+            ]
+        }
+    ],
+    "description": "private-v42-org-ip-space",
+    "ipSpaceExternalScope": null,
+    "routeAdvertisementEnabled": true,
+    "orgRef": {
+        "id": "urn:vcloud:org:c6e4bb09-b0c3-41a2-919b-9e33b48d3204",
+        "name": "v42"
+    }
+}

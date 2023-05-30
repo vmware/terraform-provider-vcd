@@ -56,7 +56,11 @@ Changes in progress for v3.10.0 are available at [.changes/v3.10.0](https://gith
 * Fix a bug that prevented returning a specific error while authenticating provider with invalid
   password ([#962](https://github.com/vmware/terraform-provider-vcd/pull/962))
 * Add `prefix_length` field to `vcd_vapp_network` as creating IPv6 vApp networks was not supported due to the lack of a suitable subnet representation (Issue #999) ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007), [#1031](https://github.com/vmware/terraform-provider-vcd/pull/1031))
+<<<<<<< HEAD
+* Remove incorrect default value from `vcd_vapp_network` `netmask` field, as it prevents using IPV6 networks. Users of already defined resources need to add a `netmask = "255.255.255.0"` when using Ipv4 ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
+=======
 * Remove incorrect default value from `vcd_vapp_network` `netmask` field, as it prevents using IPv6 networks. Users of already defined resources need to add a `netmask = "255.255.255.0"` when using IPv4 ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
+>>>>>>> main
 
 ### DEPRECATIONS
 * Deprecate `netmask` in favor of `prefix_length` for `vcd_vapp_network` ([#1007](https://github.com/vmware/terraform-provider-vcd/pull/1007))
