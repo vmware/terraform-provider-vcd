@@ -17,7 +17,7 @@ func datasourceVcdIpSpace() *schema.Resource {
 			"org_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "For 'SHARED' (Org bound) IP spaces - Org ID",
+				Description: "Org ID for 'SHARED' IP spaces",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -45,12 +45,12 @@ func datasourceVcdIpSpace() *schema.Resource {
 			"ip_range_quota": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "IP ranges (should match internal scope)",
+				Description: "IP range quota",
 			},
 			"ip_range": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "IP ranges (should match internal scope)",
+				Description: "IP ranges",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": {
@@ -69,24 +69,24 @@ func datasourceVcdIpSpace() *schema.Resource {
 			"ip_prefix": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "IP prefixes (should match internal scope)",
+				Description: "IP prefixes",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"prefix": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "IP ranges (should match internal scope)",
+							Description: "IP Prefix",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"first_ip": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "First IP in CIDR format",
+										Description: "First IP",
 									},
 									"prefix_length": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "First IP in CIDR format",
+										Description: "Prefix length",
 									},
 									"prefix_count": {
 										Type:        schema.TypeString,

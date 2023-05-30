@@ -53,7 +53,7 @@ var ipSpacePrefix = &schema.Resource{
 		"first_ip": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "First IP in CIDR format",
+			Description: "First IP",
 		},
 		"prefix_length": {
 			Type:         schema.TypeString,
