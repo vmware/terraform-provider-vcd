@@ -19,21 +19,21 @@ Supported in provider *v3.10+* and requires VCD 10.2+
 
 ```hcl
 locals {
-   my_plugin_orgs = [
-      "myOrg1",
-      "myOrg2"
-   ]
+  my_plugin_orgs = [
+    "myOrg1",
+    "myOrg2"
+  ]
 }
 
 data "vcd_org" "my_plugin_orgs" {
-   count = length(local.my_plugin_orgs)
-   name  = local.my_plugin_orgs[count.index]
+  count = length(local.my_plugin_orgs)
+  name  = local.my_plugin_orgs[count.index]
 }
 
 resource "vcd_ui_plugin" "my_plugin" {
-   plugin_path = "./container-ui-plugin-4.0.zip"
-   enabled     = true
-   tenant_ids  = data.vcd_org.my_plugin_orgs[*].id
+  plugin_path = "./container-ui-plugin-4.0.zip"
+  enabled     = true
+  tenant_ids  = data.vcd_org.my_plugin_orgs[*].id
 }
 ```
 

@@ -22,9 +22,11 @@ data "vcd_ui_plugin" "existing_ui_plugin" {
   name    = "Customize Portal"
   version = "3.1.4"
 }
+
 output "license" {
   value = data.vcd_ui_plugin.existing_ui_plugin.license
 }
+
 output "tenants" {
   value = data.vcd_ui_plugin.existing_ui_plugin.tenant_ids
 }
