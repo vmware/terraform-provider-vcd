@@ -36,7 +36,7 @@ var ipPrefixes = &schema.Resource{
 		"prefix": {
 			Type:        schema.TypeSet,
 			Required:    true,
-			Description: "IP ranges (should match internal scope)",
+			Description: "One or more prefixes",
 			Elem:        ipSpacePrefix,
 		},
 		"default_quota": {
@@ -54,18 +54,17 @@ var ipSpacePrefix = &schema.Resource{
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "First IP in CIDR format",
-			// ValidateFunc: validation.IsIPAddress,
 		},
 		"prefix_length": {
 			Type:         schema.TypeString,
 			Required:     true,
-			Description:  "First IP in CIDR format",
+			Description:  "Prefix length",
 			ValidateFunc: IsIntAndAtLeast(0),
 		},
 		"prefix_count": {
 			Type:         schema.TypeString,
 			Required:     true,
-			Description:  "Prefix count",
+			Description:  "Number of prefixes to define",
 			ValidateFunc: IsIntAndAtLeast(1),
 		},
 	},
@@ -85,7 +84,7 @@ func resourceVcdIpSpace() *schema.Resource {
 			"org_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "For 'SHARED' (Org bound) IP spaces - Org ID",
+				Description: "Org ID for 'SHARED' IP spaces",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -97,17 +96,15 @@ func resourceVcdIpSpace() *schema.Resource {
 				Optional:    true,
 				Description: "Description of IP space",
 			},
-
 			"type": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Type of IP space",
-				// PUBLIC, SHARED_SERVICES, PRIVATE
-			},
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Type of IP space",
+				ValidateFunc: validation.StringInSlice([]string{"PUBLIC", "SHARED_SERVICES", "PRIVATE"}, false)},
 			"internal_scope": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "A set of up internal scope IPs in CIDR format",
+				Description: "A set of internal scope IPs in CIDR format",
 				Elem: &schema.Schema{
 					MinItems: 1,
 					Type:     schema.TypeString,
@@ -117,19 +114,19 @@ func resourceVcdIpSpace() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				Description:  "IP ranges (should match internal scope)",
+				Description:  "IP ranges quota. '-1' - unlimited, '0' - no quota",
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
 			"ip_range": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "IP ranges (should match internal scope)",
+				Description: "One or more IP ranges for floating IP allocation",
 				Elem:        ipSpaceIpRangeRange,
 			},
 			"ip_prefix": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "IP prefixes (should match internal scope)",
+				Description: "One or more IP prefixes withing internal scope",
 				Elem:        ipPrefixes,
 			},
 			"external_scope": {
@@ -168,7 +165,7 @@ func resourceVcdIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	log.Printf("[TRACE] IP Space creation initiated")
+	log.Printf("[TRACE] IP Space update initiated")
 
 	ipSpaceConfig, err := getIpSpaceType(d)
 	if err != nil {
@@ -181,7 +178,6 @@ func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	ipSpaceConfig.ID = d.Id()
-
 	_, err = ipSpace.Update(ipSpaceConfig)
 	if err != nil {
 		return diag.Errorf("error updating IP Space: %s", err)
@@ -228,6 +224,9 @@ func resourceVcdIpSpaceDelete(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
+// resourceVcdIpSpaceImport has two cases:
+// * Import global (provider level) IP Space - just a name is required
+// * Import Private IP space for an Organization - org-name.ip-space-name is required
 func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] IP Space import initiated")
 
@@ -269,7 +268,6 @@ func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
-
 	ipSpace := &types.IpSpace{
 		Name:                      d.Get("name").(string),
 		Description:               d.Get("description").(string),
