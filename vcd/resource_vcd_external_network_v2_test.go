@@ -988,3 +988,148 @@ data "vcd_network_direct" "net" {
   name = vcd_network_direct.net.name
 }
 `
+
+func TestAccVcdExternalNetworkV2NsxtIpSpace(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+
+		"Tags": "network extnetwork nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtIpSpaceStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdExternalNetworkV2NsxtIpSpaceStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step2DS"
+	configText3DS := templateFill(testAccVcdExternalNetworkV2NsxtIpSpaceStep2DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText3DS)
+
+	// params["FuncName"] = t.Name() + "step3"
+	// configText3 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep3, params)
+	// debugPrintf("#[DEBUG] CONFIGURATION: %s", configText3)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
+				),
+			},
+			{
+				ResourceName:      "vcd_external_network_v2.ext-net-nsxt",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
+			},
+			{
+				Taint:  []string{"vcd_external_network_v2.ext-net-nsxt"},
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
+				),
+			},
+			{
+				Config: configText3DS,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resourceFieldsEqual("data.vcd_external_network_v2.ext-net-nsxt", "vcd_external_network_v2.ext-net-nsxt", nil),
+				),
+			},
+		},
+	})
+}
+
+const testAccVcdExternalNetworkV2NsxtIpSpaceStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces = true
+}
+`
+
+const testAccVcdExternalNetworkV2NsxtIpSpaceStep2 = testAccCheckVcdExternalNetworkV2NsxtDS + `
+data "vcd_org" "org1" {
+  name = "{{.Org}}"
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces     = true
+  dedicated_org_id = data.vcd_org.org1.id
+}
+`
+
+const testAccVcdExternalNetworkV2NsxtIpSpaceStep2DS = testAccCheckVcdExternalNetworkV2NsxtDS + `
+# skip-binary-test: datasource test
+data "vcd_org" "org1" {
+  name = "{{.Org}}"
+}
+
+data "vcd_external_network_v2" "ext-net-nsxt" {
+  name = vcd_external_network_v2.ext-net-nsxt.name
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces     = true
+  dedicated_org_id = data.vcd_org.org1.id
+}
+`

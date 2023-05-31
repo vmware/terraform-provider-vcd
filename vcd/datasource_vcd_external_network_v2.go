@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -21,6 +22,16 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"dedicated_org_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of an Org that this network is dedicated to",
+			},
+			"use_ip_spaces": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines if this network uses IP Spaces. VCD 10.4.1+",
 			},
 			"ip_scope": {
 				Type:        schema.TypeSet,

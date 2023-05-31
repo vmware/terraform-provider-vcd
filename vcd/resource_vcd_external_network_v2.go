@@ -142,9 +142,21 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				Optional:    true,
 				Description: "Network description",
 			},
+			"dedicated_org_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Dedicate External Network to an Org (only with IP Spaces)",
+			},
+			"use_ip_spaces": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Enables IP Spaces for this network (default 'false'). VCD 10.4.1+",
+			},
 			"ip_scope": {
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true, // Not required when `use_ip_spaces` is enabled
 				Description: "A set of IP scopes for the network",
 				Elem:        networkV2IpScope,
 			},
@@ -288,13 +300,32 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, know
 	if err != nil {
 		return nil, fmt.Errorf("error getting network backing type: %s", err)
 	}
-	subnetSlice := getSubnetsType(d)
 
 	newExtNet := &types.ExternalNetworkV2{
 		Name:            d.Get("name").(string),
 		Description:     d.Get("description").(string),
-		Subnets:         types.ExternalNetworkV2Subnets{Values: subnetSlice},
 		NetworkBackings: networkBackings,
+		DedicatedOrg:    &types.OpenApiReference{ID: d.Get("dedicated_org_id").(string)},
+	}
+
+	usingIpSpace := d.Get("use_ip_spaces").(bool)
+	if usingIpSpace {
+		newExtNet.UsingIpSpace = &usingIpSpace
+	}
+
+	// Using IP blocks
+	if !usingIpSpace {
+		subnetSlice := getSubnetsType(d)
+		newExtNet.Subnets = types.ExternalNetworkV2Subnets{Values: subnetSlice}
+	}
+
+	// perform some runtime validations to make use lives easier
+	if usingIpSpace && len(newExtNet.Subnets.Values) > 0 {
+		return nil, fmt.Errorf("'ip_scope' should not be set when 'use_ip_spaces' is enabled")
+	}
+
+	if !usingIpSpace && d.Get("dedicated_org_id").(string) != "" {
+		return nil, fmt.Errorf("'dedicated_org_id' can only be set when 'use_ip_spaces' is enabled")
 	}
 
 	return newExtNet, nil
@@ -450,6 +481,14 @@ func processIpRanges(staticIpPool *schema.Set) []types.ExternalNetworkV2IPRange 
 func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2) error {
 	dSet(d, "name", net.Name)
 	dSet(d, "description", net.Description)
+
+	if net.DedicatedOrg != nil && net.DedicatedOrg.ID != "" {
+		dSet(d, "dedicated_org_id", net.DedicatedOrg.ID)
+	}
+
+	if net.UsingIpSpace != nil {
+		dSet(d, "use_ip_spaces", net.UsingIpSpace)
+	}
 
 	// Loop over all subnets (known as ip_scope in UI)
 	subnetSlice := make([]interface{}, len(net.Subnets.Values))

@@ -20,6 +20,24 @@ requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks 
 
 Supported in provider *v3.0+*.
 
+## Example Usage (NSX-T Tier 0 Router backed External Network backed by IP Spaces)
+
+```hcl
+resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
+  name        = "nsxt-external-network"
+  description = "IP Space backed"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces = true
+  # optional argument to dedicate network to a particular Org
+  dedicated_org_id = data.vcd_org.org1.id 
+}
+```
+
 ## Example Usage (NSX-T Tier 0 Router backed External Network)
 
 ```hcl
@@ -169,7 +187,11 @@ The following arguments are supported:
 
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) Network friendly description
-* `ip_scope` - (Required) One or more IP scopes for the network. See [IP Scope](#ipscope) below for details.
+* `use_ip_spaces` - (Optional; *v3.10+*; *VCD 10.4.1+*) Defines if the network uses IP Spaces. Do
+* `dedicated_org_id` - (Optional; *v3.10+*; *VCD 10.4.1+*) An Org ID that this network should be
+  not specify `ip_scope` when using IP Spaces. (default `false`)
+* dedicated to. Only applicable when `use_ip_spaces=true`
+* `ip_scope` - (Optional) One or more IP scopes for the network. See [IP Scope](#ipscope) below for details.
 * `vsphere_network` - (Optional) One or more blocks of [vSphere Network](#vspherenetwork)..
 * `nsxt_network` - (Optional) NSX-T network definition. See [NSX-T Network](#nsxtnetwork) below for details.
 
