@@ -45,13 +45,18 @@ There are three types of IP spaces that you can create.
   consumption is unlimited.
 
 
+## New resources
 
-## Impacted resources
 
-* `vcd_external_network_v2` - new fields `use_ip_spaces` and `dedicated_org_id`
+## Modified resources
+
+* `vcd_external_network_v2` - new fields `use_ip_spaces` and `dedicated_org_id` (applicable only to
+  T0 or T0 VRF backed networks also known as Provider Gateways in UI)
+
 
 ## References
 
 * [VMware Cloud Director Documentation for Providers](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-46772618-7991-4928-A77B-BC774C45EA33.html)
 * [VMware Cloud Director Documentation for Tenants](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-FB230D89-ACBC-4345-A11A-D099D359ED1B.html)
+* [IP Space Uplinks for Provider Gateways](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-0D40BD21-CAAA-4FD3-B6ED-78BA8FE2DEF1.html)
 
