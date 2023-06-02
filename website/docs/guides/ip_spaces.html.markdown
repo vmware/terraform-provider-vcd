@@ -46,13 +46,24 @@ There are three types of IP spaces that you can create.
 
 
 ## New resources
+* `vcd_ip_space`
 
+
+* `vcd_ip_space_uplink` 
+
+### WIP uplink
+* You can associate only one IP space with an IP space uplink. You cannot associate a private IP space to a public provider gateway
+* You cannot change reference once created
 
 ## Modified resources
 
 * `vcd_external_network_v2` - new fields `use_ip_spaces` and `dedicated_org_id` (applicable only to
   T0 or T0 VRF backed networks also known as Provider Gateways in UI)
-
+* `vcd_nsxt_edgegateway` - none of the fields `subnet_with_total_ip_count`, `subnet`,
+  `subnet_with_ip_count` are no longer mandatory when specifying `external_network_id` that is using
+  IP Spaces. As a result they will not be populated after read operations together with
+  `used_ip_count` and `unused_ip_count`. Additional computed flag `uses_ip_spaces` to tell if the
+  Edge Gateway is using IP Spaces (is backed by Provider Gateway that has IP Space Uplinks)
 
 ## References
 

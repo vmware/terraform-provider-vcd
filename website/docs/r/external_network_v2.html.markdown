@@ -14,11 +14,12 @@ Provides a VMware Cloud Director External Network resource (version 2). New vers
 uses new VCD API and is capable of creating NSX-T backed external networks as well as port group
 backed ones.
 
--> **Note:** This resource uses new VMware Cloud Director
-[OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks (NSX-T *3.0+* requires VCD *10.1.1+*)
+-> This resource manages both NSX-T and NSX-V **External Networks** and **NSX-T Provider
+Gateways**
 
-Supported in provider *v3.0+*.
+This resource supports **IP Spaces** - read [IP Spaces guide
+page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/ip_spaces) for more
+information.
 
 ## Example Usage (NSX-T Tier 0 Router backed External Network backed by IP Spaces)
 
@@ -88,7 +89,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 ```
 
-## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network [only VCD 10.3+])
+## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network)
 
 -> NSX-T **Segment backed External Network** is similar to **Imported Org VDC network**. The difference is that
 **External Network can consume one NSX-T Segment and then many VDCs can use it by using NSX-T Direct Network**, 

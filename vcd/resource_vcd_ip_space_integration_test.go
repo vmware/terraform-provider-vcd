@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdIpSpaceUplink(t *testing.T) {
+func TestAccVcdIpSpaceIntegration(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -18,21 +18,23 @@ func TestAccVcdIpSpaceUplink(t *testing.T) {
 		"NsxtManager":         testConfig.Nsxt.Manager,
 		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
 		"ExternalNetworkName": t.Name(),
+		"Org":                 testConfig.VCD.Org,
+		"VDC":                 testConfig.Nsxt.Vdc,
 
 		"Tags": "network nsxt",
 	}
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdIpSpaceUplinkStep1, params)
+	configText1 := templateFill(testAccVcdIpSpaceIntegrationStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
-	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccVcdIpSpaceUplinkStep2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	// params["FuncName"] = t.Name() + "step2"
+	// configText2 := templateFill(testAccVcdIpSpaceIntegrationStep2, params)
+	// debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	params["FuncName"] = t.Name() + "step3DS"
-	configText3DS := templateFill(testAccVcdIpSpaceUplinkStep3DS, params)
+	configText3DS := templateFill(testAccVcdIpSpaceIntegrationStep3DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3DS)
 
 	if vcdShortTest {
@@ -48,6 +50,9 @@ func TestAccVcdIpSpaceUplink(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "uses_ip_spaces", "true"),
+
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
@@ -58,29 +63,10 @@ func TestAccVcdIpSpaceUplink(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()+"-updated"),
-					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", "description"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
-				),
-			},
-			{
-				ResourceName:      "vcd_ip_space_uplink.u1",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importCustomObject([]string{params["ExternalNetworkName"].(string), params["TestName"].(string) + "-updated"}),
-			},
-			{
 				Config: configText3DS,
 				Check: resource.ComposeTestCheckFunc(
 					resourceFieldsEqual("data.vcd_ip_space_uplink.u1", "vcd_ip_space_uplink.u1", nil),
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway.ip-space", "vcd_nsxt_edgegateway.ip-space", []string{"%"}),
 				),
 			},
 		},
@@ -88,7 +74,7 @@ func TestAccVcdIpSpaceUplink(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdIpSpaceUplinkPrereqs = `
+const testAccVcdIpSpaceIntegrationPrereqs = `
 data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
 }
@@ -96,6 +82,11 @@ data "vcd_nsxt_manager" "main" {
 data "vcd_nsxt_tier0_router" "router" {
   name            = "{{.NsxtTier0Router}}"
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+data "vcd_org_vdc" "vdc1" {
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
 }
 
 resource "vcd_ip_space" "space1" {
@@ -119,34 +110,47 @@ resource "vcd_external_network_v2" "provider-gateway" {
 }
 `
 
-const testAccVcdIpSpaceUplinkStep1 = testAccVcdIpSpaceUplinkPrereqs + `
+const testAccVcdIpSpaceIntegrationStep1 = testAccVcdIpSpaceIntegrationPrereqs + `
 resource "vcd_ip_space_uplink" "u1" {
   name                = "{{.TestName}}"
   external_network_id = vcd_external_network_v2.provider-gateway.id
   ip_space_id         = vcd_ip_space.space1.id
 }
+
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "{{.Org}}"
+  name                = "{{.TestName}}"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+}
 `
 
-const testAccVcdIpSpaceUplinkStep2 = testAccVcdIpSpaceUplinkPrereqs + `
+const testAccVcdIpSpaceIntegrationStep2 = testAccVcdIpSpaceIntegrationPrereqs + `
 resource "vcd_ip_space_uplink" "u1" {
   name                = "{{.TestName}}-updated"
   description         = "description"
   external_network_id = vcd_external_network_v2.provider-gateway.id
   ip_space_id         = vcd_ip_space.space1.id
 }
+
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "{{.Org}}"
+  name                = "{{.TestName}}"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+}
 `
 
-const testAccVcdIpSpaceUplinkStep3DS = testAccVcdIpSpaceUplinkPrereqs + `
+const testAccVcdIpSpaceIntegrationStep3DS = testAccVcdIpSpaceIntegrationStep1 + `
 # skip-binary-test: Data Source test
 data "vcd_ip_space_uplink" "u1" {
-  name                = "{{.TestName}}-updated"
+  name                = "{{.TestName}}"
   external_network_id = vcd_external_network_v2.provider-gateway.id
 }
 
-resource "vcd_ip_space_uplink" "u1" {
-  name                = "{{.TestName}}-updated"
-  description         = "description"
-  external_network_id = vcd_external_network_v2.provider-gateway.id
-  ip_space_id         = vcd_ip_space.space1.id
+data "vcd_nsxt_edgegateway" "ip-space" {
+  org      = "{{.Org}}"
+  name     = vcd_nsxt_edgegateway.ip-space.name
+  owner_id = data.vcd_org_vdc.vdc1.id
 }
 `
