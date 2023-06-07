@@ -326,11 +326,39 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
+			"ignore_metadata": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Defines a set of metadata entries that need to be ignored by this provider",
+				Elem:        ignoreMetadataSchema,
+			},
 		},
 		ResourcesMap:         globalResourceMap,
 		DataSourcesMap:       globalDataSourceMap,
 		ConfigureContextFunc: providerConfigure,
 	}
+}
+
+var ignoreMetadataSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"object_name": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "If set, defines a resource in VCD whose metadata should be ignored",
+		},
+		"key": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			Description:  "Regular expression of the metadata entry keys to ignore",
+			AtLeastOneOf: []string{"key", "value"},
+		},
+		"value": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			Description:  "Regular expression of the metadata entry keys to ignore",
+			AtLeastOneOf: []string{"key", "value"},
+		},
+	},
 }
 
 func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
