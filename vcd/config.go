@@ -47,6 +47,9 @@ type Config struct {
 	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default vCD Entity
 	// ID is used as Relaying Party Trust identifier.
 	CustomAdfsRptId string
+
+	// TODO
+	IgnoredMetadata []govcd.IgnoredMetadata
 }
 
 type VCDClient struct {
@@ -679,6 +682,7 @@ func (c *Config) Client() (*VCDClient, error) {
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
 			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
 			govcd.WithHttpUserAgent(userAgent),
+			govcd.WithIgnoredMetadata(c.IgnoredMetadata),
 		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,

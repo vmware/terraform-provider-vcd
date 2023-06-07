@@ -4,9 +4,87 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
 )
+
+// ignoreMetadataSchema returns the schema associated to ignore_metadata for the provider configuration.
+func ignoreMetadataSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Optional:    true,
+		Description: "Defines a set of metadata entries that need to be ignored by this provider",
+		Elem: schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"object_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "If set, defines a resource in VCD whose metadata should be ignored",
+				},
+				"key_regex": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Description:  "Regular expression of the metadata entry keys to ignore",
+					AtLeastOneOf: []string{"key_regex", "value_regex"},
+				},
+				"value_regex": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Description:  "Regular expression of the metadata entry values to ignore",
+					AtLeastOneOf: []string{"key_regex", "value_regex"},
+				},
+				"type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Metadata entry type to ignore",
+				},
+				"user_access": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Metadata entry user access to ignore",
+				},
+				"is_system": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Regular expression of the metadata entry domain to ignore",
+				},
+			},
+		},
+	}
+}
+
+func getIgnoredMetadata(d *schema.ResourceData, key string) ([]govcd.IgnoredMetadata, error) {
+	ignoreMetadataRaw := d.Get(key).(*schema.Set).List()
+	result := make([]govcd.IgnoredMetadata, len(ignoreMetadataRaw))
+
+	assertIgnoreMetadataRegexes := func(regexes ...string) error {
+		for _, regex := range regexes {
+			if _, err := regexp.Compile(regex); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for i, ignoredEntryRaw := range ignoreMetadataRaw {
+		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
+		keyRegex := ignoredEntry["key_regex"].(string)
+		valueRegex := ignoredEntry["value_regex"].(string)
+		err := assertIgnoreMetadataRegexes(keyRegex, valueRegex)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = govcd.IgnoredMetadata{
+			KeyRegex:   regexp.MustCompile(keyRegex),
+			ValueRegex: regexp.MustCompile(valueRegex),
+			Type:       ignoredEntry["type"].(*string),
+			UserAccess: ignoredEntry["user_access"].(*string),
+			IsSystem:   ignoredEntry["is_system"].(*bool),
+		}
+	}
+	return result, nil
+}
 
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
 // The description will refer to the object name given as input.
