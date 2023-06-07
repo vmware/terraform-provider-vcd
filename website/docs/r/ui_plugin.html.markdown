@@ -40,21 +40,16 @@ resource "vcd_ui_plugin" "my_plugin" {
 ## Example Usage publishing to all Organizations available
 
 ```hcl
-data "vcd_resource_list" "list_of_orgs" {
-  name          = "list_of_orgs"
+data "vcd_resource_list" "all_orgs" {
+  name          = "all_orgs"
   resource_type = "vcd_org"
-  list_mode     = "name"
-}
-
-data "vcd_org" "all_orgs" {
-  count = length(data.vcd_resource_list.list_of_orgs.list)
-  name  = data.vcd_resource_list.list_of_orgs.list[count.index]
+  list_mode     = "id"
 }
 
 resource "vcd_ui_plugin" "my_plugin" {
   plugin_path = "./container-ui-plugin-4.0.zip"
   enabled     = true
-  tenant_ids  = data.vcd_org.all_orgs[*].id
+  tenant_ids  = data.vcd_resource_list.all_orgs.list
 }
 ```
 
