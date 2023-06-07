@@ -403,7 +403,7 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 func getParentEdgeGatewayOwnerId(vcdClient *VCDClient, d *schema.ResourceData) (string, *govcd.Org, error) {
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return "", nil, fmt.Errorf("[routed network create v2] error retrieving Org: %s", err)
+		return "", nil, fmt.Errorf("error retrieving Org: %s", err)
 	}
 
 	anyEdgeGateway, err := org.GetAnyTypeEdgeGatewayById(d.Get("edge_gateway_id").(string))

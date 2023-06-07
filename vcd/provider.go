@@ -120,6 +120,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_qos_profile":              datasourceVcdNsxtEdgeGatewayQosProfile(),        // 3.9
 	"vcd_nsxt_edgegateway_rate_limiting":            datasourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 datasourceVcdNsxtDhcpBinding(),                  // 3.9
+	"vcd_nsxt_edgegateway_dhcp_forwarding":          datasourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -204,6 +205,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde":                                       resourceVcdRde(),                              // 3.9
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 resourceVcdNsxtDhcpBinding(),                  // 3.9
+	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
 	"vcd_org_saml_metadata":                         resourceVcdOrgSamlMetadata(),                  // 3.10
 }
@@ -218,7 +220,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
 				Description: "The user name for VCD API operations.",
 			},
-
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
