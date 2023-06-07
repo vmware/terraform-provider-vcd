@@ -63,7 +63,7 @@ func resourceVcdOrgSamlCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 
 	fileName := d.Get("identity_provider_metadata_file").(string)
 
-	metadataText, err := os.ReadFile(fileName)
+	metadataText, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
 	if err != nil {
 		return diag.Errorf("[ORG SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
 	}
