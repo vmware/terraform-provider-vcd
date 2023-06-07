@@ -11,7 +11,7 @@ description: |-
 Provides a VMware Cloud Director UI Plugin resource. This can be used to manage UI Plugins in VCD, for example to add a new
 plugin from an local ZIP file, to publish/unpublish a UI Plugin to different Organizations, etc.
 
--> Creating, updating and deleting UI Plugins requires System administrator privileges.
+-> Creating, updating and deleting UI Plugins requires System Administrator privileges.
 
 Supported in provider *v3.10+* and requires VCD 10.2+
 

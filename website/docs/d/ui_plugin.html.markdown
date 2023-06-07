@@ -10,7 +10,7 @@ description: |-
 
 Provides a VMware Cloud Director UI Plugin data source. This can be used to fetch and read an existing UI Plugin.
 
--> Reading UI Plugins requires System administrator privileges.
+-> Reading UI Plugins requires System Administrator privileges.
 
 Supported in provider *v3.10+* and requires VCD 10.2+
 
