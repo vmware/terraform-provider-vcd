@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -104,6 +105,21 @@ func datasourceVcdIpAllocationRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	dSet(d, "allocation_date", ipAllocation.IpSpaceIpAllocation.AllocationDate)
 	dSet(d, "usage_state", ipAllocation.IpSpaceIpAllocation.UsageState)
+
+	// When IP Prefix is allocated, the returned value is in CIDR format (e.g. 192.168.1.0/24), and
+	// although it can be split using Terraform native functions, we're adding a convenience layer for
+	// users by splitting this address into IP and prefix length
+	if ipAllocation.IpSpaceIpAllocation.Type == "IP_PREFIX" {
+		splitCidr := strings.Split(ipAllocation.IpSpaceIpAllocation.Value, "/")
+		if len(splitCidr) == 2 {
+			dSet(d, "ip", splitCidr[0])
+			dSet(d, "prefix_length", splitCidr[1])
+		}
+	}
+
+	if ipAllocation.IpSpaceIpAllocation.Type == "FLOATING_IP" {
+		dSet(d, "ip", ipAllocation.IpSpaceIpAllocation.Value)
+	}
 
 	d.SetId(ipAllocation.IpSpaceIpAllocation.ID)
 

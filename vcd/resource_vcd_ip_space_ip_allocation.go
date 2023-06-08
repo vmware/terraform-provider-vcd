@@ -17,7 +17,7 @@ func resourceVcdIpAllocation() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdIpAllocationCreate,
 		ReadContext:   resourceVcdIpAllocationRead,
-		// UpdateContext: resourceVcdIpAllocationUpdate,
+		UpdateContext: resourceVcdIpAllocationUpdate,
 		DeleteContext: resourceVcdIpAllocationDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdIpAllocationImport,
@@ -67,21 +67,20 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Computed:    true,
 				Description: "",
 			},
-
 			"used_by_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "ID of entity that is using this allocation",
 			},
 			"allocation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Allocation date in  ISO 8601 format (e.g. 2023-06-07T09:57:58.721Z)",
 			},
 			"ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "IP address part",
 			},
 
 			// The resource supports 'quantity' parameter, however it goes against Terraform concept
@@ -164,25 +163,34 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceVcdIpAllocationRead(ctx, d, meta)
 }
 
-// func resourceVcdIpAllocationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-// 	log.Printf("[TRACE] IP Space IP Allocation update initiated")
+func resourceVcdIpAllocationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[TRACE] IP Space IP Allocation update initiated")
 
-// 	vcdClient := meta.(*VCDClient)
+	vcdClient := meta.(*VCDClient)
 
-// 	orgId := d.Get("org_id").(string)
-// 	ipSpaceId := d.Get("ip_space_id").(string)
-// 	org, err := vcdClient.GetOrgById(orgId)
-// 	if err != nil {
-// 		return diag.Errorf("error getting Org by ID: %s", err)
-// 	}
+	orgId := d.Get("org_id").(string)
+	ipSpaceId := d.Get("ip_space_id").(string)
+	org, err := vcdClient.GetOrgById(orgId)
+	if err != nil {
+		return diag.Errorf("error getting Org by ID: %s", err)
+	}
 
-// 	ipAllocation, err := org.GetIpSpaceAllocationById(ipSpaceId, d.Id())
-// 	if err != nil {
-// 		return diag.Errorf("error retrieving IP Allocation: %s", err)
-// 	}
+	ipAllocation, err := org.GetIpSpaceAllocationById(ipSpaceId, d.Id())
+	if err != nil {
+		return diag.Errorf("error retrieving IP Allocation: %s", err)
+	}
 
-// 	return resourceVcdIpAllocationRead(ctx, d, meta)
-// }
+	if d.HasChange("usage_state") || d.HasChange("description") {
+		ipAllocation.IpSpaceIpAllocation.UsageState = d.Get("usage_state").(string)
+		ipAllocation.IpSpaceIpAllocation.Description = d.Get("description").(string)
+		_, err = ipAllocation.Update(ipAllocation.IpSpaceIpAllocation)
+		if err != nil {
+			return diag.Errorf("error updating IP Space IP Allocation: %s", err)
+		}
+	}
+
+	return resourceVcdIpAllocationRead(ctx, d, meta)
+}
 
 func resourceVcdIpAllocationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] IP Space IP Allocation read initiated")
@@ -198,7 +206,7 @@ func resourceVcdIpAllocationRead(ctx context.Context, d *schema.ResourceData, me
 
 	ipAllocation, err := org.GetIpSpaceAllocationById(ipSpaceId, d.Id())
 	if err != nil {
-		return diag.Errorf("error getting IP Allocation: %s", err)
+		return diag.Errorf("error getting IP Space IP Allocation: %s", err)
 	}
 
 	dSet(d, "description", ipAllocation.IpSpaceIpAllocation.Description)
@@ -246,7 +254,7 @@ func resourceVcdIpAllocationDelete(ctx context.Context, d *schema.ResourceData, 
 
 	ipAllocation, err := org.GetIpSpaceAllocationById(ipSpaceId, d.Id())
 	if err != nil {
-		return diag.Errorf("error getting IP Allocation: %s", err)
+		return diag.Errorf("error getting IP Space IP Allocation: %s", err)
 	}
 
 	err = ipAllocation.Delete()
@@ -275,7 +283,7 @@ func resourceVcdIpAllocationImport(ctx context.Context, d *schema.ResourceData, 
 
 	ipSpace, err := vcdClient.GetIpSpaceByNameAndOrgId(ipSpaceName, org.Org.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving IP Space %s: %s ", ipSpaceName, err)
+		return nil, fmt.Errorf("error retrieving IP Space IP Allocation %s: %s ", ipSpaceName, err)
 	}
 
 	ipAllocation, err := org.GetIpSpaceAllocationByTypeAndValue(ipSpace.IpSpace.ID, ipAllocationType, ipAllocationIp, nil)
@@ -285,6 +293,8 @@ func resourceVcdIpAllocationImport(ctx context.Context, d *schema.ResourceData, 
 
 	// Only setting Org because VDC is a deprecated field. `owner_id` is set by resourceVcdNsxtEdgeGatewayRead by itself
 	dSet(d, "org_id", org.Org.ID)
+	dSet(d, "ip_space_id", ipSpace.IpSpace.ID)
+	dSet(d, "type", ipSpace.IpSpace.Type)
 
 	d.SetId(ipAllocation.IpSpaceIpAllocation.ID)
 

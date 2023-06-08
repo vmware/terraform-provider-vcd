@@ -107,16 +107,16 @@ The following arguments are supported:
 * `prefix_length` (Optional) Required when `type=IP_PREFIX`
 * `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space
 * `usage_state` - (Optiona) Not required unless manual IP reservation is required which can be
-  enabled `USED_MANUAL`
+  enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
 
-## Atribute Reference
+## Attribute Reference
 
 * `ip_address` - contains either single IP when `type=FLOATING_IP` (e.g. `192.168.1.100`) or subnet
   in CIDR format when `type=IP_PREFIX` (e.g. `192.168.1.100/30`). **Note** Terraform built-in
   function [cidrhost](https://developer.hashicorp.com/terraform/language/functions/cidrhost) is a
   convenient method to getting IPs within returned CIDR
-* `allocation_date` - allocation date in formated as `2023-06-07T09:57:58.721Z`
+* `allocation_date` - allocation date in formated as `2023-06-07T09:57:58.721Z` (ISO 8601)
 * `usage_state` - `USED` or `UNUSED` is populated by system unless set to `USED_MANUAL`
 * `used_by_id` - contains entity ID that is using the IP if `usage_state=USED`
 * `ip` - convenience field. For `type=IP_PREFIX` it will contain only the IP from CIDR returned

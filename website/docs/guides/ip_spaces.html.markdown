@@ -165,6 +165,14 @@ resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 
+resource "vcd_ip_space_ip_allocation" "public-floating-ip2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
 resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
   org             = "cloudOrg"
   edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
@@ -173,7 +181,7 @@ resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
   rule_type = "DNAT"
 
   # Using Floating IP From IP Space
-  external_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
+  external_address = vcd_ip_space_ip_allocation.public-floating-ip2.ip_address
   internal_address = "77.77.77.1"
   logging          = true
 }
@@ -201,12 +209,15 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 
+
+# ip_address = split("/","10.10.10.1/24")
+
 resource "vcd_network_routed_v2" "using-public-prefix" {
   org             = "cloudOrg"
   name            = "IpSpaceIntegration"
   edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
   gateway         = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 1)
-  prefix_length   = split("/", vcd_ip_space_ip_allocation.public-ip-prefix.ip_address)[1]
+  prefix_length   = vcd_ip_space_ip_allocation.public-ip-prefix.prefix_length
 
   static_ip_pool {
     start_address = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 2)
@@ -215,7 +226,7 @@ resource "vcd_network_routed_v2" "using-public-prefix" {
 }
 ```
 
-## Sample configuration without IP Spaces
+## Sample configuration without IP Spaces (the old way)
 
 ```hcl
 resource "vcd_external_network_v2" "provider-gateway" {
