@@ -34,3 +34,10 @@ The following arguments are supported:
 
 * `enabled` - Shows whether the SAML identity service is used for authentication
 * `entity_id` - Your service provider entity ID
+* `group` - The name of the SAML attribute that returns the identifiers of all the groups of which the user is a member
+* `role` - The name of the SAML attribute that returns the identifiers of all roles of the user
+* `email` - The name of the SAML attribute that returns the email address of the user
+* `first_name` - The name of the SAML attribute that returns the first name of the user
+* `surname` - The name of the SAML attribute that returns the surname of the user
+* `full_name` - The name of the SAML attribute that returns the full name of the user
+* `user_name` - The name of the SAML attribute that returns the username of the user

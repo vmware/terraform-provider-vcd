@@ -26,6 +26,13 @@ resource "vcd_org_saml" "my-org-saml" {
   enabled                         = true
   entity_id                       = "my-entity"
   identity_provider_metadata_file = "idp-metadata.xml"
+  email                           = "email"
+  username                        = "uname"
+  firstname                       = "fname"
+  fullname                        = "fullname"
+  surname                         = "lname"
+  role                            = "role"
+  group                           = "group"
 }
 ```
 
@@ -33,10 +40,17 @@ resource "vcd_org_saml" "my-org-saml" {
 
 The following arguments are supported:
 
-* `org_id` - (Required) Org ID: there is only one SAML configuration available for an organization. Thus, the resource can be identified by the Org.
-* `enabled` - (Required) If true, the organization will use SAML for authentication.
-* `entity_id` - (Optional) Your service provider entity ID. Once you set this field, it cannot be changed back to empty.
-* `identity_provider_metadata_file` - (Required) Name of a file containing the metadata text from a SAML Identity Provider.
+* `org_id` - (Required) Org ID: there is only one SAML configuration available for an organization. Thus, the resource can be identified by the Org
+* `enabled` - (Required) If true, the organization will use SAML for authentication
+* `entity_id` - (Optional) Your service provider entity ID. Once you set this field, it cannot be changed back to empty
+* `identity_provider_metadata_file` - (Required) Name of a file containing the metadata text from a SAML Identity Provider
+* `group` - (Optional) The name of the SAML attribute that returns the identifiers of all the groups of which the user is a member
+* `role` - (Optional) The name of the SAML attribute that returns the identifiers of all roles of the user
+* `email` - (Optional) The name of the SAML attribute that returns the email address of the user
+* `first_name` - (Optional) The name of the SAML attribute that returns the first name of the user
+* `surname` - (Optional) The name of the SAML attribute that returns the surname of the user
+* `full_name` - (Optional) The name of the SAML attribute that returns the full name of the user
+* `user_name` - (Optional) The name of the SAML attribute that returns the username of the user
 
 ## Identity provider metadata
 
