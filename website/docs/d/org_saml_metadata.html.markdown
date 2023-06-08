@@ -22,7 +22,7 @@ data "vcd_org" "my-org" {
 
 data "vcd_org_saml_metadata" "first" {
   org_id    = data.vcd_org.my-org.id
-  file_name = "vcd-metadata.txt" 
+  file_name = "vcd-metadata.txt"
 }
 
 # The metadata will be stored in vcd-metadata.txt
