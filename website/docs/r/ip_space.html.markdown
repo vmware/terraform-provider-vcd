@@ -145,7 +145,7 @@ The following arguments are supported:
 
 * `org_id` - (Optional) Required for `PRIVATE` type
 * `name` - (Required) A name for IP Space
-* `description` - (Optional) - Description of IP Space
+* `description` - (Optional) Description of IP Space
 * `type` - (Required) One of `PUBLIC`, `SHARED_SERVICES`, `PRIVATE`
   * `PUBLIC` - A public IP space is *used by multiple organizations* and is *controlled by the service
     provider* through a quota-based system. 

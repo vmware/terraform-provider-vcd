@@ -498,7 +498,6 @@ data "vcd_ip_space" "space1" {
 
 func TestAccVcdIpSpacePrivate(t *testing.T) {
 	preTestChecks(t)
-	// skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
