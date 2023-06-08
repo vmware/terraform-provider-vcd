@@ -47,13 +47,8 @@ There are three types of IP spaces that you can create.
 
 ## New resources
 * `vcd_ip_space`
-
-
-* `vcd_ip_space_uplink` 
-
-### WIP uplink
-* You can associate only one IP space with an IP space uplink. You cannot associate a private IP space to a public provider gateway
-* You cannot change reference once created
+* `vcd_ip_space_uplink`
+* `vcd_ip_space_ip_allocation`
 
 ## Modified resources
 
@@ -64,6 +59,217 @@ There are three types of IP spaces that you can create.
   IP Spaces. As a result they will not be populated after read operations together with
   `used_ip_count` and `unused_ip_count`. Additional computed flag `uses_ip_spaces` to tell if the
   Edge Gateway is using IP Spaces (is backed by Provider Gateway that has IP Space Uplinks)
+
+## Sample configuration using IP Spaces
+
+```hcl
+data "vcd_nsxt_manager" "main" {
+  name = "nsxManager1"
+}
+
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "tier0Router-cloudOrg"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+data "vcd_org" "org1" {
+  name = "cloudOrg"
+}
+
+data "vcd_org_vdc" "vdc1" {
+  org  = "cloudOrg"
+  name = "nsxt-vdc-cloudOrg"
+}
+
+resource "vcd_ip_space" "space1" {
+  name = "IpSpaceIntegration"
+  type = "PUBLIC"
+
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
+  external_scope = "0.0.0.0/24"
+
+  route_advertisement_enabled = false
+
+  ip_prefix {
+    default_quota = 2
+
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
+
+    prefix {
+      first_ip      = "192.168.1.200"
+      prefix_length = 30
+      prefix_count  = 4
+    }
+  }
+
+  ip_prefix {
+    default_quota = -1
+
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
+  }
+
+  ip_range {
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
+  }
+
+  ip_range {
+    start_address = "11.11.11.120"
+    end_address   = "11.11.11.123"
+  }
+}
+
+resource "vcd_external_network_v2" "provider-gateway" {
+  name = "IpSpaceIntegration"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  # A flag to use IP Spaces instead of specifying IP allocations at Provider Gateway configuration
+  use_ip_spaces = true
+}
+
+# The IP Space uplink for external network is the way to assign IP Space to External Network
+resource "vcd_ip_space_uplink" "u1" {
+  name                = "IpSpaceIntegration"
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+  ip_space_id         = vcd_ip_space.space1.id
+}
+
+# Using an External Network that has an IP Space uplink does not need subnet allocation
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "cloudOrg"
+  name                = "IpSpaceIntegration"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  depends_on = [vcd_ip_space_uplink.u1]
+}
+
+# Explicit resource for Floating IP which is then used in vcd_nsxt_nat_rule (`ip_address` attribute)
+resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
+  org             = "cloudOrg"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+
+  name      = "IpSpaceIntegration"
+  rule_type = "DNAT"
+
+  # Using Floating IP From IP Space
+  external_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
+  internal_address = "77.77.77.1"
+  logging          = true
+}
+
+# An example IP allocation for manual usage
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+  usage_state = "USED_MANUAL"
+  description = "manually used floating IP"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+# IP Prefix allocation for routed network within Org - `ip_address` computed attribute is returned 
+# in CIDR format (e.g. 192.168.1.0/24). Using built-in Terraform functions `cidrhost` and `split` 
+# can be used to split and pick IP Addresses as well as prefix length
+resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
+  org_id        = data.vcd_org.org1.id
+  ip_space_id   = vcd_ip_space.space1.id
+  type          = "IP_PREFIX"
+  prefix_length = 29
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_network_routed_v2" "using-public-prefix" {
+  org             = "cloudOrg"
+  name            = "IpSpaceIntegration"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+  gateway         = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 1)
+  prefix_length   = split("/", vcd_ip_space_ip_allocation.public-ip-prefix.ip_address)[1]
+
+  static_ip_pool {
+    start_address = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 2)
+    end_address   = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 4)
+  }
+}
+```
+
+## Sample configuration without IP Spaces
+
+```hcl
+resource "vcd_external_network_v2" "provider-gateway" {
+  name = "IpSpaceIntegration"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    # enabled       = true # by default
+    gateway       = "11.11.11.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "11.11.11.100"
+      end_address   = "11.11.11.110"
+    }
+  }
+}
+
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "cloudOrg"
+  name                = "IpSpaceIntegration"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  subnet {
+    gateway       = "11.11.11.1"
+    prefix_length = "24"
+    primary_ip    = "11.11.11.100"
+
+    # IP Allocation occurs in Edge Gateway
+    allocated_ips {
+      start_address = "11.11.11.100"
+      end_address   = "11.11.11.108"
+    }
+  }
+}
+
+resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
+  org             = "cloudOrg"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+
+  name      = "IpSpaceIntegration"
+  rule_type = "DNAT"
+
+  # Using Floating IP From IP Space
+  external_address = tolist(vcd_nsxt_edgegateway.ip-space.subnet)[0].end_address
+  internal_address = "77.77.77.1"
+  logging          = true
+}
+```
 
 ## References
 

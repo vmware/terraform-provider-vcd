@@ -254,16 +254,33 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			// --------------------------------------------------------------
 			// Networks
 			// --------------------------------------------------------------
-			networks, err := vdc.GetNetworkList()
+			networks, err := vdc.GetAllOpenApiOrgVdcNetworks(nil)
 			if err != nil {
-				return fmt.Errorf("error retrieving network list: %s", err)
+				return fmt.Errorf("error retrieving Org VDC network list: %s", err)
 			}
 			for _, netRef := range networks {
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.Name, "vcd_network", 2, verbose)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.OpenApiOrgVdcNetwork.Name, "vcd_network", 2, verbose)
 				if toBeDeleted {
-					err = deleteNetwork(org, vdc, netRef)
+					err = netRef.Delete()
 					if err != nil {
-						return fmt.Errorf("error deleting network '%s': %s", netRef.Name, err)
+						return fmt.Errorf("error deleting Org VDC '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+					}
+				}
+			}
+
+			// --------------------------------------------------------------
+			// NSX-T Edge Gateways
+			// --------------------------------------------------------------
+			edgeGateways, err := vdc.GetAllNsxtEdgeGateways(nil)
+			if err != nil {
+				return fmt.Errorf("error retrieving NSX-T Edge Gateway list: %s", err)
+			}
+			for _, edgeGw := range edgeGateways {
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, edgeGw.EdgeGateway.Name, "vcd_nsxt_edgegateway", 2, verbose)
+				if toBeDeleted {
+					err = edgeGw.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting NSX-T Edge Gateway '%s': %s", edgeGw.EdgeGateway.Name, err)
 					}
 				}
 			}
@@ -303,9 +320,26 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	}
 
 	// --------------------------------------------------------------
-	// IP Spaces
+	// External Networks and Provider Gateways
 	// --------------------------------------------------------------
-	err = removeLeftoversIpSpaces(govcdClient, true)
+	externalNetworks, err := govcd.GetAllExternalNetworksV2(govcdClient, nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving External Network list: %s", err)
+	}
+	for _, extNet := range externalNetworks {
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, extNet.ExternalNetwork.Name, "vcd_external_network_v2", 0, verbose)
+		if toBeDeleted {
+			err = extNet.Delete()
+			if err != nil {
+				return fmt.Errorf("error deleting External Network '%s': %s", extNet.ExternalNetwork.Name, err)
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// IP Allocations and IP Spaces
+	// --------------------------------------------------------------
+	err = removeLeftoversIpSpacesAndAllocations(govcdClient, true)
 	if err != nil {
 		return err
 	}
@@ -501,20 +535,52 @@ func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) er
 	return nil
 }
 
-func removeLeftoversIpSpaces(govcdClient *govcd.VCDClient, verbose bool) error {
+func removeLeftoversIpSpacesAndAllocations(govcdClient *govcd.VCDClient, verbose bool) error {
 	allIpSpaces, err := govcdClient.GetAllIpSpaceSummaries(nil)
 	if err != nil {
 		return fmt.Errorf("error retrieving IP spaces")
 	}
 
+	// Remove all IP allocations before removing IP Space itself
 	for _, ipSpace := range allIpSpaces {
+		// IP Space itself
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, ipSpace.IpSpace.Name, "vcd_ip_space", 0, verbose)
 		if toBeDeleted {
-			fmt.Printf("REMOVING IP Space %s\n", ipSpace.IpSpace.Name)
+
+			// Removing Floating IP Allocations
+			err = removeLeftoversIpAllocations(ipSpace, "FLOATING_IP", verbose)
+			if err != nil {
+				return err
+			}
+			// Removing IP Prefix Allocations
+			err = removeLeftoversIpAllocations(ipSpace, "IP_PREFIX", verbose)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("REMOVING IP Space IP  %s\n", ipSpace.IpSpace.Name)
 			err = ipSpace.Delete()
 			if err != nil {
 				return fmt.Errorf("error deleting IP Space '%s': %s", ipSpace.IpSpace.Name, err)
 			}
+		}
+	}
+
+	return nil
+}
+
+func removeLeftoversIpAllocations(ipSpace *govcd.IpSpace, ipSpaceType string, verbose bool) error {
+	allIpSpaceIpAllocations, err := ipSpace.GetAllIpSpaceAllocations(ipSpaceType, nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving Floating IP allocations for IP Space '%s'('%s'): %s",
+			ipSpace.IpSpace.Name, ipSpace.IpSpace.ID, err)
+	}
+
+	for _, ipAllocation := range allIpSpaceIpAllocations {
+		fmt.Printf("\tREMOVING IP Space IP Allocation %s\n", ipAllocation.IpSpaceIpAllocation.Value)
+		err = ipAllocation.Delete()
+		if err != nil {
+			return fmt.Errorf("error deleting IP Allocation '%s' in IP Space %s: %s", ipAllocation.IpSpaceIpAllocation.ID, ipSpace.IpSpace.Name, err)
 		}
 	}
 
