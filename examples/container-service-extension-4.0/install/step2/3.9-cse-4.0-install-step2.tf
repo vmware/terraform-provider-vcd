@@ -23,6 +23,10 @@ terraform {
       source  = "vmware/vcd"
       version = ">= 3.9"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.9"
+    }
   }
 }
 
@@ -547,6 +551,12 @@ resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
   reservation_model                    = "SHARED"
 }
 
+# We introduce a sleep to wait for the provider part of ALB to be ready before the assignment to the Edge gateways
+resource "time_sleep" "cse_alb_wait" {
+  depends_on      = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  create_duration = "30s"
+}
+
 ## ALB for solutions edge gateway
 resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   org             = vcd_org.solutions_organization.name
@@ -554,7 +564,7 @@ resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   is_active       = true
 
   # This dependency is required to make sure that provider part of operations is done
-  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  depends_on = [time_sleep.cse_alb_wait]
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "solutions_assignment" {
@@ -579,7 +589,8 @@ resource "vcd_nsxt_alb_settings" "tenant_alb_settings" {
   edge_gateway_id = vcd_nsxt_edgegateway.tenant_edgegateway.id
   is_active       = true
 
-  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [time_sleep.cse_alb_wait]
 }
 
 # We create a Routed network in the Solutions organization that will be used by the CSE Server.
