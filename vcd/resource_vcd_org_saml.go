@@ -3,12 +3,11 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"log"
+	"os"
 )
 
 // resourceVcdOrgSaml handles Org SAML settings
@@ -63,6 +62,11 @@ func resourceVcdOrgSamlCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 
 	fileName := d.Get("identity_provider_metadata_file").(string)
 
+	//oldFileName := fileName
+	//fileName, err = sanitizeFileName(fileName)
+	//if err != nil {
+	//	return diag.Errorf("[Org SAML %s %s] error sanitizing file name '%s': %s", origin, adminOrg.AdminOrg.Name, oldFileName, err)
+	//}
 	metadataText, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
 	if err != nil {
 		return diag.Errorf("[ORG SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
@@ -142,12 +146,7 @@ func resourceVcdOrgSamlDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 // resourceVcdOrgSamlImport is responsible for importing the resource.
-// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
-// a name based dot-formatted path to the object to lookup the object and sets the id of object.
-// `terraform import` automatically performs `refresh` operation which loads up all other fields.
-// For this resource, the import path is just the org name (or Org ID).
-//
-// Example import path (id): orgName
+// The only parameter needed is the Org identifier, which could be either the Org name or its ID
 func resourceVcdOrgSamlImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
@@ -162,3 +161,19 @@ func resourceVcdOrgSamlImport(_ context.Context, d *schema.ResourceData, meta in
 	d.SetId(adminOrg.AdminOrg.ID)
 	return []*schema.ResourceData{d}, nil
 }
+
+//func sanitizeFileName(fileName string) (string, error) {
+//	absoluteName, err := filepath.Abs(fileName)
+//	if err != nil {
+//		return "", err
+//	}
+//	clean := path.Clean(fileName)
+//	if clean == "" {
+//		return "", fmt.Errorf("error sanitizing file name '%s'", fileName)
+//	}
+//	if fileName != absoluteName {
+//		return "", fmt.Errorf("file name '%s' is not an absolute file name", fileName)
+//	}
+//	return absoluteName, nil
+//
+//}
