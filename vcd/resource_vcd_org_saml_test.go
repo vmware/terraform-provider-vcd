@@ -74,9 +74,16 @@ resource "vcd_org" "{{.OrgName}}" {
 }
 
 resource "vcd_org_saml" "{{.OrgName}}" {
-    org_id                          = vcd_org.{{.OrgName}}.id
-    enabled                         = true
-	entity_id                       = "{{.EntityId}}"
-    identity_provider_metadata_file = "{{.MetadataFile}}"
+  org_id                          = vcd_org.{{.OrgName}}.id
+  enabled                         = true
+  entity_id                       = "{{.EntityId}}"
+  identity_provider_metadata_file = "{{.MetadataFile}}"
+  email                           = "email"
+  first_name                      = "fname"
+  surname                         = "lname"
+  full_name                       = "fullname"
+  user_name                       = "uname"
+  role                            = "role"
+  group                           = "group"
 }
 `

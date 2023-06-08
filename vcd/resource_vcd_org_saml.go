@@ -45,37 +45,37 @@ func resourceVcdOrgSaml() *schema.Resource {
 			"email": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional email attribute",
+				Description: "Optional email attribute name",
 			},
 			"user_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional username attribute",
+				Description: "Optional username attribute name",
 			},
 			"first_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional first name attribute",
+				Description: "Optional first name attribute name",
 			},
 			"surname": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional surname attribute",
+				Description: "Optional surname attribute name",
 			},
 			"full_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional full name attribute",
+				Description: "Optional full name attribute name",
 			},
 			"group": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional group attribute",
+				Description: "Optional group attribute name",
 			},
 			"role": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional role attribute",
+				Description: "Optional role attribute name",
 			},
 		},
 	}
@@ -97,11 +97,6 @@ func resourceVcdOrgSamlCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 
 	fileName := d.Get("identity_provider_metadata_file").(string)
 
-	//oldFileName := fileName
-	//fileName, err = sanitizeFileName(fileName)
-	//if err != nil {
-	//	return diag.Errorf("[Org SAML %s %s] error sanitizing file name '%s': %s", origin, adminOrg.AdminOrg.Name, oldFileName, err)
-	//}
 	metadataText, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
 	if err != nil {
 		return diag.Errorf("[ORG SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
@@ -213,19 +208,3 @@ func resourceVcdOrgSamlImport(_ context.Context, d *schema.ResourceData, meta in
 	d.SetId(adminOrg.AdminOrg.ID)
 	return []*schema.ResourceData{d}, nil
 }
-
-//func sanitizeFileName(fileName string) (string, error) {
-//	absoluteName, err := filepath.Abs(fileName)
-//	if err != nil {
-//		return "", err
-//	}
-//	clean := path.Clean(fileName)
-//	if clean == "" {
-//		return "", fmt.Errorf("error sanitizing file name '%s'", fileName)
-//	}
-//	if fileName != absoluteName {
-//		return "", fmt.Errorf("file name '%s' is not an absolute file name", fileName)
-//	}
-//	return absoluteName, nil
-//
-//}

@@ -30,37 +30,37 @@ func datasourceVcdOrgSaml() *schema.Resource {
 			"email": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional email attribute",
+				Description: "Optional email attribute name",
 			},
 			"user_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional username attribute",
+				Description: "Optional username attribute name",
 			},
 			"first_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional first name attribute",
+				Description: "Optional first name attribute name",
 			},
 			"surname": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional surname attribute",
+				Description: "Optional surname attribute name",
 			},
 			"full_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional full name attribute",
+				Description: "Optional full name attribute name",
 			},
 			"group": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional group attribute",
+				Description: "Optional group attribute name",
 			},
 			"role": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional role attribute",
+				Description: "Optional role attribute name",
 			},
 		},
 	}
