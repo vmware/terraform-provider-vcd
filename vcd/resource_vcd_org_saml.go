@@ -42,6 +42,41 @@ func resourceVcdOrgSaml() *schema.Resource {
 				Optional:    true,
 				Description: "The name of the file containing the metadata from the identity provider",
 			},
+			"email": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional email attribute",
+			},
+			"user_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional username attribute",
+			},
+			"first_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional first name attribute",
+			},
+			"surname": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional surname attribute",
+			},
+			"full_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional full name attribute",
+			},
+			"group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional group attribute",
+			},
+			"role": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional role attribute",
+			},
 		},
 	}
 }
@@ -79,6 +114,14 @@ func resourceVcdOrgSamlCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	settings.SAMLMetadata = string(metadataText)
 	settings.Enabled = enabled
 	settings.SamlSPEntityID = entityId
+
+	settings.SamlAttributeMapping.EmailAttributeName = d.Get("email").(string)
+	settings.SamlAttributeMapping.UserNameAttributeName = d.Get("user_name").(string)
+	settings.SamlAttributeMapping.FirstNameAttributeName = d.Get("first_name").(string)
+	settings.SamlAttributeMapping.SurnameAttributeName = d.Get("surname").(string)
+	settings.SamlAttributeMapping.FullNameAttributeName = d.Get("full_name").(string)
+	settings.SamlAttributeMapping.RoleAttributeName = d.Get("role").(string)
+	settings.SamlAttributeMapping.GroupAttributeName = d.Get("group").(string)
 
 	_, err = adminOrg.SetFederationSettings(settings)
 	if err != nil {
@@ -118,6 +161,15 @@ func genericVcdOrgSamlRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	dSet(d, "enabled", settings.Enabled)
 	dSet(d, "entity_id", settings.SamlSPEntityID)
+
+	dSet(d, "email", settings.SamlAttributeMapping.EmailAttributeName)
+	dSet(d, "user_name", settings.SamlAttributeMapping.UserNameAttributeName)
+	dSet(d, "first_name", settings.SamlAttributeMapping.FirstNameAttributeName)
+	dSet(d, "surname", settings.SamlAttributeMapping.SurnameAttributeName)
+	dSet(d, "full_name", settings.SamlAttributeMapping.FullNameAttributeName)
+	dSet(d, "role", settings.SamlAttributeMapping.RoleAttributeName)
+	dSet(d, "group", settings.SamlAttributeMapping.GroupAttributeName)
+
 	d.SetId(adminOrg.AdminOrg.ID)
 
 	return nil
