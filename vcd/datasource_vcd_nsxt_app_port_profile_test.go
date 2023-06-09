@@ -49,6 +49,16 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 	postTestChecks(t)
 }
 
+const testAccVcdNsxtAppPortProfileSystemDSStep1 = `
+data "vcd_nsxt_app_port_profile" "custom" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  name  = "{{.ProfileName}}"
+  scope = "{{.Scope}}"
+}
+`
+
 // TestAccVcdNsxtAppPortProfileDsSystem tests if "Active Directory Server" Application Port Profile is not found in
 // PROVIDER context (because it is defined in SYSTEM context)
 func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
@@ -67,7 +77,7 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
+	configText1 := templateFill(testAccVcdNsxtAppPortProfileProviderDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
@@ -81,6 +91,16 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 	})
 	postTestChecks(t)
 }
+
+const testAccVcdNsxtAppPortProfileProviderDSStep1 = `
+data "vcd_nsxt_app_port_profile" "custom" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  name  = "{{.ProfileName}}"
+  scope = "{{.Scope}}"
+}
+`
 
 // TestAccVcdNsxtAppPortProfileDsTenantNotFound tests if "Active Directory Server" Application Port Profile is not found in
 // TENANT context (because it is defined in SYSTEM context)
@@ -100,7 +120,7 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
+	configText1 := templateFill(testAccVcdNsxtAppPortProfileTenantDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
@@ -115,7 +135,7 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtAppPortProfileSystemDSStep1 = `
+const testAccVcdNsxtAppPortProfileTenantDSStep1 = `
 data "vcd_nsxt_app_port_profile" "custom" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
