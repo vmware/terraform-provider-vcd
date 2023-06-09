@@ -80,7 +80,7 @@ func metadataFileCheck(fileName string, wanted []string) resource.TestCheckFunc 
 			return fmt.Errorf("metadata file %s not found", fileName)
 		}
 
-		metadataText, err := os.ReadFile(fileName)
+		metadataText, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
 		if err != nil {
 			return err
 		}
