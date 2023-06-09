@@ -58,7 +58,7 @@ func datasourceVcdNsxtAppPortProfile() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				Description:   "ID of VDC, VDC Group, or NSX-T Manager. Required if the VCD instance has more than one NSX-T manage",
+				Description:   "ID of VDC, VDC Group, or NSX-T Manager. Required if the VCD instance has more than one NSX-T manager",
 				ConflictsWith: []string{"nsxt_manager_id", "vdc"},
 			},
 			"scope": {
@@ -129,6 +129,8 @@ func datasourceVcdNsxtAppPortProfileRead(_ context.Context, d *schema.ResourceDa
 		contextId = ""
 	}
 
+	// If contextId is unset, send a request without _context query filter,
+	// Works properly only with SYSTEM scope and one NSX-T Manager configured.
 	if contextId != "" {
 		queryParams.Add("filter", fmt.Sprintf("name==%s;scope==%s;_context==%s", name, scope, contextId))
 	} else {
