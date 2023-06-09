@@ -180,3 +180,8 @@ variable "default_storage_class_delete_reclaim_policy" {
   description = "Use a 'Delete' reclaim policy, that deletes the volume when the PersistentVolumeClaim is deleted"
   default     = "true"
 }
+
+variable "auto_repair_on_errors" {
+  description = "If true, CSE attempts to recreate the clusters in error state. If false, it leaves the cluster in an error state for manual troubleshooting"
+  default     = "true"
+}

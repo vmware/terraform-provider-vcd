@@ -64,3 +64,7 @@ default_storage_class_filesystem            = "ext4"
 default_storage_class_name                  = "default-storage-class-1"
 default_storage_class_storage_profile       = "*"
 default_storage_class_delete_reclaim_policy = "true"
+
+# If auto_repair_on_errors = true, CSE attempts to recreate the clusters in error state.
+# If false, it leaves the cluster in an error state for manual troubleshooting.
+auto_repair_on_errors = true
