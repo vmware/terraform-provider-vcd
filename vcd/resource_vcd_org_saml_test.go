@@ -43,6 +43,7 @@ func TestAccVcdOrgSaml(t *testing.T) {
 
 	resourceOrgName := "vcd_org." + orgName
 	resourceOrgSamlName := "vcd_org_saml." + orgName
+	datasourceOrgSamlName := "data.vcd_org_saml." + orgName + "_ds"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckOrgDestroy(orgName),
@@ -57,7 +58,29 @@ func TestAccVcdOrgSaml(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceOrgName, "is_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceOrgSamlName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceOrgSamlName, "entity_id", orgName),
+					resource.TestCheckResourceAttr(resourceOrgSamlName, "user_name", "uname"),
+					resource.TestCheckResourceAttr(resourceOrgSamlName, "first_name", "fname"),
+					resource.TestCheckResourceAttr(resourceOrgSamlName, "surname", "lname"),
+					resource.TestCheckResourceAttr(resourceOrgSamlName, "full_name", "fullname"),
+					resource.TestCheckResourceAttr(resourceOrgSamlName, "role", "role"),
+					resource.TestCheckResourceAttr(resourceOrgSamlName, "group", "group"),
+					resource.TestCheckResourceAttr(datasourceOrgSamlName, "entity_id", orgName),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "enabled", datasourceOrgSamlName, "enabled"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "email", datasourceOrgSamlName, "email"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "role", datasourceOrgSamlName, "role"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "group", datasourceOrgSamlName, "group"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "full_name", datasourceOrgSamlName, "full_name"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "user_name", datasourceOrgSamlName, "user_name"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "first_name", datasourceOrgSamlName, "first_name"),
+					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "surname", datasourceOrgSamlName, "surname"),
 				),
+			},
+			{
+				ResourceName:            resourceOrgSamlName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdTopHierarchy(orgName),
+				ImportStateVerifyIgnore: []string{"identity_provider_metadata_file"},
 			},
 		},
 	})
@@ -85,5 +108,9 @@ resource "vcd_org_saml" "{{.OrgName}}" {
   user_name                       = "uname"
   role                            = "role"
   group                           = "group"
+}
+
+data "vcd_org_saml" "{{.OrgName}}_ds" {
+  org_id = vcd_org_saml.{{.OrgName}}.org_id
 }
 `
