@@ -238,7 +238,8 @@ func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta 
 
 	var ipSpace *govcd.IpSpace
 
-	if len(resourceURI) == 2 {
+	switch {
+	case len(resourceURI) == 2: // Resource path is supplied as `org-name.ip-space-name`
 		ipSpaceName := resourceURI[1]
 		orgName := resourceURI[0]
 
@@ -252,14 +253,15 @@ func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta 
 			return nil, fmt.Errorf("error retrieving IP Space '%s' in Org '%s': %s", ipSpaceName, orgName, err)
 		}
 		dSet(d, "org_id", org.Org.ID)
-
-	} else {
+	case len(resourceURI) == 1: // Resource path is supplied as `ip-space-name`
 		var err error
 		ipSpaceName := resourceURI[0]
 		ipSpace, err = vcdClient.GetIpSpaceByName(ipSpaceName)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving IP Space '%s': %s", ipSpaceName, err)
 		}
+	default:
+		return nil, fmt.Errorf("unrecognized path for IP Space import '%s'", d.Id())
 	}
 
 	d.SetId(ipSpace.IpSpace.ID)

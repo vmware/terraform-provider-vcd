@@ -3,9 +3,11 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdIpSpacePublic(t *testing.T) {
@@ -51,7 +53,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1, // minimal
@@ -296,7 +298,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1, // minimal
@@ -540,7 +542,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1, // minimal
@@ -752,3 +754,25 @@ data "vcd_ip_space" "space1" {
   name   = "{{.TestName}}"
 }
 `
+
+func testAccCheckVcdNsxtIpSpacesDestroy(ipSpaceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			ipSpaceResourceName := rs.Primary.Attributes["name"]
+			if rs.Type != "vcd_ip_space" {
+				continue
+			}
+			if ipSpaceResourceName != ipSpaceName {
+				continue
+			}
+			conn := testAccProvider.Meta().(*VCDClient)
+			_, err := conn.GetIpSpaceByName(ipSpaceResourceName)
+			if err == nil {
+				return fmt.Errorf("IP Space %s was not removed", ipSpaceName)
+			}
+
+		}
+
+		return nil
+	}
+}

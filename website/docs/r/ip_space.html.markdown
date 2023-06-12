@@ -162,9 +162,9 @@ The following arguments are supported:
   space has access, for example the internet or a WAN. 
 * `ip_range` - (Optional) One or more [ip_range](#ipspace-ip-range) for floating IP address
   allocation. (Floating IP addresses are just IP addresses taken from the defined range) 
-* `ip_range_quota` - (Optional) If you entered at least one IP Range (`ip_range`), enter a
-  number of floating IP addresses to allocate individually. `-1` is unlimited, while `0` means that
-  no IPs can be allocated.
+* `ip_range_quota` - (Optional) If you entered at least one IP Range
+  ([ip_range](#ipspace-ip-range)), enter a number of floating IP addresses to allocate individually.
+  `-1` is unlimited, while `0` means that no IPs can be allocated.
 * `ip_prefix` - (Optional) One or more IP prefixes (blocks) [ip_prefix](#ipspace-ip-prefix)
 
 * `route_advertisement_enabled` - (Optional) Toggle on the route advertisement option to
@@ -181,7 +181,9 @@ The following arguments are supported:
 
 ## ip_prefix block
 
-* `default_quota` 
+* `default_quota` - default Quota for this particular Prefix defined in
+  [`prefix`](#ipspace-ip-prefix-prefix) field. A Quota of `-1` means there is no cap to the number of
+IP Prefixes that can be allocated. A Quota of `0` means that the IP Prefixes cannot be allocated. 
 * `prefix` - IP block definition as detail [below](#ipspace-ip-prefix-prefix)
 
 <a id="ipspace-ip-prefix-prefix"></a>
