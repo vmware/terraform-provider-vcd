@@ -26,7 +26,7 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
+	configText1 := templateFill(testAccVcdNsxtAppPortProfileDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
@@ -49,6 +49,71 @@ func TestAccVcdNsxtAppPortProfileDsSystem(t *testing.T) {
 	postTestChecks(t)
 }
 
+const testAccVcdNsxtAppPortProfileDSStep1 = `
+data "vcd_nsxt_app_port_profile" "custom" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+
+  name  = "{{.ProfileName}}"
+  scope = "{{.Scope}}"
+}
+`
+
+// TestAccVcdNsxtAppPortProfileDsSystem tests if a built-in SYSTEM scope application port profile can be read using context_id with VDC Id
+func TestAccVcdNsxtAppPortProfileDsSystemContext(t *testing.T) {
+	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"NsxtVdc":     testConfig.Nsxt.Vdc,
+		"ProfileName": "Active Directory Server", // Existing System built-in Application Port Profile
+		"Scope":       "SYSTEM",
+		"Tags":        "nsxt network",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemContextDSStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.vcd_nsxt_app_port_profile.custom", "id"),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_app_port_profile.custom", "name", "Active Directory Server"),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_app_port_profile.custom", "scope", "SYSTEM"),
+					resource.TestCheckTypeSetElemAttr("data.vcd_nsxt_app_port_profile.custom", "app_port.*.port.*", "464"),
+					resource.TestCheckTypeSetElemNestedAttrs("data.vcd_nsxt_app_port_profile.custom", "app_port.*", map[string]string{
+						"protocol": "TCP",
+					}),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtAppPortProfileSystemContextDSStep1 = `
+data "vcd_org_vdc" "{{.NsxtVdc}}" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}" 
+}
+	
+data "vcd_nsxt_app_port_profile" "custom" {
+  org         = "{{.Org}}"
+  context_id  = data.vcd_org_vdc.{{.NsxtVdc}}.id
+
+  name  = "{{.ProfileName}}"
+  scope = "{{.Scope}}"
+}
+`
+
 // TestAccVcdNsxtAppPortProfileDsSystem tests if "Active Directory Server" Application Port Profile is not found in
 // PROVIDER context (because it is defined in SYSTEM context)
 func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
@@ -67,7 +132,7 @@ func TestAccVcdNsxtAppPortProfileDsProviderNotFound(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
+	configText1 := templateFill(testAccVcdNsxtAppPortProfileDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
@@ -100,7 +165,7 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdNsxtAppPortProfileSystemDSStep1, params)
+	configText1 := templateFill(testAccVcdNsxtAppPortProfileDSStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	resource.Test(t, resource.TestCase{
@@ -114,16 +179,6 @@ func TestAccVcdNsxtAppPortProfileDsTenantNotFound(t *testing.T) {
 	})
 	postTestChecks(t)
 }
-
-const testAccVcdNsxtAppPortProfileSystemDSStep1 = `
-data "vcd_nsxt_app_port_profile" "custom" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-
-  name  = "{{.ProfileName}}"
-  scope = "{{.Scope}}"
-}
-`
 
 // TestAccVcdNsxtAppPortProfileMultiOrg tests that TENANT Application Port Profile lookup works well
 // when multiple Orgs exist in VCD. The test does the following:

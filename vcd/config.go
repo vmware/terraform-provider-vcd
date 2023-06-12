@@ -375,6 +375,34 @@ func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(edgeGtwIdValue)
 }
 
+// lockParentVdcGroupOrEdgeGateway handles lock of parent Edge Gateway or parent VDC group, depending
+// if the parent Edge Gateway is in a VDC or a VDC group. Returns a function that contains the needed
+// unlock function, so that it can be deferred and called after the work with the resource has been
+// done.
+func (cli *VCDClient) lockParentVdcGroupOrEdgeGateway(d *schema.ResourceData) (func(), error) {
+	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(cli, d)
+	if err != nil {
+		return nil, fmt.Errorf("error finding parent Edge Gateway: %s", err)
+	}
+
+	// Handling locks is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		cli.lockById(parentEdgeGatewayOwnerId)
+		return func() {
+			cli.unlockById(parentEdgeGatewayOwnerId)
+		}, nil
+	} else {
+		cli.lockParentEdgeGtw(d)
+		return func() {
+			cli.unLockParentEdgeGtw(d)
+		}, nil
+	}
+}
+
 func (cli *VCDClient) lockParentOrgNetwork(d *schema.ResourceData) {
 	orgNetworkId := d.Get("org_network_id").(string)
 	vcdMutexKV.kvLock(orgNetworkId)
