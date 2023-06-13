@@ -34,54 +34,47 @@ func ignoreMetadataSchema() *schema.Schema {
 					Description:  "Regular expression of the metadata entry values to ignore",
 					AtLeastOneOf: []string{"key_regex", "value_regex"},
 				},
-				"type": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Metadata entry type to ignore",
-				},
-				"user_access": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Metadata entry user access to ignore",
-				},
-				"is_system": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Regular expression of the metadata entry domain to ignore",
-				},
 			},
 		},
 	}
 }
 
-func getIgnoredMetadata(d *schema.ResourceData, key string) ([]govcd.IgnoredMetadata, error) {
-	ignoreMetadataRaw := d.Get(key).(*schema.Set).List()
-	result := make([]govcd.IgnoredMetadata, len(ignoreMetadataRaw))
-
-	assertIgnoreMetadataRegexes := func(regexes ...string) error {
-		for _, regex := range regexes {
-			if _, err := regexp.Compile(regex); err != nil {
-				return err
-			}
-		}
-		return nil
+// Transforms the metadata to ignore from schema to the []govcd.IgnoredMetadata structure.
+func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string) ([]govcd.IgnoredMetadata, error) {
+	ignoreMetadataRaw := d.Get(ignoredMetadataAttribute).(*schema.Set).List()
+	if len(ignoreMetadataRaw) == 0 {
+		return []govcd.IgnoredMetadata{}, nil
 	}
 
+	result := make([]govcd.IgnoredMetadata, len(ignoreMetadataRaw))
 	for i, ignoredEntryRaw := range ignoreMetadataRaw {
 		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
-		keyRegex := ignoredEntry["key_regex"].(string)
-		valueRegex := ignoredEntry["value_regex"].(string)
-		err := assertIgnoreMetadataRegexes(keyRegex, valueRegex)
-		if err != nil {
-			return nil, err
+		// We can initialize it empty because either "key_regex" and "value_regex" are required by schema, so at least
+		// we know one of them will be populated for sure.
+		result[i] = govcd.IgnoredMetadata{}
+		regexRaw, ok := ignoredEntry["key_regex"]
+		if ok {
+			regex, err := regexp.Compile(regexRaw.(string))
+			if err != nil {
+				return nil, err
+			}
+			result[i].KeyRegex = regex
 		}
-		result[i] = govcd.IgnoredMetadata{
-			KeyRegex:   regexp.MustCompile(keyRegex),
-			ValueRegex: regexp.MustCompile(valueRegex),
-			Type:       ignoredEntry["type"].(*string),
-			UserAccess: ignoredEntry["user_access"].(*string),
-			IsSystem:   ignoredEntry["is_system"].(*bool),
+		regexRaw, ok = ignoredEntry["value_regex"]
+		if ok {
+			regex, err := regexp.Compile(regexRaw.(string))
+			if err != nil {
+				return nil, err
+			}
+			result[i].KeyRegex = regex
 		}
+		// Object name can be nil as it's optional in schema
+		objectNameRaw, ok := ignoredEntry["object_name"]
+		var objectName *string
+		if ok {
+			objectName = addrOf(objectNameRaw.(string))
+		}
+		result[i].ObjectName = objectName
 	}
 	return result, nil
 }
