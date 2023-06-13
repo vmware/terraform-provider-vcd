@@ -22,7 +22,7 @@ func TestAccVcdDatasourceOrgSamlMetadata(t *testing.T) {
 	orgName1 := testConfig.VCD.Org
 	metadataFileName := t.Name() + ".xml"
 	var params = StringMap{
-		"FuncName":         "TestAccVcdDatasourceOrg",
+		"FuncName":         t.Name(),
 		"OrgName1":         orgName1,
 		"Tags":             "org",
 		"MetadataFileName": metadataFileName,
