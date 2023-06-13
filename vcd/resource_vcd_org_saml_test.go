@@ -4,6 +4,7 @@ package vcd
 
 import (
 	_ "embed"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"path/filepath"
 	"testing"
@@ -22,67 +23,89 @@ func TestAccVcdOrgSaml(t *testing.T) {
 		t.Skipf("could not achieve full file name for metadata file %s: %s", metadataFile, err)
 	}
 	var params = StringMap{
-		"OrgName":      orgName,
-		"FuncName":     orgName,
-		"FullName":     "Full " + orgName,
-		"Description":  "Organization " + orgName,
-		"EntityId":     orgName,
-		"MetadataFile": metadataFullName,
-		"Tags":         "org",
+		"OrgName":               orgName,
+		"FuncName":              orgName + "-file",
+		"FullName":              "Full " + orgName,
+		"Description":           "Organization " + orgName,
+		"EntityId":              orgName,
+		"MetadataDefiner":       fmt.Sprintf(`"%s"`, metadataFullName),
+		"IdentityProviderField": "identity_provider_metadata_file",
+		"Tags":                  "org",
 	}
 	testParamsNotEmpty(t, params)
 
 	skipIfNotSysAdmin(t)
 
 	configText := templateFill(testAccCheckVcdOrgSaml, params)
+	params["IdentityProviderField"] = "identity_provider_metadata_text"
+	params["MetadataDefiner"] = "data.http.samltest.response_body"
+	params["FuncName"] = orgName + "-text"
+	configText2 := templateFill(testAccCheckVcdOrgSaml2+testAccCheckVcdOrgSaml, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION2: %s", configText2)
 
 	resourceOrgName := "vcd_org." + orgName
 	resourceOrgSamlName := "vcd_org_saml." + orgName
 	datasourceOrgSamlName := "data.vcd_org_saml." + orgName + "_ds"
-	resource.Test(t, resource.TestCase{
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckOrgDestroy(orgName),
-		Steps: []resource.TestStep{
-			{
-				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdOrgExists(resourceOrgName),
-					resource.TestCheckResourceAttr(resourceOrgName, "name", orgName),
-					resource.TestCheckResourceAttr(resourceOrgName, "full_name", params["FullName"].(string)),
-					resource.TestCheckResourceAttr(resourceOrgName, "description", params["Description"].(string)),
-					resource.TestCheckResourceAttr(resourceOrgName, "is_enabled", "true"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "entity_id", orgName),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "user_name", "uname"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "first_name", "fname"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "surname", "lname"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "full_name", "fullname"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "role", "role"),
-					resource.TestCheckResourceAttr(resourceOrgSamlName, "group", "group"),
-					resource.TestCheckResourceAttr(datasourceOrgSamlName, "entity_id", orgName),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "enabled", datasourceOrgSamlName, "enabled"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "email", datasourceOrgSamlName, "email"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "role", datasourceOrgSamlName, "role"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "group", datasourceOrgSamlName, "group"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "full_name", datasourceOrgSamlName, "full_name"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "user_name", datasourceOrgSamlName, "user_name"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "first_name", datasourceOrgSamlName, "first_name"),
-					resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "surname", datasourceOrgSamlName, "surname"),
-				),
+
+	var testFunc = func(text string) {
+		resource.Test(t, resource.TestCase{
+			ProviderFactories: testAccProviders,
+			ExternalProviders: map[string]resource.ExternalProvider{
+				"random": {
+					Source:            "hashicorp/http",
+					VersionConstraint: "3.3.0",
+				},
 			},
-			{
-				ResourceName:            resourceOrgSamlName,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdTopHierarchy(orgName),
-				ImportStateVerifyIgnore: []string{"identity_provider_metadata_file"},
+			CheckDestroy: testAccCheckOrgDestroy(orgName),
+			Steps: []resource.TestStep{
+				{
+					Config: text,
+					Check: resource.ComposeTestCheckFunc(
+						testAccCheckVcdOrgExists(resourceOrgName),
+						resource.TestCheckResourceAttr(resourceOrgName, "name", orgName),
+						resource.TestCheckResourceAttr(resourceOrgName, "full_name", params["FullName"].(string)),
+						resource.TestCheckResourceAttr(resourceOrgName, "description", params["Description"].(string)),
+						resource.TestCheckResourceAttr(resourceOrgName, "is_enabled", "true"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "enabled", "true"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "entity_id", orgName),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "user_name", "uname"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "first_name", "fname"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "surname", "lname"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "full_name", "fullname"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "role", "role"),
+						resource.TestCheckResourceAttr(resourceOrgSamlName, "group", "group"),
+						resource.TestCheckResourceAttr(datasourceOrgSamlName, "entity_id", orgName),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "enabled", datasourceOrgSamlName, "enabled"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "email", datasourceOrgSamlName, "email"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "role", datasourceOrgSamlName, "role"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "group", datasourceOrgSamlName, "group"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "full_name", datasourceOrgSamlName, "full_name"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "user_name", datasourceOrgSamlName, "user_name"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "first_name", datasourceOrgSamlName, "first_name"),
+						resource.TestCheckTypeSetElemAttrPair(resourceOrgSamlName, "surname", datasourceOrgSamlName, "surname"),
+					),
+				},
+				{
+					ResourceName:            resourceOrgSamlName,
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateIdFunc:       importStateIdTopHierarchy(orgName),
+					ImportStateVerifyIgnore: []string{"identity_provider_metadata_file", "identity_provider_metadata_text"},
+				},
 			},
-		},
+		})
+	}
+
+	t.Run("using-file", func(t *testing.T) {
+		testFunc(configText)
+	})
+	t.Run("using-http-text", func(t *testing.T) {
+		testFunc(configText2)
 	})
 	postTestChecks(t)
 }
@@ -100,7 +123,7 @@ resource "vcd_org_saml" "{{.OrgName}}" {
   org_id                          = vcd_org.{{.OrgName}}.id
   enabled                         = true
   entity_id                       = "{{.EntityId}}"
-  identity_provider_metadata_file = "{{.MetadataFile}}"
+  {{.IdentityProviderField}} = {{.MetadataDefiner}}
   email                           = "email"
   first_name                      = "fname"
   surname                         = "lname"
@@ -112,5 +135,10 @@ resource "vcd_org_saml" "{{.OrgName}}" {
 
 data "vcd_org_saml" "{{.OrgName}}_ds" {
   org_id = vcd_org_saml.{{.OrgName}}.org_id
+}
+`
+const testAccCheckVcdOrgSaml2 = `
+data "http" "samltest" {
+  url = "https://samltest.id/saml/idp"
 }
 `

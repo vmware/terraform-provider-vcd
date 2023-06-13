@@ -38,9 +38,16 @@ func resourceVcdOrgSaml() *schema.Resource {
 				Description: "Your service provider entity ID. Once you set this field, it cannot be changed back to empty.",
 			},
 			"identity_provider_metadata_file": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The name of the file containing the metadata from the identity provider",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "The name of the file containing the metadata from the identity provider",
+				ExactlyOneOf: []string{"identity_provider_metadata_text", "identity_provider_metadata_file"},
+			},
+			"identity_provider_metadata_text": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "The text of the metadata from the identity provider",
+				ExactlyOneOf: []string{"identity_provider_metadata_text", "identity_provider_metadata_file"},
 			},
 			"email": {
 				Type:        schema.TypeString,
@@ -96,17 +103,21 @@ func resourceVcdOrgSamlCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	fileName := d.Get("identity_provider_metadata_file").(string)
+	metadataText := d.Get("identity_provider_metadata_text").(string)
 
-	metadataText, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
-	if err != nil {
-		return diag.Errorf("[ORG SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
+	if fileName != "" {
+		metadataFromFile, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
+		if err != nil {
+			return diag.Errorf("[ORG SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
+		}
+		metadataText = string(metadataFromFile)
 	}
 
 	settings, err := adminOrg.GetFederationSettings()
 	if err != nil {
 		return diag.Errorf("[Org SAML %s %s] error reading federation settings values: %s", origin, adminOrg.AdminOrg.Name, err)
 	}
-	settings.SAMLMetadata = string(metadataText)
+	settings.SAMLMetadata = metadataText
 	settings.Enabled = enabled
 	settings.SamlSPEntityID = entityId
 
@@ -195,10 +206,10 @@ func resourceVcdOrgSamlDelete(ctx context.Context, d *schema.ResourceData, meta 
 // resourceVcdOrgSamlImport is responsible for importing the resource.
 // The only parameter needed is the Org identifier, which could be either the Org name or its ID
 func resourceVcdOrgSamlImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	orgName := d.Id()
+	orgNameOrId := d.Id()
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgName)
+	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgNameOrId)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
