@@ -3,18 +3,18 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_saml"
 sidebar_current: "docs-vcd-resource-org-saml"
 description: |-
-  Provides a VMware Cloud Director Organization SAML resource. This can be used to create, delete, and update SAML configuration for an organization .
+  Provides a VMware Cloud Director Organization SAML resource. This can be used to create, delete, and update SAML configuration for an organization.
 ---
 
 # vcd\_org\_saml
 
-Provides a VMware Cloud Director Org SAML resource. This can be used to create, update, and delete SAML configuration for an organization.
+Provides a VMware Cloud Director Organization SAML resource. This can be used to create, update, and delete SAML configuration for an organization.
 
 Supported in provider *v3.10+*
 
 -> **Note:** This resource requires system administrator privileges.
 
-## Example Usage
+## Example Usage with metadata file
 
 ```hcl
 data "vcd_org" "my-org" {
@@ -36,6 +36,32 @@ resource "vcd_org_saml" "my-org-saml" {
 }
 ```
 
+## Example Usage with metadata text
+
+```hcl
+data "vcd_org" "my-org" {
+  name = "my-org"
+}
+
+data "http" "example" {
+  url = "https://samltest.id/saml/idp"
+}
+
+resource "vcd_org_saml" "my-org-saml" {
+  org_id                          = data.vcd_org.my-org.id
+  enabled                         = true
+  entity_id                       = "my-entity"
+  identity_provider_metadata_text = data.http.example.response_body
+  email                           = "email"
+  username                        = "uname"
+  firstname                       = "fname"
+  fullname                        = "fullname"
+  surname                         = "lname"
+  role                            = "role"
+  group                           = "group"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -43,7 +69,8 @@ The following arguments are supported:
 * `org_id` - (Required) Org ID: there is only one SAML configuration available for an organization. Thus, the resource can be identified by the Org
 * `enabled` - (Required) If true, the organization will use SAML for authentication
 * `entity_id` - (Optional) Your service provider entity ID. Once you set this field, it cannot be changed back to empty
-* `identity_provider_metadata_file` - (Required) Name of a file containing the metadata text from a SAML Identity Provider
+* `identity_provider_metadata_file` - (Optional) Name of a file containing the metadata text from a SAML Identity Provider. Required if `identity_provider_metadata_text` is not defined
+* `identity_provider_metadata_text` - (Optional) Text of the metadata text from a SAML Identity Provider. Required if `identity_provider_metadata_file` is not defined
 * `group` - (Optional) The name of the SAML attribute that returns the identifiers of all the groups of which the user is a member
 * `role` - (Optional) The name of the SAML attribute that returns the identifiers of all roles of the user
 * `email` - (Optional) The name of the SAML attribute that returns the email address of the user
@@ -51,27 +78,6 @@ The following arguments are supported:
 * `surname` - (Optional) The name of the SAML attribute that returns the surname of the user
 * `full_name` - (Optional) The name of the SAML attribute that returns the full name of the user
 * `user_name` - (Optional) The name of the SAML attribute that returns the username of the user
-
-## Identity provider metadata
-
-To configure a SAML service, we need to provide the metadata from an identity provider.
-An easy way of getting such metadata into a file is by using Terraform itself:
-
-```hcl
-data "http" "example" {
-  url = "https://samltest.id/saml/idp"
-}
-
-output "result" {
-  value = data.http.example.response_body
-}
-```
-To save into a file, we can run the following:
-
-```
-$ terraform apply -auto-approve
-$ terraform output -raw result > data.xml
-```
 
 ## Importing
 

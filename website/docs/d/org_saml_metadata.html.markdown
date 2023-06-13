@@ -10,8 +10,8 @@ description: |-
 
 Supported in provider *v3.10+*.
 
-Provides a data source to read SAML metadata for an organization.
-This metadata (service provider) is used to configure the identity provider.
+Provides a data source to read service provider SAML metadata for an organization.
+This service provider metadata is used to configure the identity provider.
 
 ## Example Usage
 
