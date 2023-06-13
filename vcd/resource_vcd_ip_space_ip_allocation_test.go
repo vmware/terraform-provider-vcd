@@ -263,6 +263,14 @@ resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
 resource "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
   org_id      = data.vcd_org.org1.id
   ip_space_id = vcd_ip_space.space1.id
@@ -344,6 +352,14 @@ resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
 resource "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
   org_id      = data.vcd_org.org1.id
   ip_space_id = vcd_ip_space.space1.id
@@ -361,7 +377,7 @@ resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
   rule_type   = "DNAT"
 
   # Using Floating IP From IP Space
-  external_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
+  external_address = vcd_ip_space_ip_allocation.public-floating-ip-2.ip_address
   internal_address = "77.77.77.1"
   logging          = true
 }
