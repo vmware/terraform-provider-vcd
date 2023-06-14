@@ -263,7 +263,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	postTestChecks(t)
 }
 
-func TestMetadataEntryIgnore(t *testing.T) {
+func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(string) (metadataCompatible, error), extraParams map[string]string) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":      testConfig.VCD.Org,
@@ -272,12 +272,17 @@ func TestMetadataEntryIgnore(t *testing.T) {
 		"Metadata": " ",
 	}
 
-	step1 := templateFill(testAccCheckVcdOrgMetadataIgnore, params)
+	for extraParam, extraParamValue := range extraParams {
+		params[extraParam] = extraParamValue
+	}
+	testParamsNotEmpty(t, params)
+
+	step1 := templateFill(resourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s", step1)
 	params["FuncName"] = t.Name() + "-Step2"
 	params["Metadata"] = getMetadataTestingHcl(1, 0, 0, 0, 0, 0)
-	step2 := templateFill(testAccCheckVcdOrgMetadataIgnore, params)
-
-	testParamsNotEmpty(t, params)
+	step2 := templateFill(resourceTemplate+datasourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", step2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -320,36 +325,86 @@ func TestMetadataEntryIgnore(t *testing.T) {
 				{
 					Config: step1,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttrSet("vcd_org.test-org", "id"),
-						cachedId.cacheTestResourceFieldValue("vcd_org.test-org", "id"),
+						resource.TestCheckResourceAttrSet(resourceAddress, "id"),
+						cachedId.cacheTestResourceFieldValue(resourceAddress, "id"),
+						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
 					),
 				},
 				{
 					PreConfig: func() {
-						vcdClient := createSystemTemporaryVCDConnection()
-						adminOrg, err := vcdClient.GetAdminOrgById(cachedId.fieldValue)
+						object, err := retrieveObjectById(cachedId.fieldValue)
 						if err != nil {
-							t.Errorf("could not retrieve Org '%s': %s", cachedId.fieldValue, err)
+							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
-						err = adminOrg.AddMetadataEntryWithVisibility("foo", "bar", types.MetadataStringValue, types.MetadataReadWriteVisibility, false)
+						err = object.AddMetadataEntryWithVisibility("foo", "bar", types.MetadataStringValue, types.MetadataReadWriteVisibility, false)
 						if err != nil {
-							t.Errorf("could not add metadata to Org '%s': %s", cachedId.fieldValue, err)
+							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 					},
 					Config: step2,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttrSet("vcd_org.test-org", "id"),
-						resource.TestCheckResourceAttr("vcd_org.test-org", "metadata_entry.#", "1"),
+						resource.TestCheckResourceAttrSet(resourceAddress, "id"),
+						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
+						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+
+						resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
+						resource.TestCheckResourceAttrPair(datasourceAddress, "metadata_entry.#", resourceAddress, "metadata_entry.#"),
+						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					),
 				},
 			},
 		})
 	}
 
-	t.Run("1", func(t *testing.T) {
+	t.Run("filter by object type", func(t *testing.T) {
 		testFunc([]govcd.IgnoredMetadata{
 			{
-				ObjectName: addrOf("org"),
+				ObjectType: addrOf("org"),
+			},
+		})
+	})
+	t.Run("filter by object name", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				ObjectName: addrOf(t.Name()),
+			},
+		})
+	})
+	t.Run("filter by key regex", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				KeyRegex: regexp.MustCompile(`foo`),
+			},
+		})
+	})
+	t.Run("filter by value regex", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				ValueRegex: regexp.MustCompile(`bar`),
+			},
+		})
+	})
+	t.Run("filter by object type and name", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				ObjectType: addrOf("org"),
+				ObjectName: addrOf(t.Name()),
+			},
+		})
+	})
+	t.Run("filter by key regex and key value", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				KeyRegex:   regexp.MustCompile(`foo`),
+				ValueRegex: regexp.MustCompile(`bar`),
+			},
+		})
+	})
+	t.Run("filter by all", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				ObjectType: addrOf("org"),
+				ObjectName: addrOf(t.Name()),
 				KeyRegex:   regexp.MustCompile(`foo`),
 				ValueRegex: regexp.MustCompile(`bar`),
 			},
@@ -358,16 +413,6 @@ func TestMetadataEntryIgnore(t *testing.T) {
 
 	postTestChecks(t)
 }
-
-const testAccCheckVcdOrgMetadataIgnore = `
-resource "vcd_org" "test-org" {
-  name             = "{{.Name}}"
-  full_name        = "{{.Name}}"
-  delete_recursive = "true"
-  delete_force     = "true"
-  {{.Metadata}}
-}
-`
 
 // getMetadataTestingHcl gets valid metadata entries to inject them into an HCL for testing
 func getMetadataTestingHcl(stringEntries, numberEntries, boolEntries, dateEntries, readOnlyEntries, privateEntries int) string {
