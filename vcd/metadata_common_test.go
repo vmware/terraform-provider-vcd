@@ -216,6 +216,9 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				),
 			},
 			{
+				PreConfig: func() {
+					util.Logger.Printf("a")
+				},
 				Config: deleteWithSystemHcl,
 				SkipFunc: func() (bool, error) {
 					return !usingSysAdmin(), nil

@@ -279,10 +279,26 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
-	// This early return guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
-	// set an empty attribute in state, which would taint it and ask for an update all the time.
 	if len(metadataFromVcd) == 0 {
-		return nil
+		// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
+		// set an empty Set as attribute in state, which would taint it and ask for an update all the time.
+		rawState := d.GetRawState()
+		if !rawState.IsNull() {
+			rawMetadataEntry := rawState.GetAttr("metadata_entry")
+			if !rawMetadataEntry.IsNull() {
+				rawValues := rawMetadataEntry.AsValueSet().Values()
+				if len(rawValues) == 1 {
+					metadataEntryMap := rawValues[0].AsValueMap()
+					if metadataEntryMap["key"].AsString() == "" && metadataEntryMap["value"].AsString() == "" &&
+						metadataEntryMap["type"].AsString() == "" && metadataEntryMap["user_access"].AsString() == "" {
+						return nil
+					}
+				}
+			}
+		}
+		// In every other case, if metadata from VCD is empty, we need to update the state accordingly.
+		err := d.Set("metadata_entry", []map[string]interface{}{})
+		return err
 	}
 
 	metadataSet := make([]map[string]interface{}, len(metadataFromVcd))
