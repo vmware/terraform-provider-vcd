@@ -41,27 +41,28 @@ func TestAccVcdDatasourceOrgSamlMetadata(t *testing.T) {
 	vcdUrl = strings.Replace(vcdUrl, "/api", "", 1)
 	datasource1 := "data.vcd_org." + orgName1
 
-	defer func() {
+	var cleanup = func() {
 		if fileExists(metadataFileName) {
 			err := os.Remove(metadataFileName)
 			if err != nil {
 				util.Logger.Printf("[ERROR - TestAccVcdDatasourceOrg] error removing metadata file %s: %s\n", metadataFileName, err)
 			}
 		}
-	}()
+	}
+	defer cleanup()
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
 					if fileExists(metadataFileName) {
-						_ = os.Remove(metadataFileName)
+						cleanup()
 					}
 				},
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdOrgExists(datasource1),
-					// The retrieved metadata should contain both the VCD URL and the name of the target organization`
+					// The retrieved metadata should contain both the VCD URL and the name of the target organization
 					metadataFileCheck(metadataFileName, []string{vcdUrl, orgName1}),
 				),
 			},
