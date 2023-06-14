@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"regexp"
 	"strconv"
 	"strings"
@@ -263,9 +264,10 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	postTestChecks(t)
 }
 
-func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(string) (metadataCompatible, error), extraParams map[string]string) {
+func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
+		"FuncName": t.Name() + "-Step1",
 		"Org":      testConfig.VCD.Org,
 		"Vdc":      testConfig.Nsxt.Vdc,
 		"Name":     t.Name(),
@@ -281,8 +283,11 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s", step1)
 	params["FuncName"] = t.Name() + "-Step2"
 	params["Metadata"] = getMetadataTestingHcl(1, 0, 0, 0, 0, 0)
-	step2 := templateFill(resourceTemplate+datasourceTemplate, params)
+	step2 := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", step2)
+	params["FuncName"] = t.Name() + "-Step3"
+	step3 := templateFill("# skip-binary-test\n"+resourceTemplate+datasourceTemplate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 3: %s", step3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -322,6 +327,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				},
 			},
 			Steps: []resource.TestStep{
+				// Create a resource without metadata
 				{
 					Config: step1,
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -330,6 +336,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
 					),
 				},
+				// In this step, an external actor (simulated in PreConfig by using the Go SDK) adds a metadata entry to the resource.
+				// The provider is configured to ignore it.
 				{
 					PreConfig: func() {
 						object, err := retrieveObjectById(cachedId.fieldValue)
@@ -343,10 +351,19 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					},
 					Config: step2,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttrSet(resourceAddress, "id"),
 						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
 						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
-
+					),
+				},
+				// Test data source metadata
+				{
+					PreConfig: func() {
+						util.Logger.Printf("a")
+					},
+					Config: step3,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "1"),
+						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "metadata_entry.#", resourceAddress, "metadata_entry.#"),
 						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
@@ -441,13 +458,14 @@ func getMetadataTestingHcl(stringEntries, numberEntries, boolEntries, dateEntrie
 
 func getMetadataEntryHcl(key, value, typedValue, userAccess, isSystem string) string {
 	return `
-		  metadata_entry {
-			key         = "` + key + `"
-			value       = "` + value + `"
-			type        = "` + typedValue + `"
-			user_access = "` + userAccess + `"
-			is_system   = "` + isSystem + `"
-		  }`
+metadata_entry {
+	key         = "` + key + `"
+	value       = "` + value + `"
+	type        = "` + typedValue + `"
+	user_access = "` + userAccess + `"
+	is_system   = "` + isSystem + `"
+}
+`
 }
 
 // testCheckMetadataEntrySetElemNestedAttrs asserts that a given metadata_entry has the expected input for the given resourceAddress.
