@@ -373,6 +373,54 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
   it is a dot (`.`).
 
+* `ignore_metadata` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries.
+  See ["Ignore Metadata"](#ignore-metadata) for more details.
+
+## Ignore metadata
+
+One or more `ignore_metadata` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
+items during `plan`, `apply` and `destroy`.
+
+~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
+it. This excludes the deprecated `metadata` argument, which will ignore these blocks. Filtering old `metadata` attribute can be done
+with the native Terraform `lifecycle` block.
+
+The available sub-attributes for `ignore_metadata` are:
+
+* `object_type` - (Optional) Specifies the type of the object which metadata needs to be ignored. The object types must be declared
+  as defined in the [VCD API documentation](https://developer.vmware.com/apis/1601/vmware-cloud-director). For example,
+  `catalog`, `media`, `disk`, `org`, `catalogItem`, `vAppTemplate`, `vdc`, `network`, `vdcStorageProfile` etc.
+* `object_name`- (Optional) Specifies the name of the object which metadata needs to be ignored. All object types are supported, except for
+  `vdcStorageProfile` which **cannot be filtered by name**.
+* `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
+* `value_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block.
+
+Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
+that belong to the specific Organization named "client1" AND which keys match `client[0-9]`:
+
+```hcl
+ignore_metadata {
+  object_type = "org"
+  object_name = "client1"
+  key_regex   = "[Ee]nvironment"
+}
+```
+
+You can have more than one block, to ignore more entries of your choice:
+
+```hcl
+ignore_metadata {
+  object_type = "org"
+  object_name = "client1"
+  key_regex   = "[Ee]nvironment"
+}
+
+ignore_metadata {
+  object_type = "vdc"
+  value_regex = "flex"
+}
+```
+
 ## Connection Cache (*2.0+*)
 
 Cloud Director connection calls can be expensive, and if a definition file contains several resources, it may trigger 

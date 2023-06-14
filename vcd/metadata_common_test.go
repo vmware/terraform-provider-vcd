@@ -266,12 +266,16 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 func TestMetadataEntryIgnore(t *testing.T) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":  testConfig.VCD.Org,
-		"Vdc":  testConfig.Nsxt.Vdc,
-		"Name": t.Name(),
+		"Org":      testConfig.VCD.Org,
+		"Vdc":      testConfig.Nsxt.Vdc,
+		"Name":     t.Name(),
+		"Metadata": " ",
 	}
 
-	configText := templateFill(testAccCheckVcdOrgMetadataIgnore, params)
+	step1 := templateFill(testAccCheckVcdOrgMetadataIgnore, params)
+	params["FuncName"] = t.Name() + "-Step2"
+	params["Metadata"] = getMetadataTestingHcl(1, 0, 0, 0, 0, 0)
+	step2 := templateFill(testAccCheckVcdOrgMetadataIgnore, params)
 
 	testParamsNotEmpty(t, params)
 
@@ -280,6 +284,8 @@ func TestMetadataEntryIgnore(t *testing.T) {
 		return
 	}
 
+	cachedId := testCachedFieldValue{}
+
 	testFunc := func(ignoredMetadata []govcd.IgnoredMetadata) {
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -287,14 +293,14 @@ func TestMetadataEntryIgnore(t *testing.T) {
 					newProvider := Provider()
 					newProvider.ConfigureContextFunc = func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
 						config := Config{
-							User:            testConfig.TestEnvBuild.OrgUser,
-							Password:        testConfig.TestEnvBuild.OrgUserPassword,
+							User:            testConfig.Provider.User,
+							Password:        testConfig.Provider.Password,
 							Token:           "",
 							ApiToken:        "",
 							UseSamlAdfs:     false,
 							CustomAdfsRptId: "",
-							SysOrg:          testConfig.VCD.Org,
-							Org:             testConfig.VCD.Org,
+							SysOrg:          testConfig.Provider.SysOrg,
+							Org:             testConfig.Provider.SysOrg,
 							Vdc:             "",
 							Href:            testConfig.Provider.Url,
 							InsecureFlag:    testConfig.Provider.AllowInsecure,
@@ -312,8 +318,29 @@ func TestMetadataEntryIgnore(t *testing.T) {
 			},
 			Steps: []resource.TestStep{
 				{
-					Config: configText,
-					Check:  resource.ComposeAggregateTestCheckFunc(),
+					Config: step1,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttrSet("vcd_org.test-org", "id"),
+						cachedId.cacheTestResourceFieldValue("vcd_org.test-org", "id"),
+					),
+				},
+				{
+					PreConfig: func() {
+						vcdClient := createSystemTemporaryVCDConnection()
+						adminOrg, err := vcdClient.GetAdminOrgById(cachedId.fieldValue)
+						if err != nil {
+							t.Errorf("could not retrieve Org '%s': %s", cachedId.fieldValue, err)
+						}
+						err = adminOrg.AddMetadataEntryWithVisibility("foo", "bar", types.MetadataStringValue, types.MetadataReadWriteVisibility, false)
+						if err != nil {
+							t.Errorf("could not add metadata to Org '%s': %s", cachedId.fieldValue, err)
+						}
+					},
+					Config: step2,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttrSet("vcd_org.test-org", "id"),
+						resource.TestCheckResourceAttr("vcd_org.test-org", "metadata_entry.#", "1"),
+					),
 				},
 			},
 		})
@@ -323,8 +350,8 @@ func TestMetadataEntryIgnore(t *testing.T) {
 		testFunc([]govcd.IgnoredMetadata{
 			{
 				ObjectName: addrOf("org"),
-				KeyRegex:   regexp.MustCompile("^foo$"),
-				ValueRegex: regexp.MustCompile("^bar$"),
+				KeyRegex:   regexp.MustCompile(`foo`),
+				ValueRegex: regexp.MustCompile(`bar`),
 			},
 		})
 	})
@@ -338,6 +365,7 @@ resource "vcd_org" "test-org" {
   full_name        = "{{.Name}}"
   delete_recursive = "true"
   delete_force     = "true"
+  {{.Metadata}}
 }
 `
 

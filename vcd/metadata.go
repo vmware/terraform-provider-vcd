@@ -7,6 +7,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
+	"strings"
 )
 
 // ignoreMetadataSchema returns the schema associated to ignore_metadata for the provider configuration.
@@ -248,7 +249,7 @@ func createOrUpdateMetadataEntryInVcd(d *schema.ResourceData, resource metadataC
 		return nil
 	}
 	err = resource.MergeMetadataWithMetadataValues(metadataToMerge)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "after filtering metadata, there is no metadata to merge") {
 		return fmt.Errorf("error adding metadata entries: %s", err)
 	}
 	return nil
