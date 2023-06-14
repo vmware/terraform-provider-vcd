@@ -32,7 +32,7 @@ data "vcd_org_saml_metadata" "first" {
 
 The following arguments are supported:
 
-* `org_id` - (Required)  - ID of the organization containing the SAML metadata
+* `org_id` - (Required) ID of the organization containing the SAML metadata
 * `file_name` - (Optional) name of the file where to store the metadata.
 
 ## Attribute Reference
