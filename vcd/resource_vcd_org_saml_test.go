@@ -29,6 +29,7 @@ func TestAccVcdOrgSaml(t *testing.T) {
 		"Description":           "Organization " + orgName,
 		"EntityId":              orgName,
 		"MetadataDefiner":       fmt.Sprintf(`"%s"`, metadataFullName),
+		"MetadataFileName":      metadataFullName,
 		"IdentityProviderField": "identity_provider_metadata_file",
 		"Tags":                  "org",
 	}
@@ -38,7 +39,7 @@ func TestAccVcdOrgSaml(t *testing.T) {
 
 	configText := templateFill(testAccCheckVcdOrgSaml, params)
 	params["IdentityProviderField"] = "identity_provider_metadata_text"
-	params["MetadataDefiner"] = "data.http.samltest.response_body"
+	params["MetadataDefiner"] = "data.local_file.metadata_file.content"
 	params["FuncName"] = orgName + "-text"
 	configText2 := templateFill(testAccCheckVcdOrgSaml2+testAccCheckVcdOrgSaml, params)
 	if vcdShortTest {
@@ -56,9 +57,9 @@ func TestAccVcdOrgSaml(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: testAccProviders,
 			ExternalProviders: map[string]resource.ExternalProvider{
-				"random": {
-					Source:            "hashicorp/http",
-					VersionConstraint: "3.3.0",
+				"local": {
+					Source:            "hashicorp/local",
+					VersionConstraint: "2.4.0",
 				},
 			},
 			CheckDestroy: testAccCheckOrgDestroy(orgName),
@@ -104,7 +105,7 @@ func TestAccVcdOrgSaml(t *testing.T) {
 	t.Run("using-file", func(t *testing.T) {
 		testFunc(configText)
 	})
-	t.Run("using-http-text", func(t *testing.T) {
+	t.Run("using-text", func(t *testing.T) {
 		testFunc(configText2)
 	})
 	postTestChecks(t)
@@ -138,7 +139,7 @@ data "vcd_org_saml" "{{.OrgName}}_ds" {
 }
 `
 const testAccCheckVcdOrgSaml2 = `
-data "http" "samltest" {
-  url = "https://samltest.id/saml/idp"
+data "local_file" "metadata_file" {
+  filename = "{{.MetadataFileName}}"
 }
 `
