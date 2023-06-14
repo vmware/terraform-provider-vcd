@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"os"
 )
 
@@ -41,7 +40,6 @@ func datasourceVcdOrgSamlMetadataRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[Org SAML metadata retrieval] error searching for Org %s: %s", orgId, err)
 	}
 
-	util.Logger.Printf("--- start retrieving\n")
 	metadataText, err := adminOrg.RetrieveServiceProviderSamlMetadata()
 
 	if err != nil {

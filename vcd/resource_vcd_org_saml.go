@@ -108,7 +108,7 @@ func resourceVcdOrgSamlCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	if fileName != "" {
 		metadataFromFile, err := os.ReadFile(fileName) // #nosec G304 -- We need user input for this file
 		if err != nil {
-			return diag.Errorf("[ORG SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
+			return diag.Errorf("[Org SAML %s %s] error reading metadata file %s: %s", origin, adminOrg.AdminOrg.Name, fileName, err)
 		}
 		metadataText = string(metadataFromFile)
 	}
