@@ -296,7 +296,8 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 				}
 			}
 		}
-		// In every other case, if metadata from VCD is empty, we need to update the state accordingly.
+		// In every other case, if metadata from VCD is empty (ie: it is being filtered out),
+		// we need to update the state accordingly.
 		err := d.Set("metadata_entry", []map[string]interface{}{})
 		return err
 	}
