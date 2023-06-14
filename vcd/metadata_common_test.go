@@ -3,8 +3,12 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
 	"strconv"
@@ -34,10 +38,9 @@ import (
 func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
-		"Org":            testConfig.VCD.Org,
-		"Vdc":            testConfig.Nsxt.Vdc,
-		"MetadataIgnore": " ",
-		"Name":           t.Name(),
+		"Org":  testConfig.VCD.Org,
+		"Vdc":  testConfig.Nsxt.Vdc,
+		"Name": t.Name(),
 	}
 
 	for extraParam, extraParamValue := range extraParams {
@@ -260,6 +263,84 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	postTestChecks(t)
 }
 
+func TestMetadataEntryIgnore(t *testing.T) {
+	preTestChecks(t)
+	var params = StringMap{
+		"Org":  testConfig.VCD.Org,
+		"Vdc":  testConfig.Nsxt.Vdc,
+		"Name": t.Name(),
+	}
+
+	configText := templateFill(testAccCheckVcdOrgMetadataIgnore, params)
+
+	testParamsNotEmpty(t, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	testFunc := func(ignoredMetadata []govcd.IgnoredMetadata) {
+		resource.Test(t, resource.TestCase{
+			ProviderFactories: map[string]func() (*schema.Provider, error){
+				providerVcdSystem: func() (*schema.Provider, error) {
+					newProvider := Provider()
+					newProvider.ConfigureContextFunc = func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+						config := Config{
+							User:            testConfig.TestEnvBuild.OrgUser,
+							Password:        testConfig.TestEnvBuild.OrgUserPassword,
+							Token:           "",
+							ApiToken:        "",
+							UseSamlAdfs:     false,
+							CustomAdfsRptId: "",
+							SysOrg:          testConfig.VCD.Org,
+							Org:             testConfig.VCD.Org,
+							Vdc:             "",
+							Href:            testConfig.Provider.Url,
+							InsecureFlag:    testConfig.Provider.AllowInsecure,
+							MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
+							IgnoredMetadata: ignoredMetadata,
+						}
+						conn, err := config.Client()
+						if err != nil {
+							panic("unable to initialize VCD connection :" + err.Error())
+						}
+						return conn, nil
+					}
+					return newProvider, nil
+				},
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: configText,
+					Check:  resource.ComposeAggregateTestCheckFunc(),
+				},
+			},
+		})
+	}
+
+	t.Run("1", func(t *testing.T) {
+		testFunc([]govcd.IgnoredMetadata{
+			{
+				ObjectName: addrOf("org"),
+				KeyRegex:   regexp.MustCompile("^foo$"),
+				ValueRegex: regexp.MustCompile("^bar$"),
+			},
+		})
+	})
+
+	postTestChecks(t)
+}
+
+const testAccCheckVcdOrgMetadataIgnore = `
+resource "vcd_org" "test-org" {
+  name             = "{{.Name}}"
+  full_name        = "{{.Name}}"
+  delete_recursive = "true"
+  delete_force     = "true"
+}
+`
+
 // getMetadataTestingHcl gets valid metadata entries to inject them into an HCL for testing
 func getMetadataTestingHcl(stringEntries, numberEntries, boolEntries, dateEntries, readOnlyEntries, privateEntries int) string {
 	hcl := ""
@@ -307,79 +388,4 @@ func testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, expectedKey, expe
 			"is_system":   expectedIsSystem,
 		},
 	)
-}
-
-func testMetadataIgnore(t *testing.T, resourceTemplate, resourceAddress string, extraParams StringMap) {
-	preTestChecks(t)
-	var params = StringMap{
-		"Org":  testConfig.VCD.Org,
-		"Vdc":  testConfig.Nsxt.Vdc,
-		"Name": t.Name(),
-	}
-
-	for extraParam, extraParamValue := range extraParams {
-		params[extraParam] = extraParamValue
-	}
-	testParamsNotEmpty(t, params)
-
-	params["FuncName"] = t.Name()
-	params["Metadata"] = " "
-	params["MetadataIgnore"] = " "
-	noMetadataHcl := templateFill(resourceTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", noMetadataHcl)
-
-	params["FuncName"] = t.Name() + "WithMetadata"
-	params["Metadata"] = "metadata_entry {}"
-	params["MetadataIgnore"] = "metadata_entry_ignore {\nkey = \"foo\"\n}\n"
-	withMetadataHcl := templateFill(resourceTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", noMetadataHcl)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.VCDClient == nil {
-		t.Errorf("could not get a VCD connection to add rights to tenant user")
-	}
-
-	resource.Test(t, resource.TestCase{
-		ProviderFactories: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config: noMetadataHcl,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
-				),
-			},
-			{
-				ResourceName:      resourceAddress,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
-				// These fields can't be retrieved from user data
-				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
-			},
-			{
-				Config: withMetadataHcl,
-				PreConfig: func() {
-					org, err := vcdClient.GetAdminOrgByName(t.Name())
-					if err != nil {
-						t.Errorf("could not get Organization %s: %s", t.Name(), err)
-					}
-					err = org.AddMetadataEntryWithVisibility("foo", "bar", types.MetadataStringValue, types.MetadataReadWriteVisibility, false)
-					if err != nil {
-						t.Errorf("could not add metadata to Org %s: %s", t.Name(), err)
-					}
-				},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "0"),
-				),
-			},
-		},
-	})
-	postTestChecks(t)
 }

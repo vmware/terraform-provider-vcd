@@ -15,7 +15,7 @@ func ignoreMetadataSchema() *schema.Schema {
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Description: "Defines a set of metadata entries that need to be ignored by this provider",
-		Elem: schema.Resource{
+		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"object_name": {
 					Type:        schema.TypeString,
@@ -23,16 +23,14 @@ func ignoreMetadataSchema() *schema.Schema {
 					Description: "If set, defines a resource in VCD whose metadata should be ignored",
 				},
 				"key_regex": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					Description:  "Regular expression of the metadata entry keys to ignore",
-					AtLeastOneOf: []string{"key_regex", "value_regex"},
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Regular expression of the metadata entry keys to ignore",
 				},
 				"value_regex": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					Description:  "Regular expression of the metadata entry values to ignore",
-					AtLeastOneOf: []string{"key_regex", "value_regex"},
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Regular expression of the metadata entry values to ignore",
 				},
 			},
 		},
@@ -49,8 +47,6 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 	result := make([]govcd.IgnoredMetadata, len(ignoreMetadataRaw))
 	for i, ignoredEntryRaw := range ignoreMetadataRaw {
 		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
-		// We can initialize it empty because either "key_regex" and "value_regex" are required by schema, so at least
-		// we know one of them will be populated for sure.
 		result[i] = govcd.IgnoredMetadata{}
 		regexRaw, ok := ignoredEntry["key_regex"]
 		if ok {
@@ -66,7 +62,10 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 			if err != nil {
 				return nil, err
 			}
-			result[i].KeyRegex = regex
+			result[i].ValueRegex = regex
+		}
+		if result[i].KeyRegex == nil && result[i].ValueRegex == nil {
+			return nil, fmt.Errorf("either 'key_regex' or 'value_regex' is required inside the ignore_metadata attribute")
 		}
 		// Object name can be nil as it's optional in schema
 		objectNameRaw, ok := ignoredEntry["object_name"]
