@@ -379,11 +379,15 @@ The following arguments are used to configure the VMware Cloud Director Provider
 ## Ignore metadata
 
 One or more `ignore_metadata` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
-items during `plan`, `apply` and `destroy`.
+items during `plan`, `apply` and `destroy`. This is useful, for example, to avoid removing metadata entries that were created
+by an external actor and not by this provider.
 
 ~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
-it. This excludes the deprecated `metadata` argument, which will ignore these blocks. Filtering old `metadata` attribute can be done
-with the native Terraform `lifecycle` block.
+it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle` block.
+
+-> To avoid side effects, you should only use this feature to deal with metadata not managed by this provider.
+It is encouraged to avoid ignoring metadata that was created by a Terraform resource, as you could get unwanted updates or inconsistencies
+in the state.
 
 The available sub-attributes for `ignore_metadata` are:
 
@@ -420,6 +424,8 @@ ignore_metadata {
   value_regex = "flex"
 }
 ```
+
+Note that this argument also affects metadata on [filtering](/providers/vmware/vcd/latest/docs/guides/data_source_filters).
 
 ## Connection Cache (*2.0+*)
 

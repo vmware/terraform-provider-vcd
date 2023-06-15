@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"regexp"
@@ -297,9 +298,9 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	}
 
 	cachedId := testCachedFieldValue{}
-	// We need to have two separated VCD clients to be able to add metadata. One
-	// VCD client is injected via the `retrieveObjectById` func, the other one will
-	// be created with ignored metadata by the testing framework.
+	// We need to create metadata with the `retrieveObjectById` func, which will be called
+	// after the testing SDK creates the provider config with metadata to ignore, hence we wouldn't be able to do it,
+	// unless we disable the cache to have separated clients.
 	backupEnableConnectionCache := enableConnectionCache
 	enableConnectionCache = false
 	cachedVCDClients.reset()
@@ -308,14 +309,15 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		cachedVCDClients.reset()
 	}()
 
-	testFunc := func(ignoredMetadata []map[string]string, stepError *regexp.Regexp) {
+	testFunc := func(ignoredMetadata []map[string]string, expectedMetadata, expectedMetadataInVcd int) {
+		var object metadataCompatible
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
 				providerVcdSystem: func() (*schema.Provider, error) {
 					newProvider := Provider()
 					newProvider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 						// We configure the provider this way to be able to test that providerConfigure
-						// retrieves and parses the given configuration correctly
+						// retrieves and parses the 'ignore_metadata' argument correctly
 						err := d.Set("ignore_metadata", ignoredMetadata)
 						if err != nil {
 							return nil, diag.FromErr(err)
@@ -336,10 +338,11 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					),
 				},
 				// In this step, an external actor (simulated in PreConfig by using the Go SDK) adds a metadata entry to the resource.
-				// The provider is configured to ignore it.
+				// The provider is configured to ignore it. This entry is always added as the client cache is deactivated.
 				{
 					PreConfig: func() {
-						object, err := retrieveObjectById(cachedId.fieldValue)
+						var err error
+						object, err = retrieveObjectById(cachedId.fieldValue)
 						if err != nil {
 							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
@@ -348,38 +351,117 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 					},
-					Config:      step2,
-					ExpectError: stepError,
+					Config: step2,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
+						// We need to check both metadata in state and metadata in VCD
+						func(state *terraform.State) error {
+							realMetadata, err := object.GetMetadata()
+							if err != nil {
+								return err
+							}
+							if len(realMetadata.MetadataEntry) != expectedMetadataInVcd {
+								return fmt.Errorf("expected %d metadata entries in VCD but got %d", expectedMetadataInVcd, len(realMetadata.MetadataEntry))
+							}
+							return nil
+						},
+						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", fmt.Sprintf("%d", expectedMetadata)),
 						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					),
 				},
 				// Test data source metadata
 				{
-					PreConfig: func() {
-						util.Logger.Printf("a")
-					},
 					Config: step3,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "1"),
+						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", fmt.Sprintf("%d", expectedMetadata)),
+						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "metadata_entry.#", resourceAddress, "metadata_entry.#"),
-						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					),
 				},
 			},
 		})
 	}
 
-	t.Run("filter by object type", func(t *testing.T) {
+	t.Run("filter by object type and specific key", func(t *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_type": objectType,
 				"key_regex":   "foo",
 			},
-		}, nil)
+		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+	})
+	t.Run("filter by object type and specific value", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_type": objectType,
+				"value_regex": "bar",
+			},
+		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+	})
+	t.Run("filter by object type and key that doesn't match", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_type": objectType,
+				"key_regex":   "notmatch",
+			},
+		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+	})
+	t.Run("filter by object type and value that doesn't match", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_type": objectType,
+				"value_regex": "notmatch",
+			},
+		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+	})
+	t.Run("filter by object name and specific key", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_name": t.Name(),
+				"key_regex":   "foo",
+			},
+		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+	})
+	t.Run("filter by object name and specific value", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_name": t.Name(),
+				"value_regex": "bar",
+			},
+		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+	})
+	t.Run("filter by object name and key that doesn't match", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_name": t.Name(),
+				"key_regex":   "notmatch",
+			},
+		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+	})
+	t.Run("filter by object name and value that doesn't match", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"object_name": t.Name(),
+				"value_regex": "notmatch",
+			},
+		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+	})
+	t.Run("filter by key and value that match", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"key_regex":   "foo",
+				"value_regex": "bar",
+			},
+		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+	})
+	t.Run("filter by key and value that don't match", func(t *testing.T) {
+		testFunc([]map[string]string{
+			{
+				"key_regex":   "foo",
+				"value_regex": "barz",
+			},
+		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
 	})
 
 	postTestChecks(t)
