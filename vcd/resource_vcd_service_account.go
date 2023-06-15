@@ -59,8 +59,7 @@ func resourceVcdServiceAccount() *schema.Resource {
 			},
 			"active": {
 				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
+				Required:    true,
 				Description: "Status of the service account.",
 			},
 			"file_name": {
@@ -274,6 +273,7 @@ func genericVcdServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("[Service Account read] error: %s", err)
 	}
 
+	d.SetId(sa.ServiceAccount.ID)
 	dSet(d, "name", sa.ServiceAccount.Name)
 	dSet(d, "software_id", sa.ServiceAccount.SoftwareID)
 	dSet(d, "software_version", sa.ServiceAccount.SoftwareVersion)

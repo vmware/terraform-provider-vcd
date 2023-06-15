@@ -30,7 +30,7 @@ func resourceVcdApiToken() *schema.Resource {
 			},
 			"file_name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Name of the file that the API token will be saved to",
 			},
 			"allow_token_file": {
@@ -60,10 +60,7 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("[API token create] error creating API token: %s", err)
 	}
 
-	// token.Token.ID is in URN format, convert it to UUID
-	// for convenience in management
-	uuid := extractUuid(token.Token.ID)
-	d.SetId(uuid)
+	d.SetId(token.Token.ID)
 
 	apiToken, err := token.GetInitialApiToken()
 	if err != nil {
@@ -71,10 +68,6 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	filename := d.Get("file_name").(string)
-	if filename == "" {
-		return diag.Errorf("[API token create] file_name must be set on creation")
-	}
-
 	allowTokenFile := d.Get("allow_token_file").(bool)
 
 	var diagnostics diag.Diagnostics
@@ -82,9 +75,7 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 		diagnostics = append(diagnostics, diag.Diagnostic{
 			Severity: diag.Warning,
 			Summary:  "The file " + filename + " should be considered sensitive information.",
-			Detail: "The file " + filename + " containing the initial service account API " +
-				"HAS BEEN UPDATED with a freshly generated token. The initial token was invalidated and the " +
-				"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
+			Detail: "The file " + filename + " contains an API token which is " +
 				"usable by anyone to run operations to the current VCD. As such, it should be considered SENSITIVE INFORMATION. " +
 				"If you would like to remove this warning, add\n\n" + "	allow_token_file = true\n\nto the provider settings.",
 		})
@@ -106,6 +97,10 @@ func resourceVcdApiTokenRead(ctx context.Context, d *schema.ResourceData, meta i
 	vcdClient := meta.(*VCDClient)
 
 	token, err := vcdClient.GetTokenById(d.Id())
+	if govcd.ContainsNotFound(err) {
+		d.SetId("")
+		log.Printf("[DEBUG] API token no longer exists. Removing from tfstate")
+	}
 	if err != nil {
 		return diag.Errorf("[API token read] error getting API token: %s", err)
 	}
@@ -136,20 +131,25 @@ func resourceVcdApiTokenImport(ctx context.Context, d *schema.ResourceData, meta
 	log.Printf("[TRACE] API token import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("resource name must be specified as user-name.token-name")
+	if len(resourceURI) != 1 {
+		return nil, fmt.Errorf("resource name must be specified as token-name")
 	}
-	userName := resourceURI[0]
-	tokenName := resourceURI[1]
+	tokenName := resourceURI[0]
 
 	vcdClient := meta.(*VCDClient)
-	token, err := vcdClient.GetTokenByNameAndUsername(tokenName, userName)
+
+	sessionInfo, err := vcdClient.Client.GetSessionInfo()
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("error getting username: %s", err)
+	}
+
+	token, err := vcdClient.GetTokenByNameAndUsername(tokenName, sessionInfo.User.Name)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error getting token by name: %s", err)
 	}
 
 	dSet(d, "name", token.Token.Name)
-	d.SetId(extractUuid(token.Token.ID))
+	d.SetId(token.Token.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
