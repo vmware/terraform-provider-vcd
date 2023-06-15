@@ -383,7 +383,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		})
 	}
 
-	t.Run("filter by object type and specific key", func(t *testing.T) {
+	t.Run("filter by object type and specific key", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_type": objectType,
@@ -391,7 +391,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
 	})
-	t.Run("filter by object type and specific value", func(t *testing.T) {
+	t.Run("filter by object type and specific value", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_type": objectType,
@@ -399,7 +399,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
 	})
-	t.Run("filter by object type and key that doesn't match", func(t *testing.T) {
+	t.Run("filter by object type and key that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_type": objectType,
@@ -407,7 +407,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
 	})
-	t.Run("filter by object type and value that doesn't match", func(t *testing.T) {
+	t.Run("filter by object type and value that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_type": objectType,
@@ -415,7 +415,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
 	})
-	t.Run("filter by object name and specific key", func(t *testing.T) {
+	t.Run("filter by object name and specific key", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_name": t.Name(),
@@ -423,7 +423,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
 	})
-	t.Run("filter by object name and specific value", func(t *testing.T) {
+	t.Run("filter by object name and specific value", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_name": t.Name(),
@@ -431,7 +431,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
 	})
-	t.Run("filter by object name and key that doesn't match", func(t *testing.T) {
+	t.Run("filter by object name and key that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_name": t.Name(),
@@ -439,7 +439,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
 	})
-	t.Run("filter by object name and value that doesn't match", func(t *testing.T) {
+	t.Run("filter by object name and value that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"object_name": t.Name(),
@@ -447,7 +447,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
 	})
-	t.Run("filter by key and value that match", func(t *testing.T) {
+	t.Run("filter by key and value that match", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"key_regex":   "foo",
@@ -455,7 +455,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			},
 		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
 	})
-	t.Run("filter by key and value that don't match", func(t *testing.T) {
+	t.Run("filter by key and value that don't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
 			{
 				"key_regex":   "foo",
