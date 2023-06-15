@@ -103,6 +103,14 @@ func resourceVcdApiTokenUpdate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceVcdApiTokenRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	token, err := vcdClient.GetTokenById(d.Id())
+	if err != nil {
+		return diag.Errorf("[API token read] error getting API token: %s", err)
+	}
+
+	dSet(d, "name", token.Token.Name)
 
 	return nil
 }
