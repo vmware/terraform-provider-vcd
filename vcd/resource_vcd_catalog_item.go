@@ -79,8 +79,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:    true,
 				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 			},
-			"metadata_entry":        metadataEntryResourceSchema("Catalog Item"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("Catalog Item"),
+			"metadata_entry": metadataEntryResourceSchema("Catalog Item"),
 			"catalog_item_metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,

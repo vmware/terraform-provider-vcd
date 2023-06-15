@@ -487,7 +487,7 @@ func TestAccVcdVdcMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdVdcMetadata, "vcd_org_vdc.test-vdc",
 		testAccCheckVcdVdcMetadataDatasource, "data.vcd_org_vdc.test-vdc-ds",
-		getObjectById, StringMap{
+		"vdc", getObjectById, StringMap{
 			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})

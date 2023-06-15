@@ -58,8 +58,7 @@ func resourceVcdVApp() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry":        metadataEntryResourceSchema("vApp"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("vApp"),
+			"metadata_entry": metadataEntryResourceSchema("vApp"),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,

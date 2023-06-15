@@ -130,8 +130,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry":        metadataEntryResourceSchema("Disk"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("Disk"),
+			"metadata_entry": metadataEntryResourceSchema("Disk"),
 		},
 	}
 }

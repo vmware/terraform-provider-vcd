@@ -108,8 +108,7 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry":        metadataEntryResourceSchema("Network"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("Network"),
+			"metadata_entry": metadataEntryResourceSchema("Network"),
 		},
 	}
 }

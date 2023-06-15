@@ -96,8 +96,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry":        metadataEntryResourceSchema("vApp Template"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("vApp Template"),
+			"metadata_entry": metadataEntryResourceSchema("vApp Template"),
 		},
 	}
 }

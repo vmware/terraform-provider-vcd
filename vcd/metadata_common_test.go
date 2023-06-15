@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"regexp"
@@ -267,7 +266,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	postTestChecks(t)
 }
 
-func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(string) (metadataCompatible, error), extraParams StringMap) {
+func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress, objectType string, retrieveObjectById func(string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
 		"FuncName": t.Name() + "-Step1",
@@ -298,33 +297,30 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	}
 
 	cachedId := testCachedFieldValue{}
+	// We need to have two separated VCD clients to be able to add metadata. One
+	// VCD client is injected via the `retrieveObjectById` func, the other one will
+	// be created with ignored metadata by the testing framework.
+	backupEnableConnectionCache := enableConnectionCache
+	enableConnectionCache = false
+	cachedVCDClients.reset()
+	defer func() {
+		enableConnectionCache = backupEnableConnectionCache
+		cachedVCDClients.reset()
+	}()
 
-	testFunc := func(ignoredMetadata []govcd.IgnoredMetadata) {
+	testFunc := func(ignoredMetadata []map[string]string, stepError *regexp.Regexp) {
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
 				providerVcdSystem: func() (*schema.Provider, error) {
 					newProvider := Provider()
-					newProvider.ConfigureContextFunc = func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
-						config := Config{
-							User:            testConfig.Provider.User,
-							Password:        testConfig.Provider.Password,
-							Token:           "",
-							ApiToken:        "",
-							UseSamlAdfs:     false,
-							CustomAdfsRptId: "",
-							SysOrg:          testConfig.Provider.SysOrg,
-							Org:             testConfig.Provider.SysOrg,
-							Vdc:             "",
-							Href:            testConfig.Provider.Url,
-							InsecureFlag:    testConfig.Provider.AllowInsecure,
-							MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
-							IgnoredMetadata: ignoredMetadata,
-						}
-						conn, err := config.Client()
+					newProvider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+						// We configure the provider this way to be able to test that providerConfigure
+						// retrieves and parses the given configuration correctly
+						err := d.Set("ignore_metadata", ignoredMetadata)
 						if err != nil {
-							panic("unable to initialize VCD connection :" + err.Error())
+							return nil, diag.FromErr(err)
 						}
-						return conn, nil
+						return providerConfigure(ctx, d)
 					}
 					return newProvider, nil
 				},
@@ -352,7 +348,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 					},
-					Config: step2,
+					Config:      step2,
+					ExpectError: stepError,
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
 						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
@@ -377,58 +374,12 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	}
 
 	t.Run("filter by object type", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
+		testFunc([]map[string]string{
 			{
-				ObjectType: addrOf("org"),
+				"object_type": objectType,
+				"key_regex":   "foo",
 			},
-		})
-	})
-	t.Run("filter by object name", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
-			{
-				ObjectName: addrOf(t.Name()),
-			},
-		})
-	})
-	t.Run("filter by key regex", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
-			{
-				KeyRegex: regexp.MustCompile(`foo`),
-			},
-		})
-	})
-	t.Run("filter by value regex", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
-			{
-				ValueRegex: regexp.MustCompile(`bar`),
-			},
-		})
-	})
-	t.Run("filter by object type and name", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
-			{
-				ObjectType: addrOf("org"),
-				ObjectName: addrOf(t.Name()),
-			},
-		})
-	})
-	t.Run("filter by key regex and key value", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
-			{
-				KeyRegex:   regexp.MustCompile(`foo`),
-				ValueRegex: regexp.MustCompile(`bar`),
-			},
-		})
-	})
-	t.Run("filter by all", func(t *testing.T) {
-		testFunc([]govcd.IgnoredMetadata{
-			{
-				ObjectType: addrOf("org"),
-				ObjectName: addrOf(t.Name()),
-				KeyRegex:   regexp.MustCompile(`foo`),
-				ValueRegex: regexp.MustCompile(`bar`),
-			},
-		})
+		}, nil)
 	})
 
 	postTestChecks(t)

@@ -463,5 +463,5 @@ func TestAccVcdOrgMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
 		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
-		getObjectById, nil)
+		"org", getObjectById, nil)
 }

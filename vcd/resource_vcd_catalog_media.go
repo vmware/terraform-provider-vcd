@@ -87,8 +87,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry":        metadataEntryResourceSchema("Catalog Media"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("Catalog Media"),
+			"metadata_entry": metadataEntryResourceSchema("Catalog Media"),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,

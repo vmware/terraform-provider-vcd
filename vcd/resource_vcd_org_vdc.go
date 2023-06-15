@@ -238,8 +238,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry":        metadataEntryResourceSchema("VDC"),
-			"metadata_entry_ignore": metadataEntryIgnoreSchema("VDC"),
+			"metadata_entry": metadataEntryResourceSchema("VDC"),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,

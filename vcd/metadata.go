@@ -15,23 +15,30 @@ func ignoreMetadataSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Optional:    true,
-		Description: "Defines a set of metadata entries that need to be ignored by this provider",
+		Description: "Defines a set of `metadata_entry` that need to be ignored by this provider. All filters on this attribute are computed with a logical AND",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
+				"object_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Ignores metadata from the specific object type in VCD",
+				},
 				"object_name": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "If set, defines a resource in VCD whose metadata should be ignored",
+					Description: "Ignores metadata from the specific object in VCD named like this argument",
 				},
 				"key_regex": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "Regular expression of the metadata entry keys to ignore",
+					Description: "Regular expression of the metadata entry keys to ignore. Either `key_regex` or `value_regex` is required",
+					// Note: AtLeastOneOf can't be used here
 				},
 				"value_regex": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "Regular expression of the metadata entry values to ignore",
+					Description: "Regular expression of the metadata entry values to ignore. Either `key_regex` or `value_regex` is required",
+					// Note: AtLeastOneOf can't be used here
 				},
 			},
 		},
@@ -49,32 +56,29 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 	for i, ignoredEntryRaw := range ignoreMetadataRaw {
 		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
 		result[i] = govcd.IgnoredMetadata{}
-		regexRaw, ok := ignoredEntry["key_regex"]
-		if ok {
-			regex, err := regexp.Compile(regexRaw.(string))
+		if ignoredEntry["key_regex"].(string) != "" {
+			regex, err := regexp.Compile(ignoredEntry["key_regex"].(string))
 			if err != nil {
 				return nil, err
 			}
 			result[i].KeyRegex = regex
 		}
-		regexRaw, ok = ignoredEntry["value_regex"]
-		if ok {
-			regex, err := regexp.Compile(regexRaw.(string))
+		if ignoredEntry["value_regex"].(string) != "" {
+			regex, err := regexp.Compile(ignoredEntry["value_regex"].(string))
 			if err != nil {
 				return nil, err
 			}
 			result[i].ValueRegex = regex
 		}
 		if result[i].KeyRegex == nil && result[i].ValueRegex == nil {
-			return nil, fmt.Errorf("either 'key_regex' or 'value_regex' is required inside the ignore_metadata attribute")
+			return nil, fmt.Errorf("either `key_regex` or `value_regex` is required inside the `ignore_metadata` attribute")
 		}
-		// Object name can be nil as it's optional in schema
-		objectNameRaw, ok := ignoredEntry["object_name"]
-		var objectName *string
-		if ok {
-			objectName = addrOf(objectNameRaw.(string))
+		if ignoredEntry["object_name"].(string) != "" {
+			result[i].ObjectName = addrOf(ignoredEntry["object_name"].(string))
 		}
-		result[i].ObjectName = objectName
+		if ignoredEntry["object_type"].(string) != "" {
+			result[i].ObjectType = addrOf(ignoredEntry["object_type"].(string))
+		}
 	}
 	return result, nil
 }
@@ -158,47 +162,6 @@ func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema 
 					Optional: true,
 					// Default:     false,  // Can't be set like this as we must allow empty `metadata_entry`, to be able to delete metadata (see above comment)
 					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
-				},
-			},
-		},
-	}
-}
-
-// metadataEntryIgnoreSchema returns the schema associated to metadata_entry_ignore for a given resource.
-// The description will refer to the object name given as input.
-func metadataEntryIgnoreSchema(objectNameInDescription string) *schema.Schema {
-	return &schema.Schema{
-		Type:        schema.TypeSet,
-		Optional:    true,
-		Description: fmt.Sprintf("Metadata entries to ignore for %s", objectNameInDescription),
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"key": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Metadata entry key to ignore. It can be a regular expression",
-				},
-				"value": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Metadata entry value to ignore. It can be a regular expression",
-				},
-				"type": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					Description:  fmt.Sprintf("Type of the metadata entry to ignore. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
-					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
-				},
-				"user_access": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					Description:  fmt.Sprintf("User access level of the metadata entry to ignore. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
-					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
-				},
-				"is_system": {
-					Type:        schema.TypeBool,
-					Optional:    true,
-					Description: "Domain of the metadata entry to ignore. true if it belongs to SYSTEM, false if it belongs to GENERAL",
 				},
 			},
 		},
