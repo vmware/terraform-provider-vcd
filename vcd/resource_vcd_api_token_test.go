@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,29 +12,57 @@ import (
 )
 
 func TestAccVcdApiToken(t *testing.T) {
-	skipIfNotSysAdmin(t)
-
 	preTestChecks(t)
 
 	var params = StringMap{
-		"Org":   testConfig.Provider.SysOrg,
-		"Token": t.Name(),
+		"TokenName": t.Name(),
+		"FileName":  t.Name(),
 	}
+	testParamsNotEmpty(t, params)
 
+	configText := templateFill(testAccVcdApiToken, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resourceName := "vcd_api_token.custom"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { preRunChecks(t) },
-		ProviderFactories: buildMultipleProviders(),
-		CheckDestroy:      testAccCheckApiTokenDestroy(params["Token"].(string)),
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckApiTokenDestroy(params["TokenName"].(string)),
+		),
 		Steps: []resource.TestStep{
-			{},
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					testCheckFileExists(t.Name()),
+				),
+			},
 		},
 	})
+	postTestChecks(t)
 }
 
-// const testAccVcdApiToken_sysorg = `
-// resource
+const testAccVcdApiToken = `
+resource "vcd_api_token" "custom" {
+  name = "{{.TokenName}}"		
 
-// `
+  file_name = "{{.FileName}}"
+}
+`
+
+func testCheckFileExists(filename string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		_, err := os.ReadFile(filename)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
 
 func testAccCheckApiTokenDestroy(tokenName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

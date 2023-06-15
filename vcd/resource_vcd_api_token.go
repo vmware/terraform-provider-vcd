@@ -42,7 +42,6 @@ func resourceVcdApiToken() *schema.Resource {
 			},
 		},
 	}
-
 }
 
 func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
