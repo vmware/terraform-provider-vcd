@@ -66,7 +66,7 @@ resource "vcd_org_saml" "my-org-saml" {
 
 The following arguments are supported:
 
-* `org_id` - (Required) Org ID: there is only one SAML configuration available for an organization. Thus, the resource can be identified by the Org
+* `org_id` - (Required) Since there is only one SAML configuration available for an organization, the resource can be identified by the Org itself
 * `enabled` - (Required) If true, the organization will use SAML for authentication
 * `entity_id` - (Optional) Your service provider entity ID. Once you set this field, it cannot be changed back to empty
 * `identity_provider_metadata_file` - (Optional) Name of a file containing the metadata text from a SAML Identity Provider. Required if `identity_provider_metadata_text` is not defined
@@ -103,7 +103,6 @@ resource "vcd_org_saml" "my-org-saml" {
 You can import such SAML configuration into terraform state using one of the following commands
 
 ```
-# EITHER
 terraform import vcd_org_saml.my-org-saml organization_name
 # OR
 terraform import vcd_org_saml.my-org-saml organization_id
