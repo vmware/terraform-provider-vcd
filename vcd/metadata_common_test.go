@@ -267,10 +267,10 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 // metadata entries in all cases.
 //
 // Tests:
-// - Step 1:  Create the resource with no metadata
-// - Pre-Step 2:  SDK creates a metadata entry to simulate an external actor adding metadata to the resource.
-// - Step 2:  Add a metadata entry to the resource
-// - Step 3:  Add a data source that fetches the created resource.
+// - Step 1: Create the resource with no metadata
+// - Pre-Step 2: SDK creates a metadata entry to simulate an external actor adding metadata to the resource.
+// - Step 2: Add a metadata entry to the resource
+// - Step 3: Add a data source that fetches the created resource.
 //
 // The different ignore_metadata sub-tests check what happens if the filter matches or doesn't match the metadata entry
 // added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
@@ -304,7 +304,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		return
 	}
 
-	// We cache the ID of the created resource, so it can be used afterwards.
+	// We will cache the ID of the created resource after Step 1, so it can be used afterward.
 	cachedId := testCachedFieldValue{}
 
 	// We need to create metadata inside the input `retrieveObjectById` function, which uses the Go SDK.
