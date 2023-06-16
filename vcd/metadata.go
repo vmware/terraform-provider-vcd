@@ -246,24 +246,7 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 		// A consequence of having metadata_entry computed is that to remove the entries one needs to write `metadata_entry {}`.
 		// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
 		// set an empty Set as attribute in state, which would taint it and ask for an update all the time.
-		rawState := d.GetRawState()
-		if !rawState.IsNull() {
-			rawMetadataEntry := rawState.GetAttr("metadata_entry")
-			if !rawMetadataEntry.IsNull() {
-				rawValues := rawMetadataEntry.AsValueSet().Values()
-				if len(rawValues) == 1 {
-					metadataEntryMap := rawValues[0].AsValueMap()
-					if metadataEntryMap["key"].AsString() == "" && metadataEntryMap["value"].AsString() == "" &&
-						metadataEntryMap["type"].AsString() == "" && metadataEntryMap["user_access"].AsString() == "" {
-						return nil
-					}
-				}
-			}
-		}
-		// In every other case, if metadata from VCD is empty (ie: it is being filtered out),
-		// we need to update the state accordingly.
-		err := d.Set("metadata_entry", []map[string]interface{}{})
-		return err
+		return nil
 	}
 
 	metadataSet := make([]map[string]interface{}, len(metadataFromVcd))
