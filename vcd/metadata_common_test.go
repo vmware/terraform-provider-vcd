@@ -263,6 +263,17 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	postTestChecks(t)
 }
 
+// testMetadataEntryIgnore executes a test that asserts that the "ignore_metadata" Provider argument allows to ignore
+// metadata entries in all cases.
+//
+// Tests:
+// - Step 1:  Create the resource with no metadata
+// - Pre-Step 2:  SDK creates a metadata entry to simulate an external actor adding metadata to the resource.
+// - Step 2:  Add a metadata entry to the resource
+// - Step 3:  Add a data source that fetches the created resource.
+//
+// The different ignore_metadata sub-tests check what happens if the filter matches or doesn't match the metadata entry
+// added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
 func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress, objectType string, retrieveObjectById func(string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
@@ -293,10 +304,13 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		return
 	}
 
+	// We cache the ID of the created resource, so it can be used afterwards.
 	cachedId := testCachedFieldValue{}
-	// We need to create metadata with the `retrieveObjectById` func, which will be called
-	// after the testing SDK creates the provider config with metadata to ignore, hence we wouldn't be able to do it,
-	// unless we disable the cache to have separated clients.
+
+	// We need to create metadata inside the input `retrieveObjectById` function, which uses the Go SDK.
+	// If this SDK used the same client as the Provider, it would have the same metadata filter, hence
+	// it would fail adding it. That's why we disable the cache: To have separated clients. This way, the client used
+	// by the `retrieveObjectById` function won't have any metadata filter.
 	backupEnableConnectionCache := enableConnectionCache
 	enableConnectionCache = false
 	cachedVCDClients.reset()
@@ -313,7 +327,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					newProvider := Provider()
 					newProvider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 						// We configure the provider this way to be able to test that providerConfigure
-						// retrieves and parses the 'ignore_metadata' argument correctly
+						// retrieves and parses the 'ignore_metadata' argument correctly.
 						err := d.Set("ignore_metadata", ignoredMetadata)
 						if err != nil {
 							return nil, diag.FromErr(err)
@@ -324,7 +338,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				},
 			},
 			Steps: []resource.TestStep{
-				// Create a resource without metadata
+				// Create a resource without metadata.
 				{
 					Config: step1,
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -334,7 +348,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					),
 				},
 				// In this step, an external actor (simulated in PreConfig by using the Go SDK) adds a metadata entry to the resource.
-				// The provider is configured to ignore it. This entry is always added as the client cache is deactivated.
+				// The provider is configured to ignore it.
+				// Note: This entry is always added as the client cache is deactivated.
 				{
 					PreConfig: func() {
 						var err error
@@ -349,7 +364,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					},
 					Config: step2,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						// We need to check both metadata in state and metadata in VCD
+						// We need to check both metadata in state and metadata in VCD to assert that the filter works.
 						func(state *terraform.State) error {
 							realMetadata, err := object.GetMetadata()
 							if err != nil {
@@ -364,7 +379,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					),
 				},
-				// Test data source metadata
+				// Test data source metadata.
 				{
 					Config: step3,
 					Check: resource.ComposeAggregateTestCheckFunc(
