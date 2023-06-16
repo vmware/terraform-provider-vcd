@@ -413,15 +413,22 @@ ignore_metadata {
 You can have more than one block, to ignore more entries of your choice:
 
 ```hcl
+# Filters all metadata with key "Environment" or "environment" in all VCD objects with any name.
 ignore_metadata {
-  object_type = "org"
-  object_name = "client1"
-  key_regex   = "[Ee]nvironment"
+  key_regex   = "^[Ee]nvironment$"
 }
 
+# Filters all metadata with key "NiceMetadataKey" in all VCD objects named "SpecificName".
 ignore_metadata {
-  object_type = "vdc"
-  value_regex = "flex"
+  object_name = "SpecificName"
+  key_regex   = "^NiceMetadataKey$"
+}
+
+# Filters all metadata with values "Yes" in the Organization named "Tatooine".
+ignore_metadata {
+  object_type = "org"
+  object_name = "Tatooine"
+  value_regex = "^Yes$"
 }
 ```
 
