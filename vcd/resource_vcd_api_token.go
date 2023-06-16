@@ -30,7 +30,7 @@ func resourceVcdApiToken() *schema.Resource {
 			},
 			"file_name": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Name of the file that the API token will be saved to",
 			},
 			"allow_token_file": {
@@ -59,7 +59,6 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("[API token create] error creating API token: %s", err)
 	}
-
 	d.SetId(token.Token.ID)
 
 	apiToken, err := token.GetInitialApiToken()
@@ -81,14 +80,19 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 		})
 	}
 
+	if filename == "" {
+		return diag.Errorf("[API token create] file_name must be set on creation")
+	}
+
 	err = govcd.SaveApiTokenToFile(filename, vcdClient.Client.UserAgent, apiToken)
 	if err != nil {
 		return diag.Errorf("[API token create] error saving API token to file: %s", err)
 	}
 
-	return diagnostics
+	return append(diagnostics, resourceVcdApiTokenRead(ctx, d, meta)...)
 }
 
+// There are no fields that can be updated after creation
 func resourceVcdApiTokenUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
@@ -105,6 +109,7 @@ func resourceVcdApiTokenRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("[API token read] error getting API token: %s", err)
 	}
 
+	d.SetId(token.Token.ID)
 	dSet(d, "name", token.Token.Name)
 
 	return nil
@@ -148,8 +153,8 @@ func resourceVcdApiTokenImport(ctx context.Context, d *schema.ResourceData, meta
 		return []*schema.ResourceData{}, fmt.Errorf("error getting token by name: %s", err)
 	}
 
-	dSet(d, "name", token.Token.Name)
 	d.SetId(token.Token.ID)
+	dSet(d, "name", token.Token.Name)
 
 	return []*schema.ResourceData{d}, nil
 }

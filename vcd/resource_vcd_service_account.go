@@ -42,7 +42,7 @@ func resourceVcdServiceAccount() *schema.Resource {
 				Required:    true,
 				Description: "UUID of software, e.g: 12345678-1234-5678-90ab-1234567890ab",
 			},
-			"role_id": {
+			"role": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Role ID of service account",
@@ -59,12 +59,12 @@ func resourceVcdServiceAccount() *schema.Resource {
 			},
 			"active": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				Description: "Status of the service account.",
 			},
 			"file_name": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Name of the file that the API token will be saved to",
 			},
 			"allow_token_file": {
@@ -99,7 +99,7 @@ func resourceVcdServiceAccountCreate(ctx context.Context, d *schema.ResourceData
 
 	// Role needs to be sent in URN format, and the role name needs to be percent-encoded
 	// e.g urn:vcloud:role:Organization%20Administrator
-	roleId := d.Get("role_id").(string)
+	roleId := d.Get("role").(string)
 	role, err := adminOrg.GetRoleById(roleId)
 	if err != nil {
 		return diag.Errorf("[Service Account create] error getting Role: %s", err)
@@ -111,8 +111,7 @@ func resourceVcdServiceAccountCreate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("[Service Account create] error creating Service Account: %s", err)
 	}
-	uuid := extractUuid(sa.ServiceAccount.ID)
-	d.SetId(uuid)
+	d.SetId(sa.ServiceAccount.ID)
 
 	active := d.Get("active").(bool)
 	allowTokenFile := d.Get("allow_token_file").(bool)
@@ -150,8 +149,7 @@ func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("[Service Account update] error getting Service Account: %s", err)
 	}
 
-	roleId := d.Get("role_id").(string)
-
+	roleId := d.Get("role").(string)
 	softwareId := d.Get("software_id").(string)
 	softwareVersion := d.Get("software_version").(string)
 	uri := d.Get("uri").(string)
@@ -277,7 +275,7 @@ func genericVcdServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 	dSet(d, "name", sa.ServiceAccount.Name)
 	dSet(d, "software_id", sa.ServiceAccount.SoftwareID)
 	dSet(d, "software_version", sa.ServiceAccount.SoftwareVersion)
-	dSet(d, "role_id", sa.ServiceAccount.Role.ID)
+	dSet(d, "role", sa.ServiceAccount.Role.ID)
 	dSet(d, "uri", sa.ServiceAccount.URI)
 	if sa.ServiceAccount.Status == "ACTIVE" {
 		dSet(d, "active", true)

@@ -19,6 +19,7 @@ func TestAccVcdApiToken(t *testing.T) {
 		"FileName":  t.Name(),
 	}
 	testParamsNotEmpty(t, params)
+	t.Cleanup(deleteApiTokenFile(params["FileName"].(string)))
 
 	configText := templateFill(testAccVcdApiToken, params)
 	if vcdShortTest {
@@ -30,15 +31,13 @@ func TestAccVcdApiToken(t *testing.T) {
 	resourceName := "vcd_api_token.custom"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-			testAccCheckApiTokenDestroy(params["TokenName"].(string)),
-		),
+		CheckDestroy:      testAccCheckApiTokenDestroy(params["TokenName"].(string)),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
-					testCheckFileExists(t.Name()),
+					testCheckFileExists(params["FileName"].(string)),
 				),
 			},
 		},
@@ -53,6 +52,13 @@ resource "vcd_api_token" "custom" {
   file_name = "{{.FileName}}"
 }
 `
+
+// This is a helper function that attempts to remove created API token file no matter of the test outcome
+func deleteApiTokenFile(filename string) func() {
+	return func() {
+		os.Remove(filename)
+	}
+}
 
 func testCheckFileExists(filename string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -69,13 +75,13 @@ func testAccCheckApiTokenDestroy(tokenName string) resource.TestCheckFunc {
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "vcd_api_token" && rs.Primary.Attributes["name"] != tokenName {
+			if rs.Type != "vcd_api_token" || rs.Primary.Attributes["name"] != tokenName {
 				continue
 			}
 
 			_, err := conn.GetTokenById(rs.Primary.ID)
 			if err == nil {
-				return fmt.Errorf("Token still exist")
+				return fmt.Errorf("error: api token still exists post-destroy")
 			}
 
 			return nil
