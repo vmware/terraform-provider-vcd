@@ -271,8 +271,7 @@ data "vcd_catalog_media" "test-catalog-media-ds" {
 func TestAccVcdCatalogMediaMetadataIgnore(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
-	getObjectById := func(id string) (metadataCompatible, error) {
-		vcdClient := createSystemTemporaryVCDConnection()
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
 		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)

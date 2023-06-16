@@ -1368,8 +1368,7 @@ data "vcd_network_direct" "test-network-direct-ds" {
 func TestAccVcdDirectNetworkMetadataIgnore(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
-	getObjectById := func(id string) (metadataCompatible, error) {
-		vcdClient := createSystemTemporaryVCDConnection()
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
 		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
@@ -1425,8 +1424,7 @@ data "vcd_network_isolated" "test-network-isolated-ds" {
 func TestAccVcdIsolatedNetworkMetadataIgnore(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
-	getObjectById := func(id string) (metadataCompatible, error) {
-		vcdClient := createSystemTemporaryVCDConnection()
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
 		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
@@ -1483,8 +1481,7 @@ data "vcd_network_routed" "test-network-routed-ds" {
 func TestAccVcdRoutedNetworkMetadataIgnore(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
-	getObjectById := func(id string) (metadataCompatible, error) {
-		vcdClient := createSystemTemporaryVCDConnection()
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
 		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)

@@ -274,7 +274,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 //
 // The different ignore_metadata sub-tests check what happens if the filter matches or doesn't match the metadata entry
 // added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
-func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress, objectType string, retrieveObjectById func(string) (metadataCompatible, error), extraParams StringMap) {
+func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress, objectType string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
 		"FuncName": t.Name() + "-Step1",
@@ -306,18 +306,6 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 
 	// We will cache the ID of the created resource after Step 1, so it can be used afterward.
 	cachedId := testCachedFieldValue{}
-
-	// We need to create metadata inside the input `retrieveObjectById` function, which uses the Go SDK.
-	// If this SDK used the same client as the Provider, it would have the same metadata filter, hence
-	// it would fail creating it. That's why we disable the cache: To have separated clients. This way, the client used
-	// by the `retrieveObjectById` function won't have any metadata filter.
-	backupEnableConnectionCache := enableConnectionCache
-	enableConnectionCache = false
-	cachedVCDClients.reset()
-	defer func() {
-		enableConnectionCache = backupEnableConnectionCache
-		cachedVCDClients.reset()
-	}()
 
 	testFunc := func(ignoredMetadata []map[string]string, expectedMetadataInVcd int) {
 		var object metadataCompatible
@@ -352,8 +340,19 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				// Note: This entry is always added as the client cache is deactivated.
 				{
 					PreConfig: func() {
+						// We need to create metadata now with the SDK. If the calls below used the same client as the Provider,
+						// it would have the same metadata filter, hence it would fail creating it.
+						// That's why we disable the cache: To have separated clients. This way, the client used
+						// by the calls below won't have any metadata filter.
+						backupEnableConnectionCache := enableConnectionCache
+						enableConnectionCache = false
+						cachedVCDClients.reset()
+						vcdClient := createSystemTemporaryVCDConnection()
+						enableConnectionCache = backupEnableConnectionCache
+						cachedVCDClients.reset()
+
 						var err error
-						object, err = retrieveObjectById(cachedId.fieldValue)
+						object, err = retrieveObjectById(vcdClient, cachedId.fieldValue)
 						if err != nil {
 							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
