@@ -309,7 +309,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 
 	// We need to create metadata inside the input `retrieveObjectById` function, which uses the Go SDK.
 	// If this SDK used the same client as the Provider, it would have the same metadata filter, hence
-	// it would fail adding it. That's why we disable the cache: To have separated clients. This way, the client used
+	// it would fail creating it. That's why we disable the cache: To have separated clients. This way, the client used
 	// by the `retrieveObjectById` function won't have any metadata filter.
 	backupEnableConnectionCache := enableConnectionCache
 	enableConnectionCache = false
@@ -440,7 +440,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_name": t.Name(),
 				"value_regex": "bar",
 			},
-		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
+		}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object name and key that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
