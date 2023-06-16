@@ -231,7 +231,7 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 		return err
 	}
 
-	// Set deprecated metadata attribute, just for compatibility reasons.
+	// Set deprecated metadata attribute, just for compatibility reasons
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
 		return err
@@ -242,10 +242,10 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
+	// A consequence of having metadata_entry computed is that to remove the entries one needs to write `metadata_entry {}`.
+	// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
+	// set an empty Set as attribute in state, which would taint it and ask for an update all the time.
 	if len(metadataFromVcd) == 0 {
-		// A consequence of having metadata_entry computed is that to remove the entries one needs to write `metadata_entry {}`.
-		// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
-		// set an empty Set as attribute in state, which would taint it and ask for an update all the time.
 		return nil
 	}
 

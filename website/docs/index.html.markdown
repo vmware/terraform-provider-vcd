@@ -400,7 +400,7 @@ The available sub-attributes for `ignore_metadata` are:
 * `value_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block.
 
 Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
-that belong to the specific Organization named "client1" AND which keys match `client[0-9]`:
+that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
 
 ```hcl
 ignore_metadata {

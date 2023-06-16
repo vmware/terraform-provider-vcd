@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"regexp"
 	"strconv"
 	"strings"
@@ -216,9 +215,6 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				),
 			},
 			{
-				PreConfig: func() {
-					util.Logger.Printf("a")
-				},
 				Config: deleteWithSystemHcl,
 				SkipFunc: func() (bool, error) {
 					return !usingSysAdmin(), nil
@@ -309,7 +305,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		cachedVCDClients.reset()
 	}()
 
-	testFunc := func(ignoredMetadata []map[string]string, expectedMetadata, expectedMetadataInVcd int) {
+	testFunc := func(ignoredMetadata []map[string]string, expectedMetadataInVcd int) {
 		var object metadataCompatible
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -364,7 +360,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 							}
 							return nil
 						},
-						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", fmt.Sprintf("%d", expectedMetadata)),
+						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
 						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					),
 				},
@@ -372,7 +368,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				{
 					Config: step3,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", fmt.Sprintf("%d", expectedMetadata)),
+						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "1"),
 						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
@@ -389,7 +385,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_type": objectType,
 				"key_regex":   "foo",
 			},
-		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object type and specific value", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -397,7 +393,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_type": objectType,
 				"value_regex": "bar",
 			},
-		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+		}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object type and key that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -405,7 +401,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_type": objectType,
 				"key_regex":   "notmatch",
 			},
-		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by object type and value that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -413,7 +409,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_type": objectType,
 				"value_regex": "notmatch",
 			},
-		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+		}, 1) // We expect 1 because 'foo' 'has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by object name and specific key", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -421,7 +417,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_name": t.Name(),
 				"key_regex":   "foo",
 			},
-		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object name and specific value", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -429,7 +425,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_name": t.Name(),
 				"value_regex": "bar",
 			},
-		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object name and key that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -437,7 +433,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_name": t.Name(),
 				"key_regex":   "notmatch",
 			},
-		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by object name and value that doesn't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -445,7 +441,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"object_name": t.Name(),
 				"value_regex": "notmatch",
 			},
-		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by key and value that match", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -453,7 +449,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"key_regex":   "foo",
 				"value_regex": "bar",
 			},
-		}, 1, 2) // We expect 1 in Terraform but foo is in VCD, so it has 2
+		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by key and value that don't match", func(_ *testing.T) {
 		testFunc([]map[string]string{
@@ -461,7 +457,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				"key_regex":   "foo",
 				"value_regex": "barz",
 			},
-		}, 1, 1) // We expect 1 because foo has been deleted by Terraform as it was not ignored
+		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 
 	postTestChecks(t)
