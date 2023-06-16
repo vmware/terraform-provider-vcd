@@ -337,7 +337,6 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				},
 				// In this step, an external actor (simulated in PreConfig by using the Go SDK) adds a metadata entry to the resource.
 				// The provider is configured to ignore it.
-				// Note: This entry is always added as the client cache is deactivated.
 				{
 					PreConfig: func() {
 						// We need to create metadata now with the SDK. If the calls below used the same client as the Provider,
