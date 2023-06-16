@@ -126,7 +126,7 @@ func resourceVcdIpSpace() *schema.Resource {
 			"ip_prefix": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "One or more IP prefixes withing internal scope",
+				Description: "One or more IP prefixes within internal scope",
 				Elem:        ipPrefixes,
 			},
 			"external_scope": {
@@ -300,7 +300,7 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 	}
 	// EOF IP Ranges
 
-	// IP Prefixes
+	// IP Prefixes (`ip_prefix` blocks)
 	ipPrefixes := d.Get("ip_prefix").(*schema.Set)
 	ipPrefixesSlice := ipPrefixes.List()
 
@@ -318,17 +318,15 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 			DefaultQuotaForPrefixLength: ipPrefixQuotaInt,
 		}
 
-		// Extract IP prefixes
-		// 'prefix'
-		ipPrefixPrefix := ipPrefixMap["prefix"].(*schema.Set)
-		ipPrefixPrefixSlice := ipPrefixPrefix.List()
-		if len(ipPrefixPrefixSlice) > 0 {
+		// Nested prefix definitions within IP Prefixes structure (`ip_prefix.X.prefix` blocks)
+		nestedPrefixSet := ipPrefixMap["prefix"].(*schema.Set)
+		nestedPrefixSlice := nestedPrefixSet.List()
+		if len(nestedPrefixSlice) > 0 {
 			ipSpacePrefixType.IPPrefixSequence = []types.IPPrefixSequence{}
 		}
 
-		for ipPrefixPrefixIndex := range ipPrefixPrefixSlice {
-
-			ipPrefixMap := convertToStringMap(ipPrefixPrefixSlice[ipPrefixPrefixIndex].(map[string]interface{}))
+		for nestedPrefixSliceIndex := range nestedPrefixSlice {
+			ipPrefixMap := convertToStringMap(nestedPrefixSlice[nestedPrefixSliceIndex].(map[string]interface{}))
 			prefixLengthInt, _ := strconv.Atoi(ipPrefixMap["prefix_length"])
 			prefixLengthCountInt, _ := strconv.Atoi(ipPrefixMap["prefix_count"])
 
@@ -338,15 +336,15 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 				TotalPrefixCount:        prefixLengthCountInt,
 			})
 		}
-		// EOF // Extract IP prefixess
+		// EOF Nested prefix definitions within IP Prefixes structure (`ip_prefix.X.prefix` blocks)
 
-		// Add to the list
+		// Add each IP Prefix to the list
 		ipSpace.IPSpacePrefixes = append(ipSpace.IPSpacePrefixes, ipSpacePrefixType)
 
 	}
-	// EOF IP Prefixes
+	// EOF IP Prefixes (`ip_prefix` blocks)
 
-	// only when `org_id` is set
+	// only when `org_id` is set (IP Space is Private)
 	orgId := d.Get("org_id").(string)
 	if orgId != "" {
 		ipSpace.OrgRef = &types.OpenApiReference{ID: orgId}

@@ -16,7 +16,7 @@ overlapping IP addresses across organizations and organization VDCs.
 
 IP Spaces require VCD 10.4.1+ with NSX-T.
 
-## Example Usage (Private)
+## Example Usage (Private IP Space)
 
 ```hcl
 resource "vcd_ip_space" "space1" {
@@ -67,7 +67,7 @@ resource "vcd_ip_space" "space1" {
 }
 ```
 
-## Example Usage (Public)
+## Example Usage (Public IP Space)
 
 ```hcl
 resource "vcd_ip_space" "space1" {
@@ -105,7 +105,7 @@ resource "vcd_ip_space" "space1" {
 }
 ```
 
-## Example Usage (Shared)
+## Example Usage (Shared IP Space)
 
 ```hcl
 resource "vcd_ip_space" "space1" {
