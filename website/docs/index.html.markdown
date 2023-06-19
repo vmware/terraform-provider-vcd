@@ -433,7 +433,7 @@ ignore_metadata {
 }
 ```
 
-Note that this argument also affects metadata on [filtering](/providers/vmware/vcd/latest/docs/guides/data_source_filters).
+Note that this argument **does not affect metadata on [filtering](/providers/vmware/vcd/latest/docs/guides/data_source_filters)**.
 
 ## Connection Cache (*2.0+*)
 
