@@ -33,8 +33,12 @@ func TestAccServiceAccount_SysOrg(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccServiceAccount_SysOrg_Active, params)
+	configText2 := templateFill(testAccServiceAccount_SysOrgDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccServiceAccount_SysOrg_Active, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -59,6 +63,10 @@ func TestAccServiceAccount_SysOrg(t *testing.T) {
 			},
 			{
 				Config: configText2,
+				Check:  resourceFieldsEqual("data.vcd_service_account.sysadmin_ds", resourceName, []string{"file_name", "allow_token_file", "%"}),
+			},
+			{
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "software_id", params["SoftwareIdUpdated"].(string)),
@@ -67,6 +75,13 @@ func TestAccServiceAccount_SysOrg(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "active", "true"),
 					testCheckFileExists(params["FileName"].(string)),
 				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgObject(params["Org"].(string), params["SaName"].(string)),
+				ImportStateVerifyIgnore: []string{"org", "file_name", "allow_token_file"},
 			},
 		},
 	})
@@ -92,6 +107,15 @@ resource "vcd_service_account" "sysadmin" {
   active = false
 }
 `
+
+const testAccServiceAccount_SysOrgDS = testAccServiceAccount_SysOrg + `
+# skip-binary-test: datasource test will fail when run together with resource
+data "vcd_service_account" "sysadmin_ds" {
+  name = "{{.SaName}}"
+  org  = "{{.Org}}"		
+}		
+`
+
 const testAccServiceAccount_SysOrg_Active = testAccServiceAccount_SysOrg_Role + `
 resource "vcd_service_account" "sysadmin" {
   name = "{{.SaName}}"
@@ -159,9 +183,7 @@ func TestAccServiceAccount_Org(t *testing.T) {
 			},
 			{
 				Config: configText2,
-				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("data.vcd_service_account.org_user_ds", resourceName, []string{"file_name", "allow_token_file", "%"}),
-				),
+				Check:  resourceFieldsEqual("data.vcd_service_account.org_user_ds", resourceName, []string{"file_name", "allow_token_file", "%"}),
 			},
 			{
 				Config: configText3,
@@ -213,6 +235,7 @@ resource "vcd_service_account" "org_user" {
 `
 
 const testAccServiceAccount_OrgDS = testAccServiceAccount_Org + `
+# skip-binary-test: datasource test will fail when run together with resource
 data "vcd_service_account" "org_user_ds" {
   org  = "{{.Org}}"
   name = "{{.SaName}}"		
