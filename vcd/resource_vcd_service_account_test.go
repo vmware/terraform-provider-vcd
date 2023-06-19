@@ -174,6 +174,13 @@ func TestAccServiceAccount_Org(t *testing.T) {
 					testCheckFileExists(params["FileName"].(string)),
 				),
 			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgObject(params["Org"].(string), params["SaName"].(string)),
+				ImportStateVerifyIgnore: []string{"org"},
+			},
 		},
 	})
 }
