@@ -121,6 +121,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_rate_limiting":            datasourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 datasourceVcdNsxtDhcpBinding(),                  // 3.9
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          datasourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
+	"vcd_org_saml":                                  datasourceVcdOrgSaml(),                          // 3.10
+	"vcd_org_saml_metadata":                         datasourceVcdOrgSamlMetadata(),                  // 3.10
 	"vcd_service_account":                           datasourceVcdServiceAccount(),                   // 3.10
 }
 
@@ -207,6 +209,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 resourceVcdNsxtDhcpBinding(),                  // 3.9
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
+	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
 	"vcd_api_token":                                 resourceVcdApiToken(),                         // 3.10
 	"vcd_service_account":                           resourceVcdServiceAccount(),                   // 3.10
 }
