@@ -404,32 +404,40 @@ Note that these attributes **are evaluated as a logical `and`**. This means that
 that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
 
 ```hcl
-ignore_metadata {
-  object_type = "org"
-  object_name = "client1"
-  key_regex   = "[Ee]nvironment"
+provider "vcd" {
+  # ...
+  ignore_metadata {
+    object_type = "org"
+    object_name = "client1"
+    key_regex   = "[Ee]nvironment"
+  }
 }
+
 ```
 
 You can have more than one block, to ignore more entries of your choice:
 
 ```hcl
-# Filters all metadata with key "Environment" or "environment" in all VCD objects with any name.
-ignore_metadata {
-  key_regex   = "^[Ee]nvironment$"
-}
+provider "vcd" {
+  # ...
 
-# Filters all metadata with key "NiceMetadataKey" in all VCD objects named "SpecificName".
-ignore_metadata {
-  object_name = "SpecificName"
-  key_regex   = "^NiceMetadataKey$"
-}
+  # Filters all metadata with key "Environment" or "environment" in all VCD objects with any name.
+  ignore_metadata {
+    key_regex = "^[Ee]nvironment$"
+  }
 
-# Filters all metadata with values "Yes" in the Organization named "Tatooine".
-ignore_metadata {
-  object_type = "org"
-  object_name = "Tatooine"
-  value_regex = "^Yes$"
+  # Filters all metadata with key "NiceMetadataKey" in all VCD objects named "SpecificName".
+  ignore_metadata {
+    object_name = "SpecificName"
+    key_regex   = "^NiceMetadataKey$"
+  }
+
+  # Filters all metadata with values "Yes" in the Organization named "Tatooine".
+  ignore_metadata {
+    object_type = "org"
+    object_name = "Tatooine"
+    value_regex = "^Yes$"
+  }
 }
 ```
 
