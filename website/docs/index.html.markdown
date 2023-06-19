@@ -398,7 +398,7 @@ The available sub-attributes for `ignore_metadata` are:
 * `object_name`- (Optional) Specifies the name of the object which metadata needs to be ignored. All object types are supported, except for
   `vdcStorageProfile` which **cannot be filtered by name**.
 * `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
-* `value_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block.
+* `value_regex`- (Optional) A regular expression that can filter out metadata values that match. Either `key_regex` or `value_regex` are required on each block.
 
 Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
 that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
