@@ -12,6 +12,8 @@ Supported in provider *v3.10+*.
 
 Provides a data source to read SAML configuration for an organization.
 
+-> **Note:** This data source requires system administrator privileges.
+
 ## Example Usage
 
 ```hcl
