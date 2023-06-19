@@ -392,8 +392,9 @@ in the state.
 The available sub-attributes for `ignore_metadata` are:
 
 * `object_type` - (Optional) Specifies the type of the object which metadata needs to be ignored. The object types must be declared
-  as defined in the [VCD API documentation](https://developer.vmware.com/apis/1601/vmware-cloud-director). For example,
-  `catalog`, `media`, `disk`, `org`, `catalogItem`, `vAppTemplate`, `vdc`, `network`, `vdcStorageProfile` etc.
+  as defined in the metadata endpoints of the [VCD API documentation](https://developer.vmware.com/apis/1601/vmware-cloud-director). For example,
+  `catalog`, `media`, `disk`, `org`, `catalogItem`, `vAppTemplate`, `vdc`, `network`, `vdcStorageProfile`, `vApp` (note this one is used
+  for both vApps and VMs), etc.
 * `object_name`- (Optional) Specifies the name of the object which metadata needs to be ignored. All object types are supported, except for
   `vdcStorageProfile` which **cannot be filtered by name**.
 * `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
