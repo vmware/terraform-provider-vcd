@@ -114,7 +114,6 @@ func TestAccServiceAccount_Org(t *testing.T) {
 	params := StringMap{
 		"SaName":                 t.Name(),
 		"Org":                    testConfig.VCD.Org,
-		"RoleName":               "System Administrator",
 		"SoftwareId":             "12345678-1234-1234-1234-1234567890ab",
 		"SoftwareVersion":        "1.0.0",
 		"Uri":                    "example.com",
@@ -130,8 +129,12 @@ func TestAccServiceAccount_Org(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccServiceAccount_Org_Active, params)
+	configText2 := templateFill(testAccServiceAccount_OrgDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccServiceAccount_Org_Active, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -156,6 +159,12 @@ func TestAccServiceAccount_Org(t *testing.T) {
 			},
 			{
 				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("data.vcd_service_account.org_user_ds", resourceName, []string{"file_name", "allow_token_file", "%"}),
+				),
+			},
+			{
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "software_id", params["SoftwareIdUpdated"].(string)),
@@ -193,7 +202,16 @@ resource "vcd_service_account" "org_user" {
 
   active = false
 }
+
 `
+
+const testAccServiceAccount_OrgDS = testAccServiceAccount_Org + `
+data "vcd_service_account" "org_user_ds" {
+  org  = "{{.Org}}"
+  name = "{{.SaName}}"		
+}		
+`
+
 const testAccServiceAccount_Org_Active = testAccServiceAccount_Org_Roles + `
 resource "vcd_service_account" "org_user" {
   name = "{{.SaName}}"
