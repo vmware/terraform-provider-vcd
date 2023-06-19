@@ -220,7 +220,7 @@ func getIpSet(d *schema.ResourceData, vdc *govcd.Vdc) (*types.EdgeIpSet, error) 
 	ipSet := &types.EdgeIpSet{
 		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
-		InheritanceAllowed: takeBoolPointer(d.Get("is_inheritance_allowed").(bool)),
+		InheritanceAllowed: addrOf(d.Get("is_inheritance_allowed").(bool)),
 	}
 
 	ipAddressesSlice := convertSchemaSetToSliceOfStrings(d.Get("ip_addresses").(*schema.Set))

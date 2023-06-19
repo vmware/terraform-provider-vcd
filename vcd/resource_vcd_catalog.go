@@ -221,9 +221,9 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
 	err := adminCatalog.PublishToExternalOrganizations(types.PublishExternalCatalogParams{
-		IsPublishedExternally:    takeBoolPointer(d.Get("publish_enabled").(bool)),
-		IsCachedEnabled:          takeBoolPointer(d.Get("cache_enabled").(bool)),
-		PreserveIdentityInfoFlag: takeBoolPointer(d.Get("preserve_identity_information").(bool)),
+		IsPublishedExternally:    addrOf(d.Get("publish_enabled").(bool)),
+		IsCachedEnabled:          addrOf(d.Get("cache_enabled").(bool)),
+		PreserveIdentityInfoFlag: addrOf(d.Get("preserve_identity_information").(bool)),
 		Password:                 d.Get("password").(string),
 	})
 	if err != nil {

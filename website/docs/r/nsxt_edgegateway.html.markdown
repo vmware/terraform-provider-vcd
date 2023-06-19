@@ -251,7 +251,7 @@ The following arguments are supported:
 * `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note:** Data sources
   [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) or
   [vcd_org_vdc](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) can be used to lookup IDs by
-  name
+  name.
 
 ~> Only one of `vdc` or `owner_id` can be specified. `owner_id` takes precedence over `vdc`
 definition at provider level.

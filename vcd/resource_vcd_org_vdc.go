@@ -682,7 +682,7 @@ func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc,
 		Units:        "MB", // only this value is supported
 		Limit:        int64(storageConfiguration["limit"].(int)),
 		Default:      storageConfiguration["default"].(bool),
-		Enabled:      takeBoolPointer(storageConfiguration["enabled"].(bool)),
+		Enabled:      addrOf(storageConfiguration["enabled"].(bool)),
 		ProviderVdcStorageProfile: &types.Reference{
 			HREF: vdcStorageProfileDetails.ProviderVdcStorageProfile.HREF,
 		},
@@ -797,7 +797,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc *govcd.A
 			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile '%s' from provider VDC '%s': %s", spCombo.configuration["name"].(string), providerVdcName, err)
 		}
 		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
-			Enabled: takeBoolPointer(spCombo.configuration["enabled"].(bool)),
+			Enabled: addrOf(spCombo.configuration["enabled"].(bool)),
 			Units:   "MB",
 			Limit:   int64(spCombo.configuration["limit"].(int)),
 			Default: spCombo.configuration["default"].(bool),
@@ -1192,11 +1192,11 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("elasticity") {
-		vdc.AdminVdc.IsElastic = takeBoolPointer(d.Get("elasticity").(bool))
+		vdc.AdminVdc.IsElastic = addrOf(d.Get("elasticity").(bool))
 	}
 
 	if d.HasChange("include_vm_memory_overhead") {
-		vdc.AdminVdc.IncludeMemoryOverhead = takeBoolPointer(d.Get("include_vm_memory_overhead").(bool))
+		vdc.AdminVdc.IncludeMemoryOverhead = addrOf(d.Get("include_vm_memory_overhead").(bool))
 	}
 
 	//cleanup
@@ -1265,7 +1265,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),
-			Enabled: takeBoolPointer(storageConfiguration["enabled"].(bool)),
+			Enabled: addrOf(storageConfiguration["enabled"].(bool)),
 			ProviderVdcStorageProfile: &types.Reference{
 				HREF: sp.HREF,
 			},

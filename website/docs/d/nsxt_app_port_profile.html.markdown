@@ -46,7 +46,14 @@ data "vcd_nsxt_app_port_profile" "custom" {
 ## Example Usage 3 (Find a System defined Application Port Profile)
 
 ```hcl
+data "vcd_org_vdc" "vdc1" {
+  org  = "myOrg"
+  name = "myVDC"
+}
+
 data "vcd_nsxt_app_port_profile" "custom" {
+  context_id = data.vcd_org_vdc.vdc1.id
+
   scope = "SYSTEM"
   name  = "SSH"
 }
@@ -60,7 +67,7 @@ The following arguments are supported:
   when connected as sysadmin working across different organisations.
 * `vdc` - (Deprecated; Optional) The name of VDC to use, optional if defined at provider level.
   Deprecated and replaced by `context_id`
-* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated field `vdc`.
+* `context_id` - (Optional) ID of NSX-T Manager, VDC or VDC Group. Replaces deprecated field `vdc`. Required if using more than one NSX-T Manager.
 * `name` - (Required)  - Unique name of existing Security Group.
 * `scope` - (Required)  - `SYSTEM`, `PROVIDER`, or `TENANT`.
 

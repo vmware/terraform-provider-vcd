@@ -418,8 +418,8 @@ func attachBackVms(vcdClient *VCDClient, disk *govcd.Disk, diskDetailsForReAttac
 			return diag.Errorf("error resourceVcdIndependentDiskUpdate error fetching attached VM: %s", err)
 		}
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF},
-			BusNumber:  takeIntPointer(diskDetailsForReAttach[vmHref].BusNumber),
-			UnitNumber: takeIntPointer(diskDetailsForReAttach[vmHref].UnitNumber)}
+			BusNumber:  addrOf(diskDetailsForReAttach[vmHref].BusNumber),
+			UnitNumber: addrOf(diskDetailsForReAttach[vmHref].UnitNumber)}
 
 		task, err := vm.AttachDisk(attachParams)
 		if err != nil {

@@ -827,7 +827,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 			},
 		},
 		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{{
-			Enabled: takeBoolPointer(true),
+			Enabled: addrOf(true),
 			Units:   "MB",
 			Limit:   1024,
 			Default: true,
@@ -845,8 +845,8 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 		IsEnabled:             true,
 		IsThinProvision:       true,
 		UsesFastProvisioning:  true,
-		IsElastic:             takeBoolPointer(true),
-		IncludeMemoryOverhead: takeBoolPointer(true),
+		IsElastic:             addrOf(true),
+		IncludeMemoryOverhead: addrOf(true),
 	}
 
 	vdc, err := newAdminOrg.CreateOrgVdc(vdcConfiguration)

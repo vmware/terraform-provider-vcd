@@ -338,7 +338,7 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 		OwnerRef:    &types.OpenApiReference{ID: ownerId},
 
 		NetworkType: types.OrgVdcNetworkTypeIsolated,
-		Shared:      takeBoolPointer(d.Get("is_shared").(bool)),
+		Shared:      addrOf(d.Get("is_shared").(bool)),
 
 		Subnets: types.OrgVdcNetworkSubnets{
 			Values: []types.OrgVdcNetworkSubnetValues{

@@ -88,7 +88,7 @@ func resourceVappOrgNetworkCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
+		RetainIpMacEnabled: addrOf(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(d.Get("org_network_name").(string), true)
@@ -212,7 +212,7 @@ func resourceVappOrgNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		ID:                 d.Id(),
-		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
+		RetainIpMacEnabled: addrOf(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	_, err = vapp.UpdateOrgNetwork(vappNetworkSettings, d.Get("is_fenced").(bool))

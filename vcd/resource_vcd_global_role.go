@@ -77,7 +77,7 @@ func resourceGlobalRoleCreate(ctx context.Context, d *schema.ResourceData, meta 
 		Name:        globalRoleName,
 		Description: d.Get("description").(string),
 		BundleKey:   types.VcloudUndefinedKey,
-		PublishAll:  takeBoolPointer(publishToAllTenants),
+		PublishAll:  &publishToAllTenants,
 	})
 	if err != nil {
 		return diag.Errorf("[global role create] error creating role %s: %s", globalRoleName, err)
@@ -209,7 +209,7 @@ func resourceGlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	if d.HasChange("name") || d.HasChange("description") || d.HasChange("publish_to_all_tenants") {
 		globalRole.GlobalRole.Name = globalRoleName
 		globalRole.GlobalRole.Description = d.Get("description").(string)
-		globalRole.GlobalRole.PublishAll = takeBoolPointer(publishToAllTenants)
+		globalRole.GlobalRole.PublishAll = &publishToAllTenants
 		_, err = globalRole.Update()
 		if err != nil {
 			return diag.Errorf("[global role update] error updating global role %s: %s", globalRoleName, err)
