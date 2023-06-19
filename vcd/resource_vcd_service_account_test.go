@@ -179,7 +179,7 @@ func TestAccServiceAccount_Org(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgObject(params["Org"].(string), params["SaName"].(string)),
-				ImportStateVerifyIgnore: []string{"org"},
+				ImportStateVerifyIgnore: []string{"org", "file_name", "allow_token_file"},
 			},
 		},
 	})
