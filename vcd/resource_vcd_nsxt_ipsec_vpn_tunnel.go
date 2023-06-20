@@ -330,30 +330,24 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 
 	_, isSet := d.GetOk("security_profile_customization")
 
+	// If unset, it will set it back to default, so before updating the VPN config, we need to check if the `security_profile_customization`
+	// field is defined in the configuration
 	if isSet {
 		ipSecVpnConfig.SecurityType = "CUSTOM"
 	} else {
 		ipSecVpnConfig.SecurityType = "DEFAULT"
 	}
 
-	// Security Profile Customization settings work on two different endpoints:
-	// * To set a custom security profile - there is a separate endpoint where all security profile settings can be
-	// set. After setting them, parent IPsec VPN Tunnel `SecurityType` becomes "CUSTOM".
-	// * To remove customization and switch back to NSX-T Default parameters the parent IPsec VPN Tunnel must be updated
-	// and its field 'SecurityType' must be set to 'DEFAULT'
-	// At first update IPsec VPN tunnel configuration
-	// It will reset Security Profile to DEFAULT at the same shot if no customization exists in 'security_profile_customization'
 	updatedIpSecVpnConfiguration, err := existingIpSecVpnConfiguration.Update(ipSecVpnConfig)
 	if err != nil {
 		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel configuration '%s': %s", ipSecVpnConfig.Name, err)
 	}
 
-	// If Security Profile has change and it is being customized
+	// Get current Security Tunnel profile, if it's "DEFAULT" in VCD, returns nil
 	ipSecTunnelProfileConfig := getNsxtIpSecVpnProfileTunnelConfigurationType(d)
 
 	// To set IPsec VPN Tunnel Connection Profile - it must be updated (HTTP PUT) with all the options configured
 	if ipSecTunnelProfileConfig != nil {
-
 		_, err = updatedIpSecVpnConfiguration.UpdateTunnelConnectionProperties(ipSecTunnelProfileConfig)
 		if err != nil {
 			return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel Security Profile: %s", err)
