@@ -128,28 +128,45 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
 	if d.HasChange("tenant_ids") {
-		orgsToPublish := d.Get("tenant_ids").(*schema.Set).List()
+		// We get all the Organizations instead of one by one, as there could be thousands.
 		existingOrgs, err := vcdClient.GetOrgList()
 		if err != nil {
-			return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToPublish, err)
+			return fmt.Errorf("UI Plugin '%s' update failed, could not retrieve all the Organizations: %s", uiPlugin.UIPluginMetadata.ID, err)
 		}
-		var orgsToPubRefs types.OpenApiReferences
-		for _, org := range existingOrgs.Org {
-			for _, orgId := range orgsToPublish {
-				// We do this as org.ID is empty, so we need to reconstruct the URN with the HREF
-				uuid := extractUuid(orgId.(string))
-				if strings.Contains(org.HREF, uuid) {
-					orgsToPubRefs = append(orgsToPubRefs, types.OpenApiReference{ID: "urn:cloud:org:" + uuid, Name: org.Name})
+		oldRaw, newRaw := d.GetChange("tenant_ids")
+
+		// Retrieve the Organization IDs that need to be unpublished
+		newOrgIds := oldRaw.(*schema.Set)
+		var orgIdsToUnpublish []interface{}
+		for _, oldOrgId := range newRaw.(*schema.Set).List() {
+			if !newOrgIds.Contains(oldOrgId) {
+				orgIdsToUnpublish = append(orgIdsToUnpublish, oldOrgId)
+			}
+		}
+
+		getOrgReferences := func(orgIds []interface{}, allOrgs *types.OrgList) types.OpenApiReferences {
+			var orgRefs types.OpenApiReferences
+			for _, org := range allOrgs.Org {
+				for _, orgId := range orgIds {
+					// We do this as org.ID is empty, so we need to reconstruct the URN with the HREF
+					uuid := extractUuid(orgId.(string))
+					if strings.Contains(org.HREF, uuid) {
+						orgRefs = append(orgRefs, types.OpenApiReference{ID: "urn:cloud:org:" + uuid, Name: org.Name})
+					}
 				}
 			}
+			return orgRefs
 		}
+
 		if operation == "update" {
-			err = uiPlugin.UnpublishAll() // We need to clean up the already-published Orgs to put the new ones during an Update.
+			orgsToUnpublish := getOrgReferences(orgIdsToUnpublish, existingOrgs)
+			err = uiPlugin.Unpublish(orgsToUnpublish)
 			if err != nil {
-				return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToPublish, err)
+				return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToUnpublish, err)
 			}
 		}
-		err = uiPlugin.Publish(orgsToPubRefs)
+		orgsToPublish := getOrgReferences(newOrgIds.List(), existingOrgs)
+		err = uiPlugin.Publish(orgsToPublish)
 		if err != nil {
 			return fmt.Errorf("could not publish the UI Plugin %s to Organizations '%v': %s", uiPlugin.UIPluginMetadata.ID, orgsToPublish, err)
 		}

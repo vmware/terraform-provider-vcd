@@ -309,11 +309,12 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		return fmt.Errorf("error retrieving UI Plugins: %s", err)
 	}
 	for _, uiPlugin := range uiPlugins {
+		// This will delete all UI Plugins that match the `isTest` regex.
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, uiPlugin.UIPluginMetadata.PluginName, "vcd_ui_plugin", 1, verbose)
 		if toBeDeleted {
 			err = deleteUIPlugin(uiPlugin)
 			if err != nil {
-				return fmt.Errorf("error deleting UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+				return err
 			}
 		}
 	}
