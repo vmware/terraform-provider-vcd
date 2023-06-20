@@ -3,14 +3,24 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdIpSpacePublic(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -51,10 +61,10 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // minimal
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -65,7 +75,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2, // minimal
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
@@ -75,7 +85,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3, // minimal
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -88,7 +98,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText4, // minimal
+				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -101,7 +111,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5, // minimal
+				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -172,28 +182,28 @@ resource "vcd_ip_space" "space1" {
   description = "added description"
   type        = "PUBLIC"
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	default_quota = 2
+    default_quota = 2
 
-	prefix {
-		first_ip = "192.168.1.100"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	default_quota = -1
+    default_quota = -1
 
-	prefix {
-		first_ip = "10.10.10.96"
-		prefix_length = 29
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 }
 `
@@ -204,46 +214,47 @@ resource "vcd_ip_space" "space1" {
   description = "added description"
   type        = "PUBLIC"
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	default_quota = 2
+    default_quota = 2
 
-	prefix {
-		first_ip = "192.168.1.100"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
 
-	prefix {
-		first_ip = "192.168.1.200"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.200"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	default_quota = -1
+    default_quota = -1
 
-	prefix {
-		first_ip = "10.10.10.96"
-		prefix_length = 29
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 
   ip_range {
-	start_address = "11.11.11.100"
-	end_address   = "11.11.11.110"
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
   }
 
   ip_range {
-	start_address = "11.11.11.120"
-	end_address   = "11.11.11.123"
+    start_address = "11.11.11.120"
+    end_address   = "11.11.11.123"
   }
 }
+
 `
 
 const testAccVcdIpSpacePublicStep5DS = testAccVcdIpSpacePublicStep5 + `
@@ -255,6 +266,14 @@ data "vcd_ip_space" "space1" {
 func TestAccVcdIpSpaceShared(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -295,10 +314,10 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // minimal
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -309,7 +328,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2, // minimal
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
@@ -319,7 +338,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3, // minimal
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -332,7 +351,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText4, // minimal
+				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -345,7 +364,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5, // minimal
+				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -416,28 +435,28 @@ resource "vcd_ip_space" "space1" {
   description = "added description"
   type        = "SHARED_SERVICES"
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	default_quota = 0 # no quota
+    default_quota = 0 # no quota
 
-	prefix {
-		first_ip = "192.168.1.100"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	default_quota = 0 # no quota
+    default_quota = 0 # no quota
 
-	prefix {
-		first_ip = "10.10.10.96"
-		prefix_length = 29
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 }
 `
@@ -448,44 +467,44 @@ resource "vcd_ip_space" "space1" {
   description = "added description"
   type        = "SHARED_SERVICES"
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	 default_quota = 0 # no quota
+    default_quota = 0 # no quota
 
-	prefix {
-		first_ip = "192.168.1.100"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
 
-	prefix {
-		first_ip = "192.168.1.200"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.200"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	default_quota = 0 # no quota
+    default_quota = 0 # no quota
 
-	prefix {
-		first_ip = "10.10.10.96"
-		prefix_length = 29
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 
   ip_range {
-	start_address = "11.11.11.100"
-	end_address   = "11.11.11.110"
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
   }
 
   ip_range {
-	start_address = "11.11.11.120"
-	end_address   = "11.11.11.123"
+    start_address = "11.11.11.120"
+    end_address   = "11.11.11.123"
   }
 }
 `
@@ -498,7 +517,14 @@ data "vcd_ip_space" "space1" {
 
 func TestAccVcdIpSpacePrivate(t *testing.T) {
 	preTestChecks(t)
-	// skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -540,10 +566,10 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // minimal
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -554,7 +580,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2, // minimal
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
@@ -564,7 +590,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3, // minimal
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -577,7 +603,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText4, // minimal
+				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -590,7 +616,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5, // minimal
+				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -671,28 +697,28 @@ resource "vcd_ip_space" "space1" {
   type        = "PRIVATE"
   org_id      = data.vcd_org.org1.id
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	default_quota = -1 # unlimited
+    default_quota = -1 # unlimited
 
-	prefix {
-		first_ip = "192.168.1.100"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	default_quota = -1 # unlimited
+    default_quota = -1 # unlimited
 
-	prefix {
-		first_ip = "10.10.10.96"
-		prefix_length = 29
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 }
 `
@@ -704,44 +730,44 @@ resource "vcd_ip_space" "space1" {
   type        = "PRIVATE"
   org_id      = data.vcd_org.org1.id
 
-  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
 
   route_advertisement_enabled = false
 
   ip_prefix {
-	 default_quota = -1 # unlimited
+    default_quota = -1 # unlimited
 
-	prefix {
-		first_ip = "192.168.1.100"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
 
-	prefix {
-		first_ip = "192.168.1.200"
-		prefix_length = 30
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "192.168.1.200"
+      prefix_length = 30
+      prefix_count  = 4
+    }
   }
 
   ip_prefix {
-	default_quota = -1 # unlimited
+    default_quota = -1 # unlimited
 
-	prefix {
-		first_ip = "10.10.10.96"
-		prefix_length = 29
-		prefix_count = 4
-	}
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
   }
 
   ip_range {
-	start_address = "11.11.11.100"
-	end_address   = "11.11.11.110"
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
   }
 
   ip_range {
-	start_address = "11.11.11.120"
-	end_address   = "11.11.11.123"
+    start_address = "11.11.11.120"
+    end_address   = "11.11.11.123"
   }
 }
 `
@@ -752,3 +778,25 @@ data "vcd_ip_space" "space1" {
   name   = "{{.TestName}}"
 }
 `
+
+func testAccCheckVcdNsxtIpSpacesDestroy(ipSpaceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			ipSpaceResourceName := rs.Primary.Attributes["name"]
+			if rs.Type != "vcd_ip_space" {
+				continue
+			}
+			if ipSpaceResourceName != ipSpaceName {
+				continue
+			}
+			conn := testAccProvider.Meta().(*VCDClient)
+			_, err := conn.GetIpSpaceByName(ipSpaceResourceName)
+			if err == nil {
+				return fmt.Errorf("IP Space %s was not removed", ipSpaceName)
+			}
+
+		}
+
+		return nil
+	}
+}

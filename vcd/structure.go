@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -307,4 +308,14 @@ func stringOnNotNil(p *string) string {
 		return ""
 	}
 	return *p
+}
+
+// Checks if a file exists
+func fileExists(filename string) bool {
+	f, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	fileMode := f.Mode()
+	return fileMode.IsRegular()
 }

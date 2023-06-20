@@ -98,7 +98,7 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["NetworkName"].(string)),
-				ImportStateVerifyIgnore: []string{"vdc"},
+				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
 			{
 				Config:   configText3,
@@ -205,16 +205,19 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 }
 
 const testAccRoutedNetDhcpConfig = `
+data "vcd_org_vdc" "{{.NsxtVdc}}" {
+  name = "{{.NsxtVdc}}"		
+}
+	
 data "vcd_nsxt_edgegateway" "existing" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.EdgeGw}}"
+  org      = "{{.Org}}"
+  owner_id = data.vcd_org_vdc.{{.NsxtVdc}}.id
+  name     = "{{.EdgeGw}}"
 }
 
 resource "vcd_network_routed_v2" "net1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
   name = "{{.NetworkName}}"
+
   description = "NSX-T routed network for DHCP testing"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
@@ -231,9 +234,6 @@ resource "vcd_network_routed_v2" "net1" {
 
 const testAccRoutedNetDhcpStep1 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   
   pool {
@@ -245,9 +245,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep2 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   mode           = "EDGE"
   lease_time     = 4294967295 # maximum allowed lease time in seconds (~49 days)
@@ -266,9 +263,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 const testAccRoutedNetDhcpStep3 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   
   pool {
@@ -285,8 +279,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
-  org  = "{{.Org}}"
-
   # org_network_id = vcd_network_routed_v2.net1.id
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
@@ -298,8 +290,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org = "{{.Org}}"
-
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created
   org_network_id = vcd_nsxt_network_dhcp.pools.id
@@ -321,9 +311,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding2" {
 
 const testAccRoutedNetDhcpStep4 = testAccRoutedNetDhcpConfig + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-
   org_network_id = vcd_network_routed_v2.net1.id
   
   pool {
@@ -340,8 +327,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
-  org  = "{{.Org}}"
-
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
   name         = "{{.TestName}}-dhcp-binding-1"
@@ -352,8 +337,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org  = "{{.Org}}"
-
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created
   org_network_id = vcd_nsxt_network_dhcp.pools.id
@@ -618,7 +601,6 @@ resource "vcd_network_isolated_v2" "net1" {
 
 const testAccRoutedNetDhcpIsolatedStep1 = testAccRoutedNetDhcpIsolated + `
 resource "vcd_nsxt_network_dhcp" "pools" {
-  org  = "{{.Org}}"
   vdc  = vcd_org_vdc.with-edge-cluster.name
 
   org_network_id      = vcd_network_isolated_v2.net1.id
@@ -632,8 +614,6 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
-  org  = "{{.Org}}"
-
   # org_network_id = vcd_network_routed_v2.net1.id
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
@@ -645,8 +625,6 @@ resource "vcd_nsxt_network_dhcp_binding" "binding1" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding2" {
-  org  = "{{.Org}}"
-
   # referencing vcd_nsxt_network_dhcp.pools.id instead of vcd_network_routed_v2.net1.id because
   # DHCP service must be enabled on the network before DHCP bindings can be created
   org_network_id = vcd_nsxt_network_dhcp.pools.id
@@ -780,66 +758,79 @@ data "vcd_nsxt_network_dhcp_binding" "binding2" {
 `
 
 // TestAccVcdOpenApiDhcpNsxtRoutedRelay tests RELAY mode for DHCP.
-// TODO we do not yet have a DHCP Forwarding resource (configured in Edge Gateway) therefore this
-// test was run with DHCP forwarding manually configured. Improve and and uncomment this test when
-// DHCP Forwarding resource is created and can be used here
-// func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
-// 	preTestChecks(t)
+func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
+	preTestChecks(t)
 
-// 	// Requires VCD 10.3.1+
-// 	vcdClient := createTemporaryVCDConnection(true)
-// 	if vcdClient == nil && vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
-// 		t.Skipf("NSX-T Isolated network DHCP requires VCD 10.3.1+ (API v36.1+)")
-// 	}
+	// Requires VCD 10.3.1+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skipf(t.Name() + " requires a connection to set the tests")
+	}
 
-// 	// String map to fill the template
-// 	var params = StringMap{
-// 		"Org":         testConfig.VCD.Org,
-// 		"NsxtVdc":     testConfig.Nsxt.Vdc,
-// 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
-// 		"NetworkName": t.Name(),
-// 		"Tags":        "network nsxt",
-// 	}
-// 	testParamsNotEmpty(t, params)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+		t.Skipf("NSX-T Isolated network DHCP requires VCD 10.3.1+ (API v36.1+)")
+	}
 
-// 	configText1 := templateFill(testAccRoutedNetRelayDhcpStep1, params)
-// 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText1)
+	// String map to fill the template
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"NsxtVdc":     testConfig.Nsxt.Vdc,
+		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
+		"NetworkName": t.Name(),
+		"Tags":        "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
 
-// 	if vcdShortTest {
-// 		t.Skip(acceptanceTestsSkipped)
-// 		return
-// 	}
+	configText1 := templateFill(testAccRoutedNetRelayDhcpStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s\n", configText1)
 
-// 	resource.Test(t, resource.TestCase{
-// 		ProviderFactories: testAccProviders,
-// 		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: configText1,
-// 				Check: resource.ComposeAggregateTestCheckFunc(
-// 					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
-// 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "mode", "RELAY"),
-// 					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "pool.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				ResourceName:            "vcd_nsxt_network_dhcp.pools",
-// 				ImportState:             true,
-// 				ImportStateVerify:       true,
-// 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject("nsxt-routed-dhcp"),
-// 				ImportStateVerifyIgnore: []string{"vdc"},
-// 			},
-// 		},
-// 	})
-// 	postTestChecks(t)
-// }
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
-// const testAccRoutedNetRelayDhcpStep1 = testAccRoutedNetDhcpConfig + `
-// resource "vcd_nsxt_network_dhcp" "pools" {
-//   org  = "{{.Org}}"
-//   vdc  = "{{.NsxtVdc}}"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-dhcp"),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_network_dhcp.pools", "id", regexp.MustCompile(`^urn:vcloud:network:.*$`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "mode", "RELAY"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.pools", "pool.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "enabled", "true"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "1.2.3.4"),
+				),
+			},
+			{
+				ResourceName:            "vcd_nsxt_network_dhcp.pools",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(t.Name()),
+				ImportStateVerifyIgnore: []string{"vdc"},
+			},
+		},
+	})
+	postTestChecks(t)
+}
 
-//   org_network_id = vcd_network_routed_v2.net1.id
-//   mode           = "RELAY"
-// }
-// `
+const testAccRoutedNetRelayDhcpStep1 = testAccRoutedNetDhcpConfig + `
+ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
+   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+   enabled      = true
+   dhcp_servers = [
+     "1.2.3.4", 
+   ]
+ }
+
+ resource "vcd_nsxt_network_dhcp" "pools" {
+   org = "{{.Org}}"
+   vdc = "{{.NsxtVdc}}"
+
+   org_network_id = vcd_network_routed_v2.net1.id
+   mode           = "RELAY"
+   depends_on     = [vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding]
+ }
+
+ `

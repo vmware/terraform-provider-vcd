@@ -16,7 +16,11 @@ overlapping IP addresses across organizations and organization VDCs.
 
 IP Spaces require VCD 10.4.1+ with NSX-T.
 
+<<<<<<< HEAD
 ## Example Usage (Private)
+=======
+## Example Usage (Private IP Space)
+>>>>>>> main
 
 ```hcl
 resource "vcd_ip_space" "space1" {
@@ -67,7 +71,11 @@ resource "vcd_ip_space" "space1" {
 }
 ```
 
+<<<<<<< HEAD
 ## Example Usage (Public)
+=======
+## Example Usage (Public IP Space)
+>>>>>>> main
 
 ```hcl
 resource "vcd_ip_space" "space1" {
@@ -105,7 +113,11 @@ resource "vcd_ip_space" "space1" {
 }
 ```
 
+<<<<<<< HEAD
 ## Example Usage (Shared)
+=======
+## Example Usage (Shared IP Space)
+>>>>>>> main
 
 ```hcl
 resource "vcd_ip_space" "space1" {
@@ -145,7 +157,11 @@ The following arguments are supported:
 
 * `org_id` - (Optional) Required for `PRIVATE` type
 * `name` - (Required) A name for IP Space
+<<<<<<< HEAD
 * `description` - (Optional) - Description of IP Space
+=======
+* `description` - (Optional) Description of IP Space
+>>>>>>> main
 * `type` - (Required) One of `PUBLIC`, `SHARED_SERVICES`, `PRIVATE`
   * `PUBLIC` - A public IP space is *used by multiple organizations* and is *controlled by the service
     provider* through a quota-based system. 
@@ -162,9 +178,15 @@ The following arguments are supported:
   space has access, for example the internet or a WAN. 
 * `ip_range` - (Optional) One or more [ip_range](#ipspace-ip-range) for floating IP address
   allocation. (Floating IP addresses are just IP addresses taken from the defined range) 
+<<<<<<< HEAD
 * `ip_range_quota` - (Optional) If you entered at least one IP Range (`ip_range`), enter a
   number of floating IP addresses to allocate individually. `-1` is unlimited, while `0` means that
   no IPs can be allocated.
+=======
+* `ip_range_quota` - (Optional) If you entered at least one IP Range
+  ([ip_range](#ipspace-ip-range)), enter a number of floating IP addresses to allocate individually.
+  `-1` is unlimited, while `0` means that no IPs can be allocated.
+>>>>>>> main
 * `ip_prefix` - (Optional) One or more IP prefixes (blocks) [ip_prefix](#ipspace-ip-prefix)
 
 * `route_advertisement_enabled` - (Optional) Toggle on the route advertisement option to
@@ -181,7 +203,13 @@ The following arguments are supported:
 
 ## ip_prefix block
 
+<<<<<<< HEAD
 * `default_quota` 
+=======
+* `default_quota` - default Quota for this particular Prefix defined in
+  [`prefix`](#ipspace-ip-prefix-prefix) field. A Quota of `-1` means there is no cap to the number of
+IP Prefixes that can be allocated. A Quota of `0` means that the IP Prefixes cannot be allocated. 
+>>>>>>> main
 * `prefix` - IP block definition as detail [below](#ipspace-ip-prefix-prefix)
 
 <a id="ipspace-ip-prefix-prefix"></a>
