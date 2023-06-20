@@ -12,7 +12,7 @@ Provides a VMware Cloud Director UI Plugin data source. This can be used to fetc
 
 -> Reading UI Plugins requires System Administrator privileges.
 
-Supported in provider *v3.10+* and requires VCD 10.2+
+Supported in provider *v3.10+* and requires VCD 10.3+
 
 ## Example Usage
 
