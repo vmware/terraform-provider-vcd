@@ -225,7 +225,7 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 	dSet(d, "enabled", uiPlugin.UIPluginMetadata.Enabled)
 	dSet(d, "description", uiPlugin.UIPluginMetadata.Description)
 	dSet(d, "status", uiPlugin.UIPluginMetadata.PluginStatus)
-	err = setUIPluginTenantIds(uiPlugin, d, origin)
+	err = setUIPluginTenantIds(uiPlugin, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -234,11 +234,7 @@ func genericVcdUIPluginRead(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 // setUIPluginTenantIds reads the published tenants for a given UI Plugin.
-func setUIPluginTenantIds(uiPlugin *govcd.UIPlugin, d *schema.ResourceData, origin string) error {
-	// tenant_ids is only Computed in a data source or during an import
-	if origin != "datasource" && origin != "import" {
-		return nil
-	}
+func setUIPluginTenantIds(uiPlugin *govcd.UIPlugin, d *schema.ResourceData) error {
 	orgRefs, err := uiPlugin.GetPublishedTenants()
 	if err != nil {
 		return fmt.Errorf("could not update the published Organizations of the UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
@@ -318,7 +314,7 @@ func resourceVcdUIPluginImport(_ context.Context, d *schema.ResourceData, meta i
 		return nil, fmt.Errorf("error finding UI Plugin with vendor %s, nss %s and version %s: %s", vendor, name, version, err)
 	}
 
-	err = setUIPluginTenantIds(uiPlugin, d, "import")
+	err = setUIPluginTenantIds(uiPlugin, d)
 	if err != nil {
 		return nil, err
 	}
