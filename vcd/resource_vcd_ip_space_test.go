@@ -14,6 +14,14 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
 	// String map to fill the template
 	var params = StringMap{
 		"TestName": t.Name(),
@@ -56,7 +64,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // minimal
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -67,7 +75,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2, // minimal
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
@@ -77,7 +85,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3, // minimal
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -90,7 +98,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText4, // minimal
+				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -103,7 +111,7 @@ func TestAccVcdIpSpacePublic(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5, // minimal
+				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -259,6 +267,14 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
 	// String map to fill the template
 	var params = StringMap{
 		"TestName": t.Name(),
@@ -301,7 +317,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // minimal
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -312,7 +328,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2, // minimal
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
@@ -322,7 +338,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3, // minimal
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -335,7 +351,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText4, // minimal
+				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -348,7 +364,7 @@ func TestAccVcdIpSpaceShared(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5, // minimal
+				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -502,6 +518,14 @@ data "vcd_ip_space" "space1" {
 func TestAccVcdIpSpacePrivate(t *testing.T) {
 	preTestChecks(t)
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
 	// String map to fill the template
 	var params = StringMap{
 		"TestName": t.Name(),
@@ -545,7 +569,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // minimal
+				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -556,7 +580,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText2, // minimal
+				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
@@ -566,7 +590,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3, // minimal
+				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -579,7 +603,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText4, // minimal
+				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
@@ -592,7 +616,7 @@ func TestAccVcdIpSpacePrivate(t *testing.T) {
 				),
 			},
 			{
-				Config: configText5, // minimal
+				Config: configText5,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
