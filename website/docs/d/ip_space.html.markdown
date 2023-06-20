@@ -28,11 +28,7 @@ data "vcd_ip_space" "space1" {
 ## Example Usage (Public or Shared IP Space)
 ```hcl
 data "vcd_ip_space" "space1" {
-<<<<<<< HEAD
-  name = "private-ip-space"
-=======
   name = "public-or-shared-ip-space"
->>>>>>> main
 }
 ```
 
