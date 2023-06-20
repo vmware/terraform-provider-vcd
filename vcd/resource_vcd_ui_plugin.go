@@ -128,7 +128,9 @@ func resourceVcdUIPluginCreate(ctx context.Context, d *schema.ResourceData, meta
 // publishUIPluginToTenants performs a publish/unpublish operation for the given UI plugin.
 func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d *schema.ResourceData, operation string) error {
 	if d.HasChange("tenant_ids") {
-		// We get all the Organizations instead of one by one, as there could be thousands.
+		// We get all the Organizations because we need to retrieve the Organization names, in order to build
+		// OpenApiReference objects. Publish/Unpublish doesn't work without an Organization name in the OpenApiReferences payload,
+		// so we can't use convertSliceOfStringsToOpenApiReferenceIds.
 		existingOrgs, err := vcdClient.GetOrgList()
 		if err != nil {
 			return fmt.Errorf("UI Plugin '%s' update failed, could not retrieve all the Organizations: %s", uiPlugin.UIPluginMetadata.ID, err)
@@ -136,14 +138,16 @@ func publishUIPluginToTenants(vcdClient *VCDClient, uiPlugin *govcd.UIPlugin, d 
 		oldRaw, newRaw := d.GetChange("tenant_ids")
 
 		// Retrieve the Organization IDs that need to be unpublished
-		newOrgIds := oldRaw.(*schema.Set)
+		newOrgIds := newRaw.(*schema.Set)
 		var orgIdsToUnpublish []interface{}
-		for _, oldOrgId := range newRaw.(*schema.Set).List() {
+		for _, oldOrgId := range oldRaw.(*schema.Set).List() {
 			if !newOrgIds.Contains(oldOrgId) {
 				orgIdsToUnpublish = append(orgIdsToUnpublish, oldOrgId)
 			}
 		}
 
+		// This function is similar to convertSliceOfStringsToOpenApiReferenceIds, but here we need the
+		// Organization names, otherwise Publish/Unpublish don't work as expected.
 		getOrgReferences := func(orgIds []interface{}, allOrgs *types.OrgList) types.OpenApiReferences {
 			var orgRefs types.OpenApiReferences
 			for _, org := range allOrgs.Org {
