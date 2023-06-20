@@ -81,6 +81,35 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 				Computed:    true,
 				Description: "Network prefix",
 			},
+			"static_ip_pool": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "IP ranges used for static pool allocation in the network",
+				Elem:        networkV2IpRangeComputed,
+			},
+			"dual_stack_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Boolean value if Dual-Stack mode is enabled",
+			},
+			"secondary_gateway": {
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				Computed:    true,
+				Description: "Secondary gateway (can only be IPv6 with dual_stack_enabled=true)",
+			},
+			"secondary_prefix_length": {
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				Computed:    true,
+				Description: "Secondary prefix (can only be IPv6 with dual_stack_enabled=true)",
+			},
+			"secondary_static_ip_pool": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Secondary IP ranges used for static pool allocation in the network",
+				Elem:        networkV2IpRangeComputed,
+			},
 			"dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -95,12 +124,6 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "DNS suffix",
-			},
-			"static_ip_pool": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Description: "IP ranges used for static pool allocation in the network",
-				Elem:        networkV2IpRangeComputed,
 			},
 		},
 	}

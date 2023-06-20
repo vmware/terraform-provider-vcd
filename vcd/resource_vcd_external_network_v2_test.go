@@ -236,7 +236,6 @@ data "vcd_nsxt_tier0_router" "router" {
   name            = "{{.NsxtTier0Router}}"
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
 }
-
 `
 
 const testAccCheckVcdExternalNetworkV2NsxtStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `

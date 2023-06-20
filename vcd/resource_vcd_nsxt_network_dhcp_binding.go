@@ -87,12 +87,12 @@ func resourceVcdNsxtDhcpBinding() *schema.Resource {
 						"gateway_ip_address": {
 							Optional:    true,
 							Type:        schema.TypeString,
-							Description: "",
+							Description: "IPv4 gateway address",
 						},
 						"hostname": {
 							Optional:    true,
 							Type:        schema.TypeString,
-							Description: "",
+							Description: "Hostname for the DHCP client",
 						},
 					},
 				},
@@ -108,15 +108,15 @@ func resourceVcdNsxtDhcpBinding() *schema.Resource {
 						"sntp_servers": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "",
+							Description: "Set of SNTP servers",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
-						"dns_servers": {
+						"domain_names": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "IP address, CIDR, an IP range, or the keyword 'any'",
+							Description: "Set of domain names",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
