@@ -46,7 +46,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `name` - (Required) A unique name for the Service Account
+* `name` - (Required) A unique name for the Service Account in an organisation.
 * `role` - (Required) ID of a Role.
 * `software_id` - (Required) UUID of the Service Account.
 * `software_version` - (Optional) Version of the service using the Service Account

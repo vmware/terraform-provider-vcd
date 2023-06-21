@@ -40,9 +40,9 @@ func resourceVcdServiceAccount() *schema.Resource {
 			"software_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "UUID of software, e.g: 12345678-1234-5678-90ab-1234567890ab",
+				Description: "Any valid UUID, depends on the user, e.g: 12345678-1234-5678-90ab-1234567890ab",
 			},
-			"role": {
+			"role_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Role ID of service account",
@@ -50,12 +50,12 @@ func resourceVcdServiceAccount() *schema.Resource {
 			"software_version": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Version of software using the service account",
+				Description: "Version of software using the service account, can be freely defined by the user",
 			},
 			"uri": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "URI of the client using the service account",
+				Description: "URI of the client using the service account, can be freely defined by the user",
 			},
 			"active": {
 				Type:        schema.TypeBool,
@@ -99,7 +99,7 @@ func resourceVcdServiceAccountCreate(ctx context.Context, d *schema.ResourceData
 
 	// Role needs to be sent in URN format, and the role name needs to be percent-encoded
 	// e.g urn:vcloud:role:Organization%20Administrator
-	roleId := d.Get("role").(string)
+	roleId := d.Get("role_id").(string)
 	role, err := adminOrg.GetRoleById(roleId)
 	if err != nil {
 		return diag.Errorf("[Service Account create] error getting Role: %s", err)
@@ -149,7 +149,7 @@ func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("[Service Account update] error getting Service Account: %s", err)
 	}
 
-	roleId := d.Get("role").(string)
+	roleId := d.Get("role_id").(string)
 	softwareId := d.Get("software_id").(string)
 	softwareVersion := d.Get("software_version").(string)
 	uri := d.Get("uri").(string)
@@ -281,7 +281,7 @@ func genericVcdServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 	dSet(d, "name", sa.ServiceAccount.Name)
 	dSet(d, "software_id", sa.ServiceAccount.SoftwareID)
 	dSet(d, "software_version", sa.ServiceAccount.SoftwareVersion)
-	dSet(d, "role", sa.ServiceAccount.Role.ID)
+	dSet(d, "role_id", sa.ServiceAccount.Role.ID)
 	dSet(d, "uri", sa.ServiceAccount.URI)
 	if sa.ServiceAccount.Status == "ACTIVE" {
 		dSet(d, "active", true)
@@ -335,11 +335,10 @@ func resourceVcdServiceAccountImport(ctx context.Context, d *schema.ResourceData
 
 	d.SetId(sa.ServiceAccount.ID)
 	dSet(d, "name", sa.ServiceAccount.Name)
-	dSet(d, "role", sa.ServiceAccount.Role.Name)
+	dSet(d, "role_id", sa.ServiceAccount.Role.Name)
 	dSet(d, "software_id", sa.ServiceAccount.SoftwareID)
 	dSet(d, "software_version", sa.ServiceAccount.SoftwareVersion)
 	dSet(d, "uri", sa.ServiceAccount.URI)
-	dSet(d, "role", sa.ServiceAccount.Role.ID)
 
 	return []*schema.ResourceData{d}, nil
 }

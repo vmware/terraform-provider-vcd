@@ -27,7 +27,7 @@ func datasourceVcdServiceAccount() *schema.Resource {
 				Computed:    true,
 				Description: "UUID of software, e.g: 12345678-1234-5678-90ab-1234567890ab",
 			},
-			"role": {
+			"role_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Role ID of service account",

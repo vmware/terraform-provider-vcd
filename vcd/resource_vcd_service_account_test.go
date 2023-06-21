@@ -99,7 +99,7 @@ resource "vcd_service_account" "sysadmin" {
   name = "{{.SaName}}"
   org  = "{{.Org}}"
 
-  role             = data.vcd_role.sys_admin.id
+  role_id          = data.vcd_role.sys_admin.id
   software_id      = "{{.SoftwareId}}"
   software_version = "{{.SoftwareVersion}}"
   uri              = "{{.Uri}}"
@@ -109,10 +109,9 @@ resource "vcd_service_account" "sysadmin" {
 `
 
 const testAccServiceAccount_SysOrgDS = testAccServiceAccount_SysOrg + `
-# skip-binary-test: datasource test will fail when run together with resource
 data "vcd_service_account" "sysadmin_ds" {
-  name = "{{.SaName}}"
-  org  = "{{.Org}}"		
+  org  = vcd_service_account.sysadmin.org
+  name = vcd_service_account.sysadmin.name		
 }		
 `
 
@@ -121,7 +120,7 @@ resource "vcd_service_account" "sysadmin" {
   name = "{{.SaName}}"
   org  = "{{.Org}}"
 
-  role             = data.vcd_role.sys_admin.id
+  role_id          = data.vcd_role.sys_admin.id
   software_id      = "{{.SoftwareIdUpdated}}"
   software_version = "{{.SoftwareVersionUpdated}}"
   uri              = "{{.UriUpdated}}"
@@ -224,7 +223,7 @@ resource "vcd_service_account" "org_user" {
   name = "{{.SaName}}"
   org  = "{{.Org}}"
 
-  role             = data.vcd_role.vapp_author.id
+  role_id          = data.vcd_role.vapp_author.id
   software_id      = "{{.SoftwareId}}"
   software_version = "{{.SoftwareVersion}}"
   uri              = "{{.Uri}}"
@@ -235,10 +234,9 @@ resource "vcd_service_account" "org_user" {
 `
 
 const testAccServiceAccount_OrgDS = testAccServiceAccount_Org + `
-# skip-binary-test: datasource test will fail when run together with resource
 data "vcd_service_account" "org_user_ds" {
-  org  = "{{.Org}}"
-  name = "{{.SaName}}"		
+  org  = vcd_service_account.org_user.org
+  name = vcd_service_account.org_user.name		
 }		
 `
 
@@ -247,7 +245,7 @@ resource "vcd_service_account" "org_user" {
   name = "{{.SaName}}"
   org  = "{{.Org}}"
 
-  role             = data.vcd_role.catalog_author.id
+  role_id          = data.vcd_role.catalog_author.id
   software_id      = "{{.SoftwareIdUpdated}}"
   software_version = "{{.SoftwareVersionUpdated}}"
   uri              = "{{.UriUpdated}}"

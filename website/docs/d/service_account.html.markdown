@@ -25,7 +25,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `name` - (Required) Name of the Service Account
+* `name` - (Required) Name of the Service Account in an organisation
 
 ## Attribute Reference
 
