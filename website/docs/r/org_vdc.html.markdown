@@ -228,7 +228,6 @@ The following arguments are supported:
 * `cpu_speed` - (Optional, System Admin) Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when `allocation_model` is AllocationVApp, AllocationPool or Flex, and may not be less than 256 MHz. Defaults to 1000 MHz if value isn't provided.
 * `metadata` - (Deprecated; *v2.4+*) Use `metadata_entry` instead. Key value map of metadata to assign to this VDC
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
-* `metadata_entry_ignore` - (Optional; *3.10+*) A set of metadata entries that must be ignored by Terraform. See [Metadata](#metadata) section for details.
 * `enable_thin_provisioning` - (Optional, System Admin) Boolean to request thin provisioning. Request will be honored only if the underlying data store supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.
 * `enable_fast_provisioning` - (Optional, System Admin) Request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
 * `network_pool_name` - (Optional, System Admin) Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.
@@ -267,7 +266,7 @@ Capacity must be specified twice, once for `memory` and another for `cpu`.  Each
 <a id="metadata"></a>
 ## Metadata
 
-The `metadata_entry` (*v3.8+*) attribute is a set of metadata entries that have the following structure:
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.
 * `value` - (Required) Value of this metadata entry.
@@ -312,23 +311,6 @@ The same applies also for deprecated `metadata` attribute:
 ```
 metadata = {}
 ```
-
-To ignore any metadata entry of your choice, you may use the `metadata_entry_ignore` (*v3.10+*) attribute.
-The structure is the same as `metadata_entry`, but both `key` and `value` support regular expressions for filtering.
-Each element of the structure will be combined with the others by using an `AND` logical operator. For example:
-
-```hcl
-resource "vcd_org_vdc" "example" {
-  # ...
-  metadata_entry_ignore {
-    key         = "foo.*"
-    value       = "bar"
-    user_access = "PRIVATE"
-  }
-}
-```
-
-This will make Terraform ignore the metadata entries which key matches `foo.*` AND the value is `bar` AND the user access is `PRIVATE`.
 
 ## Importing
 

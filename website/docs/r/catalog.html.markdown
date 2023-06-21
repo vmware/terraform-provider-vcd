@@ -66,7 +66,6 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 * `password` - (Optional, *v3.6+*) An optional password to access the catalog. Only ASCII characters are allowed in a valid password.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign.
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
-* `metadata_entry_ignore` - (Optional; *3.10+*) A set of metadata entries that must be ignored by Terraform. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 
@@ -86,7 +85,7 @@ source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/stor
 <a id="metadata"></a>
 ## Metadata
 
-The `metadata_entry` (*v3.8+*) attribute is a set of metadata entries that have the following structure:
+The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.
 * `value` - (Required) Value of this metadata entry.
@@ -131,23 +130,6 @@ The same applies also for deprecated `metadata` attribute:
 ```
 metadata = {}
 ```
-
-To ignore any metadata entry of your choice, you may use the `metadata_entry_ignore` (*v3.10+*) attribute.
-The structure is the same as `metadata_entry`, but both `key` and `value` support regular expressions for filtering.
-Each element of the structure will be combined with the others by using an `AND` logical operator. For example:
-
-```hcl
-resource "vcd_catalog" "example" {
-  # ...
-  metadata_entry_ignore {
-    key         = "foo.*"
-    value       = "bar"
-    user_access = "PRIVATE"
-  }
-}
-```
-
-This will make Terraform ignore the metadata entries which key matches `foo.*` AND the value is `bar` AND the user access is `PRIVATE`.
 
 ## Importing
 
