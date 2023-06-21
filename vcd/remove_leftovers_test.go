@@ -301,6 +301,14 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
+
+	// --------------------------------------------------------------
+	// IP Spaces
+	// --------------------------------------------------------------
+	err = removeLeftoversIpSpaces(govcdClient, true)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -486,6 +494,26 @@ func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) er
 				if err != nil {
 					return fmt.Errorf("error disabling NSX-T ALB Edge Gateway settings: %s", err)
 				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func removeLeftoversIpSpaces(govcdClient *govcd.VCDClient, verbose bool) error {
+	allIpSpaces, err := govcdClient.GetAllIpSpaceSummaries(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving IP spaces")
+	}
+
+	for _, ipSpace := range allIpSpaces {
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, ipSpace.IpSpace.Name, "vcd_ip_space", 0, verbose)
+		if toBeDeleted {
+			fmt.Printf("REMOVING IP Space %s\n", ipSpace.IpSpace.Name)
+			err = ipSpace.Delete()
+			if err != nil {
+				return fmt.Errorf("error deleting IP Space '%s': %s", ipSpace.IpSpace.Name, err)
 			}
 		}
 	}
