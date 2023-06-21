@@ -13,6 +13,7 @@ import (
 func TestAccServiceAccount_SysOrg(t *testing.T) {
 	preTestChecks(t)
 	skipTestForApiToken(t)
+	skipIfNotSysAdmin(t)
 
 	params := StringMap{
 		"SaName":                 t.Name(),
