@@ -114,6 +114,6 @@ cse_admin_api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 # Other configuration
 # ------------------------------------------------
 # This path points to the .zip file that contains the bundled Kubernetes Container Clusters UI Plugin.
-# It is optional, if not informed it won't be installed.
-# Remember to remove older CSE UI plugins if present (for example 3.x plugins) after installing this one.
+# It is optional: if not set, it won't be installed.
+# Remember to remove older CSE UI plugins if present (for example 3.x plugins) before installing this one.
 k8s_container_clusters_ui_plugin_path = "/home/change-me/container-ui-plugin 4.0.zip"

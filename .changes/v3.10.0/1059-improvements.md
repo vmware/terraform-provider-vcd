@@ -1,1 +1,2 @@
-* The guide to install Container Service Extension v4.0 now additionally installs the Kubernetes Container Clusters UI Plugin [GH-1059]
+* The guide to install the Container Service Extension v4.0 now additionally explains how to install the
+  Kubernetes Container Clusters UI Plugin [GH-1059]
