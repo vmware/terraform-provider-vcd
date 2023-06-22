@@ -16,6 +16,14 @@ func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
 	// String map to fill the template
 	var params = StringMap{
 		"TestName":            t.Name(),
@@ -494,99 +502,3 @@ func stateDumper() resource.TestCheckFunc {
 		return nil
 	}
 }
-
-/*
-func TestAccVcdIpSpaceIntegrationPrivate(t *testing.T) {
-	preTestChecks(t)
-	skipIfNotSysAdmin(t)
-
-	// String map to fill the template
-	var params = StringMap{
-		"TestName":            t.Name(),
-		"NsxtManager":         testConfig.Nsxt.Manager,
-		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
-		"ExternalNetworkName": t.Name(),
-		"Org":                 testConfig.VCD.Org,
-		"VDC":                 testConfig.Nsxt.Vdc,
-
-		"Tags": "network nsxt",
-	}
-	testParamsNotEmpty(t, params)
-
-	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdIpSpaceIntegrationStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
-
-	params["FuncName"] = t.Name() + "step3DS"
-	configText3DS := templateFill(testAccVcdIpSpaceIntegrationStep3DS, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3DS)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	resource.Test(t, resource.TestCase{
-		ProviderFactories: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config: configText1,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "uses_ip_spaces", "true"),
-
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
-					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
-
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip", "id"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip", "allocation_date"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "type", "FLOATING_IP"),
-					// usage_state is UNUSED because the state is updated during creation of this
-					// resource and it is consumed in next dependent resource
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "usage_state", "UNUSED"),
-					// resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "quantity", "1"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip", "ip_address"),
-
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip-manual", "id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "usage_state", "USED_MANUAL"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "type", "FLOATING_IP"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "description", "manually used floating IP"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip-manual", "ip_address"),
-
-					// public-ip-prefix
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix", "id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix", "usage_state", "UNUSED"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix", "type", "IP_PREFIX"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix", "ip_address"),
-
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "id"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "usage_state", "USED_MANUAL"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "type", "IP_PREFIX"),
-					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "description", "manually used IP Prefix"),
-					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "ip_address"),
-				),
-			},
-			{
-				Config: configText3DS,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual("data.vcd_ip_space_uplink.u1", "vcd_ip_space_uplink.u1", nil),
-					resourceFieldsEqual("data.vcd_nsxt_edgegateway.ip-space", "vcd_nsxt_edgegateway.ip-space", []string{"%"}),
-
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-floating-ip", "vcd_ip_space_ip_allocation.public-floating-ip", nil),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-floating-ip-manual", "vcd_ip_space_ip_allocation.public-floating-ip-manual", nil),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-ip-prefix", "vcd_ip_space_ip_allocation.public-ip-prefix", nil),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-ip-prefix-manual", "vcd_ip_space_ip_allocation.public-ip-prefix-manual", nil),
-				),
-			},
-		},
-	})
-	postTestChecks(t)
-}
-*/
