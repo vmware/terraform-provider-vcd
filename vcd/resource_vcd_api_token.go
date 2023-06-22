@@ -14,7 +14,6 @@ import (
 func resourceVcdApiToken() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdApiTokenCreate,
-		UpdateContext: resourceVcdApiTokenUpdate,
 		ReadContext:   resourceVcdApiTokenRead,
 		DeleteContext: resourceVcdApiTokenDelete,
 		Importer: &schema.ResourceImporter{
@@ -90,11 +89,6 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	return append(diagnostics, resourceVcdApiTokenRead(ctx, d, meta)...)
-}
-
-// There are no fields that can be updated after creation
-func resourceVcdApiTokenUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
 }
 
 func resourceVcdApiTokenRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

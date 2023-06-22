@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_service_account"
 sidebar_current: "docs-vcd-datasource-service-account"
 description: |-
-  Provides a data source to read DHCP pools for NSX-T Org VDC networks.
+  Provides a data source to read VCD Service Accounts.
 ---
 
 # vcd\_service\_account
