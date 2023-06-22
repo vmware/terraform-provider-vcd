@@ -1552,9 +1552,12 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 	}
 }
 
-func skipTestForApiToken(t *testing.T) {
+func skipTestForServiceAccountAndApiToken(t *testing.T) {
 	if testConfig.Provider.ApiToken != "" {
 		t.Skipf("skipping test %s because API token does not support this functionality", t.Name())
+	}
+	if testConfig.Provider.ServiceAccountTokenFile != "" {
+		t.Skipf("skipping test %s because Service Accounts do not support this functionality", t.Name())
 	}
 }
 
