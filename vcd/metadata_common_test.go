@@ -307,7 +307,19 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	// We will cache the ID of the created resource after Step 1, so it can be used afterward.
 	cachedId := testCachedFieldValue{}
 
-	testFunc := func(ignoredMetadata []map[string]string, expectedMetadataInVcd int) {
+	// We need to disable the cache because we need different clients on each subtest and for the client
+	// that will create metadata in Step 2 PreConfig. If we don't disable the cache, the same would be reused for all subtests and
+	// the client of Step 2 PreConfig wouldn't be able to create metadata as it would be ignored.
+	backupEnableConnectionCache := enableConnectionCache
+	enableConnectionCache = false
+	cachedVCDClients.reset()
+	vcdClient := createSystemTemporaryVCDConnection()
+	defer func() {
+		enableConnectionCache = backupEnableConnectionCache
+		cachedVCDClients.reset()
+	}()
+
+	testFunc := func(vcdClient *VCDClient, ignoredMetadata []map[string]string, expectedMetadataInVcd int) {
 		var object metadataCompatible
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -339,17 +351,6 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				// The provider is configured to ignore it.
 				{
 					PreConfig: func() {
-						// We need to create metadata now with the SDK. If the calls below used the same client as the Provider,
-						// it would have the same metadata filter, hence it would fail creating it.
-						// That's why we disable the cache: To have separated clients. This way, the client used
-						// by the calls below won't have any metadata filter.
-						backupEnableConnectionCache := enableConnectionCache
-						enableConnectionCache = false
-						cachedVCDClients.reset()
-						vcdClient := createSystemTemporaryVCDConnection()
-						enableConnectionCache = backupEnableConnectionCache
-						cachedVCDClients.reset()
-
 						var err error
 						object, err = retrieveObjectById(vcdClient, cachedId.fieldValue)
 						if err != nil {
@@ -358,6 +359,11 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 						err = object.AddMetadataEntryWithVisibility("foo", "bar", types.MetadataStringValue, types.MetadataReadWriteVisibility, false)
 						if err != nil {
 							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
+						}
+						// Check that the metadata was added and not ignored
+						_, err = object.GetMetadataByKey("foo", false)
+						if err != nil {
+							t.Errorf("should have retrieved metadata with key 'foo' from object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 					},
 					Config: step2,
@@ -393,7 +399,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	}
 
 	t.Run("filter by object type and specific key", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_type": objectType,
 				"key_regex":   "foo",
@@ -401,7 +407,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object type and specific value", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_type": objectType,
 				"value_regex": "bar",
@@ -409,7 +415,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object type and key that doesn't match", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_type": objectType,
 				"key_regex":   "notmatch",
@@ -417,7 +423,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by object type and value that doesn't match", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_type": objectType,
 				"value_regex": "notmatch",
@@ -425,7 +431,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 1) // We expect 1 because 'foo' 'has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by object name and specific key", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_name": t.Name(),
 				"key_regex":   "foo",
@@ -433,7 +439,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object name and specific value", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_name": t.Name(),
 				"value_regex": "bar",
@@ -441,7 +447,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by object name and key that doesn't match", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_name": t.Name(),
 				"key_regex":   "notmatch",
@@ -449,7 +455,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by object name and value that doesn't match", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"object_name": t.Name(),
 				"value_regex": "notmatch",
@@ -457,7 +463,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 	})
 	t.Run("filter by key and value that match", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"key_regex":   "foo",
 				"value_regex": "bar",
@@ -465,7 +471,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
 	t.Run("filter by key and value that don't match", func(_ *testing.T) {
-		testFunc([]map[string]string{
+		testFunc(vcdClient, []map[string]string{
 			{
 				"key_regex":   "foo",
 				"value_regex": "barz",

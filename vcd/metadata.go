@@ -170,6 +170,7 @@ func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema 
 
 // metadataCompatible allows to consider all structs that implement metadata handling to be the same type
 type metadataCompatible interface {
+	GetMetadataByKey(key string, isSystem bool) (*types.MetadataValue, error)
 	GetMetadata() (*types.Metadata, error)
 	AddMetadataEntry(typedValue, key, value string) error // Deprecated
 	AddMetadataEntryWithVisibility(key, value, typedValue, visibility string, isSystem bool) error
