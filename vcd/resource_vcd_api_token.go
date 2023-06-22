@@ -14,6 +14,7 @@ import (
 func resourceVcdApiToken() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdApiTokenCreate,
+		UpdateContext: resourceVcdApiTokenUpdate,
 		ReadContext:   resourceVcdApiTokenRead,
 		DeleteContext: resourceVcdApiTokenDelete,
 		Importer: &schema.ResourceImporter{
@@ -89,6 +90,10 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	return append(diagnostics, resourceVcdApiTokenRead(ctx, d, meta)...)
+}
+
+func resourceVcdApiTokenUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdApiTokenRead(ctx, d, meta)
 }
 
 func resourceVcdApiTokenRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
