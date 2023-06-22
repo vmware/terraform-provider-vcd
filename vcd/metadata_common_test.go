@@ -307,9 +307,10 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	// We will cache the ID of the created resource after Step 1, so it can be used afterward.
 	cachedId := testCachedFieldValue{}
 
-	// We need to disable the cache because we need different clients on each subtest and for the client
-	// that will create metadata in Step 2 PreConfig. If we don't disable the cache, the same would be reused for all subtests and
-	// the client of Step 2 PreConfig wouldn't be able to create metadata as it would be ignored.
+	// We need to disable the Client cache because we need different instances on each subtest, and we need a "special"
+	// client for Step 2 PreConfig which doesn't have IgnoredMetadata configured.
+	// If we don't disable the cache, the same clients would be reused for all subtests and
+	// the Step 2 PreConfig would fail to create metadata as it would be ignored.
 	backupEnableConnectionCache := enableConnectionCache
 	enableConnectionCache = false
 	cachedVCDClients.reset()
