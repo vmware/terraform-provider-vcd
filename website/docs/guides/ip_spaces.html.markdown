@@ -35,20 +35,23 @@ has access, and manage the IP spaces available to them.
 
 There are three types of IP spaces that you can create.
 
-* Public IP Space - A public IP space is used by multiple organizations and is controlled by the
+* Public IP Space - A public IP Space is used by multiple organizations and is controlled by the
   service provider through a quota-based system. 
-* Shared IP Space - An IP space for services and management networks that are required in the tenant
+* Shared IP Space - An IP Space for services and management networks that are required in the tenant
   space, but as a service provider, you don't want to expose it to organizations in your
   environment. 
-* Private IP Space - Private IP spaces are dedicated to a single tenant - a private IP space is used
+* Private IP Space - Private IP Spaces are dedicated to a single tenant - a private IP space is used
   by only one organization that is specified during the space creation. For this organization, IP
   consumption is unlimited.
 
 
 ## New resources
-* `vcd_ip_space`
-* `vcd_ip_space_uplink`
-* `vcd_ip_space_ip_allocation`
+
+* `vcd_ip_space` - provides IP Space definition capability
+* `vcd_ip_space_uplink` - provides capability to assign IP Space Uplink for Provider Gateways
+* `vcd_ip_space_ip_allocation` - provides capability to allocation floating IPs or IP Prefix
+* `vcd_ip_space_custom_quota` - provides capability to set Org specified Custom Quotas to override
+  default ones defined in `vcd_ip_space`
 
 ## Modified resources
 
@@ -287,4 +290,3 @@ resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
 * [VMware Cloud Director Documentation for Providers](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-46772618-7991-4928-A77B-BC774C45EA33.html)
 * [VMware Cloud Director Documentation for Tenants](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-FB230D89-ACBC-4345-A11A-D099D359ED1B.html)
 * [IP Space Uplinks for Provider Gateways](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-0D40BD21-CAAA-4FD3-B6ED-78BA8FE2DEF1.html)
-
