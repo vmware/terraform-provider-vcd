@@ -13,7 +13,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// resourceVcdIpSpaceCustomQuota has a non standard behavior due to how VCD API works.
+// resourceVcdIpSpaceCustomQuota has a non standard behavior due to how VCD API works. UI works this
+// way as well.
+//
 // IP Space Custom Quota (IP Space Org Assignment name in API) is implicitly created when and Edge
 // Gateway (vcd_nsxt_edgegateway) backed by Provider Gateway (vcd_nsxt_external_network_v2). To set
 // custom quota, one does not need to create new Org Assignment entity, but rather find an existing
@@ -24,7 +26,7 @@ func resourceVcdIpSpaceCustomQuota() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdIpSpaceCustomQuotaCreate,
 		ReadContext:   resourceVcdIpSpaceCustomQuotaRead,
-		UpdateContext: resourceVcdIpSpaceCustomQuotaCreate,
+		UpdateContext: resourceVcdIpSpaceCustomQuotaUpdate,
 		DeleteContext: resourceVcdIpSpaceCustomQuotaDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdIpSpaceCustomQuotaImport,
@@ -77,12 +79,19 @@ var ipPrefixeQuota = &schema.Resource{
 }
 
 func resourceVcdIpSpaceCustomQuotaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[TRACE] IP Space Custom Quota creation initiated")
+	return resourceVcdIpSpaceCustomQuotaCreateUpdate(ctx, d, meta, "create")
+}
+
+func resourceVcdIpSpaceCustomQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdIpSpaceCustomQuotaCreateUpdate(ctx, d, meta, "update")
+}
+
+func resourceVcdIpSpaceCustomQuotaCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+	log.Printf("[TRACE] IP Space Custom Quota %s initiated", operation)
 
 	vcdClient := meta.(*VCDClient)
 
 	orgId := d.Get("org_id").(string)
-
 	ipSpaceId := d.Get("ip_space_id").(string)
 	ipSpace, err := vcdClient.GetIpSpaceById(ipSpaceId)
 	if err != nil {
@@ -94,23 +103,18 @@ func resourceVcdIpSpaceCustomQuotaCreate(ctx context.Context, d *schema.Resource
 	// Instead of creating, one must find it and update Custom Quota values.
 	orgAssignment, err := ipSpace.GetOrgAssignmentByOrgId(orgId)
 	if err != nil {
-		return diag.Errorf("error finding Org Assignment: %s", err)
+		return diag.Errorf("error finding Org Assignment during %s: %s", operation, err)
 	}
 
 	newOrgAssignmentConfig := getIpSpaceOrgAssignmentType(d, orgAssignment.IpSpaceOrgAssignment.ID, orgAssignment.IpSpaceOrgAssignment.IPSpaceType)
 	_, err = orgAssignment.Update(newOrgAssignmentConfig)
 	if err != nil {
-		return diag.Errorf("error updating custom quotas: %s", err)
+		return diag.Errorf("error updating custom quotas during %s: %s", operation, err)
 	}
-
 	d.SetId(orgAssignment.IpSpaceOrgAssignment.ID)
 
 	return resourceVcdIpSpaceCustomQuotaRead(ctx, d, meta)
 }
-
-// func resourceVcdIpSpaceCustomQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-// 	return resourceVcdIpSpaceCustomQuotaRead(ctx, d, meta)
-// }
 
 func resourceVcdIpSpaceCustomQuotaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] IP Space Custom quota read initiated")

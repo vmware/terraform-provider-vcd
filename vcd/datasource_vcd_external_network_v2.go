@@ -26,12 +26,12 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 			"dedicated_org_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of an Org that this network is dedicated to",
+				Description: "ID of an Org that this network is dedicated to (VCD 10.4.1+)",
 			},
 			"use_ip_spaces": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Defines if this network uses IP Spaces. VCD 10.4.1+",
+				Description: "Defines if this network uses IP Spaces (VCD 10.4.1+)",
 			},
 			"ip_scope": {
 				Type:        schema.TypeSet,

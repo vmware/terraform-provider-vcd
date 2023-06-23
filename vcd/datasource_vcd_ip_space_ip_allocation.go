@@ -30,7 +30,7 @@ func datasourceVcdIpAllocation() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required if 'type' is IP_PREFIX",
+				Description: "IP Address or Prefix of the allocation",
 			},
 			"type": {
 				Type:        schema.TypeString,
@@ -41,33 +41,33 @@ func datasourceVcdIpAllocation() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "",
+				Description: "IP Allocation Description",
 			},
 			"prefix_length": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Required if 'type' is IP_PREFIX",
+				Description: "Exposed only if 'type' is 'IP_PREFIX'",
 			},
 			"usage_state": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "",
+				Description: "One of 'UNUSED', 'USED', 'USED_MANUAL",
 			},
 			"used_by_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "An ID of entity this IP Allocation is assigned to",
 			},
 			"allocation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Allocation date in ISO 8601 format (e.g. 2023-06-07T09:57:58.721Z)",
 			},
 			"ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Allocated IP address",
 			},
 		},
 	}
@@ -86,8 +86,6 @@ func datasourceVcdIpAllocationRead(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("error getting Org by id: %s", err)
 	}
-
-	// org.GetIpSpaceAllocationByValue(ipSpaceId, ipAllocationValue, nil)
 
 	ipAllocation, err := org.GetIpSpaceAllocationByTypeAndValue(ipSpaceId, ipAllocationType, ipAddress, nil)
 	if err != nil {

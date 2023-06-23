@@ -1014,10 +1014,6 @@ func TestAccVcdExternalNetworkV2NsxtIpSpace(t *testing.T) {
 	configText3DS := templateFill(testAccVcdExternalNetworkV2NsxtIpSpaceStep2DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText3DS)
 
-	// params["FuncName"] = t.Name() + "step3"
-	// configText3 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep3, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION: %s", configText3)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -1082,7 +1078,7 @@ func TestAccVcdExternalNetworkV2NsxtIpSpace(t *testing.T) {
 
 const testAccVcdExternalNetworkV2NsxtIpSpaceStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
 resource "vcd_external_network_v2" "ext-net-nsxt" {
-  name        = "{{.ExternalNetworkName}}"
+  name = "{{.ExternalNetworkName}}"
 
   nsxt_network {
     nsxt_manager_id      = data.vcd_nsxt_manager.main.id
@@ -1099,14 +1095,14 @@ data "vcd_org" "org1" {
 }
 
 resource "vcd_external_network_v2" "ext-net-nsxt" {
-  name        = "{{.ExternalNetworkName}}"
+  name = "{{.ExternalNetworkName}}"
 
   nsxt_network {
     nsxt_manager_id      = data.vcd_nsxt_manager.main.id
     nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
   }
 
-  use_ip_spaces     = true
+  use_ip_spaces    = true
   dedicated_org_id = data.vcd_org.org1.id
 }
 `
@@ -1129,7 +1125,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
     nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
   }
 
-  use_ip_spaces     = true
+  use_ip_spaces    = true
   dedicated_org_id = data.vcd_org.org1.id
 }
 `

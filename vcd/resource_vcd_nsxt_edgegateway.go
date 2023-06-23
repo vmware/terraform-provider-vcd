@@ -176,7 +176,6 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Elem:          nsxtEdgeAutoSubnetAndTotal,
 				RequiredWith:  []string{"total_allocated_ip_count"},
 				ConflictsWith: []string{"subnet", "subnet_with_ip_count"},
-				// AtLeastOneOf:  []string{"subnet_with_total_ip_count", "subnet", "subnet_with_ip_count"},
 			},
 			"subnet_with_ip_count": {
 				Type:          schema.TypeSet,
@@ -185,7 +184,6 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description:   "Auto allocation of subnets by using per subnet IP allocation counts",
 				Elem:          nsxtEdgeAutoAllocatedSubnet,
 				ConflictsWith: []string{"subnet", "subnet_with_total_ip_count"},
-				// AtLeastOneOf:  []string{"subnet_with_total_ip_count", "subnet", "subnet_with_ip_count"},
 			},
 			"subnet": {
 				Type:          schema.TypeSet,
@@ -194,7 +192,6 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description:   "One or more blocks with external network information to be attached to this gateway's interface including IP allocation ranges",
 				Elem:          nsxtEdgeSubnet,
 				ConflictsWith: []string{"subnet_with_total_ip_count", "total_allocated_ip_count", "subnet_with_ip_count"},
-				// AtLeastOneOf:  []string{"subnet_with_total_ip_count", "subnet", "subnet_with_ip_count"},
 			},
 			"primary_ip": {
 				Type:        schema.TypeString,

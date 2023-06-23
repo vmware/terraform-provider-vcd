@@ -72,7 +72,7 @@ func datasourceVcdIpSpaceCustomQuotaRead(ctx context.Context, d *schema.Resource
 
 	err = setIpSpaceOrgAssignmentData(d, orgAssignment.IpSpaceOrgAssignment)
 	if err != nil {
-		return diag.Errorf("error ")
+		return diag.Errorf("error storing Org Assignment: %s", err)
 	}
 	d.SetId(orgAssignment.IpSpaceOrgAssignment.ID)
 

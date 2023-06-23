@@ -65,7 +65,7 @@ func resourceVcdIpAllocation() *schema.Resource {
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "IP address or CIDR",
 			},
 			"used_by_id": {
 				Type:        schema.TypeString,
@@ -75,7 +75,7 @@ func resourceVcdIpAllocation() *schema.Resource {
 			"allocation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Allocation date in  ISO 8601 format (e.g. 2023-06-07T09:57:58.721Z)",
+				Description: "Allocation date in ISO 8601 format (e.g. 2023-06-07T09:57:58.721Z)",
 			},
 			"ip": {
 				Type:        schema.TypeString,

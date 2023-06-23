@@ -3,13 +3,9 @@
 package vcd
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
@@ -101,8 +97,6 @@ func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "ip_address"),
 
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.using-public-prefix", "id"),
-					// sleepTester(5*time.Minute),
-					// stateDumper(),
 				),
 			},
 			{
@@ -148,8 +142,6 @@ func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "ip_address"),
 
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.using-public-prefix", "id"),
-					// sleepTester(5*time.Minute),
-					// stateDumper(),
 				),
 			},
 			{
@@ -449,9 +441,7 @@ data "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
   org_id      = data.vcd_org.org1.id
   ip_space_id = vcd_ip_space.space1.id
   type        = "FLOATING_IP"
-  #usage_state = "USED_MANUAL"
-  #description = "manually used floating IP"
-  ip_address = vcd_ip_space_ip_allocation.public-floating-ip-manual.ip_address
+  ip_address  = vcd_ip_space_ip_allocation.public-floating-ip-manual.ip_address
 
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
@@ -460,7 +450,6 @@ data "vcd_ip_space_ip_allocation" "public-ip-prefix" {
   org_id        = data.vcd_org.org1.id
   ip_space_id   = vcd_ip_space.space1.id
   type          = "IP_PREFIX"
-  #prefix_length = 30
 
   ip_address = vcd_ip_space_ip_allocation.public-ip-prefix.ip_address
 
@@ -477,28 +466,8 @@ data "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
   org_id        = data.vcd_org.org1.id
   ip_space_id   = vcd_ip_space.space1.id
   type          = "IP_PREFIX"
-  #prefix_length = 30
-  #usage_state = "USED_MANUAL"
-  #description = "manually used IP Prefix"
-
-  ip_address = vcd_ip_space_ip_allocation.public-ip-prefix-manual.ip_address
+  ip_address    = vcd_ip_space_ip_allocation.public-ip-prefix-manual.ip_address
 
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 `
-
-func sleepTester(d time.Duration) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Printf("sleeping %s\n", d.String())
-		time.Sleep(d)
-		fmt.Println("finished sleeping")
-		return nil
-	}
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
