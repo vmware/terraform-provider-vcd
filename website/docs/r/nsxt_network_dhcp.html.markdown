@@ -75,6 +75,17 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 
 ## Example Usage 3 (Routed Org VDC Network with RELAY mode)
 ```hcl
+resource "vcd_nsxt_edgegateway_dhcp_forwarding" "dhcp-forwarding" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  enabled = true
+
+  dhcp_servers = [
+    "65.43.21.0",
+    "fe80::abcd",
+  ]
+}
+
 resource "vcd_network_routed_v2" "net1" {
   org  = "cloud"
   vdc  = "nsxt-vdc-cloud"

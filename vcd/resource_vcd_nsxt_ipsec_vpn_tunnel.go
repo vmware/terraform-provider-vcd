@@ -260,40 +260,29 @@ func resourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create] error retrieving Edge Gateway: %s", err)
 	}
 
 	ipSecVpnConfig, err := getNsxtIpSecVpnTunnelType(d)
 	if err != nil {
-		return diag.Errorf("error getting NSX-T IPsec VPN Tunnel configuration type: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create] error getting NSX-T IPsec VPN Tunnel configuration type: %s", err)
 	}
 
 	createdIpSecVpnConfig, err := nsxtEdge.CreateIpSecVpnTunnel(ipSecVpnConfig)
 	if err != nil {
-		return diag.Errorf("error creating NSX-T IPsec VPN Tunnel configuration: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel create] error creating NSX-T IPsec VPN Tunnel configuration: %s", err)
 	}
 	// IPSec VPN Tunnel is already created - storing ID
 	d.SetId(createdIpSecVpnConfig.NsxtIpSecVpn.ID)
@@ -302,12 +291,12 @@ func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.Resource
 	if _, isSet := d.GetOk("security_profile_customization"); isSet {
 		tunnelProfileConfig, err := getNsxtIpSecVpnProfileTunnelConfigurationType(d)
 		if err != nil {
-			return diag.Errorf("error getting NSX-T IPsec VPN Tunnel Profile: %s", err)
+			return diag.Errorf("[nsx-t ipsec vpn tunnel create] error getting NSX-T IPsec VPN Tunnel Profile: %s", err)
 		}
 
 		_, err = createdIpSecVpnConfig.UpdateTunnelConnectionProperties(tunnelProfileConfig)
 		if err != nil {
-			return diag.Errorf("error setting VPN Tunnel Profile: %s", err)
+			return diag.Errorf("[nsx-t ipsec vpn tunnel create] error setting VPN Tunnel Profile: %s", err)
 		}
 
 	}
@@ -318,40 +307,29 @@ func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.Resource
 func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel update] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error retrieving Edge Gateway: %s", err)
 	}
 
 	existingIpSecVpnConfiguration, err := nsxtEdge.GetIpSecVpnTunnelById(d.Id())
 	if err != nil {
-		diag.Errorf("error retrieving existing NSX-T IPsec VPN Tunnel configuration: %s", err)
+		diag.Errorf("[nsx-t ipsec vpn tunnel update] error retrieving existing NSX-T IPsec VPN Tunnel configuration: %s", err)
 	}
 
 	ipSecVpnConfig, err := getNsxtIpSecVpnTunnelType(d)
 	if err != nil {
-		return diag.Errorf("error getting NSX-T IPsec VPN Tunnel configuration type: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error getting NSX-T IPsec VPN Tunnel configuration type: %s", err)
 	}
 	// Inject ID for update
 	ipSecVpnConfig.ID = d.Id()
@@ -372,21 +350,21 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 	// It will reset Security Profile to DEFAULT at the same shot if no customization exists in 'security_profile_customization'
 	updatedIpSecVpnConfiguration, err := existingIpSecVpnConfiguration.Update(ipSecVpnConfig)
 	if err != nil {
-		return diag.Errorf("error updating NSX-T IPsec VPN Tunnel configuration '%s': %s", ipSecVpnConfig.Name, err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel configuration '%s': %s", ipSecVpnConfig.Name, err)
 	}
 
 	// If Security Profile has change and it is being customized
 	if securityProfileHasChange && newSecurityProfile != nil {
 		ipSecTunnelProfileConfig, err := getNsxtIpSecVpnProfileTunnelConfigurationType(d)
 		if err != nil {
-			return diag.Errorf("error getting NSX-T IPsec VPN Tunnel Profile: %s", err)
+			return diag.Errorf("[nsx-t ipsec vpn tunnel update] error getting NSX-T IPsec VPN Tunnel Profile: %s", err)
 		}
 
 		// To set IPsec VPN Tunnel Connection Profile - it must be updated (HTTP PUT) with all the options configured
 		if ipSecTunnelProfileConfig != nil {
 			_, err = updatedIpSecVpnConfiguration.UpdateTunnelConnectionProperties(ipSecTunnelProfileConfig)
 			if err != nil {
-				return diag.Errorf("error updating NSX-T IPsec VPN Tunnel Security Profile: %s", err)
+				return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel Security Profile: %s", err)
 			}
 
 		}
@@ -444,23 +422,12 @@ func resourceVcdNsxtIpSecVpnTunnelRead(_ context.Context, d *schema.ResourceData
 func resourceVcdNsxtIpSecVpnTunnelDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t ipsec vpn tunnel create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t ipsec vpn tunnel delete] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)

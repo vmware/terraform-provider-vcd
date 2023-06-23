@@ -53,23 +53,12 @@ func resourceVcdNsxtEdgegatewayRateLimiting() *schema.Resource {
 func resourceVcdNsxtEdgegatewayRateLimitingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[rate limiting (QoS) create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[rate limiting (QoS) create/update] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
@@ -124,23 +113,12 @@ func resourceVcdNsxtEdgegatewayRateLimitingRead(ctx context.Context, d *schema.R
 func resourceVcdNsxtEdgegatewayRateLimitingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[rate limiting (QoS) delete] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[rate limiting (QoS) delete] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
@@ -161,7 +139,7 @@ func resourceVcdNsxtEdgegatewayRateLimitingDelete(ctx context.Context, d *schema
 
 // resourceVcdNsxtEdgegatewayRateLimitingImport imports rate limiting (QoS) configuration for NSX-T
 // Edge Gateway.
-// The import path for this resource is Edge Gateway. ID of the field is also Edge Gateway ID as it
+// The import path for this resource is Edge Gateway. ID of the field is also Edge Gateway ID as
 // rate limiting is a property of Edge Gateway, not a separate entity.
 func resourceVcdNsxtEdgegatewayRateLimitingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T Edge Gateway Rate limiting (QoS) import initiated")
