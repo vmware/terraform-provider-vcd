@@ -411,7 +411,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 
 	// This environment variable controls the execution of all remaining test cases.
 	// As client cache is disabled for the whole test, it can take a long time to run, specially if it also involves
-	// VM creation. By default, we only run the most typical use case.
+	// VM creation.
 	testAll := os.Getenv("TEST_VCD_METADATA_IGNORE")
 	if testAll != "" {
 		t.Run("filter by object type and specific key", func(_ *testing.T) {
