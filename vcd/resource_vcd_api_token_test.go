@@ -23,13 +23,13 @@ func TestAccVcdApiToken(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	filename := params["FileName"].(string)
-	t.Cleanup(deleteApiTokenFile(filename, t))
 
 	configText := templateFill(testAccVcdApiToken, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	t.Cleanup(deleteApiTokenFile(filename, t))
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resourceName := "vcd_api_token.custom"
@@ -54,7 +54,8 @@ const testAccVcdApiToken = `
 resource "vcd_api_token" "custom" {
   name = "{{.TokenName}}"		
 
-  file_name = "{{.FileName}}"
+  file_name        = "{{.FileName}}"
+  allow_token_file = true
 }
 `
 
@@ -63,7 +64,7 @@ func deleteApiTokenFile(filename string, t *testing.T) func() {
 	return func() {
 		err := os.Remove(filename)
 		if err != nil {
-			t.Fatalf("Failed to delete file: %s", err)
+			t.Errorf("Failed to delete file: %s", err)
 		}
 	}
 }
