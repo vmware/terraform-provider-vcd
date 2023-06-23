@@ -400,7 +400,16 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		})
 	}
 
-	// This environment variable controls the execution of all test cases.
+	t.Run("filter by key and value that match", func(_ *testing.T) {
+		testFunc(vcdClient, []map[string]string{
+			{
+				"key_regex":   "foo",
+				"value_regex": "bar",
+			},
+		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
+	})
+
+	// This environment variable controls the execution of all remaining test cases.
 	// As client cache is disabled for the whole test, it can take a long time to run, specially if it also involves
 	// VM creation. By default, we only run the most typical use case.
 	testAll := os.Getenv("TEST_VCD_METADATA_IGNORE")
@@ -478,15 +487,6 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 			}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 		})
 	}
-
-	t.Run("filter by key and value that match", func(_ *testing.T) {
-		testFunc(vcdClient, []map[string]string{
-			{
-				"key_regex":   "foo",
-				"value_regex": "bar",
-			},
-		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
-	})
 
 	postTestChecks(t)
 }
