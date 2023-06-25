@@ -28,13 +28,13 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "Org ID for IP Allocation",
 			},
 			"ip_space_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "IP Space ID for IP Allocation",
 			},
 			"type": {
 				Type:         schema.TypeString,
@@ -53,7 +53,7 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Can only be set when usage_state is set to 'USED_MANUAL'",
+				Description: "Custom description can only be set when usage_state is set to 'USED_MANUAL'",
 			},
 			"prefix_length": {
 				Type:        schema.TypeString,
@@ -132,10 +132,13 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(allocation[0].ID)
 	dSet(d, "ip_address", allocation[0].Value)
 
-	// Perform manual reservation if there is a request for USED_MANUAL
+	// Perform manual reservation if there is a request for USED_MANUAL (it always needs a separate
+	// API call)
 	// * UNUSED - the allocated IP is current not being used in the system.
-	// * USED - the allocated IP is currently in use in the system. An allocated IP address or IP Prefix is considered used if it is being used in network services such as NAT rule or in Org VDC network definition.
-	// * USED_MANUAL
+	// * USED - the allocated IP is currently in use in the system. An allocated IP address or IP
+	// Prefix is considered used if it is being used in network services such as NAT rule or in Org
+	// VDC network definition.
+	// * USED_MANUAL - manual usage reservation with custom description
 
 	// If user specified
 	usageState := d.Get("usage_state").(string)

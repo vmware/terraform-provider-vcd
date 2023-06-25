@@ -69,7 +69,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "uses_ip_spaces", "true"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
@@ -77,7 +76,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_custom_quota.test", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_range_quota", "6"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_prefix_quota.#", "2"),
@@ -98,7 +96,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "uses_ip_spaces", "true"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
@@ -106,7 +103,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_custom_quota.test", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_range_quota", "4"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_prefix_quota.#", "0"),
@@ -119,7 +115,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "uses_ip_spaces", "true"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
@@ -127,7 +122,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_custom_quota.test", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_range_quota", ""),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_prefix_quota.#", "0"),
@@ -140,7 +134,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "uses_ip_spaces", "true"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
@@ -148,7 +141,6 @@ func TestAccVcdIpSpaceCustomQuota(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
 					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
-
 					resource.TestCheckResourceAttrSet("vcd_ip_space_custom_quota.test", "id"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_range_quota", "23"),
 					resource.TestCheckResourceAttr("vcd_ip_space_custom_quota.test", "ip_prefix_quota.#", "2"),

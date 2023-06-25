@@ -142,7 +142,6 @@ func resourceVcdIpSpaceUplinkDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// External
 func resourceVcdIpSpaceUplinkImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] IP Space Uplink import initiated")
 

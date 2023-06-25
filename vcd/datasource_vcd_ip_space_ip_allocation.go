@@ -18,13 +18,13 @@ func datasourceVcdIpAllocation() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "Org ID",
 			},
 			"ip_space_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "IP Space ID",
 			},
 			"ip_address": {
 				Type:        schema.TypeString,
@@ -35,7 +35,7 @@ func datasourceVcdIpAllocation() *schema.Resource {
 			"type": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Edge gateway name in which NAT Rule is located",
+				Description: "Type of IP Allocation. One of 'FLOATING_IP' or 'IP_PREFIX'",
 			},
 			"description": {
 				Type:        schema.TypeString,

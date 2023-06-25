@@ -18,10 +18,10 @@ IP Spaces require VCD 10.4.1+ with NSX-T.
 
 ```hcl
 data "vcd_ip_space_ip_allocation" "ip-prefix" {
-  org_id        = data.vcd_org.org1.id
-  ip_space_id   = vcd_ip_space.space1.id
-  type          = "IP_PREFIX"
-  ip_address    = "192.168.1.1/24"
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "IP_PREFIX"
+  ip_address  = "192.168.1.1/24"
 }
 ```
 

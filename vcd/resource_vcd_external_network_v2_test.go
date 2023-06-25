@@ -992,6 +992,14 @@ data "vcd_network_direct" "net" {
 func TestAccVcdExternalNetworkV2NsxtIpSpace(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
 		"NsxtManager":         testConfig.Nsxt.Manager,

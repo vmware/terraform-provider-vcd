@@ -20,8 +20,8 @@ import (
 // Gateway (vcd_nsxt_edgegateway) backed by Provider Gateway (vcd_nsxt_external_network_v2). To set
 // custom quota, one does not need to create new Org Assignment entity, but rather find an existing
 // one based on IP Space ID and Org ID and update `CustomQuotas` parameter.
-// Due to this reason, delete operation also does not destroy the Assignment itself, but rather just
-// removes `CustomQuotas` parameter.
+// Due to this reason, delete operation also does not destroy the Org Assignment itself, but rather
+// just removes `CustomQuotas` parameter.
 func resourceVcdIpSpaceCustomQuota() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdIpSpaceCustomQuotaCreate,
@@ -98,9 +98,9 @@ func resourceVcdIpSpaceCustomQuotaCreateUpdate(ctx context.Context, d *schema.Re
 		return diag.Errorf("error getting IP Space by ID '%s': %s", ipSpaceId, err)
 	}
 
-	// The Custom Quota mechanism (or as it is called in IP Org Assignment) is being implicitly
-	// created when Edge Gateway (T1) backed by Provider Gateway (T0) with assigned uplinks.
-	// Instead of creating, one must find it and update Custom Quota values.
+	// The Custom Quota mechanism (or as it is called in API - Org Assignment) is being implicitly
+	// created when Edge Gateway (T1) backed by Provider Gateway (T0) with assigned uplinks. Instead
+	// of creating, one must find it and update Custom Quota values.
 	orgAssignment, err := ipSpace.GetOrgAssignmentByOrgId(orgId)
 	if err != nil {
 		return diag.Errorf("error finding Org Assignment during %s: %s", operation, err)
@@ -109,7 +109,7 @@ func resourceVcdIpSpaceCustomQuotaCreateUpdate(ctx context.Context, d *schema.Re
 	newOrgAssignmentConfig := getIpSpaceOrgAssignmentType(d, orgAssignment.IpSpaceOrgAssignment.ID, orgAssignment.IpSpaceOrgAssignment.IPSpaceType)
 	_, err = orgAssignment.Update(newOrgAssignmentConfig)
 	if err != nil {
-		return diag.Errorf("error updating custom quotas during %s: %s", operation, err)
+		return diag.Errorf("error updating Custom Quotas during %s: %s", operation, err)
 	}
 	d.SetId(orgAssignment.IpSpaceOrgAssignment.ID)
 
@@ -161,7 +161,7 @@ func resourceVcdIpSpaceCustomQuotaDelete(ctx context.Context, d *schema.Resource
 	orgAssignment.IpSpaceOrgAssignment.CustomQuotas = nil
 	_, err = orgAssignment.Update(orgAssignment.IpSpaceOrgAssignment)
 	if err != nil {
-		return diag.Errorf("error removing custom quotas: %s", err)
+		return diag.Errorf("error removing Custom Quotas: %s", err)
 	}
 
 	return nil

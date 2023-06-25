@@ -319,7 +319,7 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, know
 		newExtNet.Subnets = types.ExternalNetworkV2Subnets{Values: subnetSlice}
 	}
 
-	// perform some runtime validations to make use lives easier
+	// Additional user convenience validations
 	if usingIpSpace && len(newExtNet.Subnets.Values) > 0 {
 		return nil, fmt.Errorf("'ip_scope' should not be set when 'use_ip_spaces' is enabled")
 	}
