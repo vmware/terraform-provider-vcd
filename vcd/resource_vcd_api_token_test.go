@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,19 +14,22 @@ import (
 
 func TestAccVcdApiToken(t *testing.T) {
 	preTestChecks(t)
+	skipTestForServiceAccountAndApiToken(t)
 
 	var params = StringMap{
 		"TokenName": t.Name(),
 		"FileName":  t.Name(),
 	}
 	testParamsNotEmpty(t, params)
-	t.Cleanup(deleteApiTokenFile(params["FileName"].(string)))
+
+	filename := params["FileName"].(string)
 
 	configText := templateFill(testAccVcdApiToken, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	t.Cleanup(deleteApiTokenFile(filename, t))
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resourceName := "vcd_api_token.custom"
@@ -45,23 +49,29 @@ func TestAccVcdApiToken(t *testing.T) {
 	postTestChecks(t)
 }
 
+// #nosec G101 -- No hardcoded credentials here
 const testAccVcdApiToken = `
 resource "vcd_api_token" "custom" {
   name = "{{.TokenName}}"		
 
-  file_name = "{{.FileName}}"
+  file_name        = "{{.FileName}}"
+  allow_token_file = true
 }
 `
 
 // This is a helper function that attempts to remove created API token file no matter of the test outcome
-func deleteApiTokenFile(filename string) func() {
+func deleteApiTokenFile(filename string, t *testing.T) func() {
 	return func() {
-		os.Remove(filename)
+		err := os.Remove(filename)
+		if err != nil {
+			t.Errorf("Failed to delete file: %s", err)
+		}
 	}
 }
 
 func testCheckFileExists(filename string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		filename = filepath.Clean(filename)
 		_, err := os.ReadFile(filename)
 		if err != nil {
 			return err

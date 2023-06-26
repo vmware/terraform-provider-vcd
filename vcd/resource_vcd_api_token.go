@@ -14,7 +14,6 @@ import (
 func resourceVcdApiToken() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdApiTokenCreate,
-		UpdateContext: resourceVcdApiTokenUpdate,
 		ReadContext:   resourceVcdApiTokenRead,
 		DeleteContext: resourceVcdApiTokenDelete,
 		Importer: &schema.ResourceImporter{
@@ -30,15 +29,17 @@ func resourceVcdApiToken() *schema.Resource {
 			},
 			"file_name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
+				ForceNew:    true,
 				Description: "Name of the file that the API token will be saved to",
 			},
 			"allow_token_file": {
 				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Required: true,
+				ForceNew: true,
 				Description: "Set this to true if you understand the security risks of using" +
-					" API token files and would like to suppress the warnings",
+					" API token files and agree to creating them",
+				ValidateDiagFunc: AllowTokenFileIfIsBoolAndTrue(),
 			},
 		},
 	}
@@ -67,34 +68,13 @@ func resourceVcdApiTokenCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	filename := d.Get("file_name").(string)
-	allowTokenFile := d.Get("allow_token_file").(bool)
-
-	var diagnostics diag.Diagnostics
-	if !allowTokenFile {
-		diagnostics = append(diagnostics, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "The file " + filename + " should be considered sensitive information.",
-			Detail: "The file " + filename + " contains an API token which is " +
-				"usable by anyone to run operations to the current VCD. As such, it should be considered SENSITIVE INFORMATION. " +
-				"If you would like to remove this warning, add\n\n" + "	allow_token_file = true\n\nto the provider settings.",
-		})
-	}
-
-	if filename == "" {
-		return diag.Errorf("[API token create] file_name must be set on creation")
-	}
 
 	err = govcd.SaveApiTokenToFile(filename, vcdClient.Client.UserAgent, apiToken)
 	if err != nil {
 		return diag.Errorf("[API token create] error saving API token to file: %s", err)
 	}
 
-	return append(diagnostics, resourceVcdApiTokenRead(ctx, d, meta)...)
-}
-
-// There are no fields that can be updated after creation
-func resourceVcdApiTokenUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
+	return resourceVcdApiTokenRead(ctx, d, meta)
 }
 
 func resourceVcdApiTokenRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

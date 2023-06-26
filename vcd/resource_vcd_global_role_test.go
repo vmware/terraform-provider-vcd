@@ -13,7 +13,7 @@ import (
 func TestAccVcdGlobalRole(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	var globalRoleName = t.Name()
 	var globalRoleUpdateName = t.Name() + "-update"
 	var globalRoleDescription = "A long description containing some text."

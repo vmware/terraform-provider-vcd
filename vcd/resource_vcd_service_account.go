@@ -107,33 +107,34 @@ func resourceVcdServiceAccountCreate(ctx context.Context, d *schema.ResourceData
 	escapedRoleName := url.PathEscape(role.Role.Name)
 	formattedRole := "urn:vcloud:role:" + escapedRoleName
 
+	active := d.Get("active").(bool)
+	allowTokenFile := d.Get("allow_token_file").(bool)
+
+	if active && !allowTokenFile {
+		return diag.Diagnostics{
+			diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "The file " + filename + " should be considered sensitive information.",
+				Detail: "The file " + filename + " will contain the initial service account API " +
+					"and should be considered SENSITIVE INFORMATION. " +
+					"The token will be invalidated at the next use but a new one will be provided in the request's response. If you acknowledge this, add\n\n	allow_token_file = true\n\nto the provider settings.",
+			},
+		}
+	}
+
 	sa, err := vcdClient.CreateServiceAccount(org.Org.Name, saName, formattedRole, softwareId, softwareVersion, uri)
 	if err != nil {
 		return diag.Errorf("[Service Account create] error creating Service Account: %s", err)
 	}
 	d.SetId(sa.ServiceAccount.ID)
 
-	active := d.Get("active").(bool)
-	allowTokenFile := d.Get("allow_token_file").(bool)
 	useragent := vcdClient.Client.UserAgent
 	err = updateServiceAccountStatus(sa, active, filename, useragent)
 	if err != nil {
 		return diag.Errorf("[Service Account create] error changing Service Account status: %s", err)
 	}
 
-	var diagnostics diag.Diagnostics
-	if active && !allowTokenFile {
-		diagnostics = append(diagnostics, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "The file " + filename + " should be considered sensitive information.",
-			Detail: "The file " + filename + " containing the initial service account API " +
-				"HAS BEEN UPDATED with a freshly generated token. The initial token was invalidated and the " +
-				"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
-				"usable by anyone to run operations to the current VCD. As such, it should be considered SENSITIVE INFORMATION. " +
-				"If you would like to remove this warning, add\n\n" + "	allow_token_file = true\n\nto the provider settings.",
-		})
-	}
-	return append(resourceVcdServiceAccountRead(ctx, d, meta), diagnostics...)
+	return resourceVcdServiceAccountRead(ctx, d, meta)
 }
 
 func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -157,6 +158,31 @@ func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData
 	allowTokenFile := d.Get("allow_token_file").(bool)
 	filename := d.Get("file_name").(string)
 
+	if d.HasChange("active") {
+		// If 'allow_token_file' is set to false and the user wants to activate the service account,
+		// return an error with the message about the file containing sensitive information.
+		if active && !allowTokenFile {
+			return diag.Diagnostics{
+				diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "The file " + filename + " should be considered sensitive information.",
+					Detail: "The file " + filename + " will contain the initial service account API " +
+						"and should be considered SENSITIVE INFORMATION. " +
+						"The token will be invalidated at the next use but a new one will be provided in the request's response. If you acknowledge this, add\n\n	allow_token_file = true\n\nto the provider settings.",
+				},
+			}
+		}
+
+		if active && filename == "" {
+			return diag.Errorf("[Service Account update] filename must be set on account activation")
+		}
+		useragent := vcdClient.Client.UserAgent
+		err = updateServiceAccountStatus(sa, active, filename, useragent)
+		if err != nil {
+			return diag.Errorf("[Service Account update] error updating Service Account status: %s", err)
+		}
+	}
+
 	saConfig := &types.ServiceAccount{
 		SoftwareID:      softwareId,
 		SoftwareVersion: softwareVersion,
@@ -166,38 +192,12 @@ func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData
 		},
 	}
 
-	sa, err = sa.Update(saConfig)
+	_, err = sa.Update(saConfig)
 	if err != nil {
 		return diag.Errorf("[Service Account update] error updating Service Account: %s", err)
 	}
 
-	var diagnostics diag.Diagnostics
-	if d.HasChange("active") {
-		if active && filename == "" {
-			return diag.Errorf("[Service Account update] filename must be set on account activation")
-		}
-		useragent := vcdClient.Client.UserAgent
-		err = updateServiceAccountStatus(sa, active, filename, useragent)
-		if err != nil {
-			return diag.Errorf("[Service Account update] error updating Service Account status: %s", err)
-		}
-
-		// Output a warning during update if a service account was set to active with allow_token_file
-		// set to false
-		if active && !allowTokenFile {
-			diagnostics = append(diagnostics, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "The file " + filename + " should be considered sensitive information.",
-				Detail: "The file " + filename + " containing the initial service account API " +
-					"HAS BEEN UPDATED with a freshly generated token. The initial token was invalidated and the " +
-					"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
-					"usable by anyone to run operations to the current VCD. As such, it should be considered SENSITIVE INFORMATION. " +
-					"If you would like to remove this warning, add\n\n" + "	allow_token_file = true\n\nto the provider settings.",
-			})
-		}
-	}
-
-	return append(resourceVcdServiceAccountRead(ctx, d, meta), diagnostics...)
+	return resourceVcdServiceAccountRead(ctx, d, meta)
 }
 
 func updateServiceAccountStatus(sa *govcd.ServiceAccount, active bool, filename, useragent string) error {

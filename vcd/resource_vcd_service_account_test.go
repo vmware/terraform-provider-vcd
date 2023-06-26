@@ -12,7 +12,7 @@ import (
 
 func TestAccServiceAccount_SysOrg(t *testing.T) {
 	preTestChecks(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	skipIfNotSysAdmin(t)
 
 	params := StringMap{
@@ -46,7 +46,8 @@ func TestAccServiceAccount_SysOrg(t *testing.T) {
 		return
 	}
 
-	t.Cleanup(deleteApiTokenFile(t.Name()))
+	filename := params["FileName"].(string)
+	t.Cleanup(deleteApiTokenFile(filename, t))
 	resourceName := "vcd_service_account.sysadmin"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -126,14 +127,15 @@ resource "vcd_service_account" "sysadmin" {
   software_version = "{{.SoftwareVersionUpdated}}"
   uri              = "{{.UriUpdated}}"
 
-  active   = true
-  file_name = "{{.FileName}}"
+  active           = true
+  file_name        = "{{.FileName}}"
+  allow_token_file = true
 }
 `
 
 func TestAccServiceAccount_Org(t *testing.T) {
 	preTestChecks(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 
 	params := StringMap{
 		"SaName":                 t.Name(),
@@ -165,7 +167,8 @@ func TestAccServiceAccount_Org(t *testing.T) {
 		return
 	}
 
-	t.Cleanup(deleteApiTokenFile(params["FileName"].(string)))
+	filename := params["FileName"].(string)
+	t.Cleanup(deleteApiTokenFile(filename, t))
 	resourceName := "vcd_service_account.org_user"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -251,8 +254,9 @@ resource "vcd_service_account" "org_user" {
   software_version = "{{.SoftwareVersionUpdated}}"
   uri              = "{{.UriUpdated}}"
 
-  active   = true
-  file_name = "{{.FileName}}"
+  active           = true
+  file_name        = "{{.FileName}}"
+  allow_token_file = true
 }
 `
 
