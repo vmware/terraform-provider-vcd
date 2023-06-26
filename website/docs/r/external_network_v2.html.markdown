@@ -35,7 +35,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 
   use_ip_spaces = true
   # optional argument to dedicate network to a particular Org
-  dedicated_org_id = data.vcd_org.org1.id 
+  dedicated_org_id = data.vcd_org.org1.id
 }
 ```
 

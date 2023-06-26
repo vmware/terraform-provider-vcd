@@ -28,8 +28,8 @@ resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
   org             = "v42"
   edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
 
-  name        = "TestAccVcdIpSpaceIntegration"
-  rule_type   = "DNAT"
+  name      = "IP Space integration"
+  rule_type = "DNAT"
 
   # Using Floating IP From IP Space
   external_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
@@ -86,8 +86,8 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
   ip_space_id   = vcd_ip_space.space1.id
   type          = "IP_PREFIX"
   prefix_length = 30
-  usage_state = "USED_MANUAL"
-  description = "manually used IP Prefix"
+  usage_state   = "USED_MANUAL"
+  description   = "manually used IP Prefix"
 
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
