@@ -42,3 +42,5 @@ The following arguments are supported:
 
 All the supported attributes are defined in the
 [Defined Interface resource](/providers/vmware/vcd/latest/docs/resources/rde_interface#argument-reference).
+
+~> Note that `behavior` blocks are only available since *v3.10+*

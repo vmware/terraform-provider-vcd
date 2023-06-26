@@ -52,6 +52,40 @@ func resourceVcdRdeInterface() *schema.Resource {
 				Computed:    true,
 				Description: "True if the Runtime Defined Entity Interface cannot be modified",
 			},
+			"behavior": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "TODO",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Name of the Defined Interface Behavior",
+						},
+						"description": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Description of the Defined Interface Behavior",
+						},
+						"execution": {
+							Type:        schema.TypeMap,
+							Required:    true,
+							Description: "Execution map of the Defined Interface Behavior",
+						},
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Defined Interface Behavior ID",
+						},
+						"ref": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Behavior invocation reference to be used for polymorphic behavior invocations",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -92,6 +126,27 @@ func genericVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta 
 	}
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if meta.(*VCDClient).Client.IsSysAdmin {
+		behaviors, err := di.GetAllBehaviors(nil)
+		if err != nil {
+			return diag.Errorf("could not retrieve Behaviors for the Runtime Defined Entity Interface %s: %s", di.DefinedInterface.ID, err)
+		}
+		var behaviorsAttr = make([]map[string]interface{}, len(behaviors))
+		for i, behavior := range behaviors {
+			behaviorsAttr[i] = map[string]interface{}{
+				"id":          behavior.Behavior.ID,
+				"name":        behavior.Behavior.Name,
+				"description": behavior.Behavior.Description,
+				"ref":         behavior.Behavior.Ref,
+				"execution":   behavior.Behavior.Execution,
+			}
+		}
+		err = d.Set("behavior", behaviorsAttr)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	dSet(d, "vendor", di.DefinedInterface.Vendor)

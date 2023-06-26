@@ -48,10 +48,25 @@ The following arguments are supported:
 * `nss` - (Required) A unique namespace associated with the RDE Interface. Only alphanumeric characters, underscores and hyphens allowed.
 * `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the RDE Interface.
+* `behavior` - (Optional; *v3.10+*) A block that defines a RDE Interface Behavior. Only System Administrators can read and manage Behaviors.
+  See [Behaviors](#behaviors) for more information.
 
 ## Attribute Reference
 
 * `readonly` - Specifies if the RDE Interface can be only read.
+
+## Behaviors
+
+-> Available since v3.10+
+
+You can define Behaviors on a RDE Interface with one or more of the `behavior` blocks, which contain the following
+attributes:
+
+* `name` - (Required) Name of the Behavior
+* `execution` - (Required) A map that defines the execution elements of the behavior
+* `description` - (Optional) Description of the Behavior
+* `ìd` - ID of the behavior. This is auto-generated and read-only
+* `ref` - The Behavior invocation reference to be used for polymorphic behavior invocations. This is auto-generated and read-only
 
 ## Importing
 
