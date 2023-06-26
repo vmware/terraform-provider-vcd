@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func datasourceVcdIpSpaceUplink() *schema.Resource {
@@ -55,9 +56,15 @@ func datasourceVcdIpSpaceUplinkRead(ctx context.Context, d *schema.ResourceData,
 	externalNetworkId := d.Get("external_network_id").(string)
 	name := d.Get("name").(string)
 
+	// Check if external network exists
+	_, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, name)
+	if err != nil {
+		return diag.Errorf("error retrieving External Network by name '%s': %s", name, err)
+	}
+
 	ipSpaceUplink, err := vcdClient.GetIpSpaceUplinkByName(externalNetworkId, name)
 	if err != nil {
-		return diag.Errorf("error finding IP Space Uplink by Name '%s': %s", d.Id(), err)
+		return diag.Errorf("error finding IP Space Uplink by Name '%s': %s", name, err)
 	}
 
 	d.SetId(ipSpaceUplink.IpSpaceUplink.ID)

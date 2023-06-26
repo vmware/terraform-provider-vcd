@@ -46,7 +46,24 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 36.2",
 				datasourceName:        "vcd_nsxt_edgegateway_qos_profile",
 			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_custom_quota",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_ip_allocation",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_uplink",
+			},
 		}
+		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
 		for _, constraintSkip := range skipOnVersionsVersionsOlderThan {
 			if dataSourceName == constraintSkip.datasourceName && vcdClient.Client.APIVCDMaxVersionIs(constraintSkip.skipVersionConstraint) {
@@ -195,11 +212,17 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 
 		if (dataSourceName == "vcd_org_saml" ||
 			dataSourceName == "vcd_org_saml_metadata" ||
-			dataSourceName == "vcd_org_ldap") &&
+			dataSourceName == "vcd_org_ldap" ||
+			dataSourceName == "vcd_ip_space_custom_quota" ||
+			dataSourceName == "vcd_ip_space_ip_allocation") &&
 			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
-			return templateFields
+			// return templateFields
+		}
+
+		if dataSourceName == "vcd_ip_space_ip_allocation" && mandatoryFields[fieldIndex] == "type" {
+			templateFields = templateFields + `type = "FLOATING_IP"` + "\n"
 		}
 
 		// vcd_portgroup requires portgroup  type
@@ -323,6 +346,10 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `version = "9.9.9"` + "\n"
 		case "rde_type_id":
 			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:donotexist:donotexist:9.9.9"` + "\n"
+		case "ip_space_id":
+			templateFields = templateFields + `ip_space_id = "urn:vcloud:ipSpace:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
+		case "external_network_id":
+			templateFields = templateFields + `external_network_id = "urn:vcloud:network:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
 		}
 	}
 
