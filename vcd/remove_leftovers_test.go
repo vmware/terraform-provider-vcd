@@ -337,11 +337,13 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	}
 
 	// --------------------------------------------------------------
-	// IP Allocations and IP Spaces
+	// IP Allocations and IP Spaces (VCD 10.4.1+)
 	// --------------------------------------------------------------
-	err = removeLeftoversIpSpacesAndAllocations(govcdClient, true)
-	if err != nil {
-		return err
+	if govcdClient.Client.APIVCDMaxVersionIs(">= 37.1") {
+		err = removeLeftoversIpSpacesAndAllocations(govcdClient, true)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
