@@ -35,7 +35,7 @@ resource "vcd_ip_space_custom_quota" "q1" {
   }
 
   # Custom Quota can only be configured once Edge Gateway is created
-  depends_on = [ vcd_nsxt_edgegateway.ip-space ]
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 ```
 
