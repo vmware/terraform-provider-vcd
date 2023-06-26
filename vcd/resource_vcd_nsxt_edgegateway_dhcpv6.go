@@ -101,10 +101,6 @@ func resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx context.Context, d *schema
 	return resourceVcdNsxtEdgegatewayDhcpV6Read(ctx, d, meta)
 }
 
-// func resourceVcdNsxtEdgegatewayDhcpV6Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-// 	return resourceVcdNsxtEdgegatewayDhcpV6Read(ctx, d, meta)
-// }
-
 func resourceVcdNsxtEdgegatewayDhcpV6Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
