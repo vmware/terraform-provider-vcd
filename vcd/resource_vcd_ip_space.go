@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -541,9 +540,7 @@ func getIpPrefixSequenceIdFromFromPreviousState(d *schema.ResourceData, firstIp,
 	ipPrefixesSlice := ipPrefixOldSchema.List()
 
 	util.Logger.Printf("[TRACE] Looking for ID of 'ip_prefix' with first_ip '%s', prefix_length '%s' and prefix_count '%s'\n", firstIp, prefixLength, prefixCount)
-
-	search := make(PairList, 0)
-
+	var foundPartialId string
 	for ipPrefixIndex := range ipPrefixesSlice {
 		singleIpPrefix := ipPrefixesSlice[ipPrefixIndex]
 		ipPrefixMap := singleIpPrefix.(map[string]interface{})
@@ -561,54 +558,19 @@ func getIpPrefixSequenceIdFromFromPreviousState(d *schema.ResourceData, firstIp,
 				return ipPrefixMap["id"]
 			}
 
-			points := 0
-			matchDetail := make([]string, 0)
 			if ipPrefixMap["first_ip"] == firstIp {
-				points++
-				matchDetail = append(matchDetail, fmt.Sprintf("first_ip '%s'(got) '%s' (searched)", ipPrefixMap["first_ip"], firstIp))
+				util.Logger.Printf("[TRACE] Found partial match for ID '%s' of 'ip_prefix' with first_ip '%s'. 'prefix_length' and 'prefix_count' are ignored'\n", ipPrefixMap["id"], firstIp)
+				foundPartialId = ipPrefixMap["id"]
 			}
-
-			// Matching on prefix_length alone is risky - there may be many elements with the same prefix_length
-			// if ipPrefixMap["prefix_length"] == prefixLength {
-			// 	points++
-			// 	matchDetail = append(matchDetail, fmt.Sprintf("prefix_length '%s'(got) '%s' (searched)", ipPrefixMap["prefix_length"], prefixLength))
-			// }
-
-			// if ipPrefixMap["prefix_count"] == prefixCount {
-			// 	points++
-			// 	matchDetail = append(matchDetail, fmt.Sprintf("prefix_count '%s'(got) '%s' (searched)", ipPrefixMap["prefix_count"], prefixCount))
-			// }
-
-			// Add value to results which contains at least one match
-			if points > 0 {
-				search = append(search, Pair{Key: ipPrefixMap["id"], Value: points, MatchDetail: matchDetail})
-			}
-
 		}
-
 	}
 
-	// An exact match was not found attempt to find an ID with best match
-	sort.Sort(sort.Reverse(search))
-	if len(search) > 0 {
-		util.Logger.Printf("[TRACE] Found a partial match for 'ip_prefix' ID '%s' with '%d' points [criteria: %s]\n",
-			search[0].Key, search[0].Value, strings.Join(search[0].MatchDetail, ","))
-		return search[0].Key
+	if foundPartialId != "" {
+		util.Logger.Printf("[TRACE] Returning partial match for ID '%s' of 'ip_prefix' with first_ip '%s'. 'prefix_length' and 'prefix_count' are ignored'\n", foundPartialId, firstIp)
+		return foundPartialId
 	}
 
 	util.Logger.Printf("[TRACE] Not found 'ip_prefix' ID \n")
 	// No ID was found at all
 	return ""
 }
-
-type Pair struct {
-	Key         string
-	Value       int
-	MatchDetail []string
-}
-
-type PairList []Pair
-
-func (p PairList) Len() int           { return len(p) }
-func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
-func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
