@@ -45,7 +45,7 @@ resource "vcd_external_network_v2" "provider-gateway" {
 }
 
 resource "vcd_ip_space_uplink" "u1" {
-  name                = "TestAccVcdIpSpaceUplink-updated"
+  name                = "uplink"
   description         = "uplink number one"
   external_network_id = vcd_external_network_v2.provider-gateway.id
   ip_space_id         = vcd_ip_space.space1.id

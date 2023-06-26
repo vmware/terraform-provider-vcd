@@ -19,7 +19,6 @@ This resource supports **IP Spaces** - read [IP Spaces guide
 page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/ip_spaces) for more
 information.
 
-
 ## Example Usage (Simple case)
 
 ```hcl
@@ -73,7 +72,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   external_network_id = data.vcd_external_network_v2.ip-space-provider-gw.id
 }
 ```
-
 
 <a id="subnet-example"></a>
 ## Example Usage (Using custom Edge Cluster and multiple subnets)
