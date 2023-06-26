@@ -261,6 +261,7 @@ func getNsxtAlbVirtualServiceType(d *schema.ResourceData, vcdClient *VCDClient) 
 		ServiceEngineGroupRef: types.OpenApiReference{ID: d.Get("service_engine_group_id").(string)},
 		LoadBalancerPoolRef:   types.OpenApiReference{ID: d.Get("pool_id").(string)},
 		VirtualIpAddress:      d.Get("virtual_ip_address").(string),
+		IPv6VirtualIpAddress:  d.Get("ipv6_virtual_ip_address").(string),
 	}
 	// Certificate must only be set if it is specified as the API throws error
 	if d.Get("ca_certificate_id").(string) != "" {
@@ -319,6 +320,7 @@ func setNsxtAlbVirtualServiceData(d *schema.ResourceData, albVirtualService *typ
 	dSet(d, "pool_id", albVirtualService.LoadBalancerPoolRef.ID)
 	dSet(d, "service_engine_group_id", albVirtualService.ServiceEngineGroupRef.ID)
 	dSet(d, "virtual_ip_address", albVirtualService.VirtualIpAddress)
+	dSet(d, "ipv6_virtual_ip_address", albVirtualService.IPv6VirtualIpAddress)
 	dSet(d, "application_profile_type", albVirtualService.ApplicationProfile.Type)
 
 	// Optional fields
