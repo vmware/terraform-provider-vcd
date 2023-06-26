@@ -57,9 +57,9 @@ func datasourceVcdIpSpaceUplinkRead(ctx context.Context, d *schema.ResourceData,
 	name := d.Get("name").(string)
 
 	// Check if external network exists
-	_, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, name)
+	_, err := govcd.GetExternalNetworkV2ById(vcdClient.VCDClient, externalNetworkId)
 	if err != nil {
-		return diag.Errorf("error retrieving External Network by name '%s': %s", name, err)
+		return diag.Errorf("error retrieving External Network by ID '%s': %s", externalNetworkId, err)
 	}
 
 	ipSpaceUplink, err := vcdClient.GetIpSpaceUplinkByName(externalNetworkId, name)
