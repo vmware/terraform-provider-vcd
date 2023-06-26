@@ -72,6 +72,11 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 	}
 }
 
+// String satisfies stringer interface (support fmt.Printf...)
+func (c *testCachedFieldValue) String() string {
+	return c.fieldValue
+}
+
 // testCheckMatchOutput allows to match output field with regexp
 func testCheckMatchOutput(name string, r *regexp.Regexp) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
