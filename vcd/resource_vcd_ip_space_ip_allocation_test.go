@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -847,12 +846,5 @@ func importCustomIpAllocationFunc(path []string, cachedField *testCachedFieldVal
 			fmt.Printf("# Import path '%s'\n", completePath)
 		}
 		return completePath, nil
-	}
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
 	}
 }

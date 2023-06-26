@@ -672,19 +672,6 @@ func deleteVapp(vdc *govcd.Vdc, vappRef *types.ResourceReference) error {
 	return task.WaitTaskCompletion()
 }
 
-func deleteNetwork(org *govcd.Org, vdc *govcd.Vdc, netRef *types.QueryResultOrgVdcNetworkRecordType) error {
-	network, err := vdc.GetOrgVdcNetworkByHref(netRef.HREF)
-	if err != nil {
-		return fmt.Errorf("error retrieving Org Network %s/%s: %s", vdc.Vdc.Name, netRef.Name, err)
-	}
-	fmt.Printf("\t\t REMOVING network %s/%s\n", vdc.Vdc.Name, network.OrgVDCNetwork.Name)
-	task, err := network.Delete()
-	if err != nil {
-		return fmt.Errorf("error initiating network '%s' deletion: %s", network.OrgVDCNetwork.Name, err)
-	}
-	return task.WaitTaskCompletion()
-}
-
 func deleteMediaItem(catalog *govcd.Catalog, mediaRec *types.MediaRecordType) error {
 	media, err := catalog.GetMediaByHref(mediaRec.HREF)
 	if err != nil {
