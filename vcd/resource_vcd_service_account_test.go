@@ -127,8 +127,9 @@ resource "vcd_service_account" "sysadmin" {
   software_version = "{{.SoftwareVersionUpdated}}"
   uri              = "{{.UriUpdated}}"
 
-  active   = true
-  file_name = "{{.FileName}}"
+  active           = true
+  file_name        = "{{.FileName}}"
+  allow_token_file = true
 }
 `
 
@@ -253,8 +254,9 @@ resource "vcd_service_account" "org_user" {
   software_version = "{{.SoftwareVersionUpdated}}"
   uri              = "{{.UriUpdated}}"
 
-  active   = true
-  file_name = "{{.FileName}}"
+  active           = true
+  file_name        = "{{.FileName}}"
+  allow_token_file = true
 }
 `
 
