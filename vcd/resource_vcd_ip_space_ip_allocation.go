@@ -271,8 +271,8 @@ func resourceVcdIpAllocationDelete(ctx context.Context, d *schema.ResourceData, 
 func resourceVcdIpAllocationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] IP Allocation import initiated")
 
-	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) != 3 {
+	resourceURI := strings.SplitN(d.Id(), ImportSeparator, 4)
+	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.ip-space-name.ip-allocation-type.ip-allocation-ip")
 	}
 
@@ -284,9 +284,9 @@ func resourceVcdIpAllocationImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("error retrieving Org '%s': %s", orgName, err)
 	}
 
-	ipSpace, err := vcdClient.GetIpSpaceByNameAndOrgId(ipSpaceName, org.Org.ID)
+	ipSpace, err := vcdClient.GetIpSpaceByName(ipSpaceName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving IP Space IP Allocation %s: %s ", ipSpaceName, err)
+		return nil, fmt.Errorf("error retrieving IP Space %s: %s ", ipSpaceName, err)
 	}
 
 	ipAllocation, err := org.GetIpSpaceAllocationByTypeAndValue(ipSpace.IpSpace.ID, ipAllocationType, ipAllocationIp, nil)
