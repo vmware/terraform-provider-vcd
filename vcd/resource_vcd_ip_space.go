@@ -4,18 +4,26 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 var ipSpaceIpRangeRange = &schema.Resource{
 	Schema: map[string]*schema.Schema{
+		"id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of IP Range",
+		},
 		"start_address": {
 			Type:         schema.TypeString,
 			Required:     true,
@@ -50,6 +58,11 @@ var ipPrefixes = &schema.Resource{
 
 var ipSpacePrefix = &schema.Resource{
 	Schema: map[string]*schema.Schema{
+		"id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of IP Prefix",
+		},
 		"first_ip": {
 			Type:        schema.TypeString,
 			Required:    true,
@@ -148,7 +161,7 @@ func resourceVcdIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta 
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space creation initiated")
 
-	ipSpaceConfig, err := getIpSpaceType(d)
+	ipSpaceConfig, err := getIpSpaceType(d, "create")
 	if err != nil {
 		return diag.Errorf("could not get IP Space type: %s", err)
 	}
@@ -157,6 +170,8 @@ func resourceVcdIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("error creating IP Space: %s", err)
 	}
+
+	d.GetRawState()
 
 	d.SetId(createdIpSpace.IpSpace.ID)
 
@@ -167,7 +182,7 @@ func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space update initiated")
 
-	ipSpaceConfig, err := getIpSpaceType(d)
+	ipSpaceConfig, err := getIpSpaceType(d, "update")
 	if err != nil {
 		return diag.Errorf("could not get IP Space type: %s", err)
 	}
@@ -181,6 +196,16 @@ func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	_, err = ipSpace.Update(ipSpaceConfig)
 	if err != nil {
 		return diag.Errorf("error updating IP Space: %s", err)
+	}
+
+	// Operations on IP Space related entities trigger a separate task
+	// 'ipSpaceUplinkRouteAdvertisementSync' which is better to finish before any other operations
+	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
+	// Sleeping a few seconds because the task is not immediately seen sometimes.
+	time.Sleep(3 * time.Second)
+	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceVcdIpSpaceRead(ctx, d, meta)
@@ -219,6 +244,16 @@ func resourceVcdIpSpaceDelete(ctx context.Context, d *schema.ResourceData, meta 
 	err = ipSpace.Delete()
 	if err != nil {
 		return diag.Errorf("error deleting IP space by ID '%s': %s", d.Id(), err)
+	}
+
+	// Operations on IP Space related entities trigger a separate task
+	// 'ipSpaceUplinkRouteAdvertisementSync' which is better to finish before any other operations
+	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
+	// Sleeping a few seconds because the task is not immediately seen sometimes.
+	time.Sleep(3 * time.Second)
+	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
@@ -269,7 +304,7 @@ func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta 
 	return []*schema.ResourceData{d}, nil
 }
 
-func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
+func getIpSpaceType(d *schema.ResourceData, operation string) (*types.IpSpace, error) {
 	ipSpace := &types.IpSpace{
 		Name:                      d.Get("name").(string),
 		Description:               d.Get("description").(string),
@@ -294,13 +329,19 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 		for ipRangeIndex := range ipRangesSlice {
 			ipRangeStrings := convertToStringMap(ipRangesSlice[ipRangeIndex].(map[string]interface{}))
 
+			// This is important for update - an ID of IP range must be supplied to prevent
+			// recreating an IP Space
+			if operation == "update" {
+				foundIdInState := getIpRangeIdFromFromPreviousState(d, ipRangeStrings["start_address"], ipRangeStrings["end_address"])
+				ipSpace.IPSpaceRanges.IPRanges[ipRangeIndex].ID = foundIdInState
+			}
+
 			ipSpace.IPSpaceRanges.IPRanges[ipRangeIndex].StartIPAddress = ipRangeStrings["start_address"]
 			ipSpace.IPSpaceRanges.IPRanges[ipRangeIndex].EndIPAddress = ipRangeStrings["end_address"]
 		}
 	}
 	// EOF IP Ranges
 
-	// IP Prefixes (`ip_prefix` blocks)
 	ipPrefixes := d.Get("ip_prefix").(*schema.Set)
 	ipPrefixesSlice := ipPrefixes.List()
 
@@ -330,11 +371,19 @@ func getIpSpaceType(d *schema.ResourceData) (*types.IpSpace, error) {
 			prefixLengthInt, _ := strconv.Atoi(ipPrefixMap["prefix_length"])
 			prefixLengthCountInt, _ := strconv.Atoi(ipPrefixMap["prefix_count"])
 
-			ipSpacePrefixType.IPPrefixSequence = append(ipSpacePrefixType.IPPrefixSequence, types.IPPrefixSequence{
+			anotherPrefix := types.IPPrefixSequence{
 				StartingPrefixIPAddress: ipPrefixMap["first_ip"],
 				PrefixLength:            prefixLengthInt,
 				TotalPrefixCount:        prefixLengthCountInt,
-			})
+			}
+
+			// Update operation requires the ID of prefix, otherwise it recreates the IP sequence
+			if operation == "update" {
+				foundId := getIpPrefixSequenceIdFromFromPreviousState(d, ipPrefixMap["first_ip"], ipPrefixMap["prefix_length"], ipPrefixMap["prefix_count"])
+				anotherPrefix.ID = foundId
+			}
+
+			ipSpacePrefixType.IPPrefixSequence = append(ipSpacePrefixType.IPPrefixSequence, anotherPrefix)
 		}
 		// EOF Nested prefix definitions within IP Prefixes structure (`ip_prefix.X.prefix` blocks)
 
@@ -387,6 +436,10 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 			singlePrefixSequence["prefix_length"] = prefixLengthStr
 			singlePrefixSequence["prefix_count"] = prefixCountStr
 
+			// Storing ID of this particular prefix which is required during update to prevent
+			// recreating IP Prefix
+			singlePrefixSequence["id"] = seqVal.ID
+
 			prefSequence[ii] = singlePrefixSequence
 		}
 
@@ -407,6 +460,9 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 
 		singleRange["start_address"] = val.StartIPAddress
 		singleRange["end_address"] = val.EndIPAddress
+		// Storing ID of this particular range which is required during update to prevent recreating
+		// IP range
+		singleRange["id"] = val.ID
 
 		ipRangesInterface[i] = singleRange
 	}
@@ -425,3 +481,134 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 
 	return nil
 }
+
+// getIpRangeIdFromFromPreviousState helps to find ip_range ID from previous state (because the current does not have it) and match it for current configuration
+func getIpRangeIdFromFromPreviousState(d *schema.ResourceData, startAddress, endAddress string) string {
+	ipRangesOld, _ := d.GetChange("ip_range")
+	ipRangesOldSchema := ipRangesOld.(*schema.Set)
+	ipRangesSlice := ipRangesOldSchema.List()
+
+	util.Logger.Printf("[TRACE] Looking for ID of 'ip_range' with start_address '%s' and end_address '%s'\n", startAddress, endAddress)
+
+	// Looping over ip_range definitions from state which contained all values and also stored ID. It looks for this ID with 2 priority levels:
+	// 1. An exact match with the same start and end IP addresses is found - return it immediately
+	// as this particular block has not changed at all for update operation
+	// 2. A partial match - if at least the start_address or end_address remained the same - cache
+	// this ID as it is the best bet to capture it if nothing was found
+	//
+	// The problem remains that one might be changing both - start and end IP addresses. In such
+	// case this is a completely different configuration from Terraform TypeSet and there is no way
+	// to match previous and current values
+
+	var foundPartialId string
+	for ipRangeIndex := range ipRangesSlice {
+		ipRangeStrings := convertToStringMap(ipRangesSlice[ipRangeIndex].(map[string]interface{}))
+
+		// If both - start and end IP addresses remained the same - we have found the ID and can
+		// return it immediatelly
+		if ipRangeStrings["start_address"] == startAddress && ipRangeStrings["end_address"] == endAddress {
+			util.Logger.Printf("[TRACE] Found exact match for 'ip_range' with start_address '%s' and end_address '%s' - ID is '%s'\n",
+				startAddress, endAddress, ipRangeStrings["id"])
+			return ipRangeStrings["id"]
+		}
+
+		// Search for a partial match where either start_address or end_address matches
+		if ipRangeStrings["start_address"] == startAddress || ipRangeStrings["end_address"] == endAddress {
+			util.Logger.Printf("[TRACE] Found a partial match for 'ip_range' with start_address '%s' (looked) '%s' (found) and end_address '%s' (looked) '%s' (found) - ID is '%s'. "+
+				"Storing until search finalizes.",
+				startAddress, ipRangeStrings["start_address"], endAddress, ipRangeStrings["end_address"], ipRangeStrings["id"])
+			foundPartialId = ipRangeStrings["id"]
+		}
+	}
+
+	if foundPartialId != "" {
+		util.Logger.Printf("[TRACE] Returning partial match for 'ip_range' with start_address '%s' and end_address '%s'  - ID is '%s'.",
+			startAddress, endAddress, foundPartialId)
+		return foundPartialId
+	}
+
+	util.Logger.Printf("[TRACE] No matches found for 'ip_range' with start_address '%s' and end_address '%s'  - ID is '%s'.",
+		startAddress, endAddress, foundPartialId)
+
+	return ""
+}
+
+// getIpPrefixSequenceIdFromFromPreviousState helps to find ip_prefix ID from previous state
+// (because the current does not have it) and match it for current configuration
+func getIpPrefixSequenceIdFromFromPreviousState(d *schema.ResourceData, firstIp, prefixLength, prefixCount string) string {
+	ipPrefixOld, _ := d.GetChange("ip_prefix")
+	ipPrefixOldSchema := ipPrefixOld.(*schema.Set)
+	ipPrefixesSlice := ipPrefixOldSchema.List()
+
+	util.Logger.Printf("[TRACE] Looking for ID of 'ip_prefix' with first_ip '%s', prefix_length '%s' and prefix_count '%s'\n", firstIp, prefixLength, prefixCount)
+
+	search := make(PairList, 0)
+
+	for ipPrefixIndex := range ipPrefixesSlice {
+		singleIpPrefix := ipPrefixesSlice[ipPrefixIndex]
+		ipPrefixMap := singleIpPrefix.(map[string]interface{})
+
+		// Nested prefix definitions within IP Prefixes structure (`ip_prefix.X.prefix` blocks)
+		nestedPrefixSet := ipPrefixMap["prefix"].(*schema.Set)
+		nestedPrefixSlice := nestedPrefixSet.List()
+
+		for nestedPrefixSliceIndex := range nestedPrefixSlice {
+			ipPrefixMap := convertToStringMap(nestedPrefixSlice[nestedPrefixSliceIndex].(map[string]interface{}))
+
+			// Exact match
+			if ipPrefixMap["first_ip"] == firstIp && ipPrefixMap["prefix_length"] == prefixLength && ipPrefixMap["prefix_count"] == prefixCount {
+				util.Logger.Printf("[TRACE] Found exact match for ID '%s' of 'ip_prefix' with first_ip '%s', prefix_length '%s' and prefix_count '%s'\n", ipPrefixMap["id"], firstIp, prefixLength, prefixCount)
+				return ipPrefixMap["id"]
+			}
+
+			points := 0
+			matchDetail := make([]string, 0)
+			if ipPrefixMap["first_ip"] == firstIp {
+				points++
+				matchDetail = append(matchDetail, fmt.Sprintf("first_ip '%s'(got) '%s' (searched)", ipPrefixMap["first_ip"], firstIp))
+			}
+
+			// Matching on prefix_length alone is risky - there may be many elements with the same prefix_length
+			// if ipPrefixMap["prefix_length"] == prefixLength {
+			// 	points++
+			// 	matchDetail = append(matchDetail, fmt.Sprintf("prefix_length '%s'(got) '%s' (searched)", ipPrefixMap["prefix_length"], prefixLength))
+			// }
+
+			// if ipPrefixMap["prefix_count"] == prefixCount {
+			// 	points++
+			// 	matchDetail = append(matchDetail, fmt.Sprintf("prefix_count '%s'(got) '%s' (searched)", ipPrefixMap["prefix_count"], prefixCount))
+			// }
+
+			// Add value to results which contains at least one match
+			if points > 0 {
+				search = append(search, Pair{Key: ipPrefixMap["id"], Value: points, MatchDetail: matchDetail})
+			}
+
+		}
+
+	}
+
+	// An exact match was not found attempt to find an ID with best match
+	sort.Sort(sort.Reverse(search))
+	if len(search) > 0 {
+		util.Logger.Printf("[TRACE] Found a partial match for 'ip_prefix' ID '%s' with '%d' points [criteria: %s]\n",
+			search[0].Key, search[0].Value, strings.Join(search[0].MatchDetail, ","))
+		return search[0].Key
+	}
+
+	util.Logger.Printf("[TRACE] Not found 'ip_prefix' ID \n")
+	// No ID was found at all
+	return ""
+}
+
+type Pair struct {
+	Key         string
+	Value       int
+	MatchDetail []string
+}
+
+type PairList []Pair
+
+func (p PairList) Len() int           { return len(p) }
+func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
+func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
