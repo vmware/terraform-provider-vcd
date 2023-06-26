@@ -28,7 +28,7 @@ data "vcd_org_ldap" "first" {
 
 The following arguments are supported:
 
-* `org_name` - (Required)  - Name of the organization containing the LDAP settings
+* `org_id` - (Required)  - ID of the organization containing the LDAP settings
 
 ## Attribute Reference
 

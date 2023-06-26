@@ -39,10 +39,6 @@ func TestAccVcdIpv6(t *testing.T) {
 	configText := templateFill(testAccVcdIpv6, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	// params["FuncName"] = t.Name() + "step1"
-	// configText1 := templateFill(testAccCheckVcdCatalogStep1, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

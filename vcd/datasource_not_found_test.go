@@ -61,6 +61,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_nsxt_edgegateway_bgp_ip_prefix_list",
 			"vcd_nsxt_edgegateway_bgp_neighbor",
 			"vcd_org_ldap",
+			"vcd_org_saml",
 			"vcd_portgroup",
 			"vcd_provider_vdc",
 			"vcd_rights_bundle",
@@ -184,14 +185,18 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		}
 
 		if (dataSourceName == "vcd_nsxt_edgegateway_bgp_configuration" || dataSourceName == "vcd_nsxt_alb_settings" ||
-			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting" || dataSourceName == "vcd_nsxt_edgegateway_dhcp_forwarding") &&
+			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting" || dataSourceName == "vcd_nsxt_edgegateway_dhcp_forwarding" ||
+			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement") &&
 			mandatoryFields[fieldIndex] == "edge_gateway_id" {
 			// injecting fake Edge Gateway ID
 			templateFields = templateFields + `edge_gateway_id = "urn:vcloud:gateway:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			return templateFields
 		}
 
-		if dataSourceName == "vcd_org_ldap" && mandatoryFields[fieldIndex] == "org_id" {
+		if (dataSourceName == "vcd_org_saml" ||
+			dataSourceName == "vcd_org_saml_metadata" ||
+			dataSourceName == "vcd_org_ldap") &&
+			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			return templateFields
