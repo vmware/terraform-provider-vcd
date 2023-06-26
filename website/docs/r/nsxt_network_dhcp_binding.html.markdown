@@ -68,7 +68,7 @@ resource "vcd_network_routed_v2" "ipv6-dualstack" {
     end_address   = "192.168.1.20"
   }
 
-  dual_stack_enabled = true
+  dual_stack_enabled      = true
   secondary_gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
   secondary_prefix_length = 124
 
@@ -84,7 +84,7 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "test" {
 
   enabled = true
   # Bindings can be configured only in `DHCPv6` mode
-  mode = "DHCPv6" 
+  mode = "DHCPv6"
 }
 
 resource "vcd_nsxt_network_dhcp" "routed-ipv6-dual-stack" {
@@ -102,7 +102,6 @@ resource "vcd_nsxt_network_dhcp" "routed-ipv6-dual-stack" {
   depends_on = [vcd_nsxt_edgegateway_dhcpv6.test]
 }
 
-
 resource "vcd_nsxt_network_dhcp_binding" "ipv6-binding1" {
   org = "cloud"
 
@@ -115,8 +114,8 @@ resource "vcd_nsxt_network_dhcp_binding" "ipv6-binding1" {
   mac_address  = "00:11:22:33:44:66"
 
   dhcp_v6_config {
-    sntp_servers = ["4b0d:74eb:ee01:0ff4:ab1b:f7cc:4d74:d2a3","cc80:5498:18da:0883:d78a:4e4b:754d:df47"]
-    domain_names = ["non-existing.org.tld","fake.org.tld"]
+    sntp_servers = ["4b0d:74eb:ee01:0ff4:ab1b:f7cc:4d74:d2a3", "cc80:5498:18da:0883:d78a:4e4b:754d:df47"]
+    domain_names = ["non-existing.org.tld", "fake.org.tld"]
   }
 }
 ```

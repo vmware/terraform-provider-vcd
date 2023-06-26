@@ -71,7 +71,10 @@ func datasourceVcdNsxtEdgegatewayDhcpV6Read(ctx context.Context, d *schema.Resou
 
 	// Rate limiting does not have its own ID - it is a part of Edge Gateway
 	d.SetId(edgeGatewayId)
-	setNsxtEdgeGatewaySlaacProfileData(d, slaacProfile)
+	err = setNsxtEdgeGatewaySlaacProfileData(d, slaacProfile)
+	if err != nil {
+		return diag.Errorf("error storing state: %s", err)
+	}
 
 	return nil
 }

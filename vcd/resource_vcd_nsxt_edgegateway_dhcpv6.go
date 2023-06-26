@@ -123,7 +123,10 @@ func resourceVcdNsxtEdgegatewayDhcpV6Read(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway dhcpv6 (SLAAC Profile): %s", err)
 	}
 
-	setNsxtEdgeGatewaySlaacProfileData(d, slaacProfile)
+	err = setNsxtEdgeGatewaySlaacProfileData(d, slaacProfile)
+	if err != nil {
+		return diag.Errorf("error storing state: %s", err)
+	}
 
 	return nil
 }

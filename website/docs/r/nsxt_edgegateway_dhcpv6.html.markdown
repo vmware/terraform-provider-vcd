@@ -13,7 +13,7 @@ Provides a resource to manage DHCPv6 configuration for NSX-T Edge Gateways.
 ## Example Usage (DHCPv6 mode)
 
 ```hcl
-esource "vcd_nsxt_edgegateway_dhcpv6" "dhcpv6-mode" {
+resource "vcd_nsxt_edgegateway_dhcpv6" "dhcpv6-mode" {
   org             = "cloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
@@ -31,8 +31,8 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "slaac-mode" {
 
   enabled      = true
   mode         = "SLAAC"
-  domain_names = ["non-existing.org.tld","fake.org.tld"]
-  dns_servers  = ["2001:4860:4860::8888","2001:4860:4860::8844"]
+  domain_names = ["non-existing.org.tld", "fake.org.tld"]
+  dns_servers  = ["2001:4860:4860::8888", "2001:4860:4860::8844"]
 }
 ```
 
