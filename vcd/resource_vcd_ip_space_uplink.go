@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,6 +72,16 @@ func resourceVcdIpSpaceUplinkCreate(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(createdIpSpaceUplink.IpSpaceUplink.ID)
 
+	// Operations on IP Space related entities trigger a separate task
+	// 'ipSpaceUplinkRouteAdvertisementSync' which is better to finish before any other operations
+	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
+	// Sleeping a few seconds because the task is not immediately seen sometimes.
+	time.Sleep(3 * time.Second)
+	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return resourceVcdIpSpaceUplinkRead(ctx, d, meta)
 }
 
@@ -89,6 +100,16 @@ func resourceVcdIpSpaceUplinkUpdate(ctx context.Context, d *schema.ResourceData,
 	_, err = ipSpaceUplink.Update(ipSpaceUplinkConfig)
 	if err != nil {
 		return diag.Errorf("error updating IP Space Uplink: %s", err)
+	}
+
+	// Operations on IP Space related entities trigger a separate task
+	// 'ipSpaceUplinkRouteAdvertisementSync' which is better to finish before any other operations
+	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
+	// Sleeping a few seconds because the task is not immediately seen sometimes.
+	time.Sleep(3 * time.Second)
+	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceVcdIpSpaceUplinkRead(ctx, d, meta)
@@ -137,6 +158,16 @@ func resourceVcdIpSpaceUplinkDelete(ctx context.Context, d *schema.ResourceData,
 	err = ipSpaceUplink.Delete()
 	if err != nil {
 		return diag.Errorf("error deleting IP Space Uplink by ID '%s': %s", d.Id(), err)
+	}
+
+	// Operations on IP Space related entities trigger a separate task
+	// 'ipSpaceUplinkRouteAdvertisementSync' which is better to finish before any other operations
+	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
+	// Sleeping a few seconds because the task is not immediately seen sometimes.
+	time.Sleep(3 * time.Second)
+	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
