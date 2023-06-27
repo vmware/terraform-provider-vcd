@@ -63,6 +63,8 @@ func resourceVcdIpSpaceUplink() *schema.Resource {
 func resourceVcdIpSpaceUplinkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space Uplink creation initiated")
+	vcdClient.lockParentExternalNetwork(d)
+	defer vcdClient.unlockParentExternalNetwork(d)
 
 	ipSpaceUplinkConfig := getIpSpaceUplinkType(d)
 	createdIpSpaceUplink, err := vcdClient.CreateIpSpaceUplink(ipSpaceUplinkConfig)
@@ -88,9 +90,10 @@ func resourceVcdIpSpaceUplinkCreate(ctx context.Context, d *schema.ResourceData,
 func resourceVcdIpSpaceUplinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space Uplink update initiated")
+	vcdClient.lockParentExternalNetwork(d)
+	defer vcdClient.unlockParentExternalNetwork(d)
 
 	ipSpaceUplinkConfig := getIpSpaceUplinkType(d)
-
 	ipSpaceUplink, err := vcdClient.GetIpSpaceUplinkById(d.Id())
 	if err != nil {
 		return diag.Errorf("error finding IP Space Uplink by ID '%s': %s", d.Id(), err)
@@ -149,6 +152,8 @@ func resourceVcdIpSpaceUplinkRead(ctx context.Context, d *schema.ResourceData, m
 func resourceVcdIpSpaceUplinkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space Uplink deletion initiated")
+	vcdClient.lockParentExternalNetwork(d)
+	defer vcdClient.unlockParentExternalNetwork(d)
 
 	ipSpaceUplink, err := vcdClient.GetIpSpaceUplinkById(d.Id())
 	if err != nil {
