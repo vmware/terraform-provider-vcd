@@ -334,24 +334,24 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 
 	// If unset, it will set it back to default, so before updating the VPN config, we need to check if the `security_profile_customization`
 	// field is defined in the configuration
-	_, isSet := d.GetOk("security_profile_customization")
-	if isSet {
+	_, customSecurityProfile := d.GetOk("security_profile_customization")
+	if customSecurityProfile {
 		ipSecVpnConfig.SecurityType = "CUSTOM"
 	} else {
 		ipSecVpnConfig.SecurityType = "DEFAULT"
 	}
 
-	updatedIpSecVpnConfiguration, err := existingIpSecVpnConfiguration.Update(ipSecVpnConfig)
+	updatedIpSecVpnConfig, err := existingIpSecVpnConfiguration.Update(ipSecVpnConfig)
 	if err != nil {
 		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel configuration '%s': %s", ipSecVpnConfig.Name, err)
 	}
 
-	if ipSecVpnConfig.SecurityType == "CUSTOM" {
+	if customSecurityProfile {
 		// Get Security Tunnel profile from Terraform state
 		ipSecTunnelProfileConfig := getNsxtIpSecVpnProfileTunnelConfigurationType(d)
 
 		// To set IPsec VPN Tunnel Connection Profile - it must be updated (HTTP PUT) with all the options configured
-		_, err = updatedIpSecVpnConfiguration.UpdateTunnelConnectionProperties(ipSecTunnelProfileConfig)
+		_, err = updatedIpSecVpnConfig.UpdateTunnelConnectionProperties(ipSecTunnelProfileConfig)
 		if err != nil {
 			return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel Security Profile: %s", err)
 		}
