@@ -50,6 +50,7 @@ resource "vcd_network_isolated_v2" "nsxt-backed" {
 ```
 
 ## Example Usage (NSX-T backed isolated IPv6 Org VDC network)
+
 ```hcl
 resource "vcd_network_isolated_v2" "ipv6" {
   owner_id = vcd_org_vdc.with-edge-cluster.id
@@ -67,6 +68,7 @@ resource "vcd_network_isolated_v2" "ipv6" {
 ```
 
 ## Example Usage (Dual-Stack mode with IPv4 and IPv6)
+
 ```hcl
 resource "vcd_network_isolated_v2" "ipv6-dualstack" {
   owner_id = vcd_org_vdc.with-edge-cluster.id

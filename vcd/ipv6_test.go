@@ -47,8 +47,108 @@ func TestAccVcdIpv6Support(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check:  resource.ComposeTestCheckFunc(
-				// TODO - add checks
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_org_vdc.with-edge-cluster", "id"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.ext-net-nsxt", "id"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_external_network_v2.ext-net-nsxt", "ip_scope.*", map[string]string{
+						"enabled":       "true",
+						"gateway":       "2002:0:0:1234:abcd:ffff:c0a8:101",
+						"prefix_length": "124",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_external_network_v2.ext-net-nsxt", "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a8:103",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a8:104",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_external_network_v2.ext-net-nsxt", "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a8:107",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a8:109",
+					}),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
+						"gateway":       "2002:0:0:1234:abcd:ffff:c0a8:101",
+						"prefix_length": "124",
+					}),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.ipv6", "id"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6", "gateway", "2002:0:0:1234:abcd:ffff:c0a7:121"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6", "prefix_length", "124"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.ipv6", "static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a7:122",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a7:124",
+					}),
+
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.ipv6-dualstack", "id"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6-dualstack", "gateway", "192.168.1.1"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6-dualstack", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6-dualstack", "dual_stack_enabled", "true"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.ipv6-dualstack", "static_ip_pool.*", map[string]string{
+						"start_address": "192.168.1.10",
+						"end_address":   "192.168.1.20",
+					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6-dualstack", "secondary_gateway", "2002:0:0:1234:abcd:ffff:c0a6:121"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.ipv6-dualstack", "secondary_prefix_length", "124"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.ipv6-dualstack", "secondary_static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a6:122",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a6:124",
+					}),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp.routed-ipv6-dual-stack", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp.routed-ipv6-dual-stack", "listener_ip_address", "2002:0:0:1234:abcd:ffff:c0a6:129"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_dhcp.routed-ipv6-dual-stack", "pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a6:125",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a6:126",
+					}),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp_binding.ipv6-binding1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.ipv6-binding1", "ip_address", "2002:0:0:1234:abcd:ffff:c0a6:127"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_network_dhcp_binding.ipv6-binding1", "dhcp_v6_config.*.sntp_servers.*", "4b0d:74eb:ee01:0ff4:ab1b:f7cc:4d74:d2a3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_network_dhcp_binding.ipv6-binding1", "dhcp_v6_config.*.sntp_servers.*", "cc80:5498:18da:0883:d78a:4e4b:754d:df47"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_network_dhcp_binding.ipv6-binding1", "dhcp_v6_config.*.domain_names.*", "non-existing.org.tld"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_network_dhcp_binding.ipv6-binding1", "dhcp_v6_config.*.domain_names.*", "fake.org.tld"),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_dhcp_binding.ipv6-binding2", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_dhcp_binding.ipv6-binding2", "ip_address", "2002:0:0:1234:abcd:ffff:c0a6:128"),
+
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.ipv6", "id"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6", "gateway", "2002:0:0:1234:abcd:ffff:c0a8:121"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6", "prefix_length", "124"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_isolated_v2.ipv6", "static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a8:122",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a8:123",
+					}),
+
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.ipv6-dualstack", "id"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6-dualstack", "gateway", "192.168.1.1"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6-dualstack", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6-dualstack", "dual_stack_enabled", "true"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_isolated_v2.ipv6-dualstack", "static_ip_pool.*", map[string]string{
+						"start_address": "192.168.1.10",
+						"end_address":   "192.168.1.20",
+					}),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6-dualstack", "secondary_gateway", "2002:0:0:1234:abcd:ffff:c0a6:121"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.ipv6-dualstack", "secondary_prefix_length", "124"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_isolated_v2.ipv6-dualstack", "secondary_static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a6:122",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a6:124",
+					}),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.ipv6-dualstack", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.ipv6-dualstack", "gateway", "192.168.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.ipv6-dualstack", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.ipv6-dualstack", "dual_stack_enabled", "true"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.ipv6-dualstack", "static_ip_pool.*", map[string]string{
+						"start_address": "192.168.1.10",
+						"end_address":   "192.168.1.20",
+					}),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.ipv6-dualstack", "secondary_gateway", "2002:0:0:1234:abcd:ffff:c0a6:121"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.ipv6-dualstack", "secondary_prefix_length", "124"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.ipv6-dualstack", "secondary_static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a6:122",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a6:124",
+					}),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ip_set.ipv6", "id"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ip_set.ipv6", "ip_addresses.*", "2001:db8::/48"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ip_set.ipv6", "ip_addresses.*", "2001:db6:0:0:0:0:0:0-2001:db6:0:ffff:ffff:ffff:ffff:ffff"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ip_set.ipv6", "ip_addresses.*", "2002:0:0:1234:abcd:ffff:c0a8:120/124"),
 				),
 			},
 		},

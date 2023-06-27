@@ -75,7 +75,6 @@ func resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx context.Context, d *schema
 	if err != nil {
 		return diag.Errorf("[dhcpv6 (SLAAC Profile) create/update] %s", err)
 	}
-
 	defer unlock()
 
 	orgName := d.Get("org").(string)
@@ -138,7 +137,6 @@ func resourceVcdNsxtEdgegatewayDhcpV6Delete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.Errorf("[dhcpv6 (SLAAC Profile) delete] %s", err)
 	}
-
 	defer unlock()
 
 	orgName := d.Get("org").(string)
