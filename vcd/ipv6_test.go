@@ -3,15 +3,12 @@
 package vcd
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccVcdIpv6(t *testing.T) {
+func TestAccVcdIpv6Support(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -50,8 +47,8 @@ func TestAccVcdIpv6(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
-					sleepTester(3 * time.Minute),
+				Check:  resource.ComposeTestCheckFunc(
+				// TODO - add checks
 				),
 			},
 		},
@@ -189,7 +186,7 @@ resource "vcd_network_routed_v2" "ipv6-dualstack" {
     end_address   = "192.168.1.20"
   }
 
-  dual_stack_enabled = true
+  dual_stack_enabled      = true
   secondary_gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
   secondary_prefix_length = 124
 
@@ -281,7 +278,7 @@ resource "vcd_network_isolated_v2" "ipv6-dualstack" {
     end_address   = "192.168.1.20"
   }
 
-  dual_stack_enabled = true
+  dual_stack_enabled      = true
   secondary_gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
   secondary_prefix_length = 124
 
@@ -305,7 +302,7 @@ resource "vcd_nsxt_network_imported" "ipv6-dualstack" {
     end_address   = "192.168.1.20"
   }
 
-  dual_stack_enabled = true
+  dual_stack_enabled      = true
   secondary_gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
   secondary_prefix_length = 124
 
@@ -327,12 +324,3 @@ resource "vcd_nsxt_ip_set" "ipv6" {
   ]
 }
 `
-
-func sleepTester(d time.Duration) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Printf("sleeping %s\n", d.String())
-		time.Sleep(d)
-		fmt.Println("finished sleeping")
-		return nil
-	}
-}
