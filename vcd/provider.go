@@ -204,6 +204,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_nsxv_distributed_firewall":                 resourceVcdNsxvDistributedFirewall(),          // 3.9
 	"vcd_rde_interface":                             resourceVcdRdeInterface(),                     // 3.9
+	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),           // 3.10
 	"vcd_rde_type":                                  resourceVcdRdeType(),                          // 3.9
 	"vcd_rde":                                       resourceVcdRde(),                              // 3.9
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9

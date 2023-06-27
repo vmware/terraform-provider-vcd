@@ -80,6 +80,23 @@ The following attributes are supported:
 
 * `readonly` - True if the Runtime Defined Entity Type cannot be modified.
 
+## Behaviors
+
+-> Available since v3.10+. Only System Administrators can manage Behaviors from RDE Types.
+
+You can define Behaviors on a RDE Type, that will override the Behavior defined in the RDE Interface with same `ref`.
+The `behavior` block contains the following attributes:
+
+~> If the RDE Interface is being used by one or more [RDE Types](/providers/vmware/vcd/latest/docs/resources/rde_types),
+then Behaviors **can't be added or removed**, and only the `execution` attribute can be updated for existing ones.
+Keep this in mind when creating a RDE Interface with Behaviors.
+
+* `name` - (Required) Name of the Behavior
+* `execution` - (Required) A map that defines the execution elements of the Behavior
+* `description` - (Required) A description specifying the contract of the Behavior
+* `ìd` - ID of the Behavior. This is auto-generated and read-only
+* `ref` - The Behavior invocation reference to be used for polymorphic behavior invocations. This is auto-generated and read-only
+
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate

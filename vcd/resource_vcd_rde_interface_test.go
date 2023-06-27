@@ -101,6 +101,135 @@ resource "vcd_rde_interface" "interface1" {
 }
 `
 
+func TestAccVcdRdeDefinedInterfacBehavior(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Nss":                   "nss1",
+		"Version":               "1.0.0",
+		"Vendor":                "vendor1",
+		"Name":                  t.Name(),
+		"BehaviorName":          "TestBehavior",
+		"BehaviorExecutionId":   "TestActivity",
+		"BehaviorExecutionType": "Activity",
+		"BehaviorDescription":   t.Name(),
+		"ExtraBehavior":         " ",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdRdeDefinedInterfaceBehavior, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
+
+	params["FuncName"] = t.Name() + "-Step2"
+	params["ExtraBehavior"] = `
+	behavior {
+    	name = "TestBehavior2"
+    	execution = {
+      		"id":   "TestActivity2"
+      		"type": "noop"
+    	}
+    	description = "` + t.Name() + `2"
+  	}
+	`
+	params["BehaviorName"] = "TestBehaviorUpdate"
+	params["BehaviorDescription"] = t.Name() + "Update"
+	params["BehaviorExecutionId"] = "TestActivityUpdate"
+	configText2 := templateFill(testAccVcdRdeDefinedInterfaceBehavior, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
+
+	params["FuncName"] = t.Name() + "-Step3"
+	configText3 := templateFill(testAccVcdRdeDefinedInterface, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 3: %s\n", configText3)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	interfaceName := "vcd_rde_interface.interface1"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckRdeInterfaceDestroy(interfaceName),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "nss1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "nss", "nss1"),
+					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
+					resource.TestCheckTypeSetElemNestedAttrs(interfaceName, "behavior.*", map[string]string{
+						"name":           "TestBehavior",
+						"description":    t.Name(),
+						"execution.%":    "2",
+						"execution.id":   "TestActivity",
+						"execution.type": "Activity",
+					}),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "nss1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "nss", "nss1"),
+					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
+					resource.TestCheckTypeSetElemNestedAttrs(interfaceName, "behavior.*", map[string]string{
+						"name":           "TestBehaviorUpdate",
+						"description":    t.Name() + "Update",
+						"execution.%":    "2",
+						"execution.id":   "TestActivityUpdate",
+						"execution.type": "Activity",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(interfaceName, "behavior.*", map[string]string{
+						"name":           "TestBehavior2",
+						"description":    t.Name() + "2",
+						"execution.%":    "2",
+						"execution.id":   "TestActivity2",
+						"execution.type": "noop",
+					}),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(interfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["Vendor"].(string), "nss1", params["Version"].(string))),
+					resource.TestCheckResourceAttr(interfaceName, "nss", "nss1"),
+					resource.TestCheckResourceAttr(interfaceName, "version", params["Version"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "vendor", params["Vendor"].(string)),
+					resource.TestCheckResourceAttr(interfaceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(interfaceName, "readonly", "false"),
+					resource.TestCheckResourceAttr(interfaceName, "behavior.#", "0"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdRdeDefinedInterfaceBehavior = `
+resource "vcd_rde_interface" "interface1" {
+  nss     = "{{.Nss}}"
+  version = "{{.Version}}"
+  vendor  = "{{.Vendor}}"
+  name    = "{{.Name}}"
+
+  behavior {
+    name = "{{.BehaviorName}}"
+    execution = {
+      "id":   "{{.BehaviorExecutionId}}"
+      "type": "{{.BehaviorExecutionType}}"
+    }
+    description = "{{.BehaviorDescription}}"
+  }
+  {{.ExtraBehavior}}
+}`
+
 // testAccCheckRdeInterfaceDestroy checks that the Defined Interface defined by its identifier no longer
 // exists in VCD.
 func testAccCheckRdeInterfaceDestroy(identifier string) resource.TestCheckFunc {
@@ -121,6 +250,7 @@ func testAccCheckRdeInterfaceDestroy(identifier string) resource.TestCheckFunc {
 		if err == nil || !govcd.ContainsNotFound(err) {
 			return fmt.Errorf("%s not deleted yet", identifier)
 		}
+
 		return nil
 
 	}

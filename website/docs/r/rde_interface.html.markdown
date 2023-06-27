@@ -57,15 +57,19 @@ The following arguments are supported:
 
 ## Behaviors
 
--> Available since v3.10+
+-> Available since v3.10+. Only System Administrators can manage Behaviors from RDE Interfaces.
 
 You can define Behaviors on a RDE Interface with one or more of the `behavior` blocks, which contain the following
 attributes:
 
+~> If the RDE Interface is being used by one or more [RDE Types](/providers/vmware/vcd/latest/docs/resources/rde_types),
+then Behaviors **can't be added or removed**, and only the `execution` attribute can be updated for existing ones.
+Keep this in mind when creating a RDE Interface with Behaviors.
+
 * `name` - (Required) Name of the Behavior
-* `execution` - (Required) A map that defines the execution elements of the behavior
-* `description` - (Optional) Description of the Behavior
-* `ìd` - ID of the behavior. This is auto-generated and read-only
+* `execution` - (Required) A map that defines the execution elements of the Behavior
+* `description` - (Required) A description specifying the contract of the Behavior
+* `ìd` - ID of the Behavior. This is auto-generated and read-only
 * `ref` - The Behavior invocation reference to be used for polymorphic behavior invocations. This is auto-generated and read-only
 
 ## Importing

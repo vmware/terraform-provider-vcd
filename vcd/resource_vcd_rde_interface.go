@@ -55,28 +55,28 @@ func resourceVcdRdeInterface() *schema.Resource {
 			"behavior": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "TODO",
+				Description: "Each block defines a Behavior on the Runtime Defined Entity Interface",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Name of the Defined Interface Behavior",
+							Description: "Name of the Behavior",
 						},
 						"description": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Description of the Defined Interface Behavior",
+							Description: "Description of the Behavior",
 						},
 						"execution": {
 							Type:        schema.TypeMap,
 							Required:    true,
-							Description: "Execution map of the Defined Interface Behavior",
+							Description: "Execution map of the Behavior",
 						},
 						"id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The Defined Interface Behavior ID",
+							Description: "The RDE Interface Behavior ID",
 						},
 						"ref": {
 							Type:        schema.TypeString,
@@ -157,11 +157,11 @@ func genericVcdRdeInterfaceRead(_ context.Context, d *schema.ResourceData, meta 
 		var behaviorsAttr = make([]map[string]interface{}, len(behaviors))
 		for i, behavior := range behaviors {
 			behaviorsAttr[i] = map[string]interface{}{
-				"id":          behavior.Behavior.ID,
-				"name":        behavior.Behavior.Name,
-				"description": behavior.Behavior.Description,
-				"ref":         behavior.Behavior.Ref,
-				"execution":   behavior.Behavior.Execution,
+				"id":          behavior.ID,
+				"name":        behavior.Name,
+				"description": behavior.Description,
+				"ref":         behavior.Ref,
+				"execution":   behavior.Execution,
 			}
 		}
 		err = d.Set("behavior", behaviorsAttr)
@@ -200,42 +200,35 @@ func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = di.Update(types.DefinedInterface{
-		Name: d.Get("name").(string), // Only name can be updated
-	})
-	if err != nil {
-		return diag.Errorf("could not update the Runtime Defined Entity Interface: %s", err)
+	if d.HasChange("name") {
+		err = di.Update(types.DefinedInterface{
+			Name: d.Get("name").(string), // Only name can be updated
+		})
+		if err != nil {
+			return diag.Errorf("could not update the Runtime Defined Entity Interface: %s", err)
+		}
 	}
 
 	// Only System Administrators can update Behaviors
 	if meta.(*VCDClient).Client.IsSysAdmin && d.HasChange("behavior") {
-		oldBehRaw, newBehRaw := d.GetChange("behavior")
-		for _, oldBehRaw := range oldBehRaw.(*schema.Set).List() {
-			if newBehRaw.(*schema.Set).Contains(oldBehRaw) {
-				continue
-			}
-			oldBehavior := oldBehRaw.(map[string]interface{})
-			err = di.DeleteBehavior(oldBehavior["id"].(string))
-			if err != nil {
-				return diag.Errorf("could not delete Behavior '%v' from the Runtime Defined Entity Interface '%s': %s", oldBehavior["id"], di.DefinedInterface.ID, err)
+		behaviorsRaw := d.Get("behavior").(*schema.Set).List()
+		var behaviors = make([]*types.Behavior, len(behaviorsRaw))
+		for i, behaviorRaw := range behaviorsRaw {
+			b := behaviorRaw.(map[string]interface{})
+			behaviors[i] = &types.Behavior{
+				ID:          b["id"].(string),
+				Description: b["description"].(string),
+				Execution:   b["execution"].(map[string]interface{}),
+				Ref:         b["ref"].(string),
+				Name:        b["name"].(string),
 			}
 		}
-		for _, newBehRaw := range newBehRaw.(*schema.Set).List() {
-			if oldBehRaw.(*schema.Set).Contains(newBehRaw) {
-				continue
-			}
-			newBehavior := newBehRaw.(map[string]interface{})
-			_, err = di.AddBehavior(types.Behavior{
-				Description: newBehavior["description"].(string),
-				Execution:   newBehavior["execution"].(map[string]interface{}),
-				Name:        newBehavior["name"].(string),
-			})
-			if err != nil {
-				return diag.Errorf("could not add Behavior '%v' to the Runtime Defined Entity Interface '%s': %s", newBehavior, di.DefinedInterface.ID, err)
-			}
-
+		_, err := di.UpdateBehaviors(behaviors)
+		if err != nil {
+			return diag.Errorf("could not update Behaviors from Runtime Defined Entity Interface '%s': %s", di.DefinedInterface.ID, err)
 		}
 	}
+
 	return resourceVcdRdeInterfaceRead(ctx, d, meta)
 }
 
