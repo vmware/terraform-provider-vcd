@@ -72,7 +72,7 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 	}
 }
 
-// String satisfies stringer interface (support fmt.Printf...)
+// String satisfies stringer interface (supports fmt.Printf...)
 func (c *testCachedFieldValue) String() string {
 	return c.fieldValue
 }

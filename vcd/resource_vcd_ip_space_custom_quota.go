@@ -55,13 +55,13 @@ func resourceVcdIpSpaceCustomQuota() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "One or more IP prefixes within internal scope",
-				Elem:        ipPrefixeQuota,
+				Elem:        ipPrefixQuota,
 			},
 		},
 	}
 }
 
-var ipPrefixeQuota = &schema.Resource{
+var ipPrefixQuota = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"prefix_length": {
 			Type:         schema.TypeString,

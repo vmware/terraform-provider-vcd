@@ -98,7 +98,6 @@ func datasourceVcdIpAllocationRead(ctx context.Context, d *schema.ResourceData, 
 		dSet(d, "org_id", ipAllocation.IpSpaceIpAllocation.OrgRef.ID)
 	}
 	if ipAllocation.IpSpaceIpAllocation.UsedByRef != nil {
-		// used_by_id
 		dSet(d, "used_by_id", ipAllocation.IpSpaceIpAllocation.UsedByRef.ID)
 	}
 	dSet(d, "allocation_date", ipAllocation.IpSpaceIpAllocation.AllocationDate)

@@ -170,8 +170,6 @@ func resourceVcdIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error creating IP Space: %s", err)
 	}
 
-	d.GetRawState()
-
 	d.SetId(createdIpSpace.IpSpace.ID)
 
 	return resourceVcdIpSpaceRead(ctx, d, meta)
@@ -370,7 +368,7 @@ func getIpSpaceType(d *schema.ResourceData, operation string) (*types.IpSpace, e
 			prefixLengthInt, _ := strconv.Atoi(ipPrefixMap["prefix_length"])
 			prefixLengthCountInt, _ := strconv.Atoi(ipPrefixMap["prefix_count"])
 
-			anotherPrefix := types.IPPrefixSequence{
+			singlePrefix := types.IPPrefixSequence{
 				StartingPrefixIPAddress: ipPrefixMap["first_ip"],
 				PrefixLength:            prefixLengthInt,
 				TotalPrefixCount:        prefixLengthCountInt,
@@ -379,10 +377,10 @@ func getIpSpaceType(d *schema.ResourceData, operation string) (*types.IpSpace, e
 			// Update operation requires the ID of prefix, otherwise it recreates the IP sequence
 			if operation == "update" {
 				foundId := getIpPrefixSequenceIdFromFromPreviousState(d, ipPrefixMap["first_ip"], ipPrefixMap["prefix_length"], ipPrefixMap["prefix_count"])
-				anotherPrefix.ID = foundId
+				singlePrefix.ID = foundId
 			}
 
-			ipSpacePrefixType.IPPrefixSequence = append(ipSpacePrefixType.IPPrefixSequence, anotherPrefix)
+			ipSpacePrefixType.IPPrefixSequence = append(ipSpacePrefixType.IPPrefixSequence, singlePrefix)
 		}
 		// EOF Nested prefix definitions within IP Prefixes structure (`ip_prefix.X.prefix` blocks)
 

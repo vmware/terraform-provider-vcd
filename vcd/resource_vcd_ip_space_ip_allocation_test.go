@@ -157,8 +157,6 @@ func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
 					ipPrefixForImport.cacheTestResourceFieldValue("vcd_ip_space_ip_allocation.public-ip-prefix", "ip_address"),
 				),
 			},
-			// org-name.ip-space-name.ip-allocation-type.ip-allocation-ip
-
 			{ // terraform import vcd_ip_space_ip_allocation.ip my-org.my-ip-space.FLOATING_IP.X.X.X.X
 				ResourceName:      "vcd_ip_space_ip_allocation.public-floating-ip",
 				ImportState:       true,
