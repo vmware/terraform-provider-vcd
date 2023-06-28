@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func datasourceVcdRdeInterfaceBehavior() *schema.Resource {
@@ -48,14 +47,8 @@ func datasourceVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.Resource
 		return diag.Errorf("could not get the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 
-	var behavior *types.Behavior
-	behaviors, err := rdeInterface.GetAllBehaviors(nil)
-	for _, b := range behaviors {
-		if b.Name == d.Get("name").(string) {
-			behavior = b
-		}
-	}
-	if err != nil || behavior == nil {
+	behavior, err := rdeInterface.GetBehaviorByName(d.Get("name").(string))
+	if err != nil {
 		return diag.Errorf("could not get the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 
