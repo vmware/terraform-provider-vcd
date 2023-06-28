@@ -36,7 +36,7 @@ func datasourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 			"domain_names": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of domain names. (only applicable for 'SLAAC' mode)",
+				Description: "A set of domain names (only applicable for 'SLAAC' mode)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -44,7 +44,7 @@ func datasourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 			"dns_servers": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of DNS Servers. (only applicable for 'SLAAC' mode)",
+				Description: "A set of DNS Servers (only applicable for 'SLAAC' mode)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

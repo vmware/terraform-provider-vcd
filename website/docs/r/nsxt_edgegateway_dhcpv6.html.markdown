@@ -42,7 +42,7 @@ The following arguments are supported:
 
 * `org` - (Required) Org in which the NSX-T Edge Gateway is located
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
-* `enabled` - (Required) Boolean flag if DHCPv6 is enabled or disabled. **Note**
+* `enabled` - (Required) Boolean flag if DHCPv6 is enabled or disabled.
 * `mode` - (Required) One of `SLAAC` (Stateless Address Autoconfiguration) or `DHCPv6` (Dynamic Host
   Configuration Protocol)
 * `domain_names` - (Optional) Set of domain names (only applicable for `DHCPv6` mode)

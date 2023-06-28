@@ -51,7 +51,7 @@ func resourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 			"domain_names": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "A set of domain names. (only applicable for 'SLAAC' mode)",
+				Description: "A set of domain names (only applicable for 'SLAAC' mode)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -59,7 +59,7 @@ func resourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 			"dns_servers": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "A set of DNS Servers. (only applicable for 'SLAAC' mode)",
+				Description: "A set of DNS Servers (only applicable for 'SLAAC' mode)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -114,12 +114,12 @@ func resourceVcdNsxtEdgegatewayDhcpV6Read(ctx context.Context, d *schema.Resourc
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway dhcpv6 (SLAAC Profile): %s", err)
+		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway DHCPv6 (SLAAC Profile): %s", err)
 	}
 
 	slaacProfile, err := nsxtEdge.GetSlaacProfile()
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway dhcpv6 (SLAAC Profile): %s", err)
+		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway DHCPv6 (SLAAC Profile): %s", err)
 	}
 
 	err = setNsxtEdgeGatewaySlaacProfileData(d, slaacProfile)
