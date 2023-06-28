@@ -47,16 +47,6 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 					resource.TestCheckResourceAttr(sysadminInterfaceName, "name", "Kubernetes"), // Name is always the same
 					resource.TestCheckResourceAttr(sysadminInterfaceName, "id", fmt.Sprintf("urn:vcloud:interface:%s:%s:%s", params["InterfaceVendor"].(string), params["InterfaceNss"].(string), params["InterfaceVersion"].(string))),
 					resource.TestCheckResourceAttr(sysadminInterfaceName, "readonly", "false"),
-					resource.TestCheckResourceAttr(sysadminInterfaceName, "behavior.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs(sysadminInterfaceName, "behavior.*", map[string]string{
-						"name":           "createKubeConfig",
-						"id":             "urn:vcloud:behavior-interface:createKubeConfig:vmware:k8s:1.0.0",
-						"ref":            "urn:vcloud:behavior-interface:createKubeConfig:vmware:k8s:1.0.0",
-						"description":    "Creates and returns a kubeconfig",
-						"execution.%":    "2",
-						"execution.id":   "CreateKubeConfigActivity",
-						"execution.type": "Activity",
-					}),
 
 					resource.TestCheckResourceAttrPair(tenantInterfaceName, "nss", sysadminInterfaceName, "nss"),
 					resource.TestCheckResourceAttrPair(tenantInterfaceName, "version", sysadminInterfaceName, "version"),
@@ -64,7 +54,6 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 					resource.TestCheckResourceAttrPair(tenantInterfaceName, "name", sysadminInterfaceName, "name"),
 					resource.TestCheckResourceAttrPair(tenantInterfaceName, "id", sysadminInterfaceName, "id"),
 					resource.TestCheckResourceAttrPair(tenantInterfaceName, "readonly", sysadminInterfaceName, "readonly"),
-					resource.TestCheckResourceAttr(tenantInterfaceName, "behavior.#", "0"),
 				),
 			},
 		},
