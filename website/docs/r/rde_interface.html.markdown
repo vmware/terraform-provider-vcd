@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_rde_interface"
 sidebar_current: "docs-vcd-resource-rde-interface"
 description: |-
-  Provides the capability of creating, updating, and deleting Runtime Defined Entity Interfaces in VMware Cloud Director.
+   Provides the capability of creating, updating, and deleting Runtime Defined Entity Interfaces in VMware Cloud Director.
 ---
 
 # vcd\_rde\_interface

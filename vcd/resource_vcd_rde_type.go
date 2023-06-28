@@ -97,35 +97,6 @@ func resourceVcdRdeType() *schema.Resource {
 				Computed:    true,
 				Description: "True if the Runtime Defined Entity Type cannot be modified",
 			},
-			"behavior_override": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Each block defines a Behavior on the Runtime Defined Entity Entity that overrides the corresponding one from the RDE Interface",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"interface_id": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "RDE Interface that owns the Behavior to override",
-						},
-						"interface_behavior_id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The ID of the Behavior defined in the RDE Interface that needs to be overridden",
-						},
-						"execution": {
-							Type:        schema.TypeMap,
-							Required:    true,
-							Description: "Execution map of the Behavior that will override the existing executions defined in the RDE Interface",
-						},
-						"id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The RDE Type Behavior ID",
-						},
-					},
-				},
-			},
 		},
 	}
 }
