@@ -26,6 +26,10 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 
 	configText1 := templateFill(testAccVcdRdeInterfaceBehavior, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
+	params["FuncName"] = t.Name() + "-Step2"
+	params["ExecutionId"] = "MyActivityUpdated"
+	configText2 := templateFill(testAccVcdRdeInterfaceBehavior, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -45,6 +49,17 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
 					resource.TestCheckResourceAttr(behaviorName, "description", "Foo"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
+					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "interface_id"),
+					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
+					resource.TestCheckResourceAttr(behaviorName, "description", "Foo"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivityUpdated"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
 				),
