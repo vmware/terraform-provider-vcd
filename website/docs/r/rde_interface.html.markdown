@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_rde_interface"
 sidebar_current: "docs-vcd-resource-rde-interface"
 description: |-
-   Provides the capability of creating, updating, and deleting Runtime Defined Entity Interfaces in VMware Cloud Director.
+  Provides the capability of creating, updating, and deleting Runtime Defined Entity Interfaces in VMware Cloud Director.
 ---
 
 # vcd\_rde\_interface
@@ -48,29 +48,10 @@ The following arguments are supported:
 * `nss` - (Required) A unique namespace associated with the RDE Interface. Only alphanumeric characters, underscores and hyphens allowed.
 * `version` - (Required) The version of the RDE Interface. Must follow [semantic versioning](https://semver.org/) syntax.
 * `name` - (Required) The name of the RDE Interface.
-* `behavior` - (Optional; *v3.10+*) A block that defines a RDE Interface Behavior. Only System Administrators can read and manage Behaviors.
-  See [Behaviors](#behaviors) for more information.
 
 ## Attribute Reference
 
 * `readonly` - Specifies if the RDE Interface can be only read.
-
-## Behaviors
-
--> Available since v3.10+. Only System Administrators can manage Behaviors from RDE Interfaces.
-
-You can define Behaviors on a RDE Interface with one or more of the `behavior` blocks, which contain the following
-attributes:
-
-~> If the RDE Interface is being used by one or more [RDE Types](/providers/vmware/vcd/latest/docs/resources/rde_types),
-then Behaviors **can't be added or removed**, and only the `execution` attribute can be updated for existing ones.
-Keep this in mind when creating a RDE Interface with Behaviors.
-
-* `name` - (Required) Name of the Behavior
-* `execution` - (Required) A map that defines the execution elements of the Behavior
-* `description` - (Required) A description specifying the contract of the Behavior
-* `ìd` - ID of the Behavior. This is auto-generated and read-only
-* `ref` - The Behavior invocation reference to be used for polymorphic behavior invocations. This is auto-generated and read-only
 
 ## Importing
 

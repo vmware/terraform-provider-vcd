@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_rde_interface"
 sidebar_current: "docs-vcd-data-source-rde-interface"
 description: |-
-   Provides the capability of fetching an existing Runtime Defined Entity Interface from VMware Cloud Director.
+  Provides the capability of fetching an existing Runtime Defined Entity Interface from VMware Cloud Director.
 ---
 
 # vcd\_rde\_interface
@@ -42,5 +42,3 @@ The following arguments are supported:
 
 All the supported attributes are defined in the
 [Defined Interface resource](/providers/vmware/vcd/latest/docs/resources/rde_interface#argument-reference).
-
-~> Note that `behavior` blocks are only available since *v3.10+*
