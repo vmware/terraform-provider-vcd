@@ -14,19 +14,21 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Nss":           "nss1",
-		"Version":       "1.0.0",
-		"Vendor":        "vendor1",
-		"InterfaceName": t.Name(),
-		"BehaviorName":  t.Name(),
-		"ExecutionId":   "MyActivity",
-		"ExecutionType": "Activity",
+		"Nss":                 "nss1",
+		"Version":             "1.0.0",
+		"Vendor":              "vendor1",
+		"InterfaceName":       t.Name(),
+		"BehaviorName":        t.Name(),
+		"BehaviorDescription": t.Name(),
+		"ExecutionId":         "MyActivity",
+		"ExecutionType":       "Activity",
 	}
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdRdeInterfaceBehavior, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
 	params["FuncName"] = t.Name() + "-Step2"
+	params["BehaviorDescription"] = t.Name() + "Updated"
 	params["ExecutionId"] = "MyActivityUpdated"
 	configText2 := templateFill(testAccVcdRdeInterfaceBehavior, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
@@ -47,7 +49,7 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "interface_id"),
 					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
-					resource.TestCheckResourceAttr(behaviorName, "description", "Foo"),
+					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()),
 					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
@@ -58,7 +60,7 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "interface_id"),
 					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
-					resource.TestCheckResourceAttr(behaviorName, "description", "Foo"),
+					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()+"Updated"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivityUpdated"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
@@ -86,7 +88,7 @@ resource "vcd_rde_interface" "interface1" {
 resource "vcd_rde_interface_behavior" "behavior1" {
   interface_id = vcd_rde_interface.interface1.id
   name         = "{{.BehaviorName}}"
-  description  = "Foo"
+  description  = "{{.BehaviorDescription}}"
   execution = {
     "id":   "{{.ExecutionId}}"
     "type": "{{.ExecutionType}}"
