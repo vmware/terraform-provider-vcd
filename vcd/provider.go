@@ -124,6 +124,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          datasourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  datasourceVcdOrgSaml(),                          // 3.10
 	"vcd_org_saml_metadata":                         datasourceVcdOrgSamlMetadata(),                  // 3.10
+	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),             // 3.10
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -204,7 +205,6 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_subscribed_catalog":                        resourceVcdSubscribedCatalog(),                // 3.8
 	"vcd_nsxv_distributed_firewall":                 resourceVcdNsxvDistributedFirewall(),          // 3.9
 	"vcd_rde_interface":                             resourceVcdRdeInterface(),                     // 3.9
-	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),           // 3.10
 	"vcd_rde_type":                                  resourceVcdRdeType(),                          // 3.9
 	"vcd_rde":                                       resourceVcdRde(),                              // 3.9
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
@@ -212,6 +212,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_ip_space":                                  resourceVcdIpSpace(),                          // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
+	"vcd_rde_interface_behavior":                    resourceVcdRdeInterfaceBehavior(),             // 3.10
 }
 
 // Provider returns a terraform.ResourceProvider.

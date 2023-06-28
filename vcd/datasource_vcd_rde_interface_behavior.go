@@ -39,24 +39,6 @@ func datasourceVcdRdeInterfaceBehavior() *schema.Resource {
 	}
 }
 
-func datasourceVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-	interfaceId := d.Get("interface_id").(string)
-	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
-	if err != nil {
-		return diag.Errorf("could not get the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
-	}
-
-	behavior, err := rdeInterface.GetBehaviorByName(d.Get("name").(string))
-	if err != nil {
-		return diag.Errorf("could not get the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
-	}
-
-	dSet(d, "name", behavior.Name)
-	dSet(d, "execution", behavior.Execution)
-	dSet(d, "ref", behavior.Ref)
-	dSet(d, "description", behavior.Description)
-	d.SetId(behavior.ID)
-
-	return nil
+func datasourceVcdRdeInterfaceBehaviorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdRdeInterfaceBehaviorRead(ctx, d, meta, "datasource")
 }
