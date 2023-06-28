@@ -13,12 +13,12 @@ func datasourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"interface_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "ID of the RDE Interface that contains the desired Behavior",
+				Description: "The ID of the RDE Interface that owns the Behavior to fetch",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the RDE Interface Behavior to read",
+				Description: "The name of the RDE Interface Behavior to fetch",
 			},
 			"execution": {
 				Type:        schema.TypeMap,
@@ -33,7 +33,7 @@ func datasourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Description of the Behavior",
+				Description: "A description specifying the contract of the Behavior",
 			},
 		},
 	}

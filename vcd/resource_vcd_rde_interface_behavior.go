@@ -25,7 +25,7 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "ID of the RDE Interface that will have this Behavior",
+				Description: "The ID of the RDE Interface that owns the Behavior",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -36,7 +36,7 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Description of the Behavior",
+				Description: "A description specifying the contract of the Behavior",
 			},
 			"execution": {
 				Type:        schema.TypeMap,
@@ -98,9 +98,12 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	}
 
 	dSet(d, "name", behavior.Name)
-	dSet(d, "execution", behavior.Execution)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
+	err = d.Set("execution", behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	d.SetId(behavior.ID)
 
 	return nil
