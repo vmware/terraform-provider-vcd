@@ -9,10 +9,10 @@ description: |-
 
 # vcd\_api\_token 
 
-Supported in provider *v3.10+* and VCD 10.3.1+.
-
 Provides a resource to manage API tokens. API tokens are an easy way to authenticate to VCD. 
-They are user-based and have the same role as the user. Explained in more detail [here].[api-tokens]
+They are user-based and have the same role as the user. Explained in more detail [here][api-tokens].
+
+Supported in provider *v3.10+* and VCD 10.3.1+.
 
 ## Example usage
 
@@ -23,6 +23,7 @@ resource "vcd_api_token" "example_token" {
   allow_token_file = true
 }
 ```
+
 ## Argument reference
 
 The following arguments are supported:

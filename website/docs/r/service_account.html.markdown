@@ -10,12 +10,12 @@ description: |-
 
 # vcd\_service\_account 
 
-Supported in provider *v3.10+* and VCD 10.4+.
-
 Provides a resource to manage Service Accounts. Service Accounts can have defined roles
 and act just like a VCD user. Service Accounts, when activated, provide one-time use
 access tokens for authentication to the VCD API, during which a new access token is generated.
-Explained in more detail [here].[service-accounts]
+Explained in more detail [here][service-accounts]
+
+Supported in provider *v3.10+* and VCD 10.4+.
 
 ## Example Usage 
 

@@ -39,7 +39,7 @@ func resourceVcdApiToken() *schema.Resource {
 				ForceNew: true,
 				Description: "Set this to true if you understand the security risks of using" +
 					" API token files and agree to creating them",
-				ValidateDiagFunc: AllowTokenFileIfIsBoolAndTrue(),
+				ValidateDiagFunc: allowTokenFileIfIsBoolAndTrue(),
 			},
 		},
 	}

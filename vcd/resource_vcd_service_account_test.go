@@ -15,6 +15,15 @@ func TestAccServiceAccount_SysOrg(t *testing.T) {
 	skipTestForServiceAccountAndApiToken(t)
 	skipIfNotSysAdmin(t)
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skipf(t.Name() + " requires a connection to set the tests")
+	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skipf("Service Accounts require VCD 10.4.0+ (API v37.0+)")
+	}
+
 	params := StringMap{
 		"SaName":                 t.Name(),
 		"Org":                    testConfig.Provider.SysOrg,
@@ -136,6 +145,15 @@ resource "vcd_service_account" "sysadmin" {
 func TestAccServiceAccount_Org(t *testing.T) {
 	preTestChecks(t)
 	skipTestForServiceAccountAndApiToken(t)
+
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skipf(t.Name() + " requires a connection to set the tests")
+	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skipf("Service Accounts require VCD 10.4.0+ (API v37.0+)")
+	}
 
 	params := StringMap{
 		"SaName":                 t.Name(),
