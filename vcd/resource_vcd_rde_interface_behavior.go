@@ -57,7 +57,7 @@ func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.Resour
 	interfaceId := d.Get("interface_id").(string)
 	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior create] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	_, err = rdeInterface.AddBehavior(types.Behavior{
 		Description: d.Get("description").(string),
@@ -65,7 +65,7 @@ func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.Resour
 		Name:        d.Get("name").(string),
 	})
 	if err != nil {
-		return diag.Errorf("could not create the Behavior in the RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior create] could not create the Behavior in the RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	return genericVcdRdeInterfaceBehaviorRead(ctx, d, meta, "resource")
 }
@@ -79,7 +79,7 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	interfaceId := d.Get("interface_id").(string)
 	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior read] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 
 	var behavior *types.Behavior
@@ -94,7 +94,7 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior read] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 
 	dSet(d, "name", behavior.Name)
@@ -114,7 +114,7 @@ func resourceVcdRdeInterfaceBehaviorUpdate(ctx context.Context, d *schema.Resour
 	interfaceId := d.Get("interface_id").(string)
 	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior update] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	_, err = rdeInterface.UpdateBehavior(types.Behavior{
 		ID:          d.Id(),
@@ -122,7 +122,7 @@ func resourceVcdRdeInterfaceBehaviorUpdate(ctx context.Context, d *schema.Resour
 		Execution:   d.Get("execution").(map[string]interface{}),
 	})
 	if err != nil {
-		return diag.Errorf("could not update the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior update] could not update the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	return genericVcdRdeInterfaceBehaviorRead(ctx, d, meta, "resource")
 }
@@ -132,11 +132,11 @@ func resourceVcdRdeInterfaceBehaviorDelete(_ context.Context, d *schema.Resource
 	interfaceId := d.Get("interface_id").(string)
 	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Behavior delete] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	err = rdeInterface.DeleteBehavior(d.Id())
 	if err != nil {
-		return diag.Errorf("could not delete the Behavior '%s' of RDE Interface with ID '%s': %s", d.Id(), interfaceId, err)
+		return diag.Errorf("[RDE Behavior delete] could not delete the Behavior '%s' of RDE Interface with ID '%s': %s", d.Id(), interfaceId, err)
 	}
 	return nil
 }
@@ -154,7 +154,7 @@ func resourceVcdRdeInterfaceBehaviorDelete(_ context.Context, d *schema.Resource
 // Example resource name (_resource_name_): vcd_rde_interface_behavior.behavior1
 // Example import path (_the_id_string_): vmware.kubernetes.1.0.0.myBehavior
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdRdeInterfaceBehaviorImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdRdeInterfaceBehaviorImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	log.Printf("[DEBUG] importing vcd_rde_interface_behavior resource with provided id %s", d.Id())
@@ -182,6 +182,7 @@ func resourceVcdRdeInterfaceBehaviorImport(ctx context.Context, d *schema.Resour
 	}
 
 	d.SetId(behavior.ID)
+	dSet(d, "interface_id", rdeInterface.DefinedInterface.ID)
 	dSet(d, "name", behavior.Name)
 	return []*schema.ResourceData{d}, nil
 }
