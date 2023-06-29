@@ -439,6 +439,22 @@ provider "vcd" {
     value_regex = "^Yes$"
   }
 }
+
+resource "vcd_org" "my_org" {
+  name = "MyOrg"
+  # ...
+  
+  # This entry will be added, if this Organization has other metadata entries that
+  # match the ones defined in the Provider `ignore_metadata` blocks, they will not be
+  # deleted.
+  metadata_entry {
+    key         = "OneKey"
+    value       = "OneValue"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+}
 ```
 
 Note that this argument **does not affect metadata of the [data source filters](/providers/vmware/vcd/latest/docs/guides/data_source_filters)**.
