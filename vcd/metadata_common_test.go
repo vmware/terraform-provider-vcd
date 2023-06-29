@@ -290,14 +290,15 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	}
 	testParamsNotEmpty(t, params)
 
-	step1 := templateFill(resourceTemplate, params)
+	skipBinary := "# skip-binary-test - Requires a special Provider configuration with ignore_metadata blocks\n"
+	step1 := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s", step1)
 	params["FuncName"] = t.Name() + "-Step2"
 	params["Metadata"] = getMetadataTestingHcl(1, 0, 0, 0, 0, 0)
-	step2 := templateFill(resourceTemplate, params)
+	step2 := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", step2)
 	params["FuncName"] = t.Name() + "-Step3"
-	step3 := templateFill("# skip-binary-test\n"+resourceTemplate+datasourceTemplate, params)
+	step3 := templateFill(skipBinary+resourceTemplate+datasourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 3: %s", step3)
 
 	if vcdShortTest {
