@@ -53,70 +53,102 @@ func TestAccVcdNsxtEdgeStaticRoute(t *testing.T) {
 	configText1 := templateFill(testAccVcdNsxtEdgegatewayStaticRouteStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s\n", configText1)
 
-	// params["FuncName"] = t.Name() + "step2"
-	// configText2 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep2, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s\n", configText2)
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdNsxtEdgegatewayStaticRouteStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s\n", configText2)
 
-	// params["FuncName"] = t.Name() + "step3"
-	// configText3 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep3, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s\n", configText3)
+	params["FuncName"] = t.Name() + "step3"
+	configText3DS := templateFill(testAccVcdNsxtEdgegatewayStaticRouteStep3DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s\n", configText3DS)
 
 	// params["FuncName"] = t.Name() + "step4"
 	// configText4 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep4, params)
 	// debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s\n", configText4)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
+	routedNetGw := &testCachedFieldValue{}
+	routedNetId := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNsxtEdgeDhcpForwardDestroy(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
+		CheckDestroy:      testAccCheckNsxtEdgeStaticRouteDestroy(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_static_route.sr1", "id"),
-					// resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "enabled", "true"),
-					// resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "1.2.3.4"),
-					// resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.#", "1"),
-					// sleepTester(2*time.Minute),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "name", t.Name()+"-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "description", "description-field"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "network_cidr", "10.10.11.0/24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "next_hop.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway_static_route.sr1", "next_hop.*", map[string]string{
+						"ip_address":     "4.3.2.1",
+						"admin_distance": "1",
+					}),
+
+					routedNetGw.cacheTestResourceFieldValue("data.vcd_network_routed_v2.net", "gateway"),
+					routedNetId.cacheTestResourceFieldValue("data.vcd_network_routed_v2.net", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_static_route.sr2", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "name", t.Name()+"-2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "network_cidr", "192.168.1.0/24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "next_hop.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway_static_route.sr2", "next_hop.*", map[string]string{
+						"ip_address":     routedNetGw.fieldValue,
+						"admin_distance": "4",
+						"scope.#":        "1",
+						"scope.0.type":   "NETWORK",
+						"scope.0.id":     routedNetId.fieldValue,
+						"scope.0.name":   params["RoutedNetName"].(string),
+					}),
+
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway_static_route.sr2", "next_hop.*", map[string]string{
+						"ip_address":     routedNetGw.fieldValue,
+						"admin_distance": "3",
+						"scope.#":        "1",
+						"scope.0.type":   "NETWORK",
+						"scope.0.id":     routedNetId.fieldValue,
+						"scope.0.name":   params["RoutedNetName"].(string),
+					}),
 				),
 			},
-			// {
-			// 	Config: configText2,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "enabled", "true"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "1.2.3.4"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "fe80::aaaa"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "192.168.1.254"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "0.0.0.0"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.#", "4"),
-			// 	),
-			// },
-			// {
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "enabled", "false"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "1.2.3.4"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "fe80::aaaa"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "192.168.1.254"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "0.0.0.0"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.#", "4"),
-			// 	),
-			// },
-			// {
-			// 	Config: configText4,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "enabled", "true"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "1.2.3.4"),
-			// 		resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.*", "fe80::aaaa"),
-			// 		// This is left on purpose, as right now if the forwarding service is disabled,
-			// 		// IP addresses can't be deleted, if this fails, it means that the bug got fixed
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding", "dhcp_servers.#", "2"),
-			// 	),
-			// },
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_static_route.sr1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "name", t.Name()+"-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "description", "description-field-updated"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "network_cidr", "10.10.11.0/24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "next_hop.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway_static_route.sr1", "next_hop.*", map[string]string{
+						"ip_address":     "1.2.3.4",
+						"admin_distance": "5",
+					}),
+
+					routedNetGw.cacheTestResourceFieldValue("data.vcd_network_routed_v2.net", "gateway"),
+					routedNetId.cacheTestResourceFieldValue("data.vcd_network_routed_v2.net", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_static_route.sr2", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "name", t.Name()+"-2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "description", "description-field"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "network_cidr", "192.168.1.0/24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "next_hop.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway_static_route.sr2", "next_hop.*", map[string]string{
+						"ip_address":     routedNetGw.fieldValue,
+						"admin_distance": "2",
+						"scope.#":        "1",
+						"scope.0.type":   "NETWORK",
+						"scope.0.id":     routedNetId.fieldValue,
+						"scope.0.name":   params["RoutedNetName"].(string),
+					}),
+				),
+			},
+			{
+				Config: configText3DS,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway_static_route.by-name", "vcd_nsxt_edgegateway_static_route.sr1", nil),
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway_static_route.by-name-and-cidr", "vcd_nsxt_edgegateway_static_route.sr1", nil),
+				),
+			},
+
 			// {
 			// 	ResourceName:            "vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding",
 			// 	ImportState:             true,
@@ -163,85 +195,103 @@ resource "vcd_nsxt_edgegateway_static_route" "sr2" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name         = "{{.TestName}}-2"
-  description  = "description-field"
   network_cidr = "192.168.1.0/24"
 
   next_hop {
-	ip_address     = data.vcd_network_routed_v2.net.gateway
-	admin_distance = 4
+    ip_address     = data.vcd_network_routed_v2.net.gateway
+    admin_distance = 4
 
 	scope {
-		id   = data.vcd_network_routed_v2.net.id
-		type = "NETWORK"
+	  id   = data.vcd_network_routed_v2.net.id
+	  type = "NETWORK"
+	}
+  }
+
+  next_hop {
+    ip_address     = cidrhost(format("%s/%s",data.vcd_network_routed_v2.net.gateway,data.vcd_network_routed_v2.net.prefix_length),4)
+    admin_distance = 3
+
+	scope {
+	  id   = data.vcd_network_routed_v2.net.id
+	  type = "NETWORK"
 	}
   }
 }
 `
 
-// const testAccVcdNsxtEdgegatewayDhcpForwardingStep2 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
-// resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-//   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-//   enabled      = true
-//   dhcp_servers = [
-//     "1.2.3.4",
-//     "fe80::aaaa",
-//     "192.168.1.254",
-//     "0.0.0.0",
-//   ]
-// }
-// `
+const testAccVcdNsxtEdgegatewayStaticRouteStep2 = testAccVcdNsxtEdgegatewayStaticRoutePrereqs + `
+resource "vcd_nsxt_edgegateway_static_route" "sr1" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-// const testAccVcdNsxtEdgegatewayDhcpForwardingStep3 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
-// resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-//   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-//   enabled      = false
-//   dhcp_servers = [
-//     "1.2.3.4",
-//     "fe80::aaaa",
-//     "192.168.1.254",
-//     "0.0.0.0",
-//   ]
-// }
-// `
+  name         = "{{.TestName}}-1"
+  description  = "description-field-updated"
+  network_cidr = "10.10.11.0/24"
 
-// const testAccVcdNsxtEdgegatewayDhcpForwardingStep4 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
-// resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
-//   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  next_hop {
+	ip_address     = "1.2.3.4"
+	admin_distance = 5
+  }
+}
 
-//   enabled      = true
-//   dhcp_servers = [
-//     "1.2.3.4",
-//     "fe80::aaaa",
-//   ]
-// }
-// `
+resource "vcd_nsxt_edgegateway_static_route" "sr2" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-// func testAccCheckNsxtEdgeDhcpForwardDestroy(vdcOrVdcGroupName, edgeGatewayName string) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		conn := testAccProvider.Meta().(*VCDClient)
+  name         = "{{.TestName}}-2"
+  description  = "description-field"
+  network_cidr = "192.168.1.0/24"
 
-// 		vdcOrVdcGroup, err := lookupVdcOrVdcGroup(conn, testConfig.VCD.Org, vdcOrVdcGroupName)
-// 		if err != nil {
-// 			return fmt.Errorf("unable to find VDC or VDC group %s: %s", vdcOrVdcGroupName, err)
-// 		}
+  next_hop {
+    ip_address     = data.vcd_network_routed_v2.net.gateway
+    admin_distance = 2
 
-// 		edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
-// 		if err != nil {
-// 			return fmt.Errorf(errorUnableToFindEdgeGateway, edgeGatewayName)
-// 		}
+	scope {
+	  id   = data.vcd_network_routed_v2.net.id
+	  type = "NETWORK"
+	}
+  }
+}
+`
 
-// 		dhcpForwardingConfig, err := edge.GetDhcpForwarder()
-// 		if err != nil {
-// 			return fmt.Errorf("unable to get DHCP forwarding config: %s", err)
-// 		}
+const testAccVcdNsxtEdgegatewayStaticRouteStep3DS = testAccVcdNsxtEdgegatewayStaticRouteStep2 + `
+# skip-binary-test: Data Source test
+data "vcd_nsxt_edgegateway_static_route" "by-name" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name            = "{{.TestName}}-1"
+}
 
-// 		if dhcpForwardingConfig.Enabled && dhcpForwardingConfig.DhcpServers != nil {
-// 			return fmt.Errorf("DHCP forwarding configuration still exists")
-// 		}
+data "vcd_nsxt_edgegateway_static_route" "by-name-and-cidr" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name            = "{{.TestName}}-1"
+  network_cidr    = "10.10.11.0/24"
+}
+`
 
-// 		return nil
-// 	}
-// }
+func testAccCheckNsxtEdgeStaticRouteDestroy(vdcOrVdcGroupName, edgeGatewayName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		vdcOrVdcGroup, err := lookupVdcOrVdcGroup(conn, testConfig.VCD.Org, vdcOrVdcGroupName)
+		if err != nil {
+			return fmt.Errorf("unable to find VDC or VDC group %s: %s", vdcOrVdcGroupName, err)
+		}
+
+		edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, edgeGatewayName)
+		}
+
+		allStaticRoutes, err := edge.GetAllStaticRoutes(nil)
+		if err != nil {
+			return fmt.Errorf("unable to get Static Routes: %s", err)
+		}
+
+		if len(allStaticRoutes) > 0 {
+			return fmt.Errorf("'%d' Static Routes still exist", len(allStaticRoutes))
+		}
+
+		return nil
+	}
+}
 
 func sleepTester(d time.Duration) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
