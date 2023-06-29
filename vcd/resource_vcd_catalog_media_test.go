@@ -290,7 +290,7 @@ func TestAccVcdCatalogMediaMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdCatalogMediaMetadata, "vcd_catalog_media.test-catalog-media",
 		testAccCheckVcdCatalogMediaMetadataDatasource, "data.vcd_catalog_media.test-catalog-media-ds",
-		"media", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"Catalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"MediaPath": testConfig.Media.MediaPath,
 		})

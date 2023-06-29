@@ -287,5 +287,5 @@ func TestAccVcdVAppMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdVAppMetadata, "vcd_vapp.test-vapp",
 		testAccCheckVcdVAppMetadataDatasource, "data.vcd_vapp.test-vapp-ds",
-		"vApp", getObjectById, nil)
+		getObjectById, nil)
 }

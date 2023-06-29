@@ -375,7 +375,7 @@ func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdCatalogVAppTemplateMetadata, "vcd_catalog_vapp_template.test-catalog-vapp-template",
 		testAccCheckVcdCatalogVAppTemplateMetadataDatasource, "data.vcd_catalog_vapp_template.test-catalog-vapp-template-ds",
-		"vAppTemplate", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})

@@ -18,10 +18,10 @@ func ignoreMetadataSchema() *schema.Schema {
 		Description: "Defines a set of `metadata_entry` that need to be ignored by this provider. All filters on this attribute are computed with a logical AND",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"object_type": {
+				"resource_type": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "Ignores metadata from the specific object type in VCD",
+					Description: "Ignores metadata from the specific resource type",
 				},
 				"object_name": {
 					Type:        schema.TypeString,
@@ -32,13 +32,13 @@ func ignoreMetadataSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Regular expression of the metadata entry keys to ignore. Either `key_regex` or `value_regex` is required",
-					// Note: AtLeastOneOf can't be used here
+					// Note: This one should have AtLeastOneOf, but it can't be used inside Sets
 				},
 				"value_regex": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Regular expression of the metadata entry values to ignore. Either `key_regex` or `value_regex` is required",
-					// Note: AtLeastOneOf can't be used here
+					// Note: This one should have AtLeastOneOf, but it can't be used inside Sets
 				},
 			},
 		},
@@ -76,11 +76,57 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 		if ignoredEntry["object_name"].(string) != "" {
 			result[i].ObjectName = addrOf(ignoredEntry["object_name"].(string))
 		}
-		if ignoredEntry["object_type"].(string) != "" {
-			result[i].ObjectType = addrOf(ignoredEntry["object_type"].(string))
+		if ignoredEntry["resource_type"].(string) != "" {
+			result[i].ObjectType = addrOf(ignoredEntry["resource_type"].(string))
 		}
 	}
 	return result, nil
+}
+
+// mapTerraformIgnoredMetadata transforms the ObjectType property on every input entry, which references a Terraform
+// resource by its name, to the corresponding VCD object that the Go SDK can understand.
+func mapTerraformIgnoredMetadata(ignoredMetadata []govcd.IgnoredMetadata) []govcd.IgnoredMetadata {
+	relationMap := map[string]string{
+		"vcd_catalog":               "catalog",
+		"vcd_catalog_item":          "catalogItem",
+		"vcd_catalog_media":         "media",
+		"vcd_catalog_vapp_template": "vAppTemplate",
+		"vcd_independent_disk":      "disk",
+		"vcd_network_direct":        "network",
+		"vcd_network_isolated":      "network",
+		"vcd_network_isolated_v2":   "network",
+		"vcd_network_routed":        "network",
+		"vcd_network_routed_v2":     "network",
+		"vcd_org":                   "org",
+		"vcd_org_vdc":               "vdc",
+		"vcd_provider_vdc":          "providervdc",
+		"vcd_storage_profile":       "vdcStorageProfile",
+		"vcd_vapp":                  "vApp",
+		"vcd_vapp_vm":               "vApp",
+		"vcd_vm":                    "vApp",
+	}
+
+	terraformMetadataRelation := func(resourceName *string) *string {
+		if resourceName == nil {
+			return nil
+		}
+		result, ok := relationMap[*resourceName]
+		if !ok {
+			return nil
+		}
+		return &result
+	}
+
+	result := make([]govcd.IgnoredMetadata, len(ignoredMetadata))
+	for i, entry := range ignoredMetadata {
+		result[i] = govcd.IgnoredMetadata{
+			ObjectType: terraformMetadataRelation(entry.ObjectType),
+			ObjectName: entry.ObjectName,
+			KeyRegex:   entry.KeyRegex,
+			ValueRegex: entry.ValueRegex,
+		}
+	}
+	return result
 }
 
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.

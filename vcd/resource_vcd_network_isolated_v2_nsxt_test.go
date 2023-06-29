@@ -705,5 +705,5 @@ func TestAccVcdIsolatedNetworkV2MetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
-		"network", getObjectById, nil)
+		getObjectById, nil)
 }

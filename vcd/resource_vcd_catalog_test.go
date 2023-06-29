@@ -981,7 +981,7 @@ func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
 		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
-		"catalog", getObjectById, nil)
+		getObjectById, nil)
 }
 
 func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {

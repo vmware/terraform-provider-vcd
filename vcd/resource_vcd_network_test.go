@@ -1387,7 +1387,7 @@ func TestAccVcdDirectNetworkMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdDirectNetworkMetadata, "vcd_network_direct.test-network-direct",
 		testAccCheckVcdDirectNetworkMetadataDatasource, "data.vcd_network_direct.test-network-direct-ds",
-		"network", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"ExternalNetwork": testConfig.Networking.ExternalNetwork,
 			"Vdc":             testConfig.VCD.Vdc,
 		})
@@ -1443,7 +1443,7 @@ func TestAccVcdIsolatedNetworkMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdIsolatedNetworkMetadata, "vcd_network_isolated.test-network-isolated",
 		testAccCheckVcdIsolatedNetworkMetadataDatasource, "data.vcd_network_isolated.test-network-isolated-ds",
-		"network", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"Vdc": testConfig.VCD.Vdc,
 		})
 }
@@ -1500,7 +1500,7 @@ func TestAccVcdRoutedNetworkMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdRoutedNetworkMetadata, "vcd_network_routed.test-network-routed",
 		testAccCheckVcdRoutedNetworkMetadataDatasource, "data.vcd_network_routed.test-network-routed-ds",
-		"network", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"Vdc":         testConfig.VCD.Vdc,
 			"EdgeGateway": testConfig.Networking.EdgeGateway,
 		})

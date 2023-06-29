@@ -391,10 +391,11 @@ in the state.
 
 The available sub-attributes for `ignore_metadata` are:
 
-* `object_type` - (Optional) Specifies the type of the object which metadata needs to be ignored. The object types must be declared
-  as defined in the metadata endpoints of the [VCD API documentation](https://developer.vmware.com/apis/1601/vmware-cloud-director). For example,
-  `catalog`, `media`, `disk`, `org`, `catalogItem`, `vAppTemplate`, `vdc`, `network`, `providervdc`, `vApp` (note this one is used
-  for both vApps and VMs), etc.
+* `resource_type` - (Optional) Specifies the resource type which metadata needs to be ignored. If set, the resource type must be one of:
+  *"vcd_catalog"*, *"vcd_catalog_item"*, *"vcd_catalog_media"*, *"vcd_catalog_vapp_template"*, *"vcd_independent_disk"*, *"vcd_network_direct"*,
+  *"vcd_network_isolated"*, *"vcd_network_isolated_v2"*, *"vcd_network_routed"*, *"vcd_network_routed_v2"*, *"vcd_org"*, *"vcd_org_vdc"*, *"vcd_provider_vdc"*,
+  *"vcd_storage_profile"*, *"vcd_vapp"*, *"vcd_vapp_vm"* or *"vcd_vm"*, which are the resources compatible with `metadata_entry`.
+  Any other resource type will not have effect.
 * `object_name`- (Optional) Specifies the name of the object which metadata needs to be ignored. All object types are supported, except for
   `vdcStorageProfile` which **cannot be filtered by name**.
 * `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 

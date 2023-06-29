@@ -275,7 +275,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 //
 // The different ignore_metadata sub-tests check what happens if the filter matches or doesn't match the metadata entry
 // added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
-func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress, objectType string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
+func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
 		"FuncName": t.Name() + "-Step1",
@@ -289,6 +289,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		params[extraParam] = extraParamValue
 	}
 	testParamsNotEmpty(t, params)
+
+	resourceType := strings.Split(resourceAddress, ".")[0]
 
 	skipBinary := "# skip-binary-test - Requires a special Provider configuration with ignore_metadata blocks\n"
 	step1 := templateFill(skipBinary+resourceTemplate, params)
@@ -401,11 +403,13 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		})
 	}
 
-	t.Run("filter by key and value that match", func(_ *testing.T) {
+	t.Run("filter by all options that match", func(_ *testing.T) {
 		testFunc(vcdClient, []map[string]string{
 			{
-				"key_regex":   "foo",
-				"value_regex": "bar",
+				"resource_type": resourceType,
+				"object_name":   t.Name(),
+				"key_regex":     "foo",
+				"value_regex":   "bar",
 			},
 		}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 	})
@@ -418,32 +422,32 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		t.Run("filter by object type and specific key", func(_ *testing.T) {
 			testFunc(vcdClient, []map[string]string{
 				{
-					"object_type": objectType,
-					"key_regex":   "foo",
+					"resource_type": resourceType,
+					"key_regex":     "foo",
 				},
 			}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 		})
 		t.Run("filter by object type and specific value", func(_ *testing.T) {
 			testFunc(vcdClient, []map[string]string{
 				{
-					"object_type": objectType,
-					"value_regex": "bar",
+					"resource_type": resourceType,
+					"value_regex":   "bar",
 				},
 			}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 		})
 		t.Run("filter by object type and key that doesn't match", func(_ *testing.T) {
 			testFunc(vcdClient, []map[string]string{
 				{
-					"object_type": objectType,
-					"key_regex":   "notmatch",
+					"resource_type": resourceType,
+					"key_regex":     "notmatch",
 				},
 			}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 		})
 		t.Run("filter by object type and value that doesn't match", func(_ *testing.T) {
 			testFunc(vcdClient, []map[string]string{
 				{
-					"object_type": objectType,
-					"value_regex": "notmatch",
+					"resource_type": resourceType,
+					"value_regex":   "notmatch",
 				},
 			}, 1) // We expect 1 because 'foo' 'has been deleted by Terraform as it was not ignored
 		})

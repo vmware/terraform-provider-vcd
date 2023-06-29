@@ -974,7 +974,7 @@ func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdRoutedNetworkV2Metadata, "vcd_network_routed_v2.test-network-routed-v2",
 		testAccCheckVcdRoutedNetworkV2MetadataDatasource, "data.vcd_network_routed_v2.test-network-routed-v2-ds",
-		"network", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		})
 }

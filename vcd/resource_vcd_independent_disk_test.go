@@ -720,7 +720,7 @@ func TestAccVcdIndependentDiskMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdIndependentDiskMetadata, "vcd_independent_disk.test-independent-disk",
 		testAccCheckVcdIndependentDiskMetadataDatasource, "data.vcd_independent_disk.test-independent-disk-ds",
-		"disk", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})
 }

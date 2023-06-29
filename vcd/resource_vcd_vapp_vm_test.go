@@ -534,7 +534,7 @@ func TestAccVcdVAppVmMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdVAppVmMetadata, "vcd_vapp_vm.test-vapp-vm",
 		testAccCheckVcdVAppVmMetadataDatasource, "data.vcd_vapp_vm.test-vapp-vm-ds",
-		"vApp", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
 		})
@@ -602,7 +602,7 @@ func TestAccVcdVmMetadataIgnore(t *testing.T) {
 	testMetadataEntryIgnore(t,
 		testAccCheckVcdVmMetadata, "vcd_vm.test-vm",
 		testAccCheckVcdVmMetadataDatasource, "data.vcd_vm.test-vm-ds",
-		"vApp", getObjectById, StringMap{
+		getObjectById, StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
 		})
