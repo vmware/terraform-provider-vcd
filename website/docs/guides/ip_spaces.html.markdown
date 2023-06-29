@@ -27,8 +27,8 @@ As a service provider, you create public, shared, or private IP spaces and assig
 gateways by creating IP space uplinks. After creating an IP space, you can assign to it IP prefixes
 for networks and floating IP addresses for network services.
 
-Organization administrators can view general information about the IP spaces in their organization
-has access, and manage the IP spaces available to them.
+Organization administrators can view general information about the IP spaces in their organization,
+and manage the IP spaces available to them provided they have access rights.
 
 There are three types of IP spaces that you can create.
 
@@ -42,29 +42,24 @@ There are three types of IP spaces that you can create.
   IP consumption is unlimited.
 
 
-## New resources for IP Space support
+## List of resources with IP Space support
 
-The following new resources for IP Space management are now available with Terraform Provider for
-VCD 3.10+:
+The following resources for IP Space management are available with Terraform Provider for
+VCD starting with version 3.10:
 
 * `vcd_ip_space` - provides IP Space and default quota definition capability
 * `vcd_ip_space_uplink` - provides capability to assign IP Space Uplink for Provider Gateways
-* `vcd_ip_space_ip_allocation` - provides capability to allocation floating IPs or IP Prefix
-* `vcd_ip_space_custom_quota` - provides capability to set Org specified Custom Quotas and override
+  (resource `vcd_external_network_v2`)
+* `vcd_ip_space_ip_allocation` - provides capability to allocate floating IPs or IP Prefixes
+* `vcd_ip_space_custom_quota` - provides capability to set Org specific Custom Quotas and override
   default ones defined in `vcd_ip_space`
-
-## Modified resources for IP Space support
-
-In addition to new IP Space resources, the following resources were amended to accommodate IP Space
-support:
-
-* `vcd_external_network_v2` - new fields `use_ip_spaces` and `dedicated_org_id` (applicable only to
+* `vcd_external_network_v2` - fields `use_ip_spaces` and `dedicated_org_id` (applicable only to
   T0 or T0 VRF backed networks also known as Provider Gateways in UI)
 * `vcd_nsxt_edgegateway` - none of the fields `subnet_with_total_ip_count`, `subnet`,
-  `subnet_with_ip_count` are no longer mandatory when specifying `external_network_id` that is using
-  IP Spaces. As a result they will not be populated after read operations together with
-  `used_ip_count` and `unused_ip_count`. Additional computed flag `uses_ip_spaces` to tell if the
-  Edge Gateway is using IP Spaces (is backed by Provider Gateway that has IP Space Uplinks)
+  `subnet_with_ip_count` are mandatory when specifying `external_network_id` that is using IP
+  Spaces. As a result they will not be populated after read operations together with `used_ip_count`
+  and `unused_ip_count`. Additional computed flag `use_ip_spaces` to tell if the Edge Gateway is
+  using IP Spaces (is backed by Provider Gateway that has IP Space Uplinks)
 
 
 ## Sample end to end configuration using IP Spaces

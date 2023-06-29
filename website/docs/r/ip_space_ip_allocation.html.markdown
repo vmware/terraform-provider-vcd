@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_ip_space_ip_allocation"
 sidebar_current: "docs-vcd-resource-ip-space-ip-allocation"
 description: |-
-  Provides a resource to manage IP IP Allocations within IP Spaces. It supports both - Floating IPs 
+  Provides a resource to manage IP Allocations within IP Spaces. It supports both - Floating IPs 
   (IPs from IP Ranges) and IP Prefix (subnet) allocations with manual and automatic reservations.
 ---
 
 # vcd\_ip\_space\_ip\_allocation
 
-Provides a resource to manage IP IP Allocations within IP Spaces. It supports both - Floating IPs
-(IPs from IP Ranges) and IP Prefix (subnet) allocations with manual and automatic reservations.
+Provides a resource to manage IP Allocations within IP Spaces. It supports both - Floating IPs (IPs
+from IP Ranges) and IP Prefix (subnet) allocations with manual and automatic reservations.
 
 
 ## Example Usage (Floating IP Usage for NAT rule)

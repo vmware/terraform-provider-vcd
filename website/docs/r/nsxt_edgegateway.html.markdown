@@ -382,7 +382,7 @@ The following attributes are exported on this resource:
 * `primary_ip` - Primary IP address exposed for an easy access without nesting.
 * `used_ip_count` - Unused IP count in this Edge Gateway
 * `unused_ip_count` - Used IP count in this Edge Gateway
-* `uses_ip_spaces` - Boolean value that hints if the NSX-T Edge Gateway uses IP Spaces
+* `use_ip_spaces` - Boolean value that hints if the NSX-T Edge Gateway uses IP Spaces
 
 ~> `primary_ip`, `used_ip_count` and `unused_ip_count` will not be populated when using **IP Spaces**
 

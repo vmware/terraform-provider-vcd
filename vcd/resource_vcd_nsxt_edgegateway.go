@@ -214,7 +214,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Number of unused IP addresses",
 			},
-			"uses_ip_spaces": {
+			"use_ip_spaces": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Boolean value that hints if the Edge Gateway is using IP Spaces",
@@ -859,9 +859,9 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	// NSX-T Edge Gateway subnet and used/unused IP counts are only available and can be stored in
 	// state if it is not backed by IP Spaces
 	if edgeUplink.UsingIpSpace != nil && *edgeUplink.UsingIpSpace {
-		dSet(d, "uses_ip_spaces", true)
+		dSet(d, "use_ip_spaces", true)
 	} else {
-		dSet(d, "uses_ip_spaces", false)
+		dSet(d, "use_ip_spaces", false)
 		err := setNsxtEdgeGatewayUplinkData(edgeGateway, &edgeUplink, d)
 		if err != nil {
 			return fmt.Errorf("error storing uplink information: %s", err)

@@ -9,7 +9,7 @@ description: |-
 
 # vcd\_ip\_space\_ip\_allocation
 
-Provides a data source to read IP IP Allocations within IP Spaces. It supports both - Floating IPs
+Provides a data source to read IP Allocations within IP Spaces. It supports both - Floating IPs
 (IPs from IP Ranges) and IP Prefix (subnet) allocations with manual and automatic reservations.
 
 IP Spaces require VCD 10.4.1+ with NSX-T.
