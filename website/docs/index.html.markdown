@@ -373,7 +373,7 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
   it is a dot (`.`).
 
-* `ignore_metadata` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries.
+* `ignore_metadata` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries from being managed by this Terraform provider.
   See ["Ignore Metadata"](#ignore-metadata) for more details.
 
 ## Ignore metadata
