@@ -124,6 +124,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          datasourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  datasourceVcdOrgSaml(),                          // 3.10
 	"vcd_org_saml_metadata":                         datasourceVcdOrgSamlMetadata(),                  // 3.10
+	"vcd_nsxt_edgegateway_static_route":             datasourceVcdNsxtEdgeGatewayStaticRoute(),       // 3.10
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -211,6 +212,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_ip_space":                                  resourceVcdIpSpace(),                          // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
+	"vcd_nsxt_edgegateway_static_route":             resourceVcdNsxtEdgeGatewayStaticRoute(),       // 3.10
 }
 
 // Provider returns a terraform.ResourceProvider.
