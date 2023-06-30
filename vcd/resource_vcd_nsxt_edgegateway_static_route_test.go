@@ -5,7 +5,6 @@ package vcd
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -61,9 +60,13 @@ func TestAccVcdNsxtEdgeStaticRoute(t *testing.T) {
 	configText3DS := templateFill(testAccVcdNsxtEdgegatewayStaticRouteStep3DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s\n", configText3DS)
 
-	// params["FuncName"] = t.Name() + "step4"
-	// configText4 := templateFill(testAccVcdNsxtEdgegatewayDhcpForwardingStep4, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s\n", configText4)
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccVcdNsxtEdgegatewayStaticRouteStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s\n", configText4)
+
+	params["FuncName"] = t.Name() + "step5"
+	configText5DS := templateFill(testAccVcdNsxtEdgegatewayStaticRouteStep5DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s\n", configText5DS)
 
 	routedNetGw := &testCachedFieldValue{}
 	routedNetId := &testCachedFieldValue{}
@@ -141,6 +144,18 @@ func TestAccVcdNsxtEdgeStaticRoute(t *testing.T) {
 					}),
 				),
 			},
+			{ // Import by Name
+				ResourceName:      "vcd_nsxt_edgegateway_static_route.sr1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, t.Name()+"-1"),
+			},
+			{ // Import by Network CIDR
+				ResourceName:      "vcd_nsxt_edgegateway_static_route.sr1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, "10.10.11.0/24"),
+			},
 			{
 				Config: configText3DS,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -148,14 +163,22 @@ func TestAccVcdNsxtEdgeStaticRoute(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_edgegateway_static_route.by-name-and-cidr", "vcd_nsxt_edgegateway_static_route.sr1", nil),
 				),
 			},
+			{
+				Config: configText4, // check that 2 static routes can have duplicate names
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_static_route.sr1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr1", "name", t.Name()),
 
-			// {
-			// 	ResourceName:            "vcd_nsxt_edgegateway_dhcp_forwarding.DhcpForwarding",
-			// 	ImportState:             true,
-			// 	ImportStateVerify:       true,
-			// 	ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["EdgeGw"].(string)),
-			// 	ImportStateVerifyIgnore: []string{"org"},
-			// },
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_static_route.sr2", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_static_route.sr2", "name", t.Name()),
+				),
+			},
+			{
+				Config: configText5DS, // validate that a single data source can be identified with name+network_cidr filtering
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("data.vcd_nsxt_edgegateway_static_route.by-name-and-cidr", "vcd_nsxt_edgegateway_static_route.sr1", nil),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -179,6 +202,7 @@ data "vcd_network_routed_v2" "net" {
 
 const testAccVcdNsxtEdgegatewayStaticRouteStep1 = testAccVcdNsxtEdgegatewayStaticRoutePrereqs + `
 resource "vcd_nsxt_edgegateway_static_route" "sr1" {
+  org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name         = "{{.TestName}}-1"
@@ -192,6 +216,7 @@ resource "vcd_nsxt_edgegateway_static_route" "sr1" {
 }
 
 resource "vcd_nsxt_edgegateway_static_route" "sr2" {
+  org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name         = "{{.TestName}}-2"
@@ -221,6 +246,7 @@ resource "vcd_nsxt_edgegateway_static_route" "sr2" {
 
 const testAccVcdNsxtEdgegatewayStaticRouteStep2 = testAccVcdNsxtEdgegatewayStaticRoutePrereqs + `
 resource "vcd_nsxt_edgegateway_static_route" "sr1" {
+  org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name         = "{{.TestName}}-1"
@@ -234,6 +260,7 @@ resource "vcd_nsxt_edgegateway_static_route" "sr1" {
 }
 
 resource "vcd_nsxt_edgegateway_static_route" "sr2" {
+  org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name         = "{{.TestName}}-2"
@@ -266,6 +293,59 @@ data "vcd_nsxt_edgegateway_static_route" "by-name-and-cidr" {
 }
 `
 
+// create Static Routes with duplicate names to check that data source can filter on network_cidr
+const testAccVcdNsxtEdgegatewayStaticRouteStep4 = testAccVcdNsxtEdgegatewayStaticRoutePrereqs + `
+resource "vcd_nsxt_edgegateway_static_route" "sr1" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  name         = "{{.TestName}}"
+  description  = "description-field-updated"
+  network_cidr = "10.10.11.0/24"
+
+  next_hop {
+	ip_address     = "1.2.3.4"
+	admin_distance = 5
+  }
+}
+
+resource "vcd_nsxt_edgegateway_static_route" "sr2" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  name         = "{{.TestName}}"
+  description  = "description-field"
+  network_cidr = "192.168.1.0/24"
+
+  next_hop {
+    ip_address     = data.vcd_network_routed_v2.net.gateway
+    admin_distance = 2
+
+	scope {
+	  id   = data.vcd_network_routed_v2.net.id
+	  type = "NETWORK"
+	}
+  }
+}
+`
+
+const testAccVcdNsxtEdgegatewayStaticRouteStep5DS = testAccVcdNsxtEdgegatewayStaticRouteStep4 + `
+# skip-binary-test: Data Source test
+# This data source would fail because it attemps to search only by name and there are 2 Static 
+# Routes with the same name
+#data "vcd_nsxt_edgegateway_static_route" "by-name" {
+#  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+#  name            = "{{.TestName}}"
+#}
+
+data "vcd_nsxt_edgegateway_static_route" "by-name-and-cidr" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name            = "{{.TestName}}"
+  network_cidr    = "10.10.11.0/24"
+}
+`
+
 func testAccCheckNsxtEdgeStaticRouteDestroy(vdcOrVdcGroupName, edgeGatewayName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -289,15 +369,6 @@ func testAccCheckNsxtEdgeStaticRouteDestroy(vdcOrVdcGroupName, edgeGatewayName s
 			return fmt.Errorf("'%d' Static Routes still exist", len(allStaticRoutes))
 		}
 
-		return nil
-	}
-}
-
-func sleepTester(d time.Duration) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Printf("sleeping %s\n", d.String())
-		time.Sleep(d)
-		fmt.Println("finished sleeping")
 		return nil
 	}
 }

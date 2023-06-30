@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -223,9 +224,10 @@ func resourceVcdNsxtEdgeGatewayStaticRouteDelete(ctx context.Context, d *schema.
 func resourceVcdNsxtEdgeGatewayStaticRouteImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.SplitN(d.Id(), ImportSeparator, 4)
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.static_route_cidr, got '%s'", d.Id())
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.edge_gateway_name.static_route_name or "+
+			"'org-name.vdc-or-vdc-group-name.edge_gateway_name.name', got '%s'", d.Id())
 	}
-	orgName, vdcOrVdcGroupName, edgeGatewayName, staticRouteCidr := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcOrVdcGroupName, edgeGatewayName, staticRouteCidrOrName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
 	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
@@ -238,9 +240,25 @@ func resourceVcdNsxtEdgeGatewayStaticRouteImport(ctx context.Context, d *schema.
 		return nil, fmt.Errorf("[NSX-T Edge Gateway Static Route import] unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
 	}
 
-	staticRoute, err := edgeGateway.GetStaticRouteByNetworkCidr(staticRouteCidr)
-	if err != nil {
-		return nil, fmt.Errorf("[NSX-T Edge Gateway Static Route import] unable to find BGP Neighbor with Name '%s': %s", staticRouteCidr, err)
+	_, _, err = net.ParseCIDR(staticRouteCidrOrName)
+	isNetworkCidr := err == nil // when error is nil, this is a CIDR
+
+	var staticRoute *govcd.NsxtEdgeGatewayStaticRoute
+
+	if isNetworkCidr {
+		staticRoute, err = edgeGateway.GetStaticRouteByNetworkCidr(staticRouteCidrOrName)
+		if err != nil {
+			return nil, fmt.Errorf("[NSX-T Edge Gateway Static Route import] unable to find Static Route with Network CIDR '%s': %s", staticRouteCidrOrName, err)
+		}
+	} else { // by name
+		staticRoute, err = edgeGateway.GetStaticRouteByName(staticRouteCidrOrName)
+		if err != nil {
+			return nil, fmt.Errorf("[NSX-T Edge Gateway Static Route import] unable to find Static Route with Name '%s': %s", staticRouteCidrOrName, err)
+		}
+	}
+
+	if staticRoute == nil {
+		return nil, fmt.Errorf("NSX-T Edge Gateway Static Route import unable to find Static Route by the following ID: %s", d.Id())
 	}
 
 	dSet(d, "org", orgName)
