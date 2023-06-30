@@ -23,23 +23,23 @@ resource "vcd_nsxt_edgegateway_static_route" "sr2" {
   network_cidr = "192.168.1.0/24"
 
   next_hop {
-    ip_address     = 1.1.1.1
+    ip_address     = "1.1.1.1"
     admin_distance = 4
 
-	  scope {
-	    id   = data.vcd_network_routed_v2.net.id
-	    type = "NETWORK"
-	  }
+    scope {
+      id   = data.vcd_network_routed_v2.net.id
+      type = "NETWORK"
+    }
   }
 
   next_hop {
     ip_address     = "1.1.1.254"
     admin_distance = 3
 
-	  scope {
-	    id   = data.vcd_network_routed_v2.net.id
-	    type = "NETWORK"
-	  }
+    scope {
+      id   = data.vcd_network_routed_v2.net.id
+      type = "NETWORK"
+    }
   }
 }
 ```
