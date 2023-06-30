@@ -6,19 +6,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdRdeInterfaceBehavior() *schema.Resource {
+func datasourceVcdRdeTypeBehavior() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdRdeInterfaceBehaviorRead,
+		ReadContext: datasourceVcdRdeTypeBehaviorRead,
 		Schema: map[string]*schema.Schema{
-			"rde_interface_id": {
+			"rde_type_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The ID of the RDE Interface that owns the Behavior to fetch",
+				Description: "The ID of the RDE Type that owns the Behavior to fetch",
+			},
+			"rde_interface_behavior_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The ID of the overridden RDE Interface Behavior to fetch",
 			},
 			"name": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The name of the Behavior to fetch",
+				Computed:    true,
+				Description: "The name of the Behavior",
 			},
 			"execution": {
 				Type:        schema.TypeMap,
@@ -39,6 +44,6 @@ func datasourceVcdRdeInterfaceBehavior() *schema.Resource {
 	}
 }
 
-func datasourceVcdRdeInterfaceBehaviorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdRdeInterfaceBehaviorRead(ctx, d, meta, "datasource")
+func datasourceVcdRdeTypeBehaviorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdRdeTypeBehaviorRead(ctx, d, meta, "datasource")
 }

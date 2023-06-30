@@ -59,7 +59,7 @@ data "vcd_rde_interface" "interface_ds" {
 }
 
 data "vcd_rde_interface_behavior" "behavior_ds" {
-  interface_id = data.vcd_rde_interface.interface_ds.id
-  name         = "{{.BehaviorName}}"
+  rde_interface_id = data.vcd_rde_interface.interface_ds.id
+  name             = "{{.BehaviorName}}"
 }
 `

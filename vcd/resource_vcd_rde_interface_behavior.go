@@ -21,7 +21,7 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			StateContext: resourceVcdRdeInterfaceBehaviorImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"interface_id": {
+			"rde_interface_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -54,10 +54,10 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 
 func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	interfaceId := d.Get("interface_id").(string)
-	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
+	interfaceId := d.Get("rde_interface_id").(string)
+	rdeInterface, err := vcdClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior create] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior create] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	_, err = rdeInterface.AddBehavior(types.Behavior{
 		Description: d.Get("description").(string),
@@ -65,7 +65,7 @@ func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.Resour
 		Name:        d.Get("name").(string),
 	})
 	if err != nil {
-		return diag.Errorf("[RDE Behavior create] could not create the Behavior in the RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior create] could not create the Behavior in the RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	return genericVcdRdeInterfaceBehaviorRead(ctx, d, meta, "resource")
 }
@@ -76,10 +76,10 @@ func resourceVcdRdeInterfaceBehaviorRead(ctx context.Context, d *schema.Resource
 
 func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	interfaceId := d.Get("interface_id").(string)
-	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
+	interfaceId := d.Get("rde_interface_id").(string)
+	rdeInterface, err := vcdClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior read] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior read] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 
 	var behavior *types.Behavior
@@ -89,12 +89,12 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 		behavior, err = rdeInterface.GetBehaviorByName(d.Get("name").(string))
 	}
 	if origin == "resource" && govcd.ContainsNotFound(err) {
-		log.Printf("[DEBUG] Behavior no longer exists. Removing from tfstate")
+		log.Printf("[DEBUG] RDE Interface Behavior no longer exists. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[RDE Behavior read] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior read] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 
 	dSet(d, "name", behavior.Name)
@@ -111,10 +111,10 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 
 func resourceVcdRdeInterfaceBehaviorUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	interfaceId := d.Get("interface_id").(string)
-	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
+	interfaceId := d.Get("rde_interface_id").(string)
+	rdeInterface, err := vcdClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior update] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior update] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	_, err = rdeInterface.UpdateBehavior(types.Behavior{
 		ID:          d.Id(),
@@ -122,21 +122,21 @@ func resourceVcdRdeInterfaceBehaviorUpdate(ctx context.Context, d *schema.Resour
 		Execution:   d.Get("execution").(map[string]interface{}),
 	})
 	if err != nil {
-		return diag.Errorf("[RDE Behavior update] could not update the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior update] could not update the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	return genericVcdRdeInterfaceBehaviorRead(ctx, d, meta, "resource")
 }
 
 func resourceVcdRdeInterfaceBehaviorDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	interfaceId := d.Get("interface_id").(string)
-	rdeInterface, err := vcdClient.VCDClient.GetDefinedInterfaceById(interfaceId)
+	interfaceId := d.Get("rde_interface_id").(string)
+	rdeInterface, err := vcdClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior delete] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior delete] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	err = rdeInterface.DeleteBehavior(d.Id())
 	if err != nil {
-		return diag.Errorf("[RDE Behavior delete] could not delete the Behavior '%s' of RDE Interface with ID '%s': %s", d.Id(), interfaceId, err)
+		return diag.Errorf("[RDE Interface Behavior delete] could not delete the Behavior '%s' of RDE Interface with ID '%s': %s", d.Id(), interfaceId, err)
 	}
 	return nil
 }
@@ -182,7 +182,7 @@ func resourceVcdRdeInterfaceBehaviorImport(_ context.Context, d *schema.Resource
 	}
 
 	d.SetId(behavior.ID)
-	dSet(d, "interface_id", rdeInterface.DefinedInterface.ID)
+	dSet(d, "rde_interface_id", rdeInterface.DefinedInterface.ID)
 	dSet(d, "name", behavior.Name)
 	return []*schema.ResourceData{d}, nil
 }
