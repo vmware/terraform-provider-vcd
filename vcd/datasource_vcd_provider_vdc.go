@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"context"
-	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 
@@ -12,50 +11,6 @@ import (
 
 // datasourceVcdProviderVdc defines the data source for a Provider VDC.
 func datasourceVcdProviderVdc() *schema.Resource {
-	// This internal schema defines the Root Capacity of the Provider VDC.
-	rootCapacityUsage := func(typeOfCapacity string) *schema.Schema {
-		return &schema.Schema{
-			Type:        schema.TypeList,
-			Computed:    true,
-			Description: fmt.Sprintf("Single-element list with an indicator of %s capacity available in the Provider VDC", typeOfCapacity),
-			// MaxItems: 1 - A computed field can't use "MaxItems", this is a reminder that this is a single-element list.
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"allocation": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Allocated %s for this Provider VDC", typeOfCapacity),
-					},
-					"overhead": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("%s overhead for this Provider VDC", typeOfCapacity),
-					},
-					"reserved": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Reserved %s for this Provider VDC", typeOfCapacity),
-					},
-					"total": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Total %s for this Provider VDC", typeOfCapacity),
-					},
-					"units": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: fmt.Sprintf("Units for the %s of this Provider VDC", typeOfCapacity),
-					},
-					"used": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Used %s in this Provider VDC", typeOfCapacity),
-					},
-				},
-			},
-		}
-	}
-
 	return &schema.Resource{
 		ReadContext: datasourceVcdProviderVdcRead,
 		Schema: map[string]*schema.Schema{
@@ -94,8 +49,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Description: "Single-element list with an indicator of CPU and memory capacity",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"cpu":    rootCapacityUsage("CPU"),
-						"memory": rootCapacityUsage("Memory"),
+						"cpu":    providerVdcRootCapacityUsage("CPU"),
+						"memory": providerVdcRootCapacityUsage("Memory"),
 						"is_elastic": {
 							Type:        schema.TypeBool,
 							Computed:    true,
@@ -193,6 +148,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 	}
 }
 
+// TODO: unify datasourceVcdProviderVdcRead with resourceVcdProviderVdcRead
+
 func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
@@ -225,7 +182,7 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 		}
 	}
 
-	if extendedProviderVdc.VMWProviderVdc.DataStoreRefs != nil {
+	if extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef != nil {
 		if err = d.Set("storage_container_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef)); err != nil {
 			return diag.Errorf("error setting storage_container_ids: %s", err)
 		}
@@ -273,7 +230,7 @@ func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, met
 		dSet(d, "universal_network_pool_id", extendedProviderVdc.VMWProviderVdc.AvailableUniversalNetworkPool.ID)
 	}
 	if extendedProviderVdc.VMWProviderVdc.VimServer != nil {
-		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer.ID)
+		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer[0].ID)
 	}
 
 	metadata, err := providerVdc.GetMetadata()
