@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_service_account"
-sidebar_current: "docs-vcd-resource-service_account"
+sidebar_current: "docs-vcd-resource-service-account"
 description: |-
   Provides a resource to manage Service Accounts. Service Accounts can have defined roles
   and act just like a VCD user. Service Accounts, when activated, provide one-time use

@@ -107,7 +107,6 @@ func resourceVcdApiTokenDelete(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("[API token delete] error deleting API token: %s", err)
 	}
-	d.SetId("")
 
 	return nil
 }

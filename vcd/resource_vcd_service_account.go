@@ -268,7 +268,7 @@ func genericVcdServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 		sa, err = org.GetServiceAccountByName(saName)
 	}
 	if govcd.ContainsNotFound(err) {
-		// When parent Edge Gateway is not found - this resource is also not found and should be
+		// When Service Account is not found - this resource is also not found and should be
 		// removed from state
 		if origin == "datasource" {
 			return diag.Errorf("[Service Account DS read] error retrieving Service Account: %s", err)
@@ -314,7 +314,7 @@ func resourceVcdServiceAccountDelete(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("[Service Account delete] error deleting Service Account: %s", err)
 	}
 
-	return resourceVcdServiceAccountRead(ctx, d, meta)
+	return nil
 }
 
 func resourceVcdServiceAccountImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
