@@ -39,7 +39,7 @@ func datasourceResourcePoolRead(_ context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resourcePool, err := vCenter.GetAvailableResourcePoolByName(resourcePoolName)
+	resourcePool, err := vCenter.GetResourcePoolByName(resourcePoolName)
 	if err != nil {
 		return diag.Errorf("could not find  resource pool by name '%s': %s", resourcePoolName, err)
 	}
