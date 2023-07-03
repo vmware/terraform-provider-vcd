@@ -6,20 +6,18 @@ import (
 	"log"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdNsxtDistributedFirewall() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdNsxtDistributedFirewallCreate,
+		CreateContext: resourceVcdNsxtDistributedFirewallCreateUpdate,
 		ReadContext:   resourceVcdNsxtDistributedFirewallRead,
-		UpdateContext: resourceVcdNsxtDistributedFirewallUpdate,
+		UpdateContext: resourceVcdNsxtDistributedFirewallCreateUpdate,
 		DeleteContext: resourceVcdNsxtDistributedFirewallDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdNsxtDistributedFirewallImport,
@@ -149,39 +147,31 @@ func resourceVcdNsxtDistributedFirewall() *schema.Resource {
 	}
 }
 
-func resourceVcdNsxtDistributedFirewallCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdNsxtDistributedFirewallCreateUpdate(ctx, d, meta, "create")
-}
-
-func resourceVcdNsxtDistributedFirewallUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdNsxtDistributedFirewallCreateUpdate(ctx, d, meta, "update")
-}
-
 // resourceVcdNsxtDistributedFirewallCreateUpdate is used in both Create and Update cases because
 // firewall rules don't have separate create or update methods. Firewall endpoint only uses HTTP PUT
 // for update.
-func resourceVcdNsxtDistributedFirewallCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdNsxtDistributedFirewallCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVdcGroup(d)
 	defer vcdClient.unlockParentVdcGroup(d)
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall %s] error retriving Org: %s", operation, err)
+		return diag.Errorf("[Distributed Firewall Create/Update] error retriving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall %s] error retrieving VDC Group: %s", operation, err)
+		return diag.Errorf("[Distributed Firewall Create/Update] error retrieving VDC Group: %s", err)
 	}
 
-	firewallRulesType, err := getDistributedFirewallTypes(vcdClient, d, operation)
+	firewallRulesType, err := getDistributedFirewallTypes(vcdClient, d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall %s] error getting Distributed Firewall type: %s", operation, err)
+		return diag.Errorf("[Distributed Firewall Create/Update] error getting Distributed Firewall type: %s", err)
 	}
 	_, err = vdcGroup.UpdateDistributedFirewall(firewallRulesType)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall %s] error setting Distributed Firewall: %s", operation, err)
+		return diag.Errorf("[Distributed Firewall Create/Update] error setting Distributed Firewall: %s", err)
 	}
 
 	d.SetId(vdcGroup.VdcGroup.Id)
@@ -309,18 +299,7 @@ func setDistributedFirewallData(vcdClient *VCDClient, dfwRules *types.Distribute
 	return d.Set("rule", result)
 }
 
-func getDistributedFirewallTypes(vcdClient *VCDClient, d *schema.ResourceData, operation string) (*types.DistributedFirewallRules, error) {
-
-	if operation == "update" {
-		old, new := d.GetChange("rule")
-		util.Logger.Println("old old old")
-		util.Logger.Println(spew.Sdump(old))
-
-		util.Logger.Println("new new new")
-		util.Logger.Println(spew.Sdump(new))
-
-	}
-
+func getDistributedFirewallTypes(vcdClient *VCDClient, d *schema.ResourceData) (*types.DistributedFirewallRules, error) {
 	ruleInterfaceSlice := d.Get("rule").([]interface{})
 	if len(ruleInterfaceSlice) > 0 {
 		sliceOfRules := make([]*types.DistributedFirewallRule, len(ruleInterfaceSlice))
@@ -336,12 +315,6 @@ func getDistributedFirewallTypes(vcdClient *VCDClient, d *schema.ResourceData, o
 				Logging:     oneRuleMapInterface["logging"].(bool),
 				Direction:   oneRuleMapInterface["direction"].(string),
 				Version:     nil,
-			}
-
-			// In the case of update, there is an ID of rule already stored which needs to be put it
-			// to avoid recreating the rule
-			if operation == "update" {
-				sliceOfRules[index].ID = oneRuleMapInterface["id"].(string)
 			}
 
 			if oneRuleMapInterface["source_ids"] != nil {
