@@ -41,7 +41,11 @@ data "vcd_resource_pool" "rp1" {
 
 # Error: could not find resource pool by name 'common-name': more than one resource pool was found with name common-name - 
 # use resource pool ID instead - [resgroup-241 resgroup-239]
+```
 
+When you receive such error, you can run the script again, but using the resource pool ID instead of the name.
+
+```hcl
 data "vcd_resource_pool" "rp1" {
   name       = "resgroup-241"
   vcenter_id = data.vcd_vcenter.vcenter1.id
