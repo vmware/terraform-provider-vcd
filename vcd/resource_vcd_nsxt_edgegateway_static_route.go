@@ -105,7 +105,6 @@ func resourceVcdNsxtEdgeGatewayStaticRouteCreate(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[NSX-T Edge Gateway Static Route create] %s", err)
 	}
-
 	defer unlock()
 
 	orgName := d.Get("org").(string)
@@ -135,7 +134,6 @@ func resourceVcdNsxtEdgeGatewayStaticRouteUpdate(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[NSX-T Edge Gateway Static Route update] %s", err)
 	}
-
 	defer unlock()
 
 	orgName := d.Get("org").(string)
@@ -148,7 +146,7 @@ func resourceVcdNsxtEdgeGatewayStaticRouteUpdate(ctx context.Context, d *schema.
 
 	staticRoute, err := nsxtEdge.GetStaticRouteById(d.Id())
 	if err != nil {
-		return diag.Errorf("[NSX-T Edge Gateway Static Route update]: %s", err)
+		return diag.Errorf("[NSX-T Edge Gateway Static Route update] error retrieving existing Static Route by ID: %s", err)
 	}
 
 	staticRouteConfig := getStaticRouteType(d)
@@ -197,7 +195,6 @@ func resourceVcdNsxtEdgeGatewayStaticRouteDelete(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[NSX-T Edge Gateway Static Route delete] %s", err)
 	}
-
 	defer unlock()
 
 	orgName := d.Get("org").(string)
