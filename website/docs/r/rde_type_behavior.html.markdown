@@ -27,8 +27,8 @@ resource "vcd_rde_interface_behavior" "my_interface_behavior" {
   name             = "MyBehavior"
   description      = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
   execution = {
-    "id":   "addNode"
-    "type": "Activity"
+    "id" : "addNode"
+    "type" : "Activity"
   }
 }
 
@@ -82,7 +82,7 @@ For example, using this structure, representing an existing RDE Type Behavior th
 
 ```hcl
 resource "vcd_rde_type_behavior" "my_rde_type_behavior" {
-  rde_type_id = data.vcd_rde_type.my_rde_type.id
+  rde_type_id               = data.vcd_rde_type.my_rde_type.id
   rde_interface_behavior_id = data.vcd_rde_interface_behavior.my_interface_behavior.id
 }
 ```

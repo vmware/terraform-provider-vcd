@@ -68,8 +68,8 @@ resource "vcd_rde_interface_behavior" "my_behavior" {
   name         = "MyBehavior"
   description  = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
   execution = {
-    "id": "MyExecution"
-    "type": "Activity"
+    "id" : "MyExecution"
+    "type" : "Activity"
   }
 }
 
@@ -81,7 +81,7 @@ resource "vcd_rde_type" "my_rde_type" {
   interface_ids = [data.vcd_rde_interface.my_interface.id]
   schema_url    = "https://just.an-example.com/schemas/my-type-schema.json"
   
-  depends_on = [ vcd_rde_interface_behavior.my_behavior ] # Behaviors need to be created before any RDE Type
+  depends_on = [vcd_rde_interface_behavior.my_behavior] # Behaviors need to be created before any RDE Type
 }
 ```
 
