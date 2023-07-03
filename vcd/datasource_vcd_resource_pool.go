@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -39,9 +40,16 @@ func datasourceResourcePoolRead(_ context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resourcePool, err := vCenter.GetResourcePoolByName(resourcePoolName)
+	var resourcePool *govcd.ResourcePool
+
+	// If the resource pool has a duplicate name within the same vCenter, we can use the ID instead
+	resourcePool, err = vCenter.GetResourcePoolByName(resourcePoolName)
 	if err != nil {
-		return diag.Errorf("could not find  resource pool by name '%s': %s", resourcePoolName, err)
+		firstErr := err
+		resourcePool, err = vCenter.GetResourcePoolById(resourcePoolName)
+		if err != nil {
+			return diag.Errorf("could not find resource pool by name '%s': %s", resourcePoolName, firstErr)
+		}
 	}
 
 	hardwareVersion, err := resourcePool.GetDefaultHardwareVersion()
