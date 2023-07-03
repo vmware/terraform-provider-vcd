@@ -331,6 +331,10 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericResourceVcdProviderVdcRead(ctx, d, meta, "resource")
+}
+
+func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	providerVdcName := d.Get("name").(string)
@@ -343,8 +347,12 @@ func resourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, met
 		extendedProviderVdc, err = vcdClient.GetProviderVdcExtendedByName(providerVdcName)
 	}
 	if err != nil {
-		log.Printf("[DEBUG] Could not find any extended Provider VDC with name %s: %s", providerVdcName, err)
-		return diag.Errorf("could not find any extended Provider VDC with name %s: %s", providerVdcName, err)
+		log.Printf("[DEBUG] (%s) Could not find any extended Provider VDC with name %s: %s", origin, providerVdcName, err)
+		if origin == "datasource" {
+			return diag.Errorf("could not find any extended Provider VDC with name %s: %s", providerVdcName, err)
+		}
+		d.SetId("")
+		return nil
 	}
 	providerVdc, err := extendedProviderVdc.ToProviderVdc()
 	if err != nil {
@@ -431,18 +439,11 @@ func resourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, met
 			}
 		}
 	}
-
-	//rawNetworkIds := d.Get("network_pool_ids")
-	//if rawNetworkIds != nil {
-	//	err = d.Set("network_pool_ids", rawNetworkIds)
-	//	if err != nil {
-	//		return diag.FromErr(err)
-	//	}
-	//}
-
 	var items []string
 	if extendedProviderVdc.VMWProviderVdc.Capabilities != nil && extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions != nil {
-		items = append(items, extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions.SupportedHardwareVersion...)
+		for _, item := range extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions.SupportedHardwareVersion {
+			items = append(items, item.Name)
+		}
 	}
 	if err = d.Set("capabilities", items); err != nil {
 		return diag.Errorf("error setting capabilities: %s", err)
