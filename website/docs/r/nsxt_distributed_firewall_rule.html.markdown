@@ -1,20 +1,20 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_distributed_firewall"
-sidebar_current: "docs-vcd-resource-nsxt-distributed-firewall"
+page_title: "VMware Cloud Director: vcd_nsxt_distributed_firewall_rule"
+sidebar_current: "docs-vcd-resource-nsxt-distributed-firewall-rule"
 description: |-
   The Distributed Firewall allows user to segment organization virtual data center entities, such as
   virtual machines, based on virtual machine names and attributes. 
 ---
 
-# vcd\_nsxt\_distributed\_firewall
+# vcd\_nsxt\_distributed\_firewall\_rule
 
 The Distributed Firewall allows user to segment organization virtual data center entities, such as
 virtual machines, based on virtual machine names and attributes. 
 
 ~> There is a different resource
-[`vcd_nsxt_distributed_firewall_rule`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall_rule)
-that can manage firewall rules one by one. **Note.** One should use **only one of**
+[`vcd_nsxt_distributed_firewall`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall)
+that can manage all firewall rules in one resource. **Note.** One should use **only one of**
 `vcd_nsxt_distributed_firewall` or `vcd_nsxt_distributed_firewall_rule` as they will **override each
 other**.
 
@@ -32,56 +32,30 @@ data "vcd_nsxt_network_context_profile" "cp1" {
   scope      = "SYSTEM"
 }
 
-resource "vcd_nsxt_distributed_firewall" "t1" {
-  org          = "my-org" # Optional, can be inherited from Provider configuration
-  vdc_group_id = vcd_vdc_group.existing.id
+resource "vcd_nsxt_distributed_firewall_rule" "r1" {
+  org          = "my-org"
+  vdc_group_id = vcd_vdc_group.test1.id
 
-  rule {
-    name        = "rule1"
-    action      = "ALLOW"
-    description = "description"
-    # 'comment' field is only supported in VCD 10.3.2+
-    comment = "My first rule to allow everything"
+  name        = "rule1"
+  action      = "ALLOW"
+  description = "description"
 
-    source_ids             = [data.vcd_nsxt_ip_set.set1.id, data.vcd_nsxt_ip_set.set2.id]
-    source_groups_excluded = true # Negates value of 'source_id' (VCD 10.3.2+)
-    app_port_profile_ids   = [data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
-  }
+  source_ids           = [vcd_nsxt_ip_set.set1.id, vcd_nsxt_ip_set.set2.id]
+  destination_ids      = [vcd_nsxt_security_group.g1-empty.id, vcd_nsxt_security_group.g2.id]
+  app_port_profile_ids = [vcd_nsxt_app_port_profile.p1.id, data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
+}
 
-  rule {
-    name      = "rule2"
-    action    = "DROP"
-    enabled   = false
-    logging   = true
-    direction = "IN_OUT"
+resource "vcd_nsxt_distributed_firewall_rule" "r4" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
 
-    network_context_profile_ids = [vcd_nsxt_network_context_profile.cp1.id]
-  }
+  # Specifying a particular ID of other firewall rule will ensure that the current one is placed above
+  above_rule_id = vcd_nsxt_distributed_firewall_rule.r1.id 
 
-  rule {
-    name = "rule3"
-    # 'REJECT' is only supported in VCD 10.2.2+
-    action      = "REJECT"
-    ip_protocol = "IPV4"
-  }
-
-  rule {
-    name        = "rule4"
-    action      = "ALLOW"
-    ip_protocol = "IPV6"
-    direction   = "OUT"
-
-    # Below two fields are supported in VCD 10.3.2+
-    source_groups_excluded      = false
-    destination_groups_excluded = false
-  }
-
-  rule {
-    name        = "rule5"
-    action      = "ALLOW"
-    ip_protocol = "IPV6"
-    direction   = "IN"
-  }
+  name        = "rule4"
+  action      = "ALLOW"
+  ip_protocol = "IPV6"
+  direction   = "OUT"
 }
 ```
 
@@ -91,18 +65,11 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
+* `above_rule_id` - (Optional) ID of another `vcd_nsxt_distributed_firewall_rule` entry will ensure
+  that newly created rule is positioned above the references rule. **Note.** By default, new rule
+  will be created at the bottom of the list
 * `vdc_group_id` - (Required) The ID of VDC Group to manage Distributed Firewall in. Can be looked
   up using `vcd_vdc_group` resource or data source.
-* `rule` - (Required) One or more blocks with [Firewall Rule](#firewall-rule) definitions. **Order**
-  defines firewall rule precedence
-
-<a id="firewall-rule"></a>
-## Firewall Rule
-
--> Order of `rule` blocks defines order of firewall rules in the system.
-
-Each Firewall Rule contains following attributes:
-
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
 * `comment` - (Optional; *VCD 10.3.2+*) Comment field shown in UI
 * `description` - (Optional) Description of firewall rule (not shown in UI)
@@ -124,6 +91,7 @@ groups`). Leaving it empty matches `Any` (all)
 * `destination_groups_excluded` - (Optional; VCD 10.3.2+) - reverses value of `destination_ids` for
   the rule to match everything except specified IDs.
 
+
 ## Importing
 
 ~> The current implementation of Terraform import can only import resources into the state.
@@ -135,8 +103,8 @@ the full dot separated path for your VDC Group Name. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_distributed_firewall.imported my-org-name.my-vdc-group-name
+terraform import vcd_nsxt_distributed_firewall_rule.imported my-org-name.my-vdc-group-name.my-rule-name
 ```
 
-The above would import all firewall rules defined on VDC Group `my-vdc-group-name` which is
-configured in organization named `my-org-name`.
+The above would import firewall rule with name `my-rule-name` defined on VDC Group
+`my-vdc-group-name` which is configured in organization named `my-org-name`.
