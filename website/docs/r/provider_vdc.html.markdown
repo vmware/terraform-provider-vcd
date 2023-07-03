@@ -13,6 +13,8 @@ data within other resources or data sources.
 
 Supported in provider *v3.10+*
 
+~> Note: this resource requires system administrator privileges
+
 ## Example Usage
 
 ```hcl
@@ -54,7 +56,7 @@ The following arguments are supported:
 * `description` - (Optional) description of the Provider VDC.
 * `is_enabled` - (Optional) True if this Provider VDC is enabled and can provide resources to organization VDCs. A Provider VDC is always enabled on creation.
 * `nsxt_manager_id` - (Required) ID of the registered NSX-T Manager that backs networking operations for this Provider VDC.
-* `highest_supported_hardware_version` - (Required) The highest virtual hardware version supported by this Provider VDC.
+* `highest_supported_hardware_version` - (Required) The highest virtual hardware version supported by this Provider VDC. This value cannot be changed to a lower version, and can only be updated when adding a new resource pool.
 * `storage_profile_names` - (Required) Set of Storage Profile names used to create this provider VDC.
 * `resource_pool_ids` - (Required) Set of IDs of the Resource Pools backing this provider VDC. (Note: only one resource pool can be set at creation)
 * `vcenter_id` - (Required) ID of the vCenter Server that provides the Resource Pools and Datastores.

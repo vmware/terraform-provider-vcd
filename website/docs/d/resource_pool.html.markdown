@@ -8,12 +8,17 @@ description: |-
 
 # vcd\_resource\_pool
 
-Provides a data source for a resource pool attached to a vCenter.
+Provides a data source for a resource pool attached to a vCenter. A resource pool is an essential component of a Provider VDC.
+
+
+~> Note 1: this data source requires system administrator privileges
+
+~> Note 2: you can create or modify a resource pool using [vSphere provider](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/resource_pool)
 
 Supported in provider *v3.10+*
 
 
-## Example Usage
+## Example Usage 1
 
 ```hcl
 data "vcd_vcenter" "vcenter1" {
@@ -26,11 +31,30 @@ data "vcd_resource_pool" "rp1" {
 }
 ```
 
+## Example Usage 2
+
+```hcl
+data "vcd_resource_pool" "rp1" {
+  name       = "common-name"
+  vcenter_id = data.vcd_vcenter.vcenter1.id
+}
+
+# Error: could not find resource pool by name 'common-name': more than one resource pool was found with name common-name - 
+# use resource pool ID instead - [resgroup-241 resgroup-239]
+
+data "vcd_resource_pool" "rp1" {
+  name       = "resgroup-241"
+  vcenter_id = data.vcd_vcenter.vcenter1.id
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
-* `name` - (Required) resource pool name.
+* `name` - (Required) resource pool name. The name may not be unique within the vCenter. If that happens, you will get an
+   error message with the list of IDs for the pools with the same name, and can subsequently enter the resource pool ID instead of the name.
+  (See [Example Usage 2](#example-usage-2))
 * `vcenter_id` - (Required) ID of the vCenter to which this resource pool belongs.
 
 ## Attribute reference

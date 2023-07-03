@@ -12,7 +12,6 @@ Provides a data source for a network pool attached to a VCD.
 
 Supported in provider *v3.10+*
 
-
 ## Example Usage
 
 ```hcl
