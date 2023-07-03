@@ -190,18 +190,6 @@ func extractIdsFromReferences(refs []*types.Reference) []string {
 	return resultStrings
 }
 
-// extractIdsFromVimObjectRefs extracts []string with IDs from []*types.VimObjectRef which contains *types.Reference
-func extractIdsFromVimObjectRefs(refs []*types.VimObjectRef) []string {
-	var resultStrings []string
-	for index := range refs {
-		if refs[index].VimServerRef != nil {
-			resultStrings = append(resultStrings, refs[index].VimServerRef.ID)
-		}
-	}
-
-	return resultStrings
-}
-
 // convertSliceOfStringsToOpenApiReferenceIds converts []string to []types.OpenApiReference by filling
 // types.OpenApiReference.ID fields
 func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiReference {
