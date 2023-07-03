@@ -12,6 +12,9 @@ Provides the capability of managing RDE Interface Behaviors in VMware Cloud Dire
 
 Supported in provider *v3.10+*. Requires System administrator privileges.
 
+~> Be aware that Behaviors can only be created and deleted when no [RDE Types](/providers/vmware/vcd/latest/docs/resources/rde_type) are using the Interface where they are defined.
+If you want to use RDE Types with Behaviors, you should use `depends_on` as seen in the example [here](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior#example-usage)
+
 ## Example Usage
 
 ```hcl
@@ -27,11 +30,13 @@ resource "vcd_rde_interface_behavior" "my_behavior" {
   name         = "MyBehavior"
   description  = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
   execution = {
-    "id": "MyExecution"
-    "type": "Activity"
+    "id" : "MyExecution"
+    "type" : "Activity"
   }
 }
 ```
+
+
 
 ## Argument Reference
 

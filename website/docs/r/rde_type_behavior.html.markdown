@@ -42,17 +42,17 @@ resource "vcd_rde_type" "my_rde_type" {
 
   # Behaviors can't be created after the RDE Interface is used by a RDE Type
   # so we need to depend on the Behavior to wait for it to be created first.
-  depends_on = [ vcd_rde_interface_behavior.my_interface_behavior ]
+  depends_on = [vcd_rde_interface_behavior.my_interface_behavior]
 }
 
 resource "vcd_rde_type_behavior" "my_rde_type_behavior" {
-  rde_type_id = vcd_rde_type.my_rde_type.id
+  rde_type_id               = vcd_rde_type.my_rde_type.id
   rde_interface_behavior_id = vcd_rde_interface_behavior.my_interface_behavior.id
   execution = {
-    "id":   "addNodeOverrided"
-    "type": "Activity"
+    "id" : "addNodeOverrided"
+    "type" : "Activity"
   }
-  access_level_ids = [ "urn:vcloud:accessLevel:ReadOnly" ]
+  access_level_ids = ["urn:vcloud:accessLevel:ReadOnly"]
 }
 ```
 
