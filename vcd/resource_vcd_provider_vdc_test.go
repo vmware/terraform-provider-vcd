@@ -17,7 +17,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 
 	providerVdcName1 := t.Name()
 	providerVdcDescription1 := t.Name() + "description"
-	providerVdcName2 := t.Name()
+	providerVdcName2 := t.Name() + "-2"
 	providerVdcDescription2 := t.Name() + "description 2"
 	// Test configuration
 	var params = StringMap{
