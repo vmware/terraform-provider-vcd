@@ -76,19 +76,8 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not read the Behavior of RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
-	// This is not really needed, as `OverrideBehavior` works with both the original Interface Behavior ID
-	// and the RDE Type Behavior ID (that is returned after an override creation), but this shows better how the process work.
-	var behaviorId string
-	switch operation {
-	case "create":
-		behaviorId = d.Get("rde_interface_behavior_id").(string) // RDE Interface Behavior ID: urn:vcloud:behavior-interface:...
-	case "update":
-		behaviorId = d.Id() // RDE Type override ID: urn:vcloud:behavior-type:...
-	default:
-		return diag.Errorf("[RDE Type Behavior create/update] unrecognized operation %s", operation)
-	}
 	behavior, err := rdeType.OverrideBehavior(types.Behavior{
-		ID:          behaviorId,
+		ID:          d.Get("rde_interface_behavior_id").(string),
 		Ref:         d.Get("ref").(string),
 		Description: d.Get("description").(string),
 		Execution:   d.Get("execution").(map[string]interface{}),
