@@ -229,8 +229,8 @@ data "vcd_nsxt_distributed_firewall_rule" "r3" {
 }
 `
 
-// TestAccVcdDistributedFirewallVCD10_3_2 complements TestAccVcdDistributedFirewallRule and aims to
-// test our 3 new fields of VCD 10.3.2+ in distributed firewall:
+// TestAccVcdDistributedFirewallRuleVCD10_3_2 complements TestAccVcdDistributedFirewallRule and aims
+// to test our 3 new fields of VCD 10.3.2+ in distributed firewall:
 // * comment (this one is shown in UI, not like `description`)
 // * source_groups_excluded (negates the values specified in source_ids)
 // * destination_groups_excluded (negates the values specified in destinations_ids)

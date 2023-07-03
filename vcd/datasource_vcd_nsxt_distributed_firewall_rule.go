@@ -68,7 +68,7 @@ func datasourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 			"source_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of Source Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
+				Description: "A set of Source Firewall Group IDs (IP Sets or Security Groups).Empty means 'Any'",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -76,7 +76,7 @@ func datasourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 			"destination_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of Destination Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
+				Description: "A set of Destination Firewall Group IDs (IP Sets or Security Groups). Empty means 'Any'",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -84,7 +84,7 @@ func datasourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 			"app_port_profile_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of Application Port Profile IDs. Leaving it empty means 'Any'",
+				Description: "A set of Application Port Profile IDs. Empty means 'Any'",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -92,7 +92,7 @@ func datasourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 			"network_context_profile_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of Network Context Profile IDs. Leaving it empty means 'Any'",
+				Description: "A set of Network Context Profile IDs. Empty means 'Any'",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
