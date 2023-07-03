@@ -40,6 +40,14 @@ func datasourceVcdRdeTypeBehavior() *schema.Resource {
 				Computed:    true,
 				Description: "A description specifying the contract of the Behavior",
 			},
+			"access_level_ids": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Set of access level IDs associated to this Behavior",
+			},
 		},
 	}
 }

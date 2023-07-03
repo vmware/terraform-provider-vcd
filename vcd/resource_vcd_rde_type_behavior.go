@@ -53,6 +53,14 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 				Computed:    true,
 				Description: "The Behavior invocation reference to be used for polymorphic behavior invocations",
 			},
+			"access_level_ids": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Set of access level IDs associated to this Behavior",
+			},
 		},
 	}
 }
@@ -79,7 +87,7 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	default:
 		return diag.Errorf("[RDE Type Behavior create/update] unrecognized operation %s", operation)
 	}
-	_, err = rdeType.OverrideBehavior(types.Behavior{
+	behavior, err := rdeType.OverrideBehavior(types.Behavior{
 		ID:          behaviorId,
 		Ref:         d.Get("ref").(string),
 		Description: d.Get("description").(string),
@@ -87,6 +95,21 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	})
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not %s the Behavior in the RDE Type with ID '%s': %s", operation, operation, rdeTypeId, err)
+	}
+	aclRaw, aclSet := d.GetOk("access_level_ids")
+	if aclSet {
+		aclList := aclRaw.(*schema.Set).List()
+		var acls = make([]*types.BehaviorAccess, len(aclList))
+		for i, acl := range aclRaw.(*schema.Set).List() {
+			acls[i] = &types.BehaviorAccess{
+				AccessLevelId: acl.(string),
+				BehaviorId:    behavior.ID,
+			}
+		}
+		err = rdeType.SetBehaviorAccessControls(acls)
+		if err != nil {
+			return diag.Errorf("[RDE Type Behavior %s] could not set the Behavior '%s' Access controls: %s", operation, behavior.ID, err)
+		}
 	}
 	return genericVcdRdeTypeBehaviorRead(ctx, d, meta, "resource")
 }
@@ -117,6 +140,18 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
 	err = d.Set("execution", behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	acls, err := rdeType.GetAllBehaviorsAccessControls(nil)
+	if err != nil {
+		return diag.Errorf("[RDE Type Behavior read] could not read the Behavior Access Controls of RDE Type with ID '%s': %s", rdeTypeId, err)
+	}
+	var aclsAttr = make([]string, len(acls))
+	for i, acl := range acls {
+		aclsAttr[i] = acl.AccessLevelId
+	}
+	err = d.Set("access_level_ids", aclsAttr)
 	if err != nil {
 		return diag.FromErr(err)
 	}
