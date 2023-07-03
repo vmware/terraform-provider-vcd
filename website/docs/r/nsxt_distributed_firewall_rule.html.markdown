@@ -50,7 +50,7 @@ resource "vcd_nsxt_distributed_firewall_rule" "r4" {
   vdc_group_id = vcd_vdc_group.test1.id
 
   # Specifying a particular ID of other firewall rule will ensure that the current one is placed above
-  above_rule_id = vcd_nsxt_distributed_firewall_rule.r1.id 
+  above_rule_id = vcd_nsxt_distributed_firewall_rule.r1.id
 
   name        = "rule4"
   action      = "ALLOW"

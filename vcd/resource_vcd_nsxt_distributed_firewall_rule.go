@@ -138,9 +138,6 @@ func resourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 	}
 }
 
-// resourceVcdNsxtDistributedFirewallRuleCreateUpdate is used in both Create and Update cases because
-// firewall rules don't have separate create or update methods. Firewall endpoint only uses HTTP PUT
-// for update.
 func resourceVcdNsxtDistributedFirewallRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVdcGroup(d)
@@ -185,7 +182,6 @@ func resourceVcdNsxtDistributedFirewallRuleUpdate(ctx context.Context, d *schema
 		return diag.Errorf("[Distributed Firewall Rule update] error retrieving VDC Group: %s", err)
 	}
 
-	// Get existing rule
 	rule, err := vdcGroup.GetDistributedFirewallRuleById(d.Id())
 	if err != nil {
 		return diag.Errorf("[Distributed Firewall Rule update] error retrieving Firewall Rule By ID: %s", err)
@@ -218,7 +214,6 @@ func resourceVcdNsxtDistributedFirewallRuleRead(_ context.Context, d *schema.Res
 		return diag.Errorf("[Distributed Firewall Rule read] error retrieving VDC Group: %s", err)
 	}
 
-	// Get existing rule
 	rule, err := vdcGroup.GetDistributedFirewallRuleById(d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {

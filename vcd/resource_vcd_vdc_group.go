@@ -184,7 +184,9 @@ func resourceVdcGroup() *schema.Resource {
 func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool), d.Get("default_policy_status").(bool))
+	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool),
+		d.Get("default_policy_status").(bool),
+		d.Get("remove_default_firewall_rule").(bool))
 	if diagErr != nil {
 		return diagErr
 	}
@@ -228,9 +230,13 @@ func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVcdVdcGroupRead(ctx, d, meta)
 }
 
-func isInvalidPropertySetup(dfw_enabled, default_policy_status bool) diag.Diagnostics {
+func isInvalidPropertySetup(dfw_enabled, default_policy_status, remove_default_firewall_rule bool) diag.Diagnostics {
 	if !dfw_enabled && default_policy_status {
 		return diag.Errorf("`default_policy_status` must be `false` when `dfw_enabled` is `false`.")
+	}
+
+	if remove_default_firewall_rule && !dfw_enabled && !default_policy_status {
+		return diag.Errorf("'remove_default_firewall_rule' can only be 'true' when 'dfw_enabled=true' and 'default_policy_status=true'")
 	}
 	return nil
 }
@@ -239,7 +245,9 @@ func isInvalidPropertySetup(dfw_enabled, default_policy_status bool) diag.Diagno
 func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool), d.Get("default_policy_status").(bool))
+	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool),
+		d.Get("default_policy_status").(bool),
+		d.Get("remove_default_firewall_rule").(bool))
 	if diagErr != nil {
 		return diagErr
 	}

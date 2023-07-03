@@ -3,13 +3,9 @@
 package vcd
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdDistributedFirewallRule(t *testing.T) {
@@ -51,14 +47,6 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 	configText4DS := templateFill(dfwRuleStep4DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4DS)
 
-	// params["FuncName"] = t.Name() + "-step5"
-	// configText5 := templateFill(dfwStep4, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText5)
-
-	// params["FuncName"] = t.Name() + "-step6"
-	// configText6 := templateFill(dfwStep6DS, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText6)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -78,6 +66,42 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r2", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r3", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r4", "id"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "name", "rule1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "description", "description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "source_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "destination_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "app_port_profile_ids.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "network_context_profile_ids.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "name", "rule2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "action", "DROP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "ip_protocol", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "network_context_profile_ids.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "name", "rule3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "action", "DROP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "logging", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "direction", "IN_OUT"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "source_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r3", "network_context_profile_ids.#", "3"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "name", "rule4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "ip_protocol", "IPV6"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "direction", "OUT"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r4", "network_context_profile_ids.#", "0"),
 				),
 			},
 			{
@@ -92,10 +116,6 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_distributed_firewall.all-rules", "rule.1.name", "vcd_nsxt_distributed_firewall_rule.r2", "name"),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_distributed_firewall.all-rules", "rule.2.name", "vcd_nsxt_distributed_firewall_rule.r1", "name"),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_distributed_firewall.all-rules", "rule.3.name", "vcd_nsxt_distributed_firewall_rule.r4", "name"),
-
-					// resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r1", "id"),
-					// resourceFieldsEqual()
-
 				),
 			},
 			{
@@ -113,32 +133,6 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_distributed_firewall_rule.r3", "vcd_nsxt_distributed_firewall_rule.r3", []string{"%"}),
 				),
 			},
-			// {
-			// 	Config: configText5,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall.t1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.#", "1"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.name", "rule1"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.action", "DROP"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.direction", "IN_OUT"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.ip_protocol", "IPV4_IPV6"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.logging", "false"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.enabled", "true"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.source_ids.#", "0"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.destination_ids.#", "0"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.app_port_profile_ids.#", "0"),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.network_context_profile_ids.#", "3"),
-			// 		resource.TestMatchResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.network_context_profile_ids.0", regexp.MustCompile(`^urn:vcloud:networkContextProfile:`)),
-			// 		resource.TestMatchResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.network_context_profile_ids.1", regexp.MustCompile(`^urn:vcloud:networkContextProfile:`)),
-			// 		resource.TestMatchResourceAttr("vcd_nsxt_distributed_firewall.t1", "rule.0.network_context_profile_ids.2", regexp.MustCompile(`^urn:vcloud:networkContextProfile:`)),
-			// 	),
-			// },
-			// {
-			// 	Config: configText6,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resourceFieldsEqual("vcd_nsxt_distributed_firewall.t1", "data.vcd_nsxt_distributed_firewall.t1", nil),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)
@@ -201,7 +195,6 @@ resource "vcd_nsxt_distributed_firewall_rule" "r4" {
   # This rule should be added to the bottom of rule list as it has no specific 'above_rule_id'
   depends_on = [vcd_nsxt_distributed_firewall_rule.r1, vcd_nsxt_distributed_firewall_rule.r2, vcd_nsxt_distributed_firewall_rule.r3]
 }
-
 `
 
 const dfwRuleStep3 = dfwRuleStep2 + `
@@ -294,6 +287,29 @@ func TestAccVcdDistributedFirewallRuleVCD10_3_2(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r1", "id"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r2", "id"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "name", "rule2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "action", "DROP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "logging", "true"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "destination_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "destination_groups_excluded", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "network_context_profile_ids.#", "1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "name", "rule1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "action", "REJECT"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "description", "description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "comment", "longer text comment field filled"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "source_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "source_groups_excluded", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "destination_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "destination_groups_excluded", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "network_context_profile_ids.#", "0"),
 				),
 			},
 		},
@@ -394,19 +410,3 @@ resource "vcd_nsxt_distributed_firewall_rule" "r2" {
   destination_groups_excluded = true
 }
 `
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
-
-func sleepTester(d time.Duration) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Printf("sleeping %s\n", d.String())
-		time.Sleep(d)
-		fmt.Println("finished sleeping")
-		return nil
-	}
-}
