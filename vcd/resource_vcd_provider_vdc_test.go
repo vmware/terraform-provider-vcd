@@ -11,6 +11,10 @@ import (
 )
 
 func TestAccVcdResourceProviderVdc(t *testing.T) {
+	// Note: you need to have at least one free resource pool to test provider VDC creation,
+	// and at least two of them to test update. They should be indicated in
+	// testConfig.Vsphere.ResourcePoolForVcd1 and testConfig.Vsphere.ResourcePoolForVcd2
+
 	// Pre-checks
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
