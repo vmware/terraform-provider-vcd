@@ -15,7 +15,7 @@ Provides a resource to manage NSX-T Edge Gateway Static Routes.
 ## Example Usage
 
 ```hcl
-resource "vcd_nsxt_edgegateway_static_route" "sr2" {
+resource "vcd_nsxt_edgegateway_static_route" "sr" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name         = "some-static-route"
@@ -53,7 +53,7 @@ The following arguments are supported:
 * `description` - (Optional) Description for NSX-T Edge Gateway Static Route
 * `network_cidr` - (Required) Specifies network prefix in CIDR format. Both IPv4 and IPv6 formats
   are supported.
-* `next_hop` - (Required) A set of next hops to use within the static route.. At least one is
+* `next_hop` - (Required) A set of next hops to use within the static route. At least one is
   required. See [Next Hop](#next-hop) for definition structure.
 
 <a id="next-hop"></a>

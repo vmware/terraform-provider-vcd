@@ -12,7 +12,7 @@ Supported in provider *v3.10+* and VCD 10.4.0+ with NSX-T.
 
 Provides a data source to read NSX-T Edge Gateway Static Routes.
 
-## Example Usage (by Name only)
+## Example Usage (by name only)
 
 ```hcl
 data "vcd_nsxt_edgegateway_static_route" "by-name" {
@@ -21,7 +21,7 @@ data "vcd_nsxt_edgegateway_static_route" "by-name" {
 }
 ```
 
-## Example Usage (by Name and Network Cidr )
+## Example Usage (by name and network CIDR )
 
 ```hcl
 data "vcd_nsxt_edgegateway_static_route" "by-name-and-cidr" {
@@ -39,6 +39,10 @@ The following arguments are supported:
 * `name` - (Required) Name of Static Route. **Note** names *can be duplicate* and one can use
   `network_cidr` to make filtering more precise
 * `network_cidr` - (Optional) Network CIDR for Static Route
+
+-> It may happen that there are multiple NSX-T Static Routes with the same `name`. In such a case, a
+data source will return an error as it expects to find only one entity. If this happens, one can
+make the filtering more precise by supplying `network_cidr` in addition to `name`.
 
 ## Attribute Reference
 
