@@ -196,27 +196,9 @@ func validateAlphanumericWithUnderscoresAndHyphens() schema.SchemaValidateFunc {
 	return validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed")
 }
 
-// IsBoolAndTrue returns a SchemaValidateFunc which tests if the provided value is convertable to
-// float64 and is set to true.
-func IsBoolAndTrue() schema.SchemaValidateFunc {
-	return func(i interface{}, k string) (warnings []string, errors []error) {
-		value, ok := i.(bool)
-		if !ok {
-			errors = append(errors, fmt.Errorf("expected type of %s to be integer", k))
-		}
-
-		if !value {
-			errors = append(errors, fmt.Errorf("expected %s to be `true`, got %t", k, value))
-			return warnings, errors
-		}
-
-		return warnings, errors
-	}
-}
-
-// AllowTokenFileIfIsBoolAndTrue checks if the 'allow_token_file' is set to true, otherwise returns
+// allowTokenFileIfIsBoolAndTrue checks if the 'allow_token_file' is set to true, otherwise returns
 // a descriptive error
-func AllowTokenFileIfIsBoolAndTrue() schema.SchemaValidateDiagFunc {
+func allowTokenFileIfIsBoolAndTrue() schema.SchemaValidateDiagFunc {
 	return func(i interface{}, path cty.Path) diag.Diagnostics {
 		value := i.(bool)
 

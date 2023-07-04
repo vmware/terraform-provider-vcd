@@ -95,7 +95,6 @@ func resourceVcdServiceAccountCreate(ctx context.Context, d *schema.ResourceData
 	softwareId := d.Get("software_id").(string)
 	softwareVersion := d.Get("software_version").(string)
 	uri := d.Get("uri").(string)
-	filename := d.Get("file_name").(string)
 
 	// Role needs to be sent in URN format, and the role name needs to be percent-encoded
 	// e.g urn:vcloud:role:Organization%20Administrator
@@ -107,8 +106,13 @@ func resourceVcdServiceAccountCreate(ctx context.Context, d *schema.ResourceData
 	escapedRoleName := url.PathEscape(role.Role.Name)
 	formattedRole := "urn:vcloud:role:" + escapedRoleName
 
+	filename := d.Get("file_name").(string)
 	active := d.Get("active").(bool)
 	allowTokenFile := d.Get("allow_token_file").(bool)
+
+	if active && filename == "" {
+		return diag.Errorf("[Service Account create] filename must be set on account activation")
+	}
 
 	if active && !allowTokenFile {
 		return diag.Diagnostics{
@@ -161,6 +165,10 @@ func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData
 	if d.HasChange("active") {
 		// If 'allow_token_file' is set to false and the user wants to activate the service account,
 		// return an error with the message about the file containing sensitive information.
+		if active && filename == "" {
+			return diag.Errorf("[Service Account update] filename must be set on account activation")
+		}
+
 		if active && !allowTokenFile {
 			return diag.Diagnostics{
 				diag.Diagnostic{
@@ -173,9 +181,6 @@ func resourceVcdServiceAccountUpdate(ctx context.Context, d *schema.ResourceData
 			}
 		}
 
-		if active && filename == "" {
-			return diag.Errorf("[Service Account update] filename must be set on account activation")
-		}
 		useragent := vcdClient.Client.UserAgent
 		err = updateServiceAccountStatus(sa, active, filename, useragent)
 		if err != nil {
@@ -263,7 +268,7 @@ func genericVcdServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 		sa, err = org.GetServiceAccountByName(saName)
 	}
 	if govcd.ContainsNotFound(err) {
-		// When parent Edge Gateway is not found - this resource is also not found and should be
+		// When Service Account is not found - this resource is also not found and should be
 		// removed from state
 		if origin == "datasource" {
 			return diag.Errorf("[Service Account DS read] error retrieving Service Account: %s", err)
@@ -309,7 +314,7 @@ func resourceVcdServiceAccountDelete(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("[Service Account delete] error deleting Service Account: %s", err)
 	}
 
-	return resourceVcdServiceAccountRead(ctx, d, meta)
+	return nil
 }
 
 func resourceVcdServiceAccountImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

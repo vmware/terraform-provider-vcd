@@ -39,7 +39,7 @@ func resourceVcdApiToken() *schema.Resource {
 				ForceNew: true,
 				Description: "Set this to true if you understand the security risks of using" +
 					" API token files and agree to creating them",
-				ValidateDiagFunc: AllowTokenFileIfIsBoolAndTrue(),
+				ValidateDiagFunc: allowTokenFileIfIsBoolAndTrue(),
 			},
 		},
 	}
@@ -107,7 +107,6 @@ func resourceVcdApiTokenDelete(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("[API token delete] error deleting API token: %s", err)
 	}
-	d.SetId("")
 
 	return nil
 }

@@ -10,7 +10,9 @@ description: |-
 
 Provides a data source to read VCD Service Accounts.
 
-## Example Usage 1
+Supported in provider *v3.10+* and VCD 10.4+.
+
+## Example Usage
 
 ```hcl
 data "vcd_service_account" "example" {
