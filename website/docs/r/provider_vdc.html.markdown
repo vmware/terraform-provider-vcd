@@ -111,3 +111,28 @@ The `metadata_entry` is a set of metadata entries that have the following struct
 * `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
 * `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
 * `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing provider VDC configuration can be [imported][docs-import] into this resource via supplying the path for the provider VDC.
+Since the provider VDC is at the top of the VCD hierarchy, the path corresponds to the provider VDC name.
+For example, using the structure in [example usage](#example-usage), representing an existing provider VDC configuration 
+that was **not** created using Terraform:
+
+You can import such provider VDC configuration into terraform state using one of the following commands
+
+```
+terraform import vcd_provider_vdc.pvdc1 myPvdc
+# OR
+terraform import vcd_provider_vdc.pvdc1 provider-vdc-ID
+```
+
+After that, you may need to edit the configuration file before you can either update or delete the provider VDC configuration.
+Running `terraform plan` at this stage will show the difference between the minimal configuration file and the stored properties.
+
+One important point: if the NSX-T manager has more than one network pools attached, all of them will end up in the provider VDC
+configuration, and the plan will show such difference. The discrepancy will not appear if you created the provider VDC
+with Terraform, but it will if you import it. 
