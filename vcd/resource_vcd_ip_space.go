@@ -192,6 +192,24 @@ func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	ipSpaceConfig.ID = d.Id()
 	_, err = ipSpace.Update(ipSpaceConfig)
 	if err != nil {
+		// Duplicate key case can happen when splitting a single IP range
+		// start_address = "11.11.11.100"
+		// end_address   = "11.11.11.111"
+		// Into two ranges, where one matches `start_address` and another matches `end_address`
+		// start_address = "11.11.11.100" <- matches the start_address of single range I had
+		// end_address   = "11.11.11.108"
+		// start_address = "11.11.11.110"
+		// end_address   = "11.11.11.111" <- matches the end_address of single range I had
+		//
+		// It does not cause any issues on VCD or Terraform state except the split is not done even
+		// after multiple apply attempts.
+		// The point here is to hint user that what he is doing could be done in two steps
+		if strings.Contains(err.Error(), "Duplicate key") {
+			return diag.Errorf("error updating IP Space: splitting a single IP Range into two ranges "+
+				"with matching 'start_address' and 'end_address' is not supported in a single update "+
+				"operation. Please perform it in two steps: %s", err)
+		}
+
 		return diag.Errorf("error updating IP Space: %s", err)
 	}
 
