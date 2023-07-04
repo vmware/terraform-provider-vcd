@@ -69,7 +69,7 @@ in the
 prerequisites](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-575513A8-9ADE-4A3D-92AB-CB0917FF8316.html)
 for IP Space management in Organizations.
 
-Each resource have their own documentation, but this snippet gives a birds eye view how all the
+All resources have their own documentation, but this snippet gives a birds eye view how all the
 components integrate into a single picture when using IP Spaces:
 
 ```hcl

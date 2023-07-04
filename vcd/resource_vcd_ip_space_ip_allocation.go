@@ -40,7 +40,7 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "Edge gateway name in which NAT Rule is located",
+				Description:  "Type of allocation. One of `FLOATING_IP``, `IP_PREFIX`",
 				ValidateFunc: validation.StringInSlice([]string{"FLOATING_IP", "IP_PREFIX"}, false),
 			},
 			"usage_state": {

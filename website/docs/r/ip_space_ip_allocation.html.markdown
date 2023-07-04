@@ -110,6 +110,10 @@ The following arguments are supported:
   enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
 
+~> IP Allocations can be done only after an NSX-T Edge Gateway (`vcd_nsxt_edgegateway`) backed by
+Provider Gateway using IP Spaces is created. Attempting to allocate IP Addresses before having an
+Edge Gateway will return errors of type `This operation is denied`.
+
 ## Attribute Reference
 
 * `ip_address` - contains either single IP when `type=FLOATING_IP` (e.g. `192.168.1.100`) or subnet
