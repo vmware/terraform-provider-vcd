@@ -104,13 +104,13 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 				Type:        schema.TypeString,
 				ForceNew:    true,
 				Optional:    true,
-				Description: "Secondary gateway (can only be IPv6 with dual_stack_enabled=true)",
+				Description: "Secondary gateway (can only be IPv6 and requires enabled Dual Stack mode)",
 			},
 			"secondary_prefix_length": {
 				Type:         schema.TypeString, // using TypeString to differentiate between 0 and no value ""
 				ForceNew:     true,
 				Optional:     true,
-				Description:  "Secondary prefix (can only be IPv6 with dual_stack_enabled=true)",
+				Description:  "Secondary prefix (can only be IPv6 and requires enabled Dual Stack mode)",
 				ValidateFunc: IsIntAndAtLeast(0),
 			},
 			"secondary_static_ip_pool": {
