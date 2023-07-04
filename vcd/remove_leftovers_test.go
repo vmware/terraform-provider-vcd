@@ -320,18 +320,20 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	}
 
 	// --------------------------------------------------------------
-	// External Networks and Provider Gateways
+	// External Networks and Provider Gateways (only for SysAdmin)
 	// --------------------------------------------------------------
-	externalNetworks, err := govcd.GetAllExternalNetworksV2(govcdClient, nil)
-	if err != nil {
-		return fmt.Errorf("error retrieving External Network list: %s", err)
-	}
-	for _, extNet := range externalNetworks {
-		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, extNet.ExternalNetwork.Name, "vcd_external_network_v2", 0, verbose)
-		if toBeDeleted {
-			err = extNet.Delete()
-			if err != nil {
-				return fmt.Errorf("error deleting External Network '%s': %s", extNet.ExternalNetwork.Name, err)
+	if govcdClient.Client.IsSysAdmin {
+		externalNetworks, err := govcd.GetAllExternalNetworksV2(govcdClient, nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving External Network list: %s", err)
+		}
+		for _, extNet := range externalNetworks {
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, extNet.ExternalNetwork.Name, "vcd_external_network_v2", 0, verbose)
+			if toBeDeleted {
+				err = extNet.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting External Network '%s': %s", extNet.ExternalNetwork.Name, err)
+				}
 			}
 		}
 	}
