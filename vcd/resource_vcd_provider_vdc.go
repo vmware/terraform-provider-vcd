@@ -129,6 +129,7 @@ func resourceVcdProviderVdc() *schema.Resource {
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "ID of the registered NSX-T Manager that backs networking operations for this Provider VDC",
 			},
 			"storage_container_ids": {
@@ -196,6 +197,7 @@ func resourceVcdProviderVdc() *schema.Resource {
 			"vcenter_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "ID of the vCenter server that provides the resource pools and datastores",
 			},
 			// TODO: metadata handling to be added after refactoring of conflicting fields "metadata" and "metadata_entry"
@@ -270,6 +272,9 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	nsxtManagers, err := vcdClient.QueryNsxtManagerByHref(managerHref)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	if len(nsxtManagers) == 0 {
+		return diag.Errorf("no NSX-T managers found with ID %s", managerid)
 	}
 	if len(nsxtManagers) > 1 {
 		return diag.Errorf("more than one NSX-T manager found with ID %s", managerid)
@@ -356,8 +361,8 @@ func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceDa
 	}
 	providerVdc, err := extendedProviderVdc.ToProviderVdc()
 	if err != nil {
-		log.Printf("[DEBUG] Could not find any Provider VDC with name %s: %s", providerVdcName, err)
-		return diag.Errorf("could not find any Provider VDC with name %s: %s", providerVdcName, err)
+		log.Printf("[DEBUG] Could not convert extended Provider VDC with name %s to regular Provider VDC: %s", providerVdcName, err)
+		return diag.Errorf("could not convert extended Provider VDC with name %s to regular one: %s", providerVdcName, err)
 	}
 
 	dSet(d, "name", extendedProviderVdc.VMWProviderVdc.Name)
@@ -488,7 +493,6 @@ func resourceVcdProviderVdcUpdate(ctx context.Context, d *schema.ResourceData, m
 	vcdClient := meta.(*VCDClient)
 	providerVdcId := d.Id()
 	providerVdcName := d.Get("name").(string)
-	//extendedProviderVdc, err := vcdClient.GetProviderVdcExtendedById(providerVdcId)
 	pvdc, err := vcdClient.GetProviderVdcExtendedById(providerVdcId)
 	if err != nil {
 		log.Printf("[DEBUG] Could not find any extended Provider VDC with name %s: %s", providerVdcName, err)
