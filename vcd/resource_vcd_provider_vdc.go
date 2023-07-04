@@ -530,6 +530,13 @@ func resourceVcdProviderVdcUpdate(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(err)
 		}
 	}
+	if d.HasChange("highest_supported_hardware_version") {
+		pvdc.VMWProviderVdc.HighestSupportedHardwareVersion = d.Get("highest_supported_hardware_version").(string)
+		err = pvdc.Update()
+		if err != nil {
+			return diag.Errorf("error changing highest supported hardware version: %s", err)
+		}
+	}
 	return resourceVcdProviderVdcRead(ctx, d, meta)
 }
 

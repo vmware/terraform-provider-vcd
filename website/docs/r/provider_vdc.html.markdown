@@ -15,7 +15,7 @@ Supported in provider *v3.10+*
 
 ~> Note: this resource requires system administrator privileges
 
-## Example Usage
+## Example Usage 1
 
 ```hcl
 data "vcd_vcenter" "vcenter1" {
@@ -25,6 +25,13 @@ data "vcd_vcenter" "vcenter1" {
 data "vcd_resource_pool" "rp1" {
   name       = "resource-pool-for-vcd-01"
   vcenter_id = data.vcd_vcenter.vcenter1.id
+  # maximum hardware version: "vmx-18"
+}
+
+data "vcd_resource_pool" "rp2" {
+  name       = "resource-pool-for-vcd-01"
+  vcenter_id = data.vcd_vcenter.vcenter1.id
+  # maximum hardware version: "vmx-19"
 }
 
 data "vcd_nsxt_manager" "mgr1" {
@@ -44,7 +51,26 @@ resource "vcd_provider_vdc" "pvdc1" {
   network_pool_ids                   = [data.vcd_network_pool.np1.id]
   resource_pool_ids                  = [data.vcd_resource_pool.rp1.id]
   storage_profile_names              = ["Development"]
-  highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
+  highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version # vmx-18
+}
+```
+
+## Example Usage 2
+
+You can update the provider VDC in [Example Usage 1](#example-usage-1) to use a higher hardware version by adding a new
+resource pool that supports such version.
+
+```hcl
+resource "vcd_provider_vdc" "pvdc1" {
+  name                               = "myPvdc"
+  description                        = "new provider VDC"
+  is_enabled                         = true
+  vcenter_id                         = data.vcd_vcenter.vcenter1.id
+  nsxt_manager_id                    = data.vcd_nsxt_manager.mgr1.id
+  network_pool_ids                   = [data.vcd_network_pool.np1.id]
+  resource_pool_ids                  = [data.vcd_resource_pool.rp1.id, data.vcd_resource_pool.rp2.id]
+  storage_profile_names              = ["Development"]
+  highest_supported_hardware_version = data.vcd_resource_pool.rp2.hardware_version # vmx-19
 }
 ```
 
@@ -119,7 +145,7 @@ configuration. [More information.][docs-import]
 
 An existing provider VDC configuration can be [imported][docs-import] into this resource via supplying the path for the provider VDC.
 Since the provider VDC is at the top of the VCD hierarchy, the path corresponds to the provider VDC name.
-For example, using the structure in [example usage](#example-usage), representing an existing provider VDC configuration 
+For example, using the structure in [example usage](#example-usage-1), representing an existing provider VDC configuration
 that was **not** created using Terraform:
 
 You can import such provider VDC configuration into terraform state using one of the following commands
