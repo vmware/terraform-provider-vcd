@@ -506,16 +506,19 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
 `
 
 const testAccVcdIpSpaceIpAllocationStep3DS = testAccVcdIpSpaceIpAllocationStep1 + `
-# skip-binary-test: Data Source test
 data "vcd_ip_space_uplink" "u1" {
   name                = "{{.TestName}}"
   external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  depends_on = [vcd_ip_space_uplink.u1]
 }
 
 data "vcd_nsxt_edgegateway" "ip-space" {
   org      = "{{.Org}}"
   name     = vcd_nsxt_edgegateway.ip-space.name
   owner_id = data.vcd_org_vdc.vdc1.id
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 
 data "vcd_ip_space_ip_allocation" "public-floating-ip" {
@@ -524,7 +527,7 @@ data "vcd_ip_space_ip_allocation" "public-floating-ip" {
   type        = "FLOATING_IP"
   ip_address  = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
 
-  depends_on = [vcd_nsxt_edgegateway.ip-space]
+  depends_on = [vcd_nsxt_edgegateway.ip-space, vcd_ip_space_ip_allocation.public-floating-ip]
 }
 
 data "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
@@ -533,7 +536,7 @@ data "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
   type        = "FLOATING_IP"
   ip_address  = vcd_ip_space_ip_allocation.public-floating-ip-manual.ip_address
 
-  depends_on = [vcd_nsxt_edgegateway.ip-space]
+  depends_on = [vcd_nsxt_edgegateway.ip-space, vcd_ip_space_ip_allocation.public-floating-ip-manual]
 }
 
 data "vcd_ip_space_ip_allocation" "public-ip-prefix" {
@@ -543,13 +546,15 @@ data "vcd_ip_space_ip_allocation" "public-ip-prefix" {
 
   ip_address = vcd_ip_space_ip_allocation.public-ip-prefix.ip_address
 
-  depends_on = [vcd_nsxt_edgegateway.ip-space]
+  depends_on = [vcd_nsxt_edgegateway.ip-space, vcd_ip_space_ip_allocation.public-ip-prefix]
 }
 
 data "vcd_network_routed_v2" "using-public-prefix" {
   org             = "{{.Org}}"
   name            = "{{.TestName}}"
   edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+
+  depends_on = [vcd_network_routed_v2.using-public-prefix]
 }
 
 data "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
@@ -558,7 +563,7 @@ data "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
   type        = "IP_PREFIX"
   ip_address  = vcd_ip_space_ip_allocation.public-ip-prefix-manual.ip_address
 
-  depends_on = [vcd_nsxt_edgegateway.ip-space]
+  depends_on = [vcd_nsxt_edgegateway.ip-space, vcd_ip_space_ip_allocation.public-ip-prefix-manual]
 }
 `
 

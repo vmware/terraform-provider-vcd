@@ -145,10 +145,11 @@ resource "vcd_ip_space_uplink" "u1" {
 `
 
 const testAccVcdIpSpaceUplinkStep3DS = testAccVcdIpSpaceUplinkPrereqs + `
-# skip-binary-test: Data Source test
 data "vcd_ip_space_uplink" "u1" {
   name                = "{{.TestName}}-updated"
   external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  depends_on = [vcd_ip_space_uplink.u1]
 }
 
 resource "vcd_ip_space_uplink" "u1" {

@@ -258,9 +258,10 @@ resource "vcd_ip_space" "space1" {
 `
 
 const testAccVcdIpSpacePublicStep5DS = testAccVcdIpSpacePublicStep5 + `
-# skip-binary-test: Data Source test
 data "vcd_ip_space" "space1" {
   name = "{{.TestName}}"
+
+  depends_on = [vcd_ip_space.space1]
 }
 `
 
@@ -511,9 +512,10 @@ resource "vcd_ip_space" "space1" {
 `
 
 const testAccVcdIpSpaceSharedStep5DS = testAccVcdIpSpaceSharedStep5 + `
-# skip-binary-test: Data Source test
 data "vcd_ip_space" "space1" {
   name = "{{.TestName}}"
+
+  depends_on = [vcd_ip_space.space1]
 }
 `
 
@@ -775,10 +777,11 @@ resource "vcd_ip_space" "space1" {
 `
 
 const testAccVcdIpSpacePrivateStep5DS = testAccVcdIpSpacePrivateStep5 + `
-# skip-binary-test: Data Source test
 data "vcd_ip_space" "space1" {
   org_id = data.vcd_org.org1.id
   name   = "{{.TestName}}"
+
+  depends_on = [vcd_ip_space.space1]
 }
 `
 

@@ -1116,13 +1116,14 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 `
 
 const testAccVcdExternalNetworkV2NsxtIpSpaceStep2DS = testAccCheckVcdExternalNetworkV2NsxtDS + `
-# skip-binary-test: datasource test
 data "vcd_org" "org1" {
   name = "{{.Org}}"
 }
 
 data "vcd_external_network_v2" "ext-net-nsxt" {
   name = vcd_external_network_v2.ext-net-nsxt.name
+  
+  depends_on = [vcd_external_network_v2.ext-net-nsxt]
 }
 
 resource "vcd_external_network_v2" "ext-net-nsxt" {

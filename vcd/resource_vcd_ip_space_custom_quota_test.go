@@ -322,9 +322,10 @@ resource "vcd_ip_space_custom_quota" "test" {
 `
 
 const testAccVcdIpSpaceCustomQuotaStep5DS = testAccVcdIpSpaceCustomQuotaStep4 + `
-# skip-binary-test: Data Source test
 data "vcd_ip_space_custom_quota" "test" {
   org_id      = data.vcd_org.org1.id
   ip_space_id = vcd_ip_space.space1.id
+
+  depends_on = [vcd_ip_space_custom_quota.test]
 }
 `
