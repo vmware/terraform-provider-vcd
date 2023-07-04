@@ -80,7 +80,7 @@ resource "vcd_rde_type" "my_rde_type" {
   name          = "My VMware RDE Type"
   interface_ids = [data.vcd_rde_interface.my_interface.id]
   schema_url    = "https://just.an-example.com/schemas/my-type-schema.json"
-  
+
   depends_on = [vcd_rde_interface_behavior.my_behavior] # Behaviors need to be created before any RDE Type
 }
 ```

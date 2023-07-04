@@ -65,6 +65,7 @@ The following arguments are supported:
 * `execution` - (Required) A map that specifies the Behavior execution mechanism. This will override the referenced RDE Interface behavior
 * `description` - (Optional) The description of the RDE Type Behavior.
 * `access_level_ids` - (Optional) A set of Access levels to specify for the RDE Type Behavior.
+  Go [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-0749DEA0-08A2-4F32-BDD7-D16869578F96.html) to know more about this feature.
 
 ## Attribute Reference
 
