@@ -12,7 +12,7 @@ description: |-
 The Distributed Firewall allows user to segment organization virtual data center entities, such as
 virtual machines, based on virtual machine names and attributes. 
 
-~> There is a different resource
+!> There is a different resource
 [`vcd_nsxt_distributed_firewall`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall)
 that can manage all firewall rules in one resource. One should use **only one of**
 `vcd_nsxt_distributed_firewall` or `vcd_nsxt_distributed_firewall_rule` as they will **override each
