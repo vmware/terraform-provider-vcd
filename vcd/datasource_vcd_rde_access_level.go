@@ -6,9 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdRdeBehaviorAccessLevel() *schema.Resource {
+func datasourceVcdRdeTypeBehaviorAccessLevel() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdRdeBehaviorAccessLevelRead,
+		ReadContext: datasourceVcdRdeTypeBehaviorAccessLevelRead,
 		Schema: map[string]*schema.Schema{
 			"rde_type_id": {
 				Type:        schema.TypeString,
@@ -34,6 +34,6 @@ func datasourceVcdRdeBehaviorAccessLevel() *schema.Resource {
 	}
 }
 
-func datasourceVcdRdeBehaviorAccessLevelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdRdeBehaviorAccessLevelRead(ctx, d, meta)
+func datasourceVcdRdeTypeBehaviorAccessLevelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdRdeTypeBehaviorAccessLevelRead(ctx, d, meta)
 }

@@ -11,14 +11,14 @@ import (
 	"strings"
 )
 
-func resourceVcdRdeBehaviorAccessLevel() *schema.Resource {
+func resourceVcdRdeTypeBehaviorAccessLevel() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdRdeBehaviorAccessLevelCreate,
-		ReadContext:   resourceVcdRdeBehaviorAccessLevelRead,
-		UpdateContext: resourceVcdRdeBehaviorAccessLevelUpdate,
-		DeleteContext: resourceVcdRdeBehaviorAccessLevelDelete,
+		CreateContext: resourceVcdRdeTypeBehaviorAccessLevelCreate,
+		ReadContext:   resourceVcdRdeTypeBehaviorAccessLevelRead,
+		UpdateContext: resourceVcdRdeTypeBehaviorAccessLevelUpdate,
+		DeleteContext: resourceVcdRdeTypeBehaviorAccessLevelDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdRdeBehaviorAccessLevelImport,
+			StateContext: resourceVcdRdeTypeBehaviorAccessLevelImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"rde_type_id": {
@@ -45,22 +45,22 @@ func resourceVcdRdeBehaviorAccessLevel() *schema.Resource {
 	}
 }
 
-func resourceVcdRdeBehaviorAccessLevelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdRdeBehaviorAccessLevelCreateOrUpdate(ctx, d, meta, "create")
+func resourceVcdRdeTypeBehaviorAccessLevelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdRdeTypeBehaviorAccessLevelCreateOrUpdate(ctx, d, meta, "create")
 }
 
-func resourceVcdRdeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdRdeTypeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
 
 	behaviorId := d.Get("behavior_id").(string)
 	behavior, err := rdeType.GetBehaviorById(behaviorId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level %s] could not retrieve the Behavior with ID '%s': %s", operation, behaviorId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level %s] could not retrieve the Behavior with ID '%s': %s", operation, behaviorId, err)
 	}
 
 	var payload []*types.BehaviorAccess
@@ -68,7 +68,7 @@ func resourceVcdRdeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d *sch
 	// We get "old" ACLs as there can be more ACLs from other Behaviors that would be deleted otherwise.
 	allAcls, err := rdeType.GetAllBehaviorsAccessControls(nil)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level %s] could not get the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
+		return diag.Errorf("[RDE Type Behavior Access Level %s] could not get the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
 	}
 
 	for _, acl := range allAcls {
@@ -89,34 +89,34 @@ func resourceVcdRdeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d *sch
 	payload = append(payload, newAcls...)
 	err = rdeType.SetBehaviorAccessControls(payload)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level %s] could not set the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
+		return diag.Errorf("[RDE Type Behavior Access Level %s] could not set the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
 	}
 
-	return genericVcdRdeBehaviorAccessLevelRead(ctx, d, meta)
+	return genericVcdRdeTypeBehaviorAccessLevelRead(ctx, d, meta)
 }
 
-func resourceVcdRdeBehaviorAccessLevelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdRdeBehaviorAccessLevelRead(ctx, d, meta)
+func resourceVcdRdeTypeBehaviorAccessLevelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdRdeTypeBehaviorAccessLevelRead(ctx, d, meta)
 }
 
-func genericVcdRdeBehaviorAccessLevelRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func genericVcdRdeTypeBehaviorAccessLevelRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level read] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level read] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 
 	behaviorId := d.Get("behavior_id").(string)
 	// This is not really needed, but this way we assure the Behavior exists
 	behavior, err := rdeType.GetBehaviorById(behaviorId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level read] could not retrieve the Behavior with ID '%s': %s", behaviorId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level read] could not retrieve the Behavior with ID '%s': %s", behaviorId, err)
 	}
 
 	acls, err := rdeType.GetAllBehaviorsAccessControls(nil)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level read] could not read the Behavior Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level read] could not read the Behavior Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 	var aclsAttr []string
 	for _, acl := range acls {
@@ -134,21 +134,21 @@ func genericVcdRdeBehaviorAccessLevelRead(_ context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceVcdRdeBehaviorAccessLevelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdRdeBehaviorAccessLevelCreateOrUpdate(ctx, d, meta, "update")
+func resourceVcdRdeTypeBehaviorAccessLevelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdRdeTypeBehaviorAccessLevelCreateOrUpdate(ctx, d, meta, "update")
 }
 
-func resourceVcdRdeBehaviorAccessLevelDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdRdeTypeBehaviorAccessLevelDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level delete] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level delete] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 
 	allAcls, err := rdeType.GetAllBehaviorsAccessControls(nil)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level delete] could not read the Behavior Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level delete] could not read the Behavior Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 	var payload []*types.BehaviorAccess
 	for _, acl := range allAcls {
@@ -159,12 +159,12 @@ func resourceVcdRdeBehaviorAccessLevelDelete(_ context.Context, d *schema.Resour
 	}
 	err = rdeType.SetBehaviorAccessControls(payload)
 	if err != nil {
-		return diag.Errorf("[RDE Behavior Access Level delete] could not delete the Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior Access Level delete] could not delete the Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 	return nil
 }
 
-// resourceVcdRdeBehaviorAccessLevelImport is responsible for importing the resource.
+// resourceVcdRdeTypeBehaviorAccessLevelImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
@@ -177,7 +177,7 @@ func resourceVcdRdeBehaviorAccessLevelDelete(_ context.Context, d *schema.Resour
 // Example resource name (_resource_name_): vcd_rde_type_behavior_acl.behavior_acl1
 // Example import path (_the_id_string_): vmware.kubernetes.1.0.0.myBehavior
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdRdeBehaviorAccessLevelImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdRdeTypeBehaviorAccessLevelImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	log.Printf("[DEBUG] importing vcd_rde_type_behavior resource with provided id %s", d.Id())
