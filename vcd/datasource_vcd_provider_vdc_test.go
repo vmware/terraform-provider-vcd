@@ -3,8 +3,6 @@
 package vcd
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
 
@@ -55,19 +53,11 @@ func TestAccVcdDatasourceProviderVdc(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_container_ids.0", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "storage_profile_ids.0", getProviderVdcDatasourceAttributeUrnRegex("providervdcstorageprofile")),
 					resource.TestMatchResourceAttr("data.vcd_provider_vdc.pvdc1", "vcenter_id", getProviderVdcDatasourceAttributeUrnRegex("vimserver")),
-					stateDumper(),
 				),
 			},
 		},
 	})
 	postTestChecks(t)
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
 }
 
 // As the `vcd_provider_vdc` data source has a lot of URNs in its attributes, this function tries to centralize URN checking
