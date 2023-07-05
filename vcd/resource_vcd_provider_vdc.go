@@ -314,12 +314,12 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 			},
 		},
 		StorageProfile: wantedStorageProfiles,
-		NsxTManagerReference: types.Reference{
+		NsxTManagerReference: &types.Reference{
 			HREF: nsxtManagers[0].HREF,
 			ID:   extractUuid(nsxtManagers[0].HREF),
 			Name: nsxtManagers[0].Name,
 		},
-		NetworkPool: types.Reference{
+		NetworkPool: &types.Reference{
 			HREF: networkPoolHref,
 			Name: networkPool.NetworkPool.Name,
 			ID:   extractUuid(networkPool.NetworkPool.Id),
