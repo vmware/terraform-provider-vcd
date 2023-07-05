@@ -395,7 +395,6 @@ The available sub-attributes for `ignore_metadata` are:
   *"vcd_catalog"*, *"vcd_catalog_item"*, *"vcd_catalog_media"*, *"vcd_catalog_vapp_template"*, *"vcd_independent_disk"*, *"vcd_network_direct"*,
   *"vcd_network_isolated"*, *"vcd_network_isolated_v2"*, *"vcd_network_routed"*, *"vcd_network_routed_v2"*, *"vcd_org"*, *"vcd_org_vdc"*, *"vcd_provider_vdc"*,
   *"vcd_storage_profile"*, *"vcd_vapp"*, *"vcd_vapp_vm"* or *"vcd_vm"*, which are the resources compatible with `metadata_entry`.
-  Any other resource type will not have effect.
 * `object_name`- (Optional) Specifies the name of the object which metadata needs to be ignored. All object types are supported, except for
   `vdcStorageProfile` which **cannot be filtered by name**.
 * `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
@@ -408,9 +407,9 @@ that belong to the specific Organization named "client1" **and** which keys matc
 provider "vcd" {
   # ...
   ignore_metadata {
-    object_type = "org"
-    object_name = "client1"
-    key_regex   = "[Ee]nvironment"
+    resource_type = "vcd_org"
+    object_name   = "client1"
+    key_regex     = "[Ee]nvironment"
   }
 }
 
@@ -435,9 +434,9 @@ provider "vcd" {
 
   # Filters all metadata with values "Yes" in the Organization named "Tatooine".
   ignore_metadata {
-    object_type = "org"
-    object_name = "Tatooine"
-    value_regex = "^Yes$"
+    resource_type = "vcd_org"
+    object_name   = "Tatooine"
+    value_regex   = "^Yes$"
   }
 }
 
