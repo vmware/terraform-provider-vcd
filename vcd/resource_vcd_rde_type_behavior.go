@@ -184,6 +184,6 @@ func resourceVcdRdeTypeBehaviorImport(_ context.Context, d *schema.ResourceData,
 
 	d.SetId(behavior.ID)
 	dSet(d, "rde_type_id", rdeType.DefinedEntityType.ID)
-	dSet(d, "behavior_id", behavior.ID)
+	dSet(d, "rde_interface_behavior_id", behavior.Ref) // Ref contains the original Interface Behavior ID
 	return []*schema.ResourceData{d}, nil
 }

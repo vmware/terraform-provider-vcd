@@ -18,17 +18,17 @@ func TestAccVcdRdeInterfaceBehaviorDS(t *testing.T) {
 		"InterfaceNss":     "k8s",
 		"InterfaceVersion": "1.0.0",
 		"InterfaceVendor":  "vmware",
-		"BehaviorName":     "createKubeConfig",
+		"BehaviorName":     "createKubeConfig", // This Behavior is also included
 	}
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccVcdRdeInterfaceBehaviorDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", configText)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION data source: %s\n", configText)
 
 	rdeInterfaceBehavior := "data.vcd_rde_interface_behavior.behavior_ds"
 	resource.Test(t, resource.TestCase{

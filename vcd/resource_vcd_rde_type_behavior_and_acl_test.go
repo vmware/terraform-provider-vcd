@@ -51,6 +51,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 	interfaceBehavior2 := "vcd_rde_interface_behavior.behavior2"
 	rdeTypeBehavior := "vcd_rde_type_behavior.behavior_override"
 	rdeTypeBehaviorDS := "data.vcd_rde_type_behavior.behavior_override_ds"
+	rdeTypeBehaviorInterfaceDS := "data.vcd_rde_type_behavior.behavior_interface_ds"
 	interfaceBehaviorAcl := "vcd_rde_type_behavior_acl.interface_acl"
 	interfaceBehaviorAclDS := "data.vcd_rde_type_behavior_acl.interface_acl_ds"
 	rdeTypeBehaviorAcl := "vcd_rde_type_behavior_acl.type_acl"
@@ -116,6 +117,14 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.%", rdeTypeBehavior, "execution.%"),
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.id", rdeTypeBehavior, "execution.id"),
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.type", rdeTypeBehavior, "execution.type"),
+
+					// RDE Type Behavior from an Interface
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "id", interfaceBehavior2, "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "ref", interfaceBehavior2, "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "description", interfaceBehavior2, "description"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution.%", interfaceBehavior2, "execution.%"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution.id", interfaceBehavior2, "execution.id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution.type", interfaceBehavior2, "execution.type"),
 
 					// Interface Access Levels
 					resource.TestCheckResourceAttrPair(interfaceBehaviorAclDS, "id", interfaceBehaviorAcl, "id"),
@@ -217,9 +226,16 @@ resource "vcd_rde_type_behavior_acl" "interface_acl" {
 `
 
 const testAccVcdRdeTypeBehaviorDS = `
+# We fetch an RDE Type Behavior
 data "vcd_rde_type_behavior" "behavior_override_ds" {
-  rde_type_id               = vcd_rde_type_behavior.behavior_override.rde_type_id
-  rde_interface_behavior_id = vcd_rde_type_behavior.behavior_override.rde_interface_behavior_id
+  rde_type_id = vcd_rde_type_behavior.behavior_override.rde_type_id
+  behavior_id = vcd_rde_type_behavior.behavior_override.id
+}
+
+# In this case we fetch a RDE Interface Behavior inherited automatically
+data "vcd_rde_type_behavior" "behavior_interface_ds" {
+  rde_type_id = vcd_rde_type_behavior.behavior_override.rde_type_id
+  behavior_id = vcd_rde_interface_behavior.behavior2.id
 }
 
 data "vcd_rde_type_behavior_acl" "interface_acl_ds" {
