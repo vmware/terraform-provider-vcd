@@ -1,0 +1,234 @@
+//go:build rde || ALL || functional
+
+package vcd
+
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+)
+
+// TestAccVcdRdeTypeBehaviorAndAcl tests both RDE Type Behaviors resource/data-source and the Access Level resource/data-source
+func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Nss":                   "nss1",
+		"Version":               "1.0.0",
+		"Vendor":                "vendor1",
+		"Name":                  t.Name(),
+		"Description":           t.Name(),
+		"SchemaPath":            getCurrentDir() + "/../test-resources/rde_type.json",
+		"ExecutionId":           "MyActivity",
+		"ExecutionType":         "noop",
+		"TypeAccessLevels":      "\"urn:vcloud:accessLevel:FullControl\"",
+		"InterfaceAccessLevels": "\"urn:vcloud:accessLevel:ReadOnly\", \"urn:vcloud:accessLevel:FullControl\"",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdRdeTypeBehavior, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
+
+	params["FuncName"] = t.Name() + "-Step2"
+	params["Description"] = t.Name() + "Updated"
+	params["ExecutionId"] = "MyActivityUpdated"
+	params["TypeAccessLevels"] = "\"urn:vcloud:accessLevel:ReadOnly\""
+	params["InterfaceAccessLevels"] = "\"urn:vcloud:accessLevel:FullControl\""
+	configText2 := templateFill(testAccVcdRdeTypeBehavior, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
+
+	params["FuncName"] = t.Name() + "-Step3"
+	configText3 := templateFill(testAccVcdRdeTypeBehavior+testAccVcdRdeTypeBehaviorDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 3: %s\n", configText3)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	interfaceBehavior1 := "vcd_rde_interface_behavior.behavior1"
+	interfaceBehavior2 := "vcd_rde_interface_behavior.behavior2"
+	rdeTypeBehavior := "vcd_rde_type_behavior.behavior_override"
+	rdeTypeBehaviorDS := "data.vcd_rde_type_behavior.behavior_override_ds"
+	interfaceBehaviorAcl := "vcd_rde_behavior_acl.interface_acl"
+	interfaceBehaviorAclDS := "data.vcd_rde_behavior_acl.interface_acl_ds"
+	rdeTypeBehaviorAcl := "vcd_rde_behavior_acl.type_acl"
+	rdeTypeBehaviorAclDS := "data.vcd_rde_behavior_acl.type_acl_ds"
+	rdeType := "vcd_rde_type.type"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckRdeTypesDestroy(rdeType), // If the RDE Type is destroyed, the Behavior is also destroyed.
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// RDE Type Behavior
+					resource.TestCheckResourceAttrPair(rdeTypeBehavior, "ref", interfaceBehavior1, "id"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "name", t.Name()+"1"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "description", t.Name()+"Override"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.id", "MyActivityOverride"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.type", "noop"),
+
+					// Interface Access Levels
+					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "id", interfaceBehavior2, "id"),
+					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "behavior_id", interfaceBehaviorAcl, "id"),
+					resource.TestCheckResourceAttr(interfaceBehaviorAcl, "access_level_ids.#", "2"),
+					resource.TestCheckTypeSetElemAttr(interfaceBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:FullControl"),
+					resource.TestCheckTypeSetElemAttr(interfaceBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:ReadOnly"),
+
+					// Type Access Levels
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "id", rdeTypeBehavior, "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "behavior_id", rdeTypeBehaviorAcl, "id"),
+					resource.TestCheckResourceAttr(rdeTypeBehaviorAcl, "access_level_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr(rdeTypeBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:FullControl"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// RDE Type Behavior
+					resource.TestCheckResourceAttrPair(rdeTypeBehavior, "ref", interfaceBehavior1, "id"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "description", t.Name()+"UpdatedOverride"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.id", "MyActivityUpdatedOverride"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.type", "noop"),
+
+					// Interface Access Levels
+					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "id", interfaceBehavior2, "id"),
+					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "behavior_id", interfaceBehaviorAcl, "id"),
+					resource.TestCheckResourceAttr(interfaceBehaviorAcl, "access_level_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr(interfaceBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:FullControl"),
+
+					// Type Access Levels
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "id", rdeTypeBehavior, "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "behavior_id", rdeTypeBehaviorAcl, "id"),
+					resource.TestCheckResourceAttr(rdeTypeBehaviorAcl, "access_level_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr(rdeTypeBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:ReadOnly"),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// RDE Type Behavior
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "id", rdeTypeBehavior, "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "ref", rdeTypeBehavior, "ref"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "description", rdeTypeBehavior, "description"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.%", rdeTypeBehavior, "execution.%"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.id", rdeTypeBehavior, "execution.id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.type", rdeTypeBehavior, "execution.type"),
+
+					// Interface Access Levels
+					resource.TestCheckResourceAttrPair(interfaceBehaviorAclDS, "id", interfaceBehaviorAcl, "id"),
+					resource.TestCheckResourceAttrPair(interfaceBehaviorAclDS, "access_level_ids.#", interfaceBehaviorAcl, "access_level_ids.#"),
+					resource.TestCheckTypeSetElemAttr(interfaceBehaviorAclDS, "access_level_ids.*", "urn:vcloud:accessLevel:FullControl"),
+
+					// Type Access Levels
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAclDS, "id", rdeTypeBehaviorAcl, "id"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAclDS, "access_level_ids.#", interfaceBehaviorAcl, "access_level_ids.#"),
+					resource.TestCheckTypeSetElemAttr(rdeTypeBehaviorAclDS, "access_level_ids.*", "urn:vcloud:accessLevel:ReadOnly"),
+				),
+			},
+			{
+				ResourceName:      rdeTypeBehavior,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["Name"].(string)+"1"),
+			},
+			{
+				ResourceName:      interfaceBehaviorAcl,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["Name"].(string)+"1"),
+			},
+			{
+				ResourceName:      rdeTypeBehaviorAcl,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["Name"].(string)+"1"),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdRdeTypeBehavior = `
+resource "vcd_rde_interface" "interface" {
+  nss     = "{{.Nss}}"
+  version = "{{.Version}}"
+  vendor  = "{{.Vendor}}"
+  name    = "{{.Name}}"
+}
+
+resource "vcd_rde_interface_behavior" "behavior1" {
+  rde_interface_id = vcd_rde_interface.interface.id
+  name             = "{{.Name}}1"
+  description      = "{{.Description}}"
+  execution = {
+    "id" : "{{.ExecutionId}}1"
+    "type" : "{{.ExecutionType}}"
+  }
+}
+
+resource "vcd_rde_interface_behavior" "behavior2" {
+  rde_interface_id = vcd_rde_interface.interface.id
+  name             = "{{.Name}}2"
+  description      = "{{.Description}}"
+  execution = {
+    "id" : "{{.ExecutionId}}2"
+    "type" : "{{.ExecutionType}}"
+  }
+}
+
+resource "vcd_rde_type" "type" {
+  nss           = "{{.Nss}}"
+  version       = "{{.Version}}"
+  vendor        = "{{.Vendor}}"
+  name          = "{{.Name}}"
+  description   = "{{.Description}}"
+  interface_ids = [vcd_rde_interface.interface.id]
+  schema        = file("{{.SchemaPath}}")
+
+  # Behaviors can't be created after the RDE Interface is used by a RDE Type
+  # so we need to depend on the Behaviors to wait for them to be created first.
+  depends_on = [vcd_rde_interface_behavior.behavior1, vcd_rde_interface_behavior.behavior2]
+}
+
+resource "vcd_rde_type_behavior" "behavior_override" {
+  rde_type_id               = vcd_rde_type.type.id
+  rde_interface_behavior_id = vcd_rde_interface_behavior.behavior1.id
+  description               = "{{.Description}}Override"
+  execution = {
+    "id" : "{{.ExecutionId}}Override"
+    "type" : "{{.ExecutionType}}"
+  }
+}
+
+resource "vcd_rde_behavior_acl" "type_acl" {
+  rde_type_id = vcd_rde_type.type.id
+  behavior_id = vcd_rde_type_behavior.behavior_override.id
+  access_level_ids = [{{.TypeAccessLevels}}]
+}
+
+resource "vcd_rde_behavior_acl" "interface_acl" {
+  rde_type_id = vcd_rde_type.type.id
+  behavior_id = vcd_rde_interface_behavior.behavior2.id
+  access_level_ids = [{{.InterfaceAccessLevels}}]
+}
+`
+
+const testAccVcdRdeTypeBehaviorDS = `
+data "vcd_rde_type_behavior" "behavior_override_ds" {
+  rde_type_id               = vcd_rde_type_behavior.behavior_override.rde_type_id
+  rde_interface_behavior_id = vcd_rde_type_behavior.behavior_override.rde_interface_behavior_id
+}
+
+data "vcd_rde_behavior_acl" "interface_acl_ds" {
+  rde_type_id = vcd_rde_behavior_acl.interface_acl.rde_type_id
+  behavior_id = vcd_rde_behavior_acl.interface_acl.behavior_id
+}
+
+data "vcd_rde_behavior_acl" "type_acl_ds" {
+  rde_type_id = vcd_rde_behavior_acl.type_acl.rde_type_id
+  behavior_id = vcd_rde_behavior_acl.type_acl.behavior_id
+}
+`

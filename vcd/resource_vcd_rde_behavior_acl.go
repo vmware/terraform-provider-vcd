@@ -63,24 +63,18 @@ func resourceVcdRdeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d *sch
 		return diag.Errorf("[RDE Behavior Access Level %s] could not retrieve the Behavior with ID '%s': %s", operation, behaviorId, err)
 	}
 
-	definedAcls := d.Get("access_level_ids").(*schema.Set).List()
 	var payload []*types.BehaviorAccess
+	definedAcls := d.Get("access_level_ids").(*schema.Set).List()
+	// We get "old" ACLs as there can be more ACLs from other Behaviors that would be deleted otherwise.
+	allAcls, err := rdeType.GetAllBehaviorsAccessControls(nil)
+	if err != nil {
+		return diag.Errorf("[RDE Behavior Access Level %s] could not get the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
+	}
 
-	if operation == "update" {
-		// We get "old" ACLs as there can be more ACLs from other Behaviors that would be deleted otherwise.
-		allAcls, err := rdeType.GetAllBehaviorsAccessControls(nil)
-		if err != nil {
-			return diag.Errorf("[RDE Behavior Access Level %s] could not get the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
-		}
-
-		for _, acl := range allAcls {
-			for _, definedAcl := range definedAcls {
-				// We just ignore the entries that belong to the same Behavior but have been changed (because they need to be updated)
-				if acl.BehaviorId == behaviorId && acl.AccessLevelId != definedAcl {
-					continue
-				}
-				payload = append(payload, acl)
-			}
+	for _, acl := range allAcls {
+		// We must preserve the Access levels that belong to other Behavior
+		if acl.BehaviorId != behaviorId {
+			payload = append(payload, acl)
 		}
 	}
 
@@ -151,7 +145,19 @@ func resourceVcdRdeBehaviorAccessLevelDelete(_ context.Context, d *schema.Resour
 	if err != nil {
 		return diag.Errorf("[RDE Behavior Access Level delete] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
-	err = rdeType.SetBehaviorAccessControls([]*types.BehaviorAccess{})
+
+	allAcls, err := rdeType.GetAllBehaviorsAccessControls(nil)
+	if err != nil {
+		return diag.Errorf("[RDE Behavior Access Level delete] could not read the Behavior Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
+	}
+	var payload []*types.BehaviorAccess
+	for _, acl := range allAcls {
+		// We must preserve the Access levels that belong to other Behavior
+		if acl.BehaviorId != d.Id() {
+			payload = append(payload, acl)
+		}
+	}
+	err = rdeType.SetBehaviorAccessControls(payload)
 	if err != nil {
 		return diag.Errorf("[RDE Behavior Access Level delete] could not delete the Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
