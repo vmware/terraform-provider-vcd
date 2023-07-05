@@ -61,14 +61,14 @@ func resourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 			"direction": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "Direction on which Firewall Rule applies (One of 'IN', 'OUT', 'IN_OUT')",
+				Description:  "Direction on which Firewall Rule applies (one of 'IN', 'OUT', 'IN_OUT')",
 				Default:      "IN_OUT",
 				ValidateFunc: validation.StringInSlice([]string{"IN", "OUT", "IN_OUT"}, false),
 			},
 			"ip_protocol": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "Firewall Rule Protocol (One of 'IPV4', 'IPV6', 'IPV4_IPV6')",
+				Description:  "Firewall Rule Protocol (one of 'IPV4', 'IPV6', 'IPV4_IPV6')",
 				Default:      "IPV4_IPV6",
 				ValidateFunc: validation.StringInSlice([]string{"IPV4", "IPV6", "IPV4_IPV6"}, false),
 			},
@@ -145,7 +145,7 @@ func resourceVcdNsxtDistributedFirewallRuleCreate(ctx context.Context, d *schema
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Rule create] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Rule create] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
@@ -174,7 +174,7 @@ func resourceVcdNsxtDistributedFirewallRuleUpdate(ctx context.Context, d *schema
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Rule update] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Rule update] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
@@ -206,7 +206,7 @@ func resourceVcdNsxtDistributedFirewallRuleRead(_ context.Context, d *schema.Res
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Rule read] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Rule read] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
@@ -237,7 +237,7 @@ func resourceVcdNsxtDistributedFirewallRuleDelete(_ context.Context, d *schema.R
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Rule delete] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Rule delete] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))

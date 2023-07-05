@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxt\_distributed\_firewall\_rule
 
-The Distributed Firewall data source reads all defined rules for a particular VDC Group.
+The Distributed Firewall data source a single rules for a particular VDC Group.
 
 -> There is a different data source
 [`vcd_nsxt_distributed_firewall`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_distributed_firewall)

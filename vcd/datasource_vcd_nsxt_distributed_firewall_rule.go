@@ -43,12 +43,12 @@ func datasourceVcdNsxtDistributedFirewallRule() *schema.Resource {
 			"direction": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Direction on which Firewall Rule applies (One of 'IN', 'OUT', 'IN_OUT')",
+				Description: "Direction on which Firewall Rule applies (one of 'IN', 'OUT', 'IN_OUT')",
 			},
 			"ip_protocol": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Firewall Rule Protocol (One of 'IPV4', 'IPV6', 'IPV4_IPV6')",
+				Description: "Firewall Rule Protocol (one of 'IPV4', 'IPV6', 'IPV4_IPV6')",
 			},
 			"action": {
 				Type:        schema.TypeString,
@@ -116,7 +116,7 @@ func datasourceVcdNsxtDistributedFirewallRuleRead(ctx context.Context, d *schema
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Rule DS read] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Rule DS read] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
