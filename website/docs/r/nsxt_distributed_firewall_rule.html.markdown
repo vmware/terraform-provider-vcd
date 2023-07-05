@@ -14,7 +14,7 @@ virtual machines, based on virtual machine names and attributes.
 
 ~> There is a different resource
 [`vcd_nsxt_distributed_firewall`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall)
-that can manage all firewall rules in one resource. **Note.** One should use **only one of**
+that can manage all firewall rules in one resource. One should use **only one of**
 `vcd_nsxt_distributed_firewall` or `vcd_nsxt_distributed_firewall_rule` as they will **override each
 other**.
 
@@ -45,7 +45,7 @@ resource "vcd_nsxt_distributed_firewall_rule" "r1" {
   app_port_profile_ids = [vcd_nsxt_app_port_profile.p1.id, data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
 }
 
-resource "vcd_nsxt_distributed_firewall_rule" "r4" {
+resource "vcd_nsxt_distributed_firewall_rule" "r2" {
   org          = "{{.Org}}"
   vdc_group_id = vcd_vdc_group.test1.id
 
@@ -68,6 +68,13 @@ The following arguments are supported:
 * `above_rule_id` - (Optional) ID of another `vcd_nsxt_distributed_firewall_rule` entry will ensure
   that newly created rule is positioned above the references rule. **Note.** By default, new rule
   will be created at the bottom of the list
+
+-> When activating Distributed Firewall with resource
+[`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group) there is a default firewall
+rule created which can make inconvenient to use this resource. For that reason, resource
+[`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group) has a parameter
+`remove_default_firewall_rule` which can remove default firewall rule.
+
 * `vdc_group_id` - (Required) The ID of VDC Group to manage Distributed Firewall in. Can be looked
   up using `vcd_vdc_group` resource or data source.
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
