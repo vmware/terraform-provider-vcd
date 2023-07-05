@@ -5,3 +5,5 @@
 * **New Resource:** `vcd_rde_type_behavior` to manage Behaviors in RDE Types, which can override those defined
   in RDE Interfaces [GH-1074]
 * **New Data Source:** `vcd_rde_type_behavior` to read RDE Type Behaviors [GH-1074]
+* **New Resource:** `vcd_rde_behavior_acl` to manage the access to Behaviors in RDE Types and RDE Interfaces [GH-1074]
+* **New Data Source:** `vcd_rde_behavior_acl` to read Access Levels from Behaviors of RDE Types and RDE Interfaces [GH-1074]

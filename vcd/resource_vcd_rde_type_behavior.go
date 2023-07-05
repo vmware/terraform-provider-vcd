@@ -35,7 +35,7 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 			},
 			"execution": {
 				Type:        schema.TypeMap,
-				Required:    true,
+				Optional:    true,
 				Description: "Execution map of the Behavior that overrides the original",
 			},
 			"description": {
@@ -53,14 +53,6 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 				Computed:    true,
 				Description: "The Behavior invocation reference to be used for polymorphic behavior invocations",
 			},
-			"access_level_ids": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Description: "Set of access level IDs associated to this Behavior",
-			},
 		},
 	}
 }
@@ -74,31 +66,19 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
-		return diag.Errorf("[RDE Type Behavior %s] could not read the Behavior of RDE Type with ID '%s': %s", operation, rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
-	behavior, err := rdeType.OverrideBehavior(types.Behavior{
-		ID:          d.Get("rde_interface_behavior_id").(string),
-		Ref:         d.Get("ref").(string),
-		Description: d.Get("description").(string),
-		Execution:   d.Get("execution").(map[string]interface{}),
-	})
+	payload := types.Behavior{
+		ID:        d.Get("rde_interface_behavior_id").(string),
+		Ref:       d.Get("ref").(string),
+		Execution: d.Get("execution").(map[string]interface{}),
+	}
+	if desc, ok := d.GetOk("description"); ok {
+		payload.Description = desc.(string)
+	}
+	_, err = rdeType.OverrideBehavior(payload)
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not %s the Behavior in the RDE Type with ID '%s': %s", operation, operation, rdeTypeId, err)
-	}
-	aclRaw, aclSet := d.GetOk("access_level_ids")
-	if aclSet {
-		aclList := aclRaw.(*schema.Set).List()
-		var acls = make([]*types.BehaviorAccess, len(aclList))
-		for i, acl := range aclRaw.(*schema.Set).List() {
-			acls[i] = &types.BehaviorAccess{
-				AccessLevelId: acl.(string),
-				BehaviorId:    behavior.ID,
-			}
-		}
-		err = rdeType.SetBehaviorAccessControls(acls)
-		if err != nil {
-			return diag.Errorf("[RDE Type Behavior %s] could not set the Behavior '%s' Access controls: %s", operation, behavior.ID, err)
-		}
 	}
 	return genericVcdRdeTypeBehaviorRead(ctx, d, meta, "resource")
 }
@@ -129,18 +109,6 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
 	err = d.Set("execution", behavior.Execution)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	acls, err := rdeType.GetAllBehaviorsAccessControls(nil)
-	if err != nil {
-		return diag.Errorf("[RDE Type Behavior read] could not read the Behavior Access Controls of RDE Type with ID '%s': %s", rdeTypeId, err)
-	}
-	var aclsAttr = make([]string, len(acls))
-	for i, acl := range acls {
-		aclsAttr[i] = acl.AccessLevelId
-	}
-	err = d.Set("access_level_ids", aclsAttr)
 	if err != nil {
 		return diag.FromErr(err)
 	}
