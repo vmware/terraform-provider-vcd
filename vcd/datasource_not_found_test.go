@@ -325,8 +325,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:notexist:notexist:9.9.9"` + "\n"
 		case "rde_interface_id":
 			templateFields = templateFields + `rde_interface_id = "urn:vcloud:interface:notexist:notexist:9.9.9"` + "\n"
-		case "rde_interface_behavior_id":
-			templateFields = templateFields + `rde_interface_behavior_id = "urn:vcloud:behavior-interface:NotExist:notexist:notexist:9.9.9"` + "\n"
 		case "behavior_id":
 			templateFields = templateFields + `behavior_id = "urn:vcloud:behavior-interface:NotExist:notexist:notexist:9.9.9"` + "\n"
 		}

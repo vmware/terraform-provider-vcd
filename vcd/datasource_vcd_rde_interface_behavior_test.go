@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdRdeInterfaceDS tests the vcd_rde_interface_behavior as System Administrator.
 func TestAccVcdRdeInterfaceBehaviorDS(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)

@@ -28,7 +28,7 @@ func datasourceVcdRdeTypeBehaviorAccessLevel() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "Set of access level IDs associated to this Behavior",
+				Description: "Set of Access Level IDs associated to the Behavior defined in `behavior_id` argument",
 			},
 		},
 	}

@@ -95,14 +95,21 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 		return diag.Errorf("[RDE Type Behavior read] could not read the Behavior of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 
-	behavior, err := rdeType.GetBehaviorById(d.Get("rde_interface_behavior_id").(string))
+	var behaviorId string
+	if origin == "datasource" {
+		behaviorId = d.Get("behavior_id").(string)
+	} else {
+		behaviorId = d.Get("rde_interface_behavior_id").(string)
+	}
+
+	behavior, err := rdeType.GetBehaviorById(behaviorId)
 	if origin == "resource" && govcd.ContainsNotFound(err) {
 		log.Printf("[DEBUG] RDE Type Behavior no longer exists. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[RDE Type Behavior read] could not read the Behavior of RDE Type with ID '%s': %s", rdeTypeId, err)
+		return diag.Errorf("[RDE Type Behavior read] could not read the Behavior '%s' of RDE Type '%s': %s", behaviorId, rdeTypeId, err)
 	}
 
 	dSet(d, "name", behavior.Name)
@@ -177,6 +184,6 @@ func resourceVcdRdeTypeBehaviorImport(_ context.Context, d *schema.ResourceData,
 
 	d.SetId(behavior.ID)
 	dSet(d, "rde_type_id", rdeType.DefinedEntityType.ID)
-	dSet(d, "rde_interface_behavior_id", behavior.Ref) // Ref always points to the original Interface Behavior ID
+	dSet(d, "behavior_id", behavior.ID)
 	return []*schema.ResourceData{d}, nil
 }

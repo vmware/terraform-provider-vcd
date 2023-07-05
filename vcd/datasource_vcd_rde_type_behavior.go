@@ -15,10 +15,10 @@ func datasourceVcdRdeTypeBehavior() *schema.Resource {
 				Required:    true,
 				Description: "The ID of the RDE Type that owns the Behavior to fetch",
 			},
-			"rde_interface_behavior_id": {
+			"behavior_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The ID of the overridden RDE Interface Behavior to fetch",
+				Description: "The ID of either a RDE Interface Behavior or RDE Type Behavior",
 			},
 			"name": {
 				Type:        schema.TypeString,
