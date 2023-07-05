@@ -3,13 +3,13 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_rde_type_behavior_acl"
 sidebar_current: "docs-vcd-resource-rde-type-behavior-acl"
 description: |-
-   Provides the capability of managing RDE Type Behavior and RDE Interface Behavior Access Levels in VMware Cloud Director.
+   Provides the capability of managing RDE Type Behavior Access Levels in VMware Cloud Director.
 ---
 
 # vcd\_rde\_type\_behavior\_acl
 
-Provides the capability of managing [RDE Type Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior)
-and [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) Access Levels in VMware Cloud Director.
+Provides the capability of managing [RDE Type Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior) Access Levels
+in VMware Cloud Director.
 
 Supported in provider *v3.10+*. Requires System administrator privileges.
 
@@ -74,7 +74,7 @@ resource "vcd_rde_type_behavior_acl" "acl1" {
   access_level_ids = ["urn:vcloud:accessLevel:FullControl", "urn:vcloud:accessLevel:ReadOnly"]
 }
 
-# Access levels for the Behavior defined in a RDE Interface
+# Access levels for the Behavior defined in a RDE Interface that is inherited by the RDE Type
 resource "vcd_rde_type_behavior_acl" "acl2" {
   rde_type_id      = vcd_rde_type.type.id
   behavior_id      = vcd_rde_interface_behavior.behavior2.id
