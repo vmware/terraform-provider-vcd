@@ -39,7 +39,7 @@ func resourceVcdRdeBehaviorAccessLevel() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "Set of access level IDs to associate to this Behavior",
+				Description: "Set of Access Level IDs to associate to the Behavior defined in `behavior_id` argument",
 			},
 		},
 	}
@@ -174,7 +174,7 @@ func resourceVcdRdeBehaviorAccessLevelDelete(_ context.Context, d *schema.Resour
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.
 //
-// Example resource name (_resource_name_): vcd_rde_behavior_acl.behavior_acl1
+// Example resource name (_resource_name_): vcd_rde_type_behavior_acl.behavior_acl1
 // Example import path (_the_id_string_): vmware.kubernetes.1.0.0.myBehavior
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdRdeBehaviorAccessLevelImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

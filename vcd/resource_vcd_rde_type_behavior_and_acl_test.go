@@ -51,10 +51,10 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 	interfaceBehavior2 := "vcd_rde_interface_behavior.behavior2"
 	rdeTypeBehavior := "vcd_rde_type_behavior.behavior_override"
 	rdeTypeBehaviorDS := "data.vcd_rde_type_behavior.behavior_override_ds"
-	interfaceBehaviorAcl := "vcd_rde_behavior_acl.interface_acl"
-	interfaceBehaviorAclDS := "data.vcd_rde_behavior_acl.interface_acl_ds"
-	rdeTypeBehaviorAcl := "vcd_rde_behavior_acl.type_acl"
-	rdeTypeBehaviorAclDS := "data.vcd_rde_behavior_acl.type_acl_ds"
+	interfaceBehaviorAcl := "vcd_rde_type_behavior_acl.interface_acl"
+	interfaceBehaviorAclDS := "data.vcd_rde_type_behavior_acl.interface_acl_ds"
+	rdeTypeBehaviorAcl := "vcd_rde_type_behavior_acl.type_acl"
+	rdeTypeBehaviorAclDS := "data.vcd_rde_type_behavior_acl.type_acl_ds"
 	rdeType := "vcd_rde_type.type"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -203,13 +203,13 @@ resource "vcd_rde_type_behavior" "behavior_override" {
   }
 }
 
-resource "vcd_rde_behavior_acl" "type_acl" {
+resource "vcd_rde_type_behavior_acl" "type_acl" {
   rde_type_id = vcd_rde_type.type.id
   behavior_id = vcd_rde_type_behavior.behavior_override.id
   access_level_ids = [{{.TypeAccessLevels}}]
 }
 
-resource "vcd_rde_behavior_acl" "interface_acl" {
+resource "vcd_rde_type_behavior_acl" "interface_acl" {
   rde_type_id = vcd_rde_type.type.id
   behavior_id = vcd_rde_interface_behavior.behavior2.id
   access_level_ids = [{{.InterfaceAccessLevels}}]
@@ -222,13 +222,13 @@ data "vcd_rde_type_behavior" "behavior_override_ds" {
   rde_interface_behavior_id = vcd_rde_type_behavior.behavior_override.rde_interface_behavior_id
 }
 
-data "vcd_rde_behavior_acl" "interface_acl_ds" {
-  rde_type_id = vcd_rde_behavior_acl.interface_acl.rde_type_id
-  behavior_id = vcd_rde_behavior_acl.interface_acl.behavior_id
+data "vcd_rde_type_behavior_acl" "interface_acl_ds" {
+  rde_type_id = vcd_rde_type_behavior_acl.interface_acl.rde_type_id
+  behavior_id = vcd_rde_type_behavior_acl.interface_acl.behavior_id
 }
 
-data "vcd_rde_behavior_acl" "type_acl_ds" {
-  rde_type_id = vcd_rde_behavior_acl.type_acl.rde_type_id
-  behavior_id = vcd_rde_behavior_acl.type_acl.behavior_id
+data "vcd_rde_type_behavior_acl" "type_acl_ds" {
+  rde_type_id = vcd_rde_type_behavior_acl.type_acl.rde_type_id
+  behavior_id = vcd_rde_type_behavior_acl.type_acl.behavior_id
 }
 `
