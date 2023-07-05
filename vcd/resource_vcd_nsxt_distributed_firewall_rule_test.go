@@ -35,6 +35,10 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
 
+	params["FuncName"] = t.Name() + "-newVdcGroupValidation"
+	configTextPre2 := templateFill(dfwRuleStep11, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configTextPre2)
+
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(dfwRuleStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
@@ -58,6 +62,16 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 			{
 				// Setup prerequisites
 				Config: configTextPre,
+			},
+			{
+				// This step validates that `remove_default_firewall_rule` in resource
+				// `vcd_vdc_group` worked. The expectation is to get 0 rules in `vcd_nsxt_firewall`
+				// data source as otherwise it would be one (default rule gets added when enabling
+				// DFW)
+				Config: configTextPre2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.vcd_nsxt_firewall.rule-count", "rule.#", "0"),
+				),
 			},
 			{
 				Config: configText2,
@@ -137,6 +151,15 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 	})
 	postTestChecks(t)
 }
+
+const dfwRuleStep11 = constDfwPrereqs + `
+# skip-binary-test: Only for rule count validation in Acceptance test
+data "vcd_nsxt_firewall" "rule-count" {
+  org = "{{.Org}}"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+}
+`
 
 const dfwRuleStep2 = constDfwPrereqs + `
 resource "vcd_nsxt_distributed_firewall_rule" "r1" {
