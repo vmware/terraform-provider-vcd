@@ -27,7 +27,7 @@ func ignoreMetadataSchema() *schema.Schema {
 					ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 						v, ok := i.(string)
 						if !ok {
-							return diag.Errorf("expected type of %v to be string", i)
+							return diag.Errorf("expected type of '%v' to be string", i)
 						}
 						found := false
 						for k := range resourceMetadataApiRelation {
@@ -37,7 +37,7 @@ func ignoreMetadataSchema() *schema.Schema {
 							}
 						}
 						if !found {
-							return diag.Errorf("can't ignore metadata of resource type %s", i)
+							return diag.Errorf("can't ignore metadata of resource type '%s'", i)
 						}
 						return nil
 					},
