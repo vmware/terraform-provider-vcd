@@ -34,9 +34,27 @@ resource "vcd_rde_interface_behavior" "my_behavior" {
     "type" : "Activity"
   }
 }
+
+resource "vcd_rde_interface_behavior" "my_behavior2" {
+  interface_id = vcd_rde_interface.my_interface.id
+  name         = "MyBehavior2"
+  execution = {
+    "id" : "MyExecution2"
+    "type" : "noop"
+  }
+}
+
+resource "vcd_rde_interface_behavior" "my_behavior3" {
+  interface_id = vcd_rde_interface.my_interface.id
+  name         = "MyBehavior3"
+  execution = {
+    "type": "WebHook",
+    "id": "testWebHook",
+    "href": "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX" ,
+    "_internal_key": "secretKey"
+  }
+}
 ```
-
-
 
 ## Argument Reference
 
@@ -45,7 +63,9 @@ The following arguments are supported:
 * `interface_id` - (Required) The ID of the RDE Interface that owns the Behavior
 * `name` - (Required) Name of the Behavior
 * `description` - (Optional) A description specifying the contract of the Behavior
-* `execution` - (Required) A map that specifies the Behavior execution mechanism
+* `execution` - (Required) A map that specifies the Behavior execution mechanism.
+  You can find more information about the different execution types, like `WebHook`, `noop`, `Activity`, `MQTT`, `VRO`, `AWSLambdaFaaS`
+  and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors)
 
 ## Attribute Reference
 

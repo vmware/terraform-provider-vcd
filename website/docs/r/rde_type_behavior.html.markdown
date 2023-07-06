@@ -61,8 +61,9 @@ The following arguments are supported:
 
 * `rde_type_id` - (Required) The ID of the RDE Type that owns the Behavior
 * `rde_interface_behavior_id` - (Required) The ID of the [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) to override
-* `execution` - (Optional) A map that specifies the Behavior execution mechanism. This will override the referenced RDE Interface behavior.
-  At least `execution` or `access_level_ids` is required.
+* `execution` - (Required) A map that specifies the Behavior execution mechanism.
+  You can find more information about the different execution types, like `WebHook`, `noop`, `Activity`, `MQTT`, `VRO`, `AWSLambdaFaaS`
+  and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors)
 * `description` - (Optional) The description of the RDE Type Behavior.
 
 ## Attribute Reference

@@ -53,7 +53,7 @@ resource "vcd_rde_type" "my_rde_type" {
 
 ## Example Usage with Interface Behaviors
 
--> Be aware that [RDE Interface Behaviors](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) need to be created
+~> Be aware that [RDE Interface Behaviors](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) need to be created
 **before** the Interface is used by any RDE Type, so you'll need to use `depends_on` in this case.
 
 ```hcl
