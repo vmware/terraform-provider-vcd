@@ -40,10 +40,6 @@ data "vcd_rde_type_behavior" "my_behavior" {
 output "execution_id" {
   value = data.vcd_rde_type_behavior.my_behavior.execution.id
 }
-
-output "access_levels" {
-  value = data.vcd_rde_type_behavior.my_behavior.access_level_ids
-}
 ```
 
 ## Argument Reference
