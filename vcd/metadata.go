@@ -102,6 +102,9 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 	return result, nil
 }
 
+// This map is used by mapTerraformIgnoredMetadata and the Schema validation. It links a Terraform
+// resource type (how the resource was named) with a Metadata API endpoint object present in
+// https://developer.vmware.com/apis/1601/vmware-cloud-director
 var resourceMetadataApiRelation = map[string]string{
 	"vcd_catalog":               "catalog",
 	"vcd_catalog_item":          "catalogItem",
