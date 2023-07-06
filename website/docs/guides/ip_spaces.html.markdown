@@ -53,7 +53,7 @@ VCD starting with version 3.10:
   capability to assign IP Space Uplink for Provider Gateways (resource
   [`vcd_external_network_v2`](/providers/vmware/vcd/latest/docs/resources/external_network_v2))
 * [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation)
-  - provides capability to allocate floating IPs or IP Prefixes
+  provides capability to allocate floating IPs or IP Prefixes
 * `vcd_ip_space_custom_quota` - provides capability to set Org specific Custom Quotas and override
   default ones defined in
   [`vcd_ip_space`](/providers/vmware/vcd/latest/docs/resources/ip_space_custom_quota)
@@ -68,15 +68,101 @@ VCD starting with version 3.10:
   that has IP Space Uplinks)
 
 
-## Sample end to end configuration using IP Spaces
-
 -> There are new rights for IP Space management starting with VCD 10.4.1. Some of them are [listed
 in the
 prerequisites](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-575513A8-9ADE-4A3D-92AB-CB0917FF8316.html)
 for IP Space management in Organizations.
 
+## Sample configuration without IP Spaces (the original way)
+
+Without IP Spaces, IP address mapping happens in every separate resource - one has to make correct
+IP mappings in every resource. Management of allocations and correctnes is user's responsibility.
+
+```hcl
+resource "vcd_external_network_v2" "provider-gateway" {
+  name = "without-ip-spaces"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    # enabled       = true # by default
+    gateway       = "11.11.11.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "11.11.11.100"
+      end_address   = "11.11.11.110"
+    }
+  }
+}
+
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "cloudOrg"
+  name                = "nsxt-edge-gateway"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  subnet {
+    gateway       = "11.11.11.1"
+    prefix_length = "24"
+    primary_ip    = "11.11.11.100"
+
+    # IP Allocation occurs in Edge Gateway
+    allocated_ips {
+      start_address = "11.11.11.100"
+      end_address   = "11.11.11.108"
+    }
+  }
+}
+
+resource "vcd_nsxt_nat_rule" "dnat-rule" {
+  org             = "cloudOrg"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+
+  name      = "dnat-with-ip-from-range"
+  rule_type = "DNAT"
+
+  # Using Floating IP From IP Space
+  external_address = tolist(vcd_nsxt_edgegateway.ip-space.subnet)[0].end_address
+  internal_address = "77.77.77.1"
+  logging          = true
+}
+```
+
+## Sample end to end configuration using IP Spaces
+
 All resources have their own documentation, but this snippet gives a birds eye view how all the
-components integrate into a single picture when using IP Spaces:
+components integrate into a single picture when using IP Spaces. 
+
+The main difference from the above example before IP Space support - one does not need to map IPs in
+each resource. Available IP Ranges and Prefixes are defined in an IP Space. IPs and Prefixes can
+then be allocated dynamically (using
+[`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation)
+resource).
+
+Here is what this snippet does: 
+
+* Creates a [Public IP Space](/providers/vmware/vcd/latest/docs/resources/ip_space) with IP Prefixes
+  (Subnets) and IP Ranges (Floating IP ranges)
+* Creates a [Provider Gateway] (/providers/vmware/vcd/latest/docs/resources/external_network_v2)
+  that has an [IP Space Uplink](/providers/vmware/vcd/latest/docs/resources/ip_space_uplink) with
+  the newly created IP Space. 
+* Creates an [NSX-T Edge Gateway](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway)
+  backed by newly created Provider Gateway. **Note** IP Space IP allocations can be performed in the
+  VDC *only* after this step as it maps the IP Space to a particular VDC.
+* Creates a DNAT rule
+  [`vcd_nsxt_nat_rule`](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule) that uses
+  Floating IP allocated by
+  [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation)
+  resource.
+* Allocates a floating IP for manual usage using 
+  [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation)
+  resource (usage_state="USED_MANUAL")
+* Creates a [routed network](/providers/vmware/vcd/latest/docs/resources/routed_network_v2) and
+  uses [IP Prefix allocation](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation)
 
 ```hcl
 data "vcd_nsxt_manager" "main" {
@@ -228,61 +314,6 @@ resource "vcd_network_routed_v2" "using-public-prefix" {
 }
 ```
 
-## Sample configuration without IP Spaces (the original way)
-
-```hcl
-resource "vcd_external_network_v2" "provider-gateway" {
-  name = "without-ip-spaces"
-
-  nsxt_network {
-    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
-    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
-  }
-
-  ip_scope {
-    # enabled       = true # by default
-    gateway       = "11.11.11.1"
-    prefix_length = "24"
-
-    static_ip_pool {
-      start_address = "11.11.11.100"
-      end_address   = "11.11.11.110"
-    }
-  }
-}
-
-resource "vcd_nsxt_edgegateway" "ip-space" {
-  org                 = "cloudOrg"
-  name                = "nsxt-edge-gateway"
-  owner_id            = data.vcd_org_vdc.vdc1.id
-  external_network_id = vcd_external_network_v2.provider-gateway.id
-
-  subnet {
-    gateway       = "11.11.11.1"
-    prefix_length = "24"
-    primary_ip    = "11.11.11.100"
-
-    # IP Allocation occurs in Edge Gateway
-    allocated_ips {
-      start_address = "11.11.11.100"
-      end_address   = "11.11.11.108"
-    }
-  }
-}
-
-resource "vcd_nsxt_nat_rule" "dnat-rule" {
-  org             = "cloudOrg"
-  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
-
-  name      = "dnat-with-ip-from-range"
-  rule_type = "DNAT"
-
-  # Using Floating IP From IP Space
-  external_address = tolist(vcd_nsxt_edgegateway.ip-space.subnet)[0].end_address
-  internal_address = "77.77.77.1"
-  logging          = true
-}
-```
 
 ## References
 
