@@ -218,7 +218,7 @@ func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
 	// Sleeping a few seconds because the task is not immediately seen sometimes.
 	time.Sleep(3 * time.Second)
-	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	err = vcdClient.Client.WaitForRouteAdvertisementTasks()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -266,7 +266,7 @@ func resourceVcdIpSpaceDelete(ctx context.Context, d *schema.ResourceData, meta 
 	// as it might cause an error: busy completing an operation IP_SPACE_UPLINK_ROUTE_ADVERTISEMENT_SYNC
 	// Sleeping a few seconds because the task is not immediately seen sometimes.
 	time.Sleep(3 * time.Second)
-	err = vcdClient.Client.WaitForRunningTasksByName("ipSpaceUplinkRouteAdvertisementSync")
+	err = vcdClient.Client.WaitForRouteAdvertisementTasks()
 	if err != nil {
 		return diag.FromErr(err)
 	}
