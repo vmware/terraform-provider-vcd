@@ -320,6 +320,7 @@ provider "vcd" {
   #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
+  {{.IgnoreMetadataBlock}}
 }
 `
 )
@@ -440,6 +441,9 @@ func templateFill(tmpl string, data StringMap) string {
 			data["LoggingFile"] = testConfig.Logging.LogFileName
 		} else {
 			data["LoggingFile"] = util.ApiLogFileName
+		}
+		if _, found = data["IgnoreMetadataBlock"]; !found {
+			data["IgnoreMetadataBlock"] = ""
 		}
 
 		// Pick correct auth_type

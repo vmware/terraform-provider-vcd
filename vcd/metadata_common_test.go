@@ -277,30 +277,29 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 // added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
 func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
+	resourceType := strings.Split(resourceAddress, ".")[0]
 	var params = StringMap{
 		"FuncName": t.Name() + "-Step1",
 		"Org":      testConfig.VCD.Org,
 		"Vdc":      testConfig.Nsxt.Vdc,
 		"Name":     t.Name(),
 		"Metadata": " ",
+		// The IgnoreMetadataBlock entry below is for binary tests
+		"IgnoreMetadataBlock": "ignore_metadata {\n\tresource_type = \"" + resourceType + "\"\n\tobject_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n}",
 	}
 
 	for extraParam, extraParamValue := range extraParams {
 		params[extraParam] = extraParamValue
 	}
 	testParamsNotEmpty(t, params)
-
-	resourceType := strings.Split(resourceAddress, ".")[0]
-
-	skipBinary := "# skip-binary-test - Requires a special Provider configuration with ignore_metadata blocks\n"
-	step1 := templateFill(skipBinary+resourceTemplate, params)
+	step1 := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s", step1)
 	params["FuncName"] = t.Name() + "-Step2"
 	params["Metadata"] = getMetadataTestingHcl(1, 0, 0, 0, 0, 0)
-	step2 := templateFill(skipBinary+resourceTemplate, params)
+	step2 := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", step2)
 	params["FuncName"] = t.Name() + "-Step3"
-	step3 := templateFill(skipBinary+resourceTemplate+datasourceTemplate, params)
+	step3 := templateFill(resourceTemplate+datasourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 3: %s", step3)
 
 	if vcdShortTest {
