@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_settings"
-sidebar_current: "docs-vcd-datasource-nsxt-alb-settings"
+page_title: "VMware Cloud Director: vcd_ip_space_custom_quota"
+sidebar_current: "docs-vcd-resource-ip-space-custom-quota"
 description: |-
   Provides a data source to read Custom Quotas for a given Org in a particular IP Space.
 ---

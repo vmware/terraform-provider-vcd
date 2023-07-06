@@ -146,7 +146,7 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Dedicate External Network to an Org (only with IP Spaces)",
+				Description: "Dedicate this External Network to an Org ID (only with IP Spaces, VCD 10.4.1+) ",
 			},
 			"use_ip_spaces": {
 				Type:        schema.TypeBool,

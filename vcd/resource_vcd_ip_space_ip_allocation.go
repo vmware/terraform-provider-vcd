@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdIpAllocation() *schema.Resource {
@@ -232,6 +233,9 @@ func resourceVcdIpAllocationRead(ctx context.Context, d *schema.ResourceData, me
 		if len(splitCidr) == 2 {
 			dSet(d, "ip", splitCidr[0])
 			dSet(d, "prefix_length", splitCidr[1])
+		} else {
+			util.Logger.Printf("[TRACE] resourceVcdIpAllocationRead Unable to store split CIDR (value %s, split length %d)\n",
+				ipAllocation.IpSpaceIpAllocation.Value, len(ipAllocation.IpSpaceIpAllocation.Value))
 		}
 	}
 

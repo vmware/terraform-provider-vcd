@@ -14,8 +14,8 @@ Provides a VMware Cloud Director External Network resource (version 2). New vers
 uses new VCD API and is capable of creating NSX-T backed external networks as well as port group
 backed ones.
 
--> This resource manages both NSX-T and NSX-V **External Networks** and **NSX-T Provider
-Gateways**
+-> This resource manages NSX-T **External Networks**, NSX-V **External Networks**, and **NSX-T
+Provider Gateways**
 
 This resource supports **IP Spaces** - read [IP Spaces guide
 page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/ip_spaces) for more

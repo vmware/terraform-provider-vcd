@@ -16,13 +16,11 @@ func datasourceVcdIpSpaceCustomQuota() *schema.Resource {
 			"ip_space_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "ID of IP Space",
 			},
 			"org_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Organization ID for which custom quota is set",
 			},
 			"ip_range_quota": {

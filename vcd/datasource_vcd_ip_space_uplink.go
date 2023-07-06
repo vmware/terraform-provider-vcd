@@ -27,7 +27,6 @@ func datasourceVcdIpSpaceUplink() *schema.Resource {
 			"external_network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "External Network ID",
 			},
 			"ip_space_id": {

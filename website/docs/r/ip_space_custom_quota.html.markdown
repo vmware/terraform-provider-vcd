@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_service_engine_group"
-sidebar_current: "docs-vcd-resource-nsxt-alb-service-engine-group"
+page_title: "VMware Cloud Director: vcd_ip_space_custom_quota"
+sidebar_current: "docs-vcd-resource-ip-space-custom-quota"
 description: |-
   Provides a resource to manage Custom Quotas for a given Org in a particular IP Space if one wants 
   to override default quota set for IP Space.
