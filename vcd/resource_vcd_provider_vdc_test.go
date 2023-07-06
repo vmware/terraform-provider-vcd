@@ -20,11 +20,15 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	providerVdcName1 := t.Name()
+	orgVdcName := "TestOrgVdcNewPvdc"
+	orgName := testConfig.VCD.Org
 	providerVdcDescription1 := t.Name() + "description"
 	providerVdcName2 := t.Name() + "-2"
 	providerVdcDescription2 := t.Name() + "description 2"
 	// Test configuration
 	var params = StringMap{
+		"OrgName":                 orgName,
+		"OrgVdcName":              orgVdcName,
 		"ProviderVdcName1":        providerVdcName1,
 		"ProviderVdcDescription1": providerVdcDescription1,
 		"ProviderVdcName2":        providerVdcName2,
@@ -39,6 +43,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 		"FuncName":                t.Name() + "_step1",
 	}
 	testParamsNotEmpty(t, params)
+	params["SkipMessage"] = "# skip-binary-test: redundant"
 	configText := templateFill(testAccVcdResourceProviderVdcPrerequisites+testAccVcdResourceProviderVdcStep1, params)
 	debugPrintf("#[DEBUG] Configuration: %s", configText)
 
@@ -53,6 +58,12 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 	params["FuncName"] = t.Name() + "_step4"
 	configTextDisable := templateFill(testAccVcdResourceProviderVdcPrerequisites+testAccVcdResourceProviderVdcStep4, params)
 	debugPrintf("#[DEBUG] disable: %s", configTextDisable)
+
+	params["SkipMessage"] = ""
+	params["FuncName"] = t.Name() + "_step5"
+	configTextOrgVdc := templateFill(testAccVcdResourceProviderVdcPrerequisites+
+		testAccVcdResourceProviderVdcStep1+testAccVcdResourceProviderVdcStep5, params)
+	debugPrintf("#[DEBUG] Add VDC: %s", configTextOrgVdc)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -72,7 +83,10 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 	// Test cases
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      checkProviderVdcExists(providerVdcName1, false),
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			checkProviderVdcExists(providerVdcName1, false),
+			checkOrgVdcExists(orgName, orgVdcName, false),
+		),
 		Steps: []resource.TestStep{
 			// step 0 - Create provider VDC
 			{
@@ -200,7 +214,27 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 7 - import
+			// step 7 - Add Org VDC
+			{
+				Config:    configTextOrgVdc,
+				PreConfig: makeFunc("create depending org VDC"),
+				Check: resource.ComposeTestCheckFunc(
+					checkProviderVdcExists(providerVdcName1, true),
+					checkOrgVdcExists(orgName, orgVdcName, true),
+					resource.TestCheckResourceAttr(resourceDef, "name", providerVdcName1),
+					resource.TestCheckResourceAttr(resourceDef, "description", providerVdcDescription1),
+					resource.TestMatchResourceAttr(resourceDef, "id", getProviderVdcDatasourceAttributeUrnRegex("providervdc")),
+					resource.TestCheckResourceAttr(resourceDef, "is_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceDef, "status", "1"),
+					resource.TestMatchResourceAttr(resourceDef, "nsxt_manager_id", getProviderVdcDatasourceAttributeUrnRegex("nsxtmanager")),
+					resource.TestMatchResourceAttr(resourceDef, "highest_supported_hardware_version", regexp.MustCompile(`vmx-[\d]+`)),
+					resource.TestCheckResourceAttr(resourceDef, "compute_provider_scope", testConfig.Networking.Vcenter),
+					resource.TestCheckResourceAttr(resourceDef, "resource_pool_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_org_vdc.testVdc", "name", orgVdcName),
+				),
+			},
+			// step 8 - import
 			{
 				PreConfig:         makeFunc("import provider VDC"),
 				ResourceName:      resourceDef,
@@ -213,6 +247,36 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
+}
+
+func checkOrgVdcExists(orgName, vdcName string, wantExisting bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_org_vdc" {
+				continue
+			}
+			org, err := conn.GetOrg(orgName)
+			if err != nil {
+				return err
+			}
+			_, err = org.GetVDCByName(vdcName, false)
+
+			if wantExisting {
+				if err != nil {
+					return fmt.Errorf("org vdc %s not found: %s ", vdcName, err)
+				}
+			} else {
+				if err == nil {
+					return fmt.Errorf("org vdc %s not deleted yet", vdcName)
+				} else {
+					return nil
+				}
+			}
+		}
+		return nil
+	}
 }
 
 func checkProviderVdcExists(providerVdcName string, wantExisting bool) resource.TestCheckFunc {
@@ -265,6 +329,7 @@ data "vcd_network_pool" "np1" {
 `
 
 const testAccVcdResourceProviderVdcStep1 = `
+{{.SkipMessage}}
 resource "vcd_provider_vdc" "pvdc1" {
   name                               = "{{.ProviderVdcName1}}"
   description                        = "{{.ProviderVdcDescription1}}"
@@ -279,6 +344,7 @@ resource "vcd_provider_vdc" "pvdc1" {
 `
 
 const testAccVcdResourceProviderVdcStep2 = `
+# skip-binary-test: used for updates
 resource "vcd_provider_vdc" "pvdc1" {
   name                               = "{{.ProviderVdcName2}}"
   description                        = "{{.ProviderVdcDescription2}}"
@@ -292,6 +358,7 @@ resource "vcd_provider_vdc" "pvdc1" {
 }
 `
 const testAccVcdResourceProviderVdcStep3 = `
+# skip-binary-test: used for updates
 resource "vcd_provider_vdc" "pvdc1" {
   name                               = "{{.ProviderVdcName1}}"
   description                        = "{{.ProviderVdcDescription1}}"
@@ -306,6 +373,7 @@ resource "vcd_provider_vdc" "pvdc1" {
 `
 
 const testAccVcdResourceProviderVdcStep4 = `
+# skip-binary-test: used for updates
 resource "vcd_provider_vdc" "pvdc1" {
   name                               = "{{.ProviderVdcName1}}"
   description                        = "{{.ProviderVdcDescription1}}"
@@ -316,5 +384,32 @@ resource "vcd_provider_vdc" "pvdc1" {
   resource_pool_ids                  = [data.vcd_resource_pool.rp1.id]
   storage_profile_names              = ["{{.StorageProfile1}}"]
   highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
+}
+`
+const testAccVcdResourceProviderVdcStep5 = `
+resource "vcd_org_vdc" "testVdc" {
+  org               = "{{.OrgName}}"
+  name              = "{{.OrgVdcName}}"
+  allocation_model  = "ReservationPool"
+  network_pool_name = "NSX-T Overlay 1"
+  provider_vdc_name = vcd_provider_vdc.pvdc1.name
+  compute_capacity {
+    cpu {
+      allocated = 2048
+    }
+    memory {
+      allocated = 2048
+    }
+  }
+  storage_profile {
+    name    = "{{.StorageProfile1}}"
+    limit   = 10240
+    default = true
+  }
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
+  delete_force             = true
+  delete_recursive         = true
 }
 `
