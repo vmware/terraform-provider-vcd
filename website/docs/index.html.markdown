@@ -443,7 +443,7 @@ provider "vcd" {
 resource "vcd_org" "my_org" {
   name = "MyOrg"
   # ...
-  
+
   # This entry will be added, if this Organization has other metadata entries that
   # match the ones defined in the Provider `ignore_metadata` blocks, they will not be
   # deleted.
