@@ -161,4 +161,6 @@ Running `terraform plan` at this stage will show the difference between the mini
 
 One important point: if the NSX-T manager has more than one network pools attached, all of them will end up in the provider VDC
 configuration, and the plan will show such difference. The discrepancy will not appear if you created the provider VDC
-with Terraform, but it will if you import it. 
+with Terraform, but it will if you import it.
+
+[docs-import]:https://www.terraform.io/docs/import/
