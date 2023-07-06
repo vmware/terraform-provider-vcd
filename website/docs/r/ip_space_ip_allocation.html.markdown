@@ -118,7 +118,7 @@ Edge Gateway withing VDC will return errors of type `This operation is denied`.
 ## Attribute Reference
 
 * `ip_address` - contains either single IP when `type=FLOATING_IP` (e.g. `192.168.1.100`) or subnet
-  in CIDR format when `type=IP_PREFIX` (e.g. `192.168.1.100/30`). **Note** Terraform built-in
+  in CIDR format when `type=IP_PREFIX` (e.g. `192.168.1.100/30`). **Note:** Terraform built-in
   function [cidrhost](https://developer.hashicorp.com/terraform/language/functions/cidrhost) is a
   convenient method to getting IPs within returned CIDR
 * `allocation_date` - allocation date in formated as `2023-06-07T09:57:58.721Z` (ISO 8601)

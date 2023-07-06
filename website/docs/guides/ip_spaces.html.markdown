@@ -54,8 +54,8 @@ VCD starting with version 3.10:
   [`vcd_external_network_v2`](/providers/vmware/vcd/latest/docs/resources/external_network_v2))
 * [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation)
   provides capability to allocate floating IPs or IP Prefixes
-* `vcd_ip_space_custom_quota` - provides capability to set Org specific Custom Quotas and override
-  default ones defined in
+* [`vcd_ip_space_custom_quota`](/providers/vmware/vcd/latest/docs/resources/ip_space_custom_quota) -
+  provides capability to set Org specific Custom Quotas and override default ones defined in
   [`vcd_ip_space`](/providers/vmware/vcd/latest/docs/resources/ip_space_custom_quota)
 * [`vcd_external_network_v2`](/providers/vmware/vcd/latest/docs/resources/external_network_v2) -
   fields `use_ip_spaces` and `dedicated_org_id` (applicable only to T0 or T0 VRF backed networks

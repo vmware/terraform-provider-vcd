@@ -23,7 +23,7 @@ data "vcd_ip_space_custom_quota" "org1" {
 
 The following arguments are supported:
 
-* `ip_space_id` - (Required) - IP Space ID to read Custom Quotas
+* `ip_space_id` - (Required) IP Space ID to read Custom Quotas
 * `org_id` - (Required) Organization ID, for which the Custom Quota should be read
 
 ## Attribute Reference

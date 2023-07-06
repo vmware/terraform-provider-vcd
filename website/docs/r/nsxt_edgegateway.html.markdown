@@ -330,7 +330,7 @@ schema limitations_, only **one of the three** methods can be utilized:
 Each `subnet` block has these attributes ([complete example](#subnet-example)):
 
 * `gateway` - (Required) - Gateway for a subnet in external network
-* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24 for netmask
   of 255.255.255.0)
 * `primary_ip` - (Optional) - Primary IP address for edge gateway. **Note:** `primary_ip` must fall
 into `allocated_ips` block range as otherwise `plan` will not be clean with a new range defined for
@@ -354,7 +354,7 @@ example](#subnet-with-total-ip-count-example)).
 Each `subnet_with_total_ip_count` has these attributes:
 
 * `gateway` - (Required) - Gateway for a subnet in external network
-* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
 * `primary_ip` (Required) - Exactly one Primary IP is required for an Edge Gateway. It should be
   defined in any of the `subnet_with_total_ip_count` blocks
 
@@ -369,7 +369,7 @@ added capability of automatically allocating a specific number of IPs from the b
 `allocated_ip_count` field ([complete example](#subnet-with-ip-count-example)).
 
 * `gateway` - (Required) - Gateway for a subnet in external network
-* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
 * `primary_ip` (Required) - Exactly one Primary IP is required for an Edge Gateway. It should be
   defined in any of the `subnet_with_ip_count` blocks
 * `allocated_ip_count` (Required) - Number of allocated IPs from that particular subnet

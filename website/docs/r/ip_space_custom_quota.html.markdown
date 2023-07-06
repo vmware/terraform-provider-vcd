@@ -43,7 +43,7 @@ resource "vcd_ip_space_custom_quota" "q1" {
 
 The following arguments are supported:
 
-* `ip_space_id` - (Required) - IP Space ID to set Custom Quotas
+* `ip_space_id` - (Required) IP Space ID to set Custom Quotas
 * `org_id` - (Required) Organization ID, for which the Quota should be customized
 * `ip_range_quota` - (Optional) Floating IP Quota. Will inherit the default Quota set in
   `vcd_ip_space` if not set
@@ -58,7 +58,7 @@ for an Edge Gateway to exist might be required. (See the [example](#example-1).)
 
 ## ip_prefix_quota block
 
-* `prefix_length` - (Required) - Prefix length for which the quota should be set (must be an
+* `prefix_length` - (Required) Prefix length for which the quota should be set (must be an
   existing prefix length in parent IP Space)
 * `quota` - (Required) - Quota value for specific *prefix_length*
 
