@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -22,25 +24,23 @@ func ignoreMetadataSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Ignores metadata from the specific resource type",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-						"vcd_catalog",
-						"vcd_catalog_item",
-						"vcd_catalog_media",
-						"vcd_catalog_vapp_template",
-						"vcd_independent_disk",
-						"vcd_network_direct",
-						"vcd_network_isolated",
-						"vcd_network_isolated_v2",
-						"vcd_network_routed",
-						"vcd_network_routed_v2",
-						"vcd_org",
-						"vcd_org_vdc",
-						"vcd_provider_vdc",
-						"vcd_storage_profile",
-						"vcd_vapp",
-						"vcd_vapp_vm",
-						"vcd_vm",
-					}, false)),
+					ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+						v, ok := i.(string)
+						if !ok {
+							return diag.Errorf("expected type of %v to be string", i)
+						}
+						found := false
+						for k := range resourceMetadataApiRelation {
+							if v == k {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return diag.Errorf("can't ignore metadata of resource type %s", i)
+						}
+						return nil
+					},
 				},
 				"object_name": {
 					Type:        schema.TypeString,
@@ -102,34 +102,34 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 	return result, nil
 }
 
+var resourceMetadataApiRelation = map[string]string{
+	"vcd_catalog":               "catalog",
+	"vcd_catalog_item":          "catalogItem",
+	"vcd_catalog_media":         "media",
+	"vcd_catalog_vapp_template": "vAppTemplate",
+	"vcd_independent_disk":      "disk",
+	"vcd_network_direct":        "network",
+	"vcd_network_isolated":      "network",
+	"vcd_network_isolated_v2":   "network",
+	"vcd_network_routed":        "network",
+	"vcd_network_routed_v2":     "network",
+	"vcd_org":                   "org",
+	"vcd_org_vdc":               "vdc",
+	"vcd_provider_vdc":          "providervdc",
+	"vcd_storage_profile":       "vdcStorageProfile",
+	"vcd_vapp":                  "vApp",
+	"vcd_vapp_vm":               "vApp",
+	"vcd_vm":                    "vApp",
+}
+
 // mapTerraformIgnoredMetadata transforms the ObjectType property on every input entry, which references a Terraform
 // resource by its name, to the corresponding VCD object that the Go SDK can understand.
 func mapTerraformIgnoredMetadata(ignoredMetadata []govcd.IgnoredMetadata) []govcd.IgnoredMetadata {
-	relationMap := map[string]string{
-		"vcd_catalog":               "catalog",
-		"vcd_catalog_item":          "catalogItem",
-		"vcd_catalog_media":         "media",
-		"vcd_catalog_vapp_template": "vAppTemplate",
-		"vcd_independent_disk":      "disk",
-		"vcd_network_direct":        "network",
-		"vcd_network_isolated":      "network",
-		"vcd_network_isolated_v2":   "network",
-		"vcd_network_routed":        "network",
-		"vcd_network_routed_v2":     "network",
-		"vcd_org":                   "org",
-		"vcd_org_vdc":               "vdc",
-		"vcd_provider_vdc":          "providervdc",
-		"vcd_storage_profile":       "vdcStorageProfile",
-		"vcd_vapp":                  "vApp",
-		"vcd_vapp_vm":               "vApp",
-		"vcd_vm":                    "vApp",
-	}
-
 	terraformMetadataRelation := func(resourceName *string) *string {
 		if resourceName == nil {
 			return nil
 		}
-		result, ok := relationMap[*resourceName]
+		result, ok := resourceMetadataApiRelation[*resourceName]
 		if !ok {
 			return nil
 		}
