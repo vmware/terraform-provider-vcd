@@ -226,7 +226,7 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	vcenter, err := vcdClient.GetVcenterById(vcenterId)
+	vcenter, err := vcdClient.GetVCenterById(vcenterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -296,8 +296,8 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 		VimServer: []*types.Reference{
 			{
 				HREF: vcenterUrl,
-				ID:   extractUuid(vcenter.VSphereVcenter.VcId),
-				Name: vcenter.VSphereVcenter.Name,
+				ID:   extractUuid(vcenter.VSphereVCenter.VcId),
+				Name: vcenter.VSphereVCenter.Name,
 			},
 		},
 		ResourcePoolRefs: &types.VimObjectRefs{
@@ -305,8 +305,8 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 				{
 					VimServerRef: &types.Reference{
 						HREF: vcenterUrl,
-						ID:   extractUuid(vcenter.VSphereVcenter.VcId),
-						Name: vcenter.VSphereVcenter.Name,
+						ID:   extractUuid(vcenter.VSphereVCenter.VcId),
+						Name: vcenter.VSphereVCenter.Name,
 					},
 					MoRef:         resourcePool.ResourcePool.Moref,
 					VimObjectType: "RESOURCE_POOL",

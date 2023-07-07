@@ -271,12 +271,12 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 		case "vcenter_id":
 			testParamsNotEmpty(t, StringMap{"Networking.Vcenter": testConfig.Networking.Vcenter})
-			vcenter, err := vcdClient.GetVcenterByName(testConfig.Networking.Vcenter)
+			vcenter, err := vcdClient.GetVCenterByName(testConfig.Networking.Vcenter)
 			if err != nil {
 				t.Skip("No suitable Vcenter found for this test")
 				return ""
 			}
-			templateFields = templateFields + `vcenter_id = "` + vcenter.VSphereVcenter.VcId + `"` + "\n"
+			templateFields = templateFields + `vcenter_id = "` + vcenter.VSphereVCenter.VcId + `"` + "\n"
 		case "nsxt_manager_id":
 			testParamsNotEmpty(t, StringMap{"Nsxt.Manager": testConfig.Nsxt.Manager})
 			// This test needs a valid nsxt_manager_id

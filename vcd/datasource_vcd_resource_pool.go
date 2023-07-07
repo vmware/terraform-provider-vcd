@@ -36,7 +36,7 @@ func datasourceResourcePoolRead(_ context.Context, d *schema.ResourceData, meta 
 	resourcePoolName := d.Get("name").(string)
 	vCenterId := d.Get("vcenter_id").(string)
 
-	vCenter, err := vcdClient.GetVcenterById(vCenterId)
+	vCenter, err := vcdClient.GetVCenterById(vCenterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
