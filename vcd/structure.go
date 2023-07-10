@@ -283,7 +283,7 @@ func createOrUpdateMetadata(d *schema.ResourceData, vcdClient *VCDClient, resour
 		vcdClient.SetMetadataToIgnore(previousIgnoredMetadata)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("error on metadata_entry %s: %s", operation, err)
 	}
 
 	if d.HasChange(attributeName) && !d.HasChange("metadata_entry") {
@@ -301,13 +301,13 @@ func createOrUpdateMetadata(d *schema.ResourceData, vcdClient *VCDClient, resour
 		for _, k := range toBeRemovedMetadata {
 			err = resource.DeleteMetadataEntry(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %s", err)
+				return fmt.Errorf("error deleting metadata on %s: %s", operation, err)
 			}
 		}
 		if len(newMetadata) > 0 {
 			err = resource.MergeMetadata(types.MetadataStringValue, newMetadata)
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %s", err)
+				return fmt.Errorf("error adding metadata on %s: %s", operation, err)
 			}
 		}
 	}

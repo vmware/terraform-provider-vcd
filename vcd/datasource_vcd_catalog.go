@@ -248,16 +248,16 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "publish_subscription_url", subscriptionUrl)
 	}
 
-	err = updateMetadataInState(d, catalog)
-	if err != nil {
-		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", catalog)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	orgId := ""
 	if adminOrg != nil {
 		orgId = adminOrg.AdminOrg.ID
 	}
-	err = setCatalogData(d, vcdClient, orgName, orgId, catalog, "vcd_catalog")
+	err = setCatalogData(d, vcdClient, orgName, orgId, catalog)
 	if err != nil {
 		return diag.FromErr(err)
 	}

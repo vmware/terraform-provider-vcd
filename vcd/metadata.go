@@ -8,8 +8,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"regexp"
 	"strings"
+)
+
+var (
+	// IgnoreMetadataChangesErrorLevel can be "error", "warn" or "ignore", and tells Terraform whether it should
+	// give an error or just a warning if any Metadata Entry configured in HCL is affected by the 'ignore_metadata_changes'
+	// configuration.
+	IgnoreMetadataChangesErrorLevel string
 )
 
 // ignoreMetadataSchema returns the schema associated to ignore_metadata_changes for the provider configuration.
@@ -61,6 +69,7 @@ func ignoreMetadataSchema() *schema.Schema {
 				},
 			},
 		},
+		RequiredWith: []string{"ignore_metadata_changes_error_level"},
 	}
 }
 
@@ -287,23 +296,74 @@ func createOrUpdateMetadataEntryInVcd(d *schema.ResourceData, resource metadataC
 	return nil
 }
 
+// checkIgnoredMetadataConflicts checks that no `metadata_entry` managed by Terraform is ignored due to being filtered out
+// in any `ignore_metadata_changes` block and errors/warns if so, depending on the value of `ignore_metadata_changes_error_level`.
+func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient, resourceType string) diag.Diagnostics {
+	metadataEntryList := d.Get("metadata_entry").(*schema.Set).List()
+	if len(metadataEntryList) == 0 {
+		return nil
+	}
+	for _, entryRaw := range metadataEntryList {
+		entry := entryRaw.(map[string]interface{})
+		for _, ignoredMetadata := range vcdClient.Client.IgnoredMetadata {
+
+			if (ignoredMetadata.ObjectType == nil || strings.TrimSpace(*ignoredMetadata.ObjectType) == "" || *ignoredMetadata.ObjectType == resourceMetadataApiRelation[resourceType]) &&
+				(ignoredMetadata.ObjectName == nil || strings.TrimSpace(*ignoredMetadata.ObjectName) == "" || strings.TrimSpace(d.Get("name").(string)) == "" || *ignoredMetadata.ObjectName == d.Get("name").(string)) &&
+				(ignoredMetadata.KeyRegex == nil || ignoredMetadata.KeyRegex.MatchString(entry["key"].(string))) &&
+				(ignoredMetadata.ValueRegex == nil || ignoredMetadata.ValueRegex.MatchString(entry["value"].(string))) {
+				util.Logger.Printf("[DEBUG] trying to update metadata entry with key '%s' and value '%v' when it is being being ignored with '%v'", entry["key"].(string), entry["value"].(string), ignoredMetadata)
+
+				var severity diag.Severity
+				switch IgnoreMetadataChangesErrorLevel {
+				case "error":
+					severity = diag.Error
+				case "warn":
+					severity = diag.Warning
+				case "ignore":
+					return nil
+				default:
+					return diag.Errorf("unknown value for 'ignore_metadata_changes_error_level': %s", IgnoreMetadataChangesErrorLevel)
+				}
+				return diag.Diagnostics{
+					diag.Diagnostic{
+						Severity: severity,
+						Summary:  "Found a conflict between 'ignore_metadata_changes' and 'metadata_entry'",
+						Detail: fmt.Sprintf("There is an 'ignored_metadata' block: %s\n"+
+							"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria and will be ignored.\n"+
+							"This will cause that the entry will be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
+							"Please use a more fine-grained 'ignore_metadata_changes' configuration or change your metadata entry.", ignoredMetadata, entry["key"], entry["value"]),
+						AttributePath: cty.Path{},
+					},
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompatible) error {
+func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+
+	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	metadata, err := receiverObject.GetMetadata()
 	if err != nil {
-		return err
+		return diag.Errorf("error getting metadata to save in state: %s", err)
 	}
 
 	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
-		return err
+		return diag.Errorf("error setting metadata entry in state: %s", err)
 	}
 
 	// Set deprecated metadata attribute, just for compatibility reasons
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	if err != nil {
-		return err
+		return diag.Errorf("error setting metadata in state: %s", err)
 	}
 
 	return nil

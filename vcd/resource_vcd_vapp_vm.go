@@ -1947,8 +1947,8 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	err = updateMetadataInState(d, vm)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
+	if diagErr != nil {
 		return diag.Errorf("[VM read] set metadata: %s", err)
 	}
 

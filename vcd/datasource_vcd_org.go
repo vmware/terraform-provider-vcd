@@ -136,9 +136,9 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	err = setOrgData(d, adminOrg)
-	if err != nil {
-		return diag.FromErr(err)
+	diagErr := setOrgData(d, vcdClient, adminOrg)
+	if diagErr != nil {
+		return diagErr
 	}
 	return diags
 }

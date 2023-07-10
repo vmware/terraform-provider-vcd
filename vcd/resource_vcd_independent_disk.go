@@ -486,7 +486,7 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	err = setMainData(d, disk, diskRecord)
+	err = setMainData(d, vcdClient, disk, diskRecord)
 	if err != nil {
 		diag.FromErr(err)
 	}
@@ -495,7 +495,7 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.DiskRecordType) error {
+func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType) error {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -528,8 +528,8 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 		return fmt.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	err = updateMetadataInState(d, disk)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Independent disk metadata")
 		return fmt.Errorf("unable to set Independent disk metadata %s", err)
 	}

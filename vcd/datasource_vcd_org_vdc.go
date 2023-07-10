@@ -251,9 +251,9 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(adminVdc.AdminVdc.ID)
 
-	err = setOrgVdcData(d, vcdClient, adminVdc)
-	if err != nil {
-		return diag.FromErr(err)
+	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "data.vcd_org_vdc")

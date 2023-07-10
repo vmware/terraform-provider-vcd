@@ -394,10 +394,10 @@ func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	err = updateMetadataInState(d, network)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed", network)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set routed network metadata: %s", err)
-		return diag.Errorf("[routed network read] unable to set network metadata %s", err)
+		return diagErr
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)

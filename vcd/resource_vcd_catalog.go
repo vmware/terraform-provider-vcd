@@ -233,21 +233,17 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 }
 
 func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericResourceVcdCatalogRead(d, meta)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return genericResourceVcdCatalogRead(d, meta)
 }
 
-func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
+func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -258,7 +254,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+		return diag.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
 	// Check if storage profile is set. Although storage profile structure accepts a list, in UI only one can be picked
@@ -280,7 +276,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "preserve_identity_information", adminCatalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 		subscriptionUrl, err := adminCatalog.FullSubscriptionUrl()
 		if err != nil {
-			return fmt.Errorf("error retrieving subscription URL from catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
+			return diag.Errorf("error retrieving subscription URL from catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
 		}
 		dSet(d, "publish_subscription_url", subscriptionUrl)
 	} else {
@@ -290,15 +286,15 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "password", "")
 	}
 
-	err = updateMetadataInState(d, adminCatalog)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
-		return err
+		return diagErr
 	}
 
-	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_catalog")
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
@@ -461,15 +457,15 @@ func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta in
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields
-	err = genericResourceVcdCatalogRead(d, meta)
-	if err != nil {
-		return nil, err
+	diagErr := genericResourceVcdCatalogRead(d, meta)
+	if diagErr != nil {
+		return nil, fmt.Errorf("error during catalog read on catalog import: %v", diagErr)
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
+func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name, govcd.TenantContext{OrgName: orgName, OrgId: orgId})
 	if err != nil {

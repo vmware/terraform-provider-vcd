@@ -272,14 +272,13 @@ func resourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
 	var network *govcd.OrgVDCNetwork
 	var err error
 
 	switch origin {
 	case "resource", "datasource":
 		// From the resource creation or data source, we need to retrieve the network from scratch
-		vcdClient := meta.(*VCDClient)
-
 		network, err = getNetwork(d, vcdClient, origin == "datasource", "isolated")
 
 		if err != nil {
@@ -342,10 +341,10 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	err = updateMetadataInState(d, network)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_isolated", network)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
-		return diag.Errorf("[isolated network read] unable to set network metadata %s", err)
+		return diagErr
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)

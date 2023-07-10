@@ -388,9 +388,9 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	err = setOrgVdcData(d, vcdClient, adminVdc)
-	if err != nil {
-		return diag.FromErr(err)
+	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "vdc_org_vdc")
@@ -410,7 +410,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) error {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) diag.Diagnostics {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -436,7 +436,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	if adminVdc.AdminVdc.NetworkPoolReference != nil {
 		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 		if err != nil {
-			return fmt.Errorf("error retrieving network pool: %s", err)
+			return diag.Errorf("error retrieving network pool: %s", err)
 		}
 		dSet(d, "network_pool_name", networkPool.Name)
 	}
@@ -449,18 +449,18 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	dSet(d, "vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
 	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
-		return fmt.Errorf("error setting compute_capacity: %s", err)
+		return diag.Errorf("error setting compute_capacity: %s", err)
 	}
 
 	if adminVdc.AdminVdc.VdcStorageProfiles != nil {
 
 		storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
 		if err != nil {
-			return fmt.Errorf("error preparing storage profile data: %s", err)
+			return diag.Errorf("error preparing storage profile data: %s", err)
 		}
 
 		if err := d.Set("storage_profile", storageProfileStateData); err != nil {
-			return fmt.Errorf("error setting compute_capacity: %s", err)
+			return diag.Errorf("error setting compute_capacity: %s", err)
 		}
 	}
 
@@ -472,10 +472,10 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	err := updateMetadataInState(d, adminVdc)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
-		return fmt.Errorf("unable to set VDC metadata %s", err)
+		return diagErr
 	}
 
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
@@ -486,7 +486,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	})
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get assigned VM Compute policies")
-		return fmt.Errorf("unable to get assigned VM Compute policies %s", err)
+		return diag.Errorf("unable to get assigned VM Compute policies %s", err)
 	}
 	var sizingPolicyIds []string
 	var placementPolicyIds []string
@@ -503,11 +503,11 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 
 	err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	err = d.Set("vm_placement_policy_ids", vmPlacementPoliciesSet)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
