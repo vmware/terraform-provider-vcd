@@ -298,9 +298,10 @@ The following arguments are used to configure the VMware Cloud Director Provider
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. 
   `saml_adfs_rpt_id` can be used to specify a different RPT ID.
-  * `token` allows to specify token in [`token`](#token) field.
+  * `token` allows to specify token in `token` field.
   * `api_token` allows to specify an API token.
-  * `service_account_token_file` allows to specify a file containing a service account's token file.
+  * `api_token_file` allows to specify a file containing an API token.
+  * `service_account_token_file` allows to specify a file containing a service account's token.
   
 * `token` - (Optional; *v2.6+*) This is the bearer token that can be used instead of username
    and password (in combination with field `auth_type=token`). When this is set, username and
@@ -314,6 +315,9 @@ The following arguments are used to configure the VMware Cloud Director Provider
    environment variable. This token requires at least VCD 10.3.1. There are restrictions to its use, as defined in
    [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html)
 
+* `api_token_file` - (Optional; *v3.10+*)) Same as `api_token`, only provided 
+   as a JSON file. Can also be specified with the `VCD_API_TOKEN_FILE` environment variable.
+ 
 * `service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) This is the file that contains a Service Account API token. The
    path to the file could be provided as absolute or relative to the working directory. It is used instead of username
    and password (in combination with `auth_type=service_account_token_file`. The file can also be specified with the 
