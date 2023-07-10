@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"os"
 	"reflect"
 	"regexp"
@@ -264,11 +265,23 @@ func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 // TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataEntryInVcd`
 // once "metadata" field is removed.
-func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
+func createOrUpdateMetadata(d *schema.ResourceData, vcdClient *VCDClient, resource metadataCompatible, attributeName, operation string) error {
+
+	// On Create operations we must bypass the ignored metadata by setting it to nil
+	var previousIgnoredMetadata []govcd.IgnoredMetadata
+	if operation == "create" {
+		previousIgnoredMetadata = vcdClient.SetMetadataToIgnore(nil)
+	}
+
 	// We invoke the new "metadata_entry" metadata creation here to have it centralized and reduce duplication.
 	// Ideally, once "metadata" is removed in a new major version, the implementation of `createOrUpdateMetadataEntryInVcd` should
 	// just go here in the `createOrUpdateMetadata` body.
 	err := createOrUpdateMetadataEntryInVcd(d, resource)
+
+	// After a Create operation, we must restore the ignored metadata for the other operations: Plan, Update
+	if operation == "create" {
+		vcdClient.SetMetadataToIgnore(previousIgnoredMetadata)
+	}
 	if err != nil {
 		return err
 	}

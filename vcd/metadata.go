@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// ignoreMetadataSchema returns the schema associated to ignore_metadata for the provider configuration.
+// ignoreMetadataSchema returns the schema associated to ignore_metadata_changes for the provider configuration.
 func ignoreMetadataSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
@@ -90,7 +90,7 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 			result[i].ValueRegex = regex
 		}
 		if result[i].KeyRegex == nil && result[i].ValueRegex == nil {
-			return nil, fmt.Errorf("either `key_regex` or `value_regex` is required inside the `ignore_metadata` attribute")
+			return nil, fmt.Errorf("either `key_regex` or `value_regex` is required inside the `ignore_metadata_changes` attribute")
 		}
 		if ignoredEntry["object_name"].(string) != "" {
 			result[i].ObjectName = addrOf(ignoredEntry["object_name"].(string))

@@ -332,7 +332,7 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
-			"ignore_metadata": ignoreMetadataSchema(),
+			"ignore_metadata_changes": ignoreMetadataSchema(),
 		},
 		ResourcesMap:         globalResourceMap,
 		DataSourcesMap:       globalDataSourceMap,
@@ -430,7 +430,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		ImportSeparator = d.Get("import_separator").(string)
 	}
 
-	ignoredMetadata, err := getIgnoredMetadata(d, "ignore_metadata")
+	ignoredMetadata, err := getIgnoredMetadata(d, "ignore_metadata_changes")
 	if err != nil {
 		return nil, diag.Errorf("could not process the metadata that needs to be ignored: %s", err)
 	}

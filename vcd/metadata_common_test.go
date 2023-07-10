@@ -264,7 +264,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	postTestChecks(t)
 }
 
-// testMetadataEntryIgnore executes a test that asserts that the "ignore_metadata" Provider argument allows to ignore
+// testMetadataEntryIgnore executes a test that asserts that the "ignore_metadata_changes" Provider argument allows to ignore
 // metadata entries in all cases.
 //
 // Tests:
@@ -273,7 +273,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 // - Step 2: Add a metadata entry to the resource
 // - Step 3: Add a data source that fetches the created resource.
 //
-// The different ignore_metadata sub-tests check what happens if the filter matches or doesn't match the metadata entry
+// The different ignore_metadata_changes sub-tests check what happens if the filter matches or doesn't match the metadata entry
 // added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
 func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
@@ -285,7 +285,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		"Name":     t.Name(),
 		"Metadata": " ",
 		// The IgnoreMetadataBlock entry below is for binary tests
-		"IgnoreMetadataBlock": "ignore_metadata {\n\tresource_type = \"" + resourceType + "\"\n\tobject_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n}",
+		"IgnoreMetadataBlock": "ignore_metadata_changes {\n\tresource_type = \"" + resourceType + "\"\n\tobject_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n}",
 	}
 
 	for extraParam, extraParamValue := range extraParams {
@@ -331,8 +331,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					newProvider := Provider()
 					newProvider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 						// We configure the provider this way to be able to test that providerConfigure
-						// retrieves and parses the 'ignore_metadata' argument correctly.
-						err := d.Set("ignore_metadata", ignoredMetadata)
+						// retrieves and parses the 'ignore_metadata_changes' argument correctly.
+						err := d.Set("ignore_metadata_changes", ignoredMetadata)
 						if err != nil {
 							return nil, diag.FromErr(err)
 						}

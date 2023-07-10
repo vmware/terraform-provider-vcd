@@ -130,7 +130,7 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 
 	log.Printf("[TRACE] Catalog item created: %s", itemName)
 
-	err = createOrUpdateCatalogItemMetadata(d, meta)
+	err = createOrUpdateCatalogItemMetadata(d, meta, "create")
 	if diagError != nil {
 		return diag.FromErr(err)
 	}
@@ -220,14 +220,14 @@ func resourceVcdCatalogItemUpdate(_ context.Context, d *schema.ResourceData, met
 		}
 	}
 
-	err := createOrUpdateCatalogItemMetadata(d, meta)
+	err := createOrUpdateCatalogItemMetadata(d, meta, "update")
 	if err != nil {
 		return diag.Errorf("error updating catalog item metadata: %s", err)
 	}
 	return nil
 }
 
-func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) error {
+func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}, operation string) error {
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
@@ -244,7 +244,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	err = createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
+	err = createOrUpdateMetadata(d, meta.(*VCDClient), catalogItem, "catalog_item_metadata", operation)
 	if err != nil {
 		return err
 	}

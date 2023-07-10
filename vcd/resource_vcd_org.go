@@ -224,7 +224,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	d.SetId(org.AdminOrg.ID)
 
-	err = createOrUpdateMetadata(d, org, "metadata")
+	err = createOrUpdateMetadata(d, vcdClient, org, "metadata", "create")
 	if err != nil {
 		return diag.Errorf("error adding metadata to Org: %s", err)
 	}
@@ -411,7 +411,7 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 		return diag.Errorf("error completing update of Org %s", err)
 	}
 
-	err = createOrUpdateMetadata(d, adminOrg, "metadata")
+	err = createOrUpdateMetadata(d, vcdClient, adminOrg, "metadata", "update")
 	if err != nil {
 		return diag.Errorf("error updating metadata from Org: %s", err)
 	}

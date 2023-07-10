@@ -373,23 +373,20 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
   it is a dot (`.`).
 
-* `ignore_metadata` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries from being managed by this Terraform provider.
-  See ["Ignore Metadata"](#ignore-metadata) for more details.
+* `ignore_metadata_changes` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries from being changed by this Terraform provider
+  after creation or when they were created outside Terraform.
+  See ["Ignore Metadata Changes"](#ignore-metadata-changes) for more details.
 
-## Ignore metadata
+## Ignore metadata changes
 
-One or more `ignore_metadata` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
-items during `plan`, `apply` and `destroy`. This is useful, for example, to avoid removing metadata entries that were created
-by an external actor and not by this provider.
+One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
+items during `plan`, `updates-in-place` and `destroy` (**not** `create`). This is useful, for example, to avoid removing metadata entries that were created
+by an external actor or after they were created by Terraform.
 
 ~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
 it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle` block.
 
--> To avoid side effects, you should only use this feature to deal with metadata not managed by this provider.
-It is encouraged to avoid ignoring metadata that was created by a Terraform resource, as you could get unwanted updates or inconsistencies
-in the state.
-
-The available sub-attributes for `ignore_metadata` are:
+The available sub-attributes for `ignore_metadata_changes` are:
 
 * `resource_type` - (Optional) Specifies the resource type which metadata needs to be ignored. If set, the resource type must be one of:
   *"vcd_catalog"*, *"vcd_catalog_item"*, *"vcd_catalog_media"*, *"vcd_catalog_vapp_template"*, *"vcd_independent_disk"*, *"vcd_network_direct"*,
@@ -406,7 +403,7 @@ that belong to the specific Organization named "client1" **and** which keys matc
 ```hcl
 provider "vcd" {
   # ...
-  ignore_metadata {
+  ignore_metadata_changes {
     resource_type = "vcd_org"
     object_name   = "client1"
     key_regex     = "[Ee]nvironment"
@@ -422,18 +419,18 @@ provider "vcd" {
   # ...
 
   # Filters all metadata with key "Environment" or "environment" in all VCD objects with any name.
-  ignore_metadata {
+  ignore_metadata_changes {
     key_regex = "^[Ee]nvironment$"
   }
 
   # Filters all metadata with key "NiceMetadataKey" in all VCD objects named "SpecificName".
-  ignore_metadata {
+  ignore_metadata_changes {
     object_name = "SpecificName"
     key_regex   = "^NiceMetadataKey$"
   }
 
   # Filters all metadata with values "Yes" in the Organization named "Tatooine".
-  ignore_metadata {
+  ignore_metadata_changes {
     resource_type = "vcd_org"
     object_name   = "Tatooine"
     value_regex   = "^Yes$"
@@ -445,7 +442,7 @@ resource "vcd_org" "my_org" {
   # ...
 
   # This entry will be added, if this Organization has other metadata entries that
-  # match the ones defined in the Provider `ignore_metadata` blocks, they will not be
+  # match the ones defined in the Provider `ignore_metadata_changes` blocks, they will not be
   # deleted.
   metadata_entry {
     key         = "OneKey"

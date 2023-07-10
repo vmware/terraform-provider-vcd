@@ -210,7 +210,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[TRACE] adding metadata for catalog")
-	err = createOrUpdateMetadata(d, catalog, "metadata")
+	err = createOrUpdateMetadata(d, vcdClient, catalog, "metadata", "create")
 	if err != nil {
 		return diag.Errorf("error adding catalog metadata: %s", err)
 	}
@@ -386,7 +386,7 @@ func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData
 		}
 
 		log.Printf("[TRACE] updating metadata for catalog")
-		err = createOrUpdateMetadata(d, adminCatalog, "metadata")
+		err = createOrUpdateMetadata(d, vcdClient, adminCatalog, "metadata", "update")
 		if err != nil {
 			return diag.Errorf("error updating catalog metadata: %s", err)
 		}

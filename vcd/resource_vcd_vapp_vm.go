@@ -716,7 +716,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// Handle Metadata
 	// Such schema fields are processed:
 	// * metadata
-	err = createOrUpdateMetadata(d, vm, "metadata")
+	err = createOrUpdateMetadata(d, vcdClient, vm, "metadata", "create")
 	if err != nil {
 		return diag.Errorf("error setting metadata: %s", err)
 	}
@@ -1485,7 +1485,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		}
 	}
 
-	err = createOrUpdateMetadata(d, vm, "metadata")
+	err = createOrUpdateMetadata(d, meta.(*VCDClient), vm, "metadata", "update")
 	if err != nil {
 		return diag.FromErr(err)
 	}

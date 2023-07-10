@@ -131,7 +131,7 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	err = createOrUpdateOpenApiNetworkMetadata(d, meta, orgNetwork, "create")
 	if err != nil {
 		return diag.Errorf("[isolated network v2 create] error adding metadata to Isolated network: %s", err)
 	}
@@ -182,7 +182,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network v2 update] error updating Isolated network: %s", err)
 	}
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
+	err = createOrUpdateOpenApiNetworkMetadata(d, meta, orgNetwork, "update")
 	if err != nil {
 		return diag.Errorf("[isolated network v2 update] error updating Isolated network metadata: %s", err)
 	}
@@ -359,13 +359,13 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	return orgVdcNetworkConfig, nil
 }
 
-func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
-	log.Printf("[TRACE] adding/updating metadata to Network V2")
+func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, meta interface{}, network *govcd.OpenApiOrgVdcNetwork, operation string) error {
+	log.Printf("[TRACE] %s metadata for Network V2", operation)
 
 	// Metadata is not supported when the network is in a VDC Group
 	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
 		return nil
 	}
 
-	return createOrUpdateMetadata(d, network, "metadata")
+	return createOrUpdateMetadata(d, meta.(*VCDClient), network, "metadata", operation)
 }

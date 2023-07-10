@@ -332,7 +332,7 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	d.SetId(vdc.Vdc.ID)
 	log.Printf("[TRACE] VDC created: %#v", vdc)
 
-	err = createOrUpdateOrgMetadata(d, meta)
+	err = createOrUpdateOrgMetadata(d, meta, "create")
 	if err != nil {
 		return diag.Errorf("error adding metadata to VDC: %s", err)
 	}
@@ -618,7 +618,7 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
-	err = createOrUpdateOrgMetadata(d, meta)
+	err = createOrUpdateOrgMetadata(d, meta, "update")
 	if err != nil {
 		return diag.Errorf("error updating VDC metadata: %s", err)
 	}
@@ -1052,9 +1052,9 @@ func addAssignedComputePolicies(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}) error {
+func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}, operation string) error {
 
-	log.Printf("[TRACE] adding/updating metadata to VDC")
+	log.Printf("[TRACE] %s metadata for VDC", operation)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -1068,7 +1068,7 @@ func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 	}
 
-	return createOrUpdateMetadata(d, adminVdc, "metadata")
+	return createOrUpdateMetadata(d, vcdClient, adminVdc, "metadata", operation)
 }
 
 // helper for transforming the compute capacity section of the resource input into the VdcConfiguration structure
