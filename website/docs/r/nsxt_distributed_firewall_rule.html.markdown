@@ -70,9 +70,9 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `above_rule_id` - (Optional) ID of another `vcd_nsxt_distributed_firewall_rule` entry will ensure
-  that newly created rule is positioned above the referenced rule. **Note.** By default, new rule
-  will be created at the bottom of the list
+* `above_rule_id` - (Optional) ID of an existing `vcd_nsxt_distributed_firewall_rule` entry, above
+  which the newly created firewall rule will be positioned. **Note.** By default, new rule will be
+  created at the bottom of the list
 
 -> When activating Distributed Firewall with resource
 [`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group) there is a default firewall
