@@ -98,6 +98,11 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
 			},
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if Network allows guest VLAN tagging",
+			},
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,

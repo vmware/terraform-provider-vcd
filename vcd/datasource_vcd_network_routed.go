@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -87,6 +88,12 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
+			},
+
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if Network allows guest VLAN tagging",
 			},
 
 			"dhcp_pool": {

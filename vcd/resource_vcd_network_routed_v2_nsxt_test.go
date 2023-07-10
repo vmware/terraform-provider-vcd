@@ -65,6 +65,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "guest_vlan_allowed", "false"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
@@ -94,6 +95,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.60",
 						"end_address":   "1.1.1.70",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "guest_vlan_allowed", "true"),
 					resource.TestCheckNoResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string)),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 
@@ -120,6 +122,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "0"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "guest_vlan_allowed", "false"),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
@@ -149,6 +152,8 @@ resource "vcd_network_routed_v2" "net1" {
     end_address = "1.1.1.20"
   }
 
+  guest_vlan_allowed = false
+
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
   }
@@ -170,6 +175,7 @@ resource "vcd_network_routed_v2" "net1" {
 
   gateway = "1.1.1.1"
   prefix_length = 24
+  guest_vlan_allowed = true
 
   static_ip_pool {
 	start_address = "1.1.1.10"

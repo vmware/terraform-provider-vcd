@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -93,6 +94,12 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
+			},
+
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if Network allows guest VLAN tagging",
 			},
 
 			"dhcp_pool": {
@@ -185,6 +192,7 @@ func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceDat
 	netMask := d.Get("netmask").(string)
 	dns1 := d.Get("dns1").(string)
 	dns2 := d.Get("dns2").(string)
+	guestVLANAllowed := d.Get("guest_vlan_allowed").(bool)
 
 	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 	if err != nil {
@@ -229,6 +237,7 @@ func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceDat
 				}},
 			},
 			BackwardCompatibilityMode: true,
+			GuestVlanAllowed:          &guestVLANAllowed,
 		},
 		IsShared: d.Get("shared").(bool),
 	}
@@ -304,6 +313,7 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "name", network.OrgVDCNetwork.Name)
 	dSet(d, "href", network.OrgVDCNetwork.HREF)
 	if c := network.OrgVDCNetwork.Configuration; c != nil {
+		dSet(d, "guest_vlan_allowed", c.GuestVlanAllowed)
 		if c.IPScopes != nil {
 			dSet(d, "gateway", c.IPScopes.IPScope[0].Gateway)
 			dSet(d, "netmask", c.IPScopes.IPScope[0].Netmask)
@@ -430,6 +440,7 @@ func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceDat
 		dns2               = d.Get("dns2").(string)
 		dnsSuffix          = d.Get("dns_suffix").(string)
 		dhcpPool           = d.Get("dhcp_pool").(*schema.Set).List()
+		guestVLANAllowed   = d.Get("guest_vlan_allowed").(bool)
 		identifier         = d.Id()
 		ipRanges           types.IPRanges
 		dhcpPoolService    []*types.DhcpPoolService
@@ -479,6 +490,7 @@ func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceDat
 	network.OrgVDCNetwork.Name = networkName
 	network.OrgVDCNetwork.Description = networkDescription
 	network.OrgVDCNetwork.IsShared = isShared
+	network.OrgVDCNetwork.Configuration.GuestVlanAllowed = &guestVLANAllowed
 
 	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
 	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
