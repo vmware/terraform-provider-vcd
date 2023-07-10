@@ -542,7 +542,7 @@ func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) er
 func removeLeftoversIpSpacesAndAllocations(govcdClient *govcd.VCDClient, verbose bool) error {
 	allIpSpaces, err := govcdClient.GetAllIpSpaceSummaries(nil)
 	if err != nil {
-		return fmt.Errorf("error retrieving IP spaces")
+		return fmt.Errorf("error retrieving IP spaces: %s", err)
 	}
 
 	// Remove all IP allocations before removing IP Space itself

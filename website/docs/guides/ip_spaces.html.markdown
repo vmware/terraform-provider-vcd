@@ -183,6 +183,9 @@ data "vcd_org_vdc" "vdc1" {
   name = "nsxt-vdc-cloud"
 }
 
+# This resource defines a public IP Space with multiple IP 
+# Prefixes (subnets) and two IP Ranges for Floating IP 
+# Allocation
 resource "vcd_ip_space" "space1" {
   name = "public-ip-space"
   type = "PUBLIC"
@@ -237,10 +240,14 @@ resource "vcd_external_network_v2" "provider-gateway" {
     nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
   }
 
-  # boolean flag to enable IP Space support
+  # boolean flag to enable IP Space support is used 
+  # instead of defining IP Scopes which are used in
+  # configuration without IP Spaces
   use_ip_spaces = true
 }
 
+# An IP Space Uplink establishes relationship for Provider 
+# Gateways and IP Spaces
 resource "vcd_ip_space_uplink" "u1" {
   name                = "IP Space Uplink assignment"
   external_network_id = vcd_external_network_v2.provider-gateway.id
@@ -251,6 +258,10 @@ resource "vcd_nsxt_edgegateway" "ip-space" {
   org                 = "cloud"
   name                = "ip-space-backed-edge"
   owner_id            = data.vcd_org_vdc.vdc1.id
+
+  # An NSX-T Edge Gateway is configured without 
+  # defined subnets as it uses Provider Gateway
+  # that has an IP Space Uplink
   external_network_id = vcd_external_network_v2.provider-gateway.id
 
   # Explicit dependency to be sure that IP Space Uplink is configured before
@@ -258,14 +269,22 @@ resource "vcd_nsxt_edgegateway" "ip-space" {
   depends_on = [vcd_ip_space_uplink.u1]
 }
 
+# This resource creates a single Floating IP Allocation 
+# from a given IP Space.
+# Its field 'ip_address' will contain allocated Floating IP, 
+# which can be used in further resources, such as 
+# 'vcd_nsxt_nat_rule' a few lines below
 resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
   org_id      = data.vcd_org.org1.id
   ip_space_id = vcd_ip_space.space1.id
   type        = "FLOATING_IP"
 
+  # Edge Gateway must be created before IP Allocations can be performed
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 
+# This is a Floating IP Allocation that is marked for manual usage with 
+# custom description
 resource "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
   org_id      = data.vcd_org.org1.id
   ip_space_id = vcd_ip_space.space1.id
@@ -283,12 +302,17 @@ resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
   name      = "dnat-ip-space-ip"
   rule_type = "DNAT"
 
-  # Using allocated Floating IP From IP Space
+  # Using allocated Floating IP From IP Space which is allocated in 
+  # resource vcd_ip_space_ip_allocation.public-floating-ip
   external_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
   internal_address = "77.77.77.1"
   logging          = true
 }
 
+# This is an IP Prefix (subnet) allocation that can be used 
+# for creating networks
+# This allocation is used within 'vcd_network_routed_v2.using-public-prefix'
+# resource a few lines below
 resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
   org_id        = data.vcd_org.org1.id
   ip_space_id   = vcd_ip_space.space1.id
@@ -303,7 +327,9 @@ resource "vcd_network_routed_v2" "using-public-prefix" {
   name            = "ip-space-allocated-prefix"
   edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
 
-  # Using prefix allocated from IP Space
+  # Using prefix allocated from IP Space. Terraform's native 
+  # functions 'cidrhost' and 'split' are very convenient 
+  # for such use cases
   gateway       = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 1)
   prefix_length = split("/", vcd_ip_space_ip_allocation.public-ip-prefix.ip_address)[1]
 
