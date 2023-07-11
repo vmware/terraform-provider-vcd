@@ -418,7 +418,7 @@ provider "vcd" {
     key_regex     = "[Ee]nvironment"
   }
 
-  # Setting this value to warning will make all metadata_entry entries that
+  # Setting this value to 'warn' will make all 'metadata_entry' entries that
   # are managed by Terraform and that are ignored to give a warning to the user.
   ignore_metadata_changes_error_level = "warn"
 }
