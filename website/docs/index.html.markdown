@@ -391,6 +391,10 @@ by an external actor or after they were created by Terraform.
 ~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
 it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle` block.
 
+~> Be aware that setting a `metadata_entry` in your Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
+results, as the metadata will be stored in state but nothing will be done in VCD. You can control what to do in this situation with
+`ignore_metadata_changes_error_level`, which can be `error`, `warn` or `ignore`.
+
 The available sub-attributes for `ignore_metadata_changes` are:
 
 * `resource_type` - (Optional) Specifies the resource type which metadata needs to be ignored. If set, the resource type must be one of:

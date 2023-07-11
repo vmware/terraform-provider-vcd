@@ -310,7 +310,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 				(ignoredMetadata.ObjectName == nil || strings.TrimSpace(*ignoredMetadata.ObjectName) == "" || strings.TrimSpace(d.Get("name").(string)) == "" || *ignoredMetadata.ObjectName == d.Get("name").(string)) &&
 				(ignoredMetadata.KeyRegex == nil || ignoredMetadata.KeyRegex.MatchString(entry["key"].(string))) &&
 				(ignoredMetadata.ValueRegex == nil || ignoredMetadata.ValueRegex.MatchString(entry["value"].(string))) {
-				util.Logger.Printf("[DEBUG] trying to update metadata entry with key '%s' and value '%v' when it is being being ignored with '%v'", entry["key"].(string), entry["value"].(string), ignoredMetadata)
+				util.Logger.Printf("[DEBUG] detected a conflict with metadata_entry with key '%s' and value '%v', it is being being ignored with the ignore_metadata_changes block '%v'", entry["key"].(string), entry["value"].(string), ignoredMetadata)
 
 				var severity diag.Severity
 				switch IgnoreMetadataChangesErrorLevel {
@@ -328,7 +328,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 						Severity: severity,
 						Summary:  "Found a conflict between 'ignore_metadata_changes' and 'metadata_entry'",
 						Detail: fmt.Sprintf("There is an 'ignored_metadata' block: %s\n"+
-							"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria and will be ignored.\n"+
+							"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria, hence it will be ignored.\n"+
 							"This will cause that the entry will be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
 							"Please use a more fine-grained 'ignore_metadata_changes' configuration or change your metadata entry.", ignoredMetadata, entry["key"], entry["value"]),
 						AttributePath: cty.Path{},

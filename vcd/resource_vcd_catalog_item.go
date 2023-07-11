@@ -162,7 +162,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
-	// We can't use updateMetadataInState(d, vcdClient, aaaaaaaa, catalogItem) because the attribute name is different.
+	// We can't use updateMetadataInState(d, vcdClient, "vcd_catalog_item", catalogItem) because the attribute name is different.
 	// We have three metadata attributes here.
 	metadata, err := catalogItem.GetMetadata()
 	if err != nil {
