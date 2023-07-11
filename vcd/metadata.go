@@ -69,7 +69,6 @@ func ignoreMetadataSchema() *schema.Schema {
 				},
 			},
 		},
-		RequiredWith: []string{"ignore_metadata_changes_error_level"},
 	}
 }
 

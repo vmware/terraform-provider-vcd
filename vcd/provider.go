@@ -338,7 +338,6 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				Default:      "error",
 				ValidateFunc: validation.StringInSlice([]string{"error", "warn", "ignore"}, false),
-				RequiredWith: []string{"ignore_metadata_changes"},
 				Description:  "Configures whether a conflict between ignored metadata and the metadata entries set in Terraform should error, warn or do nothing. Defaults to error",
 			},
 		},
