@@ -142,11 +142,13 @@ resource "vcd_network_routed" "net1" {
 ```
 When using a token, the fields `user` and `password` will be ignored, but they need to be in the script.
 
-### Connecting with an API token
+### Connecting with an API token/API token file
 
 With VCD 10.3.1+, you can connect using an API token, as defined in the [documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html).
 The API token is not a bearer token, but one will be created and automatically used by the Terraform provider when an API
-token is supplied.
+token is supplied. You can create an API token file by utilizing the [`vcd_api_token`][api-token] resource.
+
+#### Example usage (API token)
 
 ```hcl
 provider "vcd" {
@@ -168,11 +170,39 @@ resource "vcd_network_routed" "net1" {
 }
 ```
 
+#### Example usage (API token file)
+
+```hcl
+provider "vcd" {
+  user                 = "none"
+  password             = "none"
+  auth_type            = "api_token_file"
+  api_token            = "token.json"
+  sysorg               = "System"
+  org                  = var.vcd_org # Default for resources
+  vdc                  = var.vcd_vdc # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
+}
+
+# Create a new network in the default organization and VDC
+resource "vcd_network_routed" "net1" {
+  # ...
+}
+```
+
+The file containing the API token needs to be readable and writable, in `json` format with the API key. e.g:
+```json
+{"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+```
+
+
 Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
 ### Connecting with a Service Account API token
 
-With VCD 10.4.0+, you can connect using a service account API token, as 
+With VCD 10.4.0+, similar to API token file, you can connect using a service account API token, as 
 defined in the 
 [documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). 
 Because a new API token is provided on every authentication request, 
@@ -194,9 +224,11 @@ Note that the file will be rewritten at every usage, and the updated file will h
 The API token file is **sensitive data** and it's up to the user to secure it.
 
 ~> **NOTE:** The service account needs to be in `Active Stage` and 
-it's up to the user to provide the initial API token. A sample shell 
-script for creating, authorizing and activating a VCD Service Account
-can be found in the [repository](https://github.com/vmware/terraform-provider-vcd/blob/service_accounts/scripts/create_service_account.sh)
+it's up to the user to provide the initial API token. A service account 
+can be created using the [`service_account`][service-account] resource, 
+also it can be done using a sample shell script for creating, authorizing 
+and activating a VCD Service Account can be found in the 
+[repository][service-account-script]
 
 ```hcl
 provider "vcd" {
@@ -383,3 +415,8 @@ Cloud Director connection calls can be expensive, and if a definition file conta
 multiple connections. There is a cache engine, disabled by default, which can be activated by the `VCD_CACHE` 
 environment variable. When enabled, the provider will not reconnect, but reuse an active connection for up to 20 
 minutes, and then connect again.
+
+[service-account]: /providers/vmware/vcd/latest/docs/resources/service_account
+[service-account-script]: https://github.com/vmware/terraform-provider-vcd/blob/main/scripts/create_service_account.sh
+[api-token]: /providers/vmware/vcd/latest/docs/resource/api_token
+

@@ -40,6 +40,8 @@ resource "vcd_service_account" "example_service" {
 }
 ```
 
+-> After creation, the file can be used to authenticate the provider using the [`service_account_token_file`][provider-service-account-token-file] field.
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -72,3 +74,4 @@ terraform import vcd_service_account.imported my-org.my-service-account
 
 [service-accounts]: https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html
 [docs-import]: https://www.terraform.io/docs/import/
+[provider-service-account-token-file]: /providers/vmware/vcd/latest/docs#service_account_token_file

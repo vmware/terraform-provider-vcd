@@ -24,6 +24,8 @@ resource "vcd_api_token" "example_token" {
 }
 ```
 
+-> After creation, the file can be used to authenticate the provider using the [`api_token_file`][provider-api-token-file] field.
+
 ## Argument reference
 
 The following arguments are supported:
@@ -47,3 +49,4 @@ terraform import vcd_api_token.example_token example_token
 
 [api-tokens]: https://blogs.vmware.com/cloudprovider/2022/03/cloud-director-api-token.html
 [docs-import]: https://www.terraform.io/docs/import/
+[provider-api-token-file]: /providers/vmware/vcd/latest/docs#api_token_file

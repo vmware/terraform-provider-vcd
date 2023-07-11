@@ -274,7 +274,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Set this to true if you understand the security risks of using Service Account token files and would like to suppress the warnings",
+				Description: "Set this to true if you understand the security risks of using API token files and would like to suppress the warnings",
 			},
 
 			"service_account_token_file": {
