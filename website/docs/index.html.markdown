@@ -377,6 +377,11 @@ The following arguments are used to configure the VMware Cloud Director Provider
   after creation or when they were created outside Terraform.
   See ["Ignore Metadata Changes"](#ignore-metadata-changes) for more details.
 
+* `ignore_metadata_changes_error_level` - (Optional; *v3.10+*) Defines what to do if a conflict exists between a `metadata_entry` that is managed
+  by Terraform, and it matches the criteria defined in `ignore_metadata_changes`, as the metadata will be stored in state but nothing will be done in VCD.
+  If the value is `error`, when this happens, the Plan will fail. When the value is `warn`, it will just give a warning but the Plan will continue,
+  and with the `ignore` value nothing will be shown. Defaults to `error`.
+
 ## Ignore metadata changes
 
 One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
@@ -408,6 +413,10 @@ provider "vcd" {
     object_name   = "client1"
     key_regex     = "[Ee]nvironment"
   }
+
+  # Setting this value to warning will make all metadata_entry entries that
+  # are managed by Terraform and that are ignored to give a warning to the user.
+  ignore_metadata_changes_error_level = "warn"
 }
 
 ```
