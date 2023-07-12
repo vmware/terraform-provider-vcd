@@ -15,9 +15,9 @@ import (
 
 func resourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate,
+		CreateContext: resourceVcdNsxtEdgegatewayDhcpV6Create,
 		ReadContext:   resourceVcdNsxtEdgegatewayDhcpV6Read,
-		UpdateContext: resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate,
+		UpdateContext: resourceVcdNsxtEdgegatewayDhcpV6Update,
 		DeleteContext: resourceVcdNsxtEdgegatewayDhcpV6Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdNsxtEdgegatewayDhcpV6Import,
@@ -68,12 +68,20 @@ func resourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 	}
 }
 
-func resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtEdgegatewayDhcpV6Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx, d, meta, "create")
+}
+
+func resourceVcdNsxtEdgegatewayDhcpV6Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx, d, meta, "update")
+}
+
+func resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) create/update] %s", err)
+		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] %s", origin, err)
 	}
 	defer unlock()
 
@@ -82,17 +90,17 @@ func resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx context.Context, d *schema
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) create/update] error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] error retrieving Edge Gateway: %s", origin, err)
 	}
 
 	dhcpv6Config, err := getNsxtEdgeGatewaySlaacProfileType(d)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) create/update] error getting DHCPv6 configuration: %s", err)
+		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] error getting DHCPv6 configuration: %s", origin, err)
 	}
 
 	_, err = nsxtEdge.UpdateSlaacProfile(dhcpv6Config)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) create/update] error updating DHCPv6 configuration: %s", err)
+		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] error updating DHCPv6 configuration: %s", origin, err)
 	}
 
 	d.SetId(edgeGatewayId)
