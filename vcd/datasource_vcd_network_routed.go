@@ -180,5 +180,5 @@ func datasourceVcdNetworkRoutedRead(ctx context.Context, d *schema.ResourceData,
 		logForScreen("vcd_network_routed", "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkRoutedRead(ctx, d, meta, "datasource", "read")
+	return genericVcdNetworkRoutedRead(ctx, d, meta, "datasource")
 }

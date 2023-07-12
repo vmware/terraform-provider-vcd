@@ -185,7 +185,7 @@ func datasourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceD
 
 	dSet(d, "subscription_url", adminCatalog.AdminCatalog.ExternalCatalogSubscription.Location)
 	dSet(d, "make_local_copy", adminCatalog.AdminCatalog.ExternalCatalogSubscription.LocalCopy)
-	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog)
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_subscribed_catalog")
 	if err != nil {
 		return diag.Errorf("%v", err)
 	}

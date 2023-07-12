@@ -152,7 +152,7 @@ func resourceVcdVAppCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(vapp.VApp.ID)
 
-	return genericVcdVAppRead(d, meta, "resource", "create")
+	return genericVcdVAppRead(d, meta, "resource")
 }
 
 func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -248,14 +248,14 @@ func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	return genericVcdVAppRead(d, meta, "resource", "update")
+	return genericVcdVAppRead(d, meta, "resource")
 }
 
 func resourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVAppRead(d, meta, "resource", "read")
+	return genericVcdVAppRead(d, meta, "resource")
 }
 
-func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)

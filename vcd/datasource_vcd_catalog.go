@@ -257,7 +257,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 	if adminOrg != nil {
 		orgId = adminOrg.AdminOrg.ID
 	}
-	err = setCatalogData(d, vcdClient, orgName, orgId, catalog)
+	err = setCatalogData(d, vcdClient, orgName, orgId, catalog, "vcd_catalog")
 	if err != nil {
 		return diag.FromErr(err)
 	}

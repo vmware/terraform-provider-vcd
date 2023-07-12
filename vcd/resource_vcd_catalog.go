@@ -216,7 +216,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
-	return genericResourceVcdCatalogRead(ctx, d, meta, "create")
+	return resourceVcdCatalogRead(ctx, d, meta)
 }
 
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
@@ -232,11 +232,7 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 	return nil
 }
 
-func resourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericResourceVcdCatalogRead(ctx, d, meta, "read")
-}
-
-func genericResourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -292,7 +288,7 @@ func genericResourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, me
 		return diagErr
 	}
 
-	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog)
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_catalog")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -306,13 +302,13 @@ func genericResourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, me
 // resourceVcdCatalogUpdate does not require actions for  fields "delete_force", "delete_recursive",
 // but does allow changing `storage_profile`
 func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericResourceVcdCatalogUpdate(ctx, d, meta, nil, genericResourceVcdCatalogRead)
+	return genericResourceVcdCatalogUpdate(ctx, d, meta, nil, resourceVcdCatalogRead)
 }
 
 // genericResourceVcdCatalogUpdate can handle update for both vcd_catalog and vcd_subscribed_catalog
 // The mucf parameter is a slice of updating functions which –if provided– will be processed sequentially
 // The readFunc parameter is the Read function to be used at the end of update.
-func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, mucf []moreUpdateCatalogFunc, readFunc func(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics) diag.Diagnostics {
+func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, mucf []moreUpdateCatalogFunc, readFunc schema.ReadContextFunc) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -397,7 +393,7 @@ func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData
 			}
 		}
 	}
-	return readFunc(ctx, d, meta, "update")
+	return readFunc(ctx, d, meta)
 }
 
 func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -457,15 +453,15 @@ func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta 
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields
-	diagErr := genericResourceVcdCatalogRead(ctx, d, meta, "import")
+	diagErr := resourceVcdCatalogRead(ctx, d, meta)
 	if diagErr != nil {
-		return nil, fmt.Errorf("error during catalog read on catalog import: %v", diagErr)
+		return nil, fmt.Errorf("error during read after import: %v", diagErr)
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog) error {
+func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name, govcd.TenantContext{OrgName: orgName, OrgId: orgId})
 	if err != nil {

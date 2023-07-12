@@ -82,6 +82,6 @@ func datasourceVcdVApp() *schema.Resource {
 	}
 }
 
-func datasourceVcdVAppRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVAppRead(d, meta, "datasource", "read")
+func datasourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdVAppRead(d, meta, "datasource")
 }

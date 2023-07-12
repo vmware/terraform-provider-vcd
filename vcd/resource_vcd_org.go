@@ -229,7 +229,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.Errorf("error adding metadata to Org: %s", err)
 	}
 
-	return genericOrgRead(ctx, d, m, "create")
+	return genericOrgRead(ctx, d, m)
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
@@ -417,11 +417,11 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)
-	return genericOrgRead(ctx, d, m, "update")
+	return genericOrgRead(ctx, d, m)
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
-func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, operation string) diag.Diagnostics {
+func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg) diag.Diagnostics {
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -491,11 +491,11 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 }
 
 func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return genericOrgRead(ctx, d, m, "read")
+	return genericOrgRead(ctx, d, m)
 }
 
 // Retrieves an Org resource from vCD
-func genericOrgRead(_ context.Context, d *schema.ResourceData, m interface{}, operation string) diag.Diagnostics {
+func genericOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -529,7 +529,7 @@ func genericOrgRead(_ context.Context, d *schema.ResourceData, m interface{}, op
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	diagErr := setOrgData(d, vcdClient, adminOrg, operation)
+	diagErr := setOrgData(d, vcdClient, adminOrg)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -552,7 +552,7 @@ func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta inte
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagErr := genericOrgRead(ctx, d, adminOrg, "import")
+	diagErr := genericOrgRead(ctx, d, adminOrg)
 	if diagErr != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
 	}

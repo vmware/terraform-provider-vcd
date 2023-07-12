@@ -264,22 +264,22 @@ func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error adding metadata to isolated network: %s", err)
 	}
 
-	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource", "create")
+	return resourceVcdNetworkIsolatedRead(ctx, d, meta)
 }
 
 func resourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource", "read")
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource")
 }
 
-func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
+func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	var network *govcd.OrgVDCNetwork
 	var err error
-	if origin == "resource" && operation == "update" {
-		// From update, we get the network directly
-		network = meta.(*govcd.OrgVDCNetwork)
-	} else {
+
+	switch origin {
+	case "resource", "datasource":
 		// From the resource creation or data source, we need to retrieve the network from scratch
+		vcdClient := meta.(*VCDClient)
+
 		network, err = getNetwork(d, vcdClient, origin == "datasource", "isolated")
 
 		if err != nil {
@@ -291,6 +291,9 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 			}
 			return diag.Errorf("[network isolated read] error looking for network: %s", err)
 		}
+	case "resource-update":
+		// From update, we get the network directly
+		network = meta.(*govcd.OrgVDCNetwork)
 	}
 
 	// Fix coverity warning
@@ -339,7 +342,7 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_isolated", network)
+	diagErr := updateMetadataInState(d, meta.(*VCDClient), "vcd_network_isolated", network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
 		return diagErr
@@ -492,5 +495,5 @@ func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// The update returns already a network. No need to retrieve it twice
-	return genericVcdNetworkIsolatedRead(ctx, d, network, "resource", "update")
+	return genericVcdNetworkIsolatedRead(ctx, d, network, "resource-update")
 }
