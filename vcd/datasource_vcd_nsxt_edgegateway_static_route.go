@@ -43,8 +43,9 @@ func datasourceVcdNsxtEdgeGatewayStaticRoute() *schema.Resource {
 				Description: "Description of Static Route",
 			},
 			"next_hop": {
-				Type:     schema.TypeSet,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "A set of next hops used within the static route",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip_address": {

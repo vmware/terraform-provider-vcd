@@ -52,9 +52,10 @@ func resourceVcdNsxtEdgeGatewayStaticRoute() *schema.Resource {
 				Description: "Network CIDR (e.g. 192.168.1.1/24) for Static Route",
 			},
 			"next_hop": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				Description: "A set of next hops to use within the static route",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip_address": {

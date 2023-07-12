@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_static_route"
-sidebar_current: "docs-vcd-resource-nsxt-edge-static-route"
+sidebar_current: "docs-vcd-resource-nsxt-edgegateway-static-route"
 description: |-
   Provides a resource to manage NSX-T Edge Gateway Static Routes.
 ---
@@ -59,7 +59,7 @@ The following arguments are supported:
 <a id="next-hop"></a>
 ## Next Hop
 
-Each member `next_hop` contains following attributes:
+Each member `next_hop` contains the following attributes:
 
 * `ip_address` - (Required) IP address for next hop gateway IP Address for the Static Route
 * `admin_distance` - (Required) Admin distance is used to choose which route to use when there are

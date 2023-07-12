@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_static_route"
-sidebar_current: "docs-vcd-data-source-nsxt-edge-static-route"
+sidebar_current: "docs-vcd-data-source-nsxt-edgegateway-static-route"
 description: |-
   Provides a data source to read NSX-T Edge Gateway Static Routes.
 ---
