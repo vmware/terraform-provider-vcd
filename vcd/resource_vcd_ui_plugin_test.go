@@ -1,4 +1,4 @@
-//go:build plugin || ALL || functional
+//go:build uiPlugin || ALL || functional
 
 package vcd
 
@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	testingTags["plugin"] = "resource_vcd_ui_plugin_test.go"
+	testingTags["uiPlugin"] = "resource_vcd_ui_plugin_test.go"
 }
 
 // This object is equivalent to the manifest.json that is inside the ../test-resources/ui_plugin.zip file
