@@ -299,14 +299,14 @@ func resourceVcdNetworkRoutedCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error adding metadata to routed network: %s", err)
 	}
 
-	return resourceVcdNetworkRoutedRead(ctx, d, meta)
+	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource", "create")
 }
 
 func resourceVcdNetworkRoutedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource")
+	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource", "read")
 }
 
-func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -394,7 +394,7 @@ func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed", network)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed", operation, network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set routed network metadata: %s", err)
 		return diagErr
@@ -677,5 +677,5 @@ func resourceVcdNetworkRoutedUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[routed network update] error updating network metadata: %s", err)
 	}
 
-	return resourceVcdNetworkRoutedRead(ctx, d, meta)
+	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource", "update")
 }

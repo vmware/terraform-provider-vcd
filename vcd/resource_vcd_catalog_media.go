@@ -200,14 +200,14 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error adding media item metadata: %s", err)
 	}
 
-	return resourceVcdMediaRead(ctx, d, meta)
+	return genericVcdMediaRead(d, meta, "resource", "create")
 }
 
 func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdMediaRead(d, meta, "resource")
+	return genericVcdMediaRead(d, meta, "resource", "read")
 }
 
-func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	var catalog *govcd.Catalog
@@ -286,7 +286,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", operation, media)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
 		return diagErr
@@ -299,12 +299,12 @@ func resourceVcdMediaDelete(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 // currently updates only metadata
-func resourceVcdMediaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdMediaUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := createOrUpdateMediaItemMetadata(d, meta, "update")
 	if err != nil {
 		return diag.Errorf("error updating media item metadata: %s", err)
 	}
-	return resourceVcdMediaRead(ctx, d, meta)
+	return genericVcdMediaRead(d, meta, "resource", "update")
 }
 
 func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}, operation string) error {

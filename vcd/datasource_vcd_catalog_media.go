@@ -104,5 +104,5 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 }
 
 func dataSourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdMediaRead(d, meta, "datasource")
+	return genericVcdMediaRead(d, meta, "datasource", "read")
 }

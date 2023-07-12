@@ -83,5 +83,5 @@ func datasourceVcdVApp() *schema.Resource {
 }
 
 func datasourceVcdVAppRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVAppRead(d, meta, "datasource")
+	return genericVcdVAppRead(d, meta, "datasource", "read")
 }

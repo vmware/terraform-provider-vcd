@@ -216,7 +216,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
-	return resourceVcdCatalogRead(ctx, d, meta)
+	return genericResourceVcdCatalogRead(ctx, d, meta, "create")
 }
 
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
@@ -232,11 +232,11 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 	return nil
 }
 
-func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericResourceVcdCatalogRead(d, meta)
+func resourceVcdCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericResourceVcdCatalogRead(ctx, d, meta, "read")
 }
 
-func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func genericResourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -286,7 +286,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) dia
 		dSet(d, "password", "")
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", operation, adminCatalog)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
 		return diagErr
@@ -306,13 +306,13 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) dia
 // resourceVcdCatalogUpdate does not require actions for  fields "delete_force", "delete_recursive",
 // but does allow changing `storage_profile`
 func resourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericResourceVcdCatalogUpdate(ctx, d, meta, nil, resourceVcdCatalogRead)
+	return genericResourceVcdCatalogUpdate(ctx, d, meta, nil, genericResourceVcdCatalogRead)
 }
 
 // genericResourceVcdCatalogUpdate can handle update for both vcd_catalog and vcd_subscribed_catalog
 // The mucf parameter is a slice of updating functions which –if provided– will be processed sequentially
 // The readFunc parameter is the Read function to be used at the end of update.
-func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, mucf []moreUpdateCatalogFunc, readFunc schema.ReadContextFunc) diag.Diagnostics {
+func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, mucf []moreUpdateCatalogFunc, readFunc func(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -397,7 +397,7 @@ func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData
 			}
 		}
 	}
-	return readFunc(ctx, d, meta)
+	return readFunc(ctx, d, meta, "update")
 }
 
 func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -433,7 +433,7 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 //
 // Example import path (id): org_name.catalog_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog")
@@ -457,7 +457,7 @@ func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta in
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields
-	diagErr := genericResourceVcdCatalogRead(d, meta)
+	diagErr := genericResourceVcdCatalogRead(ctx, d, meta, "import")
 	if diagErr != nil {
 		return nil, fmt.Errorf("error during catalog read on catalog import: %v", diagErr)
 	}

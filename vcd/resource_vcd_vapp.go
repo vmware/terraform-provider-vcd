@@ -152,7 +152,7 @@ func resourceVcdVAppCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(vapp.VApp.ID)
 
-	return resourceVcdVAppUpdate(ctx, d, meta)
+	return genericVcdVAppRead(d, meta, "resource", "create")
 }
 
 func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -248,14 +248,14 @@ func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	return resourceVcdVAppRead(ctx, d, meta)
+	return genericVcdVAppRead(d, meta, "resource", "update")
 }
 
 func resourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVAppRead(d, meta, "resource")
+	return genericVcdVAppRead(d, meta, "resource", "read")
 }
 
-func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -315,7 +315,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "href", vapp.VApp.HREF)
 	dSet(d, "description", vapp.VApp.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", vapp)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", operation, vapp)
 	if diagErr != nil {
 		return diag.Errorf("[vapp read] error setting metadata: %s", err)
 	}

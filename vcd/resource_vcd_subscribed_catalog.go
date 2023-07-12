@@ -283,12 +283,16 @@ func resourceVcdSubscribedCatalogCreate(ctx context.Context, d *schema.ResourceD
 	// Creation will start the initial synchronisation. A new one should not be run when `sync_on_refresh` is set
 	ctx = context.WithValue(ctx, contextString("operation"), contextString("create"))
 	util.Logger.Printf("[TRACE] Subscribed Catalog created: %#v\n", adminCatalog)
-	return resourceVcdSubscribedCatalogRead(ctx, d, meta)
+	return genericVcdSubscribedCatalogRead(ctx, d, meta, "create")
 }
 
 // resourceVcdSubscribedCatalogRead reads or refreshes the subscribed catalog
 // if `sync_on_refresh` was set, it also performs the catalog synchronisation
 func resourceVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdSubscribedCatalogRead(ctx, d, meta, "read")
+}
+
+func genericVcdSubscribedCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}, _ string) diag.Diagnostics {
 	util.Logger.Println("[TRACE] entering resourceVcdSubscribedCatalogRead")
 
 	vcdClient := meta.(*VCDClient)
@@ -443,7 +447,7 @@ func resourceVcdSubscribedCatalogUpdate(ctx context.Context, d *schema.ResourceD
 			updateSubscriptionFunc,
 			runSubscribedCatalogSyncOperations,
 		},
-		resourceVcdSubscribedCatalogRead)
+		genericVcdSubscribedCatalogRead)
 }
 
 // resourceVcdSubscribedCatalogDelete deletes a subscribed catalog

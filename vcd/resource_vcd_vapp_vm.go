@@ -661,7 +661,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
-	return genericVcdVmRead(d, meta, "create")
+	return genericVcdVmRead(d, meta, "resource", "create")
 }
 
 // genericResourceVmCreate does the following:
@@ -1443,7 +1443,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	// update so that its value can be written into statefile and be accessible in read function
 	if onlyHasChange("network_dhcp_wait_seconds", vmSchemaFunc(vmType), d) {
 		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
-		return genericVcdVmRead(d, meta, "update")
+		return genericVcdVmRead(d, meta, "resource", "update")
 	}
 
 	err := resourceVmHotUpdate(d, meta, vmType)
@@ -1817,15 +1817,15 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	}
 
 	log.Printf("[DEBUG] [VM update] finished")
-	return genericVcdVmRead(d, meta, "update")
+	return genericVcdVmRead(d, meta, "resource", "update")
 }
 
 func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVmRead(d, meta, "resource")
+	return genericVcdVmRead(d, meta, "resource", "read")
 }
 
-func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	log.Printf("[DEBUG] [VM read] started with origin %s", origin)
+func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+	log.Printf("[DEBUG] [VM %s read] started with origin %s", origin, operation)
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -1947,7 +1947,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", operation, vm)
 	if diagErr != nil {
 		return diag.Errorf("[VM read] set metadata: %s", err)
 	}

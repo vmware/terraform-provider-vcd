@@ -79,5 +79,5 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 }
 
 func datasourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "datasource")
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "datasource", "read")
 }

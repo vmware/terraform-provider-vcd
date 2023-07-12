@@ -15,5 +15,5 @@ func datasourceVcdStandaloneVm() *schema.Resource {
 }
 
 func datasourceVcdStandaloneVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVmRead(d, meta, "datasource")
+	return genericVcdVmRead(d, meta, "datasource", "read")
 }

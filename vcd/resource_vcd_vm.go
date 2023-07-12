@@ -39,7 +39,7 @@ func resourceVcdStandaloneVmCreate(_ context.Context, d *schema.ResourceData, me
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished standalone VM creation [took %s ]", timeElapsed)
 
-	return genericVcdVmRead(d, meta, "create")
+	return genericVcdVmRead(d, meta, "resource", "create")
 }
 
 func resourceVcdStandaloneVmUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -47,5 +47,5 @@ func resourceVcdStandaloneVmUpdate(_ context.Context, d *schema.ResourceData, me
 }
 
 func resourceVcdVStandaloneVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVmRead(d, meta, "resource")
+	return genericVcdVmRead(d, meta, "resource", "read")
 }

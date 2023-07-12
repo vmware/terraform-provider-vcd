@@ -155,5 +155,5 @@ func datasourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceDat
 		logForScreen("vcd_network_isolated", "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkIsolatedRead(ctx, d, meta, "datasource")
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "datasource", "read")
 }

@@ -363,11 +363,15 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		dSet(d, "enable_nsxv_distributed_firewall", true)
 	}
 
-	return resourceVcdVdcRead(ctx, d, meta)
+	return genericVcdVdcRead(ctx, d, meta, "create")
+}
+
+func resourceVcdVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdVdcRead(ctx, d, meta, "read")
 }
 
 // Fetches information about an existing VDC for a data definition
-func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func genericVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
@@ -388,7 +392,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
+	diagErr := setOrgVdcData(d, vcdClient, adminVdc, operation)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -410,7 +414,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) diag.Diagnostics {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc, operation string) diag.Diagnostics {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -472,7 +476,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", operation, adminVdc)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
 		return diagErr
@@ -663,7 +667,7 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
-	return resourceVcdVdcRead(ctx, d, meta)
+	return genericVcdVdcRead(ctx, d, meta, "update")
 }
 
 func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc, storageProfile *types.Reference, storageConfiguration map[string]interface{}) error {

@@ -229,7 +229,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.Errorf("error adding metadata to Org: %s", err)
 	}
 
-	return resourceOrgRead(ctx, d, m)
+	return genericOrgRead(ctx, d, m, "create")
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
@@ -352,7 +352,7 @@ func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{})
 }
 
 // Update the resource
-func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	vcdClient := m.(*VCDClient)
 
@@ -417,11 +417,11 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)
-	return nil
+	return genericOrgRead(ctx, d, m, "update")
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
-func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg) diag.Diagnostics {
+func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, operation string) diag.Diagnostics {
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -481,7 +481,7 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 		}
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", adminOrg)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", operation, adminOrg)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Org metadata")
 		return diagErr
@@ -490,9 +490,12 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	return nil
 }
 
-// Retrieves an Org resource from vCD
-func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return genericOrgRead(ctx, d, m, "read")
+}
 
+// Retrieves an Org resource from vCD
+func genericOrgRead(_ context.Context, d *schema.ResourceData, m interface{}, operation string) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -526,7 +529,7 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
+	diagErr := setOrgData(d, vcdClient, adminOrg, operation)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -540,7 +543,7 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 // For this resource, the import path is just the org name.
 //
 // Example import path (id): orgName
-func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
 	vcdClient := meta.(*VCDClient)
@@ -549,7 +552,7 @@ func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
+	diagErr := genericOrgRead(ctx, d, adminOrg, "import")
 	if diagErr != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
 	}

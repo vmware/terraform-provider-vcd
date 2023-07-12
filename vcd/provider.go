@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"os"
 	"regexp"
 
@@ -333,13 +334,6 @@ func Provider() *schema.Provider {
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
 			"ignore_metadata_changes": ignoreMetadataSchema(),
-			"ignore_metadata_changes_error_level": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "error",
-				ValidateFunc: validation.StringInSlice([]string{"error", "warn", "ignore"}, false),
-				Description:  "Configures whether a conflict between ignored metadata and the metadata entries set in Terraform should error, warn or do nothing. Defaults to error",
-			},
 		},
 		ResourcesMap:         globalResourceMap,
 		DataSourcesMap:       globalDataSourceMap,
@@ -437,18 +431,15 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		ImportSeparator = d.Get("import_separator").(string)
 	}
 
-	ignoreMetadataChangesErrorLevel := os.Getenv("VCD_IGNORE_METADATA_CHANGES_ERROR_LEVEL")
-	if ignoreMetadataChangesErrorLevel != "" {
-		IgnoreMetadataChangesErrorLevel = ignoreMetadataChangesErrorLevel
-	} else {
-		IgnoreMetadataChangesErrorLevel = d.Get("ignore_metadata_changes_error_level").(string)
-	}
-
 	ignoredMetadata, err := getIgnoredMetadata(d, "ignore_metadata_changes")
 	if err != nil {
 		return nil, diag.Errorf("could not process the metadata that needs to be ignored: %s", err)
 	}
-	config.IgnoredMetadata = ignoredMetadata
+	config.IgnoredMetadata = make([]govcd.IgnoredMetadata, len(ignoredMetadata))
+	for i, im := range ignoredMetadata {
+		config.IgnoredMetadata[i] = ignoredMetadata[i].IgnoredMetadata
+		IgnoreMetadataChangesConflictResolution[ignoreMetadataChangesConflictResolutionHash(im.IgnoredMetadata)] = ignoredMetadata[i].ConflictResolution
+	}
 
 	vcdClient, err := config.Client()
 	if err != nil {

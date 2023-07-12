@@ -242,7 +242,7 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error adding metadata to independent disk: %s", err)
 	}
 
-	return resourceVcdIndependentDiskRead(ctx, d, meta)
+	return genericVcdIndependentDiskRead(ctx, d, meta, "create")
 }
 
 func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -336,7 +336,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	return resourceVcdIndependentDiskRead(ctx, d, meta)
+	return genericVcdIndependentDiskRead(ctx, d, meta, "update")
 }
 
 // lockIndependentDiskOpsGlobally acquire lock for independent disk resource using key `globalIndependentDiskLockKey`
@@ -433,7 +433,11 @@ func attachBackVms(vcdClient *VCDClient, disk *govcd.Disk, diskDetailsForReAttac
 	return nil
 }
 
-func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdIndependentDiskRead(ctx, d, meta, "read")
+}
+
+func genericVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -486,7 +490,7 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	diagErr := setMainData(d, vcdClient, disk, diskRecord)
+	diagErr := setMainData(d, vcdClient, disk, diskRecord, operation)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -495,7 +499,7 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType) diag.Diagnostics {
+func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType, operation string) diag.Diagnostics {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -528,7 +532,7 @@ func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk,
 		return diag.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", operation, disk)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Independent disk metadata")
 		return diagErr

@@ -137,16 +137,16 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 	log.Printf("[TRACE] Catalog vApp Template created: %s", vappTemplateName)
 
-	return resourceVcdCatalogVappTemplateRead(ctx, d, meta)
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource", "create")
 }
 
 func resourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource")
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource", "read")
 }
 
 // genericVcdCatalogVappTemplateRead performs a Read operation for the vApp Template resource (origin="resource")
 // and data source (origin="datasource").
-func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vAppTemplate, err := findVAppTemplate(d, vcdClient, origin)
 	if err != nil {
@@ -182,7 +182,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 		dSet(d, "vdc_id", "urn:vcloud:vdc:"+extractUuid(vappTemplateRec.Vdc))
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", operation, vAppTemplate)
 	if diagErr != nil {
 		return diag.Errorf("Unable to set vApp template metadata: %s", err)
 	}
@@ -202,7 +202,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogVappTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vAppTemplate, err := findVAppTemplate(d, meta.(*VCDClient), "resource")
 
 	if d.HasChange("description") || d.HasChange("name") {
@@ -222,7 +222,7 @@ func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource", "update")
 }
 
 func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

@@ -377,11 +377,6 @@ The following arguments are used to configure the VMware Cloud Director Provider
   after creation or when they were created outside Terraform.
   See ["Ignore Metadata Changes"](#ignore-metadata-changes) for more details.
 
-* `ignore_metadata_changes_error_level` - (Optional; *v3.10+*) Defines what to do if a conflict exists between a `metadata_entry` that is managed
-  by Terraform, and it matches the criteria defined in `ignore_metadata_changes`, as the metadata will be stored in state but nothing will be done in VCD.
-  If the value is `error`, when this happens, the Plan will fail. When the value is `warn`, it will just give a warning but the Plan will continue,
-  and with the `ignore` value nothing will be shown. Defaults to `error`.
-
 ## Ignore metadata changes
 
 One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
@@ -393,7 +388,7 @@ it. In other words, to ignore metadata when you are using the deprecated `metada
 
 ~> Be aware that setting a `metadata_entry` in your Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
 results, as the metadata will be stored in state but nothing will be done in VCD. You can control what to do in this situation with
-`ignore_metadata_changes_error_level`, which can be `error`, `warn` or `ignore`.
+`ignore_metadata_changes_error_level`, which can be `error`, `warn` or `none`.
 
 The available sub-attributes for `ignore_metadata_changes` are:
 
@@ -405,6 +400,10 @@ The available sub-attributes for `ignore_metadata_changes` are:
   `vdcStorageProfile` which **cannot be filtered by name**.
 * `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
 * `value_regex`- (Optional) A regular expression that can filter out metadata values that match. Either `key_regex` or `value_regex` are required on each block.
+* `conflict_resolution` - (Optional) Defines what to do if a conflict exists between a `metadata_entry` that is managed
+  by Terraform, and it matches the criteria defined in the `ignore_metadata_changes` block, as the metadata will be stored in state but nothing will be done in VCD.
+  If the value is `error`, when this happens, the Plan will fail. When the value is `warn`, it will just give a warning but the Plan will continue,
+  and with the `none` value nothing will be shown. Defaults to `error`.
 
 Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
 that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
@@ -416,11 +415,12 @@ provider "vcd" {
     resource_type = "vcd_org"
     object_name   = "client1"
     key_regex     = "[Ee]nvironment"
+    # Setting this value to 'warn' will make all 'metadata_entry' entries that
+    # are managed by Terraform and that are ignored to give a warning to the user.
+    conflict_resolution = "warn"
   }
 
-  # Setting this value to 'warn' will make all 'metadata_entry' entries that
-  # are managed by Terraform and that are ignored to give a warning to the user.
-  ignore_metadata_changes_error_level = "warn"
+
 }
 
 ```

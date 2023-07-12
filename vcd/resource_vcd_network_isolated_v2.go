@@ -136,7 +136,7 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network v2 create] error adding metadata to Isolated network: %s", err)
 	}
 
-	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
+	return genericVcdNetworkIsolatedV2Read(ctx, d, meta, "create")
 }
 
 func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -187,10 +187,14 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network v2 update] error updating Isolated network metadata: %s", err)
 	}
 
-	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
+	return genericVcdNetworkIsolatedV2Read(ctx, d, meta, "update")
 }
 
-func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNetworkIsolatedV2Read(ctx, d, meta, "read")
+}
+
+func genericVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -219,7 +223,7 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 	// Hence, we skip the read to preserve its value in state.
 	var diagErr diag.Diagnostics
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		diagErr = updateMetadataInState(d, vcdClient, "vcd_network_isolated_v2", orgNetwork)
+		diagErr = updateMetadataInState(d, vcdClient, "vcd_network_isolated_v2", operation, orgNetwork)
 	} else if _, ok := d.GetOk("metadata"); !ok {
 		// If it's a VDC Group and metadata is not set, we explicitly compute it to empty. Otherwise, its value should
 		// be preserved as it is still present in the entity.
