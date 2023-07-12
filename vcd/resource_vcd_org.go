@@ -490,6 +490,7 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	return nil
 }
 
+// Retrieves an Org resource from VCD
 func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
@@ -547,7 +548,7 @@ func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta inte
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagErr := resourceOrgRead(ctx, d, adminOrg)
+	diagErr := setOrgData(d, vcdClient, adminOrg)
 	if diagErr != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
 	}
