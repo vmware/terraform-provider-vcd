@@ -677,5 +677,5 @@ func resourceVcdNetworkRoutedUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[routed network update] error updating network metadata: %s", err)
 	}
 
-	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource")
+	return resourceVcdNetworkRoutedRead(ctx, d, meta)
 }

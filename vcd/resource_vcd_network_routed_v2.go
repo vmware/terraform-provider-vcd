@@ -146,12 +146,12 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, meta, orgNetwork, "create")
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network create v2] error adding metadata to Routed network: %s", err)
 	}
 
-	return genericVcdNetworkRoutedV2Read(ctx, d, meta, "create")
+	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
 func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -198,19 +198,15 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[routed network update v2] error updating Routed network: %s", err)
 	}
 
-	err = createOrUpdateOpenApiNetworkMetadata(d, meta, orgNetwork, "update")
+	err = createOrUpdateOpenApiNetworkMetadata(d, orgNetwork)
 	if err != nil {
 		return diag.Errorf("[routed network v2 update] error updating Routed network metadata: %s", err)
 	}
 
-	return genericVcdNetworkRoutedV2Read(ctx, d, meta, "update")
+	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
 }
 
-func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkRoutedV2Read(ctx, d, meta, "read")
-}
-
-func genericVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -250,7 +246,7 @@ func genericVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, me
 	}
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set routed network v2 metadata: %s", err)
-		return diag.Errorf("[routed network read v2] unable to set Routed network metadata %s", err)
+		return diagErr
 	}
 
 	return nil
