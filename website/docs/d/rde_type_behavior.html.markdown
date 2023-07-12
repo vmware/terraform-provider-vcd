@@ -3,12 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_rde_type_behavior"
 sidebar_current: "docs-vcd-data-source-rde-type-behavior"
 description: |-
-  Provides the capability of fetching the Behavior overrides from an existing RDE Type in VMware Cloud Director.
+  Provides the capability of reading RDE Type Behaviors in VMware Cloud Director, which override an existing RDE Interface
+  Behavior.
 ---
 
 # vcd\_rde\_type\_behavior
 
-Provides the capability of fetching the Behavior overrides from an existing RDE Type in VMware Cloud Director.
+Provides the capability of reading RDE Type Behaviors in VMware Cloud Director, which override an existing [RDE Interface
+Behavior](/providers/vmware/vcd/latest/docs/data-sources/rde_interface_behavior).
 
 Supported in provider *v3.10+*. Requires System Administrator privileges.
 
@@ -46,7 +48,7 @@ output "execution_id" {
 
 The following arguments are supported:
 
-* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) that owns the Behavior override to fetch
+* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) that owns the Behavior override
 * `rde_interface_behavior_id` - (Required) The ID of the original [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/data-sources/rde_interface_behavior)
 
 ## Attribute Reference

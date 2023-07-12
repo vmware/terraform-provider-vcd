@@ -126,7 +126,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_org_saml_metadata":                         datasourceVcdOrgSamlMetadata(),                  // 3.10
 	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         datasourceVcdRdeTypeBehavior(),                  // 3.10
-	"vcd_rde_type_behavior_acl":                     datasourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10,
+	"vcd_rde_type_behavior_acl":                     datasourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
 }
 
 var globalResourceMap = map[string]*schema.Resource{
