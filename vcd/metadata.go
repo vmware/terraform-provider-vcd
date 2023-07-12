@@ -21,11 +21,6 @@ var (
 	IgnoreMetadataChangesConflictResolution map[string]string
 )
 
-// ignoreMetadataChangesConflictResolutionHash is used to write/read on IgnoreMetadataChangesConflictResolution map
-func ignoreMetadataChangesConflictResolutionHash(ignoreMetadata govcd.IgnoredMetadata) string {
-	return fmt.Sprintf("%v%v%v%v", ignoreMetadata.KeyRegex, ignoreMetadata.ValueRegex, ignoreMetadata.ObjectName, ignoreMetadata.ObjectType)
-}
-
 // ignoreMetadataSchema returns the schema associated to ignore_metadata_changes for the provider configuration.
 func ignoreMetadataSchema() *schema.Schema {
 	return &schema.Schema{
@@ -73,7 +68,7 @@ func ignoreMetadataSchema() *schema.Schema {
 					Description: "Regular expression of the metadata entry values to ignore. Either `key_regex` or `value_regex` is required",
 					// Note: This one should have AtLeastOneOf, but it can't be used inside Sets
 				},
-				"conflict_resolution": {
+				"conflict_action": {
 					Type:         schema.TypeString,
 					Optional:     true,
 					Default:      "error",
@@ -85,6 +80,8 @@ func ignoreMetadataSchema() *schema.Schema {
 	}
 }
 
+// IgnoredMetadata extends the SDK IgnoredMetadata type to be able to add also
+// the conflict resolution behavior defined as an attribute in the schema.
 type IgnoredMetadata struct {
 	IgnoredMetadata    govcd.IgnoredMetadata
 	ConflictResolution string
@@ -101,7 +98,7 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 	for i, ignoredEntryRaw := range ignoreMetadataRaw {
 		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
 		result[i] = IgnoredMetadata{
-			ConflictResolution: ignoredEntry["conflict_resolution"].(string),
+			ConflictResolution: ignoredEntry["conflict_action"].(string),
 		}
 		ignoredMetadata := govcd.IgnoredMetadata{}
 		if ignoredEntry["key_regex"].(string) != "" {
@@ -125,14 +122,14 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 			ignoredMetadata.ObjectName = addrOf(ignoredEntry["object_name"].(string))
 		}
 		if ignoredEntry["resource_type"].(string) != "" {
-			ignoredMetadata.ObjectType = addrOf(ignoredEntry["resource_type"].(string))
+			ignoredMetadata.ObjectType = addrOf(resourceMetadataApiRelation[ignoredEntry["resource_type"].(string)])
 		}
 		result[i].IgnoredMetadata = ignoredMetadata
 	}
 	return result, nil
 }
 
-// This map is used by mapTerraformIgnoredMetadata and the Schema validation. It links a Terraform
+// This map is used by getIgnoredMetadata and the Schema validation. It links a Terraform
 // resource type (how the resource was named) with a Metadata API endpoint object present in
 // https://developer.vmware.com/apis/1601/vmware-cloud-director
 var resourceMetadataApiRelation = map[string]string{
@@ -155,39 +152,13 @@ var resourceMetadataApiRelation = map[string]string{
 	"vcd_vm":                    "vApp",
 }
 
-// mapTerraformIgnoredMetadata transforms the ObjectType property on every input entry, which references a Terraform
-// resource by its name, to the corresponding VCD object that the Go SDK can understand.
-func mapTerraformIgnoredMetadata(ignoredMetadata []govcd.IgnoredMetadata) []govcd.IgnoredMetadata {
-	terraformMetadataRelation := func(resourceName *string) *string {
-		if resourceName == nil {
-			return nil
-		}
-		result, ok := resourceMetadataApiRelation[*resourceName]
-		if !ok {
-			return nil
-		}
-		return &result
-	}
-
-	result := make([]govcd.IgnoredMetadata, len(ignoredMetadata))
-	for i, entry := range ignoredMetadata {
-		result[i] = govcd.IgnoredMetadata{
-			ObjectType: terraformMetadataRelation(entry.ObjectType),
-			ObjectName: entry.ObjectName,
-			KeyRegex:   entry.KeyRegex,
-			ValueRegex: entry.ValueRegex,
-		}
-	}
-	return result
-}
-
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
-// The description will refer to the object name given as input.
-func metadataEntryDatasourceSchema(objectNameInDescription string) *schema.Schema {
+// The description will refer to the resource type given as input.
+func metadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Computed:    true,
-		Description: fmt.Sprintf("Metadata entries from the given %s", objectNameInDescription),
+		Description: fmt.Sprintf("Metadata entries from the given %s", resourceType),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"key": {
@@ -221,13 +192,13 @@ func metadataEntryDatasourceSchema(objectNameInDescription string) *schema.Schem
 }
 
 // metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
-// The description will refer to the object name given as input.
-func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema {
+// The description will refer to the resource type given as input.
+func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
 		Computed:      true, // This is required for `metadata_entry` to live together with deprecated `metadata`.
-		Description:   fmt.Sprintf("Metadata entries for the given %s", objectNameInDescription),
+		Description:   fmt.Sprintf("Metadata entries for the given %s", resourceType),
 		ConflictsWith: []string{"metadata"},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -318,7 +289,7 @@ func createOrUpdateMetadataEntryInVcd(d *schema.ResourceData, resource metadataC
 }
 
 // checkIgnoredMetadataConflicts checks that no `metadata_entry` managed by Terraform is ignored due to being filtered out
-// in any `ignore_metadata_changes` block and errors/warns if so, depending on the value of `ignore_metadata_changes_error_level`.
+// in any `ignore_metadata_changes` block and errors/warns if so, depending on the value of `conflict_action`.
 func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient, resourceType string) diag.Diagnostics {
 	metadataEntryList := d.Get("metadata_entry").(*schema.Set).List()
 	if len(metadataEntryList) == 0 {
@@ -339,7 +310,8 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 
 			util.Logger.Printf("[DEBUG] detected a conflict with metadata_entry with key '%s' and value '%v', it is being being ignored with the ignore_metadata_changes block '%v'", newEntry["key"].(string), newEntry["value"].(string), ignoredMetadata)
 			var severity diag.Severity
-			switch IgnoreMetadataChangesConflictResolution[ignoreMetadataChangesConflictResolutionHash(ignoredMetadata)] {
+			action := IgnoreMetadataChangesConflictResolution[ignoredMetadata.String()]
+			switch action {
 			case "error":
 				severity = diag.Error
 			case "warn":
@@ -347,7 +319,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 			case "none":
 				return nil
 			default:
-				return diag.Errorf("unknown value for 'ignore_metadata_changes_error_level': %s", IgnoreMetadataChangesConflictResolution)
+				return diag.Errorf("unknown value for 'conflict_action': %s", action)
 			}
 
 			return diag.Diagnostics{

@@ -711,7 +711,7 @@ func (c *Config) Client() (*VCDClient, error) {
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
 			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
 			govcd.WithHttpUserAgent(userAgent),
-			govcd.WithIgnoredMetadata(mapTerraformIgnoredMetadata(c.IgnoredMetadata)),
+			govcd.WithIgnoredMetadata(c.IgnoredMetadata),
 		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,

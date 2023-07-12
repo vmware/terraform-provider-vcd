@@ -436,9 +436,10 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		return nil, diag.Errorf("could not process the metadata that needs to be ignored: %s", err)
 	}
 	config.IgnoredMetadata = make([]govcd.IgnoredMetadata, len(ignoredMetadata))
+	IgnoreMetadataChangesConflictResolution = map[string]string{}
 	for i, im := range ignoredMetadata {
 		config.IgnoredMetadata[i] = ignoredMetadata[i].IgnoredMetadata
-		IgnoreMetadataChangesConflictResolution[ignoreMetadataChangesConflictResolutionHash(im.IgnoredMetadata)] = ignoredMetadata[i].ConflictResolution
+		IgnoreMetadataChangesConflictResolution[im.IgnoredMetadata.String()] = ignoredMetadata[i].ConflictResolution
 	}
 
 	vcdClient, err := config.Client()
