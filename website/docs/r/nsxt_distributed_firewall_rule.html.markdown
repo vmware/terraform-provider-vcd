@@ -12,10 +12,10 @@ description: |-
 The Distributed Firewall allows user to segment organization virtual data center entities, such as
 virtual machines, based on virtual machine names and attributes. 
 
-Multiple rules defined with this
-resource will **not be created in parallel** because the API provides no direct endpoint to create a
-single rule and this functionality uses a custom made function that abstracts the "update all"
-endpoint.
+Multiple rules defined with this resource will **not be created in parallel** because Cloud Director
+API provides no direct endpoint to create a single rule. To overcome this,
+`vcd_nsxt_distributed_firewall_rule` calls an "update all rules" API endpoint for each single rule,
+and this call is serialized to avoid data conflicts.
 
 !> There is a different resource
 [`vcd_nsxt_distributed_firewall`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall)
@@ -75,7 +75,7 @@ The following arguments are supported:
   created at the bottom of the list
 
 -> When activating Distributed Firewall with resource
-[`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group) there is a default firewall
+[`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group), there is a default firewall
 rule created which can make inconvenient to use this resource. For that reason, resource
 [`vcd_vdc_group`](/providers/vmware/vcd/latest/docs/resources/vdc_group) has a parameter
 `remove_default_firewall_rule` which can remove default firewall rule.
