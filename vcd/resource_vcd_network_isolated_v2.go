@@ -364,7 +364,7 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 }
 
 func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd.OpenApiOrgVdcNetwork) error {
-	log.Printf("[TRACE] create/update metadata for Network V2")
+	log.Printf("[TRACE] adding/updating metadata to Network V2")
 
 	// Metadata is not supported when the network is in a VDC Group
 	if govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
