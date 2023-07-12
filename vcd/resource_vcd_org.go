@@ -229,7 +229,7 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.Errorf("error adding metadata to Org: %s", err)
 	}
 
-	return genericOrgRead(ctx, d, m)
+	return resourceOrgRead(ctx, d, m)
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
@@ -417,7 +417,7 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)
-	return genericOrgRead(ctx, d, m)
+	return resourceOrgRead(ctx, d, m)
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
@@ -490,12 +490,7 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	return nil
 }
 
-func resourceOrgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return genericOrgRead(ctx, d, m)
-}
-
-// Retrieves an Org resource from vCD
-func genericOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -552,7 +547,7 @@ func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta inte
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagErr := genericOrgRead(ctx, d, adminOrg)
+	diagErr := resourceOrgRead(ctx, d, adminOrg)
 	if diagErr != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
 	}

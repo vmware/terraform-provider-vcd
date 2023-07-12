@@ -299,7 +299,7 @@ func resourceVcdNetworkRoutedCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error adding metadata to routed network: %s", err)
 	}
 
-	return genericVcdNetworkRoutedRead(ctx, d, meta, "resource")
+	return resourceVcdNetworkRoutedRead(ctx, d, meta)
 }
 
 func resourceVcdNetworkRoutedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

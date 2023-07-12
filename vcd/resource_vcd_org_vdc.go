@@ -332,7 +332,7 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	d.SetId(vdc.Vdc.ID)
 	log.Printf("[TRACE] VDC created: %#v", vdc)
 
-	err = createOrUpdateOrgMetadata(d, meta, "create")
+	err = createOrUpdateOrgMetadata(d, meta)
 	if err != nil {
 		return diag.Errorf("error adding metadata to VDC: %s", err)
 	}
@@ -363,15 +363,10 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		dSet(d, "enable_nsxv_distributed_firewall", true)
 	}
 
-	return genericVcdVdcRead(ctx, d, meta, "create")
+	return resourceVcdVdcRead(ctx, d, meta)
 }
 
-func resourceVcdVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVdcRead(ctx, d, meta, "read")
-}
-
-// Fetches information about an existing VDC for a data definition
-func genericVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
@@ -392,7 +387,7 @@ func genericVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc, operation)
+	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -414,7 +409,7 @@ func genericVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc, operation string) diag.Diagnostics {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) diag.Diagnostics {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -622,7 +617,7 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
-	err = createOrUpdateOrgMetadata(d, meta, "update")
+	err = createOrUpdateOrgMetadata(d, meta)
 	if err != nil {
 		return diag.Errorf("error updating VDC metadata: %s", err)
 	}
@@ -667,7 +662,7 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
-	return genericVcdVdcRead(ctx, d, meta, "update")
+	return resourceVcdVdcRead(ctx, d, meta)
 }
 
 func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc, storageProfile *types.Reference, storageConfiguration map[string]interface{}) error {
@@ -1056,9 +1051,9 @@ func addAssignedComputePolicies(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}, operation string) error {
+func createOrUpdateOrgMetadata(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[TRACE] %s metadata for VDC", operation)
+	log.Printf("[TRACE] adding/updating metadata to VDC")
 
 	vcdClient := meta.(*VCDClient)
 

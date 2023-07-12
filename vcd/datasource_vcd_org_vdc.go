@@ -251,7 +251,7 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(adminVdc.AdminVdc.ID)
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc, "read")
+	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
 	if diagErr != nil {
 		return diagErr
 	}
