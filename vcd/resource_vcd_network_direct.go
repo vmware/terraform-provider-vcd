@@ -150,14 +150,14 @@ func resourceVcdNetworkDirectCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error adding metadata to direct network: %s", err)
 	}
 
-	return genericVcdNetworkDirectRead(ctx, d, meta, "resource", "create")
+	return genericVcdNetworkDirectRead(ctx, d, meta, "resource")
 }
 
 func resourceVcdNetworkDirectRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkDirectRead(ctx, d, meta, "resource", "read")
+	return genericVcdNetworkDirectRead(ctx, d, meta, "resource")
 }
 
-func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -242,7 +242,7 @@ func resourceVcdNetworkDirectUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[direct network update] error updating network metadata: %s", err)
 	}
 
-	return genericVcdNetworkDirectRead(ctx, d, meta, "resource", "update")
+	return genericVcdNetworkDirectRead(ctx, d, meta, "resource")
 }
 
 func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool, wanted string) (*govcd.OrgVDCNetwork, error) {

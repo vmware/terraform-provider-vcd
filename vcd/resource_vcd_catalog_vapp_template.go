@@ -137,16 +137,16 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 	log.Printf("[TRACE] Catalog vApp Template created: %s", vappTemplateName)
 
-	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource", "create")
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource")
 }
 
 func resourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource", "read")
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource")
 }
 
 // genericVcdCatalogVappTemplateRead performs a Read operation for the vApp Template resource (origin="resource")
 // and data source (origin="datasource").
-func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vAppTemplate, err := findVAppTemplate(d, vcdClient, origin)
 	if err != nil {
@@ -222,7 +222,7 @@ func resourceVcdCatalogVappTemplateUpdate(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource", "update")
+	return genericVcdCatalogVappTemplateRead(ctx, d, meta, "resource")
 }
 
 func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

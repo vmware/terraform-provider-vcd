@@ -200,14 +200,14 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error adding media item metadata: %s", err)
 	}
 
-	return genericVcdMediaRead(d, meta, "resource", "create")
+	return genericVcdMediaRead(d, meta, "resource")
 }
 
 func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdMediaRead(d, meta, "resource", "read")
+	return genericVcdMediaRead(d, meta, "resource")
 }
 
-func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
+func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	var catalog *govcd.Catalog
@@ -304,7 +304,7 @@ func resourceVcdMediaUpdate(_ context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error updating media item metadata: %s", err)
 	}
-	return genericVcdMediaRead(d, meta, "resource", "update")
+	return genericVcdMediaRead(d, meta, "resource")
 }
 
 func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}, operation string) error {

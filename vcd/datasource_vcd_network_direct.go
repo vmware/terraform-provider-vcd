@@ -98,5 +98,5 @@ func datasourceVcdNetworkDirect() *schema.Resource {
 }
 
 func datasourceVcdNetworkDirectRead(c context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkDirectRead(c, d, meta, "datasource", "read")
+	return genericVcdNetworkDirectRead(c, d, meta, "datasource")
 }

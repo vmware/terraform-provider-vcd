@@ -490,7 +490,7 @@ func genericVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, me
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	diagErr := setMainData(d, vcdClient, disk, diskRecord, operation)
+	diagErr := setMainData(d, vcdClient, disk, diskRecord)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -499,7 +499,7 @@ func genericVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType, operation string) diag.Diagnostics {
+func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType) diag.Diagnostics {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
