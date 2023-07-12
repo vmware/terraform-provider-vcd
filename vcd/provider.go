@@ -211,6 +211,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_ip_space":                                  resourceVcdIpSpace(),                          // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
+	"vcd_cloned_vapp":                               resourceVcdClonedVApp(),                       // 3.10
 }
 
 // Provider returns a terraform.ResourceProvider.
