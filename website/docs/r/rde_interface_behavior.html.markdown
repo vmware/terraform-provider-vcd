@@ -48,10 +48,10 @@ resource "vcd_rde_interface_behavior" "my_behavior3" {
   interface_id = vcd_rde_interface.my_interface.id
   name         = "MyBehavior3"
   execution = {
-    "type": "WebHook",
-    "id": "testWebHook",
-    "href": "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX" ,
-    "_internal_key": "secretKey"
+    "type" : "WebHook",
+    "id" : "testWebHook",
+    "href" : "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX" ,
+    "_internal_key" : "secretKey"
   }
 }
 ```

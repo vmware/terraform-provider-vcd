@@ -76,7 +76,7 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	if desc, ok := d.GetOk("description"); ok {
 		payload.Description = desc.(string)
 	}
-	_, err = rdeType.OverrideBehavior(payload)
+	_, err = rdeType.UpdateBehaviorOverride(payload)
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not %s the Behavior in the RDE Type with ID '%s': %s", operation, operation, rdeTypeId, err)
 	}
