@@ -52,8 +52,6 @@ func TestAccVcdClonedVApp(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-
-					logState("***"),
 					testAccCheckVAppExists(resourceVappFromTemplate, orgName, nsxtVdcName, vappFromTemplate, true),
 					testAccCheckVAppExists(resourceVappFromVapp, orgName, nsxtVdcName, vappFromVapp, true),
 					resource.TestCheckResourceAttr(resourceVappFromTemplate, "name", vappFromTemplate),
