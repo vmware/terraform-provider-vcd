@@ -244,7 +244,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{},
 		return err
 	}
 
-	err = createOrUpdateMetadata(d, meta.(*VCDClient), catalogItem, "catalog_item_metadata", operation)
+	err = createOrUpdateMetadata(d, catalogItem, "catalog_item_metadata")
 	if err != nil {
 		return err
 	}

@@ -129,7 +129,7 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("error retrieving vApp Template %s: %s", vappTemplateName, err)
 	}
 
-	err = createOrUpdateMetadata(d, vcdClient, vAppTemplate, "metadata", "create")
+	err = createOrUpdateMetadata(d, vAppTemplate, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -218,7 +218,7 @@ func resourceVcdCatalogVappTemplateUpdate(ctx context.Context, d *schema.Resourc
 		}
 	}
 
-	err = createOrUpdateMetadata(d, meta.(*VCDClient), vAppTemplate, "metadata", "update")
+	err = createOrUpdateMetadata(d, vAppTemplate, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
 	}

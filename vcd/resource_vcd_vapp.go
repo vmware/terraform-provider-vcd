@@ -217,7 +217,7 @@ func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	err = createOrUpdateMetadata(d, vcdClient, vapp, "metadata", "update")
+	err = createOrUpdateMetadata(d, vapp, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
 	}

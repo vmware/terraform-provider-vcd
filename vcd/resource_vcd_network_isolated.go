@@ -259,7 +259,7 @@ func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	err = createOrUpdateMetadata(d, vcdClient, network, "metadata", "create")
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to isolated network: %s", err)
 	}
@@ -486,7 +486,7 @@ func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error updating isolated network: %s", err)
 	}
 
-	err = createOrUpdateMetadata(d, vcdClient, network, "metadata", "update")
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("error updating isolated network metadata: %s", err)
 	}

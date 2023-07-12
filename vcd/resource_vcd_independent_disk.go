@@ -237,7 +237,7 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(disk.Disk.Id)
 
-	err = createOrUpdateMetadata(d, vcdClient, disk, "metadata", "create")
+	err = createOrUpdateMetadata(d, disk, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to independent disk: %s", err)
 	}
@@ -331,7 +331,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 
 	}
 
-	err = createOrUpdateMetadata(d, vcdClient, disk, "metadata", "update")
+	err = createOrUpdateMetadata(d, disk, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
 	}

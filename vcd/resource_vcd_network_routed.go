@@ -294,7 +294,7 @@ func resourceVcdNetworkRoutedCreate(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	err = createOrUpdateMetadata(d, vcdClient, network, "metadata", "create")
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to routed network: %s", err)
 	}
@@ -672,7 +672,7 @@ func resourceVcdNetworkRoutedUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	err = createOrUpdateMetadata(d, vcdClient, network, "metadata", "update")
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("[routed network update] error updating network metadata: %s", err)
 	}

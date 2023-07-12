@@ -375,5 +375,5 @@ func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, meta interface
 		return nil
 	}
 
-	return createOrUpdateMetadata(d, meta.(*VCDClient), network, "metadata", operation)
+	return createOrUpdateMetadata(d, network, "metadata")
 }

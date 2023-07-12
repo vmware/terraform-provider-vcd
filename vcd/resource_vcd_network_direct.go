@@ -145,7 +145,7 @@ func resourceVcdNetworkDirectCreate(ctx context.Context, d *schema.ResourceData,
 	}
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	err = createOrUpdateMetadata(d, vcdClient, network, "metadata", "create")
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding metadata to direct network: %s", err)
 	}
@@ -237,7 +237,7 @@ func resourceVcdNetworkDirectUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("[direct network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 
-	err = createOrUpdateMetadata(d, vcdClient, network, "metadata", "update")
+	err = createOrUpdateMetadata(d, network, "metadata")
 	if err != nil {
 		return diag.Errorf("[direct network update] error updating network metadata: %s", err)
 	}

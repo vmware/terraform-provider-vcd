@@ -338,7 +338,7 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}, o
 		return fmt.Errorf("unable to find media item: %s", err)
 	}
 
-	return createOrUpdateMetadata(d, vcdClient, media, "metadata", operation)
+	return createOrUpdateMetadata(d, media, "metadata")
 }
 
 // resourceVcdCatalogMediaImport is responsible for importing the resource.

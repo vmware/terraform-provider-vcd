@@ -264,14 +264,13 @@ func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 // TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataEntryInVcd`
 // once "metadata" field is removed.
-func createOrUpdateMetadata(d *schema.ResourceData, vcdClient *VCDClient, resource metadataCompatible, attributeName, operation string) error {
+func createOrUpdateMetadata(d *schema.ResourceData, resource metadataCompatible, attributeName string) error {
 	// We invoke the new "metadata_entry" metadata creation here to have it centralized and reduce duplication.
 	// Ideally, once "metadata" is removed in a new major version, the implementation of `createOrUpdateMetadataEntryInVcd` should
 	// just go here in the `createOrUpdateMetadata` body.
 	err := createOrUpdateMetadataEntryInVcd(d, resource)
-
 	if err != nil {
-		return fmt.Errorf("error on metadata_entry %s: %s", operation, err)
+		return err
 	}
 
 	if d.HasChange(attributeName) && !d.HasChange("metadata_entry") {
@@ -289,13 +288,13 @@ func createOrUpdateMetadata(d *schema.ResourceData, vcdClient *VCDClient, resour
 		for _, k := range toBeRemovedMetadata {
 			err = resource.DeleteMetadataEntry(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata on %s: %s", operation, err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		if len(newMetadata) > 0 {
 			err = resource.MergeMetadata(types.MetadataStringValue, newMetadata)
 			if err != nil {
-				return fmt.Errorf("error adding metadata on %s: %s", operation, err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
