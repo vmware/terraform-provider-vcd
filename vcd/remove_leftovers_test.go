@@ -27,6 +27,7 @@ type entityList []entityDef
 // despite having a name that starts with `Test` or `test`
 // Use only one of the following type identifiers:
 // vcd_org
+// vcd_provider_vdc
 // vcd_org_vdc
 // vcd_catalog
 // vcd_catalog_media
@@ -89,7 +90,7 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
+var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -106,6 +107,35 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		}
 	}
 
+	// --------------------------------------------------------------
+	// Provider VDCs
+	// --------------------------------------------------------------
+	providerVdcs, err := govcdClient.QueryProviderVdcs()
+	if err != nil {
+		return fmt.Errorf("error retrieving provider VDCs: %s", err)
+	}
+	for _, pvdcRec := range providerVdcs {
+		pvdc, err := govcdClient.GetProviderVdcExtendedByName(pvdcRec.Name)
+		if err != nil {
+			return fmt.Errorf("error retrieving provider VDC '%s': %s", pvdcRec.Name, err)
+		}
+		tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, pvdcRec.Name, "vcd_provider_vdc", 0, verbose)
+		if tobeDeleted {
+			fmt.Printf("\t REMOVING Provider VDC %s\n", pvdcRec.Name)
+			err = pvdc.Disable()
+			if err != nil {
+				return fmt.Errorf("error disabling provider VDC '%s': %s", pvdcRec.Name, err)
+			}
+			task, err := pvdc.Delete()
+			if err != nil {
+				return fmt.Errorf("error deleting provider VDC '%s': %s", pvdcRec.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("error finoshing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
+			}
+		}
+	}
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
 	if err != nil {
@@ -309,6 +339,25 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if err != nil {
 		return err
 	}
+
+	// --------------------------------------------------------------
+	// Plugins
+	// --------------------------------------------------------------
+	uiPlugins, err := govcdClient.GetAllUIPlugins()
+	if err != nil {
+		return fmt.Errorf("error retrieving UI Plugins: %s", err)
+	}
+	for _, uiPlugin := range uiPlugins {
+		// This will delete all UI Plugins that match the `isTest` regex.
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, uiPlugin.UIPluginMetadata.PluginName, "vcd_ui_plugin", 1, verbose)
+		if toBeDeleted {
+			err = deleteUIPlugin(uiPlugin)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -652,6 +701,15 @@ func deleteRdeType(rdeType *govcd.DefinedEntityType) error {
 	err := rdeType.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting RDE type '%s': %s", rdeType.DefinedEntityType.ID, err)
+	}
+	return nil
+}
+
+func deleteUIPlugin(uiPlugin *govcd.UIPlugin) error {
+	fmt.Printf("\t\t REMOVING UI PLUGIN %s\n", uiPlugin.UIPluginMetadata.ID)
+	err := uiPlugin.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
 	return nil
 }
