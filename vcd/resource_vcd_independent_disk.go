@@ -242,7 +242,7 @@ func resourceVcdIndependentDiskCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error adding metadata to independent disk: %s", err)
 	}
 
-	return genericVcdIndependentDiskRead(ctx, d, meta, "create")
+	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
 func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -336,7 +336,7 @@ func resourceVcdIndependentDiskUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	return genericVcdIndependentDiskRead(ctx, d, meta, "update")
+	return resourceVcdIndependentDiskRead(ctx, d, meta)
 }
 
 // lockIndependentDiskOpsGlobally acquire lock for independent disk resource using key `globalIndependentDiskLockKey`
@@ -433,11 +433,7 @@ func attachBackVms(vcdClient *VCDClient, disk *govcd.Disk, diskDetailsForReAttac
 	return nil
 }
 
-func resourceVcdIndependentDiskRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdIndependentDiskRead(ctx, d, meta, "read")
-}
-
-func genericVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)

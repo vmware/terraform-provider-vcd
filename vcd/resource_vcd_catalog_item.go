@@ -130,7 +130,7 @@ func resourceVcdCatalogItemCreate(ctx context.Context, d *schema.ResourceData, m
 
 	log.Printf("[TRACE] Catalog item created: %s", itemName)
 
-	err = createOrUpdateCatalogItemMetadata(d, meta, "create")
+	err = createOrUpdateCatalogItemMetadata(d, meta)
 	if diagError != nil {
 		return diag.FromErr(err)
 	}
@@ -162,7 +162,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
-	// We can't use updateMetadataInState(d, vcdClient, "vcd_catalog_item", catalogItem) because the attribute name is different.
+	// We can't use updateMetadataInState(d, catalogItem) because the attribute name is different.
 	// We have three metadata attributes here.
 	metadata, err := catalogItem.GetMetadata()
 	if err != nil {
@@ -220,14 +220,14 @@ func resourceVcdCatalogItemUpdate(_ context.Context, d *schema.ResourceData, met
 		}
 	}
 
-	err := createOrUpdateCatalogItemMetadata(d, meta, "update")
+	err := createOrUpdateCatalogItemMetadata(d, meta)
 	if err != nil {
 		return diag.Errorf("error updating catalog item metadata: %s", err)
 	}
 	return nil
 }
 
-func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}, operation string) error {
+func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 

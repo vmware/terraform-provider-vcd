@@ -195,12 +195,12 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	log.Printf("[TRACE] Catalog media created: %#v", mediaName)
 
-	err = createOrUpdateMediaItemMetadata(d, meta, "create")
+	err = createOrUpdateMediaItemMetadata(d, meta)
 	if err != nil {
 		return diag.Errorf("error adding media item metadata: %s", err)
 	}
 
-	return genericVcdMediaRead(d, meta, "resource")
+	return resourceVcdMediaRead(ctx, d, meta)
 }
 
 func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -299,17 +299,17 @@ func resourceVcdMediaDelete(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 // currently updates only metadata
-func resourceVcdMediaUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := createOrUpdateMediaItemMetadata(d, meta, "update")
+func resourceVcdMediaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := createOrUpdateMediaItemMetadata(d, meta)
 	if err != nil {
 		return diag.Errorf("error updating media item metadata: %s", err)
 	}
-	return genericVcdMediaRead(d, meta, "resource")
+	return resourceVcdMediaRead(ctx, d, meta)
 }
 
-func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}, operation string) error {
+func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[TRACE] %s metadata for media item", operation)
+	log.Printf("[TRACE] adding/updating metadata for media item")
 
 	vcdClient := meta.(*VCDClient)
 
