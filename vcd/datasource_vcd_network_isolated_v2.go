@@ -84,19 +84,17 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 			},
 			"secondary_gateway": {
 				Type:        schema.TypeString,
-				ForceNew:    true,
 				Computed:    true,
 				Description: "Secondary gateway (can only be IPv6 and requires enabled Dual Stack mode)",
 			},
 			"secondary_prefix_length": {
 				Type:        schema.TypeString,
-				ForceNew:    true,
 				Computed:    true,
 				Description: "Secondary prefix (can only be IPv6 and requires enabled Dual Stack mode)",
 			},
 			"secondary_static_ip_pool": {
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Computed:    true,
 				Description: "Secondary IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
 			},

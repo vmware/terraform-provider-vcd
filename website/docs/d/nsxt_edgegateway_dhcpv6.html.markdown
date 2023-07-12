@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_settings"
-sidebar_current: "docs-vcd-datasource-nsxt-alb-settings"
+sidebar_current: "docs-vcd-data-source-nsxt-edge-dhcpv6"
 description: |-
-  Provides a datasource to read DHCPv6 configuration for NSX-T Edge Gateways.
+  Provides a data source to read DHCPv6 configuration for NSX-T Edge Gateways.
 ---
 
 # vcd\_nsxt\_edgegateway\_dhcpv6
 
-Provides a datasource to read DHCPv6 configuration for NSX-T Edge Gateways.
+Provides a data source to read DHCPv6 configuration for NSX-T Edge Gateways.
 
 ## Example Usage
 
