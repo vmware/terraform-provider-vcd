@@ -11,7 +11,7 @@ description: |-
 Provides a data source for a resource pool attached to a vCenter. A resource pool is an essential component of a Provider VDC.
 
 
-~> Note 1: this data source requires system administrator privileges
+~> Note 1: this data source requires System Administrator privileges
 
 ~> Note 2: you can create or modify a resource pool using [vSphere provider](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/resource_pool)
 

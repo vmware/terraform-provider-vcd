@@ -8,12 +8,12 @@ description: |-
 
 # vcd\_provider\_vdc
 
-Gives a VMware Cloud Director Provider VDC resource. This resource can be used to create, modify, and delete a Provider VDC and use its 
+Provides a VMware Cloud Director Provider VDC resource. This resource can be used to create, modify, and delete a Provider VDC and use its 
 data within other resources or data sources.
 
 Supported in provider *v3.10+*
 
-~> Note: this resource requires system administrator privileges
+~> Note: this resource requires System Administrator privileges
 
 ## Example Usage 1
 
@@ -79,18 +79,18 @@ resource "vcd_provider_vdc" "pvdc1" {
 The following arguments are supported:
  
 * `name` - (Required) Provider VDC name
-* `description` - (Optional) description of the Provider VDC.
+* `description` - (Optional) Description of the Provider VDC.
 * `is_enabled` - (Optional) True if this Provider VDC is enabled and can provide resources to organization VDCs. A Provider VDC is always enabled on creation.
 * `nsxt_manager_id` - (Required) ID of the registered NSX-T Manager that backs networking operations for this Provider VDC.
 * `highest_supported_hardware_version` - (Required) The highest virtual hardware version supported by this Provider VDC. This value cannot be changed to a lower version, and can only be updated when adding a new resource pool.
 * `storage_profile_names` - (Required) Set of Storage Profile names used to create this provider VDC.
-* `resource_pool_ids` - (Required) Set of IDs of the Resource Pools backing this provider VDC. (Note: only one resource pool can be set at creation)
+* `resource_pool_ids` - (Required) Set of IDs of the Resource Pools backing this provider VDC. (Note: only one resource pool can be set at creation).
 * `vcenter_id` - (Required) ID of the vCenter Server that provides the Resource Pools and Datastores.
 * `network_pool_ids` - (Required) Set IDs of the Network Pools used by this Provider VDC.
 
 ## Attribute reference
 
-* `status` - Status of the Provider VDC, it can be -1 (creation failed), 0 (not ready), 1 (ready), 2 (unknown) or 3 (unrecognized).
+* `status` - Status of the Provider VDC: -1 (creation failed), 0 (not ready), 1 (ready), 2 (unknown) or 3 (unrecognized).
 * `capabilities` - Set of virtual hardware versions supported by this Provider VDC.
 * `compute_capacity` - An indicator of CPU and memory capacity. See [Compute Capacity](#compute-capacity) below for details.
 * `compute_provider_scope` - Represents the compute fault domain for this Provider VDC. This value is a tenant-facing tag that is shown to tenants when viewing fault domains of the child Organization VDCs (for example, a VDC Group).
@@ -98,7 +98,7 @@ The following arguments are supported:
 * `external_network_ids` - Set of IDs of External Networks.
 * `storage_profile_ids` - Set of IDs to the Storage Profiles available to this Provider VDC.
 * `universal_network_pool_id` - ID of the universal network reference.
-* `host_ids` - Set with all the hosts which are connected to VC server.
+* `host_ids` - Set containing all the hosts which are connected to VC server.
 <!--
 // metadata to be added soon
 * `metadata` - (Deprecated) Use `metadata_entry` instead. Key and value pairs for Provider VDC Metadata.
@@ -136,7 +136,7 @@ The `metadata_entry` is a set of metadata entries that have the following struct
 * `value` - Value of this metadata entry.
 * `type` - Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
 * `user_access` - User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
-* `is_system` - Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
+* `is_system` - Domain for this metadata entry. `true` if it belongs to `SYSTEM`, `false` if it belongs to `GENERAL`.
 
 ## Importing
 
