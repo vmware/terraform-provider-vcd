@@ -315,7 +315,7 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin, operat
 	dSet(d, "href", vapp.VApp.HREF)
 	dSet(d, "description", vapp.VApp.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", operation, vapp)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", vapp)
 	if diagErr != nil {
 		return diag.Errorf("[vapp read] error setting metadata: %s", err)
 	}

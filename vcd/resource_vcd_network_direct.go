@@ -206,7 +206,7 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_direct", operation, network)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_direct", network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set direct network metadata: %s", err)
 		return diagErr

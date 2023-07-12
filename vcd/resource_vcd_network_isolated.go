@@ -339,7 +339,7 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_isolated", operation, network)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_isolated", network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
 		return diagErr

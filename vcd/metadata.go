@@ -340,7 +340,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 
 // updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType, operation string, receiverObject metadataCompatible) diag.Diagnostics {
+func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
 	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
 	if diagErr != nil {
 		return diagErr

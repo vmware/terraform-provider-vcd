@@ -182,7 +182,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 		dSet(d, "vdc_id", "urn:vcloud:vdc:"+extractUuid(vappTemplateRec.Vdc))
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", operation, vAppTemplate)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
 	if diagErr != nil {
 		return diag.Errorf("Unable to set vApp template metadata: %s", err)
 	}

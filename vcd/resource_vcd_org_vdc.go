@@ -476,7 +476,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", operation, adminVdc)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
 		return diagErr

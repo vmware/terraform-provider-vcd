@@ -481,7 +481,7 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 		}
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", operation, adminOrg)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", adminOrg)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Org metadata")
 		return diagErr

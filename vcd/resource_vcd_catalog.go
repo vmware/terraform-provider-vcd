@@ -286,7 +286,7 @@ func genericResourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, me
 		dSet(d, "password", "")
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", operation, adminCatalog)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
 		return diagErr
