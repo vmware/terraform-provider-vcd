@@ -15,8 +15,10 @@ func TestAccVcdClonedVApp(t *testing.T) {
 	var vappFromTemplate = "TestAccClonedVAppFromTemplate"
 	var vappFromVapp = "TestAccClonedVAppFromVapp"
 	var vappDescription = "Test cloned vApp from Template"
-	vappTemplateName := "small-3VM"
+	vappTemplateName := "Test-small-3VM"
 	firstVmName := "firstVM"
+	//secondVmName := "secondVM"
+	//thirdVmName := "thirdVM"
 	orgName := testConfig.VCD.Org
 	nsxtVdcName := testConfig.Nsxt.Vdc
 
@@ -24,7 +26,8 @@ func TestAccVcdClonedVApp(t *testing.T) {
 		"Org":                  orgName,
 		"Vdc":                  nsxtVdcName,
 		"Catalog":              testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":          vappTemplateName,
+		"VappTemplateName":     vappTemplateName,
+		"OvaPath":              testConfig.Ova.OvaVappMultiVmsPath,
 		"VappFromTemplateName": vappFromTemplate,
 		"VappFromVappName":     vappFromVapp,
 		"VappDescription":      vappDescription,
@@ -36,12 +39,16 @@ func TestAccVcdClonedVApp(t *testing.T) {
 
 	configText := templateFill(testAccVcdClonedVApp, params)
 
-	debugPrintf("#[DEBUG] CONFIGURATION cloned vApp: %s\n", configText)
+	params["FuncName"] = t.Name() + "-DS"
+	configTextDs := templateFill(testAccVcdClonedVApp+testAccVcdClonedVApDataSources, params)
 
-	resourceVappFromTemplate := "vcd_cloned_vapp." + vappFromTemplate
-	datasourceVappFromTemplate := "data.vcd_vapp." + vappFromTemplate
-	resourceVappFromVapp := "vcd_cloned_vapp." + vappFromVapp
-	datasourceVappFromVapp := "data.vcd_vapp." + vappFromVapp
+	debugPrintf("#[DEBUG] CONFIGURATION cloned vApp: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION cloned vApp data sources: %s\n", configTextDs)
+
+	resourceVappFromTemplate := "vcd_cloned_vapp.vapp_from_template"
+	datasourceVappFromTemplate := "data.vcd_vapp.vapp_from_template"
+	resourceVappFromVapp := "vcd_cloned_vapp.vapp_from_vapp"
+	datasourceVappFromVapp := "data.vcd_vapp.vapp_from_vapp"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
@@ -56,18 +63,31 @@ func TestAccVcdClonedVApp(t *testing.T) {
 					testAccCheckVAppExists(resourceVappFromVapp, orgName, nsxtVdcName, vappFromVapp, true),
 					resource.TestCheckResourceAttr(resourceVappFromTemplate, "name", vappFromTemplate),
 					resource.TestCheckResourceAttr(resourceVappFromTemplate, "description", vappDescription),
-					resource.TestCheckResourceAttr(resourceVappFromTemplate, "status", "1"),
+					resource.TestCheckResourceAttr(resourceVappFromTemplate, "status", "4"), // POWERED_ON
 					resource.TestCheckResourceAttr(resourceVappFromVapp, "name", vappFromVapp),
 					resource.TestCheckResourceAttr(resourceVappFromVapp, "description", vappDescription),
-					resource.TestCheckResourceAttr(resourceVappFromVapp, "status", "1"),
+					resource.TestCheckResourceAttr(resourceVappFromVapp, "status", "4"), // POWERED_ON
+				),
+			},
+			{
+				Config: configTextDs,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVAppExists(resourceVappFromTemplate, orgName, nsxtVdcName, vappFromTemplate, true),
+					testAccCheckVAppExists(resourceVappFromVapp, orgName, nsxtVdcName, vappFromVapp, true),
+					resource.TestCheckResourceAttr(resourceVappFromTemplate, "name", vappFromTemplate),
+					resource.TestCheckResourceAttr(resourceVappFromTemplate, "description", vappDescription),
+					resource.TestCheckResourceAttr(resourceVappFromTemplate, "status", "4"),
+					resource.TestCheckResourceAttr(resourceVappFromVapp, "name", vappFromVapp),
+					resource.TestCheckResourceAttr(resourceVappFromVapp, "description", vappDescription),
+					resource.TestCheckResourceAttr(resourceVappFromVapp, "status", "4"),
 					resource.TestCheckResourceAttrPair(resourceVappFromTemplate, "name", datasourceVappFromTemplate, "name"),
 					resource.TestCheckResourceAttrPair(resourceVappFromTemplate, "href", datasourceVappFromTemplate, "href"),
 					resource.TestCheckResourceAttrPair(resourceVappFromTemplate, "description", datasourceVappFromTemplate, "description"),
 					resource.TestCheckResourceAttrPair(resourceVappFromVapp, "name", datasourceVappFromVapp, "name"),
 					resource.TestCheckResourceAttrPair(resourceVappFromVapp, "href", datasourceVappFromVapp, "href"),
 					resource.TestCheckResourceAttrPair(resourceVappFromVapp, "description", datasourceVappFromVapp, "description"),
-					resource.TestCheckResourceAttr("data.vcd_vapp_vm.first_vm_from_template", "name", firstVmName),
-					resource.TestCheckResourceAttr("data.vcd_vapp_vm.first_vm_from_vapp", "name", firstVmName),
+					resource.TestCheckResourceAttr("data.vcd_vapp_vm.first_vm_from_template", "status", "4"),
+					resource.TestCheckResourceAttr("data.vcd_vapp_vm.first_vm_from_vapp", "status", "4"),
 				),
 			},
 		},
@@ -77,14 +97,6 @@ func TestAccVcdClonedVApp(t *testing.T) {
 
 func testAccCheckVAppExists(resourceDef, orgName, vdcName, vAppName string, wantExist bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceDef]
-		if !ok {
-			return fmt.Errorf("not found: %s", resourceDef)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no vApp ID is set")
-		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
@@ -111,14 +123,18 @@ func testAccCheckVAppExists(resourceDef, orgName, vdcName, vAppName string, want
 
 const testAccVcdClonedVApp = `
 data "vcd_catalog" "cat" {
-  org  = "{{.Org}}"
-  name = "{{.Catalog}}"
+ org  = "{{.Org}}"
+ name = "{{.Catalog}}"
 }
 
-data "vcd_catalog_vapp_template" "tmpl" {
+resource "vcd_catalog_vapp_template" "multi-vm-template" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.cat.id
-  name       = "{{.CatalogItem}}"
+
+  name                 = "{{.VappTemplateName}}"
+  description          = "vApp template with multiple VMs"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = 5
 }
 
 resource "vcd_cloned_vapp" "vapp_from_template" {
@@ -127,7 +143,7 @@ resource "vcd_cloned_vapp" "vapp_from_template" {
   name          = "{{.VappFromTemplateName}}"
   description   = "{{.VappDescription}}"
   power_on      = true
-  source_id     = data.vcd_catalog_vapp_template.tmpl.id
+  source_id     = vcd_catalog_vapp_template.multi-vm-template.id
   source_type   = "template"
   delete_source = false
 }
@@ -142,31 +158,32 @@ resource "vcd_cloned_vapp" "vapp_from_vapp" {
   source_type   = "vapp"
   delete_source = false
 }
+`
 
+const testAccVcdClonedVApDataSources = `
 data "vcd_vapp" "vapp_from_template" {
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  name = vcd_cloned_vapp.vapp_from_template.name
+ org  = "{{.Org}}"
+ vdc  = "{{.Vdc}}"
+ name = vcd_cloned_vapp.vapp_from_template.name
 }
 
 data "vcd_vapp" "vapp_from_vapp" {
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  name = vcd_cloned_vapp.vapp_from_vapp.name
+ org  = "{{.Org}}"
+ vdc  = "{{.Vdc}}"
+ name = vcd_cloned_vapp.vapp_from_vapp.name
 }
 
 data "vcd_vapp_vm" "first_vm_from_template" {
-  org       = "{{.Org}}"
-  vdc       = "{{.Vdc}}"
-  name      = "{{.FirstVmName}}"
-  vapp_name = data.vcd_vapp.vapp_from_template.name
+ org       = "{{.Org}}"
+ vdc       = "{{.Vdc}}"
+ name      = vcd_cloned_vapp.vapp_from_template.vm_list[0]
+ vapp_name = data.vcd_vapp.vapp_from_template.name
 }
 
 data "vcd_vapp_vm" "first_vm_from_vapp" {
-  org       = "{{.Org}}"
-  vdc       = "{{.Vdc}}"
-  name      = "{{.FirstVmName}}"
-  vapp_name = data.vcd_vapp.vapp_from_vapp.name
+ org       = "{{.Org}}"
+ vdc       = "{{.Vdc}}"
+ name      = vcd_cloned_vapp.vapp_from_vapp.vm_list[0]
+ vapp_name = data.vcd_vapp.vapp_from_vapp.name
 }
-
 `
