@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_distributed_firewall_rule"
 sidebar_current: "docs-vcd-data-source-nsxt-distributed-firewall-rule"
 description: |-
-  The Distributed Firewall data source a single rules for a particular VDC Group.
+  The Distributed Firewall data source reads a single rule for a particular VDC Group.
 ---
 
 # vcd\_nsxt\_distributed\_firewall\_rule

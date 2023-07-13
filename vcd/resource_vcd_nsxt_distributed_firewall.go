@@ -157,7 +157,7 @@ func resourceVcdNsxtDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Create/Update] error retreiving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Create/Update] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
