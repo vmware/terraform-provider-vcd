@@ -1949,7 +1949,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 
 	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
 	if diagErr != nil {
-		return diag.Errorf("[VM read] set metadata: %s", err)
+		return diagErr
 	}
 
 	if vm.VM.StorageProfile != nil {
