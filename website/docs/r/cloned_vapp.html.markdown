@@ -11,8 +11,14 @@ description: |-
 Provides a VMware Cloud Director Cloned vApp resource. This can be used to create vApps from either a vApp template or another vApp.
 This resource should be used only on creation, although deletion also works. The result of using this resource is a
 regular vApp ([`vcd_vapp`](/providers/vmware/vcd/latest/docs/resources/vapp)), with all its contents derived by either a vApp template or another vApp.
-As of this first implementation, no configuration is available: the source is simply cloned from the source vApp template
+As of this first implementation, no configuration is available: the vApp is simply cloned from the source vApp template
 or vApp.
+
+This resource is useful in two scenarios:
+
+* When users want to create a vApp from a vApp template containing several VMs.
+* When users want to move or copy a vApp. The "move" means using this resource with `delete_source = true`, and it is in
+  fact a copy followed by a deletion.
 
 Supported in provider *v3.10+*
 
@@ -65,7 +71,7 @@ The following arguments are supported:
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `false`.
 * `source_type` - (Required) The type of the source to use: one of `template` or `vapp`.
 * `source_id` - (Required) The ID of the source to use.
-* `delete_source` - (Optional) A boolean value stating if the source entity should be deleted after creation.
+* `delete_source` - (Optional) A boolean value of `true` or `false` stating if the source entity should be deleted after creation.
   A source vApp can only be deleted if it is fully powered off.
 
 ## Attribute reference
