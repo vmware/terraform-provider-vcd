@@ -17,7 +17,6 @@ var (
 	// IgnoreMetadataChangesConflictActions can hold values "error", "warn" or "none", and tells Terraform whether it should
 	// give an error or just a warning if any Metadata Entry configured in HCL is affected by the 'ignore_metadata_changes'
 	// configuration.
-	// The keys of this map are obtained with ignoreMetadataChangesConflictResolutionHash.
 	IgnoreMetadataChangesConflictActions map[string]string
 )
 
