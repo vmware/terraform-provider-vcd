@@ -16,14 +16,12 @@ func datasourceVcdNsxtEdgeGatewayStaticRoute() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Edge gateway ID for Static Route configuration",
 			},
 			"name": {
@@ -60,8 +58,7 @@ func datasourceVcdNsxtEdgeGatewayStaticRoute() *schema.Resource {
 						},
 						"scope": {
 							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
+							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -144,12 +141,12 @@ func datasourceVcdNsxtEdgeGatewayStaticRouteRead(ctx context.Context, d *schema.
 		}
 
 		if len(filteredByNetworkCidr) == 0 {
-			return diag.Errorf("%s no NSX-T Edge Gateway Static Routes found with Name '%s' and Network CIDR '%s'",
+			return diag.Errorf("[NSX-T Edge Gateway Static Route DS read] %s no NSX-T Edge Gateway Static Routes found with Name '%s' and Network CIDR '%s'",
 				govcd.ErrorEntityNotFound, searchName, searchNetworkCidr)
 		}
 
 		if len(filteredByNetworkCidr) > 1 {
-			return diag.Errorf("cannot identify single result. '%d' NSX-T Edge Gateway Static Routes found.", len(filteredByNetworkCidr))
+			return diag.Errorf("[NSX-T Edge Gateway Static Route DS read] cannot identify single result. '%d' NSX-T Edge Gateway Static Routes found.", len(filteredByNetworkCidr))
 		}
 
 		// found exactly one value
@@ -157,7 +154,7 @@ func datasourceVcdNsxtEdgeGatewayStaticRouteRead(ctx context.Context, d *schema.
 	}
 
 	if foundResult == nil {
-		return diag.Errorf("%s no NSX-T Edge Gateway Static Routes found", govcd.ErrorEntityNotFound)
+		return diag.Errorf("[NSX-T Edge Gateway Static Route DS read] %s no NSX-T Edge Gateway Static Routes found", govcd.ErrorEntityNotFound)
 	}
 
 	d.SetId(foundResult.NsxtEdgeGatewayStaticRoute.ID)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -64,9 +65,10 @@ func resourceVcdNsxtEdgeGatewayStaticRoute() *schema.Resource {
 							Description: "IP Address of next hop",
 						},
 						"admin_distance": {
-							Type:        schema.TypeInt,
-							Required:    true,
-							Description: "Admin distance of next hop",
+							Type:         schema.TypeInt,
+							Required:     true,
+							Description:  "Admin distance of next hop",
+							ValidateFunc: validation.IntAtLeast(1),
 						},
 						"scope": {
 							Type:     schema.TypeList,
