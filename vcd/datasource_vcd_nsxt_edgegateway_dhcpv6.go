@@ -23,11 +23,6 @@ func datasourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 				Required:    true,
 				Description: "Edge gateway ID for DHCPv6 configuration",
 			},
-			"enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "Boolean flag if DHCPv6 is enabled",
-			},
 			"mode": {
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -51,6 +51,10 @@ func TestAccVcdNsxtEdgeDhcpV6(t *testing.T) {
 	configText4 := templateFill(testAccVcdNsxtEdgeDhcpV6Step4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
+	params["FuncName"] = t.Name() + "-step5"
+	configText5 := templateFill(testAccVcdNsxtEdgeDhcpV6Step5, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -67,10 +71,8 @@ func TestAccVcdNsxtEdgeDhcpV6(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "mode", "DHCPv6"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "mode", "DHCPv6"),
 				),
 			},
@@ -100,7 +102,6 @@ func TestAccVcdNsxtEdgeDhcpV6(t *testing.T) {
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "mode", "SLAAC"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "domain_names.#", "2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "dns_servers.#", "2"),
@@ -110,7 +111,7 @@ func TestAccVcdNsxtEdgeDhcpV6(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "dns_servers.*", "2001:4860:4860::8844"),
 
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "enabled", "true"),
+					// resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "mode", "SLAAC"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "domain_names.#", "2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "dns_servers.#", "2"),
@@ -124,16 +125,24 @@ func TestAccVcdNsxtEdgeDhcpV6(t *testing.T) {
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "mode", "SLAAC"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "domain_names.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "dns_servers.#", "0"),
 
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "mode", "SLAAC"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "domain_names.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "dns_servers.#", "0"),
+				),
+			},
+			{
+				Config: configText5,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc", "mode", "DISABLED"),
+
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway_dhcpv6.testing-in-vdc-group", "mode", "DISABLED"),
 				),
 			},
 		},
@@ -171,16 +180,14 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  enabled = true
-  mode    = "DHCPv6"
+  mode = "DHCPv6"
 }
 
 resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc-group" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
 
-  enabled = true
-  mode    = "DHCPv6"
+  mode = "DHCPv6"
 }
 `
 
@@ -202,7 +209,6 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  enabled      = true
   mode         = "SLAAC"
   domain_names = ["non-existing.org.tld","fake.org.tld"]
   dns_servers  = ["2001:4860:4860::8888","2001:4860:4860::8844"]
@@ -212,7 +218,6 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc-group" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
 
-  enabled      = true
   mode         = "SLAAC"
   domain_names = ["non-existing.org.tld","fake.org.tld"]
   dns_servers  = ["2001:4860:4860::8888","2001:4860:4860::8844"]
@@ -224,16 +229,30 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  enabled = true
-  mode    = "SLAAC"
+  mode = "SLAAC"
 }
 
 resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc-group" {
   org             = "{{.Org}}"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
 
-  enabled = true
-  mode    = "SLAAC"
+  mode = "SLAAC"
+}
+`
+
+const testAccVcdNsxtEdgeDhcpV6Step5 = testAccVcdNsxtEdgeDhcpV6Shared + `
+resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
+
+  mode = "DISABLED"
+}
+
+resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc-group" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc-group.id
+
+  mode = "DISABLED"
 }
 `
 

@@ -36,15 +36,26 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "slaac-mode" {
 }
 ```
 
+## Example Usage (Service Disabled)
+
+```hcl
+resource "vcd_nsxt_edgegateway_dhcpv6" "slaac-mode" {
+  org             = "datacloud"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
+
+  mode = "DISABLED"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org` - (Required) Org in which the NSX-T Edge Gateway is located
 * `edge_gateway_id` - (Required) NSX-T Edge Gateway ID
-* `enabled` - (Required) Boolean flag if DHCPv6 is enabled or disabled.
-* `mode` - (Required) One of `SLAAC` (Stateless Address Autoconfiguration) or `DHCPv6` (Dynamic Host
-  Configuration Protocol)
+* `mode` - (Required) One of `SLAAC` (Stateless Address Autoconfiguration), `DHCPv6` (Dynamic Host
+  Configuration Protocol) or `DISABLED` (to disable the service). **Note:** destroying the resource
+  will also disable DHCPv6.
 * `domain_names` - (Optional) Set of domain names (only applicable for `DHCPv6` mode)
 * `dns_servers` - (Optional) Set of IPv6 DNS servers (only applicable for `DHCPv6` mode)
 

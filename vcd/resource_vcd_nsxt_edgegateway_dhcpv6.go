@@ -37,16 +37,11 @@ func resourceVcdNsxtEdgegatewayDhcpV6() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway ID for Rate limiting (DHCPv6) configuration",
 			},
-			"enabled": {
-				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "Boolean flag if DHCPv6 should be enabled",
-			},
 			"mode": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "DHCPv6 configuration mode. One of 'SLAAC', 'DHCPv6'",
-				ValidateFunc: validation.StringInSlice([]string{"SLAAC", "DHCPv6"}, true),
+				Description:  "DHCPv6 configuration mode. One of 'SLAAC', 'DHCPv6', 'DISABLED'",
+				ValidateFunc: validation.StringInSlice([]string{"SLAAC", "DHCPv6", "DISABLED"}, true),
 			},
 			"domain_names": {
 				Type:        schema.TypeSet,
@@ -156,7 +151,7 @@ func resourceVcdNsxtEdgegatewayDhcpV6Delete(ctx context.Context, d *schema.Resou
 	}
 
 	// Disabling DHCPv6 configuration requires at least Mode field
-	_, err = nsxtEdge.UpdateSlaacProfile(&types.NsxtEdgeGatewaySlaacProfile{Mode: "SLAAC", Enabled: false})
+	_, err = nsxtEdge.UpdateSlaacProfile(&types.NsxtEdgeGatewaySlaacProfile{Mode: "DISABLED", Enabled: false})
 	if err != nil {
 		return diag.Errorf("[dhcpv6 (SLAAC Profile) delete] error updating DHCPv6 Profile: %s", err)
 	}
@@ -198,8 +193,15 @@ func resourceVcdNsxtEdgegatewayDhcpV6Import(ctx context.Context, d *schema.Resou
 }
 
 func getNsxtEdgeGatewaySlaacProfileType(d *schema.ResourceData) (*types.NsxtEdgeGatewaySlaacProfile, error) {
+	// The API has an ugly behavior that it uses two fields for disabling the service -
+	// `mode=DISABLED` and `enabled=false`
+	// Asking a user to match both fields looks to be inconvenient therefore we rely on `mode` field
+	// and set Enabled to `true` whenever `mode=DISABLED`
+
+	mode := d.Get("mode").(string)
+
 	slaacProfile := &types.NsxtEdgeGatewaySlaacProfile{
-		Enabled: d.Get("enabled").(bool),
+		Enabled: mode != "DISABLED", // whenever mode != DISABLED - the service is enabled
 		Mode:    d.Get("mode").(string),
 	}
 
@@ -217,7 +219,7 @@ func getNsxtEdgeGatewaySlaacProfileType(d *schema.ResourceData) (*types.NsxtEdge
 }
 
 func setNsxtEdgeGatewaySlaacProfileData(d *schema.ResourceData, slaacProfile *types.NsxtEdgeGatewaySlaacProfile) error {
-	dSet(d, "enabled", slaacProfile.Enabled)
+	// dSet(d, "enabled", slaacProfile.Enabled)
 	dSet(d, "mode", slaacProfile.Mode)
 
 	dnsServerSet := convertStringsToTypeSet(slaacProfile.DNSConfig.DNSServerIpv6Addresses)
