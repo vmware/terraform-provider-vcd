@@ -339,6 +339,25 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if err != nil {
 		return err
 	}
+
+	// --------------------------------------------------------------
+	// Plugins
+	// --------------------------------------------------------------
+	uiPlugins, err := govcdClient.GetAllUIPlugins()
+	if err != nil {
+		return fmt.Errorf("error retrieving UI Plugins: %s", err)
+	}
+	for _, uiPlugin := range uiPlugins {
+		// This will delete all UI Plugins that match the `isTest` regex.
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, uiPlugin.UIPluginMetadata.PluginName, "vcd_ui_plugin", 1, verbose)
+		if toBeDeleted {
+			err = deleteUIPlugin(uiPlugin)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -682,6 +701,15 @@ func deleteRdeType(rdeType *govcd.DefinedEntityType) error {
 	err := rdeType.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting RDE type '%s': %s", rdeType.DefinedEntityType.ID, err)
+	}
+	return nil
+}
+
+func deleteUIPlugin(uiPlugin *govcd.UIPlugin) error {
+	fmt.Printf("\t\t REMOVING UI PLUGIN %s\n", uiPlugin.UIPluginMetadata.ID)
+	err := uiPlugin.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
 	}
 	return nil
 }
