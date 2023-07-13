@@ -350,7 +350,7 @@ resource "vcd_vapp_org_network" "vappAttachedNet" {
 // error) outside of Terraform control. The following resources are verified here
 func TestAccVcdVappAccessControlResourceNotFound(t *testing.T) {
 	preTestChecks(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	// This test invokes go-vcloud-director SDK directly therefore it should not run binary tests
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

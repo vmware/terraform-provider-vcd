@@ -1,4 +1,4 @@
-//go:build vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || ALL || functional
+//go:build api || vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || ALL || functional
 
 package vcd
 

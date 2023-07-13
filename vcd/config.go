@@ -29,6 +29,8 @@ type Config struct {
 	Password                string
 	Token                   string // Token used instead of user and password
 	ApiToken                string // User generated token used instead of user and password
+	ApiTokenFile            string // File containing a user generated API token
+	AllowApiTokenFile       bool   // Setting to suppress API Token File security warnings
 	ServiceAccountTokenFile string // File containing the Service Account API token
 	AllowSATokenFile        bool   // Setting to suppress Service Account Token File security warnings
 	SysOrg                  string // Org used for authentication
@@ -641,10 +643,17 @@ func (cli *VCDClient) GetOrgName(orgName string) (string, error) {
 }
 
 // TODO Look into refactoring this into a method of *Config
-func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, saToken string) error {
+func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, apiTokenFile, saTokenFile string) error {
 	var err error
-	if saToken != "" {
-		return client.SetServiceAccountApiToken(org, saToken)
+	if saTokenFile != "" {
+		return client.SetServiceAccountApiToken(org, saTokenFile)
+	}
+	if apiTokenFile != "" {
+		_, err := client.SetApiTokenFromFile(org, apiTokenFile)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	if apiToken != "" {
 		return client.SetToken(org, govcd.ApiTokenHeader, apiToken)
@@ -669,6 +678,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Password + "#" +
 		c.Token + "#" +
 		c.ApiToken + "#" +
+		c.ApiTokenFile + "#" +
 		c.ServiceAccountTokenFile + "#" +
 		c.SysOrg + "#" +
 		c.Vdc + "#" +
@@ -714,7 +724,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
 
-	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken, c.ServiceAccountTokenFile)
+	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken, c.ApiTokenFile, c.ServiceAccountTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}
