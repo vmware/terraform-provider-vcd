@@ -16,9 +16,6 @@ func TestAccVcdClonedVApp(t *testing.T) {
 	var vappFromVapp = "TestAccClonedVAppFromVapp"
 	var vappDescription = "Test cloned vApp from Template"
 	vappTemplateName := "Test-small-3VM"
-	firstVmName := "firstVM"
-	//secondVmName := "secondVM"
-	//thirdVmName := "thirdVM"
 	orgName := testConfig.VCD.Org
 	nsxtVdcName := testConfig.Nsxt.Vdc
 
@@ -31,7 +28,6 @@ func TestAccVcdClonedVApp(t *testing.T) {
 		"VappFromTemplateName": vappFromTemplate,
 		"VappFromVappName":     vappFromVapp,
 		"VappDescription":      vappDescription,
-		"FirstVmName":          firstVmName,
 		"FuncName":             t.Name(),
 		"Tags":                 "vapp",
 	}
