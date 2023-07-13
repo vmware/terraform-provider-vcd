@@ -33,4 +33,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-Only ID is set to be able and reference in other resources or data sources.
+* `id` - ID of the manager
+* `href` - Full URL of the manager

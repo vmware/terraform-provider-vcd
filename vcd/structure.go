@@ -190,18 +190,6 @@ func extractIdsFromReferences(refs []*types.Reference) []string {
 	return resultStrings
 }
 
-// extractIdsFromVimObjectRefs extracts []string with IDs from []*types.VimObjectRef which contains *types.Reference
-func extractIdsFromVimObjectRefs(refs []*types.VimObjectRef) []string {
-	var resultStrings []string
-	for index := range refs {
-		if refs[index].VimServerRef != nil {
-			resultStrings = append(resultStrings, refs[index].VimServerRef.ID)
-		}
-	}
-
-	return resultStrings
-}
-
 // convertSliceOfStringsToOpenApiReferenceIds converts []string to []types.OpenApiReference by filling
 // types.OpenApiReference.ID fields
 func convertSliceOfStringsToOpenApiReferenceIds(ids []string) []types.OpenApiReference {
@@ -318,4 +306,46 @@ func fileExists(filename string) bool {
 	}
 	fileMode := f.Mode()
 	return fileMode.IsRegular()
+}
+
+// referenceToId is an auxiliary function to be used with ObjectMap
+func referenceToId(reference *types.Reference) string {
+	if reference.ID != "" {
+		return reference.ID
+	}
+	return extractUuid(reference.HREF)
+}
+
+// referenceToName is an auxiliary function to be used with ObjectMap
+func referenceToName(reference *types.Reference) string {
+	return reference.Name
+}
+
+// vimObjectRefToMoref is an auxiliary function to be used with ObjectMap
+func vimObjectRefToMoref(input *types.VimObjectRef) string {
+	return input.MoRef
+}
+
+// ObjectMap extracts an array of wanted elements from an array of complex objects.
+// The Input type is the complex object
+// The Output type could be a simple data type, such as a string or a number, but could
+// also be a different object.
+// The conversion is performed by the f function, which takes one complex input object and
+// produces the wanted output.
+// examples:
+//
+//	    ids := ObjectMap[*types.VimObjectRef, string](extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef,
+//	        vimObjectRefToMoref)
+//
+//		ids := ObjectMap[*types.Reference, string](extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile,
+//			referenceToId)
+//
+//		names := ObjectMap[*types.Reference, string](extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile,
+//			referenceToName)
+func ObjectMap[Input any, Output any](input []Input, f func(Input) Output) []Output {
+	var result = make([]Output, len(input))
+	for i := 0; i < len(input); i++ {
+		result[i] = f(input[i])
+	}
+	return result
 }
