@@ -121,10 +121,17 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_rate_limiting":            datasourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 datasourceVcdNsxtDhcpBinding(),                  // 3.9
 	"vcd_ip_space":                                  datasourceVcdIpSpace(),                          // 3.10
+	"vcd_ip_space_uplink":                           datasourceVcdIpSpaceUplink(),                    // 3.10
+	"vcd_ip_space_ip_allocation":                    datasourceVcdIpAllocation(),                     // 3.10
+	"vcd_ip_space_custom_quota":                     datasourceVcdIpSpaceCustomQuota(),               // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          datasourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  datasourceVcdOrgSaml(),                          // 3.10
 	"vcd_org_saml_metadata":                         datasourceVcdOrgSamlMetadata(),                  // 3.10
 	"vcd_nsxt_distributed_firewall_rule":            datasourceVcdNsxtDistributedFirewallRule(),      // 3.10
+	"vcd_resource_pool":                             datasourceVcdResourcePool(),                     // 3.10
+	"vcd_network_pool":                              datasourceVcdNetworkPool(),                      // 3.10
+	"vcd_ui_plugin":                                 datasourceVcdUIPlugin(),                         // 3.10
+	"vcd_service_account":                           datasourceVcdServiceAccount(),                   // 3.10
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -210,9 +217,16 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 resourceVcdNsxtDhcpBinding(),                  // 3.9
 	"vcd_ip_space":                                  resourceVcdIpSpace(),                          // 3.10
+	"vcd_ip_space_uplink":                           resourceVcdIpSpaceUplink(),                    // 3.10
+	"vcd_ip_space_ip_allocation":                    resourceVcdIpAllocation(),                     // 3.10
+	"vcd_ip_space_custom_quota":                     resourceVcdIpSpaceCustomQuota(),               // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
 	"vcd_nsxt_distributed_firewall_rule":            resourceVcdNsxtDistributedFirewallRule(),      // 3.10
+	"vcd_provider_vdc":                              resourceVcdProviderVdc(),                      // 3.10
+	"vcd_ui_plugin":                                 resourceVcdUIPlugin(),                         // 3.10
+	"vcd_api_token":                                 resourceVcdApiToken(),                         // 3.10
+	"vcd_service_account":                           resourceVcdServiceAccount(),                   // 3.10
 }
 
 // Provider returns a terraform.ResourceProvider.
@@ -225,19 +239,22 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
 				Description: "The user name for VCD API operations.",
 			},
+
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_PASSWORD", nil),
 				Description: "The user password for VCD API operations.",
 			},
+
 			"auth_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
-				Description:  "'integrated', 'saml_adfs', 'token', 'api_token' and 'service_account_token_file' are supported. 'integrated' is default.",
-				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "service_account_token_file"}, false),
+				Description:  "'integrated', 'saml_adfs', 'token', 'api_token', 'api_token_file' and 'service_account_token_file' are supported. 'integrated' is default.",
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token", "api_token", "api_token_file", "service_account_token_file"}, false),
 			},
+
 			"saml_adfs_rpt_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -257,6 +274,20 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_TOKEN", nil),
 				Description: "The API token used instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
+			},
+
+			"api_token_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_API_TOKEN_FILE", nil),
+				Description: "The API token file instead of username/password for VCD API operations. (Requires VCD 10.3.1+)",
+			},
+
+			"allow_api_token_file": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Set this to true if you understand the security risks of using API token files and would like to suppress the warnings",
 			},
 
 			"service_account_token_file": {
@@ -360,6 +391,8 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		Password:                d.Get("password").(string),
 		Token:                   d.Get("token").(string),
 		ApiToken:                d.Get("api_token").(string),
+		ApiTokenFile:            d.Get("api_token_file").(string),
+		AllowApiTokenFile:       d.Get("allow_api_token_file").(bool),
 		ServiceAccountTokenFile: d.Get("service_account_token_file").(string),
 		AllowSATokenFile:        d.Get("allow_service_account_token_file").(bool),
 		SysOrg:                  connectOrg,            // Connection org
@@ -388,6 +421,10 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		if config.ServiceAccountTokenFile == "" {
 			return nil, diag.Errorf("service account token file not provided with 'auth_type' == 'service_account_token_file'")
 		}
+	case "api_token_file":
+		if config.ApiTokenFile == "" {
+			return nil, diag.Errorf("api token file not provided with 'auth_type' == 'service_account_token_file'")
+		}
 	default:
 		if config.ApiToken != "" || config.Token != "" {
 			return nil, diag.Errorf("to use a token, the appropriate 'auth_type' (either 'token' or 'api_token') must be set")
@@ -407,6 +444,16 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 				"token currently in the file will be invalidated at the next usage. In the meantime, it is " +
 				"usable by anyone to run operations to the current VCD. As such, it should be considered SENSITIVE INFORMATION. " +
 				"If you would like to remove this warning, add\n\n" + "	allow_service_account_token_file = true\n\nto the provider settings.",
+		})
+	}
+
+	if config.ApiTokenFile != "" && !config.AllowApiTokenFile {
+		providerDiagnostics = append(providerDiagnostics, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "The file " + config.ServiceAccountTokenFile + " should be considered sensitive information.",
+			Detail: "The file " + config.ServiceAccountTokenFile + " contains the API token which can be used by anyone " +
+				"to run operations to the current VCD. AS such, it should be considered SENSITIVE INFORMATION. " +
+				"If you would like to remove this warning, add\n\n" + "	allow_api_token_file = true\n\nto the provider settings.",
 		})
 	}
 

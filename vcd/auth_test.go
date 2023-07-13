@@ -314,6 +314,48 @@ func TestAccAuth(t *testing.T) {
 	// in an environment variable
 	// Note: since this test has a manual input, there is no skip for VCD version. This test will fail if
 	// run on VCD < 10.4.0
+	apiTokenFile := os.Getenv("TEST_VCD_SA_TOKEN_FILE")
+	if apiTokenFile != "" {
+		testOrg := os.Getenv("TEST_VCD_ORG")
+		// If sysOrg is not defined in an environment variable, the API token must be one created for the
+		// organization stated in testConfig.VCD.Org
+		if testOrg == "" {
+			testOrg = testConfig.VCD.Org
+		}
+		testCases = append(testCases, authTestCase{
+			name: "ServiceAccountTokenFile,AuthType=service_account_token_file",
+			configText: `
+			provider "vcd" {
+			  user                       = "invalidUser"
+		      password                   = "invalidPassword"
+			  api_token_file             = "` + apiTokenFile + `"
+		      auth_type                  = "api_token_file"
+		      org                        = "` + testOrg + `"
+		      url                        = "` + testConfig.Provider.Url + `"
+		      allow_unverified_ssl       = true
+			}
+		  `,
+		})
+
+		// Testing sending an invalid Service Account token
+		createTestTokenFile(t)
+		testCases = append(testCases, authTestCase{
+			name:        "ApiTokenFile,AuthType=invalid_api_token_file",
+			expectError: regexp.MustCompile(".*(Invalid refresh token|server_error)"),
+			configText: `
+				provider "vcd" {
+					auth_type                  = "api_token_file" 
+					api_token_file             = "` + testTokenFile + `"
+					sysorg                     = "` + testConfig.Provider.SysOrg + `" 
+					org                        = "` + testConfig.VCD.Org + `"
+					vdc                        = "` + testConfig.VCD.Vdc + `"
+					url                        = "` + testConfig.Provider.Url + `"
+					allow_unverified_ssl       = true
+				}
+		`,
+		})
+	}
+
 	saTokenFile := os.Getenv("TEST_VCD_SA_TOKEN_FILE")
 	if saTokenFile != "" {
 		testOrg := os.Getenv("TEST_VCD_ORG")

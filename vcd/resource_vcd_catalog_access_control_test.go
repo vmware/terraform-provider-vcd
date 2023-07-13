@@ -15,7 +15,7 @@ import (
 func TestAccVcdCatalogAccessControl(t *testing.T) {
 	preTestChecks(t)
 
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 
 	skipIfNotSysAdmin(t)
 
