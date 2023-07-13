@@ -327,6 +327,7 @@ resource "vcd_nsxt_network_dhcp" "pools" {
 }
 
 resource "vcd_nsxt_network_dhcp_binding" "binding1" {
+  org            = "{{.Org}}"
   org_network_id = vcd_nsxt_network_dhcp.pools.id
   
   name         = "{{.TestName}}-dhcp-binding-1"
