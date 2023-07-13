@@ -255,9 +255,9 @@ resource "vcd_ip_space_uplink" "u1" {
 }
 
 resource "vcd_nsxt_edgegateway" "ip-space" {
-  org                 = "cloud"
-  name                = "ip-space-backed-edge"
-  owner_id            = data.vcd_org_vdc.vdc1.id
+  org      = "cloud"
+  name     = "ip-space-backed-edge"
+  owner_id = data.vcd_org_vdc.vdc1.id
 
   # An NSX-T Edge Gateway is configured without 
   # defined subnets as it uses Provider Gateway
