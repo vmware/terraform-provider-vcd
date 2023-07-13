@@ -381,10 +381,10 @@ The following arguments are used to configure the VMware Cloud Director Provider
 
 One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
 items during `plan`, `updates-in-place` and `destroy` (**not** `create`). This is useful, for example, to avoid removing metadata entries that were created
-by an external actor or after they were created by Terraform.
+by an external actor, or after they were created by Terraform.
 
 ~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
-it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle` block.
+it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle.ignore_changes` block.
 
 ~> Be aware that setting a `metadata_entry` in your Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
 results, as the metadata will be stored in state but nothing will be done in VCD. You can control what to do in this situation with
@@ -396,8 +396,8 @@ The available sub-attributes for `ignore_metadata_changes` are:
   *"vcd_catalog"*, *"vcd_catalog_item"*, *"vcd_catalog_media"*, *"vcd_catalog_vapp_template"*, *"vcd_independent_disk"*, *"vcd_network_direct"*,
   *"vcd_network_isolated"*, *"vcd_network_isolated_v2"*, *"vcd_network_routed"*, *"vcd_network_routed_v2"*, *"vcd_org"*, *"vcd_org_vdc"*, *"vcd_provider_vdc"*,
   *"vcd_storage_profile"*, *"vcd_vapp"*, *"vcd_vapp_vm"* or *"vcd_vm"*, which are the resources compatible with `metadata_entry`.
-* `object_name`- (Optional) Specifies the name of the object which metadata needs to be ignored. All object types are supported, except for
-  `vdcStorageProfile` which **cannot be filtered by name**.
+* `resource_name`- (Optional) Specifies the name of the entity in VCD which metadata needs to be ignored. This attribute can be used with
+   any kind of `resource_type`, except for *vcd_storage_profile* which **cannot be filtered by name**.
 * `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
 * `value_regex`- (Optional) A regular expression that can filter out metadata values that match. Either `key_regex` or `value_regex` are required on each block.
 * `conflict_action` - (Optional) Defines what to do if a conflict exists between a `metadata_entry` that is managed
@@ -413,7 +413,7 @@ provider "vcd" {
   # ...
   ignore_metadata_changes {
     resource_type = "vcd_org"
-    object_name   = "client1"
+    resource_name = "client1"
     key_regex     = "[Ee]nvironment"
     # Setting this value to 'warn' will make all 'metadata_entry' entries that
     # are managed by Terraform and that are ignored to give a warning to the user.
@@ -438,14 +438,14 @@ provider "vcd" {
 
   # Filters all metadata with key "NiceMetadataKey" in all VCD objects named "SpecificName".
   ignore_metadata_changes {
-    object_name = "SpecificName"
-    key_regex   = "^NiceMetadataKey$"
+    resource_name = "SpecificName"
+    key_regex     = "^NiceMetadataKey$"
   }
 
   # Filters all metadata with values "Yes" in the Organization named "Tatooine".
   ignore_metadata_changes {
     resource_type = "vcd_org"
-    object_name   = "Tatooine"
+    resource_name = "Tatooine"
     value_regex   = "^Yes$"
   }
 }

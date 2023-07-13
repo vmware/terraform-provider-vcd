@@ -3,6 +3,8 @@ package vcd
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"net"
 	"regexp"
 	"strconv"
@@ -192,4 +194,26 @@ func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {
 // only contains alphanumeric characters, allowing also underscores and hyphens.
 func validateAlphanumericWithUnderscoresAndHyphens() schema.SchemaValidateFunc {
 	return validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed")
+}
+
+// validateMetadataIgnoreResourceType validates whether the given attribute is a resource type
+// that supports the `metadata_entry` argument.
+func validateMetadataIgnoreResourceType() func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		v, ok := i.(string)
+		if !ok {
+			return diag.Errorf("expected type of '%v' to be string", i)
+		}
+		found := false
+		for k := range resourceMetadataApiRelation {
+			if v == k {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return diag.Errorf("can't ignore metadata of resource type '%s'", i)
+		}
+		return nil
+	}
 }

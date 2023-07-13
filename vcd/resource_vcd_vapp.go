@@ -152,7 +152,7 @@ func resourceVcdVAppCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(vapp.VApp.ID)
 
-	return resourceVcdVAppRead(ctx, d, meta)
+	return resourceVcdVAppUpdate(ctx, d, meta)
 }
 
 func resourceVcdVAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

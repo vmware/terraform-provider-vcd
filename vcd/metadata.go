@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	// IgnoreMetadataChangesConflictResolution can hold values "error", "warn" or "none", and tells Terraform whether it should
+	// IgnoreMetadataChangesConflictActions can hold values "error", "warn" or "none", and tells Terraform whether it should
 	// give an error or just a warning if any Metadata Entry configured in HCL is affected by the 'ignore_metadata_changes'
 	// configuration.
 	// The keys of this map are obtained with ignoreMetadataChangesConflictResolutionHash.
-	IgnoreMetadataChangesConflictResolution map[string]string
+	IgnoreMetadataChangesConflictActions map[string]string
 )
 
 // ignoreMetadataSchema returns the schema associated to ignore_metadata_changes for the provider configuration.
@@ -30,31 +30,15 @@ func ignoreMetadataSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"resource_type": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Ignores metadata from the specific resource type",
-					ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
-						v, ok := i.(string)
-						if !ok {
-							return diag.Errorf("expected type of '%v' to be string", i)
-						}
-						found := false
-						for k := range resourceMetadataApiRelation {
-							if v == k {
-								found = true
-								break
-							}
-						}
-						if !found {
-							return diag.Errorf("can't ignore metadata of resource type '%s'", i)
-						}
-						return nil
-					},
+					Type:             schema.TypeString,
+					Optional:         true,
+					Description:      "Ignores metadata from the specific resource type",
+					ValidateDiagFunc: validateMetadataIgnoreResourceType(),
 				},
-				"object_name": {
+				"resource_name": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "Ignores metadata from the specific object in VCD named like this argument",
+					Description: "Ignores metadata from the specific entity in VCD named like this argument",
 				},
 				"key_regex": {
 					Type:        schema.TypeString,
@@ -73,7 +57,7 @@ func ignoreMetadataSchema() *schema.Schema {
 					Optional:     true,
 					Default:      "error",
 					ValidateFunc: validation.StringInSlice([]string{"error", "warn", "none"}, false),
-					Description:  "One of 'error', 'warn' or 'none'. Configures whether a conflict between this ignored metadata block and the metadata entries set in Terraform should error, warn or do nothing. Defaults to 'error'",
+					Description:  "One of 'error', 'warn' or 'none'. Configures whether a conflict between this ignored metadata block and the metadata entries set in Terraform should fail, warn or do nothing. Defaults to 'error'",
 				},
 			},
 		},
@@ -81,10 +65,10 @@ func ignoreMetadataSchema() *schema.Schema {
 }
 
 // IgnoredMetadata extends the SDK IgnoredMetadata type to be able to add also
-// the conflict resolution behavior defined as an attribute in the schema.
+// the conflict behavior defined as an attribute in the schema.
 type IgnoredMetadata struct {
-	IgnoredMetadata    govcd.IgnoredMetadata
-	ConflictResolution string
+	IgnoredMetadata govcd.IgnoredMetadata
+	ConflictAction  string
 }
 
 // Transforms the metadata to ignore from schema to the []govcd.IgnoredMetadata structure.
@@ -98,7 +82,7 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 	for i, ignoredEntryRaw := range ignoreMetadataRaw {
 		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
 		result[i] = IgnoredMetadata{
-			ConflictResolution: ignoredEntry["conflict_action"].(string),
+			ConflictAction: ignoredEntry["conflict_action"].(string),
 		}
 		ignoredMetadata := govcd.IgnoredMetadata{}
 		if ignoredEntry["key_regex"].(string) != "" {
@@ -118,8 +102,8 @@ func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string)
 		if ignoredMetadata.KeyRegex == nil && ignoredMetadata.ValueRegex == nil {
 			return nil, fmt.Errorf("either `key_regex` or `value_regex` is required inside the `ignore_metadata_changes` attribute")
 		}
-		if ignoredEntry["object_name"].(string) != "" {
-			ignoredMetadata.ObjectName = addrOf(ignoredEntry["object_name"].(string))
+		if ignoredEntry["resource_name"].(string) != "" {
+			ignoredMetadata.ObjectName = addrOf(ignoredEntry["resource_name"].(string))
 		}
 		if ignoredEntry["resource_type"].(string) != "" {
 			ignoredMetadata.ObjectType = addrOf(resourceMetadataApiRelation[ignoredEntry["resource_type"].(string)])
@@ -310,7 +294,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 
 			util.Logger.Printf("[DEBUG] detected a conflict with metadata_entry with key '%s' and value '%v', it is being being ignored with the ignore_metadata_changes block '%v'", newEntry["key"].(string), newEntry["value"].(string), ignoredMetadata)
 			var severity diag.Severity
-			action := IgnoreMetadataChangesConflictResolution[ignoredMetadata.String()]
+			action := IgnoreMetadataChangesConflictActions[ignoredMetadata.String()]
 			switch action {
 			case "error":
 				severity = diag.Error
