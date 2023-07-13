@@ -1095,6 +1095,13 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "{{.EdgeGw}}"
 }
 
+resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc-group" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  mode = "SLAAC"
+}
+
 resource "vcd_nsxt_alb_settings" "test" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
