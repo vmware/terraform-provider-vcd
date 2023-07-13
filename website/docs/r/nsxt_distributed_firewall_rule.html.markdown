@@ -3,12 +3,13 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_distributed_firewall_rule"
 sidebar_current: "docs-vcd-resource-nsxt-distributed-firewall-rule"
 description: |-
-  The Distributed Firewall rule allows user to segment organization by creating firewall rules.
+  The Distributed Firewall rule allows user to segment organization network entities by creating firewall rules.
 ---
 
 # vcd\_nsxt\_distributed\_firewall\_rule
 
-The Distributed Firewall rule allows user to segment organization by creating firewall rules.
+The Distributed Firewall rule allows user to segment organization network entities by creating
+firewall rules.
 
 Multiple rules defined with this resource will **not be created in parallel** because Cloud Director
 API provides no direct endpoint to create a single rule. To overcome this,
