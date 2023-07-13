@@ -174,6 +174,10 @@ The following arguments are supported:
 * `secondary_static_ip_pool` - (Optional; *v3.10+*) One or more [IPv6 static
   pools](#secondary-ip-pools) *when Dual-Stack mode is enabled*
 
+-> When using IPv6, VCD API will expand IP Addresses if they are specified using *double colon*
+notation and it will cause inconsistent plan. (e.g. `2002::1234:abcd:ffff:c0a6:121` will be
+converted to `2002:0:0:1234:abcd:ffff:c0a6:121`)
+
 <a id="ip-pools"></a>
 ## IP Pools
 
