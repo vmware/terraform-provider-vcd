@@ -2,60 +2,13 @@ package vcd
 
 import (
 	"context"
-	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // datasourceVcdProviderVdc defines the data source for a Provider VDC.
 func datasourceVcdProviderVdc() *schema.Resource {
-	// This internal schema defines the Root Capacity of the Provider VDC.
-	rootCapacityUsage := func(typeOfCapacity string) *schema.Schema {
-		return &schema.Schema{
-			Type:        schema.TypeList,
-			Computed:    true,
-			Description: fmt.Sprintf("Single-element list with an indicator of %s capacity available in the Provider VDC", typeOfCapacity),
-			// MaxItems: 1 - A computed field can't use "MaxItems", this is a reminder that this is a single-element list.
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"allocation": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Allocated %s for this Provider VDC", typeOfCapacity),
-					},
-					"overhead": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("%s overhead for this Provider VDC", typeOfCapacity),
-					},
-					"reserved": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Reserved %s for this Provider VDC", typeOfCapacity),
-					},
-					"total": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Total %s for this Provider VDC", typeOfCapacity),
-					},
-					"units": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: fmt.Sprintf("Units for the %s of this Provider VDC", typeOfCapacity),
-					},
-					"used": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: fmt.Sprintf("Used %s in this Provider VDC", typeOfCapacity),
-					},
-				},
-			},
-		}
-	}
-
 	return &schema.Resource{
 		ReadContext: datasourceVcdProviderVdcRead,
 		Schema: map[string]*schema.Schema{
@@ -94,8 +47,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				Description: "Single-element list with an indicator of CPU and memory capacity",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"cpu":    rootCapacityUsage("CPU"),
-						"memory": rootCapacityUsage("Memory"),
+						"cpu":    providerVdcRootCapacityUsage("CPU"),
+						"memory": providerVdcRootCapacityUsage("Memory"),
 						"is_elastic": {
 							Type:        schema.TypeBool,
 							Computed:    true,
@@ -139,6 +92,14 @@ func datasourceVcdProviderVdc() *schema.Resource {
 				},
 				Computed:    true,
 				Description: "Set of IDs of external networks",
+			},
+			"storage_profile_names": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed:    true,
+				Description: "Set of storage profile names used to create this Provider VDC",
 			},
 			"storage_profile_ids": {
 				Type: schema.TypeSet,
@@ -193,100 +154,8 @@ func datasourceVcdProviderVdc() *schema.Resource {
 	}
 }
 
-func datasourceVcdProviderVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-
-	providerVdcName := d.Get("name").(string)
-	extendedProviderVdc, err := vcdClient.GetProviderVdcExtendedByName(providerVdcName)
-	if err != nil {
-		log.Printf("[DEBUG] Could not find any extended Provider VDC with name %s: %s", providerVdcName, err)
-		return diag.Errorf("could not find any extended Provider VDC with name %s: %s", providerVdcName, err)
-	}
-	providerVdc, err := extendedProviderVdc.ToProviderVdc()
-	if err != nil {
-		log.Printf("[DEBUG] Could not find any Provider VDC with name %s: %s", providerVdcName, err)
-		return diag.Errorf("could not find any Provider VDC with name %s: %s", providerVdcName, err)
-	}
-
-	dSet(d, "name", extendedProviderVdc.VMWProviderVdc.Name)
-	dSet(d, "description", extendedProviderVdc.VMWProviderVdc.Description)
-	dSet(d, "status", extendedProviderVdc.VMWProviderVdc.Status)
-	dSet(d, "is_enabled", extendedProviderVdc.VMWProviderVdc.IsEnabled)
-	dSet(d, "compute_provider_scope", extendedProviderVdc.VMWProviderVdc.ComputeProviderScope)
-	dSet(d, "highest_supported_hardware_version", extendedProviderVdc.VMWProviderVdc.HighestSupportedHardwareVersion)
-
-	if extendedProviderVdc.VMWProviderVdc.NsxTManagerReference != nil {
-		dSet(d, "nsxt_manager_id", extendedProviderVdc.VMWProviderVdc.NsxTManagerReference.ID)
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.AvailableNetworks != nil {
-		if err = d.Set("external_network_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.AvailableNetworks.Network)); err != nil {
-			return diag.Errorf("error setting external_network_ids: %s", err)
-		}
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.DataStoreRefs != nil {
-		if err = d.Set("storage_container_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.DataStoreRefs.VimObjectRef)); err != nil {
-			return diag.Errorf("error setting storage_container_ids: %s", err)
-		}
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.StorageProfiles != nil {
-		if err = d.Set("storage_profile_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile)); err != nil {
-			return diag.Errorf("error setting storage_profile_ids: %s", err)
-		}
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs != nil {
-		if err = d.Set("resource_pool_ids", extractIdsFromVimObjectRefs(extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef)); err != nil {
-			return diag.Errorf("error setting resource_pool_ids: %s", err)
-		}
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences != nil {
-		if err = d.Set("network_pool_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.NetworkPoolReferences.NetworkPoolReference)); err != nil {
-			return diag.Errorf("error setting network_pool_ids: %s", err)
-		}
-	}
-
-	var items []string
-	if extendedProviderVdc.VMWProviderVdc.Capabilities != nil && extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions != nil {
-		items = append(items, extendedProviderVdc.VMWProviderVdc.Capabilities.SupportedHardwareVersions.SupportedHardwareVersion...)
-	}
-	if err = d.Set("capabilities", items); err != nil {
-		return diag.Errorf("error setting capabilities: %s", err)
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.HostReferences != nil {
-		if err = d.Set("host_ids", extractIdsFromReferences(extendedProviderVdc.VMWProviderVdc.HostReferences.HostReference)); err != nil {
-			return diag.Errorf("error setting host_ids: %s", err)
-		}
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.ComputeCapacity != nil {
-		if err = d.Set("compute_capacity", getComputeCapacityForProviderVdc(extendedProviderVdc.VMWProviderVdc.ComputeCapacity)); err != nil {
-			return diag.Errorf("error setting compute_capacity: %s", err)
-		}
-	}
-
-	if extendedProviderVdc.VMWProviderVdc.AvailableUniversalNetworkPool != nil {
-		dSet(d, "universal_network_pool_id", extendedProviderVdc.VMWProviderVdc.AvailableUniversalNetworkPool.ID)
-	}
-	if extendedProviderVdc.VMWProviderVdc.VimServer != nil {
-		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer.ID)
-	}
-
-	metadata, err := providerVdc.GetMetadata()
-	if err != nil {
-		log.Printf("[DEBUG] Error retrieving metadata for Provider VDC: %s", err)
-		return diag.Errorf("error retrieving metadata for Provider VDC %s: %s", providerVdcName, err)
-	}
-	if err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
-	}
-
-	d.SetId(providerVdc.ProviderVdc.ID)
-	return nil
+func datasourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericResourceVcdProviderVdcRead(ctx, d, meta, "datasource")
 }
 
 // getComputeCapacityForProviderVdc constructs a specific struct for `compute_capacity` attribute in the `vcd_provider_vdc` Terraform state.

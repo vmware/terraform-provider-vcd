@@ -125,6 +125,10 @@
     "//": "Existing NSX-T Edge Cluster",
     "nsxtEdgeCluster": "edgeCluster1"
   },
+  "vsphere": {
+    "resourcePoolForVcd1": "resource-pool-for-vcd-01",
+    "resourcePoolForVcd2": "resource-pool-for-vcd-02"
+  },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",
     "enabled": false,

@@ -12,7 +12,7 @@ import (
 
 func TestAccVcdRole(t *testing.T) {
 	preTestChecks(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	var roleName = t.Name()
 	var roleUpdateName = t.Name() + "-update"
 	var roleDescription = "A long description containing some text."
