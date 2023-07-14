@@ -51,6 +51,40 @@ resource "vcd_rde_type" "my_rde_type" {
 }
 ```
 
+## Example Usage with Interface Behaviors
+
+~> Be aware that [RDE Interface Behaviors](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) need to be created
+**before** the Interface is used by any RDE Type, so you'll need to use `depends_on` in this case.
+
+```hcl
+data "vcd_rde_interface" "my_interface" {
+  vendor  = "bigcorp"
+  ns      = "tech1"
+  version = "1.2.3"
+}
+
+resource "vcd_rde_interface_behavior" "my_behavior" {
+  interface_id = vcd_rde_interface.my_interface.id
+  name         = "MyBehavior"
+  description  = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
+  execution = {
+    "id" : "MyExecution"
+    "type" : "Activity"
+  }
+}
+
+resource "vcd_rde_type" "my_rde_type" {
+  vendor        = "vmware"
+  nss           = "vcd"
+  version       = "4.5.6"
+  name          = "My VMware RDE Type"
+  interface_ids = [data.vcd_rde_interface.my_interface.id]
+  schema_url    = "https://just.an-example.com/schemas/my-type-schema.json"
+
+  depends_on = [vcd_rde_interface_behavior.my_behavior] # Behaviors need to be created before any RDE Type
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:

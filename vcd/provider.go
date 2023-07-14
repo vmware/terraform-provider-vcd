@@ -132,6 +132,9 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_network_pool":                              datasourceVcdNetworkPool(),                      // 3.10
 	"vcd_ui_plugin":                                 datasourceVcdUIPlugin(),                         // 3.10
 	"vcd_service_account":                           datasourceVcdServiceAccount(),                   // 3.10
+	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),             // 3.10
+	"vcd_rde_type_behavior":                         datasourceVcdRdeTypeBehavior(),                  // 3.10
+	"vcd_rde_type_behavior_acl":                     datasourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -224,9 +227,13 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
 	"vcd_nsxt_edgegateway_static_route":             resourceVcdNsxtEdgeGatewayStaticRoute(),       // 3.10
 	"vcd_provider_vdc":                              resourceVcdProviderVdc(),                      // 3.10
+	"vcd_cloned_vapp":                               resourceVcdClonedVApp(),                       // 3.10
 	"vcd_ui_plugin":                                 resourceVcdUIPlugin(),                         // 3.10
 	"vcd_api_token":                                 resourceVcdApiToken(),                         // 3.10
 	"vcd_service_account":                           resourceVcdServiceAccount(),                   // 3.10
+	"vcd_rde_interface_behavior":                    resourceVcdRdeInterfaceBehavior(),             // 3.10
+	"vcd_rde_type_behavior":                         resourceVcdRdeTypeBehavior(),                  // 3.10
+	"vcd_rde_type_behavior_acl":                     resourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
 }
 
 // Provider returns a terraform.ResourceProvider.
