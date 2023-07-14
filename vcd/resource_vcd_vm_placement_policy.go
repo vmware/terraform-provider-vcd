@@ -39,6 +39,7 @@ func resourceVcdVmPlacementPolicy() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "Description of the VM Placement Policy",
 			},
 			"vm_group_ids": {

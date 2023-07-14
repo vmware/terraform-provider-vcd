@@ -33,6 +33,15 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 		return
 	}
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	vmPlacementPolicyDescription := "This is a system generated default compute policy auto assigned to this vDC."
+	if vcdClient.Client.APIVCDMaxVersionIs("< 38.0") {
+		vmPlacementPolicyDescription = ""
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckComputePolicyDestroyed(t.Name()+"-update", "placement"),
@@ -49,6 +58,10 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckNoResourceAttr(policyName, "vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
+
+					// Checks that the description is correct when it is not populated
+					resource.TestCheckResourceAttr(policyName+"_without_description", "name", params["PolicyName"].(string)+"WithoutDescription"),
+					resource.TestCheckResourceAttr(policyName+"_without_description", "description", vmPlacementPolicyDescription),
 				),
 			},
 			{
@@ -101,6 +114,12 @@ data "vcd_vm_group" "vm-group" {
 resource "vcd_vm_placement_policy" "{{.PolicyName}}" {
   name            = "{{.PolicyName}}"
   description     = "{{.Description}}"
+  provider_vdc_id = data.vcd_provider_vdc.pvdc.id
+  vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
+}
+
+resource "vcd_vm_placement_policy" "{{.PolicyName}}_without_description" {
+  name            = "{{.PolicyName}}WithoutDescription"
   provider_vdc_id = data.vcd_provider_vdc.pvdc.id
   vm_group_ids    = [ data.vcd_vm_group.vm-group.id ]
 }
