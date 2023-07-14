@@ -152,7 +152,7 @@ func datasourceVcdNsxtAppPortProfileRead(_ context.Context, d *schema.ResourceDa
 	}
 	appPortProfile := allAppPortProfiles[0]
 
-	err = setNsxtAppPortProfileData(d, appPortProfile.NsxtAppPortProfile)
+	err = setNsxtAppPortProfileData(vcdClient, d, appPortProfile.NsxtAppPortProfile)
 	if err != nil {
 		return diag.Errorf("error storing NSX-T Application Port Profile schema: %s", err)
 	}

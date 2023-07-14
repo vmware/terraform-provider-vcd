@@ -12,7 +12,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func TestAccVcdRdeDefinedInterface(t *testing.T) {
+func TestAccVcdRdeInterface(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -24,16 +24,16 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configTextCreate := templateFill(testAccVcdRdeDefinedInterface, params)
+	configTextCreate := templateFill(testAccVcdRdeInterface, params)
 	params["FuncName"] = t.Name() + "-Update"
 	params["Name"] = params["FuncName"]
-	configTextUpdate := templateFill(testAccVcdRdeDefinedInterface, params)
+	configTextUpdate := templateFill(testAccVcdRdeInterface, params)
 
 	// We change the nss to force deletion and re-creation
 	params["FuncName"] = t.Name() + "-ForceNew"
 	params["Name"] = t.Name()
 	params["Nss"] = "nss2"
-	configTextForceNew := templateFill(testAccVcdRdeDefinedInterface, params)
+	configTextForceNew := templateFill(testAccVcdRdeInterface, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -85,14 +85,14 @@ func TestAccVcdRdeDefinedInterface(t *testing.T) {
 				ResourceName:      interfaceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string)),
+				ImportStateIdFunc: importStateIdRdeInterface(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string)),
 			},
 		},
 	})
 	postTestChecks(t)
 }
 
-const testAccVcdRdeDefinedInterface = `
+const testAccVcdRdeInterface = `
 resource "vcd_rde_interface" "interface1" {
   nss     = "{{.Nss}}"
   version = "{{.Version}}"
@@ -126,7 +126,7 @@ func testAccCheckRdeInterfaceDestroy(identifier string) resource.TestCheckFunc {
 	}
 }
 
-func importStateIdDefinedInterface(vendor, nss, version string) resource.ImportStateIdFunc {
+func importStateIdRdeInterface(vendor, nss, version string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		return vendor +
 			ImportSeparator +

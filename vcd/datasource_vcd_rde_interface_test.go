@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdRdeDefinedInterfaceDS tests the vcd_rde_interface as both System Administrator and tenant user.
-func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
+// TestAccVcdRdeInterfaceDS tests the vcd_rde_interface as both System Administrator and tenant user.
+func TestAccVcdRdeInterfaceDS(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -25,7 +25,7 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccVcdRdeDefinedInterfaceDS, params)
+	configText := templateFill(testAccVcdRdeInterfaceDS, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -61,7 +61,7 @@ func TestAccVcdRdeDefinedInterfaceDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdRdeDefinedInterfaceDS = `
+const testAccVcdRdeInterfaceDS = `
 data "vcd_rde_interface" "sysadmin_interface_ds" {
   provider = {{.ProviderVcdSystem}}
 
