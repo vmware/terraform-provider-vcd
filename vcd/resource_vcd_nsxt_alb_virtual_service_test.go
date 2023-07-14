@@ -1137,27 +1137,16 @@ resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
 }
 
-
-resource "vcd_nsxt_ip_set" "pool-members" {
-  org = "{{.Org}}"
-
-  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
-
-  name        = "{{.IpSetName}}"
-  description = "IP Set for NSX-T ALB Pool with Transparent Virtual Service"
-
-  ip_addresses = [
-    "10.10.10.0/24",
-  ]
-}
-
 resource "vcd_nsxt_alb_pool" "test" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
   name            = "{{.VirtualServiceName}}-pool"
   edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
-  member_group_id = vcd_nsxt_ip_set.pool-members.id
+  member {
+    enabled    = true
+    ip_address = "192.168.1.2"
+  }
 }
 
 resource "vcd_nsxt_alb_virtual_service" "test" {
