@@ -20,7 +20,7 @@ import (
 func TestAccVcdOrgGroup(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
