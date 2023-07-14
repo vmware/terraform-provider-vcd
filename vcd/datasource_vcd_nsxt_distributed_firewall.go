@@ -128,7 +128,7 @@ func datasourceVcdNsxtDistributedFirewallRead(_ context.Context, d *schema.Resou
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall DS Read] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall DS Read] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
