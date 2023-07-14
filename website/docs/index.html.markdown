@@ -387,7 +387,8 @@ by an external actor, or after they were created by Terraform.
 it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle.ignore_changes` block.
 
 ~> Be aware that setting a `metadata_entry` in your Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
-results, as the metadata will be stored in state but nothing will be done in VCD. You can control what to do in this situation with
+results, as the metadata will be stored in state but nothing will be done in VCD. Using `ignore_metadata_changes` with matching metadata entries
+in your code is NOT recommended. In the event that your code contains such conflict, though, you can control the ensuing action with
 `conflict_action`, which can be `error`, `warn` or `none`.
 
 The available sub-attributes for `ignore_metadata_changes` are:
