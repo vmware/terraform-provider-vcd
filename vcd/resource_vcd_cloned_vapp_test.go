@@ -45,6 +45,10 @@ func TestAccVcdClonedVApp(t *testing.T) {
 	datasourceVappFromTemplate := "data.vcd_vapp.vapp_from_template"
 	resourceVappFromVapp := "vcd_cloned_vapp.vapp_from_vapp"
 	datasourceVappFromVapp := "data.vcd_vapp.vapp_from_vapp"
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
