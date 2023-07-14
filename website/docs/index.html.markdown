@@ -456,10 +456,7 @@ provider "vcd" {
     # are managed by Terraform and that are ignored to give a warning to the user.
     conflict_action = "warn"
   }
-
-
 }
-
 ```
 
 You can have more than one block, to ignore more entries of your choice:
