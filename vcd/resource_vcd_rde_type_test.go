@@ -115,7 +115,7 @@ func TestAccVcdRdeType(t *testing.T) {
 				ResourceName:      rdeTypeFromFile,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdDefinedInterface(params["Vendor"].(string)+"file", params["Nss"].(string)+"file", params["Version"].(string)),
+				ImportStateIdFunc: importStateIdRdeInterface(params["Vendor"].(string)+"file", params["Nss"].(string)+"file", params["Version"].(string)),
 			},
 		},
 	})
