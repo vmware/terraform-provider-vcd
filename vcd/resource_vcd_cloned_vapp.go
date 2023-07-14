@@ -18,7 +18,6 @@ func resourceVcdClonedVApp() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdClonedVAppCreate,
 		ReadContext:   resourceVcdClonedVAppRead,
-		UpdateContext: resourceVcdClonedVAppUpdate,
 		DeleteContext: resourceVcdClonedVAppDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -44,28 +43,33 @@ func resourceVcdClonedVApp() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Optional description of the vApp",
 			},
 			"power_on": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
+				ForceNew:    true,
 				Description: "A boolean value stating if this vApp should be powered on",
 			},
 			"delete_source": {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "If true, it will delete the source (vApp or template) after creating the new vApp",
 			},
 			"source_type": {
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				Description:  "The type of the source to use for the creation of this vApp (one of 'vapp' or 'template')",
 				ValidateFunc: validation.StringInSlice([]string{"vapp", "template"}, true),
 			},
 			"source_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The identifier of the source to use for the creation of this vApp",
 			},
 			"vm_list": {
@@ -125,7 +129,7 @@ func resourceVcdClonedVAppCreate(ctx context.Context, d *schema.ResourceData, me
 				Type: sourceVapp.VApp.Type,
 				Name: sourceVapp.VApp.Name,
 			},
-			IsSourceDelete: addrOf(deleteSource),
+			IsSourceDelete: &deleteSource,
 		}
 		sourceStatus, err := sourceVapp.GetStatus()
 		if err != nil {
@@ -240,8 +244,4 @@ func resourceVcdClonedVAppRead(ctx context.Context, d *schema.ResourceData, meta
 
 func resourceVcdClonedVAppDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return resourceVcdVAppDelete(ctx, d, meta)
-}
-
-func resourceVcdClonedVAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.Errorf("this resource doesn't support updates")
 }
