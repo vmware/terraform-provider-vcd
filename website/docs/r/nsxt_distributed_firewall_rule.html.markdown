@@ -30,9 +30,9 @@ data "vcd_vdc_group" "existing" {
   name = "main-vdc-group"
 }
 
-data "vcd_nsxt_network_context_profile" "cp1" {
-  context_id = vcd_vdc_group.test1.id
-  name       = "CTRXICA"
+data "vcd_nsxt_app_port_profile" "FTP" {
+  context_id = data.vcd_nsxt_manager.main.id
+  name       = "FTP"
   scope      = "SYSTEM"
 }
 
@@ -46,7 +46,7 @@ resource "vcd_nsxt_distributed_firewall_rule" "r1" {
 
   source_ids           = [vcd_nsxt_ip_set.set1.id, vcd_nsxt_ip_set.set2.id]
   destination_ids      = [vcd_nsxt_security_group.g1-empty.id, vcd_nsxt_security_group.g2.id]
-  app_port_profile_ids = [vcd_nsxt_app_port_profile.p1.id, data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
+  app_port_profile_ids = [data.vcd_nsxt_app_port_profile.FTP.id]
 }
 
 resource "vcd_nsxt_distributed_firewall_rule" "r2" {
