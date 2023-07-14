@@ -164,6 +164,11 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 
 	// We can't use updateMetadataInState(d, catalogItem) because the attribute name is different.
 	// We have three metadata attributes here.
+	diagErr := checkIgnoredMetadataConflicts(d, meta.(*VCDClient), "vcd_catalog_item")
+	if diagErr != nil {
+		return diagErr
+	}
+
 	metadata, err := catalogItem.GetMetadata()
 	if err != nil {
 		return diag.Errorf("Unable to find catalog item's metadata: %s", err)
