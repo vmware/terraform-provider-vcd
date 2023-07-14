@@ -110,29 +110,31 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	// Provider VDCs
 	// --------------------------------------------------------------
-	providerVdcs, err := govcdClient.QueryProviderVdcs()
-	if err != nil {
-		return fmt.Errorf("error retrieving provider VDCs: %s", err)
-	}
-	for _, pvdcRec := range providerVdcs {
-		pvdc, err := govcdClient.GetProviderVdcExtendedByName(pvdcRec.Name)
+	if govcdClient.Client.IsSysAdmin {
+		providerVdcs, err := govcdClient.QueryProviderVdcs()
 		if err != nil {
-			return fmt.Errorf("error retrieving provider VDC '%s': %s", pvdcRec.Name, err)
+			return fmt.Errorf("error retrieving provider VDCs: %s", err)
 		}
-		tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, pvdcRec.Name, "vcd_provider_vdc", 0, verbose)
-		if tobeDeleted {
-			fmt.Printf("\t REMOVING Provider VDC %s\n", pvdcRec.Name)
-			err = pvdc.Disable()
+		for _, pvdcRec := range providerVdcs {
+			pvdc, err := govcdClient.GetProviderVdcExtendedByName(pvdcRec.Name)
 			if err != nil {
-				return fmt.Errorf("error disabling provider VDC '%s': %s", pvdcRec.Name, err)
+				return fmt.Errorf("error retrieving provider VDC '%s': %s", pvdcRec.Name, err)
 			}
-			task, err := pvdc.Delete()
-			if err != nil {
-				return fmt.Errorf("error deleting provider VDC '%s': %s", pvdcRec.Name, err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error finoshing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
+			tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, pvdcRec.Name, "vcd_provider_vdc", 0, verbose)
+			if tobeDeleted {
+				fmt.Printf("\t REMOVING Provider VDC %s\n", pvdcRec.Name)
+				err = pvdc.Disable()
+				if err != nil {
+					return fmt.Errorf("error disabling provider VDC '%s': %s", pvdcRec.Name, err)
+				}
+				task, err := pvdc.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting provider VDC '%s': %s", pvdcRec.Name, err)
+				}
+				err = task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("error finishing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
+				}
 			}
 		}
 	}

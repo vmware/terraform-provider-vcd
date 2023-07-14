@@ -222,6 +222,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
 	"vcd_provider_vdc":                              resourceVcdProviderVdc(),                      // 3.10
+	"vcd_cloned_vapp":                               resourceVcdClonedVApp(),                       // 3.10
 	"vcd_ui_plugin":                                 resourceVcdUIPlugin(),                         // 3.10
 	"vcd_api_token":                                 resourceVcdApiToken(),                         // 3.10
 	"vcd_service_account":                           resourceVcdServiceAccount(),                   // 3.10
