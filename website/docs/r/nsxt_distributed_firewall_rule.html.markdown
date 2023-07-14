@@ -25,7 +25,7 @@ unexpected firewall configuration.
 ## Example Usage
 
 ```hcl
-data "vcd_vdc_group" "existing" {
+data "vcd_vdc_group" "test1" {
   org  = "my-org" # Optional, can be inherited from Provider configuration
   name = "main-vdc-group"
 }
@@ -38,7 +38,7 @@ data "vcd_nsxt_app_port_profile" "FTP" {
 
 resource "vcd_nsxt_distributed_firewall_rule" "r1" {
   org          = "my-org"
-  vdc_group_id = vcd_vdc_group.test1.id
+  vdc_group_id = data.vcd_vdc_group.test1.id
 
   name        = "rule1"
   action      = "ALLOW"
@@ -51,7 +51,7 @@ resource "vcd_nsxt_distributed_firewall_rule" "r1" {
 
 resource "vcd_nsxt_distributed_firewall_rule" "r2" {
   org          = "{{.Org}}"
-  vdc_group_id = vcd_vdc_group.test1.id
+  vdc_group_id = data.vcd_vdc_group.test1.id
 
   # Specifying a particular ID of other firewall rule will ensure that the current one is placed above
   above_rule_id = vcd_nsxt_distributed_firewall_rule.r1.id
