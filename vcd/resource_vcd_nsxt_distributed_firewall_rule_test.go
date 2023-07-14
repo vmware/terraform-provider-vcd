@@ -51,6 +51,10 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 	configText4DS := templateFill(dfwRuleStep4DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4DS)
 
+	params["FuncName"] = t.Name() + "-step5"
+	configText5 := templateFill(dfwRuleStep5, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -145,6 +149,28 @@ func TestAccVcdDistributedFirewallRule(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_distributed_firewall_rule.r1", "vcd_nsxt_distributed_firewall_rule.r1", []string{"%"}),
 					resourceFieldsEqual("data.vcd_nsxt_distributed_firewall_rule.r2", "vcd_nsxt_distributed_firewall_rule.r2", []string{"%"}),
 					resourceFieldsEqual("data.vcd_nsxt_distributed_firewall_rule.r3", "vcd_nsxt_distributed_firewall_rule.r3", []string{"%"}),
+				),
+			},
+			{
+				Config: configText5,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// field count differs in resource and data source because resource has `above_rule_id` field
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "name", "rule1-updated"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "description", "description-updated"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "source_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "destination_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "app_port_profile_ids.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r1", "network_context_profile_ids.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "name", "rule2-updated"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "ip_protocol", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_distributed_firewall_rule.r2", "network_context_profile_ids.#", "0"),
 				),
 			},
 		},
@@ -249,6 +275,31 @@ data "vcd_nsxt_distributed_firewall_rule" "r3" {
   vdc_group_id = vcd_vdc_group.test1.id
 
   name = "rule3"
+}
+`
+const dfwRuleStep5 = constDfwPrereqs + `
+# skip-binary-test: Testing update capability
+resource "vcd_nsxt_distributed_firewall_rule" "r1" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  name        = "rule1-updated"
+  action      = "ALLOW"
+  description = "description-updated"
+
+  source_ids           = [vcd_nsxt_ip_set.set1.id, vcd_nsxt_ip_set.set2.id]
+  destination_ids      = [vcd_nsxt_security_group.g1-empty.id, vcd_nsxt_security_group.g2.id]
+  app_port_profile_ids = [vcd_nsxt_app_port_profile.p1.id, data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
+}
+
+resource "vcd_nsxt_distributed_firewall_rule" "r2" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  above_rule_id = vcd_nsxt_distributed_firewall_rule.r1.id # Order management element
+  name        = "rule2-updated"
+  action      = "ALLOW"
+  ip_protocol = "IPV4"
 }
 `
 
