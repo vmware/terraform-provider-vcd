@@ -380,7 +380,7 @@ The following arguments are used to configure the VMware Cloud Director Provider
 ## Ignore metadata changes
 
 One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
-items during `plan`, `updates-in-place` and `destroy` (**not** `create`). This is useful, for example, to avoid removing metadata entries that were created
+items during all Terraform operations. This is useful, for example, to avoid removing metadata entries that were created
 by an external actor, or after they were created by Terraform.
 
 ~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support

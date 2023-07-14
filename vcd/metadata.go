@@ -311,7 +311,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 					Summary:  "Found a conflict between 'ignore_metadata_changes' and 'metadata_entry'",
 					Detail: fmt.Sprintf("There is an 'ignored_metadata' block: %s\n"+
 						"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria, hence it will be ignored.\n"+
-						"This will cause that the entry will be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
+						"This will cause the entry to be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
 						"Please use a more fine-grained 'ignore_metadata_changes' configuration or change your metadata entry.", ignoredMetadata, newEntry["key"].(string), newEntry["value"].(string)),
 					AttributePath: cty.Path{},
 				},
