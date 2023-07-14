@@ -346,7 +346,23 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		if toBeDeleted {
 			err = deleteRdeType(rdeType)
 			if err != nil {
-				return fmt.Errorf("error deleting RDE '%s': %s", rdeType.DefinedEntityType.ID, err)
+				return fmt.Errorf("error deleting RDE Type '%s': %s", rdeType.DefinedEntityType.ID, err)
+			}
+		}
+	}
+	// --------------------------------------------------------------
+	// RDE Interfaces
+	// --------------------------------------------------------------
+	definedInterfaces, err := govcdClient.GetAllDefinedInterfaces(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving RDE Types: %s", err)
+	}
+	for _, di := range definedInterfaces {
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, di.DefinedInterface.Name, "vcd_rde_interface", 1, verbose)
+		if toBeDeleted {
+			err = deleteRdeInterface(di)
+			if err != nil {
+				return fmt.Errorf("error deleting RDE Interface '%s': %s", di.DefinedInterface.Name, err)
 			}
 		}
 	}
@@ -769,6 +785,15 @@ func deleteUIPlugin(uiPlugin *govcd.UIPlugin) error {
 	err := uiPlugin.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+	}
+	return nil
+}
+
+func deleteRdeInterface(di *govcd.DefinedInterface) error {
+	fmt.Printf("\t\t REMOVING RDE INTERFACE %s\n", di.DefinedInterface.ID)
+	err := di.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting RDE Interface '%s': %s", di.DefinedInterface.ID, err)
 	}
 	return nil
 }
