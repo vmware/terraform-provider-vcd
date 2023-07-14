@@ -194,7 +194,7 @@ Defines blocks of IPs. Blocks must fall into subnets defined in `internal_scope`
 IP ranges defined in `ip_range` 
 
 * `first_ip` - (Required) - First IP of the prefix
-* `prefix_length` - (Required) - Prefix length
+* `prefix_length` - (Required) Prefix length
 * `prefix_count` - (Required) - Number of prefixes 
 
 ## Importing

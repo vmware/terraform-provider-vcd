@@ -53,6 +53,11 @@ func datasourceVcdIpSpace() *schema.Resource {
 				Description: "IP ranges",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "ID of IP Range",
+						},
 						"start_address": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -78,6 +83,11 @@ func datasourceVcdIpSpace() *schema.Resource {
 							Description: "IP Prefix",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "ID of IP Prefix",
+									},
 									"first_ip": {
 										Type:        schema.TypeString,
 										Computed:    true,

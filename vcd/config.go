@@ -285,6 +285,26 @@ func (cli *VCDClient) unlockParentVdcGroup(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(vdcGroupId)
 }
 
+// lockParentExternalNetwork locks on External Network using 'external_network_id' field
+func (cli *VCDClient) lockParentExternalNetwork(d *schema.ResourceData) {
+	externalNetworkId := d.Get("external_network_id").(string)
+	if externalNetworkId == "" {
+		panic("'external_network_id' is empty")
+	}
+
+	vcdMutexKV.kvLock(externalNetworkId)
+}
+
+// unlockParentVdcGroup unlocks on External Network using 'external_network_id' field
+func (cli *VCDClient) unlockParentExternalNetwork(d *schema.ResourceData) {
+	externalNetworkId := d.Get("external_network_id").(string)
+	if externalNetworkId == "" {
+		panic("'external_network_id' is empty")
+	}
+
+	vcdMutexKV.kvUnlock(externalNetworkId)
+}
+
 // lockIfOwnerIsVdcGroup locks VDC Group based on `owner_id` field (if it is a VDC Group)
 func (cli *VCDClient) lockIfOwnerIsVdcGroup(d *schema.ResourceData) {
 	vdcGroupId := d.Get("owner_id")

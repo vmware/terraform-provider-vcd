@@ -176,6 +176,11 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Total number of IP addresses allocated for this Edge Gateway",
 			},
+			"use_ip_spaces": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Boolean value that specifies that the Edge Gateway is using IP Spaces",
+			},
 		},
 	}
 }

@@ -121,6 +121,9 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_rate_limiting":            datasourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 datasourceVcdNsxtDhcpBinding(),                  // 3.9
 	"vcd_ip_space":                                  datasourceVcdIpSpace(),                          // 3.10
+	"vcd_ip_space_uplink":                           datasourceVcdIpSpaceUplink(),                    // 3.10
+	"vcd_ip_space_ip_allocation":                    datasourceVcdIpAllocation(),                     // 3.10
+	"vcd_ip_space_custom_quota":                     datasourceVcdIpSpaceCustomQuota(),               // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          datasourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  datasourceVcdOrgSaml(),                          // 3.10
 	"vcd_org_saml_metadata":                         datasourceVcdOrgSamlMetadata(),                  // 3.10
@@ -213,6 +216,9 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_rate_limiting":            resourceVcdNsxtEdgegatewayRateLimiting(),      // 3.9
 	"vcd_nsxt_network_dhcp_binding":                 resourceVcdNsxtDhcpBinding(),                  // 3.9
 	"vcd_ip_space":                                  resourceVcdIpSpace(),                          // 3.10
+	"vcd_ip_space_uplink":                           resourceVcdIpSpaceUplink(),                    // 3.10
+	"vcd_ip_space_ip_allocation":                    resourceVcdIpAllocation(),                     // 3.10
+	"vcd_ip_space_custom_quota":                     resourceVcdIpSpaceCustomQuota(),               // 3.10
 	"vcd_nsxt_edgegateway_dhcp_forwarding":          resourceVcdNsxtEdgegatewayDhcpForwarding(),    // 3.10
 	"vcd_org_saml":                                  resourceVcdOrgSaml(),                          // 3.10
 	"vcd_provider_vdc":                              resourceVcdProviderVdc(),                      // 3.10
