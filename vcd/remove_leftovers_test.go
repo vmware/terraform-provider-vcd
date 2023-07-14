@@ -133,7 +133,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				}
 				err = task.WaitTaskCompletion()
 				if err != nil {
-					return fmt.Errorf("error finoshing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
+					return fmt.Errorf("error finishing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
 				}
 			}
 		}
