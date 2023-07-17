@@ -13,7 +13,7 @@ func datasourceVcdNsxtEdgegatewayDhcpForwarding() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
