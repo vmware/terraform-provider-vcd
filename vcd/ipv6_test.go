@@ -300,7 +300,6 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "test" {
   org             = "{{.Org}}"
   edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
 
-  enabled = true
   mode    = "DHCPv6"
 }
 
