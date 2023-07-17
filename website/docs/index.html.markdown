@@ -439,7 +439,7 @@ The available sub-attributes for `ignore_metadata_changes` are:
 * `value_regex`- (Optional) A regular expression that can filter out metadata values that match. Either `key_regex` or `value_regex` are required on each block.
 * `conflict_action` - (Optional) Defines what to do if a conflict exists between a `metadata_entry` that is managed
   by Terraform, and it matches the criteria defined in the `ignore_metadata_changes` block, as the metadata will be stored in state but nothing will be done in VCD.
-  If the value is `error`, when this happens, the Plan will fail. When the value is `warn`, it will just give a warning but the Plan will continue,
+  If the value is `error`, when this happens, any read operation (like a Plan or Refresh) will fail. When the value is `warn`, it will just give a warning but the operation will continue,
   and with the `none` value nothing will be shown. Defaults to `error`.
 
 Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
