@@ -442,6 +442,9 @@ The available sub-attributes for `ignore_metadata_changes` are:
   If the value is `error`, when this happens, any read operation (like a Plan or Refresh) will fail. When the value is `warn`, it will just give a warning but the operation will continue,
   and with the `none` value nothing will be shown. Defaults to `error`.
 
+~> The `conflict_action` mechanism will be evaluated on every read, including `terraform destroy`, as it will trigger a refresh before deleting
+resources. To avoid this situation, you can use the `-refresh=false` option.
+
 Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
 that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
 
