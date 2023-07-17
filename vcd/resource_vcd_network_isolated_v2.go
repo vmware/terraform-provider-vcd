@@ -72,6 +72,36 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Required:    true,
 				Description: "Network prefix",
 			},
+			"static_ip_pool": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "IP ranges used for static pool allocation in the network",
+				Elem:        networkV2IpRange,
+			},
+			"dual_stack_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Boolean value if Dual-Stack mode should be enabled (default `false`)",
+			},
+			"secondary_gateway": {
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				Optional:    true,
+				Description: "Secondary gateway (can only be IPv6 and requires enabled Dual Stack mode)",
+			},
+			"secondary_prefix_length": {
+				Type:         schema.TypeString, // using TypeString to differentiate between 0 and no value ""
+				ForceNew:     true,
+				Optional:     true,
+				Description:  "Secondary prefix (can only be IPv6 and requires enabled Dual Stack mode)",
+				ValidateFunc: IsIntAndAtLeast(0),
+			},
+			"secondary_static_ip_pool": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Secondary IP ranges used for static pool allocation in the network",
+				Elem:        networkV2IpRange,
+			},
 			"dns1": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -86,12 +116,6 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "DNS suffix",
-			},
-			"static_ip_pool": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "IP ranges used for static pool allocation in the network",
-				Elem:        networkV2IpRange,
 			},
 			"metadata": {
 				Type:          schema.TypeMap,
@@ -302,23 +326,21 @@ func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	dSet(d, "dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
 	dSet(d, "is_shared", orgVdcNetwork.Shared)
 
-	// If any IP sets are available
+	// If any IP ranges are available
 	if len(orgVdcNetwork.Subnets.Values[0].IPRanges.Values) > 0 {
-		ipRangeSlice := make([]interface{}, len(orgVdcNetwork.Subnets.Values[0].IPRanges.Values))
-		for index, ipRange := range orgVdcNetwork.Subnets.Values[0].IPRanges.Values {
-			ipRangeMap := make(map[string]interface{})
-			ipRangeMap["start_address"] = ipRange.StartAddress
-			ipRangeMap["end_address"] = ipRange.EndAddress
-
-			ipRangeSlice[index] = ipRangeMap
-		}
-		ipRangeSet := schema.NewSet(schema.HashResource(networkV2IpRange), ipRangeSlice)
-
-		err := d.Set("static_ip_pool", ipRangeSet)
+		err := setOpenApiOrgVdcNetworkStaticPoolData(d, orgVdcNetwork.Subnets.Values[0].IPRanges.Values, "static_ip_pool")
 		if err != nil {
-			return fmt.Errorf("error setting 'static_ip_pool': %s", err)
+			return err
 		}
 	}
+
+	if orgVdcNetwork.EnableDualSubnetNetwork != nil && *orgVdcNetwork.EnableDualSubnetNetwork {
+		err := setSecondarySubnet(d, orgVdcNetwork)
+		if err != nil {
+			return fmt.Errorf("error storing Dual-Stack network to schema: %s", err)
+		}
+	}
+
 	return nil
 }
 
@@ -354,6 +376,12 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 				},
 			},
 		},
+	}
+
+	// Handle Dual-Stack configuration (it accepts config address and amends it if required)
+	err = getOpenApiOrgVdcSecondaryNetworkType(d, orgVdcNetworkConfig)
+	if err != nil {
+		return nil, err
 	}
 
 	return orgVdcNetworkConfig, nil
