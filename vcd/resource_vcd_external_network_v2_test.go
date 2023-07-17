@@ -63,6 +63,10 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	configText3 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText3)
 
+	params["FuncName"] = t.Name() + "step4"
+	configText4 := templateFill(testAccCheckVcdExternalNetworkV2NsxtStep4Ipv6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText4)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -190,6 +194,35 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 					testCheckOutputNonEmpty("nsxt-tier0-router"), // Match any non empty string
 				),
 			},
+			{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "description", "IPv6"),
+					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "true",
+						"gateway":       "2002:0:0:1234:abcd:ffff:c0a8:101",
+						"prefix_length": "124",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a8:103",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a8:104",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "2002:0:0:1234:abcd:ffff:c0a8:107",
+						"end_address":   "2002:0:0:1234:abcd:ffff:c0a8:109",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+					testCheckMatchOutput("nsxt-manager", regexp.MustCompile("^urn:vcloud:nsxtmanager:.*")),
+					testCheckOutputNonEmpty("nsxt-tier0-router"), // Match any non empty string
+				),
+			},
 		},
 	})
 }
@@ -203,7 +236,6 @@ data "vcd_nsxt_tier0_router" "router" {
   name            = "{{.NsxtTier0Router}}"
   nsxt_manager_id = data.vcd_nsxt_manager.main.id
 }
-
 `
 
 const testAccCheckVcdExternalNetworkV2NsxtStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
@@ -322,6 +354,41 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
     static_ip_pool {
       start_address = "{{.StartAddress}}"
       end_address   = "{{.EndAddress}}"
+    }
+  }
+}
+
+output "nsxt-manager" {
+  value = tolist(vcd_external_network_v2.ext-net-nsxt.nsxt_network)[0].nsxt_manager_id
+}
+
+output "nsxt-tier0-router" {
+  value = tolist(vcd_external_network_v2.ext-net-nsxt.nsxt_network)[0].nsxt_tier0_router_id
+}
+`
+
+const testAccCheckVcdExternalNetworkV2NsxtStep4Ipv6 = testAccCheckVcdExternalNetworkV2NsxtDS + `
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+  description = "IPv6"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    gateway       = "2002:0:0:1234:abcd:ffff:c0a8:101"
+    prefix_length = "124"
+
+    static_ip_pool {
+      start_address = "2002:0:0:1234:abcd:ffff:c0a8:103"
+      end_address   = "2002:0:0:1234:abcd:ffff:c0a8:104"
+    }
+    
+    static_ip_pool {
+      start_address = "2002:0:0:1234:abcd:ffff:c0a8:107"
+      end_address   = "2002:0:0:1234:abcd:ffff:c0a8:109"
     }
   }
 }

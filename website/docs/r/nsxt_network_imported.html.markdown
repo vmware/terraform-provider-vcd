@@ -52,6 +52,32 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
 }
 ```
 
+## Example Usage (NSX-T backed imported Org VDC network in Dual-Stack mode)
+```hcl
+resource "vcd_nsxt_network_imported" "ipv6-dualstack" {
+  vdc  = vcd_org_vdc.with-edge-cluster.name
+  name = "dual-stack-imported"
+
+  nsxt_logical_switch_name = "segment-cloud"
+
+  gateway       = "192.168.1.1"
+  prefix_length = 24
+  static_ip_pool {
+    start_address = "192.168.1.10"
+    end_address   = "192.168.1.20"
+  }
+
+  dual_stack_enabled      = true
+  secondary_gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
+  secondary_prefix_length = 124
+
+  secondary_static_ip_pool {
+    start_address = "2002:0:0:1234:abcd:ffff:c0a6:122"
+    end_address   = "2002:0:0:1234:abcd:ffff:c0a6:124"
+  }
+}
+```
+
 ## Example Usage (NSX-T backed imported Org VDC network backed by Distributed Virtual Port Group - DVPG)
 
 ```hcl
@@ -107,18 +133,39 @@ and inherited from provider configuration)
 -> One of `nsxt_logical_switch_name` or `dvpg_name` must be provided.
 
 * `description` - (Optional) An optional description of the network
-* `gateway` - (Required) The gateway for this network (e.g. 192.168.1.1)
+* `gateway` - (Required) The gateway for this network (e.g. 192.168.1.1, 2002:0:0:1234:abcd:ffff:c0a7:121)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
   virtual machines; see [IP Pools](#ip-pools) below for details.
+* `dual_stack_enabled` - (Optional; *v3.10+*) Enables Dual-Stack mode so that one can configure one
+  IPv4 and one IPv6 networks. **Note** In such case *IPv4* addresses must be used in `gateway`,
+  `prefix_length` and `static_ip_pool` while *IPv6* addresses in `secondary_gateway`,
+  `secondary_prefix_length` and `secondary_static_ip_pool` fields.
+* `secondary_gateway` - (Optional; *v3.10+*) IPv6 gateway *when Dual-Stack mode is enabled*
+* `secondary_prefix_length` - (Optional; *v3.10+*) IPv6 prefix length *when Dual-Stack mode is
+  enabled*
+* `secondary_static_ip_pool` - (Optional; *v3.10+*) One or more [IPv6 static
+  pools](#secondary-ip-pools) *when Dual-Stack mode is enabled*
+
+-> When using IPv6, VCD API will expand IP Addresses if they are specified using *double colon*
+notation and it will cause inconsistent plan. (e.g. `2002::1234:abcd:ffff:c0a6:121` will be
+converted to `2002:0:0:1234:abcd:ffff:c0a6:121`)
 
 <a id="ip-pools"></a>
 ## IP Pools
 
 Static IP Pools  support the following attributes:
+
+* `start_address` - (Required) The first address in the IP Range
+* `end_address` - (Required) The final address in the IP Range
+
+<a id="secondary-ip-pools"></a>
+## Secondary IP Pools (IPv6 only)
+
+Static IP Pools support the following attributes:
 
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range

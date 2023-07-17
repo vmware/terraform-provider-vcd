@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -80,6 +81,27 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Network prefix",
+			},
+			"dual_stack_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Boolean value if Dual-Stack mode is enabled",
+			},
+			"secondary_gateway": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Secondary gateway (can only be IPv6 and requires enabled Dual Stack mode)",
+			},
+			"secondary_prefix_length": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Secondary prefix (can only be IPv6 and requires enabled Dual Stack mode)",
+			},
+			"secondary_static_ip_pool": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Secondary IP ranges used for static pool allocation in the network",
+				Elem:        networkV2IpRangeComputed,
 			},
 			"dns1": {
 				Type:        schema.TypeString,
