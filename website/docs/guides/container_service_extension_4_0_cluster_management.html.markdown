@@ -15,7 +15,7 @@ installed, using Terraform.
 
 We will use the [`vcd_rde`][rde] resource for this purpose.
 
-~> This section assumes that your CSE installation was done following the [CSE v4.0 installation guide][cse_install_guide].
+~> This section assumes that the CSE installation was done following the [CSE v4.0 installation guide][cse_install_guide].
 That is, CSE Server should be up and running and all elements must be working.
 
 ## Pre-requisites
@@ -30,7 +30,7 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Creating a Kubernetes cluster
 
--> You can have a look at a working example of a TKGm cluster [here][cluster]. It is encouraged to read the following
+-> Please have a look at a working example of a TKGm cluster [here][cluster]. It is encouraged to read the following
 section to understand how it works.
 
 To be able to create a TKGm cluster, one needs to prepare a [`vcd_rde`][rde] resource. In the [proposed example][cluster],
@@ -60,7 +60,7 @@ placeholders that can be found in that file:
   During creation it should be always `false`.
 - `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to automatically repair the TKGm cluster on errors.
 
-The following four placeholders are **only needed if one wants to provide a default storage class** with your TKGm cluster.
+The following four placeholders are **only needed if one wants to provide a default storage class** with the TKGm cluster.
 If this is not needed, please remove the whole `defaultStorageClassOptions` block from the JSON template:
 
 - `default_storage_class_filesystem`: Filesystem for the default storage class. Only `ext4` or `xfs` are valid.
@@ -73,8 +73,8 @@ To create a valid input for the `capi_yaml` placeholder, a [CAPVCD][capvcd] YAML
 created. In order to craft it, we need to follow these steps:
 
 - First, we need to download a YAML template from the [CAPVCD repository][capvcd_templates].
-  We should choose the template that matches your TKGm OVA. For example, if you uploaded the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`
-  and you want to use it, the template that you need to obtain corresponds to v1.22.9, that is `cluster-template-v1.22.9.yaml`.
+  We should choose the template that matches the TKGm OVA. For example, if we uploaded the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`
+  and we want to use it, the template that we need to obtain corresponds to v1.22.9, that is `cluster-template-v1.22.9.yaml`.
 
 - This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
   `annotations`, that are required by the CSE Server to be able to provision the cluster correctly. In other words, **cluster creation will fail
@@ -145,8 +145,8 @@ It must be encoded in Base64.
 - `VCD_PASSWORD_B64` (**Discouraged in favor of `VCD_REFRESH_TOKEN_B64`**): The password of the user above.
   It must be encoded in Base64. Please do **not** use this value (by setting it to `""`) and use `VCD_REFRESH_TOKEN_B64` instead.
 - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
-  in the top right, then go to the API tokens section, add a new one. Or you can visit `/tenant/<YOUR-TENANT-NAME>/administration/settings/user-preferences`
-  at your VCD URL logged in as the target user in your desired tenant. It must be encoded in Base64.
+  in the top right, then go to the API tokens section, add a new one. Or we can visit `/tenant/<TENANT-NAME>/administration/settings/user-preferences`
+  in the target VCD, logged in as the cluster author user in the desired tenant. It must be encoded in Base64.
 - `SSH_PUBLIC_KEY`: We can set a public SSH key to be able to debug the TKGm control plane nodes. It can be empty (`""`)
 - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
 - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation. Can be empty to use the VDC default (`""`)
@@ -227,7 +227,7 @@ We can perform a Terraform update to resize a TKGm cluster, for example. In orde
 in this specific case.
 
 To apply a correct update, we need to take the most recent state of the TKGm cluster, which is reflected in the contents of
-the `computed_entity` attribute. Copy the value of this attribute, edit the properties that you would like to modify, and place the
+the `computed_entity` attribute. Copy the value of this attribute, edit the properties that we would like to modify, and place the
 final result inside `input_entity`. Now the changes can be applied with `terraform apply`.
 
 ~> Do **NOT** use the initial `input_entity` contents to perform an update, as the CSE Server puts vital information in
@@ -236,17 +236,17 @@ If this information is not sent back, **the cluster will be broken**.
 
 Upgradeable items:
 
-- TKGm OVA: If you have a newer version of TKGm, you can modify the referenced OVA.
+- TKGm OVA: If there is a newer version of TKGm, we can modify the referenced OVA.
 - Number of worker nodes. Remember this must be higher than 0.
 - Number of control plane nodes. Remember this must be an odd number and higher than 0.
 
 ## Deleting a Kubernetes cluster
 
-~> Do **NOT** remove the cluster from your HCL configuration! This will leave dangling resources that the CSE Server creates
+~> Do **NOT** remove the cluster from the HCL configuration! This will leave dangling resources that the CSE Server creates
 when the TKGm cluster is created, such as vApps, networks, virtual services, etc. Please follow the procedure described in
 this section to destroy a cluster entirely.
 
-To delete an existing TKGm cluster, you need to mark it for deletion in the `vcd_rde` resource. In the [example configuration][cluster],
+To delete an existing TKGm cluster, one needs to mark it for deletion in the `vcd_rde` resource. In the [example configuration][cluster],
 there are two keys `delete` and `force_delete` that correspond to the CAPVCD [RDE Type][rde_type] schema fields `markForDelete`
 and `forceDelete` respectively.
 
@@ -257,8 +257,8 @@ and `forceDelete` respectively.
 Follow the instructions described in ["Updating a Kubernetes cluster"](#updating-a-kubernetes-cluster) to learn how to perform
 the update of these two properties.
 
-Once updated, you can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
-ask for creation again. You can now remove it from the HCL configuration.
+Once updated, one can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
+ask for creation again. It can be now removed from the HCL configuration.
 
 [capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
 [capvcd_templates]: https://github.com/vmware/cluster-api-provider-cloud-director/tree/main/templates
