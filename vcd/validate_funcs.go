@@ -216,3 +216,25 @@ func allowTokenFileIfIsBoolAndTrue() schema.SchemaValidateDiagFunc {
 		return nil
 	}
 }
+
+// validateMetadataIgnoreResourceType validates whether the given attribute is a resource type
+// that supports the `metadata_entry` argument.
+func validateMetadataIgnoreResourceType() func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		v, ok := i.(string)
+		if !ok {
+			return diag.Errorf("expected type of '%v' to be string", i)
+		}
+		found := false
+		for k := range resourceMetadataApiRelation {
+			if v == k {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return diag.Errorf("can't ignore metadata of resource type '%s'", i)
+		}
+		return nil
+	}
+}

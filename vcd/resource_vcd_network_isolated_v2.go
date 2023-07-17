@@ -125,7 +125,7 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", false),
+			"metadata_entry": metadataEntryResourceSchema("Network"),
 		},
 	}
 }
@@ -241,16 +241,20 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 
 	// Metadata is not supported when the network is in a VDC Group, although it is still present in the entity.
 	// Hence, we skip the read to preserve its value in state.
+	var diagErr diag.Diagnostics
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		err = updateMetadataInState(d, orgNetwork)
+		diagErr = updateMetadataInState(d, vcdClient, "vcd_network_isolated_v2", orgNetwork)
 	} else if _, ok := d.GetOk("metadata"); !ok {
 		// If it's a VDC Group and metadata is not set, we explicitly compute it to empty. Otherwise, its value should
 		// be preserved as it is still present in the entity.
 		err = d.Set("metadata", StringMap{})
+		if err != nil {
+			diagErr = diag.FromErr(err)
+		}
 	}
-	if err != nil {
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set isolated network v2 metadata: %s", err)
-		return diag.Errorf("[isolated network read v2] unable to set Isolated network metadata %s", err)
+		return diagErr
 	}
 
 	return nil

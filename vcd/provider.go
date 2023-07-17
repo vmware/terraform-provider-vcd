@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"os"
 	"regexp"
 
@@ -376,6 +377,7 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
+			"ignore_metadata_changes": ignoreMetadataSchema(),
 		},
 		ResourcesMap:         globalResourceMap,
 		DataSourcesMap:       globalDataSourceMap,
@@ -488,6 +490,18 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	} else {
 		ImportSeparator = d.Get("import_separator").(string)
 	}
+
+	ignoredMetadata, err := getIgnoredMetadata(d, "ignore_metadata_changes")
+	if err != nil {
+		return nil, diag.Errorf("could not process the metadata that needs to be ignored: %s", err)
+	}
+	config.IgnoredMetadata = make([]govcd.IgnoredMetadata, len(ignoredMetadata))
+	IgnoreMetadataChangesConflictActions = map[string]string{}
+	for i, im := range ignoredMetadata {
+		config.IgnoredMetadata[i] = ignoredMetadata[i].IgnoredMetadata
+		IgnoreMetadataChangesConflictActions[im.IgnoredMetadata.String()] = ignoredMetadata[i].ConflictAction
+	}
+
 	vcdClient, err := config.Client()
 	if err != nil {
 		return nil, diag.FromErr(err)

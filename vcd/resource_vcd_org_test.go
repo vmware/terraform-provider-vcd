@@ -447,3 +447,20 @@ data "vcd_org" "test-org-ds" {
   name = vcd_org.test-org.name
 }
 `
+
+func TestAccVcdOrgMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", id, err)
+		}
+		return adminOrg, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
+		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
+		getObjectById, nil)
+}

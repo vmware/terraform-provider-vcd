@@ -79,7 +79,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:    true,
 				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog Item", false),
+			"metadata_entry": metadataEntryResourceSchema("Catalog Item"),
 			"catalog_item_metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -164,6 +164,11 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 
 	// We can't use updateMetadataInState(d, catalogItem) because the attribute name is different.
 	// We have three metadata attributes here.
+	diagErr := checkIgnoredMetadataConflicts(d, meta.(*VCDClient), "vcd_catalog_item")
+	if diagErr != nil {
+		return diagErr
+	}
+
 	metadata, err := catalogItem.GetMetadata()
 	if err != nil {
 		return diag.Errorf("Unable to find catalog item's metadata: %s", err)
