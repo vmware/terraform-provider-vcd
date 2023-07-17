@@ -285,7 +285,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		"Name":     t.Name(),
 		"Metadata": " ",
 		// The IgnoreMetadataBlock entry below is for binary tests
-		"IgnoreMetadataBlock": "ignore_metadata_changes {\n\tresource_type = \"" + resourceType + "\"\n\tresource_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n}",
+		"IgnoreMetadataBlock": "ignore_metadata_changes {\n\tresource_type = \"" + resourceType + "\"\n\tresource_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n\tconflict_action = \"warn\"\n}",
 	}
 
 	for extraParam, extraParamValue := range extraParams {
