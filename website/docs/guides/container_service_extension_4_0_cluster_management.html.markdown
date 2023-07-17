@@ -61,7 +61,7 @@ placeholders that can be found in that file:
 - `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to automatically repair the TKGm cluster on errors.
 
 The following four placeholders are **only needed if one wants to provide a default storage class** with your TKGm cluster.
-If you don't need this, please remove the whole `defaultStorageClassOptions` block from the JSON template:
+If this is not needed, please remove the whole `defaultStorageClassOptions` block from the JSON template:
 
 - `default_storage_class_filesystem`: Filesystem for the default storage class. Only `ext4` or `xfs` are valid.
 - `default_storage_class_name`: Name of the default storage class, it must contain only lowercase alphanumeric characters or '-',
@@ -73,7 +73,7 @@ To create a valid input for the `capi_yaml` placeholder, a [CAPVCD][capvcd] YAML
 created. In order to craft it, we need to follow these steps:
 
 - First, we need to download a YAML template from the [CAPVCD repository][capvcd_templates].
-  You should choose the template that matches your TKGm OVA. For example, if you uploaded the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`
+  We should choose the template that matches your TKGm OVA. For example, if you uploaded the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`
   and you want to use it, the template that you need to obtain corresponds to v1.22.9, that is `cluster-template-v1.22.9.yaml`.
 
 - This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
@@ -96,7 +96,7 @@ metadata:
 ```
 
 - The downloaded template has a single worker pool (to see an example with **two** worker pools, please check the [proposed example][cluster]).
-  If you need to have **more than one worker pool**, you need to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and
+  If we need to have **more than one worker pool**, we have to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and
   `MachineDeployment`. In the downloaded template, they look like this:
 
 ```yaml
@@ -119,20 +119,20 @@ metadata:
   namespace: ${TARGET_NAMESPACE}
 ```
 
-  Notice that the default worker pool is named `${CLUSTER_NAME}-md-0`. To add an extra one, you need to duplicate these
+  Notice that the default worker pool is named `${CLUSTER_NAME}-md-0`. To add an extra one, we need to duplicate these
   blocks and name them differently, for example `name: ${CLUSTER_NAME}-md-1`.
-  If you want to specify a different number of worker nodes per worker pool, you need to modify the original template, otherwise
+  If we want to specify a different number of worker nodes per worker pool, we need to modify the original template, otherwise
   they will share the `${WORKER_MACHINE_COUNT}` placeholder located in the `MachineDeployment` object.
   The same happens with the **VM Sizing Policy, VM Placement Policy and Storage Profile**.
   See the explanation below for every placeholder to better understand how to adjust them.
 
 Now that the YAML template is ready, one needs to understand the meaning of all the placeholders.
-Below is the explanation of each one of them, you can also check [the working example][cluster] to observe the final result.
+Below is the explanation of each one of them. See also [the working example][cluster] to observe the final result.
 
 - `CLUSTER_NAME`: This will be the TKGm cluster name. It must contain only lowercase alphanumeric characters or '-',
 start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters.
-- `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] you will see that the value is
-`"${var.k8s_cluster_name}-ns"`, this mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
+- `TARGET_NAMESPACE`: This will be the TKGm cluster namespace. In [the example][cluster] the value is
+`"${var.k8s_cluster_name}-ns"`, which mimics the UI behaviour, as the namespace is the name of the TKGm cluster concatenated with `-ns`.
 - `VCD_SITE`: The VCD URL, the same that was used during CSE installation.
 - `VCD_ORGANIZATION`: The Organization in which the TKGm clusters will be created. In this guide it was created as `tenant_org` and named
 "Tenant Organization" during CSE installation phase.
@@ -147,7 +147,7 @@ It must be encoded in Base64.
 - `VCD_REFRESH_TOKEN_B64`: An API token that belongs to the user above. In UI, the API tokens can be generated in the user preferences
   in the top right, then go to the API tokens section, add a new one. Or you can visit `/tenant/<YOUR-TENANT-NAME>/administration/settings/user-preferences`
   at your VCD URL logged in as the target user in your desired tenant. It must be encoded in Base64.
-- `SSH_PUBLIC_KEY`: You can set a public SSH key to be able to debug the TKGm control plane nodes. Can be empty (`""`)
+- `SSH_PUBLIC_KEY`: We can set a public SSH key to be able to debug the TKGm control plane nodes. It can be empty (`""`)
 - `CONTROL_PLANE_MACHINE_COUNT`: Number of control plane nodes (VMs). **Must be an odd number and higher than 0**.
 - `VCD_CONTROL_PLANE_SIZING_POLICY`: Name of an existing VM Sizing Policy, created during CSE installation. Can be empty to use the VDC default (`""`)
 - `VCD_CONTROL_PLANE_PLACEMENT_POLICY` : Name of an existing VM Placement Policy. Can be empty (`""`)
@@ -164,8 +164,8 @@ It must be encoded in Base64.
 - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
 
 There are three additional variables that we added manually: `TKR_VERSION` and `TKGVERSION`.
-To know their values, you can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
-or check the following table that gives some script outputs for you:
+To know their values, one can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
+or check the following table with some script outputs:
 
 | OVA name                                                 | TKR_VERSION               | TKGVERSION |
 |----------------------------------------------------------|---------------------------|------------|
