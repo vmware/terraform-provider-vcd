@@ -75,7 +75,7 @@ func resourceRightsBundleCreate(ctx context.Context, d *schema.ResourceData, met
 		Name:        rightsBundleName,
 		Description: d.Get("description").(string),
 		BundleKey:   types.VcloudUndefinedKey,
-		PublishAll:  takeBoolPointer(publishToAllTenants),
+		PublishAll:  &publishToAllTenants,
 	})
 	if err != nil {
 		return diag.Errorf("[rights bundle create] error creating role %s: %s", rightsBundleName, err)
@@ -205,7 +205,7 @@ func resourceRightsBundleUpdate(ctx context.Context, d *schema.ResourceData, met
 	if d.HasChange("name") || d.HasChange("description") || d.HasChange("publish_to_all_tenants") {
 		rightsBundle.RightsBundle.Name = rightsBundleName
 		rightsBundle.RightsBundle.Description = d.Get("description").(string)
-		rightsBundle.RightsBundle.PublishAll = takeBoolPointer(publishToAllTenants)
+		rightsBundle.RightsBundle.PublishAll = &publishToAllTenants
 		_, err = rightsBundle.Update()
 		if err != nil {
 			return diag.Errorf("[rights bundle update] error updating rights bundle %s: %s", rightsBundleName, err)

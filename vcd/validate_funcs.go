@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -192,4 +194,47 @@ func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {
 // only contains alphanumeric characters, allowing also underscores and hyphens.
 func validateAlphanumericWithUnderscoresAndHyphens() schema.SchemaValidateFunc {
 	return validation.StringMatch(regexp.MustCompile(`(?i)^[a-z0-9_-]+$`), "only alphanumeric characters, underscores and hyphens allowed")
+}
+
+// allowTokenFileIfIsBoolAndTrue checks if the 'allow_token_file' is set to true, otherwise returns
+// a descriptive error
+func allowTokenFileIfIsBoolAndTrue() schema.SchemaValidateDiagFunc {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		value := i.(bool)
+
+		if !value {
+			return diag.Diagnostics{
+				diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "This field must be set to true",
+					Detail: "The token file should be considered SENSITIVE INFORMATION. " +
+						"If you acknowledge that, set 'allow_token_file' to 'true'.",
+					AttributePath: path,
+				},
+			}
+		}
+		return nil
+	}
+}
+
+// validateMetadataIgnoreResourceType validates whether the given attribute is a resource type
+// that supports the `metadata_entry` argument.
+func validateMetadataIgnoreResourceType() func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		v, ok := i.(string)
+		if !ok {
+			return diag.Errorf("expected type of '%v' to be string", i)
+		}
+		found := false
+		for k := range resourceMetadataApiRelation {
+			if v == k {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return diag.Errorf("can't ignore metadata of resource type '%s'", i)
+		}
+		return nil
+	}
 }

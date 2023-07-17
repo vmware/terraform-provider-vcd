@@ -46,7 +46,24 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 36.2",
 				datasourceName:        "vcd_nsxt_edgegateway_qos_profile",
 			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_custom_quota",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_ip_allocation",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_uplink",
+			},
 		}
+		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
 		for _, constraintSkip := range skipOnVersionsVersionsOlderThan {
 			if dataSourceName == constraintSkip.datasourceName && vcdClient.Client.APIVCDMaxVersionIs(constraintSkip.skipVersionConstraint) {
@@ -61,12 +78,15 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_nsxt_edgegateway_bgp_ip_prefix_list",
 			"vcd_nsxt_edgegateway_bgp_neighbor",
 			"vcd_org_ldap",
+			"vcd_org_saml",
 			"vcd_portgroup",
 			"vcd_provider_vdc",
 			"vcd_rights_bundle",
 			"vcd_vcenter",
 			"vcd_vdc_group",
 			"vcd_vm_group",
+			"vcd_resource_pool",
+			"vcd_network_pool",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -184,18 +204,28 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		}
 
 		if (dataSourceName == "vcd_nsxt_edgegateway_bgp_configuration" || dataSourceName == "vcd_nsxt_alb_settings" ||
+			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting" || dataSourceName == "vcd_nsxt_edgegateway_dhcp_forwarding" ||
 			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement" ||
-			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting") &&
+			dataSourceName == "vcd_nsxt_edgegateway_dhcpv6") &&
 			mandatoryFields[fieldIndex] == "edge_gateway_id" {
 			// injecting fake Edge Gateway ID
 			templateFields = templateFields + `edge_gateway_id = "urn:vcloud:gateway:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			return templateFields
 		}
 
-		if dataSourceName == "vcd_org_ldap" && mandatoryFields[fieldIndex] == "org_id" {
+		if (dataSourceName == "vcd_org_saml" ||
+			dataSourceName == "vcd_org_saml_metadata" ||
+			dataSourceName == "vcd_org_ldap" ||
+			dataSourceName == "vcd_ip_space_custom_quota" ||
+			dataSourceName == "vcd_ip_space_ip_allocation") &&
+			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
-			return templateFields
+			// return templateFields
+		}
+
+		if dataSourceName == "vcd_ip_space_ip_allocation" && mandatoryFields[fieldIndex] == "type" {
+			templateFields = templateFields + `type = "FLOATING_IP"` + "\n"
 		}
 
 		// vcd_portgroup requires portgroup  type
@@ -263,6 +293,14 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 				return ""
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
+		case "vcenter_id":
+			testParamsNotEmpty(t, StringMap{"Networking.Vcenter": testConfig.Networking.Vcenter})
+			vcenter, err := vcdClient.GetVCenterByName(testConfig.Networking.Vcenter)
+			if err != nil {
+				t.Skip("No suitable Vcenter found for this test")
+				return ""
+			}
+			templateFields = templateFields + `vcenter_id = "` + vcenter.VSphereVCenter.VcId + `"` + "\n"
 		case "nsxt_manager_id":
 			testParamsNotEmpty(t, StringMap{"Nsxt.Manager": testConfig.Nsxt.Manager})
 			// This test needs a valid nsxt_manager_id
@@ -319,6 +357,15 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `version = "9.9.9"` + "\n"
 		case "rde_type_id":
 			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:donotexist:donotexist:9.9.9"` + "\n"
+		case "rde_interface_id":
+			templateFields = templateFields + `rde_interface_id = "urn:vcloud:interface:notexist:notexist:9.9.9"` + "\n"
+		case "behavior_id":
+			templateFields = templateFields + `behavior_id = "urn:vcloud:behavior-interface:NotExist:notexist:notexist:9.9.9"` + "\n"
+		case "ip_space_id":
+			templateFields = templateFields + `ip_space_id = "urn:vcloud:ipSpace:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
+		case "external_network_id":
+			templateFields = templateFields + `external_network_id = "urn:vcloud:network:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
+			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:notexist:notexist:9.9.9"` + "\n"
 		}
 	}
 

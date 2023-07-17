@@ -13,7 +13,7 @@ import (
 func TestAccVcdRightsBundle(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	var rightsBundleName = t.Name()
 	var rightsBundleUpdateName = t.Name() + "-update"
 	var rightsBundleDescription = "A long description containing some text."

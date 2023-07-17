@@ -21,6 +21,6 @@
         "useDeleteReclaimPolicy": ${default_storage_class_delete_reclaim_policy}
       }
     },
-    "capiYaml": "${capi_yaml}"
+    "capiYaml": ${capi_yaml}
   }
 }

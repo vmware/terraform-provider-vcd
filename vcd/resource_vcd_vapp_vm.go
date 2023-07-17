@@ -226,7 +226,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Deprecated:    "Use metadata_entry instead",
 			ConflictsWith: []string{"metadata_entry"},
 		},
-		"metadata_entry": getMetadataEntrySchema("VM", false),
+		"metadata_entry": metadataEntryResourceSchema("VM"),
 		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -661,7 +661,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
-	return genericVcdVmRead(d, meta, "create")
+	return genericVcdVmRead(d, meta, "resource")
 }
 
 // genericResourceVmCreate does the following:
@@ -1298,7 +1298,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 				},
 				VmSpecSection: &types.VmSpecSection{
-					Modified:          takeBoolPointer(true),
+					Modified:          addrOf(true),
 					Info:              "Virtual Machine specification",
 					OsType:            osType.(string),
 					CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
@@ -1350,7 +1350,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				Description:               d.Get("description").(string),
 				GuestCustomizationSection: customizationSection,
 				VmSpecSection: &types.VmSpecSection{
-					Modified:          takeBoolPointer(true),
+					Modified:          addrOf(true),
 					Info:              "Virtual Machine specification",
 					OsType:            osType.(string),
 					NumCpus:           cpuCores,
@@ -1443,7 +1443,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	// update so that its value can be written into statefile and be accessible in read function
 	if onlyHasChange("network_dhcp_wait_seconds", vmSchemaFunc(vmType), d) {
 		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
-		return genericVcdVmRead(d, meta, "update")
+		return genericVcdVmRead(d, meta, "resource")
 	}
 
 	err := resourceVmHotUpdate(d, meta, vmType)
@@ -1817,7 +1817,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	}
 
 	log.Printf("[DEBUG] [VM update] finished")
-	return genericVcdVmRead(d, meta, "update")
+	return genericVcdVmRead(d, meta, "resource")
 }
 
 func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -1947,9 +1947,9 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	err = updateMetadataInState(d, vm)
-	if err != nil {
-		return diag.Errorf("[VM read] set metadata: %s", err)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	if vm.VM.StorageProfile != nil {

@@ -4,7 +4,7 @@
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
 #   before applying this configuration.
 #
-# * Please be sure that you have CSE v4.0 installed in your VCD appliance and the CSE Server is correctly running.
+# * Please make sure to have CSE v4.0 installed in your VCD appliance and the CSE Server is correctly running.
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
 #
@@ -105,7 +105,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
     default_storage_class_delete_reclaim_policy = var.default_storage_class_delete_reclaim_policy
 
     # Insert the rendered CAPVCD YAML here. Notice that we need to escape special characters.
-    capi_yaml = replace(replace(local.capvcd_yaml_rendered, "\n", "\\n"), "\"", "\\\"")
+    capi_yaml = jsonencode(local.capvcd_yaml_rendered)
 
     delete                = false # Make this true to delete the cluster
     force_delete          = false # Make this true to forcefully delete the cluster

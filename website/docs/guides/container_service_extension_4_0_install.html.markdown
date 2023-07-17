@@ -22,7 +22,7 @@ To know more about CSE v4.0, you can visit [the documentation][cse_docs].
 In order to complete the steps described in this guide, please be aware:
 
 * CSE v4.0 is supported from VCD v10.4.0 or above, make sure your VCD appliance matches the criteria.
-* Terraform provider needs to be v3.9.0 or above.
+* Terraform provider needs to be v3.10.0 or above.
 * Both CSE Server and the Bootstrap clusters require outbound Internet connectivity.
 * CSE v4.0 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
 
@@ -235,7 +235,7 @@ If you wish to have a different networking setup, please modify the [proposed co
 
 ### CSE Server
 
-The final set of resources created by the [proposed configuration][step2] correspond to the CSE Server vApp.
+There is also a set of resources created by the [proposed configuration][step2] that correspond to the CSE Server vApp.
 The generated VM makes use of the uploaded CSE OVA and some required guest properties.
 
 In order to do so, the [configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
@@ -253,6 +253,20 @@ In order to do so, the [configuration][step2] asks for the following variables t
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
 - `cse_admin_user`: This should reference the CSE Administrator [User][user] that was created in Step 1.
 - `cse_admin_api_token`: This should be the API token that you created for the CSE Administrator after Step 1.
+
+### UI plugin installation
+
+The final resource created by the [proposed configuration][step2] is the [`vcd_ui_plugin`][ui_plugin] resource.
+
+This resource is optional, it will be only created if the variable `k8s_container_clusters_ui_plugin_path` is not empty,
+so you can leverage whether your tenant users or system administrators will need it or not. It can be useful for troubleshooting,
+or if your tenant users are not familiar with Terraform, they will be still able to create and manage their clusters
+with the UI.
+
+If you decide to install it, `k8s_container_clusters_ui_plugin_path` should point to the
+[Kubernetes Container Clusters UI plug-in v4.0][cse_docs] ZIP file that you can download in the [CSE documentation][cse_docs].
+
+-> If the old CSE 3.x plugin is installed, you will need to remove it also.
 
 ### Final considerations
 
@@ -282,13 +296,6 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
 
 Once you gain access to the CSE Server, you can check the `cse.log` file, the configuration file or check Internet connectivity.
 If something does not work, please check the **Troubleshooting** section below.
-
-#### Kubernetes Container Clusters UI plug-in
-
-To manage CSE clusters with the UI, you can [download the Kubernetes Container Clusters UI plug-in 4.0][cse_docs]
-and install it in your VCD appliance. If the old CSE 3.x plugin is installed, you will need to remove it first. The plugin
-will allow tenants to create Kubernetes clusters with the UI wizard. Providers should still use the proposed Terraform configuration
-to perform updates on the CSE Server (see sections below).
 
 #### Troubleshooting
 
@@ -411,6 +418,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step2
 [tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
+[ui_plugin]: /providers/vmware/vcd/latest/docs/resources/ui_plugin
 [catalog_vapp_template]: /providers/vmware/vcd/latest/docs/resources/catalog_vapp_template
 [vdc]: /providers/vmware/vcd/latest/docs/resources/org_vdc
 [vm]: /providers/vmware/vcd/latest/docs/resources/vapp_vm

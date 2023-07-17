@@ -46,6 +46,11 @@ The following arguments are supported:
 * `participating_vdc_ids` - (Required) The list of organization VDCs that are participating in this group. **Note**: `starting_vdc_id` isn't automatically included in this list.
 * `dfw_enabled` - (Optional) Whether Distributed Firewall is enabled for this VDC group.
 * `default_policy_status` - (Optional) Whether this security policy is enabled. `dfw_enabled` must be `true`.
+* `remove_default_firewall_rule` - (Optional, *3.10+*) Marks whether default firewall rule should be
+  removed after activating. Both `dfw_enabled` and `default_policy_status` must be true. **Note.**
+  This is mainly useful when using
+  [`vcd_nsxt_distributed_firewall_rule`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall_rule)
+  resource as it cannot remove the default rule.
 
 ## Attribute Reference
 

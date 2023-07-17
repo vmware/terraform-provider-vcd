@@ -10,6 +10,10 @@ description: |-
 
 The Distributed Firewall data source reads all defined rules for a particular VDC Group.
 
+-> There is a different data source
+[`vcd_nsxt_distributed_firewall_rule`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_distributed_firewall_rule)
+resource are available that can fetch a single firewall rule by name.
+
 ## Example Usage
 
 ```hcl

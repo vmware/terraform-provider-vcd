@@ -25,7 +25,7 @@ That is, CSE Server should be up and running and all elements must be working.
 In order to complete the steps described in this guide, please be aware:
 
 * CSE v4.0 must be installed. Read the [installation guide][cse_install_guide] for more information.
-* Terraform provider needs to be v3.9.0 or above.
+* Terraform VMWare Cloud Director provider needs to be v3.9.0 or above.
 * CSE Server must be up and running.
 
 ## Creating a Kubernetes cluster
@@ -43,7 +43,7 @@ this RDE is named `k8s_cluster_instance`. The important arguments to take into a
   can perform a Terraform destroy in every case. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
 
 The [`vcd_rde`][rde] argument `input_entity` is taking the output of the Terraform built-in function `templatefile`, that references
-a JSON template that you can find [here][tkgmcluster_template]. This function will set the correct values to the following
+a JSON template that is located at [here][tkgmcluster_template]. This function will set the correct values to the following
 placeholders that can be found in that file:
 
 - `vcd_url`: The VCD URL, the same that was used during CSE installation.
@@ -60,7 +60,7 @@ placeholders that can be found in that file:
   During creation it should be always `false`.
 - `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to automatically repair the TKGm cluster on errors.
 
-The following four placeholders are **only needed if you want to provide a default storage class** with your TKGm cluster.
+The following four placeholders are **only needed if one wants to provide a default storage class** with your TKGm cluster.
 If you don't need this, please remove the whole `defaultStorageClassOptions` block from the JSON template:
 
 - `default_storage_class_filesystem`: Filesystem for the default storage class. Only `ext4` or `xfs` are valid.
@@ -186,8 +186,8 @@ JSON template.
 ~> Notice that we need to replace `\n` with `\\n` and also `\"` to `\\\"` to avoid breaking the JSON contents when the YAML is set, as
 line breaks and double quotes would not be interpreted correctly otherwise. This is also done in [the mentioned example][cluster].
 
-When you have set all the required values, a `terraform apply` should trigger a TKGm cluster creation. The operation is asynchronous, meaning that
-you need to monitor the RDE `computed_entity` value to see the status of the cluster provisioning. Some interesting output examples:
+When we have set all the required values, a `terraform apply` should trigger a TKGm cluster creation. The operation is asynchronous, meaning that
+we need to monitor the RDE `computed_entity` value to see the status of the cluster provisioning. Some interesting output examples:
 
 ```hcl
 locals {
@@ -208,7 +208,7 @@ output "computed_k8s_cluster_events" {
 ```
 
 When the status displayed by `computed_k8s_cluster_status` is `provisioned`, it will mean that the TKGm cluster is successfully provisioned and
-the Kubeconfig is available and ready to use. You can retrieve it with:
+the Kubeconfig is available and ready to use. It can be retrieved it with:
 
 ```hcl
 locals {
@@ -222,11 +222,11 @@ output "computed_k8s_cluster_kubeconfig" {
 
 ## Updating a Kubernetes cluster
 
-You can perform a Terraform update to resize a TKGm cluster, for example. In order to do that, you must take into account how the
-[`vcd_rde`][rde] resource works. You can read [its documentation][rde_input_vs_computed] to better understand how updates work
+We can perform a Terraform update to resize a TKGm cluster, for example. In order to do that, we must take into account how the
+[`vcd_rde`][rde] resource works. We should read [its documentation][rde_input_vs_computed] to better understand how updates work
 in this specific case.
 
-To apply a correct update, you need to take the most recent state of the TKGm cluster, which is reflected in the contents of
+To apply a correct update, we need to take the most recent state of the TKGm cluster, which is reflected in the contents of
 the `computed_entity` attribute. Copy the value of this attribute, edit the properties that you would like to modify, and place the
 final result inside `input_entity`. Now the changes can be applied with `terraform apply`.
 

@@ -656,7 +656,7 @@ func TestAccVcdIsolatedNetworkV2Metadata(t *testing.T) {
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
-		StringMap{})
+		nil)
 }
 
 const testAccCheckVcdIsolatedNetworkV2Metadata = `
@@ -682,3 +682,28 @@ data "vcd_network_isolated_v2" "test-network-isolated-v2-ds" {
   name     = vcd_network_isolated_v2.test-network-isolated-v2.name
 }
 `
+
+func TestAccVcdIsolatedNetworkV2MetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		}
+		network, err := vdc.GetOpenApiOrgVdcNetworkById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Isolated Network V2 '%s': %s", id, err)
+		}
+		return network, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
+		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
+		getObjectById, nil)
+}

@@ -198,17 +198,17 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	}
 
 	if memoryLimit, ok := d.GetOk("memory_limit"); ok {
-		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+		vmSpecSection.MemoryResourceMb.Limit = addrOf(int64(memoryLimit.(int)))
 		updateNeeded = true
 	}
 
 	if memoryShares, ok := d.GetOk("memory_shares"); ok {
-		vmSpecSection.MemoryResourceMb.Shares = takeIntPointer(memoryShares.(int))
+		vmSpecSection.MemoryResourceMb.Shares = addrOf(memoryShares.(int))
 		updateNeeded = true
 	}
 
 	if memoryReservation, ok := d.GetOk("memory_reservation"); ok {
-		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+		vmSpecSection.MemoryResourceMb.Reservation = addrOf(int64(memoryReservation.(int)))
 		updateNeeded = true
 	}
 
@@ -218,17 +218,17 @@ func updateAdvancedComputeSettings(d *schema.ResourceData, vm *govcd.VM) error {
 	}
 
 	if memoryLimit, ok := d.GetOk("cpu_limit"); ok {
-		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(memoryLimit.(int)))
+		vmSpecSection.CpuResourceMhz.Limit = addrOf(int64(memoryLimit.(int)))
 		updateNeeded = true
 	}
 
 	if memoryShares, ok := d.GetOk("cpu_shares"); ok {
-		vmSpecSection.CpuResourceMhz.Shares = takeIntPointer(memoryShares.(int))
+		vmSpecSection.CpuResourceMhz.Shares = addrOf(memoryShares.(int))
 		updateNeeded = true
 	}
 
 	if memoryReservation, ok := d.GetOk("cpu_reservation"); ok {
-		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(memoryReservation.(int)))
+		vmSpecSection.CpuResourceMhz.Reservation = addrOf(int64(memoryReservation.(int)))
 		updateNeeded = true
 	}
 
@@ -366,19 +366,19 @@ func isPrimaryNicRemoved(d *schema.ResourceData) bool {
 func updateVmSpecSection(vmSpecSection *types.VmSpecSection, vm *govcd.VM, description string) error {
 	// add missing values if not inherited from template, otherwise API throws error if some value is nil
 	if vmSpecSection.MemoryResourceMb.Reservation == nil {
-		vmSpecSection.MemoryResourceMb.Reservation = takeInt64Pointer(int64(0))
+		vmSpecSection.MemoryResourceMb.Reservation = addrOf(int64(0))
 	}
 	if vmSpecSection.MemoryResourceMb.Limit == nil {
-		vmSpecSection.MemoryResourceMb.Limit = takeInt64Pointer(int64(-1))
+		vmSpecSection.MemoryResourceMb.Limit = addrOf(int64(-1))
 	}
 	if vmSpecSection.MemoryResourceMb.SharesLevel == "" {
 		vmSpecSection.MemoryResourceMb.SharesLevel = "NORMAL"
 	}
 	if vmSpecSection.CpuResourceMhz.Reservation == nil {
-		vmSpecSection.CpuResourceMhz.Reservation = takeInt64Pointer(int64(0))
+		vmSpecSection.CpuResourceMhz.Reservation = addrOf(int64(0))
 	}
 	if vmSpecSection.CpuResourceMhz.Limit == nil {
-		vmSpecSection.CpuResourceMhz.Limit = takeInt64Pointer(int64(-1))
+		vmSpecSection.CpuResourceMhz.Limit = addrOf(int64(-1))
 	}
 	if vmSpecSection.CpuResourceMhz.SharesLevel == "" {
 		vmSpecSection.CpuResourceMhz.SharesLevel = "NORMAL"
@@ -961,32 +961,32 @@ func updateCustomizationSection(customizationInterface interface{}, d *schema.Re
 		if cust != nil {
 
 			if enabled, isSetEnabled := d.GetOkExists("customization.0.enabled"); isSetEnabled {
-				customizationSection.Enabled = takeBoolPointer(enabled.(bool))
+				customizationSection.Enabled = addrOf(enabled.(bool))
 			}
 			if initScript, isSetInitScript := d.GetOkExists("customization.0.initscript"); isSetInitScript {
 				customizationSection.CustomizationScript = initScript.(string)
 			}
 
 			if changeSid, isSetChangeSid := d.GetOkExists("customization.0.change_sid"); isSetChangeSid {
-				customizationSection.ChangeSid = takeBoolPointer(changeSid.(bool))
+				customizationSection.ChangeSid = addrOf(changeSid.(bool))
 			}
 
 			if allowLocalAdminPasswd, isSetAllowLocalAdminPasswd := d.GetOkExists("customization.0.allow_local_admin_password"); isSetAllowLocalAdminPasswd {
-				customizationSection.AdminPasswordEnabled = takeBoolPointer(allowLocalAdminPasswd.(bool))
+				customizationSection.AdminPasswordEnabled = addrOf(allowLocalAdminPasswd.(bool))
 
 			}
 
 			if mustChangeOnFirstLogin, isSetMustChangeOnFirstLogin := d.GetOkExists("customization.0.must_change_password_on_first_login"); isSetMustChangeOnFirstLogin {
-				customizationSection.ResetPasswordRequired = takeBoolPointer(mustChangeOnFirstLogin.(bool))
+				customizationSection.ResetPasswordRequired = addrOf(mustChangeOnFirstLogin.(bool))
 			}
 
 			if autoGeneratePasswd, isSetAutoGeneratePasswd := d.GetOkExists("customization.0.auto_generate_password"); isSetAutoGeneratePasswd {
-				customizationSection.AdminPasswordAuto = takeBoolPointer(autoGeneratePasswd.(bool))
+				customizationSection.AdminPasswordAuto = addrOf(autoGeneratePasswd.(bool))
 			}
 
 			if adminPasswd, isSetAdminPasswd := d.GetOkExists("customization.0.admin_password"); isSetAdminPasswd {
 				customizationSection.AdminPassword = adminPasswd.(string)
-				// customizationSection.AdminPasswordEnabled = takeBoolPointer(true)
+				// customizationSection.AdminPasswordEnabled = addrOf(true)
 			}
 
 			if nrTimesForLogin, isSetNrTimesForLogin := d.GetOkExists("customization.0.number_of_auto_logons"); isSetNrTimesForLogin {
@@ -995,17 +995,17 @@ func updateCustomizationSection(customizationInterface interface{}, d *schema.Re
 				// AdminAutoLogonEnabled=false if number_of_auto_logons == 0
 				// AdminAutoLogonEnabled=true if number_of_auto_logons > 0
 				isMoreThanZero := nrTimesForLogin.(int) > 0
-				customizationSection.AdminAutoLogonEnabled = takeBoolPointer(isMoreThanZero)
+				customizationSection.AdminAutoLogonEnabled = &isMoreThanZero
 
 				customizationSection.AdminAutoLogonCount = nrTimesForLogin.(int)
 			}
 
 			if joinDomain, isSetJoinDomain := d.GetOkExists("customization.0.join_domain"); isSetJoinDomain {
-				customizationSection.JoinDomainEnabled = takeBoolPointer(joinDomain.(bool))
+				customizationSection.JoinDomainEnabled = addrOf(joinDomain.(bool))
 			}
 
 			if joinOrgDomain, isSetJoinOrgDomain := d.GetOkExists("customization.0.join_org_domain"); isSetJoinOrgDomain {
-				customizationSection.UseOrgSettings = takeBoolPointer(joinOrgDomain.(bool))
+				customizationSection.UseOrgSettings = addrOf(joinOrgDomain.(bool))
 			}
 
 			if joinDomainName, isSetJoinDomainName := d.GetOkExists("customization.0.join_domain_name"); isSetJoinDomainName {

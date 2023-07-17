@@ -88,7 +88,7 @@ func prepareUserData(t *testing.T) []userTestData {
 func TestAccVcdOrgUserBasic(t *testing.T) {
 	preTestChecks(t)
 
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	userData := prepareUserData(t)
 	willSkipTests := false
 
@@ -147,7 +147,7 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 func TestAccVcdOrgUserFull(t *testing.T) {
 	preTestChecks(t)
 
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	userData := prepareUserData(t)
 	willSkipTests := false
 
@@ -271,7 +271,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 func TestAccVcdOrgUserWithDS(t *testing.T) {
 	preTestChecks(t)
 
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 	userData := prepareUserData(t)
 
 	ud := userData[0]
@@ -418,7 +418,7 @@ data "vcd_org_user" "DSExistingUser" {
 func TestAccVcdOrgUserResourceNotFound(t *testing.T) {
 	preTestChecks(t)
 	_ = prepareUserData(t) // This will create PasswordFile and store password for user
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 
 	// This test invokes go-vcloud-director SDK directly
 	if vcdShortTest {

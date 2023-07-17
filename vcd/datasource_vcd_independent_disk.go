@@ -105,7 +105,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Description: "Key and value pairs for disk metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Disk", true),
+			"metadata_entry": metadataEntryDatasourceSchema("Disk"),
 		},
 	}
 }
@@ -168,9 +168,9 @@ func dataSourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	err = setMainData(d, disk, diskRecord)
-	if err != nil {
-		diag.FromErr(err)
+	diagErr := setMainData(d, vcdClient, disk, diskRecord)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	log.Printf("[TRACE] Disk read completed.")

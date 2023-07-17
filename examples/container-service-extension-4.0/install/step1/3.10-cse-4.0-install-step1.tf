@@ -15,12 +15,12 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.10.0 and configured with a System administrator account.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.9"
+      version = ">= 3.10"
     }
   }
 }

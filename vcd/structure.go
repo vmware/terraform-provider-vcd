@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -112,27 +113,12 @@ func addrOf[T any](variable T) *T {
 	return &variable
 }
 
-// takeBoolPointer accepts a boolean and returns a pointer to this value.
-func takeBoolPointer(value bool) *bool {
-	return &value
-}
-
-// takeIntPointer accepts an int and returns a pointer to this value.
-func takeIntPointer(x int) *int {
-	return &x
-}
-
 // stringPtrOrNil takes a string and returns a pointer to it, but if the string is empty, returns nil
 func stringPtrOrNil(s string) *string {
 	if s == "" {
 		return nil
 	}
 	return &s
-}
-
-// takeInt64Pointer accepts an int64 and returns a pointer to this value.
-func takeInt64Pointer(x int64) *int64 {
-	return &x
 }
 
 // getStringAttributeAsPointer returns a pointer to the value of the given attribute from the current resource data.
@@ -199,18 +185,6 @@ func extractIdsFromReferences(refs []*types.Reference) []string {
 	resultStrings := make([]string, len(refs))
 	for index := range refs {
 		resultStrings[index] = refs[index].ID
-	}
-
-	return resultStrings
-}
-
-// extractIdsFromVimObjectRefs extracts []string with IDs from []*types.VimObjectRef which contains *types.Reference
-func extractIdsFromVimObjectRefs(refs []*types.VimObjectRef) []string {
-	var resultStrings []string
-	for index := range refs {
-		if refs[index].VimServerRef != nil {
-			resultStrings = append(resultStrings, refs[index].VimServerRef.ID)
-		}
 	}
 
 	return resultStrings
@@ -322,4 +296,56 @@ func stringOnNotNil(p *string) string {
 		return ""
 	}
 	return *p
+}
+
+// Checks if a file exists
+func fileExists(filename string) bool {
+	f, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	fileMode := f.Mode()
+	return fileMode.IsRegular()
+}
+
+// referenceToId is an auxiliary function to be used with ObjectMap
+func referenceToId(reference *types.Reference) string {
+	if reference.ID != "" {
+		return reference.ID
+	}
+	return extractUuid(reference.HREF)
+}
+
+// referenceToName is an auxiliary function to be used with ObjectMap
+func referenceToName(reference *types.Reference) string {
+	return reference.Name
+}
+
+// vimObjectRefToMoref is an auxiliary function to be used with ObjectMap
+func vimObjectRefToMoref(input *types.VimObjectRef) string {
+	return input.MoRef
+}
+
+// ObjectMap extracts an array of wanted elements from an array of complex objects.
+// The Input type is the complex object
+// The Output type could be a simple data type, such as a string or a number, but could
+// also be a different object.
+// The conversion is performed by the f function, which takes one complex input object and
+// produces the wanted output.
+// examples:
+//
+//	    ids := ObjectMap[*types.VimObjectRef, string](extendedProviderVdc.VMWProviderVdc.ResourcePoolRefs.VimObjectRef,
+//	        vimObjectRefToMoref)
+//
+//		ids := ObjectMap[*types.Reference, string](extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile,
+//			referenceToId)
+//
+//		names := ObjectMap[*types.Reference, string](extendedProviderVdc.VMWProviderVdc.StorageProfiles.ProviderVdcStorageProfile,
+//			referenceToName)
+func ObjectMap[Input any, Output any](input []Input, f func(Input) Output) []Output {
+	var result = make([]Output, len(input))
+	for i := 0; i < len(input); i++ {
+		result[i] = f(input[i])
+	}
+	return result
 }
