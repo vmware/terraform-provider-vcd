@@ -355,7 +355,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 				// The provider is configured to ignore it.
 				{
 					PreConfig: func() {
-						object, err := retrieveObjectById(vcdClient, cachedId.fieldValue)
+						var err error
+						object, err = retrieveObjectById(vcdClient, cachedId.fieldValue)
 						if err != nil {
 							t.Fatalf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
