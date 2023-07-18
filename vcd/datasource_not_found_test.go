@@ -62,6 +62,14 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 37.1",
 				datasourceName:        "vcd_ip_space_uplink",
 			},
+			{
+				skipVersionConstraint: "< 37.0",
+				datasourceName:        "vcd_nsxt_edgegateway_static_route",
+			},
+			{
+				skipVersionConstraint: "< 37.0",
+				datasourceName:        "vcd_service_account",
+			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
@@ -87,6 +95,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_vm_group",
 			"vcd_resource_pool",
 			"vcd_network_pool",
+			"vcd_nsxt_edgegateway_qos_profile",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -365,7 +374,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `ip_space_id = "urn:vcloud:ipSpace:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		case "external_network_id":
 			templateFields = templateFields + `external_network_id = "urn:vcloud:network:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
-			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:notexist:notexist:9.9.9"` + "\n"
 		}
 	}
 

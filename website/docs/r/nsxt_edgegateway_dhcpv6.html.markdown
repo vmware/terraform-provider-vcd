@@ -17,8 +17,7 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "dhcpv6-mode" {
   org             = "cloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  enabled = true
-  mode    = "DHCPv6"
+  mode = "DHCPv6"
 }
 ```
 
@@ -29,7 +28,6 @@ resource "vcd_nsxt_edgegateway_dhcpv6" "slaac-mode" {
   org             = "datacloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing-in-vdc.id
 
-  enabled      = true
   mode         = "SLAAC"
   domain_names = ["non-existing.org.tld", "fake.org.tld"]
   dns_servers  = ["2001:4860:4860::8888", "2001:4860:4860::8844"]
