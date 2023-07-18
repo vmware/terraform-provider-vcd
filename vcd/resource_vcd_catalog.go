@@ -6,6 +6,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -209,6 +210,11 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
+	err = waitForMetadataReadiness(catalog)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	log.Printf("[TRACE] adding metadata for catalog")
 	err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
@@ -217,6 +223,26 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
 	return resourceVcdCatalogRead(ctx, d, meta)
+}
+
+// waitForMetadataReadiness waits for the Catalog to have links to add metadata, so it can be added without errors.
+func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
+	startTime := time.Now()
+	for {
+		if time.Now().After(startTime.Add(30 * time.Second)) {
+			return fmt.Errorf("error waiting for the Catalog '%s' to be ready", catalog.AdminCatalog.ID)
+		}
+		link := catalog.AdminCatalog.Link.ForType("application/vnd.vmware.vcloud.metadata+xml", "add")
+		if link != nil {
+			break
+		}
+		err := catalog.Refresh()
+		if err != nil {
+			return err
+		}
+		time.Sleep(3 * time.Second)
+	}
+	return nil
 }
 
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
