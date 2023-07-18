@@ -228,9 +228,10 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 // waitForMetadataReadiness waits for the Catalog to have links to add metadata, so it can be added without errors.
 // It will wait for 30 seconds maximum, or less if the links are ready.
 func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
+	timeout := time.Second * 30
 	startTime := time.Now()
 	for {
-		if time.Now().After(startTime.Add(30 * time.Second)) {
+		if time.Since(startTime) > timeout {
 			return fmt.Errorf("error waiting for the Catalog '%s' to be ready", catalog.AdminCatalog.ID)
 		}
 		link := catalog.AdminCatalog.Link.ForType("application/vnd.vmware.vcloud.metadata+xml", "add")
@@ -241,7 +242,7 @@ func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
 		if err != nil {
 			return err
 		}
-		time.Sleep(3 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 	return nil
 }
