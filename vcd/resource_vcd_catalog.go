@@ -236,6 +236,7 @@ func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
 		}
 		link := catalog.AdminCatalog.Link.ForType("application/vnd.vmware.vcloud.metadata+xml", "add")
 		if link != nil {
+			util.Logger.Printf("catalog '%s' - metadata link found after %s\n", catalog.AdminCatalog.Name, time.Since(startTime))
 			break
 		}
 		err := catalog.Refresh()
