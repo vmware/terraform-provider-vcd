@@ -226,6 +226,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 // waitForMetadataReadiness waits for the Catalog to have links to add metadata, so it can be added without errors.
+// It will wait for 30 seconds maximum, or less if the links are ready.
 func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
 	startTime := time.Now()
 	for {
