@@ -166,7 +166,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	// Catalog item metadata:
 	// We can't use updateMetadataInState(d, catalogItem) because the attribute name is different.
 
-	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata and vAppTemplate metadata contents,
+	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata and vApp Template metadata contents,
 	// which should not be affected by it.
 	ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
 	deprecatedCatalogItemMetadata, err1 := catalogItem.GetMetadata()
@@ -184,7 +184,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return diag.Errorf("Unable to set catalog item's metadata: %s", err)
 	}
-	// Set vApp metadata
+	// Set vApp Template metadata
 	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
 	if err != nil {
 		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
