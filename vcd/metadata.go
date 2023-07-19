@@ -324,6 +324,22 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 // updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
 func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
+	// which should not be affected by it.
+	ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
+	deprecatedMetadata, err := receiverObject.GetMetadata()
+	vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
+	if err != nil {
+		return diag.Errorf("error getting metadata to save in state: %s", err)
+	}
+
+	// Set deprecated metadata attribute, just for compatibility reasons
+	err = d.Set("metadata", getMetadataStruct(deprecatedMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("error setting metadata in state: %s", err)
+	}
+
+	// We get metadata again with the original metadata ignore filtering
 	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
 	if diagErr != nil {
 		return diagErr
@@ -337,12 +353,6 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("error setting metadata entry in state: %s", err)
-	}
-
-	// Set deprecated metadata attribute, just for compatibility reasons
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("error setting metadata in state: %s", err)
 	}
 
 	return nil
