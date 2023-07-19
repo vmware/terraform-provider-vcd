@@ -168,17 +168,25 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata and vApp Template metadata contents,
 	// which should not be affected by it.
-	vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
-	defer vcdMutexKV.kvUnlock("metadata")
-	ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
-	deprecatedCatalogItemMetadata, err1 := catalogItem.GetMetadata()
-	vAppTemplateMetadata, err2 := vAppTemplate.GetMetadata()
-	vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
-	if err1 != nil {
-		return diag.Errorf("error getting metadata to save in state: %s", err)
+	// This closure makes the unlocking more optimal, as it unlocks when the closure returns.
+	getAllMetadata := func() (*types.Metadata, *types.Metadata, error) {
+		vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
+		defer vcdMutexKV.kvUnlock("metadata")
+		ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
+		deprecatedCatalogItemMetadata, err1 := catalogItem.GetMetadata()
+		vAppTemplateMetadata, err2 := vAppTemplate.GetMetadata()
+		vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
+		if err1 != nil {
+			return nil, nil, fmt.Errorf("error getting metadata to save in state: %s", err)
+		}
+		if err2 != nil {
+			return nil, nil, fmt.Errorf("unable to find catalog item's associated vApp template metadata: %s", err)
+		}
+		return deprecatedCatalogItemMetadata, vAppTemplateMetadata, nil
 	}
-	if err2 != nil {
-		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
+	deprecatedCatalogItemMetadata, vAppTemplateMetadata, err := getAllMetadata()
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	// Set deprecated metadata attribute of catalog item, just for compatibility reasons

@@ -324,15 +324,24 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 // updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
 func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
 	// which should not be affected by it.
-	vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
-	defer vcdMutexKV.kvUnlock("metadata")
-	ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
-	deprecatedMetadata, err := receiverObject.GetMetadata()
-	vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
+	// This closure makes the unlocking more optimal, as it unlocks when the closure returns.
+	getAllMetadata := func() (*types.Metadata, error) {
+		vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
+		defer vcdMutexKV.kvUnlock("metadata")
+		ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
+		deprecatedMetadata, err := receiverObject.GetMetadata()
+		vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("error getting metadata to save in state: %s", err)
+		}
+		return deprecatedMetadata, nil
+	}
+	deprecatedMetadata, err := getAllMetadata()
 	if err != nil {
-		return diag.Errorf("error getting metadata to save in state: %s", err)
+		return diag.FromErr(err)
 	}
 
 	// Set deprecated metadata attribute, just for compatibility reasons
