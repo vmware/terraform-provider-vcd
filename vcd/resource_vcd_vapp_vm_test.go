@@ -580,19 +580,11 @@ func TestAccVcdVmMetadataIgnore(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
-		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
 		}
-		vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, true)
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.Nsxt.Vdc, err)
-		}
-		vApp, err := vdc.GetVAppByName(t.Name(), true)
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve vApp '%s': %s", t.Name(), err)
-		}
-		vm, err := vApp.GetVMById(id, true)
+		vm, err := org.QueryVmById(id)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve VM '%s': %s", id, err)
 		}

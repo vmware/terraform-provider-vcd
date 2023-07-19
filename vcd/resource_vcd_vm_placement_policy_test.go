@@ -330,6 +330,15 @@ func TestAccVcdVmPlacementPolicyWithoutDescription(t *testing.T) {
 		return
 	}
 
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil {
+		t.Skip(acceptanceTestsSkipped)
+	}
+	vmPlacementPolicyDescription := "This is a system generated default compute policy auto assigned to this vDC."
+	if vcdClient.Client.APIVCDMaxVersionIs("< 38.0") {
+		vmPlacementPolicyDescription = ""
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckComputePolicyDestroyed(t.Name(), "placement"),
@@ -337,7 +346,7 @@ func TestAccVcdVmPlacementPolicyWithoutDescription(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(policyName, "description", ""),
+					resource.TestCheckResourceAttr(policyName, "description", vmPlacementPolicyDescription),
 				),
 			},
 		},

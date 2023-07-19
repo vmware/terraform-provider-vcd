@@ -285,7 +285,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		"Name":     t.Name(),
 		"Metadata": " ",
 		// The IgnoreMetadataBlock entry below is for binary tests
-		"IgnoreMetadataBlock": "ignore_metadata_changes {\n\tresource_type = \"" + resourceType + "\"\n\tresource_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n}",
+		"IgnoreMetadataBlock": "ignore_metadata_changes {\n\tresource_type = \"" + resourceType + "\"\n\tresource_name   = \"" + t.Name() + "\"\n\tkey_regex     = \".*\"\n\tvalue_regex   = \".*\"\n\tconflict_action = \"warn\"\n}",
 	}
 
 	for extraParam, extraParamValue := range extraParams {
@@ -323,7 +323,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		cachedVCDClients.reset()
 	}()
 
-	testFunc := func(vcdClient *VCDClient, ignoredMetadata []map[string]string, expectedMetadataInVcd int) {
+	testFunc := func(t *testing.T, vcdClient *VCDClient, ignoredMetadata []map[string]string, expectedMetadataInVcd int) {
 		var object metadataCompatible
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -358,16 +358,16 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 						var err error
 						object, err = retrieveObjectById(vcdClient, cachedId.fieldValue)
 						if err != nil {
-							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
+							t.Fatalf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 						err = object.AddMetadataEntryWithVisibility("foo", "bar", types.MetadataStringValue, types.MetadataReadWriteVisibility, false)
 						if err != nil {
-							t.Errorf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
+							t.Fatalf("could not add metadata to object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 						// Check that the metadata was added and not ignored
 						_, err = object.GetMetadataByKey("foo", false)
 						if err != nil {
-							t.Errorf("should have retrieved metadata with key 'foo' from object with ID '%s': %s", cachedId.fieldValue, err)
+							t.Fatalf("should have retrieved metadata with key 'foo' from object with ID '%s': %s", cachedId.fieldValue, err)
 						}
 					},
 					Config: step2,
@@ -402,11 +402,12 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 		})
 	}
 
-	t.Run("filter by all options that match", func(_ *testing.T) {
-		testFunc(vcdClient, []map[string]string{
+	testName := t.Name()
+	t.Run("filter by all options that match", func(t *testing.T) {
+		testFunc(t, vcdClient, []map[string]string{
 			{
 				"resource_type": resourceType,
-				"resource_name": t.Name(),
+				"resource_name": testName,
 				"key_regex":     "foo",
 				"value_regex":   "bar",
 			},
@@ -418,72 +419,72 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 	// VM creation.
 	testAll := os.Getenv("TEST_VCD_METADATA_IGNORE")
 	if testAll != "" {
-		t.Run("filter by object type and specific key", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object type and specific key", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
 					"resource_type": resourceType,
 					"key_regex":     "foo",
 				},
 			}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 		})
-		t.Run("filter by object type and specific value", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object type and specific value", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
 					"resource_type": resourceType,
 					"value_regex":   "bar",
 				},
 			}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 		})
-		t.Run("filter by object type and key that doesn't match", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object type and key that doesn't match", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
 					"resource_type": resourceType,
 					"key_regex":     "notmatch",
 				},
 			}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 		})
-		t.Run("filter by object type and value that doesn't match", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object type and value that doesn't match", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
 					"resource_type": resourceType,
 					"value_regex":   "notmatch",
 				},
 			}, 1) // We expect 1 because 'foo' 'has been deleted by Terraform as it was not ignored
 		})
-		t.Run("filter by object name and specific key", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object name and specific key", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
-					"resource_name": t.Name(),
+					"resource_name": testName,
 					"key_regex":     "foo",
 				},
 			}, 2) // As 'foo' is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 		})
-		t.Run("filter by object name and specific value", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object name and specific value", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
-					"resource_name": t.Name(),
+					"resource_name": testName,
 					"value_regex":   "bar",
 				},
 			}, 2) // As 'foo' (with value 'bar') is correctly ignored, VCD should always have 2 entries, one created by the test and 'foo'.
 		})
-		t.Run("filter by object name and key that doesn't match", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object name and key that doesn't match", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
-					"resource_name": t.Name(),
+					"resource_name": testName,
 					"key_regex":     "notmatch",
 				},
 			}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 		})
-		t.Run("filter by object name and value that doesn't match", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by object name and value that doesn't match", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
-					"resource_name": t.Name(),
+					"resource_name": testName,
 					"value_regex":   "notmatch",
 				},
 			}, 1) // We expect 1 because 'foo' has been deleted by Terraform as it was not ignored
 		})
-		t.Run("filter by key and value that don't match", func(_ *testing.T) {
-			testFunc(vcdClient, []map[string]string{
+		t.Run("filter by key and value that don't match", func(t *testing.T) {
+			testFunc(t, vcdClient, []map[string]string{
 				{
 					"key_regex":   "foo",
 					"value_regex": "barz",
