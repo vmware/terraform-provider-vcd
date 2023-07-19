@@ -130,7 +130,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Disk", false),
+			"metadata_entry": metadataEntryResourceSchema("Disk"),
 		},
 	}
 }
@@ -486,16 +486,16 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
-	err = setMainData(d, disk, diskRecord)
-	if err != nil {
-		diag.FromErr(err)
+	diagErr := setMainData(d, vcdClient, disk, diskRecord)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
 }
 
-func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.DiskRecordType) error {
+func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType) diag.Diagnostics {
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -516,7 +516,7 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 
 	vmsHrefs, err := disk.GetAttachedVmsHrefs()
 	if err != nil {
-		return fmt.Errorf("[Independent disk read] error fetching attached VMs IDs: %s ", err)
+		return diag.Errorf("[Independent disk read] error fetching attached VMs IDs: %s ", err)
 	}
 	var attachedVmIds []string
 	for _, vmHref := range vmsHrefs {
@@ -525,13 +525,13 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk, diskRecord *types.Dis
 	attachedVmSet := convertStringsToTypeSet(attachedVmIds)
 	err = d.Set("attached_vm_ids", attachedVmSet)
 	if err != nil {
-		return fmt.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
+		return diag.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	err = updateMetadataInState(d, disk)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Independent disk metadata")
-		return fmt.Errorf("unable to set Independent disk metadata %s", err)
+		return diagErr
 	}
 	return nil
 }

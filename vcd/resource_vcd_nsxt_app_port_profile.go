@@ -184,7 +184,7 @@ func resourceVcdNsxtAppPortProfileRead(_ context.Context, d *schema.ResourceData
 		return diag.Errorf("error getting NSX-T Application Port Profile with ID '%s': %s", d.Id(), err)
 	}
 
-	err = setNsxtAppPortProfileData(d, appPortProfile.NsxtAppPortProfile)
+	err = setNsxtAppPortProfileData(vcdClient, d, appPortProfile.NsxtAppPortProfile)
 	if err != nil {
 		return diag.Errorf("error reading NSX-T Application Port Profile: %s", err)
 	}
@@ -377,7 +377,7 @@ func getNsxtAppPortProfileType(d *schema.ResourceData, org *govcd.Org, vcdClient
 // setNsxtAppPortProfileData sets Terraform schema from types.NsxtAppPortProfile
 //
 // Note. GET queries do not return ContextEntityId so it cannot be set
-func setNsxtAppPortProfileData(d *schema.ResourceData, appPortProfile *types.NsxtAppPortProfile) error {
+func setNsxtAppPortProfileData(vcdClient *VCDClient, d *schema.ResourceData, appPortProfile *types.NsxtAppPortProfile) error {
 	dSet(d, "name", appPortProfile.Name)
 	dSet(d, "description", appPortProfile.Description)
 	dSet(d, "scope", appPortProfile.Scope)
@@ -393,11 +393,39 @@ func setNsxtAppPortProfileData(d *schema.ResourceData, appPortProfile *types.Nsx
 			appPortMap := make(map[string]interface{})
 			appPortMap["protocol"] = value.Protocol
 
-			destinationPortSet := convertStringsToTypeSet(value.DestinationPorts)
+			// TODO validate this with future VCD versions
+			destinationPorts := value.DestinationPorts
+			// In VCD versions prior to API v38.0, `destinationPorts` used to return empty slice if
+			// no ports are set. Starting with support of API v38.0 - the response became single
+			// element with word 'any'. This conditional code holds backwards compatibility by
+			// setting empty slice instead of word 'any'
+			// Pre API 38.0
+			// {
+			// 	"name": null,
+			// 	"protocol": "ICMPv6",
+			// 	"destinationPorts": []
+			// }
+			// After API 38.0
+			// {
+			// 	"name": null,
+			// 	"protocol": "ICMPv6",
+			// 	"destinationPorts": [
+			// 	  "any"
+			// 	]
+			// }
+			//
+
+			if vcdClient.Client.APIVCDMaxVersionIs(">= 38.0") &&
+				len(destinationPorts) == 1 &&
+				strings.EqualFold(destinationPorts[0], "any") {
+				// Remove the `any` word to maintain backwards compatibility
+				destinationPorts = []string{}
+			}
+
+			destinationPortSet := convertStringsToTypeSet(destinationPorts)
 			appPortMap["port"] = destinationPortSet
 
 			resultSet[index] = appPortMap
-
 		}
 
 		appPortSet := schema.NewSet(schema.HashResource(appPortDefinition), resultSet)

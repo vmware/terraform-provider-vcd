@@ -107,6 +107,16 @@ func resourceVcdEdgeBgpConfigCreateUpdate(ctx context.Context, d *schema.Resourc
 
 	bgpConfig := getEdgeBgpConfigType(d)
 
+	// If there is no user provided GracefulRestart config, reading BGP configuration as some VCD
+	// (10.5.0+) versions require supplying existing values
+	if bgpConfig.GracefulRestart == nil {
+		existingBgpConfig, err := nsxtEdge.GetBgpConfiguration()
+		if err != nil {
+			return diag.Errorf("error reading BGP config before creation: %s", err)
+		}
+		bgpConfig.GracefulRestart = existingBgpConfig.GracefulRestart
+	}
+
 	_, err = nsxtEdge.UpdateBgpConfiguration(bgpConfig)
 	if err != nil {
 		return diag.Errorf("error updating NSX-T Edge Gateway BGP Configuration: %s", err)

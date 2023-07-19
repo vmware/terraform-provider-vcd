@@ -176,7 +176,6 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Elem:          nsxtEdgeAutoSubnetAndTotal,
 				RequiredWith:  []string{"total_allocated_ip_count"},
 				ConflictsWith: []string{"subnet", "subnet_with_ip_count"},
-				AtLeastOneOf:  []string{"subnet_with_total_ip_count", "subnet", "subnet_with_ip_count"},
 			},
 			"subnet_with_ip_count": {
 				Type:          schema.TypeSet,
@@ -185,7 +184,6 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description:   "Auto allocation of subnets by using per subnet IP allocation counts",
 				Elem:          nsxtEdgeAutoAllocatedSubnet,
 				ConflictsWith: []string{"subnet", "subnet_with_total_ip_count"},
-				AtLeastOneOf:  []string{"subnet_with_total_ip_count", "subnet", "subnet_with_ip_count"},
 			},
 			"subnet": {
 				Type:          schema.TypeSet,
@@ -194,7 +192,6 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description:   "One or more blocks with external network information to be attached to this gateway's interface including IP allocation ranges",
 				Elem:          nsxtEdgeSubnet,
 				ConflictsWith: []string{"subnet_with_total_ip_count", "total_allocated_ip_count", "subnet_with_ip_count"},
-				AtLeastOneOf:  []string{"subnet_with_total_ip_count", "subnet", "subnet_with_ip_count"},
 			},
 			"primary_ip": {
 				Type:        schema.TypeString,
@@ -216,6 +213,11 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of unused IP addresses",
+			},
+			"use_ip_spaces": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Boolean value that specifies that the Edge Gateway is using IP Spaces",
 			},
 		},
 	}
@@ -479,7 +481,9 @@ func getNsxtEdgeGatewayUplinksTypeForCreate(d *schema.ResourceData) ([]types.Edg
 
 	}
 
-	return nil, fmt.Errorf("one of the following fields must be set: 'subnet', 'subnet_with_total_ip_count', 'subnet_with_ip_count'")
+	// When none of the fields 'subnet', 'subnet_with_total_ip_count', 'subnet_with_ip_count' we expect that the Edge Gateway
+	// is backed by IP Spaces
+	return []types.EdgeGatewayUplinks{{}}, nil
 }
 
 // getNsxtEdgeGatewayUplinksTypeForUpdate handles uplink structure in update only operations
@@ -852,6 +856,22 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	dSet(d, "dedicate_external_network", edgeUplink.Dedicated)
 	dSet(d, "external_network_id", edgeUplink.UplinkID)
 
+	// NSX-T Edge Gateway subnet and used/unused IP counts are only available and can be stored in
+	// state if it is not backed by IP Spaces
+	if edgeUplink.UsingIpSpace != nil && *edgeUplink.UsingIpSpace {
+		dSet(d, "use_ip_spaces", true)
+	} else {
+		dSet(d, "use_ip_spaces", false)
+		err := setNsxtEdgeGatewayUplinkData(edgeGateway, &edgeUplink, d)
+		if err != nil {
+			return fmt.Errorf("error storing uplink information: %s", err)
+		}
+	}
+
+	return nil
+}
+
+func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink *types.EdgeGatewayUplinks, d *schema.ResourceData) error {
 	// 'subnet' field
 	subnets := make([]interface{}, 1)
 	for _, subnetValue := range edgeUplink.Subnets.Values {

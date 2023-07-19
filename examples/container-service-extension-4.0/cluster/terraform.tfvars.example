@@ -1,0 +1,70 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+
+# ------------------------------------------------
+# Provider config
+# ------------------------------------------------
+vcd_url                 = "https://vcd.my-awesome-corp.com"
+cluster_author_user     = "cluster_author"
+cluster_author_password = "change-me"
+insecure_login          = "false"
+
+# ------------------------------------------------
+# CSE configuration
+# ------------------------------------------------
+capvcd_rde_version = "1.1.0" # Should be the same as the capvcd_rde_version used during CSE installation
+
+# ------------------------------------------------
+# Kubernetes cluster configuration
+# ------------------------------------------------
+# Name must contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric,
+# and contain at most 31 characters.
+k8s_cluster_name = "example1"
+
+# These specify the place where the cluster will be created. They were created
+# during the CSE installation phase, so they should exist already.
+cluster_organization     = "tenant_org"        # An existing Organization, created during CSE installation
+cluster_vdc              = "tenant_vdc"        # An existing VDC, created during CSE installation
+cluster_routed_network   = "tenant_net_routed" # An existing routed network, created during CSE installation
+cluster_author_api_token = "change-me"         # You can create this token logged as the cluster author user configured above, in its Preferences.
+ssh_public_key           = ""                  # This SSH public Key allows to login into the control plane nodes, for troubleshooting purposes.
+
+# Specifies the number of VMs that the TKGm cluster will have.
+control_plane_machine_count = "3" # MUST be an odd number and higher than 0
+worker_machine_count        = "1" # MUST higher than 0
+
+# Control plane dimensioning
+control_plane_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for control plane nodes
+control_plane_placement_policy = "\"\""      # An existing VM Placement Policy for control plane nodes
+control_plane_storage_profile  = "*"         # An existing Storage Profile for control plane nodes
+
+# Worker dimensioning
+worker_sizing_policy    = "TKG small"   # An existing VM Sizing Policy, created during CSE installation, for worker nodes
+worker_placement_policy = "\"\""        # An existing VM Placement Policy for worker nodes
+worker_storage_profile  = "*"           # An existing Storage Profile for worker nodes
+
+# Storage and TKGm OVA
+disk_size    = "20Gi"                                                                     # Specifies the disk size for every node in the cluster
+tkgm_catalog = "tkgm_catalog"                                                             # An existing catalog where TKGm OVAs are
+tkgm_ova     = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933" # An existing TKGm OVA
+
+# Internal networking
+pod_cidr     = "100.96.0.0/11" # Specifies the IPs that the Kubernetes Pods will use
+service_cidr = "100.64.0.0/13" # Specifies the IPs that the Kubernetes Services will use
+
+# Extra required information. Please read the guide at
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
+# to know how to obtain these required parameters.
+tkr_version = "v1.22.9---vmware.1-tkg.1"
+tkg_version = "v1.5.4"
+
+# Configures a default Storage class for the TKGm cluster. If you don't want this,
+# you can remove the variables below. Don't forget to delete them from 3.9-cluster-creation.tf as well,
+# and the 'defaultStorageClassOptions' block from ../entities/tkgmcluster-template.json
+default_storage_class_filesystem            = "ext4"
+default_storage_class_name                  = "default-storage-class-1"
+default_storage_class_storage_profile       = "*"
+default_storage_class_delete_reclaim_policy = "true"
+
+# If auto_repair_on_errors = true, CSE attempts to recreate the clusters in error state.
+# If false, it leaves the cluster in an error state for manual troubleshooting.
+auto_repair_on_errors = true

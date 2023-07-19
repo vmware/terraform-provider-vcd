@@ -77,6 +77,27 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Computed:    true,
 				Description: "Network prefix",
 			},
+			"dual_stack_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Boolean value if Dual-Stack mode is enabled",
+			},
+			"secondary_gateway": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Secondary gateway (can only be IPv6 and requires enabled Dual Stack mode)",
+			},
+			"secondary_prefix_length": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Secondary prefix (can only be IPv6 and requires enabled Dual Stack mode)",
+			},
+			"secondary_static_ip_pool": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Secondary IP ranges used for static pool allocation in the network",
+				Elem:        networkV2IpRangeComputed,
+			},
 			"dns1": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -104,7 +125,7 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", true),
+			"metadata_entry": metadataEntryDatasourceSchema("Network"),
 		},
 	}
 }
@@ -181,10 +202,10 @@ func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceDat
 
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		err = updateMetadataInState(d, network)
-		if err != nil {
+		diagErr := updateMetadataInState(d, vcdClient, "vcd_network_isolated_v2", network)
+		if diagErr != nil {
 			log.Printf("[DEBUG] Unable to set isolated network v2 metadata: %s", err)
-			return diag.Errorf("[isolated network read v2] unable to set Org VDC network metadata %s", err)
+			return diagErr
 		}
 	}
 

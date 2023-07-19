@@ -264,3 +264,28 @@ data "vcd_vapp" "test-vapp-ds" {
   name = vcd_vapp.test-vapp.name
 }
 `
+
+func TestAccVcdVAppMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		}
+		vApp, err := vdc.GetVAppById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve vApp '%s': %s", id, err)
+		}
+		return vApp, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdVAppMetadata, "vcd_vapp.test-vapp",
+		testAccCheckVcdVAppMetadataDatasource, "data.vcd_vapp.test-vapp-ds",
+		getObjectById, nil)
+}

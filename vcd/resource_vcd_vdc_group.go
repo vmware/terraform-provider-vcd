@@ -3,8 +3,9 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"strings"
+
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -122,6 +123,11 @@ func resourceVdcGroup() *schema.Resource {
 				Computed:    true,
 				Description: "Default Policy Status",
 			},
+			"remove_default_firewall_rule": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "A flag to remove default firewall rule when DFW and Default Policy are both enabled ",
+			},
 			"error_message": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -178,7 +184,9 @@ func resourceVdcGroup() *schema.Resource {
 func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool), d.Get("default_policy_status").(bool))
+	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool),
+		d.Get("default_policy_status").(bool),
+		d.Get("remove_default_firewall_rule").(bool))
 	if diagErr != nil {
 		return diagErr
 	}
@@ -206,15 +214,29 @@ func resourceVcdVdcGroupCreate(ctx context.Context, d *schema.ResourceData, meta
 				return diag.Errorf("error disabling default policy for VDC group: %s", err)
 			}
 		}
+
+		// If dfw_enabled and default_policy_status are both true - we can evaluate optional setting
+		// to disable default firewall rule which might interfere with how
+		if d.Get("default_policy_status").(bool) && d.Get("remove_default_firewall_rule").(bool) {
+			err := createdVdcGroup.DeleteAllDistributedFirewallRules()
+			if err != nil {
+				return diag.Errorf("error removing default firewall rule: %s", err)
+			}
+		}
+
 	}
 
 	d.SetId(createdVdcGroup.VdcGroup.Id)
 	return resourceVcdVdcGroupRead(ctx, d, meta)
 }
 
-func isInvalidPropertySetup(dfw_enabled, default_policy_status bool) diag.Diagnostics {
+func isInvalidPropertySetup(dfw_enabled, default_policy_status, remove_default_firewall_rule bool) diag.Diagnostics {
 	if !dfw_enabled && default_policy_status {
 		return diag.Errorf("`default_policy_status` must be `false` when `dfw_enabled` is `false`.")
+	}
+
+	if remove_default_firewall_rule && !dfw_enabled && !default_policy_status {
+		return diag.Errorf("'remove_default_firewall_rule' can only be 'true' when 'dfw_enabled=true' and 'default_policy_status=true'")
 	}
 	return nil
 }
@@ -223,7 +245,9 @@ func isInvalidPropertySetup(dfw_enabled, default_policy_status bool) diag.Diagno
 func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool), d.Get("default_policy_status").(bool))
+	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool),
+		d.Get("default_policy_status").(bool),
+		d.Get("remove_default_firewall_rule").(bool))
 	if diagErr != nil {
 		return diagErr
 	}
@@ -266,6 +290,15 @@ func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta
 		errDiag := applyDefaultPolicy(d, vdcGroup)
 		if errDiag != nil {
 			return errDiag
+		}
+	}
+
+	if d.HasChange("remove_default_firewall_rule") && d.Get("remove_default_firewall_rule").(bool) && d.Get("default_policy_status").(bool) {
+		// If dfw_enabled and default_policy_status are both true - we can evaluate optional setting
+		// to disable default firewall rule which might interfere with how
+		err := vdcGroup.DeleteAllDistributedFirewallRules()
+		if err != nil {
+			return diag.Errorf("error removing default firewall rule: %s", err)
 		}
 	}
 

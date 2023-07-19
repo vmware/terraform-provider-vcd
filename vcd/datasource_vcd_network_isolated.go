@@ -138,7 +138,7 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 				Description: "Key value map of metadata assigned to this network. Key and value can be any string",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", true),
+			"metadata_entry": metadataEntryDatasourceSchema("Network"),
 		},
 	}
 }
@@ -155,5 +155,5 @@ func datasourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceDat
 		logForScreen("vcd_network_isolated", "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
-	return genericVcdNetworkIsolatedRead(ctx, d, meta, "datasource")
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "datasource", nil)
 }

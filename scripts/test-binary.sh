@@ -608,8 +608,6 @@ do
             init)
                 if [ -n "$upgrading" ]
                     then
-                    # Remove any version definition in config.tf because it is deprecated
-                    sed  -i -e '/^\s*version *=/d' config.tf
 
                     # recreate versions.tf with "short_from" version
                     add_versions_config "versions.tf" "${PWD}" "${long_from}"

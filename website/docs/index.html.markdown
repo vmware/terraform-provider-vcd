@@ -24,6 +24,7 @@ The following Cloud Director versions are supported by this provider:
 
 * 10.3
 * 10.4
+* 10.5
 
 Also Cloud Director Service (CDS) is supported.
 
@@ -142,11 +143,13 @@ resource "vcd_network_routed" "net1" {
 ```
 When using a token, the fields `user` and `password` will be ignored, but they need to be in the script.
 
-### Connecting with an API token
+### Connecting with an API token/API token file
 
 With VCD 10.3.1+, you can connect using an API token, as defined in the [documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html).
 The API token is not a bearer token, but one will be created and automatically used by the Terraform provider when an API
-token is supplied.
+token is supplied. You can create an API token file by utilizing the [`vcd_api_token`][api-token] resource.
+
+#### Example usage (API token)
 
 ```hcl
 provider "vcd" {
@@ -168,11 +171,39 @@ resource "vcd_network_routed" "net1" {
 }
 ```
 
+#### Example usage (API token file)
+
+```hcl
+provider "vcd" {
+  user                 = "none"
+  password             = "none"
+  auth_type            = "api_token_file"
+  api_token            = "token.json"
+  sysorg               = "System"
+  org                  = var.vcd_org # Default for resources
+  vdc                  = var.vcd_vdc # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
+}
+
+# Create a new network in the default organization and VDC
+resource "vcd_network_routed" "net1" {
+  # ...
+}
+```
+
+The file containing the API token needs to be readable and writable, in `json` format with the API key. e.g:
+```json
+{"refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+```
+
+
 Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
 ### Connecting with a Service Account API token
 
-With VCD 10.4.0+, you can connect using a service account API token, as 
+With VCD 10.4.0+, similar to API token file, you can connect using a service account API token, as 
 defined in the 
 [documentation](https://blogs.vmware.com/cloudprovider/2022/07/cloud-director-service-accounts.html). 
 Because a new API token is provided on every authentication request, 
@@ -194,9 +225,11 @@ Note that the file will be rewritten at every usage, and the updated file will h
 The API token file is **sensitive data** and it's up to the user to secure it.
 
 ~> **NOTE:** The service account needs to be in `Active Stage` and 
-it's up to the user to provide the initial API token. A sample shell 
-script for creating, authorizing and activating a VCD Service Account
-can be found in the [repository](https://github.com/vmware/terraform-provider-vcd/blob/service_accounts/scripts/create_service_account.sh)
+it's up to the user to provide the initial API token. A service account 
+can be created using the [`service_account`][service-account] resource, 
+also it can be done using a sample shell script for creating, authorizing 
+and activating a VCD Service Account can be found in the 
+[repository][service-account-script]
 
 ```hcl
 provider "vcd" {
@@ -298,9 +331,10 @@ The following arguments are used to configure the VMware Cloud Director Provider
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. 
   `saml_adfs_rpt_id` can be used to specify a different RPT ID.
-  * `token` allows to specify token in [`token`](#token) field.
+  * `token` allows to specify token in `token` field.
   * `api_token` allows to specify an API token.
-  * `service_account_token_file` allows to specify a file containing a service account's token file.
+  * `api_token_file` allows to specify a file containing an API token.
+  * `service_account_token_file` allows to specify a file containing a service account's token.
   
 * `token` - (Optional; *v2.6+*) This is the bearer token that can be used instead of username
    and password (in combination with field `auth_type=token`). When this is set, username and
@@ -314,6 +348,9 @@ The following arguments are used to configure the VMware Cloud Director Provider
    environment variable. This token requires at least VCD 10.3.1. There are restrictions to its use, as defined in
    [the documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html)
 
+* `api_token_file` - (Optional; *v3.10+*)) Same as `api_token`, only provided 
+   as a JSON file. Can also be specified with the `VCD_API_TOKEN_FILE` environment variable.
+ 
 * `service_account_token_file` - (Optional; *v3.9+, VCD 10.4+*) This is the file that contains a Service Account API token. The
    path to the file could be provided as absolute or relative to the working directory. It is used instead of username
    and password (in combination with `auth_type=service_account_token_file`. The file can also be specified with the 
@@ -373,9 +410,111 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
   it is a dot (`.`).
 
+* `ignore_metadata_changes` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries from being changed by this Terraform provider
+  after creation or when they were created outside Terraform.
+  See ["Ignore Metadata Changes"](#ignore-metadata-changes) for more details.
+
+## Ignore metadata changes
+
+One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
+items during all Terraform operations. This is useful, for example, to avoid removing metadata entries that were created
+by an external actor, or after they were created by Terraform.
+
+~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
+it. In other words, to ignore metadata when the deprecated `metadata` argument is used, please use the native Terraform `lifecycle.ignore_changes` block.
+
+~> Be aware that setting a `metadata_entry` in the Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
+results, as the metadata will be stored in state but nothing will be done in VCD. Using `ignore_metadata_changes` with matching metadata entries
+in the code is NOT recommended. In the event that it contains such conflict, though, the ensuing action can be controlled with
+`conflict_action`, which can be `error`, `warn` or `none`.
+
+The available sub-attributes for `ignore_metadata_changes` are:
+
+* `resource_type` - (Optional) Specifies the resource type which metadata needs to be ignored. If set, the resource type must be one of:
+  *"vcd_catalog"*, *"vcd_catalog_item"*, *"vcd_catalog_media"*, *"vcd_catalog_vapp_template"*, *"vcd_independent_disk"*, *"vcd_network_direct"*,
+  *"vcd_network_isolated"*, *"vcd_network_isolated_v2"*, *"vcd_network_routed"*, *"vcd_network_routed_v2"*, *"vcd_org"*, *"vcd_org_vdc"*, *"vcd_provider_vdc"*,
+  *"vcd_storage_profile"*, *"vcd_vapp"*, *"vcd_vapp_vm"* or *"vcd_vm"*, which are the resources compatible with `metadata_entry`.
+* `resource_name`- (Optional) Specifies the name of the entity in VCD which metadata needs to be ignored. This attribute can be used with
+   any kind of `resource_type`, except for *vcd_storage_profile* which **cannot be filtered by name**.
+* `key_regex`- (Optional) A regular expression that can filter out metadata keys that match. Either `key_regex` or `value_regex` are required on each block. 
+* `value_regex`- (Optional) A regular expression that can filter out metadata values that match. Either `key_regex` or `value_regex` are required on each block.
+* `conflict_action` - (Optional) Defines what to do if a conflict exists between a `metadata_entry` that is managed
+  by Terraform, and it matches the criteria defined in the `ignore_metadata_changes` block, as the metadata will be stored in state but nothing will be done in VCD.
+  If the value is `error`, when this happens, any read operation (like a Plan or Refresh) will fail. When the value is `warn`, it will just give a warning but the operation will continue,
+  and with the `none` value nothing will be shown. Defaults to `error`.
+
+~> The `conflict_action` mechanism will be evaluated on every read, including `terraform destroy`, as it will trigger a refresh before deleting
+resources. To avoid this situation, we can use the `-refresh=false` option.
+
+Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
+that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
+
+```hcl
+provider "vcd" {
+  # ...
+  ignore_metadata_changes {
+    resource_type = "vcd_org"
+    resource_name = "client1"
+    key_regex     = "[Ee]nvironment"
+    # Setting this value to 'warn' will make all 'metadata_entry' entries that
+    # are managed by Terraform and that are ignored to give a warning to the user.
+    conflict_action = "warn"
+  }
+}
+```
+
+We can have more than one block, to ignore more entries:
+
+```hcl
+provider "vcd" {
+  # ...
+
+  # Filters all metadata with key "Environment" or "environment" in all VCD objects with any name.
+  ignore_metadata_changes {
+    key_regex = "^[Ee]nvironment$"
+  }
+
+  # Filters all metadata with key "NiceMetadataKey" in all VCD objects named "SpecificName".
+  ignore_metadata_changes {
+    resource_name = "SpecificName"
+    key_regex     = "^NiceMetadataKey$"
+  }
+
+  # Filters all metadata with values "Yes" in the Organization named "Tatooine".
+  ignore_metadata_changes {
+    resource_type = "vcd_org"
+    resource_name = "Tatooine"
+    value_regex   = "^Yes$"
+  }
+}
+
+resource "vcd_org" "my_org" {
+  name = "MyOrg"
+  # ...
+
+  # This entry will be added, if this Organization has other metadata entries that
+  # match the ones defined in the Provider `ignore_metadata_changes` blocks, they will not be
+  # deleted.
+  metadata_entry {
+    key         = "OneKey"
+    value       = "OneValue"
+    type        = "MetadataStringValue"
+    user_access = "READWRITE"
+    is_system   = false
+  }
+}
+```
+
+Note that this argument **does not affect metadata of the [data source filters](/providers/vmware/vcd/latest/docs/guides/data_source_filters)**.
+
 ## Connection Cache (*2.0+*)
 
 Cloud Director connection calls can be expensive, and if a definition file contains several resources, it may trigger 
 multiple connections. There is a cache engine, disabled by default, which can be activated by the `VCD_CACHE` 
 environment variable. When enabled, the provider will not reconnect, but reuse an active connection for up to 20 
 minutes, and then connect again.
+
+[service-account]: /providers/vmware/vcd/latest/docs/resources/service_account
+[service-account-script]: https://github.com/vmware/terraform-provider-vcd/blob/main/scripts/create_service_account.sh
+[api-token]: /providers/vmware/vcd/latest/docs/resource/api_token
+

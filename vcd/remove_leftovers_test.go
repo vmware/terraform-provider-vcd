@@ -27,6 +27,7 @@ type entityList []entityDef
 // despite having a name that starts with `Test` or `test`
 // Use only one of the following type identifiers:
 // vcd_org
+// vcd_provider_vdc
 // vcd_org_vdc
 // vcd_catalog
 // vcd_catalog_media
@@ -89,7 +90,7 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
+var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -106,6 +107,37 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		}
 	}
 
+	// --------------------------------------------------------------
+	// Provider VDCs
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		providerVdcs, err := govcdClient.QueryProviderVdcs()
+		if err != nil {
+			return fmt.Errorf("error retrieving provider VDCs: %s", err)
+		}
+		for _, pvdcRec := range providerVdcs {
+			pvdc, err := govcdClient.GetProviderVdcExtendedByName(pvdcRec.Name)
+			if err != nil {
+				return fmt.Errorf("error retrieving provider VDC '%s': %s", pvdcRec.Name, err)
+			}
+			tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, pvdcRec.Name, "vcd_provider_vdc", 0, verbose)
+			if tobeDeleted {
+				fmt.Printf("\t REMOVING Provider VDC %s\n", pvdcRec.Name)
+				err = pvdc.Disable()
+				if err != nil {
+					return fmt.Errorf("error disabling provider VDC '%s': %s", pvdcRec.Name, err)
+				}
+				task, err := pvdc.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting provider VDC '%s': %s", pvdcRec.Name, err)
+				}
+				err = task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("error finishing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
+				}
+			}
+		}
+	}
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
 	if err != nil {
@@ -254,16 +286,33 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			// --------------------------------------------------------------
 			// Networks
 			// --------------------------------------------------------------
-			networks, err := vdc.GetNetworkList()
+			networks, err := vdc.GetAllOpenApiOrgVdcNetworks(nil)
 			if err != nil {
-				return fmt.Errorf("error retrieving network list: %s", err)
+				return fmt.Errorf("error retrieving Org VDC network list: %s", err)
 			}
 			for _, netRef := range networks {
-				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.Name, "vcd_network", 2, verbose)
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, netRef.OpenApiOrgVdcNetwork.Name, "vcd_network", 2, verbose)
 				if toBeDeleted {
-					err = deleteNetwork(org, vdc, netRef)
+					err = netRef.Delete()
 					if err != nil {
-						return fmt.Errorf("error deleting network '%s': %s", netRef.Name, err)
+						return fmt.Errorf("error deleting Org VDC '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+					}
+				}
+			}
+
+			// --------------------------------------------------------------
+			// NSX-T Edge Gateways
+			// --------------------------------------------------------------
+			edgeGateways, err := vdc.GetAllNsxtEdgeGateways(nil)
+			if err != nil {
+				return fmt.Errorf("error retrieving NSX-T Edge Gateway list: %s", err)
+			}
+			for _, edgeGw := range edgeGateways {
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, edgeGw.EdgeGateway.Name, "vcd_nsxt_edgegateway", 2, verbose)
+				if toBeDeleted {
+					err = edgeGw.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting NSX-T Edge Gateway '%s': %s", edgeGw.EdgeGateway.Name, err)
 					}
 				}
 			}
@@ -297,10 +346,74 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		if toBeDeleted {
 			err = deleteRdeType(rdeType)
 			if err != nil {
-				return fmt.Errorf("error deleting RDE '%s': %s", rdeType.DefinedEntityType.ID, err)
+				return fmt.Errorf("error deleting RDE Type '%s': %s", rdeType.DefinedEntityType.ID, err)
 			}
 		}
 	}
+	// --------------------------------------------------------------
+	// RDE Interfaces
+	// --------------------------------------------------------------
+	definedInterfaces, err := govcdClient.GetAllDefinedInterfaces(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving RDE Types: %s", err)
+	}
+	for _, di := range definedInterfaces {
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, di.DefinedInterface.Name, "vcd_rde_interface", 1, verbose)
+		if toBeDeleted {
+			err = deleteRdeInterface(di)
+			if err != nil {
+				return fmt.Errorf("error deleting RDE Interface '%s': %s", di.DefinedInterface.Name, err)
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// External Networks and Provider Gateways (only for SysAdmin)
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		externalNetworks, err := govcd.GetAllExternalNetworksV2(govcdClient, nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving External Network list: %s", err)
+		}
+		for _, extNet := range externalNetworks {
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, extNet.ExternalNetwork.Name, "vcd_external_network_v2", 0, verbose)
+			if toBeDeleted {
+				err = extNet.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting External Network '%s': %s", extNet.ExternalNetwork.Name, err)
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// IP Allocations and IP Spaces (VCD 10.4.1+)
+	// --------------------------------------------------------------
+	if govcdClient.Client.APIVCDMaxVersionIs(">= 37.1") {
+		err = removeLeftoversIpSpacesAndAllocations(govcdClient, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Plugins
+	// --------------------------------------------------------------
+	uiPlugins, err := govcdClient.GetAllUIPlugins()
+	if err != nil {
+		return fmt.Errorf("error retrieving UI Plugins: %s", err)
+	}
+	for _, uiPlugin := range uiPlugins {
+		// This will delete all UI Plugins that match the `isTest` regex.
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, uiPlugin.UIPluginMetadata.PluginName, "vcd_ui_plugin", 1, verbose)
+		if toBeDeleted {
+			err = deleteUIPlugin(uiPlugin)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -493,6 +606,58 @@ func removeLeftoversNsxtAlbTenant(govcdClient *govcd.VCDClient, verbose bool) er
 	return nil
 }
 
+func removeLeftoversIpSpacesAndAllocations(govcdClient *govcd.VCDClient, verbose bool) error {
+	allIpSpaces, err := govcdClient.GetAllIpSpaceSummaries(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving IP spaces: %s", err)
+	}
+
+	// Remove all IP allocations before removing IP Space itself
+	for _, ipSpace := range allIpSpaces {
+		// IP Space itself
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, ipSpace.IpSpace.Name, "vcd_ip_space", 0, verbose)
+		if toBeDeleted {
+
+			// Removing Floating IP Allocations
+			err = removeLeftoversIpAllocations(ipSpace, "FLOATING_IP", verbose)
+			if err != nil {
+				return err
+			}
+			// Removing IP Prefix Allocations
+			err = removeLeftoversIpAllocations(ipSpace, "IP_PREFIX", verbose)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("REMOVING IP Space IP  %s\n", ipSpace.IpSpace.Name)
+			err = ipSpace.Delete()
+			if err != nil {
+				return fmt.Errorf("error deleting IP Space '%s': %s", ipSpace.IpSpace.Name, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func removeLeftoversIpAllocations(ipSpace *govcd.IpSpace, ipSpaceType string, verbose bool) error {
+	allIpSpaceIpAllocations, err := ipSpace.GetAllIpSpaceAllocations(ipSpaceType, nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving Floating IP allocations for IP Space '%s'('%s'): %s",
+			ipSpace.IpSpace.Name, ipSpace.IpSpace.ID, err)
+	}
+
+	for _, ipAllocation := range allIpSpaceIpAllocations {
+		fmt.Printf("\tREMOVING IP Space IP Allocation %s\n", ipAllocation.IpSpaceIpAllocation.Value)
+		err = ipAllocation.Delete()
+		if err != nil {
+			return fmt.Errorf("error deleting IP Allocation '%s' in IP Space %s: %s", ipAllocation.IpSpaceIpAllocation.ID, ipSpace.IpSpace.Name, err)
+		}
+	}
+
+	return nil
+}
+
 // shouldDeleteEntity checks whether a given entity is to be deleted, either by its name
 // or by its inclusion in one of the entity lists
 func shouldDeleteEntity(alsoDelete, doNotDelete entityList, name, entityType string, level int, verbose bool) bool {
@@ -578,19 +743,6 @@ func deleteVapp(vdc *govcd.Vdc, vappRef *types.ResourceReference) error {
 	return task.WaitTaskCompletion()
 }
 
-func deleteNetwork(org *govcd.Org, vdc *govcd.Vdc, netRef *types.QueryResultOrgVdcNetworkRecordType) error {
-	network, err := vdc.GetOrgVdcNetworkByHref(netRef.HREF)
-	if err != nil {
-		return fmt.Errorf("error retrieving Org Network %s/%s: %s", vdc.Vdc.Name, netRef.Name, err)
-	}
-	fmt.Printf("\t\t REMOVING network %s/%s\n", vdc.Vdc.Name, network.OrgVDCNetwork.Name)
-	task, err := network.Delete()
-	if err != nil {
-		return fmt.Errorf("error initiating network '%s' deletion: %s", network.OrgVDCNetwork.Name, err)
-	}
-	return task.WaitTaskCompletion()
-}
-
 func deleteMediaItem(catalog *govcd.Catalog, mediaRec *types.MediaRecordType) error {
 	media, err := catalog.GetMediaByHref(mediaRec.HREF)
 	if err != nil {
@@ -624,6 +776,24 @@ func deleteRdeType(rdeType *govcd.DefinedEntityType) error {
 	err := rdeType.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting RDE type '%s': %s", rdeType.DefinedEntityType.ID, err)
+	}
+	return nil
+}
+
+func deleteUIPlugin(uiPlugin *govcd.UIPlugin) error {
+	fmt.Printf("\t\t REMOVING UI PLUGIN %s\n", uiPlugin.UIPluginMetadata.ID)
+	err := uiPlugin.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting UI Plugin '%s': %s", uiPlugin.UIPluginMetadata.ID, err)
+	}
+	return nil
+}
+
+func deleteRdeInterface(di *govcd.DefinedInterface) error {
+	fmt.Printf("\t\t REMOVING RDE INTERFACE %s\n", di.DefinedInterface.ID)
+	err := di.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting RDE Interface '%s': %s", di.DefinedInterface.ID, err)
 	}
 	return nil
 }

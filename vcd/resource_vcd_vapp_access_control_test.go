@@ -15,7 +15,7 @@ import (
 func TestAccVcdVappAccessControl(t *testing.T) {
 	preTestChecks(t)
 
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 
 	var params = StringMap{
 		"Org":                      testConfig.VCD.Org,

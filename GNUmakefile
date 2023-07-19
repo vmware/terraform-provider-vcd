@@ -149,7 +149,7 @@ vet:
 
 # formats all .go files
 fmt:
-	gofmt -w $(GOFMT_FILES)
+	gofmt -s -w $(GOFMT_FILES)
 
 # runs a Go format check
 fmtcheck:

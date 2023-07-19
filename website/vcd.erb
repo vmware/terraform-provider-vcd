@@ -28,11 +28,20 @@
             <li<%= sidebar_current("docs-vcd-guides-vdc-groups") %>>
               <a href="/docs/providers/vcd/guides/vdc_groups.html">VDC Groups</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-guides-cse") %>>
-              <a href="/docs/providers/vcd/guides/container_service_extension_3_1_x.html">Container Service Extension</a>
+            <li<%= sidebar_current("docs-vcd-guides-cse-3-1-x") %>>
+              <a href="/docs/providers/vcd/guides/container_service_extension_3_1_x.html">Container Service Extension v3.1.x</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-guides-cse-4-0-install") %>>
+              <a href="/docs/providers/vcd/guides/container_service_extension_4_0_install.html">Container Service Extension v4.0 installation</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-guides-cse-4-0-cluster-management") %>>
+              <a href="/docs/providers/vcd/guides/container_service_extension_4_0_cluster_management.html">Container Service Extension v4.0 Kubernetes clusters management</a>
             </li>
             <li<%= sidebar_current("docs-vcd-guides-catalog-subscription-and-sharing") %>>
               <a href="/docs/providers/vcd/guides/catalog_subscription_and_sharing.html">Catalog subscription and sharing</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-guides-ip-spaces") %>>
+              <a href="/docs/providers/vcd/guides/ip_spaces.html">IP Spaces</a>
             </li>
 
           </ul>
@@ -257,6 +266,9 @@
             <li<%= sidebar_current("docs-vcd-data-source-nsxt-distributed-firewall") %>>
               <a href="/docs/providers/vcd/d/nsxt_distributed_firewall.html">vcd_nsxt_distributed_firewall</a>
             </li>
+            <li<%= sidebar_current("docs-vcd-data-source-nsxt-distributed-firewall-rule") %>>
+              <a href="/docs/providers/vcd/d/nsxt_distributed_firewall_rule.html">vcd_nsxt_distributed_firewall_rule</a>
+            </li>
             <li<%= sidebar_current("docs-vcd-data-source-nsxt-network-context-profile") %>>
               <a href="/docs/providers/vcd/d/nsxt_network_context_profile.html">vcd_nsxt_network_context_profile</a>
             </li>
@@ -290,8 +302,17 @@
             <li<%= sidebar_current("docs-vcd-data-source-rde-interface") %>>
               <a href="/docs/providers/vcd/d/rde_interface.html">vcd_rde_interface</a>
             </li>
+            <li<%= sidebar_current("docs-vcd-data-source-rde-interface-behavior") %>>
+              <a href="/docs/providers/vcd/d/rde_interface_behavior.html">vcd_rde_interface_behavior</a>
+            </li>
             <li<%= sidebar_current("docs-vcd-data-source-rde-type") %>>
               <a href="/docs/providers/vcd/d/rde_type.html">vcd_rde_type</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-rde-type-behavior") %>>
+              <a href="/docs/providers/vcd/d/rde_type_behavior.html">vcd_rde_type_behavior</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-rde-type-behavior-acl") %>>
+              <a href="/docs/providers/vcd/d/rde_type_behavior_acl.html">vcd_rde_type_behavior_acl</a>
             </li>
             <li<%= sidebar_current("docs-vcd-data-source-rde") %>>
               <a href="/docs/providers/vcd/d/rde.html">vcd_rde</a>
@@ -304,6 +325,45 @@
             </li>
             <li<%= sidebar_current("docs-vcd-data-source-nsxt-edge-rate-limiting") %>>
               <a href="/docs/providers/vcd/d/nsxt_edgegateway_rate_limiting.html">vcd_nsxt_edgegateway_rate_limiting</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-ip-space") %>>
+              <a href="/docs/providers/vcd/d/ip_space.html">vcd_ip_space</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-datasource-ip-space-uplink") %>>
+              <a href="/docs/providers/vcd/d/ip_space_uplink.html">vcd_ip_space_uplink</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-ip-space-ip-allocation") %>>
+              <a href="/docs/providers/vcd/d/ip_space_ip_allocation.html">vcd_ip_space_ip_allocation</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-ip-space-custom-quota") %>>
+              <a href="/docs/providers/vcd/d/ip_space_custom_quota.html">vcd_ip_space_custom_quota</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-nsxt-edge-dhcp-forwarding") %>>
+              <a href="/docs/providers/vcd/d/nsxt_edgegateway_dhcp_forwarding.html">vcd_nsxt_edgegateway_dhcp_forwarding</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-nsxt-edge-dhcpv6") %>>
+              <a href="/docs/providers/vcd/d/nsxt_edgegateway_dhcpv6.html">vcd_nsxt_edgegateway_dhcpv6</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-org-saml") %>>
+              <a href="/docs/providers/vcd/d/org_saml.html">vcd_org_saml</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-org-saml-metadata") %>>
+              <a href="/docs/providers/vcd/d/org_saml_metadata.html">vcd_org_saml_metadata</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-nsxt-edgegateway-static-route") %>>
+              <a href="/docs/providers/vcd/d/nsxt_edgegateway_static_route.html">vcd_nsxt_edgegateway_static_route</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-network-pool") %>>
+              <a href="/docs/providers/vcd/d/network_pool.html">network_pool</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-resource-pool") %>>
+              <a href="/docs/providers/vcd/d/resource_pool.html">resource_pool</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-ui-plugin") %>>
+              <a href="/docs/providers/vcd/d/ui_plugin.html">vcd_ui_plugin</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-service-account") %>>
+              <a href="/docs/providers/vcd/d/service_account.html">vcd_service_account</a>
             </li>
           </ul>
         </li>
@@ -511,6 +571,9 @@
             <li<%= sidebar_current("docs-vcd-resource-nsxt-distributed-firewall") %>>
               <a href="/docs/providers/vcd/r/nsxt_distributed_firewall.html">vcd_nsxt_distributed_firewall</a>
             </li>
+            <li<%= sidebar_current("docs-vcd-resource-nsxt-distributed-firewall-rule") %>>
+              <a href="/docs/providers/vcd/r/nsxt_distributed_firewall_rule.html">vcd_nsxt_distributed_firewall_rule</a>
+            </li>
             <li<%= sidebar_current("docs-vcd-resource-nsxt-edgegateway-bgp-neighbor") %>>
               <a href="/docs/providers/vcd/r/nsxt_edgegateway_bgp_neighbor.html">vcd_nsxt_edgegateway_bgp_neighbor</a>
             </li>
@@ -535,8 +598,17 @@
             <li<%= sidebar_current("docs-vcd-resource-rde-interface") %>>
               <a href="/docs/providers/vcd/r/rde_interface.html">vcd_rde_interface</a>
             </li>
+            <li<%= sidebar_current("docs-vcd-resource-rde-interface-behavior") %>>
+              <a href="/docs/providers/vcd/r/rde_interface_behavior.html">vcd_rde_interface_behavior</a>
+            </li>
             <li<%= sidebar_current("docs-vcd-resource-rde-type") %>>
               <a href="/docs/providers/vcd/r/rde_type.html">vcd_rde_type</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-rde-type-behavior") %>>
+              <a href="/docs/providers/vcd/r/rde_type_behavior.html">vcd_rde_type_behavior</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-rde-type-behavior-acl") %>>
+              <a href="/docs/providers/vcd/r/rde_type_behavior_acl.html">vcd_rde_type_behavior_acl</a>
             </li>
             <li<%= sidebar_current("docs-vcd-resource-rde") %>>
               <a href="/docs/providers/vcd/r/rde.html">vcd_rde</a>
@@ -544,7 +616,46 @@
             <li<%= sidebar_current("docs-vcd-resource-nsxt-edge-rate-limiting") %>>
               <a href="/docs/providers/vcd/r/nsxt_edgegateway_rate_limiting.html">vcd_nsxt_edgegateway_rate_limiting</a>
             </li>
-          </ul>
+            <li<%= sidebar_current("docs-vcd-resource-ip-space") %>>
+              <a href="/docs/providers/vcd/r/ip_space.html">vcd_ip_space</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-ip-space-uplink") %>>
+              <a href="/docs/providers/vcd/r/ip_space_uplink.html">vcd_ip_space_uplink</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-ip-space-ip-allocation") %>>
+              <a href="/docs/providers/vcd/r/ip_space_ip_allocation.html">vcd_ip_space_ip_allocation</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-ip-space-custom-quota") %>>
+              <a href="/docs/providers/vcd/r/ip_space_custom_quota.html">vcd_ip_space_custom_quota</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-nsxt-edge-dhcp-forwarding") %>>
+              <a href="/docs/providers/vcd/r/nsxt_edgegateway_dhcp_forwarding.html">vcd_nsxt_edgegateway_dhcp_forwarding</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-nsxt-edge-dhcpv6") %>>
+              <a href="/docs/providers/vcd/r/nsxt_edgegateway_dhcpv6.html">vcd_nsxt_edgegateway_dhcpv6</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-org-saml") %>>
+              <a href="/docs/providers/vcd/r/org_saml.html">vcd_org_saml</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-nsxt-edgegateway-static-route") %>>
+              <a href="/docs/providers/vcd/r/nsxt_edgegateway_static_route.html">vcd_nsxt_edgegateway_static_route</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-api-token") %>>
+              <a href="/docs/providers/vcd/r/api_token.html">vcd_api_token</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-service-account") %>>
+              <a href="/docs/providers/vcd/r/service_account.html">vcd_service_account</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-provider-vdc") %>>
+              <a href="/docs/providers/vcd/r/provider_vdc.html">vcd_provider_vdc</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-cloned-vapp") %>>
+              <a href="/docs/providers/vcd/r/cloned_vapp.html">vcd_cloned_vapp</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-ui-plugin") %>>
+              <a href="/docs/providers/vcd/r/ui_plugin.html">vcd_ui_plugin</a>
+            </li>
+           </ul>
         </li>
       </ul>
     </div>

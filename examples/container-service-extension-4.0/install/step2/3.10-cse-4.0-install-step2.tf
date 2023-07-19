@@ -1,10 +1,10 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.0 installation, step 2:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 #   before applying this configuration.
 #
-# * Please apply "3.9-cse-4.0-install-step1.tf" first, located at
+# * Please apply "3.10-cse-4.0-install-step1.tf" first, located at
 #   https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
@@ -15,13 +15,17 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.10.0 and configured with a System administrator account.
 # This is needed to build the minimum setup for CSE v4.0 to work, like Organizations, VDCs, Provider Gateways, etc.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.9"
+      version = ">= 3.10"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.9"
     }
   }
 }
@@ -90,8 +94,8 @@ resource "vcd_org" "tenant_organization" {
 # The VM Sizing Policies defined below MUST be created as they are specified in this HCL. These are the default
 # policies required by CSE to create TKGm clusters, hence nothing should be modified here.
 resource "vcd_vm_sizing_policy" "tkg_xl" {
-  name        = "TKG extra_large"
-  description = "Extra large VM sizing policy for a Kubernetes cluster node"
+  name        = "TKG extra-large"
+  description = "Extra-large VM sizing policy for a Kubernetes cluster node (8 CPU, 32GB memory)"
   cpu {
     count = 8
   }
@@ -102,7 +106,7 @@ resource "vcd_vm_sizing_policy" "tkg_xl" {
 
 resource "vcd_vm_sizing_policy" "tkg_l" {
   name        = "TKG large"
-  description = "Large VM sizing policy for a Kubernetes cluster node"
+  description = "Large VM sizing policy for a Kubernetes cluster node (4 CPU, 16GB memory)"
   cpu {
     count = 4
   }
@@ -113,7 +117,7 @@ resource "vcd_vm_sizing_policy" "tkg_l" {
 
 resource "vcd_vm_sizing_policy" "tkg_m" {
   name        = "TKG medium"
-  description = "Medium VM sizing policy for a Kubernetes cluster node"
+  description = "Medium VM sizing policy for a Kubernetes cluster node (2 CPU, 8GB memory)"
   cpu {
     count = 2
   }
@@ -124,7 +128,7 @@ resource "vcd_vm_sizing_policy" "tkg_m" {
 
 resource "vcd_vm_sizing_policy" "tkg_s" {
   name        = "TKG small"
-  description = "Small VM sizing policy for a Kubernetes cluster node"
+  description = "Small VM sizing policy for a Kubernetes cluster node (2 CPU, 4GB memory)"
   cpu {
     count = 2
   }
@@ -293,7 +297,7 @@ resource "vcd_catalog_vapp_template" "cse_ova" {
   ova_path    = format("%s/%s", var.cse_ova_folder, var.cse_ova_file)
 }
 
-# Fetch the RDE Type created in 3.9-cse-4.0-install-step1.tf. This is required to be able to create the following
+# Fetch the RDE Type created in 3.10-cse-4.0-install-step1.tf. This is required to be able to create the following
 # Rights Bundle.
 data "vcd_rde_type" "existing_capvcdcluster_type" {
   vendor  = "vmware"
@@ -547,6 +551,12 @@ resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
   reservation_model                    = "SHARED"
 }
 
+# We introduce a sleep to wait for the provider part of ALB to be ready before the assignment to the Edge gateways
+resource "time_sleep" "cse_alb_wait" {
+  depends_on      = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  create_duration = "30s"
+}
+
 ## ALB for solutions edge gateway
 resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   org             = vcd_org.solutions_organization.name
@@ -554,7 +564,7 @@ resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   is_active       = true
 
   # This dependency is required to make sure that provider part of operations is done
-  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  depends_on = [time_sleep.cse_alb_wait]
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "solutions_assignment" {
@@ -579,7 +589,8 @@ resource "vcd_nsxt_alb_settings" "tenant_alb_settings" {
   edge_gateway_id = vcd_nsxt_edgegateway.tenant_edgegateway.id
   is_active       = true
 
-  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [time_sleep.cse_alb_wait]
 }
 
 # We create a Routed network in the Solutions organization that will be used by the CSE Server.
@@ -675,7 +686,7 @@ resource "vcd_nsxt_firewall" "tenant_firewall" {
   }
 }
 
-# Fetch the RDE Type created in 3.9-cse-4.0-install-step1.tf, as we need to create the configuration instance.
+# Fetch the RDE Type created in 3.10-cse-4.0-install-step1.tf, as we need to create the configuration instance.
 data "vcd_rde_type" "existing_vcdkeconfig_type" {
   vendor  = "vmware"
   nss     = "VCDKEConfig"
@@ -769,6 +780,17 @@ resource "vcd_vapp_vm" "cse_server_vm" {
   ]
 }
 
-output "publish_ui_plugin" {
-  value = "When CSE Server '${vcd_vapp_vm.cse_server_vm.name}' is ready, please install the Kubernetes Container Clusters UI plug-in 4.0 for VCD that you can download from https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html"
+data "vcd_org" "system_org" {
+  name = var.administrator_org
+}
+
+resource vcd_ui_plugin "k8s_container_clusters_ui_plugin" {
+  count = var.k8s_container_clusters_ui_plugin_path == "" ? 0 : 1
+  plugin_path = var.k8s_container_clusters_ui_plugin_path
+  enabled = true
+  tenant_ids = [
+    data.vcd_org.system_org.id,
+    vcd_org.solutions_organization.id,
+    vcd_org.tenant_organization.id,
+  ]
 }

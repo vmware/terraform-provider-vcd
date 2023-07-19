@@ -697,3 +697,30 @@ data "vcd_independent_disk" "test-independent-disk-ds" {
   name    = vcd_independent_disk.test-independent-disk.name
 }
 `
+
+func TestAccVcdIndependentDiskMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		}
+		disk, err := vdc.GetDiskById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Independent Disk '%s': %s", id, err)
+		}
+		return disk, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdIndependentDiskMetadata, "vcd_independent_disk.test-independent-disk",
+		testAccCheckVcdIndependentDiskMetadataDatasource, "data.vcd_independent_disk.test-independent-disk-ds",
+		getObjectById, StringMap{
+			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}

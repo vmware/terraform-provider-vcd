@@ -1,6 +1,6 @@
 # Change configuration to your needs and rename to 'terraform.tfvars'
 # For more details about the variables specified here, please read the guide first:
-# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 
 # ------------------------------------------------
 # VCD Provider config

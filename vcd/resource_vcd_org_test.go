@@ -388,8 +388,8 @@ resource "vcd_org" "{{.OrgName}}" {
   name              = "{{.OrgName}}"
   full_name         = "{{.FullName}}"
   description       = "{{.Description}}"
-  delete_force      = "true"
-  delete_recursive  = "true"
+  delete_force      = true
+  delete_recursive  = true
 }
 `
 
@@ -405,8 +405,8 @@ resource "vcd_org" "{{.OrgName}}" {
   deployed_vm_quota               = {{.DeployedVmQuota}}
   stored_vm_quota                 = {{.StoredVmQuota}}
   is_enabled                      = "{{.IsEnabled}}"
-  delete_force                    = "true"
-  delete_recursive                = "true"
+  delete_force                    = true
+  delete_recursive                = true
   vapp_lease {
     maximum_runtime_lease_in_sec          = {{.RuntimeLease}}
     power_off_on_runtime_lease_expiration = {{.PowerOffOnLeaseExp}}
@@ -436,8 +436,8 @@ const testAccCheckVcdOrgMetadata = `
 resource "vcd_org" "test-org" {
   name             = "{{.Name}}"
   full_name        = "{{.Name}}"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
   {{.Metadata}}
 }
 `
@@ -447,3 +447,20 @@ data "vcd_org" "test-org-ds" {
   name = vcd_org.test-org.name
 }
 `
+
+func TestAccVcdOrgMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", id, err)
+		}
+		return adminOrg, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
+		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
+		getObjectById, nil)
+}

@@ -1,6 +1,6 @@
 # Change configuration to your needs and rename to 'terraform.tfvars'.
 # For more details about the variables specified here, please read the guide first:
-# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 
 # ------------------------------------------------
 # VCD Provider config
@@ -104,8 +104,16 @@ csi_version                   = "1.3.0"
 
 # Optional but recommended to avoid rate limiting when configuring the TKGm clusters.
 # Create this one in https://github.com/settings/tokens
-github_personal_access_token = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+github_personal_access_token = ""
 
 # This user was created in Step 1. You need to provide a valid API token for it
 cse_admin_user      = "cse-admin"
 cse_admin_api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# ------------------------------------------------
+# Other configuration
+# ------------------------------------------------
+# This path points to the .zip file that contains the bundled Kubernetes Container Clusters UI Plugin.
+# It is optional: if not set, it won't be installed.
+# Remember to remove older CSE UI plugins if present (for example 3.x plugins) before installing this one.
+k8s_container_clusters_ui_plugin_path = "/home/change-me/container-ui-plugin 4.0.zip"

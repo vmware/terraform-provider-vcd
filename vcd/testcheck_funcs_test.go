@@ -1,4 +1,4 @@
-//go:build vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || ALL || functional
+//go:build api || vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || org || disk || ALL || functional
 
 package vcd
 
@@ -70,6 +70,11 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 
 		return nil
 	}
+}
+
+// String satisfies stringer interface (supports fmt.Printf...)
+func (c *testCachedFieldValue) String() string {
+	return c.fieldValue
 }
 
 // testCheckMatchOutput allows to match output field with regexp
