@@ -4,9 +4,10 @@ package vcd
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"testing"
 )
 
 // TestAccVcdCatalogOrgUser tests the following:
@@ -30,25 +31,27 @@ func TestAccVcdCatalogOrgUser(t *testing.T) {
 	descriptionOrg1 := "Belongs to " + org1Name
 	descriptionOrg2 := "Belongs to " + org2Name
 	var params = StringMap{
-		"Org1":             org1Name,
-		"Org2":             org2Name,
-		"Vdc2":             vdc2Name,
-		"SharedToEveryone": "true",
-		"CatalogName":      catalogName,
-		"DescriptionOrg1":  descriptionOrg1,
-		"DescriptionOrg2":  descriptionOrg2,
-		"FuncName":         t.Name() + "-creation",
-		"CatalogMediaName": catalogMediaName,
-		"VappTemplateName": vappTemplateName,
-		"MediaPath":        testConfig.Media.MediaPath,
-		"OvaPath":          testConfig.Ova.OvaPath,
-		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"VmName":           localVmName,
-		"SkipNotice":       "# skip-binary-test: temporary phase",
-		"ProviderSystem":   providerVcdSystem,
-		"ProviderOrg1":     providerVcdOrg1,
-		"ProviderOrg2":     providerVcdOrg2,
-		"Tags":             "catalog",
+		"Org1":               org1Name,
+		"Org2":               org2Name,
+		"Vdc1":               testConfig.Nsxt.Vdc,
+		"Vdc2":               vdc2Name,
+		"SharedToEveryone":   "true",
+		"NsxtStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
+		"CatalogName":        catalogName,
+		"DescriptionOrg1":    descriptionOrg1,
+		"DescriptionOrg2":    descriptionOrg2,
+		"FuncName":           t.Name() + "-creation",
+		"CatalogMediaName":   catalogMediaName,
+		"VappTemplateName":   vappTemplateName,
+		"MediaPath":          testConfig.Media.MediaPath,
+		"OvaPath":            testConfig.Ova.OvaPath,
+		"UploadPieceSize":    testConfig.Media.UploadPieceSize,
+		"VmName":             localVmName,
+		"SkipNotice":         "# skip-binary-test: temporary phase",
+		"ProviderSystem":     providerVcdSystem,
+		"ProviderOrg1":       providerVcdOrg1,
+		"ProviderOrg2":       providerVcdOrg2,
+		"Tags":               "catalog",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -188,11 +191,19 @@ data "vcd_org" "org2" {
 	name = "{{.Org2}}"
 }
 
+data "vcd_storage_profile" "sp1" {
+  provider = {{.ProviderSystem}}
+  org      = "{{.Org1}}"
+  vdc      = "{{.Vdc1}}"
+  name     = "{{.NsxtStorageProfile}}"
+}
+
 resource "vcd_catalog" "catalog_org1" {
-  provider         = {{.ProviderSystem}}
-  org              = "{{.Org1}}"
-  name             = "{{.CatalogName}}"
-  description      = "{{.DescriptionOrg1}}"
+  provider           = {{.ProviderSystem}}
+  org                = "{{.Org1}}"
+  name               = "{{.CatalogName}}"
+  description        = "{{.DescriptionOrg1}}"
+  storage_profile_id = data.vcd_storage_profile.sp1.id
   delete_force     = true
   delete_recursive = true
 }
@@ -232,12 +243,20 @@ resource "vcd_catalog_vapp_template" "test_vapp_template1" {
   upload_piece_size = {{.UploadPieceSize}}
 }
 
+data "vcd_storage_profile" "sp2" {
+  provider = {{.ProviderOrg2}}
+  org      = "{{.Org2}}"
+  vdc      = "{{.Vdc2}}"
+  name     = "{{.NsxtStorageProfile}}"
+}
+
 # create a catalog with the same name in Org2
 resource "vcd_catalog" "catalog_org2" {
-  provider         = {{.ProviderOrg2}}
-  org              = "{{.Org2}}"
-  name             = "{{.CatalogName}}"
-  description      = "{{.DescriptionOrg2}}"
+  provider           = {{.ProviderOrg2}}
+  org                = "{{.Org2}}"
+  name               = "{{.CatalogName}}"
+  description        = "{{.DescriptionOrg2}}"
+  storage_profile_id = data.vcd_storage_profile.sp2.id
   delete_force     = true
   delete_recursive = true
 }
