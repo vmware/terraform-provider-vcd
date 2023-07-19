@@ -1,6 +1,6 @@
 # Change configuration to your needs and rename to 'terraform.tfvars'.
 # For more details about the variables specified here, please read the guide first:
-# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 
 # ------------------------------------------------
 # VCD Provider config
@@ -104,7 +104,7 @@ csi_version                   = "1.3.0"
 
 # Optional but recommended to avoid rate limiting when configuring the TKGm clusters.
 # Create this one in https://github.com/settings/tokens
-github_personal_access_token = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+github_personal_access_token = ""
 
 # This user was created in Step 1. You need to provide a valid API token for it
 cse_admin_user      = "cse-admin"

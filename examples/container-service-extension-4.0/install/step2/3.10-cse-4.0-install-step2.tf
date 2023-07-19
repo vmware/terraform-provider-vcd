@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.0 installation, step 2:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 #   before applying this configuration.
 #
 # * Please apply "3.10-cse-4.0-install-step1.tf" first, located at
@@ -22,6 +22,10 @@ terraform {
     vcd = {
       source  = "vmware/vcd"
       version = ">= 3.10"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.9"
     }
   }
 }
@@ -90,8 +94,8 @@ resource "vcd_org" "tenant_organization" {
 # The VM Sizing Policies defined below MUST be created as they are specified in this HCL. These are the default
 # policies required by CSE to create TKGm clusters, hence nothing should be modified here.
 resource "vcd_vm_sizing_policy" "tkg_xl" {
-  name        = "TKG extra_large"
-  description = "Extra large VM sizing policy for a Kubernetes cluster node"
+  name        = "TKG extra-large"
+  description = "Extra-large VM sizing policy for a Kubernetes cluster node (8 CPU, 32GB memory)"
   cpu {
     count = 8
   }
@@ -102,7 +106,7 @@ resource "vcd_vm_sizing_policy" "tkg_xl" {
 
 resource "vcd_vm_sizing_policy" "tkg_l" {
   name        = "TKG large"
-  description = "Large VM sizing policy for a Kubernetes cluster node"
+  description = "Large VM sizing policy for a Kubernetes cluster node (4 CPU, 16GB memory)"
   cpu {
     count = 4
   }
@@ -113,7 +117,7 @@ resource "vcd_vm_sizing_policy" "tkg_l" {
 
 resource "vcd_vm_sizing_policy" "tkg_m" {
   name        = "TKG medium"
-  description = "Medium VM sizing policy for a Kubernetes cluster node"
+  description = "Medium VM sizing policy for a Kubernetes cluster node (2 CPU, 8GB memory)"
   cpu {
     count = 2
   }
@@ -124,7 +128,7 @@ resource "vcd_vm_sizing_policy" "tkg_m" {
 
 resource "vcd_vm_sizing_policy" "tkg_s" {
   name        = "TKG small"
-  description = "Small VM sizing policy for a Kubernetes cluster node"
+  description = "Small VM sizing policy for a Kubernetes cluster node (2 CPU, 4GB memory)"
   cpu {
     count = 2
   }
@@ -547,6 +551,12 @@ resource "vcd_nsxt_alb_service_engine_group" "cse_alb_seg" {
   reservation_model                    = "SHARED"
 }
 
+# We introduce a sleep to wait for the provider part of ALB to be ready before the assignment to the Edge gateways
+resource "time_sleep" "cse_alb_wait" {
+  depends_on      = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  create_duration = "30s"
+}
+
 ## ALB for solutions edge gateway
 resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   org             = vcd_org.solutions_organization.name
@@ -554,7 +564,7 @@ resource "vcd_nsxt_alb_settings" "solutions_alb_settings" {
   is_active       = true
 
   # This dependency is required to make sure that provider part of operations is done
-  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  depends_on = [time_sleep.cse_alb_wait]
 }
 
 resource "vcd_nsxt_alb_edgegateway_service_engine_group" "solutions_assignment" {
@@ -579,7 +589,8 @@ resource "vcd_nsxt_alb_settings" "tenant_alb_settings" {
   edge_gateway_id = vcd_nsxt_edgegateway.tenant_edgegateway.id
   is_active       = true
 
-  depends_on = [vcd_nsxt_alb_service_engine_group.cse_alb_seg]
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [time_sleep.cse_alb_wait]
 }
 
 # We create a Routed network in the Solutions organization that will be used by the CSE Server.

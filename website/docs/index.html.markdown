@@ -24,6 +24,7 @@ The following Cloud Director versions are supported by this provider:
 
 * 10.3
 * 10.4
+* 10.5
 
 Also Cloud Director Service (CDS) is supported.
 
