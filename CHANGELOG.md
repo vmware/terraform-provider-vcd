@@ -1,6 +1,7 @@
 ## 3.10.0 (July 20, 2023)
 
 ### FEATURES
+* Add a **new guide** to create and manage Kubernetes Clusters using Container Service Extension v4.0 ([#1030](https://github.com/vmware/terraform-provider-vcd/pull/1030))
 * **New Resource:** `vcd_nsxt_edgegateway_dhcp_forwarding` to manage NSX-T Edge Gateway DHCP Forwarding configuration ([#1056](https://github.com/vmware/terraform-provider-vcd/pull/1056))
 * **New Data Source:** `vcd_nsxt_edgegateway_dhcp_forwarding` to read NSX-T Edge Gateway DHCP Forwarding configuration ([#1056](https://github.com/vmware/terraform-provider-vcd/pull/1056))
 * **New Resource:** `vcd_ui_plugin` to programmatically install and manage UI Plugins ([#1059](https://github.com/vmware/terraform-provider-vcd/pull/1059))
@@ -48,7 +49,7 @@
 * **New Resource:** `vcd_nsxt_distributed_firewall_rule` to manage NSX-T Distributed Firewall one by
   one. Rules will *not be created in parallel* because the API provides no direct endpoint to create
   a single rule and this functionality uses a custom made function that abstracts the "update all"
-  endpoint. ([#1076](https://github.com/vmware/terraform-provider-vcd/pull/1076))
+  endpoint ([#1076](https://github.com/vmware/terraform-provider-vcd/pull/1076))
 * **New Data Source:** `vcd_nsxt_distributed_firewall_rule` to read NSX-T Distributed Firewall one
   by one ([#1076](https://github.com/vmware/terraform-provider-vcd/pull/1076))
 * **New Resource:** `vcd_cloned_vapp` to create a vApp from either a vApp template or another vApp ([#1081](https://github.com/vmware/terraform-provider-vcd/pull/1081))
@@ -83,7 +84,7 @@ automatically if it is not set ([#1082](https://github.com/vmware/terraform-prov
 ### BUG FIXES
 * Fix `SYSTEM` scope data source `vcd_nsxt_app_port_profile` when multiple NSX-T managers are configured ([#1065](https://github.com/vmware/terraform-provider-vcd/pull/1065))
 * Fix inconsistent `security_profile_customization` field during `vcd_nsxt_ipsec_vpn_tunnel` update ([#1072](https://github.com/vmware/terraform-provider-vcd/pull/1072))
-* Fix Issue #1066 - Not possible to handle more than 128 storage profiles ([#1073](https://github.com/vmware/terraform-provider-vcd/pull/1073))
+* Fix [Issue #1066](https://github.com/vmware/terraform-provider-vcd/issues/1066) - Not possible to handle more than 128 storage profiles ([#1073](https://github.com/vmware/terraform-provider-vcd/pull/1073))
 * Fix a bug that caused `vcd_catalog` creation to fail if it is created with deprecated `metadata` argument in VCD 10.5  ([#1085](https://github.com/vmware/terraform-provider-vcd/pull/1085))
 
 ### NOTES
