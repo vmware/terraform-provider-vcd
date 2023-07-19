@@ -1,17 +1,17 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Container Service Extension v4.0"
-sidebar_current: "docs-vcd-guides-cse"
+page_title: "VMware Cloud Director: Container Service Extension v4.0 installation"
+sidebar_current: "docs-vcd-guides-cse-4-0-install"
 description: |-
   Provides guidance on configuring VCD to be able to install and use Container Service Extension v4.0
 ---
 
-# Container Service Extension v4.0
+# Container Service Extension v4.0 installation
 
 ## About
 
 This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v4.0, that
-will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using the UI.
+will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using Terraform or the UI.
 
 To know more about CSE v4.0, you can visit [the documentation][cse_docs].
 
@@ -90,10 +90,10 @@ you can leverage customising the [proposed configuration][step2] to use the Orga
 
 The [proposed configuration][step2] will create four VM Sizing Policies:
 
-- `TKG extra_large`: 8 CPUs, 32GB RAM.
-- `TKG large`: 4 CPUs, 16GB RAM.
-- `TKG medium`: 2 CPUs, 8GB RAM.
-- `TKG small`: 2 CPU, 4GB RAM.
+- `TKG extra-large`: 8 CPU, 32GB memory.
+- `TKG large`: 4 CPU, 16GB memory.
+- `TKG medium`: 2 CPU, 8GB memory.
+- `TKG small`: 2 CPU, 4GB memory.
 
 These VM Sizing Policies should be applied as they are, so nothing should be changed here as these are the exact same
 VM Sizing Policies created during CSE installation in UI. They will be assigned to the Tenant
@@ -270,7 +270,7 @@ If you decide to install it, `k8s_container_clusters_ui_plugin_path` should poin
 
 ### Final considerations
 
-#### Verifying that the setup works
+#### Verifying the CSE Server
 
 To validate that the CSE Server is working correctly, you can either do it programmatically with a [DNAT rule][nat_rule] that maps
 one available IP to the CSE Server, or using the UI:
@@ -381,9 +381,13 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 ```
 
+## Working with Kubernetes clusters
+
+Please read the specific guide on that topic [here][cse_cluster_management_guide].
+
 ## Uninstall CSE
 
-~> Before uninstalling CSE, make sure you mark all clusters for deletion in VCD UI.
+~> Before uninstalling CSE, make sure you mark all clusters for deletion.
 
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure with Terraform command.
 
@@ -391,7 +395,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
-[capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
+[cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway

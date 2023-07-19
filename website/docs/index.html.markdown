@@ -24,6 +24,7 @@ The following Cloud Director versions are supported by this provider:
 
 * 10.3
 * 10.4
+* 10.5
 
 Also Cloud Director Service (CDS) is supported.
 
@@ -420,11 +421,11 @@ items during all Terraform operations. This is useful, for example, to avoid rem
 by an external actor, or after they were created by Terraform.
 
 ~> Note that this feature is only considered when using the `metadata_entry` argument in the resources and data sources that support
-it. In other words, to ignore metadata when you are using the deprecated `metadata` argument, please use the native Terraform `lifecycle.ignore_changes` block.
+it. In other words, to ignore metadata when the deprecated `metadata` argument is used, please use the native Terraform `lifecycle.ignore_changes` block.
 
-~> Be aware that setting a `metadata_entry` in your Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
+~> Be aware that setting a `metadata_entry` in the Terraform configuration that matches any `ignore_metadata_changes` can produce inconsistent
 results, as the metadata will be stored in state but nothing will be done in VCD. Using `ignore_metadata_changes` with matching metadata entries
-in your code is NOT recommended. In the event that your code contains such conflict, though, you can control the ensuing action with
+in the code is NOT recommended. In the event that it contains such conflict, though, the ensuing action can be controlled with
 `conflict_action`, which can be `error`, `warn` or `none`.
 
 The available sub-attributes for `ignore_metadata_changes` are:
@@ -439,8 +440,11 @@ The available sub-attributes for `ignore_metadata_changes` are:
 * `value_regex`- (Optional) A regular expression that can filter out metadata values that match. Either `key_regex` or `value_regex` are required on each block.
 * `conflict_action` - (Optional) Defines what to do if a conflict exists between a `metadata_entry` that is managed
   by Terraform, and it matches the criteria defined in the `ignore_metadata_changes` block, as the metadata will be stored in state but nothing will be done in VCD.
-  If the value is `error`, when this happens, the Plan will fail. When the value is `warn`, it will just give a warning but the Plan will continue,
+  If the value is `error`, when this happens, any read operation (like a Plan or Refresh) will fail. When the value is `warn`, it will just give a warning but the operation will continue,
   and with the `none` value nothing will be shown. Defaults to `error`.
+
+~> The `conflict_action` mechanism will be evaluated on every read, including `terraform destroy`, as it will trigger a refresh before deleting
+resources. To avoid this situation, we can use the `-refresh=false` option.
 
 Note that these attributes **are evaluated as a logical `and`**. This means that the snippet below would ignore all metadata entries
 that belong to the specific Organization named "client1" **and** which keys match the regular expression `[Ee]nvironment`:
@@ -459,7 +463,7 @@ provider "vcd" {
 }
 ```
 
-You can have more than one block, to ignore more entries of your choice:
+We can have more than one block, to ignore more entries:
 
 ```hcl
 provider "vcd" {

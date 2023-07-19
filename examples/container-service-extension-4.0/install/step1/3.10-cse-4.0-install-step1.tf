@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.0 installation, step 1:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as Providers will need to generate an API token for the created
