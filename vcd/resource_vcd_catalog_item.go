@@ -168,6 +168,8 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata and vApp Template metadata contents,
 	// which should not be affected by it.
+	vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
+	defer vcdMutexKV.kvUnlock("metadata")
 	ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
 	deprecatedCatalogItemMetadata, err1 := catalogItem.GetMetadata()
 	vAppTemplateMetadata, err2 := vAppTemplate.GetMetadata()
