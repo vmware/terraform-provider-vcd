@@ -48,7 +48,7 @@
   on VCD 10.4.0+ ([#1075](https://github.com/vmware/terraform-provider-vcd/pull/1075))
 * **New Resource:** `vcd_nsxt_distributed_firewall_rule` to manage NSX-T Distributed Firewall one by
   one. Rules will *not be created in parallel* because the API provides no direct endpoint to create
-  a single rule and this functionality uses a custom made function that abstracts the "update all"
+  a single rule and this functionality uses a custom-made function that abstracts the "update all"
   endpoint ([#1076](https://github.com/vmware/terraform-provider-vcd/pull/1076))
 * **New Data Source:** `vcd_nsxt_distributed_firewall_rule` to read NSX-T Distributed Firewall one
   by one ([#1076](https://github.com/vmware/terraform-provider-vcd/pull/1076))
@@ -63,7 +63,7 @@
   `use_ip_spaces` and `dedicated_org_id` fields ([#1062](https://github.com/vmware/terraform-provider-vcd/pull/1062))
 * `vcd_nsxt_edgegateway` resource supports IP Spaces by not requiring `subnet` specification
   ([#1062](https://github.com/vmware/terraform-provider-vcd/pull/1062))
-* Resource and data source `vcd_nsxt_alb_virtual_service` support IPv6 on VCD 10.4.0+ via new
+* Resource and data source `vcd_nsxt_alb_virtual_service` support IPv6 on VCD 10.4.0+ via new field
   `ipv6_virtual_ip_address` ([#1071](https://github.com/vmware/terraform-provider-vcd/pull/1071))
 * Resource and data source `vcd_network_routed_v2` support Dual-Stack mode using
   `dual_stack_enabled` and `secondary_gateway`, `secondary_prefix_length`,
@@ -82,8 +82,8 @@
 automatically if it is not set ([#1082](https://github.com/vmware/terraform-provider-vcd/pull/1082))
 
 ### BUG FIXES
-* Fix `SYSTEM` scope data source `vcd_nsxt_app_port_profile` when multiple NSX-T managers are configured ([#1065](https://github.com/vmware/terraform-provider-vcd/pull/1065))
-* Fix inconsistent `security_profile_customization` field during `vcd_nsxt_ipsec_vpn_tunnel` update ([#1072](https://github.com/vmware/terraform-provider-vcd/pull/1072))
+* Fix [Issue #1058](https://github.com/vmware/terraform-provider-vcd/issues/1058) - Multiple `SYSTEM` scope data source `vcd_nsxt_app_port_profile` when multiple NSX-T managers are configured ([#1065](https://github.com/vmware/terraform-provider-vcd/pull/1065))
+* Fix [Issue #1069](https://github.com/vmware/terraform-provider-vcd/issues/1069) - Inconsistent `security_profile_customization` field during `vcd_nsxt_ipsec_vpn_tunnel` update ([#1072](https://github.com/vmware/terraform-provider-vcd/pull/1072))
 * Fix [Issue #1066](https://github.com/vmware/terraform-provider-vcd/issues/1066) - Not possible to handle more than 128 storage profiles ([#1073](https://github.com/vmware/terraform-provider-vcd/pull/1073))
 * Fix a bug that caused `vcd_catalog` creation to fail if it is created with deprecated `metadata` argument in VCD 10.5  ([#1085](https://github.com/vmware/terraform-provider-vcd/pull/1085))
 
