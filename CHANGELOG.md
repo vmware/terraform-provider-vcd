@@ -1,4 +1,4 @@
-## 3.10.0 (TBC)
+## 3.10.0 (July 20, 2023)
 
 ### FEATURES
 * **New Resource:** `vcd_nsxt_edgegateway_dhcp_forwarding` to manage NSX-T Edge Gateway DHCP Forwarding configuration ([#1056](https://github.com/vmware/terraform-provider-vcd/pull/1056))
