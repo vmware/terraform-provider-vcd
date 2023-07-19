@@ -28,6 +28,8 @@ resource "vcd_network_routed" "net" {
   edge_gateway = "Edge Gateway Name"
   gateway      = "10.10.0.1"
 
+  guest_vlan_allowed = true
+
   dhcp_pool {
     start_address = "10.10.0.2"
     end_address   = "10.10.0.100"
@@ -63,6 +65,7 @@ The following arguments are supported:
   have a static IP; see [IP Pools](#ip-pools) below for details.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
   virtual machines; see [IP Pools](#ip-pools) below for details.
+* `guest_vlan_allowed` - (Optional) True if Network allows guest VLAN tagging.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network.
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 

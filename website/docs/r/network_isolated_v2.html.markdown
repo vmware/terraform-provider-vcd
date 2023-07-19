@@ -37,6 +37,8 @@ resource "vcd_network_isolated_v2" "nsxt-backed" {
   gateway       = "1.1.1.1"
   prefix_length = 24
 
+  guest_vlan_allowed = true
+
   static_ip_pool {
     start_address = "1.1.1.10"
     end_address   = "1.1.1.20"
@@ -69,6 +71,8 @@ resource "vcd_network_isolated_v2" "nsxv-backed" {
   gateway       = "1.1.1.1"
   prefix_length = 24
 
+  guest_vlan_allowed = true
+
   static_ip_pool {
     start_address = "1.1.1.10"
     end_address   = "1.1.1.20"
@@ -97,6 +101,7 @@ and inherited from provider configuration)
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
   virtual machines; see [IP Pools](#ip-pools) below for details.
+* `guest_vlan_allowed` - (Optional) True if Network allows guest VLAN tagging.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network. **Not supported** if the network belongs to a VDC Group.
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 

@@ -28,6 +28,8 @@ resource "vcd_network_isolated" "net" {
   gateway = "192.168.2.1"
   dns1    = "192.168.2.1"
 
+  guest_vlan_allowed = true
+
   dhcp_pool {
     start_address = "192.168.2.2"
     end_address   = "192.168.2.50"
@@ -60,6 +62,7 @@ The following arguments are supported:
   have a static IP; see [IP Pools](#ip-pools) below for details.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
   virtual machines; see [IP Pools](#ip-pools) below for details.
+* `guest_vlan_allowed` - (Optional) True if Network allows guest VLAN tagging.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network.
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
