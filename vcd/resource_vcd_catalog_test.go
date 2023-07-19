@@ -963,6 +963,27 @@ data "vcd_catalog" "test-catalog-ds" {
 }
 `
 
+func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		catalog, err := adminOrg.GetAdminCatalogById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Catalog '%s': %s", id, err)
+		}
+		return catalog, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
+		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
+		getObjectById, nil)
+}
+
 func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {
 	// Filtering by name and in correct pVdc to avoid picking NSX-V VDC storage profile
 	results, _ := client.QueryWithNotEncodedParams(nil, map[string]string{

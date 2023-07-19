@@ -29,6 +29,8 @@ type Config struct {
 	Password                string
 	Token                   string // Token used instead of user and password
 	ApiToken                string // User generated token used instead of user and password
+	ApiTokenFile            string // File containing a user generated API token
+	AllowApiTokenFile       bool   // Setting to suppress API Token File security warnings
 	ServiceAccountTokenFile string // File containing the Service Account API token
 	AllowSATokenFile        bool   // Setting to suppress Service Account Token File security warnings
 	SysOrg                  string // Org used for authentication
@@ -38,15 +40,19 @@ type Config struct {
 	MaxRetryTimeout         int
 	InsecureFlag            bool
 
-	// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+	// UseSamlAdfs specifies if SAML auth is used for authenticating VCD instead of local login.
 	// The following conditions must be met so that authentication SAML authentication works:
 	// * SAML IdP (Identity Provider) is Active Directory Federation Service (ADFS)
 	// * Authentication endpoint "/adfs/services/trust/13/usernamemixed" must be enabled on ADFS
 	// server
 	UseSamlAdfs bool
-	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default vCD Entity
+	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default VCD Entity
 	// ID is used as Relaying Party Trust identifier.
 	CustomAdfsRptId string
+
+	// IgnoredMetadata allows to configure a set of metadata entries that should be ignored by all the
+	// API operations related to metadata.
+	IgnoredMetadata []govcd.IgnoredMetadata
 }
 
 type VCDClient struct {
@@ -281,6 +287,26 @@ func (cli *VCDClient) unlockParentVdcGroup(d *schema.ResourceData) {
 	}
 
 	vcdMutexKV.kvUnlock(vdcGroupId)
+}
+
+// lockParentExternalNetwork locks on External Network using 'external_network_id' field
+func (cli *VCDClient) lockParentExternalNetwork(d *schema.ResourceData) {
+	externalNetworkId := d.Get("external_network_id").(string)
+	if externalNetworkId == "" {
+		panic("'external_network_id' is empty")
+	}
+
+	vcdMutexKV.kvLock(externalNetworkId)
+}
+
+// unlockParentVdcGroup unlocks on External Network using 'external_network_id' field
+func (cli *VCDClient) unlockParentExternalNetwork(d *schema.ResourceData) {
+	externalNetworkId := d.Get("external_network_id").(string)
+	if externalNetworkId == "" {
+		panic("'external_network_id' is empty")
+	}
+
+	vcdMutexKV.kvUnlock(externalNetworkId)
 }
 
 // lockIfOwnerIsVdcGroup locks VDC Group based on `owner_id` field (if it is a VDC Group)
@@ -641,10 +667,17 @@ func (cli *VCDClient) GetOrgName(orgName string) (string, error) {
 }
 
 // TODO Look into refactoring this into a method of *Config
-func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, saToken string) error {
+func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, apiTokenFile, saTokenFile string) error {
 	var err error
-	if saToken != "" {
-		return client.SetServiceAccountApiToken(org, saToken)
+	if saTokenFile != "" {
+		return client.SetServiceAccountApiToken(org, saTokenFile)
+	}
+	if apiTokenFile != "" {
+		_, err := client.SetApiTokenFromFile(org, apiTokenFile)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	if apiToken != "" {
 		return client.SetToken(org, govcd.ApiTokenHeader, apiToken)
@@ -669,6 +702,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Password + "#" +
 		c.Token + "#" +
 		c.ApiToken + "#" +
+		c.ApiTokenFile + "#" +
 		c.ServiceAccountTokenFile + "#" +
 		c.SysOrg + "#" +
 		c.Vdc + "#" +
@@ -707,6 +741,7 @@ func (c *Config) Client() (*VCDClient, error) {
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
 			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
 			govcd.WithHttpUserAgent(userAgent),
+			govcd.WithIgnoredMetadata(c.IgnoredMetadata),
 		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
@@ -714,7 +749,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
 
-	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken, c.ServiceAccountTokenFile)
+	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken, c.ApiTokenFile, c.ServiceAccountTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}

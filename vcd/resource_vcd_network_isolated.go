@@ -170,7 +170,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", false),
+			"metadata_entry": metadataEntryResourceSchema("Network"),
 		},
 	}
 }
@@ -277,10 +277,10 @@ func resourceVcdNetworkIsolatedCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceVcdNetworkIsolatedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource")
+	return genericVcdNetworkIsolatedRead(ctx, d, meta, "resource", nil)
 }
 
-func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string, updatedNetwork *govcd.OrgVDCNetwork) diag.Diagnostics {
 	var network *govcd.OrgVDCNetwork
 	var err error
 
@@ -301,8 +301,8 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 			return diag.Errorf("[network isolated read] error looking for network: %s", err)
 		}
 	case "resource-update":
-		// From update, we get the network directly
-		network = meta.(*govcd.OrgVDCNetwork)
+		// From update, we get the network directly from the parameter
+		network = updatedNetwork
 	}
 
 	// Fix coverity warning
@@ -352,10 +352,10 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	err = updateMetadataInState(d, network)
-	if err != nil {
+	diagErr := updateMetadataInState(d, meta.(*VCDClient), "vcd_network_isolated", network)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
-		return diag.Errorf("[isolated network read] unable to set network metadata %s", err)
+		return diagErr
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
@@ -507,5 +507,5 @@ func resourceVcdNetworkIsolatedUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// The update returns already a network. No need to retrieve it twice
-	return genericVcdNetworkIsolatedRead(ctx, d, network, "resource-update")
+	return genericVcdNetworkIsolatedRead(ctx, d, vcdClient, "resource-update", network)
 }

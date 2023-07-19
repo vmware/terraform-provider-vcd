@@ -1,0 +1,249 @@
+# This file was downloaded from https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates/cluster-template-v1.22.9.yaml
+# Only the commented lines were added manually.
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${TARGET_NAMESPACE}
+  labels: # This block was added manually, it was not present in the downloaded template
+    cluster-role.tkg.tanzu.vmware.com/management: ""
+    tanzuKubernetesRelease: ${TKR_VERSION}
+    tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
+  annotations: # This block was added manually, it was not present in the downloaded template
+    TKGVERSION: ${TKGVERSION}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - ${POD_CIDR}
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+        - ${SERVICE_CIDR}
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: ${CLUSTER_NAME}-control-plane
+    namespace: ${TARGET_NAMESPACE}
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: VCDCluster
+    name: ${CLUSTER_NAME}
+    namespace: ${TARGET_NAMESPACE}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: capi-user-credentials
+  namespace: ${TARGET_NAMESPACE}
+type: Opaque
+data:
+  username: "${VCD_USERNAME_B64}"
+  password: "${VCD_PASSWORD_B64}"
+  refreshToken: "${VCD_REFRESH_TOKEN_B64}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDCluster
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  site: ${VCD_SITE}
+  org: ${VCD_ORGANIZATION}
+  ovdc: ${VCD_ORGANIZATION_VDC}
+  ovdcNetwork: ${VCD_ORGANIZATION_VDC_NETWORK}
+  useAsManagementCluster: false
+  userContext:
+    secretRef:
+      name: capi-user-credentials
+      namespace: ${TARGET_NAMESPACE}
+  loadBalancerConfigSpec:
+    vipSubnet: ""
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-control-plane
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      catalog: ${VCD_CATALOG}
+      template: ${VCD_TEMPLATE_NAME}
+      sizingPolicy: ${VCD_CONTROL_PLANE_SIZING_POLICY}
+      placementPolicy: ${VCD_CONTROL_PLANE_PLACEMENT_POLICY}
+      storageProfile: "${VCD_CONTROL_PLANE_STORAGE_PROFILE}"
+      diskSize: ${DISK_SIZE}
+      enableNvidiaGPU: false
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: ${CLUSTER_NAME}-control-plane
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer:
+        certSANs:
+          - localhost
+          - 127.0.0.1
+      controllerManager:
+        extraArgs:
+          enable-hostpath-provisioner: "true"
+      dns:
+        imageRepository: projects.registry.vmware.com/tkg
+        imageTag: v1.8.4_vmware.9
+      etcd:
+        local:
+          imageRepository: projects.registry.vmware.com/tkg
+          imageTag: v3.5.4_vmware.2
+      imageRepository: projects.registry.vmware.com/tkg
+    users:
+      - name: root
+        sshAuthorizedKeys:
+          - "${SSH_PUBLIC_KEY}"
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: VCDMachineTemplate
+      name: ${CLUSTER_NAME}-control-plane
+      namespace: ${TARGET_NAMESPACE}
+  replicas: ${CONTROL_PLANE_MACHINE_COUNT}
+  version: v1.22.9+vmware.1
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      catalog: ${VCD_CATALOG}
+      template: ${VCD_TEMPLATE_NAME}
+      sizingPolicy: ${VCD_WORKER_SIZING_POLICY}
+      placementPolicy: ${VCD_WORKER_PLACEMENT_POLICY}
+      storageProfile: "${VCD_WORKER_STORAGE_PROFILE}"
+      diskSize: ${DISK_SIZE}
+      enableNvidiaGPU: false
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - "${SSH_PUBLIC_KEY}"
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  clusterName: ${CLUSTER_NAME}
+  replicas: ${WORKER_MACHINE_COUNT}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: ${CLUSTER_NAME}-md-0
+          namespace: ${TARGET_NAMESPACE}
+      clusterName: ${CLUSTER_NAME}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VCDMachineTemplate
+        name: ${CLUSTER_NAME}-md-0
+        namespace: ${TARGET_NAMESPACE}
+      version: v1.22.9+vmware.1
+---
+# Extra worker node pool. The three blocks below were added manually. The name on each kind of object is different
+# from the original pool.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-1
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      catalog: ${VCD_CATALOG}
+      template: ${VCD_TEMPLATE_NAME}
+      sizingPolicy: ${VCD_WORKER_SIZING_POLICY}
+      placementPolicy: ${VCD_WORKER_PLACEMENT_POLICY}
+      storageProfile: "${VCD_WORKER_STORAGE_PROFILE}"
+      diskSize: ${DISK_SIZE}
+      enableNvidiaGPU: false
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-1
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - "${SSH_PUBLIC_KEY}"
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${CLUSTER_NAME}-md-1
+  namespace: ${TARGET_NAMESPACE}
+spec:
+  clusterName: ${CLUSTER_NAME}
+  replicas: ${WORKER_MACHINE_COUNT}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: ${CLUSTER_NAME}-md-1
+          namespace: ${TARGET_NAMESPACE}
+      clusterName: ${CLUSTER_NAME}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VCDMachineTemplate
+        name: ${CLUSTER_NAME}-md-1
+        namespace: ${TARGET_NAMESPACE}
+      version: v1.22.9+vmware.1

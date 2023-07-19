@@ -352,3 +352,31 @@ data "vcd_catalog_item" "test-catalog-item-ds" {
   name    = vcd_catalog_item.test-catalog-item.name
 }
 `
+
+func TestAccVcdCatalogItemMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		catalog, err := adminOrg.GetCatalogByName(testConfig.VCD.Catalog.NsxtBackedCatalogName, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Catalog '%s': %s", testConfig.VCD.Catalog.NsxtBackedCatalogName, err)
+		}
+		catalogItem, err := catalog.GetCatalogItemById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Catalog Item '%s': %s", id, err)
+		}
+		return catalogItem, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdCatalogItemMetadata, "vcd_catalog_item.test-catalog-item",
+		testAccCheckVcdCatalogItemMetadataDatasource, "data.vcd_catalog_item.test-catalog-item-ds",
+		getObjectById, StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"OvfUrl":  testConfig.Ova.OvfUrl,
+		})
+}

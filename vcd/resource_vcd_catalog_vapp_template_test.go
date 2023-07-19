@@ -352,3 +352,31 @@ data "vcd_catalog_vapp_template" "test-catalog-vapp-template-ds" {
   name       = vcd_catalog_vapp_template.test-catalog-vapp-template.name
 }
 `
+
+func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		catalog, err := adminOrg.GetCatalogByName(testConfig.VCD.Catalog.NsxtBackedCatalogName, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Catalog '%s': %s", testConfig.VCD.Catalog.NsxtBackedCatalogName, err)
+		}
+		media, err := catalog.GetVAppTemplateById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve vApp Template '%s': %s", id, err)
+		}
+		return media, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdCatalogVAppTemplateMetadata, "vcd_catalog_vapp_template.test-catalog-vapp-template",
+		testAccCheckVcdCatalogVAppTemplateMetadataDatasource, "data.vcd_catalog_vapp_template.test-catalog-vapp-template-ds",
+		getObjectById, StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"OvfUrl":  testConfig.Ova.OvfUrl,
+		})
+}

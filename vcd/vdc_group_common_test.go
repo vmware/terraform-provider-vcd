@@ -4,8 +4,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"os"
+
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 // testAccVcdVdcGroupNew is a helper definition to setup VDC Group for testing integration with other
@@ -62,8 +63,9 @@ resource "vcd_vdc_group" "test1" {
   starting_vdc_id       = vcd_org_vdc.newVdc.0.id
   participating_vdc_ids = vcd_org_vdc.newVdc.*.id
   
-  dfw_enabled           = "{{.Dfw}}"
-  default_policy_status = {{if eq .DefaultPolicy "true" }}true{{else}}false{{end}}
+  dfw_enabled                  = "{{.Dfw}}"
+  default_policy_status        = {{if eq .DefaultPolicy "true" }}true{{else}}false{{end}}
+  remove_default_firewall_rule = {{if eq .RemoveDefaultFirewallRule "true" }}true{{else}}false{{end}}
 }
 `
 

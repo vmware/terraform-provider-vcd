@@ -17,6 +17,11 @@ func datasourceVcdNsxtManager() *schema.Resource {
 				Required:    true,
 				Description: "Name of NSX-T manager.",
 			},
+			"href": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "HREF of NSX-T manager.",
+			},
 		},
 	}
 }
@@ -45,6 +50,8 @@ func datasourceNsxtManagerRead(_ context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("could not construct URN from id '%s': %s", id, err)
 	}
+	dSet(d, "name", nsxtManagers[0].Name)
+	dSet(d, "href", nsxtManagers[0].HREF)
 	d.SetId(urn)
 
 	return nil

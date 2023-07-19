@@ -974,3 +974,197 @@ data "vcd_nsxt_alb_pool" "test" {
   name            = vcd_nsxt_alb_pool.test.name
 }
 `
+
+// TestAccVcdNsxtAlbVirtualServiceIPv6 tests that IPv6 Virtual Service IP can be set on VCD 10.4.0+
+func TestAccVcdNsxtAlbVirtualServiceIPv6(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
+	}
+
+	skipNoNsxtAlbConfiguration(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"IpSetName":          t.Name(),
+		"VirtualServiceName": t.Name(),
+		"ControllerName":     t.Name(),
+		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
+		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
+		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
+		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
+		// A Service Engine Group in Legacy Active Standby mode must be used
+		// so that Transparent mode can be tested
+		"ServiceEngineGroupName": testConfig.Nsxt.NsxtAlbServiceEngineGroup,
+		"ReservationModel":       "DEDICATED",
+		"Org":                    testConfig.VCD.Org,
+		"NsxtVdc":                testConfig.Nsxt.Vdc,
+		"EdgeGw":                 testConfig.Nsxt.EdgeGateway,
+		"IsActive":               "true",
+		"AliasPrivate":           t.Name() + "-cert",
+		"Certificate1Path":       testConfig.Certificates.Certificate1Path,
+		"CertPrivateKey1":        testConfig.Certificates.Certificate1PrivateKeyPath,
+		"CertPassPhrase1":        testConfig.Certificates.Certificate1Pass,
+		"Tags":                   "nsxt alb",
+	}
+	changeSupportedFeatureSetIfVersionIsLessThan37("LicenseType", "SupportedFeatureSet", params, false)
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdNsxtAlbVirtualServiceIpv6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
+			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
+			testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
+			testAccCheckVcdAlbVirtualServiceDestroy("vcd_nsxt_alb_virtual_service.test"),
+		),
+
+		Steps: []resource.TestStep{
+			{
+				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "description", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "application_profile_type", "HTTP"),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "pool_id", regexp.MustCompile(`^urn:vcloud:`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "service_engine_group_id", regexp.MustCompile(`^urn:vcloud:`)),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_virtual_service.test", "virtual_ip_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "ipv6_virtual_ip_address", "2002:0:0:1234:abcd:ffff:c0a8:103"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "service_port.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_virtual_service.test", "service_port.*", map[string]string{
+						"start_port": "80",
+						"end_port":   "81",
+						"type":       "TCP_PROXY",
+					}),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtAlbVirtualServiceIpv6 = `
+# Provider configuration
+
+resource "vcd_nsxt_alb_controller" "first" {
+  name         = "{{.ControllerName}}"
+  description  = "first alb controller"
+  url          = "{{.ControllerUrl}}"
+  username     = "{{.ControllerUsername}}"
+  password     = "{{.ControllerPassword}}"
+  {{.LicenseType}}
+}
+
+resource "vcd_nsxt_alb_cloud" "first" {
+  name        = "nsxt-cloud"
+  description = "first alb cloud"
+
+  controller_id       = vcd_nsxt_alb_controller.first.id
+  importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cld.id
+  network_pool_id     = data.vcd_nsxt_alb_importable_cloud.cld.network_pool_id
+}
+
+resource "vcd_nsxt_alb_service_engine_group" "first" {
+  name                                 = "first-se"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
+  importable_service_engine_group_name = "{{.ServiceEngineGroupName}}"
+  reservation_model                    = "{{.ReservationModel}}"
+  {{.SupportedFeatureSet}}
+}
+
+# Tenant Configuration
+
+data "vcd_nsxt_edgegateway" "existing" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name = "{{.EdgeGw}}"
+}
+
+resource "vcd_nsxt_edgegateway_dhcpv6" "testing-in-vdc-group" {
+  org             = "{{.Org}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  mode = "SLAAC"
+}
+
+resource "vcd_nsxt_alb_settings" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id                    = data.vcd_nsxt_edgegateway.existing.id
+  is_active                          = {{.IsActive}}
+  service_network_specification      = "10.10.255.225/27"
+  ipv6_service_network_specification = "2001:0db8:85a3:0000:0000:8a2e:0370:7334/120"
+
+  {{.SupportedFeatureSet}}
+
+  # This dependency is required to make sure that provider part of operations is done
+  depends_on = [vcd_nsxt_alb_service_engine_group.first]
+}
+
+# Local variable is used to avoid direct reference and cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
+# Even changing NSX-T ALB Controller name in UI, plan will cause to recreate all resources depending 
+# on vcd_nsxt_alb_importable_cloud data source if this indirect reference (via local) variable is not used.
+locals {
+  controller_id = vcd_nsxt_alb_controller.first.id
+}
+
+data "vcd_nsxt_alb_importable_cloud" "cld" {
+  name          = "{{.ImportableCloud}}"
+  controller_id = local.controller_id
+}
+
+resource "vcd_nsxt_alb_edgegateway_service_engine_group" "assignment" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
+  service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+}
+
+resource "vcd_nsxt_alb_pool" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name            = "{{.VirtualServiceName}}-pool"
+  edge_gateway_id = vcd_nsxt_alb_settings.test.edge_gateway_id
+  member {
+    enabled    = true
+    ip_address = "192.168.1.2"
+  }
+}
+
+resource "vcd_nsxt_alb_virtual_service" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  name                        = "{{.VirtualServiceName}}"
+  edge_gateway_id             = vcd_nsxt_alb_settings.test.edge_gateway_id
+
+  pool_id                  = vcd_nsxt_alb_pool.test.id
+  service_engine_group_id  = vcd_nsxt_alb_edgegateway_service_engine_group.assignment.service_engine_group_id
+  virtual_ip_address       = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  ipv6_virtual_ip_address  = "2002:0:0:1234:abcd:ffff:c0a8:103"
+  application_profile_type = "HTTP"
+  service_port {
+    start_port = 80
+    end_port   = 81
+    type       = "TCP_PROXY"
+  }
+}
+`

@@ -157,7 +157,7 @@ func resourceVcdNsxtDistributedFirewallCreateUpdate(ctx context.Context, d *sche
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Create/Update] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Create/Update] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))
@@ -184,7 +184,7 @@ func resourceVcdNsxtDistributedFirewallRead(_ context.Context, d *schema.Resourc
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Read] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Read] error retrieving Org: %s", err)
 	}
 
 	vdcGroupId := d.Id()
@@ -217,7 +217,7 @@ func resourceVcdNsxtDistributedFirewallDelete(_ context.Context, d *schema.Resou
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[Distributed Firewall Delete] error retriving Org: %s", err)
+		return diag.Errorf("[Distributed Firewall Delete] error retrieving Org: %s", err)
 	}
 
 	vdcGroup, err := org.GetVdcGroupById(d.Get("vdc_group_id").(string))

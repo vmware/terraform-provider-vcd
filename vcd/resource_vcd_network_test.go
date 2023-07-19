@@ -1365,6 +1365,34 @@ data "vcd_network_direct" "test-network-direct-ds" {
 }
 `
 
+func TestAccVcdDirectNetworkMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.VCD.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.VCD.Vdc, err)
+		}
+		network, err := vdc.GetOrgVdcNetworkById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Direct Network '%s': %s", id, err)
+		}
+		return network, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdDirectNetworkMetadata, "vcd_network_direct.test-network-direct",
+		testAccCheckVcdDirectNetworkMetadataDatasource, "data.vcd_network_direct.test-network-direct-ds",
+		getObjectById, StringMap{
+			"ExternalNetwork": testConfig.Networking.ExternalNetwork,
+			"Vdc":             testConfig.VCD.Vdc,
+		})
+}
+
 // TestAccVcdIsolatedNetworkMetadata tests metadata CRUD on a NSX-V isolated network
 func TestAccVcdIsolatedNetworkMetadata(t *testing.T) {
 	testMetadataEntryCRUD(t,
@@ -1392,6 +1420,33 @@ data "vcd_network_isolated" "test-network-isolated-ds" {
   vdc  = vcd_network_isolated.test-network-isolated.vdc
 }
 `
+
+func TestAccVcdIsolatedNetworkMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.VCD.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.VCD.Vdc, err)
+		}
+		network, err := vdc.GetOrgVdcNetworkById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Isolated Network '%s': %s", id, err)
+		}
+		return network, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdIsolatedNetworkMetadata, "vcd_network_isolated.test-network-isolated",
+		testAccCheckVcdIsolatedNetworkMetadataDatasource, "data.vcd_network_isolated.test-network-isolated-ds",
+		getObjectById, StringMap{
+			"Vdc": testConfig.VCD.Vdc,
+		})
+}
 
 // TestAccVcdRoutedNetworkMetadata tests metadata CRUD on a NSX-V routed network
 func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
@@ -1422,3 +1477,31 @@ data "vcd_network_routed" "test-network-routed-ds" {
   vdc  = vcd_network_routed.test-network-routed.vdc
 }
 `
+
+func TestAccVcdRoutedNetworkMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.VCD.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.VCD.Vdc, err)
+		}
+		network, err := vdc.GetOrgVdcNetworkById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Routed Network '%s': %s", id, err)
+		}
+		return network, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdRoutedNetworkMetadata, "vcd_network_routed.test-network-routed",
+		testAccCheckVcdRoutedNetworkMetadataDatasource, "data.vcd_network_routed.test-network-routed-ds",
+		getObjectById, StringMap{
+			"Vdc":         testConfig.VCD.Vdc,
+			"EdgeGateway": testConfig.Networking.EdgeGateway,
+		})
+}

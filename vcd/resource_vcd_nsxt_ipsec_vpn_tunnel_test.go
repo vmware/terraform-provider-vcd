@@ -402,6 +402,24 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 	configText6 := templateFill(testAccNsxtIpSecVpnTunnelProfileStep3DS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText6)
 
+	params["FuncName"] = t.Name() + "-step7"
+	configText7 := templateFill(testAccNsxtIpSecVpnTunnelProfileStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText7)
+
+	params["FuncName"] = t.Name() + "-step8"
+	params["ResourceName"] = "test-tunnel-1"
+	configText8 := templateFill(testAccNsxtIpSecVpnTunnelProfileStep4DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 8: %s", configText8)
+
+	params["FuncName"] = t.Name() + "-step9"
+	configText9 := templateFill(testAccNsxtIpSecVpnTunnelProfileStep5, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 9: %s", configText9)
+
+	params["FuncName"] = t.Name() + "-step10"
+	params["ResourceName"] = "test-tunnel-1"
+	configText10 := templateFill(testAccNsxtIpSecVpnTunnelProfileStep5DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 10: %s", configText10)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -463,13 +481,15 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 			},
 			{
 				Config: configText2,
+				Check:  resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
+			},
+			{
+				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
-
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description-updated"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "pre_shared_key", "test-psk"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_ip_address"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.#", "3"),
@@ -478,11 +498,11 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "4"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
-
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.30.0/29"),
 					// Security profile customization checks
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "CUSTOM"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "1"),
@@ -507,58 +527,8 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 				),
 			},
 			{
-				Config: configText3,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "pre_shared_key", "test-psk"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_ip_address"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.#", "3"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "10.10.10.0/24"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "CUSTOM"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_version", "IKE_FLEX"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.#", "1"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.*", "AES_128"),
-				),
-			},
-			{
 				Config: configText4,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
-
-					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "pre_shared_key", "test-psk"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_ip_address"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.#", "3"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "10.10.10.0/24"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "CUSTOM"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_version", "IKE_FLEX"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.#", "1"),
-					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.*", "AES_128"),
-				),
+				Check:  resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
 			},
 			{
 				Config: configText5,
@@ -579,15 +549,20 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "DEFAULT"),
-					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_version", "IKE_FLEX"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.*", "AES_128"),
 				),
 			},
 			{
 				Config: configText6,
+				Check:  resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
+			},
+			{
+				Config: configText7,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
-
 					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
@@ -607,6 +582,56 @@ func TestAccVcdNsxtIpSecVpnTunnelCustomProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "DEFAULT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "0"),
 				),
+			},
+			{
+				Config: configText8,
+				Check:  resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
+			},
+			{
+				Config: configText9,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "name", "test-tunnel-1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "description", "test-tunnel-description"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "pre_shared_key", "test-psk"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_ip_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.#", "3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "10.10.10.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "30.30.30.0/28"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "local_networks.*", "40.40.40.1/32"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_ip_address", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_id", "1.2.3.4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.#", "3"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.1.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.10.0/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "remote_networks.*", "192.168.20.0/28"),
+					// Security profile customization checks
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile", "CUSTOM"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_version", "IKE_V2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_encryption_algorithms.*", "AES_128"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_digest_algorithms.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_digest_algorithms.*", "SHA2_256"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_dh_groups.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_dh_groups.*", "GROUP14"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.ike_sa_lifetime", "86400"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_pfs_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_df_policy", "COPY"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_encryption_algorithms.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_encryption_algorithms.*", "AES_256"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_digest_algorithms.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_digest_algorithms.*", "SHA2_256"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_dh_groups.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_dh_groups.*", "GROUP14"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.tunnel_sa_lifetime", "3600"),
+					resource.TestCheckResourceAttr("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "security_profile_customization.0.dpd_probe_internal", "30"),
+				),
+			},
+			{
+				Config: configText10,
+				Check:  resourceFieldsEqual("vcd_nsxt_ipsec_vpn_tunnel.tunnel1", "data.vcd_nsxt_ipsec_vpn_tunnel.tunnel1", ignoreDataSourceFields),
 			},
 		},
 	})
@@ -661,6 +686,46 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
   name        = "test-tunnel-1"
+  description = "test-tunnel-description-updated"
+  
+  pre_shared_key    = "test-psk"
+  # Primary IP address of Edge Gateway
+  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address as there is nothing else to peer to
+  remote_ip_address = "1.2.3.4"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28", "192.168.30.0/29"]
+
+  security_profile_customization {
+    ike_version               = "IKE_V2"
+    ike_encryption_algorithms = ["AES_128"]
+    # ike_encryption_algorithms = ["AES_128", "AES_256"]
+    ike_digest_algorithms     = ["SHA2_256"]
+    ike_dh_groups             = ["GROUP14"]
+    ike_sa_lifetime           = 86400
+    
+	tunnel_pfs_enabled = true
+	tunnel_df_policy = "COPY"
+    tunnel_encryption_algorithms = ["AES_256"]
+    tunnel_digest_algorithms     = ["SHA2_256"]
+    tunnel_dh_groups             = ["GROUP14"]
+    tunnel_sa_lifetime           = 3600
+    
+    dpd_probe_internal = "30"
+  }
+}
+`
+
+const testAccNsxtIpSecVpnTunnelProfileStep2DS = testAccNsxtIpSecVpnTunnelProfileStep2 + testAccNsxtIpSecVpnTunnelDS
+
+const testAccNsxtIpSecVpnTunnelProfileStep3 = testAccNsxtIpSetPrereqs + `
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
+
+  name        = "test-tunnel-1"
   description = "test-tunnel-description"
   
   pre_shared_key    = "test-psk"
@@ -690,9 +755,9 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 }
 `
 
-const testAccNsxtIpSecVpnTunnelProfileStep2DS = testAccNsxtIpSecVpnTunnelProfileStep2 + testAccNsxtIpSecVpnTunnelDS
+const testAccNsxtIpSecVpnTunnelProfileStep3DS = testAccNsxtIpSecVpnTunnelProfileStep3 + testAccNsxtIpSecVpnTunnelDS
 
-const testAccNsxtIpSecVpnTunnelProfileStep3 = testAccNsxtIpSetPrereqs + `
+const testAccNsxtIpSecVpnTunnelProfileStep4 = testAccNsxtIpSetPrereqs + `
 resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
@@ -713,7 +778,47 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
 }
 `
 
-const testAccNsxtIpSecVpnTunnelProfileStep3DS = testAccNsxtIpSecVpnTunnelProfileStep3 + testAccNsxtIpSecVpnTunnelDS
+const testAccNsxtIpSecVpnTunnelProfileStep4DS = testAccNsxtIpSecVpnTunnelProfileStep4 + testAccNsxtIpSecVpnTunnelDS
+
+const testAccNsxtIpSecVpnTunnelProfileStep5 = testAccNsxtIpSetPrereqs + `
+resource "vcd_nsxt_ipsec_vpn_tunnel" "tunnel1" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
+
+  name        = "test-tunnel-1"
+  description = "test-tunnel-description"
+  
+  pre_shared_key    = "test-psk"
+  # Primary IP address of Edge Gateway
+  local_ip_address  = tolist(data.vcd_nsxt_edgegateway.existing_gw.subnet)[0].primary_ip
+  local_networks    = ["10.10.10.0/24", "30.30.30.0/28", "40.40.40.1/32"]
+  # That is a fake remote IP address as there is nothing else to peer to
+  remote_ip_address = "1.2.3.4"
+  remote_networks   = ["192.168.1.0/24", "192.168.10.0/24", "192.168.20.0/28"]
+
+  security_profile_customization {
+    ike_version               = "IKE_V2"
+    ike_encryption_algorithms = ["AES_128"]
+    # ike_encryption_algorithms = ["AES_128", "AES_256"]
+    ike_digest_algorithms     = ["SHA2_256"]
+    ike_dh_groups             = ["GROUP14"]
+    ike_sa_lifetime           = 86400
+    
+	tunnel_pfs_enabled = true
+	tunnel_df_policy = "COPY"
+    tunnel_encryption_algorithms = ["AES_256"]
+    tunnel_digest_algorithms     = ["SHA2_256"]
+    tunnel_dh_groups             = ["GROUP14"]
+    tunnel_sa_lifetime           = 3600
+    
+    dpd_probe_internal = "30"
+  }
+}
+`
+
+const testAccNsxtIpSecVpnTunnelProfileStep5DS = testAccNsxtIpSecVpnTunnelProfileStep5 + testAccNsxtIpSecVpnTunnelDS
 
 func testAccCheckNsxtIpSecVpnTunnelDestroy(ipSecVpnTunnelIdentifier string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

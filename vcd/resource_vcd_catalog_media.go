@@ -87,7 +87,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog Media", false),
+			"metadata_entry": metadataEntryResourceSchema("Catalog Media"),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -286,10 +286,10 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
-	err = updateMetadataInState(d, media)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
-		return diag.FromErr(err)
+		return diagErr
 	}
 	return nil
 }

@@ -180,6 +180,7 @@ The following arguments are supported:
   `vcd_nsxt_alb_edgegateway_service_engine_group` resource or data source
 * `application_profile_type` - (Required) One of `HTTP`, `HTTPS`, `L4`, `L4_TLS`. 
 * `virtual_ip_address` - (Required) IP Address for the service to listen on.
+* `ipv6_virtual_ip_address` - (Optional; *v3.10+*, *VCD 10.4.0+*) IPv6 Address for the service to listen on. 
 * `ca_certificate_id` - (Optional) ID reference of CA certificate. Required when `application_profile_type` is `HTTPS`
   or `L4_TLS`
 * `service_port` - (Required) A block to define port, port range and traffic type. Multiple can be used. See

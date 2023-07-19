@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || ALL
 
 package vcd
 
@@ -65,6 +65,7 @@ type TestConfig struct {
 		Password                string `json:"password"`
 		Token                   string `json:"token,omitempty"`
 		ApiToken                string `json:"api_token,omitempty"`
+		ApiTokenFile            string `json:"api_token_file,omitempty"`
 		ServiceAccountTokenFile string `json:"service_account_token_file,omitempty"`
 
 		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
@@ -158,6 +159,10 @@ type TestConfig struct {
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
 	} `json:"nsxt"`
+	VSphere struct {
+		ResourcePoolForVcd1 string `json:"resourcePoolForVcd1,omitempty"`
+		ResourcePoolForVcd2 string `json:"resourcePoolForVcd2,omitempty"`
+	} `json:"vsphere,omitempty"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
 		LogFileName     string `json:"logFileName,omitempty"`
@@ -320,6 +325,7 @@ provider "vcd" {
   #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
+  {{.IgnoreMetadataBlock}}
 }
 `
 )
@@ -440,6 +446,9 @@ func templateFill(tmpl string, data StringMap) string {
 			data["LoggingFile"] = testConfig.Logging.LogFileName
 		} else {
 			data["LoggingFile"] = util.ApiLogFileName
+		}
+		if _, found = data["IgnoreMetadataBlock"]; !found {
+			data["IgnoreMetadataBlock"] = ""
 		}
 
 		// Pick correct auth_type
@@ -755,7 +764,7 @@ func getVcdVersion(config TestConfig) (string, error) {
 	if vcdClient == nil || err != nil {
 		return "", err
 	}
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken, config.Provider.ServiceAccountTokenFile)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken, config.Provider.ApiTokenFile, config.Provider.ServiceAccountTokenFile)
 	if err != nil {
 		return "", err
 	}
@@ -874,7 +883,7 @@ func TestMain(m *testing.M) {
 		fmt.Printf("error getting a govcd client: %s\n", err)
 		exitCode = 1
 	} else {
-		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ServiceAccountTokenFile)
+		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ApiTokenFile, testConfig.Provider.ServiceAccountTokenFile)
 		if err != nil {
 			fmt.Printf("error authenticating provider: %s\n", err)
 			exitCode = 1
@@ -1552,9 +1561,12 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 	}
 }
 
-func skipTestForApiToken(t *testing.T) {
+func skipTestForServiceAccountAndApiToken(t *testing.T) {
 	if testConfig.Provider.ApiToken != "" {
 		t.Skipf("skipping test %s because API token does not support this functionality", t.Name())
+	}
+	if testConfig.Provider.ServiceAccountTokenFile != "" {
+		t.Skipf("skipping test %s because Service Accounts do not support this functionality", t.Name())
 	}
 }
 

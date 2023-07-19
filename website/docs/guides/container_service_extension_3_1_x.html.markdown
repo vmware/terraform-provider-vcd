@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: Container Service Extension v3.1.x"
-sidebar_current: "docs-vcd-guides-cse"
+sidebar_current: "docs-vcd-guides-cse-3-1-x"
 description: |-
   Provides guidance on configuring VCD to be able to install Container Service Extension v3.1.x.
 ---

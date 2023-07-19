@@ -14,11 +14,30 @@ Provides a VMware Cloud Director External Network resource (version 2). New vers
 uses new VCD API and is capable of creating NSX-T backed external networks as well as port group
 backed ones.
 
--> **Note:** This resource uses new VMware Cloud Director
-[OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks (NSX-T *3.0+* requires VCD *10.1.1+*)
+-> This resource manages NSX-T **External Networks**, NSX-V **External Networks**, and **NSX-T
+Provider Gateways**
 
-Supported in provider *v3.0+*.
+This resource supports **IP Spaces** - read [IP Spaces guide
+page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/ip_spaces) for more
+information.
+
+## Example Usage (NSX-T Tier 0 Router backed External Network backed by IP Spaces)
+
+```hcl
+resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
+  name        = "nsxt-external-network"
+  description = "IP Space backed"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces = true
+  # optional argument to dedicate network to a particular Org
+  dedicated_org_id = data.vcd_org.org1.id
+}
+```
 
 ## Example Usage (NSX-T Tier 0 Router backed External Network)
 
@@ -70,7 +89,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 ```
 
-## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network [only VCD 10.3+])
+## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network)
 
 -> NSX-T **Segment backed External Network** is similar to **Imported Org VDC network**. The difference is that
 **External Network can consume one NSX-T Segment and then many VDCs can use it by using NSX-T Direct Network**, 
@@ -169,7 +188,11 @@ The following arguments are supported:
 
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) Network friendly description
-* `ip_scope` - (Required) One or more IP scopes for the network. See [IP Scope](#ipscope) below for details.
+* `use_ip_spaces` - (Optional; *v3.10+*; *VCD 10.4.1+*) Defines if the network uses IP Spaces. Do
+  not specify `ip_scope` when using IP Spaces. (default `false`)
+* `dedicated_org_id` - (Optional; *v3.10+*; *VCD 10.4.1+*) An Org ID that this network should be
+  dedicated to. Only applicable when `use_ip_spaces=true`
+* `ip_scope` - (Optional) One or more IP scopes for the network. See [IP Scope](#ipscope) below for details.
 * `vsphere_network` - (Optional) One or more blocks of [vSphere Network](#vspherenetwork)..
 * `nsxt_network` - (Optional) NSX-T network definition. See [NSX-T Network](#nsxtnetwork) below for details.
 
