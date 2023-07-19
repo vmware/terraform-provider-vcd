@@ -104,7 +104,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
     default_storage_class_storage_profile       = var.default_storage_class_storage_profile
     default_storage_class_delete_reclaim_policy = var.default_storage_class_delete_reclaim_policy
 
-    # Insert the rendered CAPVCD YAML here. Notice that we need to escape special characters.
+    # Insert the rendered CAPVCD YAML here. Notice that we need to encode it to JSON.
     capi_yaml = jsonencode(local.capvcd_yaml_rendered)
 
     delete                = false # Make this true to delete the cluster
