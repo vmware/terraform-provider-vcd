@@ -327,10 +327,10 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
 	// which should not be affected by it.
 	vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
+	defer vcdMutexKV.kvUnlock("metadata")
 	ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
 	deprecatedMetadata, err := receiverObject.GetMetadata()
 	vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
-	vcdMutexKV.kvUnlock("metadata") // Unlock before any error happens
 	if err != nil {
 		return diag.Errorf("error getting metadata to save in state: %s", err)
 	}
