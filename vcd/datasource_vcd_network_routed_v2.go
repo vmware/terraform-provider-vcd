@@ -105,7 +105,7 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 			},
 			"guest_vlan_allowed": {
 				Type:        schema.TypeBool,
-				Optional:    true,
+				Computed:    true,
 				Description: "True if Network allows guest VLAN tagging",
 			},
 			"metadata": {
