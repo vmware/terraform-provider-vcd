@@ -182,11 +182,6 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 		dSet(d, "vdc_id", "urn:vcloud:vdc:"+extractUuid(vappTemplateRec.Vdc))
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
-	if diagErr != nil {
-		return diagErr
-	}
-
 	var vmNames []string
 	if vAppTemplate.VAppTemplate.Children != nil {
 		for _, vm := range vAppTemplate.VAppTemplate.Children.VM {
@@ -199,6 +194,12 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	}
 
 	d.SetId(vAppTemplate.VAppTemplate.ID)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	return nil
 }
 

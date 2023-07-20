@@ -159,7 +159,8 @@
     "//": "Already uploaded media name",
     "mediaName" : "linuxOS",
     "//": "'mediaName' media is stored in NSX-V VDC backed storage profile while 'nsxtBackedMediaName' is stored in NSX-T VDC Backed storage profile",
-    "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog"
+    "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog",
+    "uiPluginPath": "../test-resources/ui_plugin.zip"
   },
   "certificates": {
     "//": "relative path to pem file",

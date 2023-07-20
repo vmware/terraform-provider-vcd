@@ -410,11 +410,13 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
   it is a dot (`.`).
 
-* `ignore_metadata_changes` - (Optional; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries from being changed by this Terraform provider
+* `ignore_metadata_changes` - (Optional; Experimental; *v3.10+*) Use one or more of these blocks to ignore specific metadata entries from being changed by this Terraform provider
   after creation or when they were created outside Terraform.
   See ["Ignore Metadata Changes"](#ignore-metadata-changes) for more details.
 
 ## Ignore metadata changes
+
+=> This is an **EXPERIMENTAL FEATURE** that may change in a future release.
 
 One or more `ignore_metadata_changes` blocks can be optionally set in the provider configuration, which will allow to ignore specific `metadata_entry`
 items during all Terraform operations. This is useful, for example, to avoid removing metadata entries that were created

@@ -720,15 +720,22 @@ func deleteVapp(vdc *govcd.Vdc, vappRef *types.ResourceReference) error {
 		return fmt.Errorf("error retrieving vApp %s: %s", vappRef.Name, err)
 	}
 	fmt.Printf("\t\t REMOVING vApp %s/%s\n", vdc.Vdc.Name, vapp.VApp.Name)
-	task, err := vapp.Undeploy()
+	vappStatus, err := vapp.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error initiating vApp '%s' undeploy: %s", vappRef.Name, err)
+		return fmt.Errorf("error reading vApp status '%s': %s", vappRef.Name, err)
 	}
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error undeploying vApp '%s': %s", vappRef.Name, err)
+	if vappStatus != "POWERED_OFF" {
+		task, err := vapp.Undeploy()
+		if err != nil {
+			return fmt.Errorf("error initiating vApp '%s' undeploy: %s", vappRef.Name, err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error undeploying vApp '%s': %s", vappRef.Name, err)
+		}
 	}
-	task, err = vapp.RemoveAllNetworks()
+
+	task, err := vapp.RemoveAllNetworks()
 	if err != nil {
 		return fmt.Errorf("error initiating vApp '%s' network removal: %s", vappRef.Name, err)
 	}

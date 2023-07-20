@@ -35,7 +35,7 @@ func TestAccVcdUiPlugin(t *testing.T) {
 		"Org1":           testConfig.VCD.Org,
 		"Org2":           testConfig.Provider.SysOrg,
 		"Enabled":        "true",
-		"PluginPath":     "../test-resources/ui_plugin.zip",
+		"PluginPath":     testConfig.Media.UiPluginPath,
 		"TenantIds":      "tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]",
 		"ProviderScoped": " ",
 		"TenantScoped":   " ",
