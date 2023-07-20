@@ -311,12 +311,6 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 		dSet(d, "password", "")
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
-		return diagErr
-	}
-
 	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog)
 	if err != nil {
 		return diag.FromErr(err)
@@ -324,6 +318,12 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
+	if diagErr != nil {
+		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
+		return diagErr
+	}
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
 	return nil
 }

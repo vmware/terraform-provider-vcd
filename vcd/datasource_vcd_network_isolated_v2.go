@@ -2,9 +2,8 @@ package vcd
 
 import (
 	"context"
-	"log"
-
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -200,6 +199,8 @@ func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceDat
 		return diag.Errorf("[isolated network read v2] error setting Org VDC network data: %s", err)
 	}
 
+	d.SetId(network.OpenApiOrgVdcNetwork.ID)
+
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
 		diagErr := updateMetadataInState(d, vcdClient, "vcd_network_isolated_v2", network)
@@ -208,8 +209,6 @@ func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceDat
 			return diagErr
 		}
 	}
-
-	d.SetId(network.OpenApiOrgVdcNetwork.ID)
 
 	return nil
 }

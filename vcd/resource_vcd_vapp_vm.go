@@ -1947,11 +1947,6 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
-	if diagErr != nil {
-		return diagErr
-	}
-
 	if vm.VM.StorageProfile != nil {
 		dSet(d, "storage_profile", vm.VM.StorageProfile.Name)
 	}
@@ -2013,6 +2008,11 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	}
 	dSet(d, "status", vm.VM.Status)
 	dSet(d, "status_text", statusText)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
+	if diagErr != nil {
+		return diagErr
+	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
