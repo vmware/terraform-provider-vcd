@@ -54,9 +54,12 @@
   by one ([#1076](https://github.com/vmware/terraform-provider-vcd/pull/1076))
 * **New Resource:** `vcd_cloned_vapp` to create a vApp from either a vApp template or another vApp ([#1081](https://github.com/vmware/terraform-provider-vcd/pull/1081))
 
-### IMPROVEMENTS
+### EXPERIMENTAL
+(_Experimental features and improvements may change in future releases, until declared stable._)
 * Add `ignore_metadata_changes` argument to the Provider configuration to be able to specify metadata entries that should **not**
   be managed by Terraform when using `metadata_entry` configuration blocks ([#1057](https://github.com/vmware/terraform-provider-vcd/pull/1057), [#1089](https://github.com/vmware/terraform-provider-vcd/pull/1089))
+
+### IMPROVEMENTS
 * The guide to install the Container Service Extension v4.0 now additionally explains how to install the
   Kubernetes Container Clusters UI Plugin ([#1059](https://github.com/vmware/terraform-provider-vcd/pull/1059))
 * `vcd_external_network_v2` resource and data source support IP Spaces on VCD 10.4.1+ by adding
