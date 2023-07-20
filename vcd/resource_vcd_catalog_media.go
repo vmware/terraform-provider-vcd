@@ -286,12 +286,12 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
-	if diagErr != nil {
+	diagnostics := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
+	if diagnostics != nil && diagnostics.HasError() {
 		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
-		return diagErr
+		return diagnostics
 	}
-	return nil
+	return diagnostics
 }
 
 func resourceVcdMediaDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

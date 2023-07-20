@@ -342,14 +342,14 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	diagErr := updateMetadataInState(d, meta.(*VCDClient), "vcd_network_isolated", network)
-	if diagErr != nil {
+	diagnostics := updateMetadataInState(d, meta.(*VCDClient), "vcd_network_isolated", network)
+	if diagnostics != nil && diagnostics.HasError() {
 		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
-		return diagErr
+		return diagnostics
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
-	return nil
+	return diagnostics
 }
 
 func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {

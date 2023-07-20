@@ -471,10 +471,10 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
-	if diagErr != nil {
+	diagnostics := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
+	if diagnostics != nil && diagnostics.HasError() {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
-		return diagErr
+		return diagnostics
 	}
 
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
@@ -510,7 +510,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
-	return nil
+	return diagnostics
 }
 
 // getComputeStorageProfiles constructs specific struct to be saved in Terraform state file.

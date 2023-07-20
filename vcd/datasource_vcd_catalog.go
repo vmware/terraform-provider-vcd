@@ -248,9 +248,9 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "publish_subscription_url", subscriptionUrl)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", catalog)
-	if diagErr != nil {
-		return diagErr
+	diagnostics := updateMetadataInState(d, vcdClient, "vcd_catalog", catalog)
+	if diagnostics != nil && diagnostics.HasError() {
+		return diagnostics
 	}
 
 	orgId := ""
@@ -262,5 +262,5 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(err)
 	}
 
-	return nil
+	return diagnostics
 }

@@ -394,14 +394,14 @@ func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed", network)
-	if diagErr != nil {
+	diagnostics := updateMetadataInState(d, vcdClient, "vcd_network_routed", network)
+	if diagnostics != nil && diagnostics.HasError() {
 		log.Printf("[DEBUG] Unable to set routed network metadata: %s", err)
-		return diagErr
+		return diagnostics
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
-	return nil
+	return diagnostics
 }
 
 func getStaticIpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
