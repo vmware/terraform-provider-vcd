@@ -96,6 +96,7 @@ automatically if it is not set ([#1082](https://github.com/vmware/terraform-prov
 * Bump `terraform-plugin-sdk` to v2.27.0 ([#1079](https://github.com/vmware/terraform-provider-vcd/pull/1079))
 * Resource `vcd_nsxt_edgegateway_bgp_configuration` will send existing `GracefulRestart` to avoid
   API validation errors in VCD 10.5.0+ ([#1083](https://github.com/vmware/terraform-provider-vcd/pull/1083))
+* [`go-vcloud-director`](https://github.com/vmware/go-vcloud-director), the SDK this provider uses for low level access to the VCD, released with version v2.21.0
 
 ## 3.9.0 (April 27, 2023)
 
