@@ -253,16 +253,15 @@ func datasourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData,
 	}
 
 	// Metadata is not supported when the network is in a VDC Group
-	var diagnostics diag.Diagnostics
 	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		diagnostics = updateMetadataInState(d, vcdClient, "vcd_network_routed_v2", network)
-		if diagnostics != nil && diagnostics.HasError() {
+		diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed_v2", network)
+		if diagErr != nil {
 			log.Printf("[DEBUG] Unable to set routed network v2 metadata: %s", err)
-			return diagnostics
+			return diagErr
 		}
 	}
 
 	d.SetId(network.OpenApiOrgVdcNetwork.ID)
 
-	return diagnostics
+	return nil
 }

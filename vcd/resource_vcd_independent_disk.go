@@ -528,12 +528,12 @@ func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk,
 		return diag.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	diagnostics := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
-	if diagnostics != nil && diagnostics.HasError() {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Independent disk metadata")
-		return diagnostics
+		return diagErr
 	}
-	return diagnostics
+	return nil
 }
 
 func resourceVcdIndependentDiskDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

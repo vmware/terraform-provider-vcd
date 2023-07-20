@@ -182,9 +182,9 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 		dSet(d, "vdc_id", "urn:vcloud:vdc:"+extractUuid(vappTemplateRec.Vdc))
 	}
 
-	diagnostics := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
-	if diagnostics != nil && diagnostics.HasError() {
-		return diagnostics
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	var vmNames []string
@@ -199,7 +199,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	}
 
 	d.SetId(vAppTemplate.VAppTemplate.ID)
-	return diagnostics
+	return nil
 }
 
 func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
