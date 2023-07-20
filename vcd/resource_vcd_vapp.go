@@ -314,13 +314,12 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "status_text", statusText)
 	dSet(d, "href", vapp.VApp.HREF)
 	dSet(d, "description", vapp.VApp.Description)
+	d.SetId(vapp.VApp.ID)
 
 	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", vapp)
 	if diagErr != nil {
 		return diagErr
 	}
-
-	d.SetId(vapp.VApp.ID)
 
 	return nil
 }

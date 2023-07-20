@@ -146,16 +146,17 @@ func TestAccVcdCatalogRename(t *testing.T) {
 	vmName := "test-vm"
 
 	var params = StringMap{
-		"Org":              orgName,
-		"Vdc":              vdcName,
-		"CatalogName":      catalogName,
-		"CatalogMediaName": catalogMediaName,
-		"VappTemplateName": vappTemplateName,
-		"Description":      t.Name(),
-		"OvaPath":          testConfig.Ova.OvaPath,
-		"MediaPath":        testConfig.Media.MediaPath,
-		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"VmName":           vmName,
+		"Org":                orgName,
+		"Vdc":                vdcName,
+		"CatalogName":        catalogName,
+		"NsxtStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
+		"CatalogMediaName":   catalogMediaName,
+		"VappTemplateName":   vappTemplateName,
+		"Description":        t.Name(),
+		"OvaPath":            testConfig.Ova.OvaPath,
+		"MediaPath":          testConfig.Media.MediaPath,
+		"UploadPieceSize":    testConfig.Media.UploadPieceSize,
+		"VmName":             vmName,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -245,11 +246,18 @@ func TestAccVcdCatalogRename(t *testing.T) {
 }
 
 const testAccCheckVcdCatalogRename = `
+data "vcd_storage_profile" "sp1" {
+  org  = "{{.Org}}" 
+  vdc  = "{{.Vdc}}"
+  name = "{{.NsxtStorageProfile}}"
+}
+
 resource "vcd_catalog" "test-catalog" {
   org = "{{.Org}}" 
   
-  name        = "{{.CatalogName}}"
-  description = "{{.Description}}"
+  name               = "{{.CatalogName}}"
+  description        = "{{.Description}}"
+  storage_profile_id = data.vcd_storage_profile.sp1.id
 
   delete_force     = "true"
   delete_recursive = "true"

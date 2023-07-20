@@ -144,6 +144,7 @@ resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
 `
 
 const testAccVcdNsxtEdgegatewayDhcpForwardingStep3 = testAccVcdNsxtEdgegatewayDhcpForwardingData + `
+# skip-binary-test: DHCP is disabled but still has dhcp_servers, so it will ask for updates + warning
 resource "vcd_nsxt_edgegateway_dhcp_forwarding" "DhcpForwarding" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   enabled      = false
