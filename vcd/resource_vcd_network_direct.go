@@ -203,16 +203,14 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 	dSet(d, "external_network_dns_suffix", currentNetwork.DnsSuffix)
 	// Fixes issue #450
 	dSet(d, "external_network_gateway", currentNetwork.DefaultGateway)
-
 	dSet(d, "description", network.OrgVDCNetwork.Description)
+	d.SetId(network.OrgVDCNetwork.ID)
 
 	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_direct", network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set direct network metadata: %s", err)
 		return diagErr
 	}
-
-	d.SetId(network.OrgVDCNetwork.ID)
 
 	return nil
 }
