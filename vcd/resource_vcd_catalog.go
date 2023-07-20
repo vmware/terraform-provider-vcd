@@ -317,7 +317,7 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 		return diagErr
 	}
 
-	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_catalog")
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -490,7 +490,7 @@ func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
+func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name, govcd.TenantContext{OrgName: orgName, OrgId: orgId})
 	if err != nil {
