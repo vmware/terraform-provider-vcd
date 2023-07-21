@@ -23,8 +23,6 @@ import (
 
 	"github.com/kr/pretty"
 
-	"github.com/hashicorp/go-version"
-
 	semver "github.com/hashicorp/go-version"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -1564,7 +1562,7 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 		t.Fatalf("Could not determine VCD version")
 	}
 
-	expectedVersion, err := version.NewVersion(exactSkipVersion)
+	expectedVersion, err := semver.NewVersion(exactSkipVersion)
 	if err != nil {
 		t.Fatalf("could not process versions")
 	}
