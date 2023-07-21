@@ -15,11 +15,7 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can create Imported networks")
-	}
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{

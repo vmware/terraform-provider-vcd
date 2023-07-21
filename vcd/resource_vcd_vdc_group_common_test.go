@@ -607,11 +607,7 @@ func TestAccVcdNsxVdcGroupResources(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
-	}
+	skipIfNotSysAdmin(t)
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||
 		testConfig.VCD.NsxtProviderVdc.NetworkPool == "" || testConfig.VCD.ProviderVdc.StorageProfile == "" {

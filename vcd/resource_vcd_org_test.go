@@ -66,8 +66,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	createEnabledOrg := false
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("= 37.2") {
+	if checkVersion(testConfig.Provider.ApiVersion, "= 37.2") {
 		// TODO revisit once bug is fixed in VCD
 		fmt.Println("VCD 10.4.2 has a bug that prevents creating a disabled Org")
 		createEnabledOrg = true

@@ -36,16 +36,16 @@ func TestAccVcdOpenApiDhcpNsxtRouted(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(true)
 	vcdVersionIsLowerThan1031 := func() (bool, error) {
-		if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36.1") {
+		if checkVersion(testConfig.Provider.ApiVersion, ">= 36.1") {
+
 			return false, nil
 		}
 		return true, nil
 	}
 
 	// This case is specific for VCD 10.3.1 onwards since dns servers are not present in previous versions
-	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs(">= 36.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, ">= 36.1") {
 		params["SkipTest"] = "# skip-binary-test: VCD 10.3.1 onwards dns servers are not present in previous versions"
 	}
 	params["FuncName"] = t.Name() + "-step2"
@@ -358,8 +358,7 @@ func TestAccVcdOpenApiDhcpNsxtIsolated(t *testing.T) {
 	skipIfNotSysAdmin(t) // creates its own VDC
 
 	// Requires VCD 10.3.1+
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil || vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 36.1") {
 		t.Skipf("NSX-T Isolated network DHCP requires VCD 10.3.1+ (API v36.1+)")
 	}
 
@@ -763,12 +762,7 @@ func TestAccVcdOpenApiDhcpNsxtRoutedRelay(t *testing.T) {
 	preTestChecks(t)
 
 	// Requires VCD 10.3.1+
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
-		t.Skipf(t.Name() + " requires a connection to set the tests")
-	}
-
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 36.1") {
 		t.Skipf("NSX-T Isolated network DHCP requires VCD 10.3.1+ (API v36.1+)")
 	}
 

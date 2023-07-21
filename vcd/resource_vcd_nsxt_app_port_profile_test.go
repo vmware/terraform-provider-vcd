@@ -131,10 +131,7 @@ func TestAccVcdNsxtAppPortProfileProvider(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can create Provider scoped Application Port Profiles")
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Org":         "System",
@@ -391,10 +388,7 @@ func TestAccVcdNsxtAppPortProfileProviderContext(t *testing.T) {
 		return
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can create Provider scoped Application Port Profiles")
-	}
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"Org":         "System",

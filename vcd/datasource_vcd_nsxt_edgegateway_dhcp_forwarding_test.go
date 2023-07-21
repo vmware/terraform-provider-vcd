@@ -14,11 +14,7 @@ func TestAccVcdDataSourceNsxtEdgeDhcpForwarding(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
-		t.Skip(acceptanceTestsSkipped)
-	}
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 36.1") {
 		t.Skipf("This test tests VCD 10.3.1+ (API V36.1+) features. Skipping.")
 	}
 
