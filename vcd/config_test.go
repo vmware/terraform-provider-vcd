@@ -310,7 +310,8 @@ const (
 # comment {{.Comment}}
 # date {{.Timestamp}}
 # file {{.CallerFileName}}
-#
+# VCD version {{.VcdVersion}}
+# API version {{.ApiVersion}}
 
 provider "vcd" {
   user                 = "{{.PrUser}}"
@@ -325,7 +326,6 @@ provider "vcd" {
   vdc                  = "{{.PrVdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
-  #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
   {{.IgnoreMetadataBlock}}
@@ -479,6 +479,8 @@ func templateFill(tmpl string, data StringMap) string {
 		data["CallerFileName"] = callerFileName
 	}
 	data["Timestamp"] = time.Now().Format("2006-01-02 15:04")
+	data["VcdVersion"] = testConfig.Provider.VcdVersion
+	data["ApiVersion"] = testConfig.Provider.ApiVersion
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
 	// error message in case of failure
