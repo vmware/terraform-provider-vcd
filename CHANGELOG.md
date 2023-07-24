@@ -1,6 +1,6 @@
-## 3.10.0 (Unreleased)
+## 3.11.0 (Unreleased)
 
-Changes in progress for v3.10.0 are available at [.changes/v3.10.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.10.0) until the release.
+Changes in progress for v3.11.0 are available at [.changes/v3.11.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.11.0) until the release.
 
 ## 3.10.0 (July 20, 2023)
 
