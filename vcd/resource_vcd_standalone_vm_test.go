@@ -244,11 +244,6 @@ output "disk_bus_number" {
 output "disk_unit_number" {
   value = tolist(vcd_vm.{{.VmName}}.disk)[0].unit_number
 }
-output "vm" {
-  value = vcd_vm.{{.VmName}}
-  
-  sensitive = true
-}
 `
 
 const testAccCheckVcdStandaloneEmptyVmNetworkShared = `

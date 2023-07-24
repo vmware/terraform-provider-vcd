@@ -64,6 +64,15 @@ func TestAccVcdOrgFull(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
+
+	createEnabledOrg := false
+	vcdClient := createTemporaryVCDConnection(false)
+	if vcdClient.Client.APIVCDMaxVersionIs("= 37.2") {
+		// TODO revisit once bug is fixed in VCD
+		fmt.Println("VCD 10.4.2 has a bug that prevents creating a disabled Org")
+		createEnabledOrg = true
+	}
+
 	type testOrgData struct {
 		name                         string
 		enabled                      bool
@@ -101,7 +110,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		},
 		{
 			name:                         "org2",
-			enabled:                      false,
+			enabled:                      createEnabledOrg,
 			canPublishCatalogs:           true,
 			canPublishExternalCatalogs:   true,
 			canSubscribeExternalCatalogs: true,
@@ -135,7 +144,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		},
 		{
 			name:                         "org4",
-			enabled:                      false,
+			enabled:                      createEnabledOrg,
 			canPublishCatalogs:           false,
 			canPublishExternalCatalogs:   true,
 			canSubscribeExternalCatalogs: true,
@@ -171,7 +180,6 @@ func TestAccVcdOrgFull(t *testing.T) {
 	willSkip := false
 
 	for _, od := range orgList {
-
 		var params = StringMap{
 			"FuncName":                     "TestAccVcdOrgFull" + "_" + od.name,
 			"OrgName":                      od.name,
@@ -192,8 +200,13 @@ func TestAccVcdOrgFull(t *testing.T) {
 			"Tags":                         "org",
 			"MetadataKey":                  od.metadataKey,
 			"MetadataValue":                od.metadataValue,
+			"SkipDirective":                " ", // one whitespace to avoid skipping test in `testParamsNotEmpty()`
 		}
 		testParamsNotEmpty(t, params)
+
+		if createEnabledOrg && !params["IsEnabled"].(bool) {
+			params["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
+		}
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
 		// Prepare update
@@ -213,6 +226,10 @@ func TestAccVcdOrgFull(t *testing.T) {
 		updateParams["IsEnabled"] = !params["IsEnabled"].(bool)
 		updateParams["MetadataKey"] = params["MetadataKey"].(string) + "-updated"
 		updateParams["MetadataValue"] = params["MetadataValue"].(string) + "-updated"
+		updateParams["SkipDirective"] = " "
+		if createEnabledOrg && !updateParams["IsEnabled"].(bool) {
+			updateParams["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
+		}
 
 		configTextUpdated := templateFill(testAccCheckVcdOrgFull, updateParams)
 		if vcdShortTest {
@@ -371,12 +388,13 @@ resource "vcd_org" "{{.OrgName}}" {
   name              = "{{.OrgName}}"
   full_name         = "{{.FullName}}"
   description       = "{{.Description}}"
-  delete_force      = "true"
-  delete_recursive  = "true"
+  delete_force      = true
+  delete_recursive  = true
 }
 `
 
 const testAccCheckVcdOrgFull = `
+{{.SkipDirective}}
 resource "vcd_org" "{{.OrgName}}" {
   name                            = "{{.OrgName}}"
   full_name                       = "{{.FullName}}"
@@ -387,8 +405,8 @@ resource "vcd_org" "{{.OrgName}}" {
   deployed_vm_quota               = {{.DeployedVmQuota}}
   stored_vm_quota                 = {{.StoredVmQuota}}
   is_enabled                      = "{{.IsEnabled}}"
-  delete_force                    = "true"
-  delete_recursive                = "true"
+  delete_force                    = true
+  delete_recursive                = true
   vapp_lease {
     maximum_runtime_lease_in_sec          = {{.RuntimeLease}}
     power_off_on_runtime_lease_expiration = {{.PowerOffOnLeaseExp}}
@@ -418,8 +436,8 @@ const testAccCheckVcdOrgMetadata = `
 resource "vcd_org" "test-org" {
   name             = "{{.Name}}"
   full_name        = "{{.Name}}"
-  delete_recursive = "true"
-  delete_force     = "true"
+  delete_recursive = true
+  delete_force     = true
   {{.Metadata}}
 }
 `
@@ -429,3 +447,20 @@ data "vcd_org" "test-org-ds" {
   name = vcd_org.test-org.name
 }
 `
+
+func TestAccVcdOrgMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", id, err)
+		}
+		return adminOrg, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
+		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
+		getObjectById, nil)
+}

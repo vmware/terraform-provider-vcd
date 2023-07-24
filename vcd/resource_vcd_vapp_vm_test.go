@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -507,6 +508,38 @@ data "vcd_vapp_vm" "test-vapp-vm-ds" {
 }
 `
 
+func TestAccVcdVAppVmMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		}
+		vApp, err := vdc.GetVAppByName(t.Name(), true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve vApp '%s': %s", t.Name(), err)
+		}
+		vm, err := vApp.GetVMById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VM '%s': %s", id, err)
+		}
+		return vm, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdVAppVmMetadata, "vcd_vapp_vm.test-vapp-vm",
+		testAccCheckVcdVAppVmMetadataDatasource, "data.vcd_vapp_vm.test-vapp-vm-ds",
+		getObjectById, StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"Media":   testConfig.Media.NsxtBackedMediaName,
+		})
+}
+
 // TestAccVcdVmMetadata tests metadata CRUD on VMs
 func TestAccVcdVmMetadata(t *testing.T) {
 	testMetadataEntryCRUD(t,
@@ -542,3 +575,27 @@ data "vcd_vm" "test-vm-ds" {
   name      = vcd_vm.test-vm.name
 }
 `
+
+func TestAccVcdVmMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vm, err := org.QueryVmById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VM '%s': %s", id, err)
+		}
+		return vm, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdVmMetadata, "vcd_vm.test-vm",
+		testAccCheckVcdVmMetadataDatasource, "data.vcd_vm.test-vm-ds",
+		getObjectById, StringMap{
+			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
+			"Media":   testConfig.Media.NsxtBackedMediaName,
+		})
+}

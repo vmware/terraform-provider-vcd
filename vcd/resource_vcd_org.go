@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -193,7 +194,7 @@ func resourceOrg() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Organization", false),
+			"metadata_entry": metadataEntryResourceSchema("Organization"),
 		},
 	}
 }
@@ -216,6 +217,16 @@ func resourceOrgCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	if err != nil {
 		log.Printf("[DEBUG] Error creating Org: %s", err)
+		// Some 10.4 VCD versions have a bug that fail when creating a disabled Org
+		if !isEnabled && strings.Contains(err.Error(), "com.vmware.vcloud.common.model.oauth.oidc.OidcAuthorizationModel") {
+			// getting VCD version for error message but not explicitly failing if it cannot be
+			// retrieved to avoid unnecessary failure path
+			// The error itself is SQL message therefore we override it
+			vcdVersion, _, _ := vcdClient.Client.GetVcdVersion()
+			err = fmt.Errorf("\nthis version of VCD (%s) has a bug that prevents creating a disabled Org.\n"+
+				"If you need to disable it, please create an enabled Org and then disable it using update", vcdVersion)
+		}
+
 		return diag.Errorf("[org creation] error creating Org %s: %s", orgName, err)
 	}
 
@@ -363,7 +374,7 @@ func resourceOrgDelete(_ context.Context, d *schema.ResourceData, m interface{})
 }
 
 // Update the resource
-func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	vcdClient := m.(*VCDClient)
 
@@ -428,11 +439,11 @@ func resourceOrgUpdate(_ context.Context, d *schema.ResourceData, m interface{})
 	}
 
 	log.Printf("[TRACE] Org %s updated", orgName)
-	return nil
+	return resourceOrgRead(ctx, d, m)
 }
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
-func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
+func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg) diag.Diagnostics {
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -497,7 +508,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 		vappLeaseSlice := []map[string]interface{}{vappLease}
 		err = d.Set("vapp_lease", vappLeaseSlice)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -518,22 +529,21 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 		vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
 		err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
-	err = updateMetadataInState(d, adminOrg)
-	if err != nil {
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", adminOrg)
+	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Org metadata")
-		return fmt.Errorf("unable to set Org metadata %s", err)
+		return diagErr
 	}
 
 	return nil
 }
 
-// Retrieves an Org resource from vCD
+// Retrieves an Org resource from VCD
 func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -567,9 +577,9 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	err = setOrgData(d, adminOrg)
-	if err != nil {
-		return diag.FromErr(err)
+	diagErr := setOrgData(d, vcdClient, adminOrg)
+	if diagErr != nil {
+		return diagErr
 	}
 	return nil
 }
@@ -581,7 +591,7 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 // For this resource, the import path is just the org name.
 //
 // Example import path (id): orgName
-func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
 	vcdClient := meta.(*VCDClient)
@@ -590,10 +600,9 @@ func resourceVcdOrgImport(_ context.Context, d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	err = setOrgData(d, adminOrg)
-
-	if err != nil {
-		return []*schema.ResourceData{}, err
+	diagErr := setOrgData(d, vcdClient, adminOrg)
+	if diagErr != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
 	}
 
 	d.SetId(adminOrg.AdminOrg.ID)

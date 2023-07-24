@@ -67,6 +67,11 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 				Computed:    true,
 				Description: "Virtual IP address (VIP) for Virtual Service",
 			},
+			"ipv6_virtual_ip_address": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IPv6 Virtual IP address (VIP) for Virtual Service (VCD 10.4.0+)",
+			},
 			"application_profile_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -99,6 +104,11 @@ func datasourceVcdAlbVirtualService() *schema.Resource {
 						},
 					},
 				},
+			},
+			"is_transparent_mode_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Preserves Client IP on a Virtual Service when enabled (VCD 10.4.1+)",
 			},
 		},
 	}

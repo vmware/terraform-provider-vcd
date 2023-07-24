@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || ALL
 
 package vcd
 
@@ -61,10 +61,12 @@ func init() {
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
-		User     string `json:"user"`
-		Password string `json:"password"`
-		Token    string `json:"token,omitempty"`
-		ApiToken string `json:"api_token,omitempty"`
+		User                    string `json:"user"`
+		Password                string `json:"password"`
+		Token                   string `json:"token,omitempty"`
+		ApiToken                string `json:"api_token,omitempty"`
+		ApiTokenFile            string `json:"api_token_file,omitempty"`
+		ServiceAccountTokenFile string `json:"service_account_token_file,omitempty"`
 
 		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
 		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
@@ -139,6 +141,8 @@ type TestConfig struct {
 		Manager                   string `json:"manager"`
 		Tier0router               string `json:"tier0router"`
 		Tier0routerVrf            string `json:"tier0routervrf"`
+		GatewayQosProfile         string `json:"gatewayQosProfile"`
+		NsxtDvpg                  string `json:"nsxtDvpg"`
 		Vdc                       string `json:"vdc"`
 		ExternalNetwork           string `json:"externalNetwork"`
 		EdgeGateway               string `json:"edgeGateway"`
@@ -150,10 +154,15 @@ type TestConfig struct {
 		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
 		NsxtAlbControllerPassword string `json:"nsxtAlbControllerPassword"`
 		NsxtAlbImportableCloud    string `json:"nsxtAlbImportableCloud"`
+		NsxtAlbServiceEngineGroup string `json:"nsxtAlbServiceEngineGroup"`
 		RoutedNetwork             string `json:"routedNetwork"`
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
 	} `json:"nsxt"`
+	VSphere struct {
+		ResourcePoolForVcd1 string `json:"resourcePoolForVcd1,omitempty"`
+		ResourcePoolForVcd2 string `json:"resourcePoolForVcd2,omitempty"`
+	} `json:"vsphere,omitempty"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
 		LogFileName     string `json:"logFileName,omitempty"`
@@ -176,6 +185,7 @@ type TestConfig struct {
 		UploadProgress      bool   `json:"uploadProgress,omitempty"`
 		MediaName           string `json:"mediaName,omitempty"`
 		NsxtBackedMediaName string `json:"nsxtBackedMediaName,omitempty"`
+		UiPluginPath        string `json:"uiPluginPath,omitempty"`
 	} `json:"media"`
 	Certificates struct {
 		Certificate1Path           string `json:"certificate1Path,omitempty"`           // absolute path to pem file
@@ -184,6 +194,7 @@ type TestConfig struct {
 		Certificate2Path           string `json:"certificate2Path,omitempty"`           // absolute path to pem file
 		Certificate2PrivateKeyPath string `json:"certificate2PrivateKeyPath,omitempty"` // absolute path to private key pem file
 		Certificate2Pass           string `json:"certificate2Pass,omitempty"`           // absolute path to pem file
+		RootCertificatePath        string `json:"rootCertificatePath,omitempty"`        // absolute path to pem file
 	} `json:"certificates"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
@@ -315,6 +326,7 @@ provider "vcd" {
   #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
+  {{.IgnoreMetadataBlock}}
 }
 `
 )
@@ -435,6 +447,9 @@ func templateFill(tmpl string, data StringMap) string {
 			data["LoggingFile"] = testConfig.Logging.LogFileName
 		} else {
 			data["LoggingFile"] = util.ApiLogFileName
+		}
+		if _, found = data["IgnoreMetadataBlock"]; !found {
+			data["IgnoreMetadataBlock"] = ""
 		}
 
 		// Pick correct auth_type
@@ -682,6 +697,13 @@ func getConfigStruct(config string) TestConfig {
 		}
 		configStruct.Media.MediaPath = mediaPath
 	}
+	if configStruct.Media.UiPluginPath != "" {
+		uiPluginPath, err := filepath.Abs(configStruct.Media.UiPluginPath)
+		if err != nil {
+			panic("error retrieving absolute path for UI plugin path " + configStruct.Media.UiPluginPath)
+		}
+		configStruct.Media.UiPluginPath = uiPluginPath
+	}
 	if configStruct.Ova.OvaVappMultiVmsPath != "" {
 		multiVmOvaPath, err := filepath.Abs(configStruct.Ova.OvaVappMultiVmsPath)
 		if err != nil {
@@ -717,6 +739,13 @@ func getConfigStruct(config string) TestConfig {
 		}
 		configStruct.Certificates.Certificate2PrivateKeyPath = certificatePrivatePath2Path
 	}
+	if configStruct.Certificates.RootCertificatePath != "" {
+		rootCertificatePath2Path, err := filepath.Abs(configStruct.Certificates.RootCertificatePath)
+		if err != nil {
+			panic("error retrieving absolute path for certificate 2 path " + configStruct.Certificates.Certificate2Path)
+		}
+		configStruct.Certificates.RootCertificatePath = rootCertificatePath2Path
+	}
 
 	// It is needed when we run the binary tests without TEST_ACC
 	if configStruct.VCD.Catalog.Name != "" {
@@ -743,7 +772,7 @@ func getVcdVersion(config TestConfig) (string, error) {
 	if vcdClient == nil || err != nil {
 		return "", err
 	}
-	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg, config.Provider.ApiToken, config.Provider.ApiTokenFile, config.Provider.ServiceAccountTokenFile)
 	if err != nil {
 		return "", err
 	}
@@ -862,7 +891,7 @@ func TestMain(m *testing.M) {
 		fmt.Printf("error getting a govcd client: %s\n", err)
 		exitCode = 1
 	} else {
-		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken)
+		err = ProviderAuthenticate(govcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ApiTokenFile, testConfig.Provider.ServiceAccountTokenFile)
 		if err != nil {
 			fmt.Printf("error authenticating provider: %s\n", err)
 			exitCode = 1
@@ -954,6 +983,13 @@ func importStateIdOrgNsxtVdcGroupObject(vdcGroupName, objectName string) resourc
 			vdcGroupName +
 			ImportSeparator +
 			objectName, nil
+	}
+}
+
+// importCustomObject accepts a path and joins it using ImportSeparator
+func importCustomObject(path []string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return strings.Join(path, ImportSeparator), nil
 	}
 }
 
@@ -1533,9 +1569,12 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 	}
 }
 
-func skipTestForApiToken(t *testing.T) {
+func skipTestForServiceAccountAndApiToken(t *testing.T) {
 	if testConfig.Provider.ApiToken != "" {
 		t.Skipf("skipping test %s because API token does not support this functionality", t.Name())
+	}
+	if testConfig.Provider.ServiceAccountTokenFile != "" {
+		t.Skipf("skipping test %s because Service Accounts do not support this functionality", t.Name())
 	}
 }
 

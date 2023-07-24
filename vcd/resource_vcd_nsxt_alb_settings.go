@@ -210,7 +210,7 @@ func getNsxtAlbConfigurationType(d *schema.ResourceData, vcdClient *VCDClient) (
 			return nil, fmt.Errorf("setting 'is_transparent_mode_enabled' is only supported in VCD 10.4.1+ (37.1+)")
 		}
 		transparentModeValue := d.Get("is_transparent_mode_enabled")
-		albConfig.TransparentModeEnabled = takeBoolPointer(transparentModeValue.(bool))
+		albConfig.TransparentModeEnabled = addrOf(transparentModeValue.(bool))
 	}
 
 	// Setting IPv6 service network definition is only possible in VCD 10.4.0 (37.0+), throw error

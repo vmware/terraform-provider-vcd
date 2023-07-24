@@ -238,7 +238,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("VDC", false),
+			"metadata_entry": metadataEntryResourceSchema("VDC"),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -366,7 +366,6 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return resourceVcdVdcRead(ctx, d, meta)
 }
 
-// Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
@@ -388,9 +387,9 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	err = setOrgVdcData(d, vcdClient, adminVdc)
-	if err != nil {
-		return diag.FromErr(err)
+	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "vdc_org_vdc")
@@ -410,7 +409,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
-func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) error {
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) diag.Diagnostics {
 
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
@@ -436,7 +435,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	if adminVdc.AdminVdc.NetworkPoolReference != nil {
 		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 		if err != nil {
-			return fmt.Errorf("error retrieving network pool: %s", err)
+			return diag.Errorf("error retrieving network pool: %s", err)
 		}
 		dSet(d, "network_pool_name", networkPool.Name)
 	}
@@ -449,18 +448,18 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	dSet(d, "vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
 	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
-		return fmt.Errorf("error setting compute_capacity: %s", err)
+		return diag.Errorf("error setting compute_capacity: %s", err)
 	}
 
 	if adminVdc.AdminVdc.VdcStorageProfiles != nil {
 
 		storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
 		if err != nil {
-			return fmt.Errorf("error preparing storage profile data: %s", err)
+			return diag.Errorf("error preparing storage profile data: %s", err)
 		}
 
 		if err := d.Set("storage_profile", storageProfileStateData); err != nil {
-			return fmt.Errorf("error setting compute_capacity: %s", err)
+			return diag.Errorf("error setting compute_capacity: %s", err)
 		}
 	}
 
@@ -472,12 +471,6 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		dSet(d, "include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	err := updateMetadataInState(d, adminVdc)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to set VDC metadata")
-		return fmt.Errorf("unable to set VDC metadata %s", err)
-	}
-
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
 	dSet(d, "default_compute_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
@@ -486,7 +479,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	})
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get assigned VM Compute policies")
-		return fmt.Errorf("unable to get assigned VM Compute policies %s", err)
+		return diag.Errorf("unable to get assigned VM Compute policies %s", err)
 	}
 	var sizingPolicyIds []string
 	var placementPolicyIds []string
@@ -503,11 +496,17 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 
 	err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	err = d.Set("vm_placement_policy_ids", vmPlacementPoliciesSet)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
+	}
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
+	if diagErr != nil {
+		log.Printf("[DEBUG] Unable to set VDC metadata")
+		return diagErr
 	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
@@ -682,7 +681,7 @@ func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc,
 		Units:        "MB", // only this value is supported
 		Limit:        int64(storageConfiguration["limit"].(int)),
 		Default:      storageConfiguration["default"].(bool),
-		Enabled:      takeBoolPointer(storageConfiguration["enabled"].(bool)),
+		Enabled:      addrOf(storageConfiguration["enabled"].(bool)),
 		ProviderVdcStorageProfile: &types.Reference{
 			HREF: vdcStorageProfileDetails.ProviderVdcStorageProfile.HREF,
 		},
@@ -797,7 +796,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc *govcd.A
 			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile '%s' from provider VDC '%s': %s", spCombo.configuration["name"].(string), providerVdcName, err)
 		}
 		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
-			Enabled: takeBoolPointer(spCombo.configuration["enabled"].(bool)),
+			Enabled: addrOf(spCombo.configuration["enabled"].(bool)),
 			Units:   "MB",
 			Limit:   int64(spCombo.configuration["limit"].(int)),
 			Default: spCombo.configuration["default"].(bool),
@@ -1192,11 +1191,11 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("elasticity") {
-		vdc.AdminVdc.IsElastic = takeBoolPointer(d.Get("elasticity").(bool))
+		vdc.AdminVdc.IsElastic = addrOf(d.Get("elasticity").(bool))
 	}
 
 	if d.HasChange("include_vm_memory_overhead") {
-		vdc.AdminVdc.IncludeMemoryOverhead = takeBoolPointer(d.Get("include_vm_memory_overhead").(bool))
+		vdc.AdminVdc.IncludeMemoryOverhead = addrOf(d.Get("include_vm_memory_overhead").(bool))
 	}
 
 	//cleanup
@@ -1265,7 +1264,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),
-			Enabled: takeBoolPointer(storageConfiguration["enabled"].(bool)),
+			Enabled: addrOf(storageConfiguration["enabled"].(bool)),
 			ProviderVdcStorageProfile: &types.Reference{
 				HREF: sp.HREF,
 			},

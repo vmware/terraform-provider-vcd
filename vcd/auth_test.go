@@ -3,12 +3,16 @@
 package vcd
 
 import (
+	"encoding/json"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
+
+const testTokenFile = "test-token.json"
 
 // TestAccAuth aims to test out all possible ways of `provider` section configuration and allow
 // authentication. It tests:
@@ -304,8 +308,96 @@ func TestAccAuth(t *testing.T) {
 			}
 		  `,
 		})
-
 	}
+
+	// Conditional test on API tokens. This subtest will run only if an API token is defined
+	// in an environment variable
+	// Note: since this test has a manual input, there is no skip for VCD version. This test will fail if
+	// run on VCD < 10.4.0
+	apiTokenFile := os.Getenv("TEST_VCD_SA_TOKEN_FILE")
+	if apiTokenFile != "" {
+		testOrg := os.Getenv("TEST_VCD_ORG")
+		// If sysOrg is not defined in an environment variable, the API token must be one created for the
+		// organization stated in testConfig.VCD.Org
+		if testOrg == "" {
+			testOrg = testConfig.VCD.Org
+		}
+		testCases = append(testCases, authTestCase{
+			name: "ServiceAccountTokenFile,AuthType=service_account_token_file",
+			configText: `
+			provider "vcd" {
+			  user                       = "invalidUser"
+		      password                   = "invalidPassword"
+			  api_token_file             = "` + apiTokenFile + `"
+		      auth_type                  = "api_token_file"
+		      org                        = "` + testOrg + `"
+		      url                        = "` + testConfig.Provider.Url + `"
+		      allow_unverified_ssl       = true
+			}
+		  `,
+		})
+
+		// Testing sending an invalid Service Account token
+		createTestTokenFile(t)
+		testCases = append(testCases, authTestCase{
+			name:        "ApiTokenFile,AuthType=invalid_api_token_file",
+			expectError: regexp.MustCompile(".*(Invalid refresh token|server_error)"),
+			configText: `
+				provider "vcd" {
+					auth_type                  = "api_token_file" 
+					api_token_file             = "` + testTokenFile + `"
+					sysorg                     = "` + testConfig.Provider.SysOrg + `" 
+					org                        = "` + testConfig.VCD.Org + `"
+					vdc                        = "` + testConfig.VCD.Vdc + `"
+					url                        = "` + testConfig.Provider.Url + `"
+					allow_unverified_ssl       = true
+				}
+		`,
+		})
+	}
+
+	saTokenFile := os.Getenv("TEST_VCD_SA_TOKEN_FILE")
+	if saTokenFile != "" {
+		testOrg := os.Getenv("TEST_VCD_ORG")
+		// If sysOrg is not defined in an environment variable, the API token must be one created for the
+		// organization stated in testConfig.VCD.Org
+		if testOrg == "" {
+			testOrg = testConfig.VCD.Org
+		}
+		testCases = append(testCases, authTestCase{
+			name: "ServiceAccountTokenFile,AuthType=service_account_token_file",
+			configText: `
+			provider "vcd" {
+			  user                       = "invalidUser"
+		      password                   = "invalidPassword"
+			  service_account_token_file = "` + saTokenFile + `"
+		      auth_type                  = "service_account_token_file"
+		      org                        = "` + testOrg + `"
+		      url                        = "` + testConfig.Provider.Url + `"
+		      allow_unverified_ssl       = true
+			}
+		  `,
+		})
+
+		// Testing sending an invalid Service Account token
+		createTestTokenFile(t)
+		testCases = append(testCases, authTestCase{
+			name:        "ServiceAccountTokenFile,AuthType=invalid_service_account_token_file",
+			expectError: regexp.MustCompile(".*(Invalid refresh token|server_error)"),
+			configText: `
+				provider "vcd" {
+					auth_type                  = "service_account_token_file" 
+					service_account_token_file = "` + testTokenFile + `"
+					sysorg                     = "` + testConfig.Provider.SysOrg + `" 
+					org                        = "` + testConfig.VCD.Org + `"
+					vdc                        = "` + testConfig.VCD.Vdc + `"
+					url                        = "` + testConfig.Provider.Url + `"
+					allow_unverified_ssl       = true
+				}
+		`,
+		})
+	}
+
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			if test.skip {
@@ -316,6 +408,7 @@ func TestAccAuth(t *testing.T) {
 	}
 
 	// Clear connection cache to force other tests use their own mechanism
+	cleanTestTokenFile(t)
 	cachedVCDClients.reset()
 	postTestChecks(t)
 }
@@ -340,4 +433,34 @@ func runAuthTest(t *testing.T, configText string, expectError *regexp.Regexp) {
 			},
 		},
 	})
+}
+
+// createTestTokenFile creates a test token file with a dummy token for
+// API token authentication
+func createTestTokenFile(t *testing.T) {
+	// Check if token file exists
+	if !fileExists(testTokenFile) {
+		testData := types.ApiTokenRefresh{
+			RefreshToken: "testToken",
+		}
+		data, err := json.Marshal(testData)
+		if err != nil {
+			t.Skipf("error creating test token file: %s", err)
+		}
+
+		err = os.WriteFile(testTokenFile, data, 0600)
+		if err != nil {
+			t.Skipf("error creating test token file: %s", err)
+		}
+	}
+}
+
+// cleanTestTokenFile is ueed to remove the test token file after the test
+func cleanTestTokenFile(t *testing.T) {
+	if fileExists(testTokenFile) {
+		err := os.Remove(testTokenFile)
+		if err != nil {
+			t.Skipf("error removing test token file: %s", err)
+		}
+	}
 }

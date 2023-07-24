@@ -467,3 +467,27 @@ data "vcd_org_vdc" "test-vdc-ds" {
   name = vcd_org_vdc.test-vdc.name
 }
 `
+
+func TestAccVcdVdcMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetAdminVDCById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", id, err)
+		}
+		return vdc, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdVdcMetadata, "vcd_org_vdc.test-vdc",
+		testAccCheckVcdVdcMetadataDatasource, "data.vcd_org_vdc.test-vdc-ds",
+		getObjectById, StringMap{
+			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}

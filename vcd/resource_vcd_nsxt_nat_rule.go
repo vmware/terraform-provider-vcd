@@ -121,41 +121,30 @@ func resourceVcdNsxtNatRule() *schema.Resource {
 func resourceVcdNsxtNatRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t nat rule create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule create] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule create] error retrieving Edge Gateway: %s", err)
 	}
 
 	nsxtNatRule, err := getNsxtNatType(d, vcdClient)
 	if err != nil {
-		return diag.Errorf("error getting NSX-T NAT rule type: %s", err)
+		return diag.Errorf("[nsx-t nat rule create] error getting NSX-T NAT rule type: %s", err)
 	}
 
 	rule, err := nsxtEdge.CreateNatRule(nsxtNatRule)
 	if err != nil {
 
-		return diag.Errorf("error creating NSX-T NAT rule: %s", err)
+		return diag.Errorf("[nsx-t nat rule create] error creating NSX-T NAT rule: %s", err)
 	}
 	d.SetId(rule.NsxtNatRule.ID)
 
@@ -165,47 +154,36 @@ func resourceVcdNsxtNatRuleCreate(ctx context.Context, d *schema.ResourceData, m
 func resourceVcdNsxtNatRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t nat rule create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule update] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule update] error retrieving Edge Gateway: %s", err)
 	}
 
 	nsxtNatRule, err := getNsxtNatType(d, vcdClient)
 	if err != nil {
-		return diag.Errorf("error getting NSX-T NAT rule type: %s", err)
+		return diag.Errorf("[nsx-t nat rule update] error getting NSX-T NAT rule type: %s", err)
 	}
 
 	existingRule, err := nsxtEdge.GetNatRuleById(d.Id())
 	if err != nil {
-		return diag.Errorf("unable to find NSX-T NAT rule: %s", err)
+		return diag.Errorf("[nsx-t nat rule update] unable to find NSX-T NAT rule: %s", err)
 	}
 
 	// Inject ID for update
 	nsxtNatRule.ID = existingRule.NsxtNatRule.ID
 	_, err = existingRule.Update(nsxtNatRule)
 	if err != nil {
-		return diag.Errorf("error updating NSX-T NAT rule: %s", err)
+		return diag.Errorf("[nsx-t nat rule update] error updating NSX-T NAT rule: %s", err)
 	}
 
 	return resourceVcdNsxtNatRuleRead(ctx, d, meta)
@@ -241,40 +219,29 @@ func resourceVcdNsxtNatRuleRead(_ context.Context, d *schema.ResourceData, meta 
 func resourceVcdNsxtNatRuleDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// Handling locks is conditional. There are two scenarios:
-	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
-	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
-	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
-	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
-	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(vcdClient, d)
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[nsx-t nat rule create/update] error finding parent Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule delete] %s", err)
 	}
 
-	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
-		vcdClient.lockById(parentEdgeGatewayOwnerId)
-		defer vcdClient.unlockById(parentEdgeGatewayOwnerId)
-	} else {
-		vcdClient.lockParentEdgeGtw(d)
-		defer vcdClient.unLockParentEdgeGtw(d)
-	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[nsx-t nat rule delete] error retrieving Edge Gateway: %s", err)
 	}
 
 	rule, err := nsxtEdge.GetNatRuleById(d.Id())
 	if err != nil {
-		return diag.Errorf("error finding NSX-T NAT Rule: %s", err)
+		return diag.Errorf("[nsx-t nat rule delete] error finding NSX-T NAT Rule: %s", err)
 	}
 
 	err = rule.Delete()
 	if err != nil {
-		return diag.Errorf("error deleting NSX-T NAT rule: %s", err)
+		return diag.Errorf("[nsx-t nat rule delete] error deleting NSX-T NAT rule: %s", err)
 	}
 
 	d.SetId("")
@@ -339,7 +306,7 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 		DnatExternalPort:         d.Get("dnat_external_port").(string),
 		Type:                     d.Get("rule_type").(string),
 		FirewallMatch:            d.Get("firewall_match").(string),
-		Priority:                 takeIntPointer(d.Get("priority").(int)),
+		Priority:                 addrOf(d.Get("priority").(int)),
 	}
 
 	if appPortProf, ok := d.GetOk("app_port_profile_id"); ok {

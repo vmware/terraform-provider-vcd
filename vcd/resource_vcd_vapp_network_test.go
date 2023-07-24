@@ -115,6 +115,7 @@ func TestAccVcdVappNetwork_Isolated_ipv6(t *testing.T) {
 		"orgNetworkForUpdate":         " ",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "false",
+		"RebootVappOnRemoval":         "true",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -562,8 +563,9 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetwork}}{{.quotationChar}}
   
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
 
-  depends_on = ["vcd_vapp.{{.vappName}}"]
+  depends_on = [vcd_vapp.{{.vappName}}]
 }
 `
 
@@ -683,7 +685,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   {{.OrgNetworkKey}} {{.equalsChar}} {{.quotationChar}}{{.orgNetworkForUpdate}}{{.quotationChar}}
 
   retain_ip_mac_enabled  = "{{.retainIpMacEnabledForUpdate}}"
-  reboot_vapp_on_removal = true
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
 
   depends_on = ["vcd_vapp.{{.vappName}}"]
 }
@@ -693,6 +695,8 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
 // NSX-T Edge Cluster is specified in NSX-T VDC
 func TestAccVcdNsxtVappNetworks(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,

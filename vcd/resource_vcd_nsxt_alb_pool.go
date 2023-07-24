@@ -90,10 +90,17 @@ func resourceVcdAlbPool() *schema.Resource {
 				Default: 1,
 			},
 			"member": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        nsxtAlbPoolMember,
-				Description: "ALB Pool Members",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Elem:          nsxtAlbPoolMember,
+				Description:   "ALB Pool Members",
+				ConflictsWith: []string{"member_group_id"},
+			},
+			"member_group_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "ID of Firewall Group to use for Pool Membership (VCD 10.4.1+)",
+				ConflictsWith: []string{"member"},
 			},
 			"health_monitor": {
 				Type:     schema.TypeSet,
@@ -385,12 +392,12 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 	albPoolConfig := &types.NsxtAlbPool{
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
-		Enabled:                  takeBoolPointer(d.Get("enabled").(bool)),
+		Enabled:                  addrOf(d.Get("enabled").(bool)),
 		GatewayRef:               types.OpenApiReference{ID: d.Get("edge_gateway_id").(string)},
 		Algorithm:                d.Get("algorithm").(string),
-		DefaultPort:              takeIntPointer(d.Get("default_port").(int)),
-		GracefulTimeoutPeriod:    takeIntPointer(d.Get("graceful_timeout_period").(int)),
-		PassiveMonitoringEnabled: takeBoolPointer(d.Get("passive_monitoring_enabled").(bool)),
+		DefaultPort:              addrOf(d.Get("default_port").(int)),
+		GracefulTimeoutPeriod:    addrOf(d.Get("graceful_timeout_period").(int)),
+		PassiveMonitoringEnabled: addrOf(d.Get("passive_monitoring_enabled").(bool)),
 	}
 
 	poolMembers, err := getNsxtAlbPoolMembersType(d)
@@ -398,6 +405,11 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 		return nil, fmt.Errorf("error defining pool members: %s", err)
 	}
 	albPoolConfig.Members = poolMembers
+
+	// Member group
+	if memberGroupId := d.Get("member_group_id").(string); memberGroupId != "" {
+		albPoolConfig.MemberGroupRef = &types.OpenApiReference{ID: memberGroupId}
+	}
 
 	persistenceProfile, err := getNsxtAlbPoolPersistenceProfileType(d)
 	if err != nil {
@@ -413,7 +425,7 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 
 	caCertificateRefs, commonNameCheckEnabled, domainNames := getCertificateTypes(d)
 	albPoolConfig.CaCertificateRefs = caCertificateRefs
-	albPoolConfig.CommonNameCheckEnabled = takeBoolPointer(commonNameCheckEnabled)
+	albPoolConfig.CommonNameCheckEnabled = &commonNameCheckEnabled
 	albPoolConfig.DomainNames = domainNames
 
 	return albPoolConfig, nil
@@ -434,6 +446,10 @@ func setNsxtAlbPoolData(d *schema.ResourceData, albPool *types.NsxtAlbPool) erro
 	err := setNsxtAlbPoolMemberData(d, albPool.Members)
 	if err != nil {
 		return fmt.Errorf("error storing ALB Pool Members: %s", err)
+	}
+
+	if albPool.MemberGroupRef != nil {
+		dSet(d, "member_group_id", albPool.MemberGroupRef.ID)
 	}
 
 	err = setNsxtAlbPoolPersistenceProfileData(d, albPool.PersistenceProfile)
@@ -494,7 +510,7 @@ func getNsxtAlbPoolMembersType(d *schema.ResourceData) ([]types.NsxtAlbPoolMembe
 		member := types.NsxtAlbPoolMember{
 			Enabled:   memberMap["enabled"].(bool),
 			IpAddress: memberMap["ip_address"].(string),
-			Ratio:     takeIntPointer(memberMap["ratio"].(int)),
+			Ratio:     addrOf(memberMap["ratio"].(int)),
 			Port:      memberMap["port"].(int),
 		}
 

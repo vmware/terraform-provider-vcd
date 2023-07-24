@@ -112,6 +112,10 @@
     "tier0routervrf": "tier-0-2",
     "//": "Existing External Network with correct configuration",
     "externalNetwork": "tier-0-backed-external-network",
+    "//":"Gateway QoS Profile used for NSX-T Edge Gateway Rate Limiting (defined in NSX-T Manager)",
+    "gatewayQosProfile":"Gateway QoS Profile 1",
+    "//": "Distributed Virtual Port Group",
+    "nsxtDvpg": "test-nsxt-dvpg-no-uplink",
     "//": "Existing NSX-T based VDC",
     "vdc": "nsxt-vdc-dainius",
     "//": "Existing NSX-T Edge Gateway",
@@ -120,6 +124,10 @@
     "nsxtImportSegment": "import-segment",
     "//": "Existing NSX-T Edge Cluster",
     "nsxtEdgeCluster": "edgeCluster1"
+  },
+  "vsphere": {
+    "resourcePoolForVcd1": "resource-pool-for-vcd-01",
+    "resourcePoolForVcd2": "resource-pool-for-vcd-02"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",
@@ -151,7 +159,8 @@
     "//": "Already uploaded media name",
     "mediaName" : "linuxOS",
     "//": "'mediaName' media is stored in NSX-V VDC backed storage profile while 'nsxtBackedMediaName' is stored in NSX-T VDC Backed storage profile",
-    "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog"
+    "nsxtBackedMediaName": "media-name-in-nsxt-backed-catalog",
+    "uiPluginPath": "../test-resources/ui_plugin.zip"
   },
   "certificates": {
     "//": "relative path to pem file",
@@ -165,7 +174,9 @@
     "//": "relative path to private key pem file",
     "certificate2PrivateKeyPath": "../test-resources/key2.pem",
     "//": "pass phrase for private key",
-    "certificate2Pass": "test"
+    "certificate2Pass": "test",
+    "//": "Root CA certificate",
+    "rootCertificatePath": "../test-resources/rootCA.pem"
   },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",

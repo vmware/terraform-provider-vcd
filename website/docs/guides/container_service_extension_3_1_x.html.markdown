@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: Container Service Extension v3.1.x"
-sidebar_current: "docs-vcd-guides-cse"
+sidebar_current: "docs-vcd-guides-cse-3-1-x"
 description: |-
   Provides guidance on configuring VCD to be able to install Container Service Extension v3.1.x.
 ---
@@ -45,7 +45,7 @@ provider "vcd" {
 }
 ```
 
-As you will be creating several administrator-scoped resources like Orgs, VDCs, Tier 0 Gateways, etc; make sure you provide 
+As you will be creating several administrator-scoped resources like Orgs, VDCs, Provider Gateways, etc; make sure you provide 
 **System administrator** credentials.
 
 ### Step 1: Initialization
@@ -149,7 +149,7 @@ resource "vcd_external_network_v2" "cse_external_network_nsxt" {
 ```
 
 Create also an [Edge Gateway](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway) that will use the recently created
-external network. This will act as the main router connecting our nodes in the internal network to the external (Tier 0 Gateway) network:
+external network. This will act as the main router connecting our nodes in the internal network to the external (Provider Gateway) network:
 
 ```hcl
 resource "vcd_nsxt_edgegateway" "cse_egw" {

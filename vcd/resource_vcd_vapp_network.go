@@ -210,7 +210,7 @@ func resourceVappNetworkCreate(ctx context.Context, d *schema.ResourceData, meta
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
 		StaticIPRanges:     staticIpRanges.IPRange,
-		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
+		RetainIpMacEnabled: addrOf(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	if _, ok := d.GetOk("guest_vlan_allowed"); ok {
@@ -419,7 +419,7 @@ func resourceVappNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
 		StaticIPRanges:     staticIpRanges.IPRange,
-		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
+		RetainIpMacEnabled: addrOf(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	if _, ok := d.GetOk("guest_vlan_allowed"); ok {

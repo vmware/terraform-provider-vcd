@@ -186,7 +186,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("Network", false),
+			"metadata_entry": metadataEntryResourceSchema("Network"),
 		},
 	}
 }
@@ -393,14 +393,13 @@ func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta
 		}
 	}
 	dSet(d, "description", network.OrgVDCNetwork.Description)
-
-	err = updateMetadataInState(d, network)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to set routed network metadata: %s", err)
-		return diag.Errorf("[routed network read] unable to set network metadata %s", err)
-	}
-
 	d.SetId(network.OrgVDCNetwork.ID)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed", network)
+	if diagErr != nil {
+		log.Printf("[DEBUG] Unable to set routed network metadata: %s", err)
+		return diagErr
+	}
 	return nil
 }
 

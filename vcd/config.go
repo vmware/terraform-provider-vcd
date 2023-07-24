@@ -25,26 +25,34 @@ func init() {
 }
 
 type Config struct {
-	User            string
-	Password        string
-	Token           string // Token used instead of user and password
-	ApiToken        string // User generated token used instead of user and password
-	SysOrg          string // Org used for authentication
-	Org             string // Default Org used for API operations
-	Vdc             string // Default (optional) VDC for API operations
-	Href            string
-	MaxRetryTimeout int
-	InsecureFlag    bool
+	User                    string
+	Password                string
+	Token                   string // Token used instead of user and password
+	ApiToken                string // User generated token used instead of user and password
+	ApiTokenFile            string // File containing a user generated API token
+	AllowApiTokenFile       bool   // Setting to suppress API Token File security warnings
+	ServiceAccountTokenFile string // File containing the Service Account API token
+	AllowSATokenFile        bool   // Setting to suppress Service Account Token File security warnings
+	SysOrg                  string // Org used for authentication
+	Org                     string // Default Org used for API operations
+	Vdc                     string // Default (optional) VDC for API operations
+	Href                    string
+	MaxRetryTimeout         int
+	InsecureFlag            bool
 
-	// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+	// UseSamlAdfs specifies if SAML auth is used for authenticating VCD instead of local login.
 	// The following conditions must be met so that authentication SAML authentication works:
 	// * SAML IdP (Identity Provider) is Active Directory Federation Service (ADFS)
 	// * Authentication endpoint "/adfs/services/trust/13/usernamemixed" must be enabled on ADFS
 	// server
 	UseSamlAdfs bool
-	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default vCD Entity
+	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default VCD Entity
 	// ID is used as Relaying Party Trust identifier.
 	CustomAdfsRptId string
+
+	// IgnoredMetadata allows to configure a set of metadata entries that should be ignored by all the
+	// API operations related to metadata.
+	IgnoredMetadata []govcd.IgnoredMetadata
 }
 
 type VCDClient struct {
@@ -281,6 +289,26 @@ func (cli *VCDClient) unlockParentVdcGroup(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(vdcGroupId)
 }
 
+// lockParentExternalNetwork locks on External Network using 'external_network_id' field
+func (cli *VCDClient) lockParentExternalNetwork(d *schema.ResourceData) {
+	externalNetworkId := d.Get("external_network_id").(string)
+	if externalNetworkId == "" {
+		panic("'external_network_id' is empty")
+	}
+
+	vcdMutexKV.kvLock(externalNetworkId)
+}
+
+// unlockParentVdcGroup unlocks on External Network using 'external_network_id' field
+func (cli *VCDClient) unlockParentExternalNetwork(d *schema.ResourceData) {
+	externalNetworkId := d.Get("external_network_id").(string)
+	if externalNetworkId == "" {
+		panic("'external_network_id' is empty")
+	}
+
+	vcdMutexKV.kvUnlock(externalNetworkId)
+}
+
 // lockIfOwnerIsVdcGroup locks VDC Group based on `owner_id` field (if it is a VDC Group)
 func (cli *VCDClient) lockIfOwnerIsVdcGroup(d *schema.ResourceData) {
 	vdcGroupId := d.Get("owner_id")
@@ -371,6 +399,44 @@ func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 	}
 
 	vcdMutexKV.kvUnlock(edgeGtwIdValue)
+}
+
+// lockParentVdcGroupOrEdgeGateway handles lock of parent Edge Gateway or parent VDC group, depending
+// if the parent Edge Gateway is in a VDC or a VDC group. Returns a function that contains the needed
+// unlock function, so that it can be deferred and called after the work with the resource has been
+// done.
+func (cli *VCDClient) lockParentVdcGroupOrEdgeGateway(d *schema.ResourceData) (func(), error) {
+	parentEdgeGatewayOwnerId, _, err := getParentEdgeGatewayOwnerId(cli, d)
+	if err != nil {
+		return nil, fmt.Errorf("error finding parent Edge Gateway: %s", err)
+	}
+
+	// Handling locks is conditional. There are two scenarios:
+	// * When the parent Edge Gateway is in a VDC - a lock on parent Edge Gateway must be acquired
+	// * When the parent Edge Gateway is in a VDC Group - a lock on parent VDC Group must be acquired
+	// To find out parent lock object, Edge Gateway must be looked up and its OwnerRef must be checked
+	// Note. It is not safe to do multiple locks in the same resource as it can result in a deadlock
+	if govcd.OwnerIsVdcGroup(parentEdgeGatewayOwnerId) {
+		cli.lockById(parentEdgeGatewayOwnerId)
+		return func() {
+			cli.unlockById(parentEdgeGatewayOwnerId)
+		}, nil
+	} else {
+		cli.lockParentEdgeGtw(d)
+		return func() {
+			cli.unLockParentEdgeGtw(d)
+		}, nil
+	}
+}
+
+func (cli *VCDClient) lockParentOrgNetwork(d *schema.ResourceData) {
+	orgNetworkId := d.Get("org_network_id").(string)
+	vcdMutexKV.kvLock(orgNetworkId)
+}
+
+func (cli *VCDClient) unLockParentOrgNetwork(d *schema.ResourceData) {
+	orgNetworkId := d.Get("org_network_id").(string)
+	vcdMutexKV.kvUnlock(orgNetworkId)
 }
 
 func (cli *VCDClient) getOrgName(d *schema.ResourceData) string {
@@ -600,25 +666,35 @@ func (cli *VCDClient) GetOrgName(orgName string) (string, error) {
 	return orgName, nil
 }
 
-func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken string) error {
+// TODO Look into refactoring this into a method of *Config
+func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org, apiToken, apiTokenFile, saTokenFile string) error {
 	var err error
-	if apiToken != "" {
-		err = client.SetToken(org, govcd.ApiTokenHeader, apiToken)
-	} else {
-		if token != "" {
-			if len(token) > 32 {
-				err = client.SetToken(org, govcd.BearerTokenHeader, token)
-			} else {
-				err = client.SetToken(org, govcd.AuthorizationHeader, token)
-			}
-			if err != nil {
-				err = fmt.Errorf("error during token-based authentication: %s", err)
-			}
-		} else {
-			err = client.Authenticate(user, password, org)
-		}
+	if saTokenFile != "" {
+		return client.SetServiceAccountApiToken(org, saTokenFile)
 	}
-	return err
+	if apiTokenFile != "" {
+		_, err := client.SetApiTokenFromFile(org, apiTokenFile)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	if apiToken != "" {
+		return client.SetToken(org, govcd.ApiTokenHeader, apiToken)
+	}
+	if token != "" {
+		if len(token) > 32 {
+			err = client.SetToken(org, govcd.BearerTokenHeader, token)
+		} else {
+			err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		}
+		if err != nil {
+			return fmt.Errorf("error during token-based authentication: %s", err)
+		}
+		return nil
+	}
+
+	return client.Authenticate(user, password, org)
 }
 
 func (c *Config) Client() (*VCDClient, error) {
@@ -626,6 +702,8 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.Password + "#" +
 		c.Token + "#" +
 		c.ApiToken + "#" +
+		c.ApiTokenFile + "#" +
+		c.ServiceAccountTokenFile + "#" +
 		c.SysOrg + "#" +
 		c.Vdc + "#" +
 		c.Href
@@ -663,6 +741,7 @@ func (c *Config) Client() (*VCDClient, error) {
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
 			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
 			govcd.WithHttpUserAgent(userAgent),
+			govcd.WithIgnoredMetadata(c.IgnoredMetadata),
 		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
@@ -670,7 +749,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
 
-	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken)
+	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg, c.ApiToken, c.ApiTokenFile, c.ServiceAccountTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}

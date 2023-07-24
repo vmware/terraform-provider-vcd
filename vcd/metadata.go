@@ -2,18 +2,146 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
+	"regexp"
+	"strings"
 )
 
+var (
+	// IgnoreMetadataChangesConflictActions can hold values "error", "warn" or "none", and tells Terraform whether it should
+	// give an error or just a warning if any Metadata Entry configured in HCL is affected by the 'ignore_metadata_changes'
+	// configuration.
+	IgnoreMetadataChangesConflictActions map[string]string
+)
+
+// ignoreMetadataSchema returns the schema associated to ignore_metadata_changes for the provider configuration.
+func ignoreMetadataSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Optional:    true,
+		Description: "Defines a set of `metadata_entry` that need to be ignored by this provider. All filters on this attribute are computed with a logical AND",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"resource_type": {
+					Type:             schema.TypeString,
+					Optional:         true,
+					Description:      "Ignores metadata from the specific resource type",
+					ValidateDiagFunc: validateMetadataIgnoreResourceType(),
+				},
+				"resource_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Ignores metadata from the specific entity in VCD named like this argument",
+				},
+				"key_regex": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Regular expression of the metadata entry keys to ignore. Either `key_regex` or `value_regex` is required",
+					// Note: This one should have AtLeastOneOf, but it can't be used inside Sets
+				},
+				"value_regex": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Regular expression of the metadata entry values to ignore. Either `key_regex` or `value_regex` is required",
+					// Note: This one should have AtLeastOneOf, but it can't be used inside Sets
+				},
+				"conflict_action": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      "error",
+					ValidateFunc: validation.StringInSlice([]string{"error", "warn", "none"}, false),
+					Description:  "One of 'error', 'warn' or 'none'. Configures whether a conflict between this ignored metadata block and the metadata entries set in Terraform should fail, warn or do nothing. Defaults to 'error'",
+				},
+			},
+		},
+	}
+}
+
+// IgnoredMetadata extends the SDK IgnoredMetadata type to be able to add also
+// the conflict behavior defined as an attribute in the schema.
+type IgnoredMetadata struct {
+	IgnoredMetadata govcd.IgnoredMetadata
+	ConflictAction  string
+}
+
+// Transforms the metadata to ignore from schema to the []govcd.IgnoredMetadata structure.
+func getIgnoredMetadata(d *schema.ResourceData, ignoredMetadataAttribute string) ([]IgnoredMetadata, error) {
+	ignoreMetadataRaw := d.Get(ignoredMetadataAttribute).(*schema.Set).List()
+	if len(ignoreMetadataRaw) == 0 {
+		return []IgnoredMetadata{}, nil
+	}
+
+	result := make([]IgnoredMetadata, len(ignoreMetadataRaw))
+	for i, ignoredEntryRaw := range ignoreMetadataRaw {
+		ignoredEntry := ignoredEntryRaw.(map[string]interface{})
+		result[i] = IgnoredMetadata{
+			ConflictAction: ignoredEntry["conflict_action"].(string),
+		}
+		ignoredMetadata := govcd.IgnoredMetadata{}
+		if ignoredEntry["key_regex"].(string) != "" {
+			regex, err := regexp.Compile(ignoredEntry["key_regex"].(string))
+			if err != nil {
+				return nil, err
+			}
+			ignoredMetadata.KeyRegex = regex
+		}
+		if ignoredEntry["value_regex"].(string) != "" {
+			regex, err := regexp.Compile(ignoredEntry["value_regex"].(string))
+			if err != nil {
+				return nil, err
+			}
+			ignoredMetadata.ValueRegex = regex
+		}
+		if ignoredMetadata.KeyRegex == nil && ignoredMetadata.ValueRegex == nil {
+			return nil, fmt.Errorf("either `key_regex` or `value_regex` is required inside the `ignore_metadata_changes` attribute")
+		}
+		if ignoredEntry["resource_name"].(string) != "" {
+			ignoredMetadata.ObjectName = addrOf(ignoredEntry["resource_name"].(string))
+		}
+		if ignoredEntry["resource_type"].(string) != "" {
+			ignoredMetadata.ObjectType = addrOf(resourceMetadataApiRelation[ignoredEntry["resource_type"].(string)])
+		}
+		result[i].IgnoredMetadata = ignoredMetadata
+	}
+	return result, nil
+}
+
+// This map is used by getIgnoredMetadata and the Schema validation. It links a Terraform
+// resource type (how the resource was named) with a Metadata API endpoint object present in
+// https://developer.vmware.com/apis/1601/vmware-cloud-director
+var resourceMetadataApiRelation = map[string]string{
+	"vcd_catalog":               "catalog",
+	"vcd_catalog_item":          "catalogItem",
+	"vcd_catalog_media":         "media",
+	"vcd_catalog_vapp_template": "vAppTemplate",
+	"vcd_independent_disk":      "disk",
+	"vcd_network_direct":        "network",
+	"vcd_network_isolated":      "network",
+	"vcd_network_isolated_v2":   "network",
+	"vcd_network_routed":        "network",
+	"vcd_network_routed_v2":     "network",
+	"vcd_org":                   "org",
+	"vcd_org_vdc":               "vdc",
+	"vcd_provider_vdc":          "providervdc",
+	"vcd_storage_profile":       "vdcStorageProfile",
+	"vcd_vapp":                  "vApp",
+	"vcd_vapp_vm":               "vApp",
+	"vcd_vm":                    "vApp",
+}
+
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
-// The description will refer to the object name given as input.
-func metadataEntryDatasourceSchema(objectNameInDescription string) *schema.Schema {
+// The description will refer to the resource type given as input.
+func metadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Computed:    true,
-		Description: fmt.Sprintf("Metadata entries from the given %s", objectNameInDescription),
+		Description: fmt.Sprintf("Metadata entries from the given %s", resourceType),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"key": {
@@ -47,13 +175,13 @@ func metadataEntryDatasourceSchema(objectNameInDescription string) *schema.Schem
 }
 
 // metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
-// The description will refer to the object name given as input.
-func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema {
+// The description will refer to the resource type given as input.
+func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
 		Computed:      true, // This is required for `metadata_entry` to live together with deprecated `metadata`.
-		Description:   fmt.Sprintf("Metadata entries for the given %s", objectNameInDescription),
+		Description:   fmt.Sprintf("Metadata entries for the given %s", resourceType),
 		ConflictsWith: []string{"metadata"},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -92,18 +220,9 @@ func metadataEntryResourceSchema(objectNameInDescription string) *schema.Schema 
 	}
 }
 
-// getMetadataEntrySchema returns a schema for the "metadata_entry" attribute, that can be used to
-// build data sources (isDatasource=true) or resources (isDatasource=false). The description of the
-// attribute will refer to the input resource name.
-func getMetadataEntrySchema(resourceNameInDescription string, isDatasource bool) *schema.Schema {
-	if isDatasource {
-		return metadataEntryDatasourceSchema(resourceNameInDescription)
-	}
-	return metadataEntryResourceSchema(resourceNameInDescription)
-}
-
 // metadataCompatible allows to consider all structs that implement metadata handling to be the same type
 type metadataCompatible interface {
+	GetMetadataByKey(key string, isSystem bool) (*types.MetadataValue, error)
 	GetMetadata() (*types.Metadata, error)
 	AddMetadataEntry(typedValue, key, value string) error // Deprecated
 	AddMetadataEntryWithVisibility(key, value, typedValue, visibility string, isSystem bool) error
@@ -146,29 +265,105 @@ func createOrUpdateMetadataEntryInVcd(d *schema.ResourceData, resource metadataC
 		return nil
 	}
 	err = resource.MergeMetadataWithMetadataValues(metadataToMerge)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "after filtering metadata, there is no metadata to merge") {
 		return fmt.Errorf("error adding metadata entries: %s", err)
+	}
+	return nil
+}
+
+// checkIgnoredMetadataConflicts checks that no `metadata_entry` managed by Terraform is ignored due to being filtered out
+// in any `ignore_metadata_changes` block and errors/warns if so, depending on the value of `conflict_action`.
+func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient, resourceType string) diag.Diagnostics {
+	metadataEntryList := d.Get("metadata_entry").(*schema.Set).List()
+	if len(metadataEntryList) == 0 {
+		return nil
+	}
+
+	for _, newEntryRaw := range metadataEntryList {
+		newEntry := newEntryRaw.(map[string]interface{})
+		for _, ignoredMetadata := range vcdClient.Client.IgnoredMetadata {
+			conflictDetected := (ignoredMetadata.ObjectType == nil || strings.TrimSpace(*ignoredMetadata.ObjectType) == "" || *ignoredMetadata.ObjectType == resourceMetadataApiRelation[resourceType]) &&
+				(ignoredMetadata.ObjectName == nil || strings.TrimSpace(*ignoredMetadata.ObjectName) == "" || strings.TrimSpace(d.Get("name").(string)) == "" || *ignoredMetadata.ObjectName == d.Get("name").(string)) &&
+				(ignoredMetadata.KeyRegex == nil || ignoredMetadata.KeyRegex.MatchString(newEntry["key"].(string))) &&
+				(ignoredMetadata.ValueRegex == nil || ignoredMetadata.ValueRegex.MatchString(newEntry["value"].(string)))
+
+			if !conflictDetected {
+				continue
+			}
+
+			util.Logger.Printf("[DEBUG] detected a conflict with metadata_entry with key '%s' and value '%v', it is being being ignored with the ignore_metadata_changes block '%v'", newEntry["key"].(string), newEntry["value"].(string), ignoredMetadata)
+			var severity diag.Severity
+			action := IgnoreMetadataChangesConflictActions[ignoredMetadata.String()]
+			switch action {
+			case "error":
+				severity = diag.Error
+			case "warn":
+				severity = diag.Warning
+			case "none":
+				return nil
+			default:
+				return diag.Errorf("unknown value for 'conflict_action': %s", action)
+			}
+
+			return diag.Diagnostics{
+				diag.Diagnostic{
+					Severity: severity,
+					Summary:  "Found a conflict between 'ignore_metadata_changes' and 'metadata_entry'",
+					Detail: fmt.Sprintf("There is an 'ignored_metadata' block: %s\n"+
+						"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria, hence it will be ignored.\n"+
+						"This will cause the entry to be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
+						"Please use a more fine-grained 'ignore_metadata_changes' configuration or change your metadata entry.", ignoredMetadata, newEntry["key"].(string), newEntry["value"].(string)),
+					AttributePath: cty.Path{},
+				},
+			}
+		}
 	}
 	return nil
 }
 
 // updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompatible) error {
+func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+
+	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
+	// which should not be affected by it.
+	// This closure makes the unlocking more optimal, as it unlocks when the closure returns.
+	getAllMetadata := func() (*types.Metadata, error) {
+		vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
+		defer vcdMutexKV.kvUnlock("metadata")
+		ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
+		deprecatedMetadata, err := receiverObject.GetMetadata()
+		vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("error getting metadata to save in state: %s", err)
+		}
+		return deprecatedMetadata, nil
+	}
+	deprecatedMetadata, err := getAllMetadata()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Set deprecated metadata attribute, just for compatibility reasons
+	err = d.Set("metadata", getMetadataStruct(deprecatedMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("error setting metadata in state: %s", err)
+	}
+
+	// We get metadata again with the original metadata ignore filtering
+	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	metadata, err := receiverObject.GetMetadata()
 	if err != nil {
-		return err
+		return diag.Errorf("error getting metadata to save in state: %s", err)
 	}
 
 	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
-		return err
-	}
-
-	// Set deprecated metadata attribute, just for compatibility reasons
-	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return err
+		return diag.Errorf("error setting metadata entry in state: %s", err)
 	}
 
 	return nil
@@ -176,8 +371,9 @@ func updateMetadataInState(d *schema.ResourceData, receiverObject metadataCompat
 
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
-	// This early return guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
-	// set an empty attribute in state, which would taint it and ask for an update all the time.
+	// A consequence of having metadata_entry computed is that to remove the entries one needs to write `metadata_entry {}`.
+	// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
+	// set an empty Set as attribute in state, which would taint it and ask for an update all the time.
 	if len(metadataFromVcd) == 0 {
 		return nil
 	}

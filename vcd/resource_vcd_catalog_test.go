@@ -146,16 +146,17 @@ func TestAccVcdCatalogRename(t *testing.T) {
 	vmName := "test-vm"
 
 	var params = StringMap{
-		"Org":              orgName,
-		"Vdc":              vdcName,
-		"CatalogName":      catalogName,
-		"CatalogMediaName": catalogMediaName,
-		"VappTemplateName": vappTemplateName,
-		"Description":      t.Name(),
-		"OvaPath":          testConfig.Ova.OvaPath,
-		"MediaPath":        testConfig.Media.MediaPath,
-		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"VmName":           vmName,
+		"Org":                orgName,
+		"Vdc":                vdcName,
+		"CatalogName":        catalogName,
+		"NsxtStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
+		"CatalogMediaName":   catalogMediaName,
+		"VappTemplateName":   vappTemplateName,
+		"Description":        t.Name(),
+		"OvaPath":            testConfig.Ova.OvaPath,
+		"MediaPath":          testConfig.Media.MediaPath,
+		"UploadPieceSize":    testConfig.Media.UploadPieceSize,
+		"VmName":             vmName,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -245,11 +246,18 @@ func TestAccVcdCatalogRename(t *testing.T) {
 }
 
 const testAccCheckVcdCatalogRename = `
+data "vcd_storage_profile" "sp1" {
+  org  = "{{.Org}}" 
+  vdc  = "{{.Vdc}}"
+  name = "{{.NsxtStorageProfile}}"
+}
+
 resource "vcd_catalog" "test-catalog" {
   org = "{{.Org}}" 
   
-  name        = "{{.CatalogName}}"
-  description = "{{.Description}}"
+  name               = "{{.CatalogName}}"
+  description        = "{{.Description}}"
+  storage_profile_id = data.vcd_storage_profile.sp1.id
 
   delete_force     = "true"
   delete_recursive = "true"
@@ -827,7 +835,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 			},
 		},
 		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{{
-			Enabled: takeBoolPointer(true),
+			Enabled: addrOf(true),
 			Units:   "MB",
 			Limit:   1024,
 			Default: true,
@@ -845,8 +853,8 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 		IsEnabled:             true,
 		IsThinProvision:       true,
 		UsesFastProvisioning:  true,
-		IsElastic:             takeBoolPointer(true),
-		IncludeMemoryOverhead: takeBoolPointer(true),
+		IsElastic:             addrOf(true),
+		IncludeMemoryOverhead: addrOf(true),
 	}
 
 	vdc, err := newAdminOrg.CreateOrgVdc(vdcConfiguration)
@@ -973,6 +981,27 @@ data "vcd_catalog" "test-catalog-ds" {
   name = vcd_catalog.test-catalog.name
 }
 `
+
+func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		catalog, err := adminOrg.GetAdminCatalogById(id, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Catalog '%s': %s", id, err)
+		}
+		return catalog, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
+		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
+		getObjectById, nil)
+}
 
 func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {
 	// Filtering by name and in correct pVdc to avoid picking NSX-V VDC storage profile

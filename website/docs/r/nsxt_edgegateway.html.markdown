@@ -15,7 +15,9 @@ NSX-T edge gateways connected to external networks.
 You must use `System Adminstrator` account in `provider` configuration
 and then provide `org` and `owner_id` arguments for Edge Gateway to work.
 
-Supported in provider *v3.1+*.
+This resource supports **IP Spaces** - read [IP Spaces guide
+page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/ip_spaces) for more
+information.
 
 ## Example Usage (Simple case)
 
@@ -51,6 +53,26 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 ```
+
+## Example Usage (IP Space backed Provider Gateway)
+
+```hcl
+data "vcd_external_network_v2" "ip-space-provider-gw" {
+  name = "nsxt-edge"
+}
+
+data "vcd_org_vdc" "vdc1" {
+  name = "existing-vdc"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org                 = "my-org"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  name                = "ip-space-backed-edge"
+  external_network_id = data.vcd_external_network_v2.ip-space-provider-gw.id
+}
+```
+
 <a id="subnet-example"></a>
 ## Example Usage (Using custom Edge Cluster and multiple subnets)
 
@@ -251,7 +273,7 @@ The following arguments are supported:
 * `owner_id` - (Optional, *v3.6+*,*VCD 10.2+*) The ID of VDC or VDC Group. **Note:** Data sources
   [vcd_vdc_group](/providers/vmware/vcd/latest/docs/data-sources/vdc_group) or
   [vcd_org_vdc](/providers/vmware/vcd/latest/docs/data-sources/org_vdc) can be used to lookup IDs by
-  name
+  name.
 
 ~> Only one of `vdc` or `owner_id` can be specified. `owner_id` takes precedence over `vdc`
 definition at provider level.
@@ -273,16 +295,16 @@ can be used to lookup ID by name.
 * `dedicate_external_network` - (Optional) Dedicating the External Network will enable Route Advertisement for this Edge Gateway. Default `false`.
 
 * `subnet` - (Optional) One or more [subnets](#edgegateway-subnet) defined for Edge Gateway. One of
-  `subnet`, `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required**. Read more in [IP
-  allocation modes](#ip-allocation-modes) section.
+  `subnet`, `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required unless** parent
+  network is backed by *IP Spaces*. Read more in [IP allocation modes](#ip-allocation-modes) section.
 * `subnet_with_total_ip_count` - (Optional, *v3.9+*) One or more
   [subnets](#edgegateway-total-ip-count-allocation) defined for Edge Gateway. One of `subnet`,
-  `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required**. Read more in [IP
-  allocation modes](#ip-allocation-modes) section.
+  `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required unless** parent network is
+  backed by *IP Spaces*. Read more in [IP allocation modes](#ip-allocation-modes) section.
 * `subnet_with_ip_count` - (*v3.9+*) One or more
   [subnets](#edgegateway-per-subnet-ip-count-allocation) defined for Edge Gateway. One of `subnet`,
-  `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required**. Read more in [IP
-  allocation modes](#ip-allocation-modes) section.
+  `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required unless** parent network is
+  backed by *IP Spaces*. Read more in [IP allocation modes](#ip-allocation-modes) section.
 * `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `subnet_with_total_ip_count`. It is
   **read-only** attribute with other other allocation models `subnet` and `subnet_with_ip_count`.
 <a id="ip-allocation-modes"></a>
@@ -290,7 +312,8 @@ can be used to lookup ID by name.
 ## IP allocation modes
 
 ~> Starting with `v3.9.0` of Terraform Provider for VCD, NSX-T Edge Gateway supports automatic IP
-allocations. More details in this section.
+allocations. More details in this section. **None** of these methods **should be applied** when Edge
+Gateway is using **IP Spaces**
 
 There are three ways to handle IP allocations, but it's important to note that _due to Terraform
 schema limitations_, only **one of the three** methods can be utilized:
@@ -307,7 +330,7 @@ schema limitations_, only **one of the three** methods can be utilized:
 Each `subnet` block has these attributes ([complete example](#subnet-example)):
 
 * `gateway` - (Required) - Gateway for a subnet in external network
-* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24 for netmask
   of 255.255.255.0)
 * `primary_ip` - (Optional) - Primary IP address for edge gateway. **Note:** `primary_ip` must fall
 into `allocated_ips` block range as otherwise `plan` will not be clean with a new range defined for
@@ -331,7 +354,7 @@ example](#subnet-with-total-ip-count-example)).
 Each `subnet_with_total_ip_count` has these attributes:
 
 * `gateway` - (Required) - Gateway for a subnet in external network
-* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
 * `primary_ip` (Required) - Exactly one Primary IP is required for an Edge Gateway. It should be
   defined in any of the `subnet_with_total_ip_count` blocks
 
@@ -346,7 +369,7 @@ added capability of automatically allocating a specific number of IPs from the b
 `allocated_ip_count` field ([complete example](#subnet-with-ip-count-example)).
 
 * `gateway` - (Required) - Gateway for a subnet in external network
-* `prefix_length` - (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
 * `primary_ip` (Required) - Exactly one Primary IP is required for an Edge Gateway. It should be
   defined in any of the `subnet_with_ip_count` blocks
 * `allocated_ip_count` (Required) - Number of allocated IPs from that particular subnet
@@ -358,7 +381,10 @@ The following attributes are exported on this resource:
 
 * `primary_ip` - Primary IP address exposed for an easy access without nesting.
 * `used_ip_count` - Unused IP count in this Edge Gateway
-* `unused_ip_count` Used IP count in this Edge Gateway
+* `unused_ip_count` - Used IP count in this Edge Gateway
+* `use_ip_spaces` - Boolean value that hints if the NSX-T Edge Gateway uses IP Spaces
+
+~> `primary_ip`, `used_ip_count` and `unused_ip_count` will not be populated when using **IP Spaces**
 
 ## Importing
 

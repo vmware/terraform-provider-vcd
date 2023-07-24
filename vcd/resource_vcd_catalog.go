@@ -6,6 +6,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -101,7 +102,7 @@ func resourceVcdCatalog() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 				Description:   "Key and value pairs for catalog metadata.",
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog", false),
+			"metadata_entry": metadataEntryResourceSchema("Catalog"),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -209,6 +210,11 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
+	err = waitForMetadataReadiness(catalog)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	log.Printf("[TRACE] adding metadata for catalog")
 	err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
@@ -219,11 +225,34 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	return resourceVcdCatalogRead(ctx, d, meta)
 }
 
+// waitForMetadataReadiness waits for the Catalog to have links to add metadata, so it can be added without errors.
+// It will wait for 30 seconds maximum, or less if the links are ready.
+func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
+	timeout := time.Second * 30
+	startTime := time.Now()
+	for {
+		if time.Since(startTime) > timeout {
+			return fmt.Errorf("error waiting for the Catalog '%s' to be ready", catalog.AdminCatalog.ID)
+		}
+		link := catalog.AdminCatalog.Link.ForType("application/vnd.vmware.vcloud.metadata+xml", "add")
+		if link != nil {
+			util.Logger.Printf("catalog '%s' - metadata link found after %s\n", catalog.AdminCatalog.Name, time.Since(startTime))
+			break
+		}
+		err := catalog.Refresh()
+		if err != nil {
+			return err
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return nil
+}
+
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
 	err := adminCatalog.PublishToExternalOrganizations(types.PublishExternalCatalogParams{
-		IsPublishedExternally:    takeBoolPointer(d.Get("publish_enabled").(bool)),
-		IsCachedEnabled:          takeBoolPointer(d.Get("cache_enabled").(bool)),
-		PreserveIdentityInfoFlag: takeBoolPointer(d.Get("preserve_identity_information").(bool)),
+		IsPublishedExternally:    addrOf(d.Get("publish_enabled").(bool)),
+		IsCachedEnabled:          addrOf(d.Get("cache_enabled").(bool)),
+		PreserveIdentityInfoFlag: addrOf(d.Get("preserve_identity_information").(bool)),
 		Password:                 d.Get("password").(string),
 	})
 	if err != nil {
@@ -233,21 +262,13 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 }
 
 func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := genericResourceVcdCatalogRead(d, meta)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
-}
-
-func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf(errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -258,7 +279,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+		return diag.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
 	// Check if storage profile is set. Although storage profile structure accepts a list, in UI only one can be picked
@@ -280,7 +301,7 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "preserve_identity_information", adminCatalog.AdminCatalog.PublishExternalCatalogParams.PreserveIdentityInfoFlag)
 		subscriptionUrl, err := adminCatalog.FullSubscriptionUrl()
 		if err != nil {
-			return fmt.Errorf("error retrieving subscription URL from catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
+			return diag.Errorf("error retrieving subscription URL from catalog %s: %s", adminCatalog.AdminCatalog.Name, err)
 		}
 		dSet(d, "publish_subscription_url", subscriptionUrl)
 	} else {
@@ -290,19 +311,19 @@ func genericResourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) err
 		dSet(d, "password", "")
 	}
 
-	err = updateMetadataInState(d, adminCatalog)
+	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
-		return err
-	}
-
-	err = setCatalogData(d, vcdClient, adminOrg.AdminOrg.Name, adminOrg.AdminOrg.ID, adminCatalog, "vcd_catalog")
-	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
+	if diagErr != nil {
+		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
+		return diagErr
+	}
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
 	return nil
 }
@@ -437,7 +458,7 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 //
 // Example import path (id): org_name.catalog_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog")
@@ -461,15 +482,15 @@ func resourceVcdCatalogImport(_ context.Context, d *schema.ResourceData, meta in
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields
-	err = genericResourceVcdCatalogRead(d, meta)
-	if err != nil {
-		return nil, err
+	diagErr := resourceVcdCatalogRead(ctx, d, meta)
+	if diagErr != nil {
+		return nil, fmt.Errorf("error during read after import: %v", diagErr)
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog, resourceType string) error {
+func setCatalogData(d *schema.ResourceData, vcdClient *VCDClient, orgName, orgId string, adminCatalog *govcd.AdminCatalog) error {
 	// Catalog record is retrieved to get the owner name, number of vApp templates and medias, and if the catalog is shared and published
 	catalogRecords, err := vcdClient.VCDClient.Client.QueryCatalogRecords(adminCatalog.AdminCatalog.Name, govcd.TenantContext{OrgName: orgName, OrgId: orgId})
 	if err != nil {

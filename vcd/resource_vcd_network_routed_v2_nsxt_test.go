@@ -951,3 +951,30 @@ data "vcd_network_routed_v2" "test-network-routed-v2-ds" {
   vdc             = vcd_network_routed_v2.test-network-routed-v2.vdc
 }
 `
+
+func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Org '%s': %s", testConfig.VCD.Org, err)
+		}
+		vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, true)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		}
+		network, err := vdc.GetOpenApiOrgVdcNetworkById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Routed Network V2 '%s': %s", id, err)
+		}
+		return network, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdRoutedNetworkV2Metadata, "vcd_network_routed_v2.test-network-routed-v2",
+		testAccCheckVcdRoutedNetworkV2MetadataDatasource, "data.vcd_network_routed_v2.test-network-routed-v2-ds",
+		getObjectById, StringMap{
+			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
+		})
+}

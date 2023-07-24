@@ -58,7 +58,7 @@ func resourceVcdVApp() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": getMetadataEntrySchema("vApp", false),
+			"metadata_entry": metadataEntryResourceSchema("vApp"),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -314,13 +314,12 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "status_text", statusText)
 	dSet(d, "href", vapp.VApp.HREF)
 	dSet(d, "description", vapp.VApp.Description)
-
-	err = updateMetadataInState(d, vapp)
-	if err != nil {
-		return diag.Errorf("[vapp read] error setting metadata: %s", err)
-	}
-
 	d.SetId(vapp.VApp.ID)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", vapp)
+	if diagErr != nil {
+		return diagErr
+	}
 
 	return nil
 }

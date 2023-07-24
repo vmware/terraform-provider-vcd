@@ -70,7 +70,7 @@ func datasourceVcdCatalog() *schema.Resource {
 				Description: "Key and value pairs for catalog metadata",
 				Deprecated:  "Use metadata_entry instead",
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog", true),
+			"metadata_entry": metadataEntryDatasourceSchema("Catalog"),
 			"catalog_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -248,18 +248,18 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		dSet(d, "publish_subscription_url", subscriptionUrl)
 	}
 
-	err = updateMetadataInState(d, catalog)
-	if err != nil {
-		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
-	}
-
 	orgId := ""
 	if adminOrg != nil {
 		orgId = adminOrg.AdminOrg.ID
 	}
-	err = setCatalogData(d, vcdClient, orgName, orgId, catalog, "vcd_catalog")
+	err = setCatalogData(d, vcdClient, orgName, orgId, catalog)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", catalog)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	return nil

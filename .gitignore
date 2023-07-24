@@ -32,6 +32,8 @@ website/vendor
 vcd/org_user_pwd.txt
 vcd/vcd_test_pass_list*.txt
 tmp/
+examples/**/terraform.tfvars
+examples/**/.terraform*
 
 # Test exclusions
 !command/test-fixtures/**/*.tfstate

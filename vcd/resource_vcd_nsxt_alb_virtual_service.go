@@ -82,6 +82,11 @@ func resourceVcdAlbVirtualService() *schema.Resource {
 				Required:    true,
 				Description: "Virtual IP address (VIP) for Virtual Service",
 			},
+			"ipv6_virtual_ip_address": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "IPv6 Virtual IP address (VIP) for Virtual Service (VCD 10.4.0+)",
+			},
 			"application_profile_type": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -91,6 +96,12 @@ func resourceVcdAlbVirtualService() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem:     nsxtAlbVirtualServicePort,
+			},
+			"is_transparent_mode_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Preserves Client IP on a Virtual Service (VCD 10.4.1+)",
 			},
 		},
 	}
@@ -127,7 +138,7 @@ func resourceVcdAlbVirtualServiceCreate(ctx context.Context, d *schema.ResourceD
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	albVirtualServiceConfig, err := getNsxtAlbVirtualServiceType(d)
+	albVirtualServiceConfig, err := getNsxtAlbVirtualServiceType(d, vcdClient)
 	if err != nil {
 		return diag.Errorf("error getting NSX-T ALB Virtual Service type: %s", err)
 	}
@@ -151,7 +162,7 @@ func resourceVcdAlbVirtualServiceUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T ALB Virtual Service: %s", err))
 	}
 
-	updateVirtualServiceConfig, err := getNsxtAlbVirtualServiceType(d)
+	updateVirtualServiceConfig, err := getNsxtAlbVirtualServiceType(d, vcdClient)
 	if err != nil {
 		return diag.Errorf("error getting NSX-T ALB Virtual Service type: %s", err)
 	}
@@ -240,20 +251,30 @@ func resourceVcdAlbVirtualServiceImport(_ context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNsxtAlbVirtualServiceType(d *schema.ResourceData) (*types.NsxtAlbVirtualService, error) {
+func getNsxtAlbVirtualServiceType(d *schema.ResourceData, vcdClient *VCDClient) (*types.NsxtAlbVirtualService, error) {
 	albVirtualServiceConfig := &types.NsxtAlbVirtualService{
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
 		ApplicationProfile:    types.NsxtAlbVirtualServiceApplicationProfile{Type: d.Get("application_profile_type").(string)},
-		Enabled:               takeBoolPointer(d.Get("enabled").(bool)),
+		Enabled:               addrOf(d.Get("enabled").(bool)),
 		GatewayRef:            types.OpenApiReference{ID: d.Get("edge_gateway_id").(string)},
 		ServiceEngineGroupRef: types.OpenApiReference{ID: d.Get("service_engine_group_id").(string)},
 		LoadBalancerPoolRef:   types.OpenApiReference{ID: d.Get("pool_id").(string)},
 		VirtualIpAddress:      d.Get("virtual_ip_address").(string),
+		IPv6VirtualIpAddress:  d.Get("ipv6_virtual_ip_address").(string),
 	}
 	// Certificate must only be set if it is specified as the API throws error
 	if d.Get("ca_certificate_id").(string) != "" {
 		albVirtualServiceConfig.CertificateRef = &types.OpenApiReference{ID: d.Get("ca_certificate_id").(string)}
+	}
+
+	// Setting transparent mode is only possible in VCD 10.4.1+ (37.1+), throw error otherwise
+	if !d.GetRawConfig().GetAttr("is_transparent_mode_enabled").IsNull() {
+		if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+			return nil, fmt.Errorf("setting 'is_transparent_mode_enabled' is only supported in VCD 10.4.1+ (37.1+)")
+		}
+		transparentModeValue := d.Get("is_transparent_mode_enabled")
+		albVirtualServiceConfig.TransparentModeEnabled = addrOf(transparentModeValue.(bool))
 	}
 
 	servicePorts, err := getNsxtAlbVirtualServicePortType(d)
@@ -272,8 +293,8 @@ func getNsxtAlbVirtualServicePortType(d *schema.ResourceData) ([]types.NsxtAlbVi
 	for hmIndex, healthMonitor := range servicePortSet.List() {
 		servicePortMap := healthMonitor.(map[string]interface{})
 		singleVirtualServicePort := types.NsxtAlbVirtualServicePort{
-			PortStart:  takeIntPointer(servicePortMap["start_port"].(int)),
-			SslEnabled: takeBoolPointer(servicePortMap["ssl_enabled"].(bool)),
+			PortStart:  addrOf(servicePortMap["start_port"].(int)),
+			SslEnabled: addrOf(servicePortMap["ssl_enabled"].(bool)),
 			TcpUdpProfile: &types.NsxtAlbVirtualServicePortTcpUdpProfile{
 				SystemDefined: true,
 				Type:          servicePortMap["type"].(string),
@@ -282,7 +303,7 @@ func getNsxtAlbVirtualServicePortType(d *schema.ResourceData) ([]types.NsxtAlbVi
 
 		// End port is optional for single ports
 		if servicePortMap["end_port"].(int) != 0 {
-			singleVirtualServicePort.PortEnd = takeIntPointer(servicePortMap["end_port"].(int))
+			singleVirtualServicePort.PortEnd = addrOf(servicePortMap["end_port"].(int))
 		}
 
 		servicePortSlice[hmIndex] = singleVirtualServicePort
@@ -299,12 +320,16 @@ func setNsxtAlbVirtualServiceData(d *schema.ResourceData, albVirtualService *typ
 	dSet(d, "pool_id", albVirtualService.LoadBalancerPoolRef.ID)
 	dSet(d, "service_engine_group_id", albVirtualService.ServiceEngineGroupRef.ID)
 	dSet(d, "virtual_ip_address", albVirtualService.VirtualIpAddress)
-
+	dSet(d, "ipv6_virtual_ip_address", albVirtualService.IPv6VirtualIpAddress)
 	dSet(d, "application_profile_type", albVirtualService.ApplicationProfile.Type)
 
 	// Optional fields
 	if albVirtualService.CertificateRef != nil {
 		dSet(d, "ca_certificate_id", albVirtualService.CertificateRef.ID)
+	}
+
+	if albVirtualService.TransparentModeEnabled != nil {
+		dSet(d, "is_transparent_mode_enabled", *albVirtualService.TransparentModeEnabled)
 	}
 
 	err := setNsxtAlbVirtualServicePortData(d, albVirtualService.ServicePorts)

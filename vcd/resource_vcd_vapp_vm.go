@@ -226,7 +226,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Deprecated:    "Use metadata_entry instead",
 			ConflictsWith: []string{"metadata_entry"},
 		},
-		"metadata_entry": getMetadataEntrySchema("VM", false),
+		"metadata_entry": metadataEntryResourceSchema("VM"),
 		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -617,6 +617,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true, // As it can get populated automatically by VDC default policy
 			Description: "VM placement policy ID. Has to be assigned to Org VDC.",
 		},
+		"security_tags": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Computed:    true,
+			Description: "Security tags to assign to this VM",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
 		"status": {
 			Type:        schema.TypeInt,
 			Computed:    true,
@@ -654,7 +661,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
-	return genericVcdVmRead(d, meta, "create")
+	return genericVcdVmRead(d, meta, "resource")
 }
 
 // genericResourceVmCreate does the following:
@@ -789,6 +796,16 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	err = updateAdvancedComputeSettings(d, vm)
 	if err != nil {
 		return diag.Errorf("error applying advanced compute settings for VM %s : %s", vm.VM.Name, err)
+	}
+
+	// Handle VM Security Tags settings
+	// Such schema fields are processed:
+	// * security_tags
+	if _, isSet := d.GetOk("security_tags"); isSet {
+		err = createOrUpdateVmSecurityTags(d, vm)
+		if err != nil {
+			return diag.Errorf("[VM create] error creating security tags for VM %s : %s", vm.VM.Name, err)
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1281,7 +1298,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 				},
 				VmSpecSection: &types.VmSpecSection{
-					Modified:          takeBoolPointer(true),
+					Modified:          addrOf(true),
 					Info:              "Virtual Machine specification",
 					OsType:            osType.(string),
 					CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
@@ -1333,7 +1350,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				Description:               d.Get("description").(string),
 				GuestCustomizationSection: customizationSection,
 				VmSpecSection: &types.VmSpecSection{
-					Modified:          takeBoolPointer(true),
+					Modified:          addrOf(true),
 					Info:              "Virtual Machine specification",
 					OsType:            osType.(string),
 					NumCpus:           cpuCores,
@@ -1426,7 +1443,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	// update so that its value can be written into statefile and be accessible in read function
 	if onlyHasChange("network_dhcp_wait_seconds", vmSchemaFunc(vmType), d) {
 		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
-		return genericVcdVmRead(d, meta, "update")
+		return genericVcdVmRead(d, meta, "resource")
 	}
 
 	err := resourceVmHotUpdate(d, meta, vmType)
@@ -1746,6 +1763,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 	}
 
+	// Update the security tags
+	if d.HasChange("security_tags") {
+		err = createOrUpdateVmSecurityTags(d, vm)
+		if err != nil {
+			return diag.Errorf("[VM Update] error updating security tags for VM %s : %s", vm.VM.Name, err)
+		}
+	}
+
 	// If the VM was powered off during update but it has to be powered on
 	if d.Get("power_on").(bool) {
 		vmStatus, err := vm.GetStatus()
@@ -1790,8 +1815,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 	}
+
 	log.Printf("[DEBUG] [VM update] finished")
-	return genericVcdVmRead(d, meta, "update")
+	return genericVcdVmRead(d, meta, "resource")
 }
 
 func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -1921,11 +1947,6 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
-	err = updateMetadataInState(d, vm)
-	if err != nil {
-		return diag.Errorf("[VM read] set metadata: %s", err)
-	}
-
 	if vm.VM.StorageProfile != nil {
 		dSet(d, "storage_profile", vm.VM.StorageProfile.Name)
 	}
@@ -1975,12 +1996,23 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		}
 	}
 
+	entitySecurityTags, err := vm.GetVMSecurityTags()
+	if err != nil {
+		return diag.Errorf("[VM read] unable to read VM security tags: %s", err)
+	}
+	dSet(d, "security_tags", convertStringsToTypeSet(entitySecurityTags.Tags))
+
 	statusText, err := vm.GetStatus()
 	if err != nil {
 		statusText = vAppUnknownStatus
 	}
 	dSet(d, "status", vm.VM.Status)
 	dSet(d, "status_text", statusText)
+
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
+	if diagErr != nil {
+		return diagErr
+	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil

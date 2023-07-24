@@ -79,7 +79,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:    true,
 				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 			},
-			"metadata_entry": getMetadataEntrySchema("Catalog Item", false),
+			"metadata_entry": metadataEntryResourceSchema("Catalog Item"),
 			"catalog_item_metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -143,7 +143,8 @@ func resourceVcdCatalogItemRead(_ context.Context, d *schema.ResourceData, meta 
 }
 
 func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), origin)
+	vcdClient := meta.(*VCDClient)
+	catalogItem, err := findCatalogItem(d, vcdClient, origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item: %s", err)
 		return diag.Errorf("Unable to find catalog item: %s", err)
@@ -162,8 +163,49 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	dSet(d, "created", vAppTemplate.VAppTemplate.DateCreated)
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
+	// Catalog item metadata:
 	// We can't use updateMetadataInState(d, catalogItem) because the attribute name is different.
-	// We have three metadata attributes here.
+
+	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata and vApp Template metadata contents,
+	// which should not be affected by it.
+	// This closure makes the unlocking more optimal, as it unlocks when the closure returns.
+	getAllMetadata := func() (*types.Metadata, *types.Metadata, error) {
+		vcdMutexKV.kvLock("metadata") // The lock is needed as we're modifying shared client internals
+		defer vcdMutexKV.kvUnlock("metadata")
+		ignoredMetadata := vcdClient.VCDClient.SetMetadataToIgnore(nil)
+		deprecatedCatalogItemMetadata, err1 := catalogItem.GetMetadata()
+		vAppTemplateMetadata, err2 := vAppTemplate.GetMetadata()
+		vcdClient.VCDClient.SetMetadataToIgnore(ignoredMetadata)
+		if err1 != nil {
+			return nil, nil, fmt.Errorf("error getting metadata to save in state: %s", err)
+		}
+		if err2 != nil {
+			return nil, nil, fmt.Errorf("unable to find catalog item's associated vApp template metadata: %s", err)
+		}
+		return deprecatedCatalogItemMetadata, vAppTemplateMetadata, nil
+	}
+	deprecatedCatalogItemMetadata, vAppTemplateMetadata, err := getAllMetadata()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Set deprecated metadata attribute of catalog item, just for compatibility reasons
+	err = d.Set("catalog_item_metadata", getMetadataStruct(deprecatedCatalogItemMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set catalog item's metadata: %s", err)
+	}
+	// Set vApp Template metadata
+	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
+	if err != nil {
+		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
+	}
+
+	// We finally enter the `metadata_entry` metadata with filtering enabled
+	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, "vcd_catalog_item")
+	if diagErr != nil {
+		return diagErr
+	}
+
 	metadata, err := catalogItem.GetMetadata()
 	if err != nil {
 		return diag.Errorf("Unable to find catalog item's metadata: %s", err)
@@ -172,20 +214,6 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("Unable to set catalog item's metadata entries: %s", err)
-	}
-	err = d.Set("catalog_item_metadata", getMetadataStruct(metadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("Unable to set catalog item's metadata: %s", err)
-	}
-
-	// vApp Template metadata
-	vAppTemplateMetadata, err := vAppTemplate.GetMetadata()
-	if err != nil {
-		return diag.Errorf("Unable to find catalog item's associated vApp template metadata: %s", err)
-	}
-	err = d.Set("metadata", getMetadataStruct(vAppTemplateMetadata.MetadataEntry))
-	if err != nil {
-		return diag.Errorf("Unable to set metadata for the catalog item's associated vApp template: %s", err)
 	}
 
 	return nil

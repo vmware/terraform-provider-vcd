@@ -293,10 +293,10 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		Name:        egwName,
 		Description: d.Get("description").(string),
 		Configuration: &types.GatewayConfiguration{
-			UseDefaultRouteForDNSRelay: takeBoolPointer(d.Get("use_default_route_for_dns_relay").(bool)),
-			HaEnabled:                  takeBoolPointer(d.Get("ha_enabled").(bool)),
+			UseDefaultRouteForDNSRelay: addrOf(d.Get("use_default_route_for_dns_relay").(bool)),
+			HaEnabled:                  addrOf(d.Get("ha_enabled").(bool)),
 			GatewayBackingConfig:       d.Get("configuration").(string),
-			DistributedRoutingEnabled:  takeBoolPointer(d.Get("distributed_routing").(bool)),
+			DistributedRoutingEnabled:  addrOf(d.Get("distributed_routing").(bool)),
 			GatewayInterfaces: &types.GatewayInterfaces{
 				GatewayInterface: gwInterfaces,
 			},
@@ -307,7 +307,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
 		fipsModeEnabledBool := fipsModeEnabled.(bool)
 		log.Printf("[TRACE] edge gateway creation. FIPS mode was set with value %t", fipsModeEnabledBool)
-		egwConfiguration.Configuration.FipsModeEnabled = takeBoolPointer(fipsModeEnabledBool)
+		egwConfiguration.Configuration.FipsModeEnabled = &fipsModeEnabledBool
 	}
 
 	edge, err := govcd.CreateAndConfigureEdgeGateway(vcdClient.VCDClient, orgName, vdcName, egwName, egwConfiguration)
