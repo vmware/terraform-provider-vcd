@@ -51,6 +51,9 @@ The following arguments are supported:
   This is mainly useful when using
   [`vcd_nsxt_distributed_firewall_rule`](/providers/vmware/vcd/latest/docs/resources/nsxt_distributed_firewall_rule)
   resource as it cannot remove the default rule.
+* `force_delete` - (Optional, *3.11+*) When `true`, will force VDC Group deletion. It should clean
+  up child components. Default `false`. **Note:** when setting it to `true` for existing resource,
+  it will cause a plan change (update), but this will not alter the resource in any way.
 
 ## Attribute Reference
 
