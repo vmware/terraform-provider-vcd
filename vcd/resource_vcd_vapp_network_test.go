@@ -1205,3 +1205,84 @@ func TestAccVcdNsxtVappNetworkRemovalFails(t *testing.T) {
 	})
 	postTestChecks(t)
 }
+
+func TestAccVcdNsxtVappNetworkRemovalFailsResolvedVapp(t *testing.T) {
+	preTestChecks(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                   testConfig.VCD.Org,
+		"VdcName":               testConfig.Nsxt.Vdc,
+		"TestName":              t.Name(),
+		"ExistingRoutedNetwork": testConfig.Nsxt.RoutedNetwork,
+		"RebootVappOnRemoval":   "true",
+
+		"Tags": "network vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdNsxtVappNetworkRemovalResolvedVapp, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVappNetworkDestroyNsxt,
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vapp.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_network.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_org_network.test", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtVappNetworkRemovalResolvedVapp = `
+resource "vcd_vapp" "test" {
+  org  = "{{.Org}}"
+  vdc  = "{{.VdcName}}"
+  name = "{{.TestName}}"
+}
+
+resource "vcd_vapp_network" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.VdcName}}"
+
+  name      = "{{.TestName}}"
+  vapp_name = vcd_vapp.test.name
+  gateway   = "192.168.2.1"
+  netmask   = "255.255.255.0"
+
+  static_ip_pool {
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
+  }
+
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
+}
+
+resource "vcd_vapp_org_network" "test" {
+  org = "{{.Org}}"
+  vdc = "{{.VdcName}}"
+
+  vapp_name        = vcd_vapp.test.name
+  org_network_name = "{{.ExistingRoutedNetwork}}"
+
+  reboot_vapp_on_removal = {{.RebootVappOnRemoval}}
+}
+`
