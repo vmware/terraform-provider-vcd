@@ -67,8 +67,11 @@ type TestConfig struct {
 		ApiToken                string `json:"api_token,omitempty"`
 		ApiTokenFile            string `json:"api_token_file,omitempty"`
 		ServiceAccountTokenFile string `json:"service_account_token_file,omitempty"`
-		VcdVersion              string `json:"vcdVersion,omitempty"`
-		ApiVersion              string `json:"apiVersion,omitempty"`
+
+		// Versions are filled by the VCD provisioning task, and allow tests to
+		// check for compatibility without using an extra connection
+		VcdVersion string `json:"vcdVersion,omitempty"`
+		ApiVersion string `json:"apiVersion,omitempty"`
 
 		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
 		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
