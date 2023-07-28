@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -233,10 +234,24 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser, *govcd.AdminOrg, error) {
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	sessionInfo, err := vcdClient.Client.GetSessionInfo()
 	if err != nil {
-		return nil, nil, fmt.Errorf("[resourceToOrgUser] error retrieving org: %s", err)
+		return nil, nil, fmt.Errorf("error retrieving session info: %s", err)
 	}
+	result, err := retry("[resourceToOrgUser]",
+		fmt.Sprintf("error retrieving org %s", d.Get("org").(string)),
+		time.Second*30,
+		nil,
+		func() (any, error) {
+			return vcdClient.GetAdminOrgFromResource(d)
+		},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("[resourceToOrgUser - org %s - user %s] error retrieving org: %s",
+			sessionInfo.Org.Name, sessionInfo.User.Name, err)
+	}
+	adminOrg := result.(*govcd.AdminOrg)
+
 	if adminOrg.AdminOrg == nil || adminOrg.AdminOrg.HREF == "" {
 		return nil, nil, fmt.Errorf("[resourceToOrgUser ] error retrieving org %s", d.Get("org").(string))
 	}
