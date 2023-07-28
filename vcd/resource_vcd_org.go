@@ -97,7 +97,7 @@ func resourceOrg() *schema.Resource {
 			"list_of_catalogs": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Elem:        schema.Schema{Type: schema.TypeString},
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of catalogs, owned or shared, available to this organization",
 			},
 			"number_of_vdcs": {
@@ -108,7 +108,7 @@ func resourceOrg() *schema.Resource {
 			"list_of_vdcs": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Elem:        schema.Schema{Type: schema.TypeString},
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of VDCs, owned or shared, available to this organization",
 			},
 			"vapp_lease": {
@@ -467,21 +467,21 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	if numberOfCatalogs > 0 {
 		var availableCatalogs []interface{}
 		for _, c := range adminOrg.AdminOrg.Catalogs.Catalog {
-			availableCatalogs = append(availableCatalogs, c)
+			availableCatalogs = append(availableCatalogs, c.Name)
 		}
 		err := d.Set("list_of_catalogs", availableCatalogs)
 		if err != nil {
-			return fmt.Errorf("error setting list of catalogs: %s", err)
+			return diag.Errorf("error setting list of catalogs: %s", err)
 		}
 	}
 	if numberOfVdcs > 0 {
 		var availableVdcs []interface{}
 		for _, v := range adminOrg.AdminOrg.Vdcs.Vdcs {
-			availableVdcs = append(availableVdcs, v)
+			availableVdcs = append(availableVdcs, v.Name)
 		}
 		err := d.Set("list_of_vdcs", availableVdcs)
 		if err != nil {
-			return fmt.Errorf("error setting list of VDCs: %s", err)
+			return diag.Errorf("error setting list of VDCs: %s", err)
 		}
 	}
 	var err error
