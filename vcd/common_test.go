@@ -1,4 +1,4 @@
-//go:build network || nsxt || gateway || org || catalog || ALL || functional
+//go:build network || nsxt || gateway || org || catalog || access_control || ALL || functional
 
 package vcd
 
@@ -49,6 +49,57 @@ func testAccCheckOrgDestroy(orgName string) resource.TestCheckFunc {
 		}
 		if org != nil {
 			return fmt.Errorf("org %s was found", orgName)
+		}
+		return nil
+	}
+}
+
+// testCheckCatalogAndItemsExist checks that a catalog exists, and optionally that it has as many items as expected
+// * checkItems defines whether we count the items or not
+// * expectedItems is the total number of catalog items (includes both vApp templates and media items)
+// * expectedTemplates is the number of vApp templates
+// expectedMedia is the number of Media
+func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if testAccProvider == nil || testAccProvider.Meta() == nil {
+			return fmt.Errorf("testAccProvider is not initialized")
+		}
+		conn := testAccProvider.Meta().(*VCDClient)
+		catalog, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
+		if err != nil {
+			return fmt.Errorf("error retrieving catalog %s/%s: %s", orgName, catalogName, err)
+		}
+		if !checkItems {
+			return nil
+		}
+
+		if catalog.AdminCatalog.Tasks != nil {
+			err = catalog.WaitForTasks()
+			if err != nil {
+				return err
+			}
+		}
+
+		items, err := catalog.QueryCatalogItemList()
+		if err != nil {
+			return fmt.Errorf("error retrieving catalog item list: %s", err)
+		}
+		vappTemplates, err := catalog.QueryVappTemplateList()
+		if err != nil {
+			return fmt.Errorf("error retrieving vApp templates list: %s", err)
+		}
+		mediaItems, err := catalog.QueryMediaList()
+		if err != nil {
+			return fmt.Errorf("error retrieving media items list: %s", err)
+		}
+		if len(items) != expectedItems {
+			return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
+		}
+		if len(vappTemplates) != expectedTemplates {
+			return fmt.Errorf("catalog '%s' -expected %d vApp templates - found %d", catalogName, expectedTemplates, len(vappTemplates))
+		}
+		if len(mediaItems) != expectedMedia {
+			return fmt.Errorf("catalog '%s' -expected %d media items - found %d", catalogName, expectedMedia, len(mediaItems))
 		}
 		return nil
 	}
