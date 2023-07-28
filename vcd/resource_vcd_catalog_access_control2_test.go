@@ -4,17 +4,16 @@ package vcd
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"testing"
 )
 
 func TestAccVcdCatalogAccessControl2(t *testing.T) {
 	preTestChecks(t)
 
-	skipTestForApiToken(t)
+	skipTestForServiceAccountAndApiToken(t)
 
 	skipIfNotSysAdmin(t)
 
@@ -37,8 +36,8 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 		userName2  = "test-user2"
 		userName3  = "test-user3"
 		newOrg1    = "test-org1"
-		newOrg2    = "test-org1"
-		newOrg3    = "test-org1"
+		newOrg2    = "test-org2"
+		newOrg3    = "test-org3"
 	)
 	var params = StringMap{
 		"Org1":                     testConfig.VCD.Org,
@@ -73,6 +72,9 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 		"AccessLevel3":             types.ControlAccessReadOnly,
 		"UserPassword":             "TO_BE_DISCARDED",
 		"FuncName":                 t.Name(),
+		"ProviderVcdSystem":        providerVcdSystem,
+		"ProviderVcdOrg1":          providerVcdOrg1,
+		"ProviderVcdOrg2":          providerVcdOrg2,
 		"Tags":                     "catalog",
 		"SkipNotice":               " ",
 	}
@@ -87,6 +89,7 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 	params["FuncName"] = t.Name() + "-update"
 	params["SkipNotice"] = "# skip-binary-test: only for updates"
 	updateText := templateFill(testAccCatalogAccessControlCreation+testAccCatalogAccessControlAccess, params)
+	params["FuncName"] = t.Name() + "-check"
 	checkText := templateFill(testAccCatalogAccessControlCreation+testAccCatalogAccessControlAccess+testAccCatalogAccessControlCheck, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -129,6 +132,10 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 			// Test access
 			{
 				Config: configTextAccess,
+				//PreConfig: func() {
+				//	fmt.Printf("sleeping for 30 seconds\n")
+				//	time.Sleep(30 * time.Second)
+				//},
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogAccessControlExists(resourceAC0, testConfig.VCD.Org),
 					testAccCheckVcdCatalogAccessControlExists(resourceAC1, testConfig.VCD.Org),
@@ -142,7 +149,7 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAC1, "shared_with.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC2, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user1",
+							"subject_name": userName1,
 							"access_level": types.ControlAccessFullControl,
 						}),
 					resource.TestCheckResourceAttr(resourceAC2, "shared_with_everyone", "false"),
@@ -150,7 +157,7 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC2, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user2",
+							"subject_name": userName2,
 							"access_level": types.ControlAccessReadWrite,
 						}),
 
@@ -158,22 +165,22 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAC3, "shared_with.#", "3"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC3, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user1",
+							"subject_name": userName1,
 							"access_level": types.ControlAccessFullControl,
 						}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC3, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user2",
+							"subject_name": userName2,
 							"access_level": types.ControlAccessReadWrite,
 						}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC3, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user3",
+							"subject_name": userName3,
 							"access_level": types.ControlAccessReadOnly,
 						}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC4, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user2",
+							"subject_name": userName2,
 							"access_level": types.ControlAccessReadWrite,
 						}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC4, "shared_with.*",
@@ -192,19 +199,19 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAC1, "shared_with.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC1, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user1",
+							"subject_name": userName1,
 							"access_level": types.ControlAccessReadWrite,
 						}),
 					resource.TestCheckResourceAttr(resourceAC2, "shared_with.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC2, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user1",
+							"subject_name": userName1,
 							"access_level": types.ControlAccessReadWrite,
 						}),
 					resource.TestCheckResourceAttr(resourceAC3, "shared_with.#", "3"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC3, "shared_with.*",
 						map[string]string{
-							"subject_name": "ac-user1",
+							"subject_name": userName1,
 							"access_level": types.ControlAccessReadWrite,
 						}),
 				)},
@@ -212,18 +219,18 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 			// Tests import by name
 			{
 				Config:            configTextAccess,
-				ResourceName:      "vcd_catalog_access_control.AC-Catalog1",
+				ResourceName:      "vcd_catalog_access_control." + acCatalog1,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, "Catalog-AC-1"),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig.VCD.Org, catalog1),
 			},
 			// Tests import by ID
 			{
 				Config:            configTextAccess,
-				ResourceName:      "vcd_catalog_access_control.AC-Catalog2",
+				ResourceName:      "vcd_catalog_access_control." + acCatalog2,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateCatalogIdViaResource("vcd_catalog_access_control.AC-Catalog2"),
+				ImportStateIdFunc: importStateCatalogId(testConfig.VCD.Org, catalog2),
 			},
 		},
 	})
@@ -334,6 +341,7 @@ resource "vcd_catalog" "{{.CatalogName6}}" {
 }
 
 data "vcd_org" "other-org" {
+  provider         = {{.ProviderVcdSystem}}
   name = "{{.Org2}}"
 }
 `
