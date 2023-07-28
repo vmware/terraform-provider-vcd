@@ -151,19 +151,40 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		if err != nil {
 			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}
+		adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
+		if err != nil {
+			return fmt.Errorf("error retrieving AdminOrg %s: %s", orgRef.Name, err)
+		}
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, orgRef.Name, "vcd_org", 0, verbose)
 		if toBeDeleted {
 			fmt.Printf("\t REMOVING org %s\n", org.Org.Name)
-			adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
-			if err != nil {
-				return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
-			}
+
 			err = adminOrg.Delete(true, true)
 			if err != nil {
 				return fmt.Errorf("error removing org %s: %s", orgRef.Name, err)
 			}
 			continue
 		}
+
+		// --------------------------------------------------------------
+		// users
+		// --------------------------------------------------------------
+		if adminOrg.AdminOrg.Users != nil {
+			for _, userRef := range adminOrg.AdminOrg.Users.User {
+				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, userRef.Name, "vcd_org_user", 1, verbose)
+				if toBeDeleted {
+					user, err := adminOrg.GetUserByHref(userRef.HREF)
+					if err != nil {
+						return fmt.Errorf("error retrieving user %s: %s", userRef.Name, err)
+					}
+					err = user.Delete(false)
+					if err != nil {
+						return fmt.Errorf("error deleting user %s: %s", userRef.Name, err)
+					}
+				}
+			}
+		}
+
 		// --------------------------------------------------------------
 		// catalogs
 		// --------------------------------------------------------------
@@ -173,7 +194,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			return fmt.Errorf("error retrieving catalog list: %s", err)
 		}
 		for _, catRec := range catalogs {
-			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
+			toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
 			catalog, err := org.GetCatalogByHref(catRec.HREF)
 			if err != nil {
 				return fmt.Errorf("error retrieving catalog '%s': %s", catRec.Name, err)
