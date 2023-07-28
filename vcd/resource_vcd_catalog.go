@@ -178,7 +178,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	// (only administrator, organization administrator and Catalog author are allowed)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog create] "+errorRetrievingOrg, err)
 	}
 
 	var storageProfiles *types.CatalogStorageProfiles
@@ -268,7 +268,7 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog read] "+errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -342,7 +342,7 @@ func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog update] "+errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -430,9 +430,26 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	sessionInfo, err := vcdClient.Client.GetSessionInfo()
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog delete] error retrieving session info :%s", err)
+	}
+
+	sessionText := fmt.Sprintf("[catalog delete - org: %s - user: %s]", sessionInfo.Org.Name, sessionInfo.User.Name)
+
+	result, err := retry(sessionText,
+		fmt.Sprintf("%s error fetching org '%s'", sessionText, d.Get("org").(string)),
+		time.Second*30,
+		nil,
+		func() (any, error) {
+			return vcdClient.GetAdminOrgFromResource(d)
+		},
+	)
+
+	//adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	adminOrg := result.(*govcd.AdminOrg)
+	if err != nil {
+		return diag.Errorf("%s "+errorRetrievingOrg, sessionText, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -468,7 +485,7 @@ func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta 
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+		return nil, fmt.Errorf("[catalog import] "+errorRetrievingOrg, orgName)
 	}
 
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
