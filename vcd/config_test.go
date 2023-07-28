@@ -1181,15 +1181,15 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 	}
 }
 
-func importStateCatalogIdViaResource(resource string) resource.ImportStateIdFunc {
+func importStateCatalogIdViaResource(resourceDef string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
-		rs, ok := s.RootModule().Resources[resource]
+		rs, ok := s.RootModule().Resources[resourceDef]
 		if !ok {
-			return "", fmt.Errorf("resource not found: %s", resource)
+			return "", fmt.Errorf("resource not found: %s", resourceDef)
 		}
 
 		if rs.Primary.ID == "" {
-			return "", fmt.Errorf("no ID is set for %s resource", resource)
+			return "", fmt.Errorf("no ID is set for %s resource", resourceDef)
 		}
 
 		importId := testConfig.VCD.Org + "." + rs.Primary.ID
@@ -1197,6 +1197,22 @@ func importStateCatalogIdViaResource(resource string) resource.ImportStateIdFunc
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil
+	}
+}
+
+// importStateCatalogId returns a catalog ID from a pair of org+catalog names
+func importStateCatalogId(orgName, catalogName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.GetOrgByName(orgName)
+		if err != nil {
+			return "", err
+		}
+		catalog, err := org.GetCatalogByName(catalogName, false)
+		if err != nil {
+			return "", err
+		}
+		return orgName + "." + catalog.Catalog.ID, nil
 	}
 }
 
