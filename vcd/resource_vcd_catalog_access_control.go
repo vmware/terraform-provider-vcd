@@ -3,13 +3,14 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"os"
+	"strings"
+	"time"
 )
 
 func resourceVcdCatalogAccessControl() *schema.Resource {
@@ -94,6 +95,11 @@ func resourceVcdCatalogAccessControl() *schema.Resource {
 func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	sessionInfo, err := vcdClient.Client.GetSessionInfo()
+	if err != nil {
+		return diag.Errorf("error retrieving session info: %s", err)
+	}
+	sessionText := fmt.Sprintf("[ vcd_catalog_access_control set - org: %s - user: %s]", sessionInfo.Org.Name, sessionInfo.User.Name)
 	var accessSettings []*types.AccessSetting
 	readOnlySharedwithOtherOrgs := d.Get("read_only_shared_with_other_orgs").(bool)
 	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
@@ -119,15 +125,17 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 
 		accessSettings, err = sharedSetToAccessControl(vcdClient, adminOrg, sharedList, []string{"org_id", "user_id", "group_id"})
 		if err != nil {
-			return diag.Errorf("error when reading shared_with from schema - %s", err)
+			return diag.Errorf("%s error when reading shared_with from schema - %s", sessionText, err)
 		}
 	}
 
 	catalogId := d.Get("catalog_id").(string)
 	catalog, err := adminOrg.GetAdminCatalogById(catalogId, false)
 	if err != nil {
-		return diag.Errorf("error when retrieving catalog %s - %s", catalogId, err)
+		return diag.Errorf("%s error when retrieving catalog %s - %s", sessionText, catalogId, err)
 	}
+	sessionText = fmt.Sprintf("[ vcd_catalog_access_control set - org: %s - user: %s - catalog: %s]",
+		sessionInfo.Org.Name, sessionInfo.User.Name, catalog.AdminCatalog.Name)
 	var accessSettingsList *types.AccessSettingList
 	if accessSettings != nil {
 		accessSettingsList = &types.AccessSettingList{
@@ -141,13 +149,27 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 		EveryoneAccessLevel: everyoneAccessLevel,
 		AccessSettings:      accessSettingsList,
 	}
-	if readOnlySharedwithOtherOrgs {
-		err = catalog.SetReadOnlyAccessControl(true)
-	} else {
-		err = catalog.SetAccessControl(&accessControlParams, true)
-	}
+	_, err = retry(sessionText,
+		"error when setting Catalog control access parameters",
+		time.Second*30,
+		nil, //func() error { return catalog.Refresh() },
+		func() (any, error) {
+			var err error
+			if readOnlySharedwithOtherOrgs {
+				err = catalog.SetReadOnlyAccessControl(true)
+			} else {
+				err = catalog.SetAccessControl(&accessControlParams, true)
+			}
+			return nil, err
+		})
+	//if readOnlySharedwithOtherOrgs {
+	//	err = catalog.SetReadOnlyAccessControl(true)
+	//} else {
+	//	err = catalog.SetAccessControl(&accessControlParams, true)
+	//}
 	if err != nil {
-		return diag.Errorf("error when setting Catalog control access parameters - %s", err)
+		//fmt.Printf("%# v\n", pretty.Formatter(accessControlParams))
+		return diag.Errorf("%s error when setting Catalog control access parameters - %s", sessionText, err)
 	}
 
 	d.SetId(catalog.AdminCatalog.ID)
@@ -156,10 +178,14 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 
 func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
+	sessionInfo, err := vcdClient.Client.GetSessionInfo()
+	if err != nil {
+		return diag.Errorf("error retrieving session info: %s", err)
+	}
+	sessionText := fmt.Sprintf("[ vcd_catalog_access_control read - org: %s - user: %s]", sessionInfo.Org.Name, sessionInfo.User.Name)
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("error while reading Org - %s", err)
+		return diag.Errorf("%s error while reading Org - %s", sessionText, err)
 	}
 
 	catalog, err := org.GetCatalogById(d.Id(), false)
@@ -168,20 +194,41 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 			d.SetId("")
 			return nil
 		} else {
-			return diag.Errorf("error while reading Catalog - %s", err)
+			return diag.Errorf("%s error while reading Catalog - %s", sessionText, err)
 		}
 	}
 
-	sharedReadOnly, err := catalog.IsSharedReadOnly()
-	if err != nil {
-		return diag.Errorf("error checking catalog read-only sharing status: %s", err)
-	}
-	dSet(d, "read_only_shared_with_other_orgs", sharedReadOnly)
+	sessionText = fmt.Sprintf("[ vcd_catalog_access_control read - org: %s - user: %s - catalog: %s]",
+		sessionInfo.Org.Name, sessionInfo.User.Name, catalog.Catalog.Name)
 
-	controlAccessParams, err := catalog.GetAccessControl(true)
+	sharedReadOnly, err := retry(sessionText,
+		fmt.Sprintf("%s error checking catalog read-only sharing status", sessionText),
+		time.Second*30,
+		nil, //func() error { return catalog.Refresh() },
+		func() (any, error) {
+			return catalog.IsSharedReadOnly()
+		},
+	)
 	if err != nil {
-		return diag.Errorf("error getting control access parameters - %s", err)
+		return diag.FromErr(err)
 	}
+
+	dSet(d, "read_only_shared_with_other_orgs", sharedReadOnly.(bool))
+
+	result, err := retry(
+		fmt.Sprintf("%s getting control access parameters", sessionText),
+		fmt.Sprintf("%s error getting control access parameters", sessionText),
+		time.Second*30,
+		nil,
+		func() (any, error) {
+			return catalog.GetAccessControl(true)
+		},
+	)
+	//controlAccessParams, err := catalog.GetAccessControl(true)
+	if err != nil {
+		return diag.Errorf("%s error getting control access parameters - %s", sessionText, err)
+	}
+	controlAccessParams := result.(*types.ControlAccessParams)
 
 	dSet(d, "shared_with_everyone", controlAccessParams.IsSharedToEveryone)
 	if controlAccessParams.EveryoneAccessLevel != nil {
@@ -225,14 +272,29 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 	}
 
 	if sharedReadOnly {
-		err = catalog.SetReadOnlyAccessControl(false)
+		_, err = retry(fmt.Sprintf("removing catalog '%s' shared read-only ", catalog.AdminCatalog.Name),
+			"error removing catalog read-only access control",
+			30*time.Second,
+			nil,
+			func() (any, error) {
+				err := catalog.SetReadOnlyAccessControl(false)
+				return nil, err
+			})
+		//err = catalog.SetReadOnlyAccessControl(false)
 		if err != nil {
-			return diag.Errorf("error removing catalog read-only access control: %s", err)
+			return diag.FromErr(err)
 		}
 		d.SetId("")
 		return nil
 	}
-	err = catalog.RemoveAccessControl(true)
+	_, err = retry(fmt.Sprintf("deleting catalog %s access control", catalog.AdminCatalog.Name),
+		fmt.Sprintf("error when deleting catalog '%s' access control", catalog.AdminCatalog.Name),
+		time.Second*30,
+		nil,
+		func() (any, error) {
+			return nil, catalog.RemoveAccessControl(true)
+		})
+	//err = catalog.RemoveAccessControl(true)
 	if err != nil {
 		return diag.Errorf("error when deleting Catalog access control - %s", err)
 	}
@@ -253,7 +315,7 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 
 	org, err := vcdClient.GetOrg(orgName)
 	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, err)
+		return nil, fmt.Errorf("[catalog access control import] "+errorRetrievingOrg, err)
 	}
 
 	catalog, err := org.GetCatalogByNameOrId(catalogIdentifier, false)
@@ -265,4 +327,37 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 	d.SetId(catalog.Catalog.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func retry(label, message string, timeout time.Duration, refresh func() error, operation func() (any, error)) (any, error) {
+	if os.Getenv("VCD_RETRY") == "" {
+		return operation()
+	}
+	if operation == nil {
+		return nil, fmt.Errorf("argument 'operation' cannot be null")
+	}
+	start := time.Now()
+	elapsed := time.Since(start)
+	attempts := 0
+	var err error
+	var result any
+	for elapsed < timeout {
+		if refresh != nil {
+			err = refresh()
+			if err != nil {
+				return nil, err
+			}
+		}
+		result, err = operation()
+		if err == nil {
+			fmt.Printf("%s attempts: %d - elapsed: %s\n", label, attempts, elapsed)
+			return result, nil
+		}
+		elapsed = time.Since(start)
+		attempts++
+		if elapsed < timeout {
+			continue
+		}
+	}
+	return nil, fmt.Errorf(message+" :%s", err)
 }
