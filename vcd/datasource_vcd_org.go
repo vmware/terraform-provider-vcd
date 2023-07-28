@@ -62,7 +62,7 @@ func datasourceVcdOrg() *schema.Resource {
 			"list_of_catalogs": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Elem:        schema.Schema{Type: schema.TypeString},
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of catalogs, owned or shared, available to this organization",
 			},
 			"number_of_vdcs": {
@@ -73,7 +73,7 @@ func datasourceVcdOrg() *schema.Resource {
 			"list_of_vdcs": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Elem:        schema.Schema{Type: schema.TypeString},
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of VDCs, owned or shared, available to this organization",
 			},
 			"vapp_lease": {
