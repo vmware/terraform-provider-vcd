@@ -1,2 +1,2 @@
-* Add `guest_vlan_allowed` to data sources `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_network_isolated` and `vcd_network_isolated_v2`
+* Add `guest_vlan_allowed` to `vcd_network_routed`, `vcd_network_routed_v2`, `vcd_network_isolated` and `vcd_network_isolated_v2` resources and data sources
   to allow the transport of VLAN-tagged packets on those network types [GH-1080]
