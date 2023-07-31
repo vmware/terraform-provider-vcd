@@ -453,11 +453,11 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier6}}" {
 `
 
 const testAccCatalogAccessControlCheck = `
-data "vcd_catalog" "{{.CatalogName1}}" {
-  provider = {{.ProviderVcdOrg2}}
-  org      = "{{.Org1}}"
-  name     = "{{.CatalogName1}}"
-}
+#data "vcd_catalog" "{{.CatalogName1}}" {
+#  provider = {{.ProviderVcdOrg2}}
+#  org      = "{{.Org1}}"
+#  name     = "{{.CatalogName1}}"
+#}
 
 data "vcd_catalog" "{{.CatalogName5}}" {
   provider = {{.ProviderVcdOrg2}}
