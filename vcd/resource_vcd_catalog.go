@@ -210,11 +210,6 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	err = waitForMetadataReadiness(catalog)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	log.Printf("[TRACE] adding metadata for catalog")
 	err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
@@ -223,29 +218,6 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
 	return resourceVcdCatalogRead(ctx, d, meta)
-}
-
-// waitForMetadataReadiness waits for the Catalog to have links to add metadata, so it can be added without errors.
-// It will wait for 30 seconds maximum, or less if the links are ready.
-func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
-	timeout := time.Second * 30
-	startTime := time.Now()
-	for {
-		if time.Since(startTime) > timeout {
-			return fmt.Errorf("error waiting for the Catalog '%s' to be ready", catalog.AdminCatalog.ID)
-		}
-		link := catalog.AdminCatalog.Link.ForType("application/vnd.vmware.vcloud.metadata+xml", "add")
-		if link != nil {
-			util.Logger.Printf("catalog '%s' - metadata link found after %s\n", catalog.AdminCatalog.Name, time.Since(startTime))
-			break
-		}
-		err := catalog.Refresh()
-		if err != nil {
-			return err
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-	return nil
 }
 
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
@@ -447,10 +419,10 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 	)
 
 	//adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	adminOrg := result.(*govcd.AdminOrg)
 	if err != nil {
 		return diag.Errorf("%s "+errorRetrievingOrg, sessionText, err)
 	}
+	adminOrg := result.(*govcd.AdminOrg)
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
