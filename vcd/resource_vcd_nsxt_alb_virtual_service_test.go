@@ -757,8 +757,7 @@ func TestAccVcdNsxtAlbVirtualServiceTransparentMode(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
 		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
 	}
 
@@ -980,8 +979,7 @@ func TestAccVcdNsxtAlbVirtualServiceIPv6(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.0") {
 		t.Skipf("This test tests VCD 10.4.0+ (API V37.0+) features. Skipping.")
 	}
 

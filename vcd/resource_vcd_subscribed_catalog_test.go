@@ -24,8 +24,7 @@ func TestAccVcdVsphereSubscriber(t *testing.T) {
 		t.Skip("vSphereSubscribedCatalog was not defined")
 	}
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.0") {
 		t.Skip("This test may fail with versions prior to 10.4.0 because of side effects from other operations. Skipping.")
 	}
 
@@ -75,8 +74,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.0") {
 		t.Skip("This test may fail with versions prior to 10.4.0 because of side effects from other operations. Skipping.")
 	}
 

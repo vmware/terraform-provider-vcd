@@ -13,11 +13,7 @@ import (
 func TestAccVcdNsxtEdgeDhcpV6(t *testing.T) {
 	preTestChecks(t)
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
-		t.Skip(acceptanceTestsSkipped)
-	}
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.2") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 36.2") {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
