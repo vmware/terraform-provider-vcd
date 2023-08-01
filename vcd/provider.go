@@ -389,6 +389,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
 
 	if err := validateProviderSchema(d); err != nil {
+		util.Logger.Printf("[ERROR] Error validating provider: %s - Call Stack: %s", err, util.FuncNameCallStack())
 		return nil, diag.Errorf("[provider validation] :%s", err)
 	}
 
