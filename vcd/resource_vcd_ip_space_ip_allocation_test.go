@@ -15,11 +15,7 @@ func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
-		t.Skip(acceptanceTestsSkipped)
-	}
-	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
 		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
 	}
 

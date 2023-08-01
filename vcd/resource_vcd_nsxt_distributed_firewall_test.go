@@ -465,8 +465,7 @@ func TestAccVcdDistributedFirewallVCD10_3_2(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.2") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 36.2") {
 		t.Skipf("This test tests VCD 10.3.2+ (API V36.2+) features. Skipping.")
 	}
 
