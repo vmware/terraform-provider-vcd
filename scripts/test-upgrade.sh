@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 runtime_dir=$(dirname $0)
 cd $runtime_dir

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script will connect to the vCD using username and password,
 # and show the headers that contain a bearer or authorization token.
 #

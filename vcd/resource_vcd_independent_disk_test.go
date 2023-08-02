@@ -178,8 +178,7 @@ func TestAccVcdIndependentDiskBasicWithUpdates(t *testing.T) {
 	// The test is being skipped due to a known bug in the current versions of VCD
 	// when updating the disk resources, thus the test will only be run on versions
 	// released after v10.4.1.
-	vcdClient := createTemporaryVCDConnection(false)
-	if vcdClient.Client.APIVCDMaxVersionIs("<= 37.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "<= 37.1") {
 		t.Skip("This test may fail on versions up to VCD 10.4.1 (API V37.1) because of a known bug. Skipping.")
 	}
 

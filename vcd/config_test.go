@@ -23,7 +23,7 @@ import (
 
 	"github.com/kr/pretty"
 
-	"github.com/hashicorp/go-version"
+	semver "github.com/hashicorp/go-version"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -67,6 +67,11 @@ type TestConfig struct {
 		ApiToken                string `json:"api_token,omitempty"`
 		ApiTokenFile            string `json:"api_token_file,omitempty"`
 		ServiceAccountTokenFile string `json:"service_account_token_file,omitempty"`
+
+		// Versions are filled by the VCD provisioning task, and allow tests to
+		// check for compatibility without using an extra connection
+		VcdVersion string `json:"vcdVersion,omitempty"`
+		ApiVersion string `json:"apiVersion,omitempty"`
 
 		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
 		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
@@ -308,7 +313,8 @@ const (
 # comment {{.Comment}}
 # date {{.Timestamp}}
 # file {{.CallerFileName}}
-#
+# VCD version {{.VcdVersion}}
+# API version {{.ApiVersion}}
 
 provider "vcd" {
   user                 = "{{.PrUser}}"
@@ -323,7 +329,6 @@ provider "vcd" {
   vdc                  = "{{.PrVdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
-  #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
   {{.IgnoreMetadataBlock}}
@@ -477,6 +482,8 @@ func templateFill(tmpl string, data StringMap) string {
 		data["CallerFileName"] = callerFileName
 	}
 	data["Timestamp"] = time.Now().Format("2006-01-02 15:04")
+	data["VcdVersion"] = testConfig.Provider.VcdVersion
+	data["ApiVersion"] = testConfig.Provider.ApiVersion
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
 	// error message in case of failure
@@ -1576,7 +1583,7 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 		t.Fatalf("Could not determine VCD version")
 	}
 
-	expectedVersion, err := version.NewVersion(exactSkipVersion)
+	expectedVersion, err := semver.NewVersion(exactSkipVersion)
 	if err != nil {
 		t.Fatalf("could not process versions")
 	}
@@ -1645,4 +1652,40 @@ func logState(label string) resource.TestCheckFunc {
 		}
 		return nil
 	}
+}
+
+// checkVersion checks a given version against a version constraint
+// for example:
+// version "37.2" ; constraint "< 36.1" ; returns false
+// version "37.2" ; constraint "> 36.0" ; returns true
+// The function returns false in case of errors, but it is chatty in such instances, because it means
+// an error in the test configuration that should be rectified
+func checkVersion(version, versionConstraint string) bool {
+	caller := util.CallFuncName()
+	if version == "" {
+		util.Logger.Printf("[INFO-%s] provided version is empty: can't be compared with constraints '%s'\n", caller, versionConstraint)
+		fmt.Printf("[INFO-%s] provided version is empty: can't be compared with constraints '%s'\n", caller, versionConstraint)
+		return false
+	}
+	checkVer, err := semver.NewVersion(version)
+	if err != nil {
+		util.Logger.Printf("[INFO-%s] error getting a semver object from version '%s': '%s'\n", caller, version, err)
+		fmt.Printf("[INFO-%s] error getting a semver object from version '%s': '%s'\n", caller, version, err)
+		return false
+	}
+	// Create a constraint to check against the provided version
+	constraints, err := semver.NewConstraint(versionConstraint)
+	if err != nil {
+		util.Logger.Printf("[INFO-%s] error getting a constraint object from versionConstraint '%s': '%s'\n", caller, versionConstraint, err)
+		fmt.Printf("[INFO-%s] error getting a constraint object from versionConstraint '%s': '%s'\n", caller, versionConstraint, err)
+		return false
+	}
+	// No screen message below this line: what follows is a legitimate boolean result
+	if constraints.Check(checkVer) {
+		util.Logger.Printf("[INFO-%s] version '%s' satisfies constraints '%s'\n", caller, checkVer, constraints)
+		return true
+	}
+
+	util.Logger.Printf("[TRACE-%s] version '%s' does not satisfy constraints '%s'\n", caller, checkVer, constraints)
+	return false
 }
