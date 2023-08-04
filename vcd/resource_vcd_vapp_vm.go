@@ -343,6 +343,19 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Default:     true,
 						Description: "It defines if NIC is connected or not.",
 					},
+					"secondary_ip": {
+						Computed:     true,
+						Optional:     true,
+						Type:         schema.TypeString,
+						ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
+						Description:  "Secondary IP of the VM. Settings depend on `secondary_ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
+					},
+					"secondary_ip_allocation_mode": {
+						Optional:     true,
+						Type:         schema.TypeString,
+						ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+						Description:  "Secondary IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+					},
 				},
 			},
 		},
@@ -1295,7 +1308,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				NetworkConnectionSection: &types.NetworkConnectionSection{
 					PrimaryNetworkConnectionIndex: 0,
 					NetworkConnection: []*types.NetworkConnection{
-						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
+						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE", SecondaryIpAddressAllocationMode: "NONE", SecondaryIpAddress: "any"}},
 				},
 				VmSpecSection: &types.VmSpecSection{
 					Modified:          addrOf(true),
@@ -1343,7 +1356,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				NetworkConnectionSection: &types.NetworkConnectionSection{
 					PrimaryNetworkConnectionIndex: 0,
 					NetworkConnection: []*types.NetworkConnection{
-						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
+						{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE", SecondaryIpAddressAllocationMode: "NONE", SecondaryIpAddress: "any"}},
 				},
 				StorageProfile:            storageProfilePtr,
 				ComputePolicy:             vmComputePolicy,

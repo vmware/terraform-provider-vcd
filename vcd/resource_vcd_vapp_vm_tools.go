@@ -783,8 +783,10 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 			networkName = "none"
 		}
 		ipAllocationMode := nic["ip_allocation_mode"].(string)
+
 		ip := nic["ip"].(string)
 		macAddress, macIsSet := nic["mac"].(string)
+		secondary_ip := nic["secondary_ip"].(string)
 
 		isPrimary := nic["is_primary"].(bool)
 		nicHasPrimaryChange := d.HasChange("network." + strconv.Itoa(index) + ".is_primary")
@@ -812,6 +814,7 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 			}
 		}
 
+		netConn.SecondaryIpAddressAllocationMode = nic["secondary_ip_allocation_mode"].(string)
 		netConn.IsConnected = nic["connected"].(bool)
 		netConn.IPAddressAllocationMode = ipAllocationMode
 		netConn.NetworkConnectionIndex = index
@@ -826,6 +829,10 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 
 		if net.ParseIP(ip) != nil {
 			netConn.IPAddress = ip
+		}
+
+		if net.ParseIP(secondary_ip) != nil {
+			netConn.SecondaryIpAddress = secondary_ip
 		}
 
 		adapterType, isSetAdapterType := nic["adapter_type"]

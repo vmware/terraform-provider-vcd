@@ -9,6 +9,7 @@ require (
 	github.com/kr/pretty v0.2.1
 	github.com/vmware/go-vcloud-director/v2 v2.21.0
 )
+replace github.com/vmware/go-vcloud-director/v2 v2.21.0 => ../riconem/go-vcloud-director
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect

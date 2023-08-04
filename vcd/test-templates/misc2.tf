@@ -100,7 +100,7 @@ resource "vcd_catalog_media" "media_for_insertion" {
   name                 = "media_for_insertion"
   description          = "media for insertion"
   media_path           = "{{.MediaPath}}"
-  upload_piece_size    = {{.MediaUploadPieceSize}}
+  upload_piece_size    = "{{.MediaUploadPieceSize}}"
   show_upload_progress = "{{.MediaUploadProgress}}"
 }
 
