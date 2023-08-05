@@ -3,14 +3,16 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"os"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
 )
 
 type resourceRef struct {
@@ -78,6 +80,11 @@ func datasourceVcdResourceList() *schema.Resource {
 					"name_id",   // The list will contain name + ID for each item
 					"hierarchy", // The list will contain parent names + resource name for each item
 				}, true),
+			},
+			"import_file_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "File where to store the import info - Only used with 'import' list mode ",
 			},
 			"name_id_separator": {
 				Type:        schema.TypeString,
@@ -314,6 +321,7 @@ func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err e
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, err := client.GetAdminOrg(d.Get("org").(string))
 	if err != nil {
@@ -333,7 +341,7 @@ func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			href: catalog.Catalog.HREF,
 		})
 	}
-	return genericResourceList("vcd_catalog", listMode, nameIdSeparator, []string{org.AdminOrg.Name}, items)
+	return genericResourceList("vcd_catalog", listMode, nameIdSeparator, importFile, []string{org.AdminOrg.Name}, items)
 }
 
 // catalogItemList finds either catalogItem or mediaItem
@@ -341,6 +349,7 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, err := client.GetAdminOrg(d.Get("org").(string))
 	if err != nil {
@@ -377,13 +386,14 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (
 
 		}
 	}
-	return genericResourceList("vcd_catalog_item", listMode, nameIdSeparator, []string{org.AdminOrg.Name, catalogName}, items)
+	return genericResourceList("vcd_catalog_item", listMode, nameIdSeparator, importFile, []string{org.AdminOrg.Name, catalogName}, items)
 }
 
 func vdcList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, err := client.GetAdminOrg(d.Get("org").(string))
 	if err != nil {
@@ -398,13 +408,14 @@ func vdcList(d *schema.ResourceData, meta interface{}) (list []string, err error
 			href: vdc.HREF,
 		})
 	}
-	return genericResourceList("vcd_org_vdc", listMode, nameIdSeparator, []string{org.AdminOrg.Name}, items)
+	return genericResourceList("vcd_org_vdc", listMode, nameIdSeparator, importFile, []string{org.AdminOrg.Name}, items)
 }
 
 func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, err := client.GetAdminOrg(d.Get("org").(string))
 	if err != nil {
@@ -419,7 +430,7 @@ func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			href: user.HREF,
 		})
 	}
-	return genericResourceList("vcd_org_user", listMode, nameIdSeparator, []string{org.AdminOrg.Name}, items)
+	return genericResourceList("vcd_org_user", listMode, nameIdSeparator, importFile, []string{org.AdminOrg.Name}, items)
 }
 
 func networkList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -548,6 +559,7 @@ func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, e
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
@@ -571,13 +583,14 @@ func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, e
 			href: edgeGateway.EdgeGateway.HREF,
 		})
 	}
-	return genericResourceList("vcd_edgegateway", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList("vcd_edgegateway", listMode, nameIdSeparator, importFile, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
@@ -597,13 +610,14 @@ func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []strin
 			href: "",
 		})
 	}
-	return genericResourceList("vcd_nsxt_edgegateway", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList("vcd_nsxt_edgegateway", listMode, nameIdSeparator, importFile, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func vappList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
@@ -623,13 +637,14 @@ func vappList(d *schema.ResourceData, meta interface{}) (list []string, err erro
 			}
 		}
 	}
-	return genericResourceList("vcd_vapp", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList("vcd_vapp", listMode, nameIdSeparator, importFile, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
@@ -637,33 +652,42 @@ func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []s
 	}
 
 	vappName := d.Get("parent").(string)
-	vmList, err := vdc.QueryVmList(types.VmQueryFilterOnlyDeployed)
+	vms, err := vdc.QueryVmList(types.VmQueryFilterOnlyDeployed)
 	if err != nil {
 		return nil, err
 	}
 	var items []resourceRef
-	for _, vm := range vmList {
+	for _, vm := range vms {
 		if vmType == standaloneVmType && !vm.AutoNature {
+			fmt.Printf("(vmType == standaloneVmType && !vm.AutoNature) %s %s [%v]\n", vm.Name, vmType, vm.AutoNature)
 			continue
 		}
 		if vmType == vappVmType && vm.AutoNature {
+			fmt.Printf("(vmType == vappVmType && vm.AutoNature) %s %s [%v]\n", vm.Name, vmType, vm.AutoNature)
 			continue
 		}
 		if vappName != "" && vappName != vm.ContainerName {
+			fmt.Printf("(vappName != '' && vappName != vm.ContainerName) %s %s [%v]\n", vm.Name, vmType, vm.AutoNature)
 			continue
 		}
 		items = append(items, resourceRef{
 			name:     vm.Name,
 			id:       "urn:vcloud:vm:" + extractUuid(vm.HREF),
 			href:     vm.HREF,
-			parent:   vm.ContainerName, // name of the hidden vApp
-			importId: true,             // import should use entity ID rather than name
+			parent:   vm.ContainerName,           // name of the hidden vApp
+			importId: vmType == standaloneVmType, // import should use entity ID rather than name
 		})
 	}
-	return genericResourceList("vcd_vm", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	if vmType == vappVmType {
+		return genericResourceList("vcd_vapp_vm", listMode, nameIdSeparator, importFile, []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
+	}
+	return genericResourceList("vcd_vm", listMode, nameIdSeparator, importFile, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
-func genericResourceList(resType, listMode, nameIdSeparator string, ancestors []string, refs []resourceRef) (list []string, err error) {
 
+func genericResourceList(resType, listMode, nameIdSeparator, importFile string, ancestors []string, refs []resourceRef) (list []string, err error) {
+
+	var importData strings.Builder
+	importData.WriteString(fmt.Sprintf("# Generated by vcd_resource_list - %s\n", time.Now().Format(time.RFC3339)))
 	for _, ref := range refs {
 		switch listMode {
 		case "name":
@@ -685,7 +709,8 @@ func genericResourceList(resType, listMode, nameIdSeparator string, ancestors []
 		case "import":
 			identifier := ref.name
 			if ref.importId {
-				identifier = fmt.Sprintf("%s # %s/%s", ref.id, ref.parent, ref.name)
+				//identifier = fmt.Sprintf("%s # %s/%s", ref.id, ref.parent, ref.name)
+				identifier = ref.id
 			}
 			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s",
 				resType,
@@ -693,9 +718,36 @@ func genericResourceList(resType, listMode, nameIdSeparator string, ancestors []
 				strings.Join(ancestors, ImportSeparator),
 				ImportSeparator,
 				identifier))
+
+			ancestorsText := ""
+			if len(ancestors) > 0 {
+				ancestorsText = strings.Join(ancestors, ImportSeparator) + ImportSeparator
+			}
+			importData.WriteString(fmt.Sprintf("# import data for %s %s%s \n", resType, ancestorsText, ref.name))
+			importData.WriteString("import {\n")
+			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resType, ref.name, idTail(ref.id)))
+			importData.WriteString(fmt.Sprintf("  id = \"%s%s%s\"\n",
+				strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier))
+			importData.WriteString("}\n\n")
+		}
+	}
+
+	if importFile != "" && listMode == "import" {
+		//fmt.Printf("%s\n", importData.String())
+		err = os.WriteFile(importFile, []byte(importData.String()), 0600)
+		if err != nil {
+			return nil, err
 		}
 	}
 	return list, nil
+}
+
+func idTail(id string) string {
+	if id == "" {
+		return ""
+	}
+	reTail := regexp.MustCompile(`([a-zA-z0-9]+)$`)
+	return reTail.FindString(id)
 }
 
 func getEdgeGatewayDetails(d *schema.ResourceData, meta interface{}) (orgName string, vdcName string, listMode string, separator string, egw *govcd.EdgeGateway, err error) {
@@ -719,6 +771,7 @@ func getEdgeGatewayDetails(d *schema.ResourceData, meta interface{}) (orgName st
 }
 
 func lbServerPoolList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -736,10 +789,11 @@ func lbServerPoolList(d *schema.ResourceData, meta interface{}) (list []string, 
 		})
 	}
 
-	return genericResourceList("vcd_lb_server_pool", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_lb_server_pool", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func lbServiceMonitorList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -757,11 +811,12 @@ func lbServiceMonitorList(d *schema.ResourceData, meta interface{}) (list []stri
 			href: sm.URL,
 		})
 	}
-	return genericResourceList("vcd_lb_service_monitor", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_lb_service_monitor", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func lbVirtualServerList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -778,10 +833,11 @@ func lbVirtualServerList(d *schema.ResourceData, meta interface{}) (list []strin
 			href: "",
 		})
 	}
-	return genericResourceList("vcd_lb_virtual_server", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_lb_virtual_server", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func nsxvFirewallList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -799,10 +855,11 @@ func nsxvFirewallList(d *schema.ResourceData, meta interface{}) (list []string, 
 			href: "",
 		})
 	}
-	return genericResourceList("vcd_nsxv_firewall_rule", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_nsxv_firewall_rule", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func lbAppRuleList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -820,10 +877,11 @@ func lbAppRuleList(d *schema.ResourceData, meta interface{}) (list []string, err
 			href: "",
 		})
 	}
-	return genericResourceList("vcd_lb_app_rule", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_lb_app_rule", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func lbAppProfileList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -841,7 +899,7 @@ func lbAppProfileList(d *schema.ResourceData, meta interface{}) (list []string, 
 			href: "",
 		})
 	}
-	return genericResourceList("vcd_lb_app_profile", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_lb_app_profile", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func ipsetList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -849,6 +907,7 @@ func ipsetList(d *schema.ResourceData, meta interface{}) (list []string, err err
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
+	importFile := d.Get("import_file_name").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
@@ -870,10 +929,11 @@ func ipsetList(d *schema.ResourceData, meta interface{}) (list []string, err err
 			href: "",
 		})
 	}
-	return genericResourceList("vcd_ipset", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList("vcd_ipset", listMode, nameIdSeparator, importFile, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	importFile := d.Get("import_file_name").(string)
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
 		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
@@ -893,7 +953,7 @@ func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (
 			})
 		}
 	}
-	return genericResourceList("vcd_lb_app_profile", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
+	return genericResourceList("vcd_lb_app_profile", listMode, separator, importFile, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
 func getResourcesList() ([]string, error) {
