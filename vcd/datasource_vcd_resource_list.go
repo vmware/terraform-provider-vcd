@@ -16,11 +16,12 @@ import (
 )
 
 type resourceRef struct {
-	name     string
-	id       string
-	href     string
-	parent   string
-	importId bool
+	name         string
+	resourceType string
+	id           string
+	href         string
+	parent       string
+	importId     bool
 }
 
 func datasourceVcdResourceList() *schema.Resource {
@@ -462,7 +463,8 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 	}
 	var items []resourceRef
 
-	resourceName := ""
+	resourceType := ""
+	trueResourceType := ""
 	for _, net := range networks {
 		switch net.LinkType {
 		case 0:
@@ -472,11 +474,12 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 		case 2:
 			networkType = "isolated"
 		}
-		resourceName = "network"
+		resourceType = "network"
 		if wantedType != "network" {
-			resourceName = "vcd_network_" + networkType
+			resourceType = "vcd_network_" + networkType
 		}
-		if wantedType != resourceName {
+		trueResourceType = "vcd_network_" + networkType
+		if wantedType != resourceType {
 			continue
 		}
 		network, err := vdc.GetOrgVdcNetworkByHref(net.HREF)
@@ -484,15 +487,16 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			return []string{}, err
 		}
 		items = append(items, resourceRef{
-			name:     network.OrgVDCNetwork.Name,
-			id:       network.OrgVDCNetwork.ID,
-			href:     network.OrgVDCNetwork.HREF,
-			parent:   vdc.Vdc.Name,
-			importId: false,
+			name:         network.OrgVDCNetwork.Name,
+			id:           network.OrgVDCNetwork.ID,
+			href:         network.OrgVDCNetwork.HREF,
+			parent:       vdc.Vdc.Name,
+			resourceType: trueResourceType,
+			importId:     false,
 		})
 	}
 
-	return genericResourceList(d, resourceName, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList(d, resourceType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 // orgNetworkListV2 uses OpenAPI endpoint to query Org VDC networks and return their list
@@ -511,19 +515,21 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 	}
 	var items []resourceRef
 
-	var resourceName string
+	var resourceType string
 	for _, net := range orgVdcNetworkList {
+		trueResourceType := ""
 		switch net.OpenApiOrgVdcNetwork.NetworkType {
 		case types.OrgVdcNetworkTypeRouted:
-			resourceName = "vcd_network_routed_v2"
+			resourceType = "vcd_network_routed_v2"
 		case types.OrgVdcNetworkTypeIsolated:
-			resourceName = "vcd_network_isolated_v2"
+			resourceType = "vcd_network_isolated_v2"
 		case types.OrgVdcNetworkTypeOpaque: // Used for Imported
-			resourceName = "vcd_nsxt_network_imported"
+			resourceType = "vcd_nsxt_network_imported"
 		}
 
+		trueResourceType = resourceType
 		// Skip undesired network types
-		if wantedType != resourceName {
+		if wantedType != resourceType {
 			continue
 		}
 		href, err := client.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointOrgVdcNetworks, net.OpenApiOrgVdcNetwork.ID)
@@ -531,15 +537,16 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 			return nil, err
 		}
 		items = append(items, resourceRef{
-			name:     net.OpenApiOrgVdcNetwork.Name,
-			id:       net.OpenApiOrgVdcNetwork.ID,
-			href:     href.Path,
-			parent:   vdc.Vdc.Name,
-			importId: false,
+			name:         net.OpenApiOrgVdcNetwork.Name,
+			id:           net.OpenApiOrgVdcNetwork.ID,
+			href:         href.Path,
+			parent:       vdc.Vdc.Name,
+			importId:     false,
+			resourceType: trueResourceType,
 		})
 	}
 
-	return genericResourceList(d, resourceName, []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList(d, resourceType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -675,6 +682,10 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 		}
 	}
 	for _, ref := range refs {
+		resourceType := resType
+		if ref.resourceType != "" {
+			resourceType = ref.resourceType
+		}
 		if reName != nil {
 			// If the regular expression doesn't match, the resource is skipped from the list
 			if reName.FindString(ref.name) == "" {
@@ -705,7 +716,7 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 				identifier = ref.id
 			}
 			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s",
-				resType,
+				resourceType,
 				ref.name,
 				strings.Join(ancestors, ImportSeparator),
 				ImportSeparator,
@@ -715,9 +726,9 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 			if len(ancestors) > 0 {
 				ancestorsText = strings.Join(ancestors, ImportSeparator) + ImportSeparator
 			}
-			importData.WriteString(fmt.Sprintf("# import data for %s %s%s \n", resType, ancestorsText, ref.name))
+			importData.WriteString(fmt.Sprintf("# import data for %s %s%s \n", resourceType, ancestorsText, ref.name))
 			importData.WriteString("import {\n")
-			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resType, ref.name, idTail(ref.id)))
+			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, ref.name, idTail(ref.id)))
 			importData.WriteString(fmt.Sprintf("  id = \"%s%s%s\"\n",
 				strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier))
 			importData.WriteString("}\n\n")
