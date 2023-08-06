@@ -17,10 +17,12 @@ type listDef struct {
 	name         string
 	resourceType string
 	parent       string
+	nameRegex    string
 	knownItem    string
 	vdc          string
 	listMode     string
 	importFile   bool
+	excludeItem  bool
 }
 
 func TestAccVcdDatasourceResourceList(t *testing.T) {
@@ -171,6 +173,9 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	lists = append(lists, listDef{name: "library_certificate", resourceType: "vcd_library_certificate"})
 
 	lists = append(lists,
+		// List with import
+		// Looking for TestVm inside TestVapp
+		// Expect to create an import file
 		listDef{
 			name:         "testVm",
 			resourceType: "vcd_vapp_vm",
@@ -180,6 +185,9 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			listMode:     "import",
 			importFile:   true,
 		},
+		// List with import
+		// Looking for standalone VM ldap-server
+		// Expect to create an import file
 		listDef{
 			name:         "ldap-server",
 			resourceType: "vcd_vm",
@@ -187,6 +195,36 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			vdc:          testConfig.Nsxt.Vdc,
 			listMode:     "import",
 			importFile:   true,
+		},
+		// Filtering for regexp: "vApp"
+		// looking for "Catalog Author"
+		// Expect NOT to find it
+		listDef{
+			name:         "role-filter1",
+			resourceType: "vcd_role",
+			knownItem:    "Catalog Author",
+			nameRegex:    "vApp",
+			excludeItem:  true,
+		},
+		// Filtering for regexp: "Author"
+		// Looking for "Catalog Author"
+		// Expect to find it
+		listDef{
+			name:         "role-filter2",
+			resourceType: "vcd_role",
+			knownItem:    "Catalog Author",
+			nameRegex:    "Author",
+			excludeItem:  false,
+		},
+		// Filtering for regexp: ".*"
+		// Looking for "Catalog Author"
+		// Expect to find it
+		listDef{
+			name:         "role-filter3",
+			resourceType: "vcd_role",
+			knownItem:    "Catalog Author",
+			nameRegex:    ".*",
+			excludeItem:  false,
 		},
 	)
 	for _, def := range lists {
@@ -203,6 +241,7 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 		"ResParent":  def.parent,
 		"ListMode":   "name",
 		"ImportFile": "",
+		"NameRegex":  def.nameRegex,
 		"FuncName":   fmt.Sprintf("ResourceList-%s", def.name+"-"+def.resourceType),
 	}
 	importFileName := fmt.Sprintf("import-%s.tf", def.resourceType)
@@ -219,7 +258,11 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 	}
 	var configText string
 	if def.parent == "" {
-		configText = templateFill(testAccCheckVcdDatasourceInfoSimple, data)
+		if def.nameRegex != "" {
+			configText = templateFill(testAccCheckVcdDatasourceInfoWithFilter, data)
+		} else {
+			configText = templateFill(testAccCheckVcdDatasourceInfoSimple, data)
+		}
 	} else {
 		configText = templateFill(testAccCheckVcdDatasourceInfoWithParent, data)
 	}
@@ -261,7 +304,7 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),
-					checkListForKnownItem(def.name, def.knownItem, true, def.importFile),
+					checkListForKnownItem(def.name, def.knownItem, !def.excludeItem, def.importFile),
 					checkImportFile(importFileName, def.importFile),
 				),
 			},
@@ -341,5 +384,14 @@ data "vcd_resource_list" "{{.ResName}}" {
   parent           = "{{.ResParent}}"
   import_file_name = "{{.ImportFile}}"
   list_mode        = "{{.ListMode}}"
+}
+`
+
+const testAccCheckVcdDatasourceInfoWithFilter = `
+data "vcd_resource_list" "{{.ResName}}" {
+  vdc              = "{{.Vdc}}"
+  name             = "{{.ResName}}"
+  resource_type    = "{{.ResType}}"
+  name_regex       = "{{.NameRegex}}"
 }
 `
