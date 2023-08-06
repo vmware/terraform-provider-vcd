@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -34,9 +35,6 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
 		{name: "user", resourceType: "vcd_org_user"},
-
-		// test for VM requires a VApp as parent, which may not be guaranteed, as there is none in the config file
-		//{"vapp_vm", "vcd_vapp_vm", "TestVapp", ""},
 	}
 
 	if testConfig.VCD.Org != "" {
@@ -76,6 +74,16 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	} else {
 		fmt.Print("`Networking.ExternalNetwork` value isn't configured, datasource test using this will be skipped\n")
 	}
+	if testConfig.VCD.ProviderVdc.Name != "" {
+		lists = append(lists, listDef{name: "provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.ProviderVdc.Name})
+	} else {
+		fmt.Print("`VCD.ProviderVdc` value isn't configured, datasource test using this will be skipped\n")
+	}
+	if testConfig.VCD.NsxtProviderVdc.Name != "" {
+		lists = append(lists, listDef{name: "nsxt-provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.NsxtProviderVdc.Name})
+	} else {
+		fmt.Print("`VCD.NsxtProviderVdc` value isn't configured, datasource test using this will be skipped\n")
+	}
 
 	if testConfig.VCD.Catalog.Name != "" {
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
@@ -85,6 +93,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		if testConfig.VCD.Catalog.CatalogItem != "" {
 			// tests in this last group always require an explicit parent
 			lists = append(lists, listDef{name: "catalog_item", resourceType: "vcd_catalog_item", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.VCD.Catalog.CatalogItem})
+			lists = append(lists, listDef{name: "catalog_vapp_template", resourceType: "vcd_catalog_vapp_template", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.VCD.Catalog.CatalogItem})
 		} else {
 			fmt.Print("`VCD.CatalogItem` value isn't configured, datasource test using this will be skipped\n")
 		}
@@ -196,11 +205,12 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 		"ImportFile": "",
 		"FuncName":   fmt.Sprintf("ResourceList-%s", def.name+"-"+def.resourceType),
 	}
+	importFileName := fmt.Sprintf("import-%s.tf", def.resourceType)
 	if def.listMode != "" {
 		data["ListMode"] = def.listMode
 	}
 	if def.importFile {
-		data["ImportFile"] = fmt.Sprintf("import-%s.tf", def.resourceType)
+		data["ImportFile"] = importFileName
 	}
 	if def.vdc == "" {
 		data["Vdc"] = testConfig.Nsxt.Vdc
@@ -239,16 +249,37 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			// We don't really check anything here, but we make sure we remove the import file, if it was created
+			if fileExists(importFileName) {
+				return os.Remove(importFileName)
+			}
+			return nil
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),
 					checkListForKnownItem(def.name, def.knownItem, true, def.importFile),
+					checkImportFile(importFileName, def.importFile),
 				),
 			},
 		},
 	})
+}
+
+// checkImportFile returns an error if an import filename is expected (importing==true) but was not found.
+func checkImportFile(fileName string, importing bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if !importing {
+			return nil
+		}
+		if fileExists(fileName) {
+			return nil
+		}
+		return fmt.Errorf("file %s not found", fileName)
+	}
 }
 
 func checkListForKnownItem(resName, target string, isWanted, importing bool) resource.TestCheckFunc {
