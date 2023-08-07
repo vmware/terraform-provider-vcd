@@ -308,6 +308,46 @@ import {
 }
 ```
 
+# Example 10 - List of roles with filter
+
+```hcl
+data "vcd_resource_list" "role-filter1" {
+  vdc              = "nsxt-vdc-datacloud"
+  name             = "role-filter1"
+  resource_type    = "vcd_role"
+  # name_regex       = "Author|vApp"
+}
+
+output "vapp_roles" {
+    value = data.vcd_resource_list.role-filter1.list
+}
+```
+
+Without the filter, the listing would be all the roles available to the current organization.
+
+```
+vapp_roles = tolist([
+  "Organization Administrator",
+  "Catalog Author",
+  "vApp Author",
+  "vApp User",
+  "Console Access Only",
+  "Defer to Identity Provider",
+])
+```
+
+If we remove the comment on `name_regex`, the listing will be filtered by the regular expression, matching only roles
+with a name including either `Author` or `vApp`.
+
+```
+vapp_roles = tolist([
+  "Catalog Author",
+  "vApp Author",
+  "vApp User",
+])
+```
+
+
 See [Importing resources][import-resources] for more information on how to leverage `vcd_resource_list` functionality
 to import resources.
 
