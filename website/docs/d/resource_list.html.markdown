@@ -312,14 +312,14 @@ import {
 
 ```hcl
 data "vcd_resource_list" "role-filter1" {
-  vdc              = "nsxt-vdc-datacloud"
-  name             = "role-filter1"
-  resource_type    = "vcd_role"
-  # name_regex       = "Author|vApp"
+  vdc           = "nsxt-vdc-datacloud"
+  name          = "role-filter1"
+  resource_type = "vcd_role"
+  # name_regex  = "Author|vApp"
 }
 
 output "vapp_roles" {
-    value = data.vcd_resource_list.role-filter1.list
+  value = data.vcd_resource_list.role-filter1.list
 }
 ```
 
