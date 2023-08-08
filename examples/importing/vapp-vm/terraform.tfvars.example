@@ -1,0 +1,7 @@
+vcd_url  = "https://some-vcd.com"
+org      = "myorg"
+vdc      = "myvdc"
+catalog  = "mycatalog"
+user     = "administrator"
+password = "mypassword"
+ova_path = "../../../test-resources/"
