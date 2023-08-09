@@ -12,7 +12,7 @@ This example shows how to import two vApps and their VMs
 
 ### Phase 2 - code generation
 
-2.1. Check the current directory: three new files were created: `vms_from_vapp.tf`, `vms_from_template.tf`, and `vapps.tf`.
+2.1. Check the current directory: three new files were created: `import_vms_from_vapp.tf`, `import_vms_from_template.tf`, and `import_vapps.tf`.
    These files contain the import blocks for the new resources.
 2.2. Run `terraform plan -generate-config-out=generated_resources.tf`: this will create a HCL file containing the definition
    of the resources we need to import.
@@ -25,5 +25,5 @@ resources without fear of interference
 3.1. Make a directory `ops`
 3.2. copy `3.11-provider.tf`, `versions.tf`, `terraform.tfvars`, `generated_resources.tf`, and all the `import*.tf` into `ops`
 3.3. Change directory to `ops`
-3.4. Run `terraform apply`: it will import the resources and update them.
+3.4. Run `terraform init` and `terraform apply`: it will import the resources and update them.
 
