@@ -16,6 +16,7 @@ description: |-
   - [Troubleshooting](#troubleshooting)
     - [Required field not found](#required-field-not-found)
     - [Phantom updates](#phantom-updates)
+  - [Examples](#examples)
 
 # Importing resources
 
@@ -275,9 +276,14 @@ with the resource stored data. We won't be making any real changes in the VM: no
 make sure that the updates being proposed don't touch important data. If they do, we should probably edit the generated
 code and set the record straight.
 
+## Examples
+
+There are two complete examples of multiple resource imports in the [`terraform-provider-vcd` repository][examples].
+They show how we can import multiple VMs, or multiple catalog items, with step-by-step instructions.
 
 [terraform-state]:https://developer.hashicorp.com/terraform/language/state
 [terraform-import]:https://developer.hashicorp.com/terraform/language/import
 [vcd-resource-list]:https://registry.terraform.io/providers/vmware/vcd/latest/docs/data-sources/resource_list
 [vcd-cloned-vapp]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/resources/cloned_vapp
 [accept-all-eulas]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/resources/vapp_vm#accept_all_eulas
+[examples]:https://github.com/vmware/terraform-provider-vcd/examples/import
