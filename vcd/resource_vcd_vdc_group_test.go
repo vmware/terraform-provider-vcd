@@ -73,7 +73,7 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 func TestAccVcdVdcGroupForceDeletion(t *testing.T) {
 	preTestChecks(t)
 
-	// This test requires performs API calls therefore it cannot be executed as binary one
+	// This test performs API calls therefore it cannot be executed as binary one
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
