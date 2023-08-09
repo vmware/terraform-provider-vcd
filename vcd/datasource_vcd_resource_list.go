@@ -347,6 +347,7 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (
 
 	for _, catalogItems := range catalog.Catalog.CatalogItems {
 		for _, reference := range catalogItems.CatalogItem {
+			resourceType := "vcd_catalog_vapp_template"
 			wanted := true
 			catalogItem, err := catalog.GetCatalogItemByHref(reference.HREF)
 			if err != nil {
@@ -354,15 +355,17 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (
 			}
 			if catalogItem.CatalogItem.Entity.Type == "application/vnd.vmware.vcloud.media+xml" {
 				wanted = wantMedia
+				resourceType = "vcd_catalog_media"
 			}
 
 			if wanted {
 				items = append(items, resourceRef{
-					name:     reference.Name,
-					id:       reference.ID,
-					href:     reference.HREF,
-					parent:   catalogName,
-					importId: false,
+					name:         reference.Name,
+					id:           reference.ID,
+					href:         reference.HREF,
+					parent:       catalogName,
+					importId:     false,
+					resourceType: resourceType,
 				})
 			}
 
