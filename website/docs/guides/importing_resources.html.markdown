@@ -6,21 +6,9 @@ description: |-
  Provides guidance to VMware Cloud resources importing
 ---
 
-- [Importing resources](#importing-resources)
-  - [Overview](#overview)
-  - [Basic importing](#basic-importing)
-  - [Importing terminology](#importing-terminology)
-  - [Import mechanics](#import-mechanics)
-  - [Semi-Automated import](#semi-automated-import-terraform-15)
-  - [More automated import](#more-automated-import-operations)
-  - [Troubleshooting](#troubleshooting)
-    - [Required field not found](#required-field-not-found)
-    - [Phantom updates](#phantom-updates)
-  - [Examples](#examples)
-
 # Importing resources
 
-Supported in provider *v3.11+* with Terraform *v1.5.4+*.
+Supported in provider *v3.11+* with Terraform *v1.5.x+* (tested with Terraform v1.5.4).
 
 -> Some parts of this document describe **EXPERIMENTAL** features.
 
@@ -58,7 +46,7 @@ In order to import a resource, we need to issue a command, containing several el
 
 * A **command** is a keyword of the Terraform command line tool, like the `import` in the _import command_ above.
 * The resource **type** is the type of resource, such as `vcd_org`, `vcd_provider_vdc`, etc.
-* The resource **definer** is the name given to the resource, right next to the resource type. Not to be confused with the `name`.
+* The **local name** (or resource **definer**) is the name given to the resource, right next to the resource type. Not to be confused with the `name`.
 * The **import path** is the identification of the resource, given as the name of its ancestors, followed by the name of the resource itself.
   The import path may be different for each resource, and may include elements other than the name.
 * The **id** is the same as the **import path** in Terraform parlance. When we see the `id` mentioned in Terraform import
@@ -286,4 +274,4 @@ They show how we can import multiple VMs, or multiple catalog items, with step-b
 [vcd-resource-list]:https://registry.terraform.io/providers/vmware/vcd/latest/docs/data-sources/resource_list
 [vcd-cloned-vapp]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/resources/cloned_vapp
 [accept-all-eulas]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/resources/vapp_vm#accept_all_eulas
-[examples]:https://github.com/vmware/terraform-provider-vcd/examples/import
+[examples]:https://github.com/dataclouder/terraform-provider-vcd/tree/import-compound-resources/examples/importing
