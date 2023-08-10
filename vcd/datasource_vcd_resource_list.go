@@ -715,7 +715,6 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 		case "import":
 			identifier := ref.name
 			if ref.importId {
-				//identifier = fmt.Sprintf("%s # %s/%s", ref.id, ref.parent, ref.name)
 				identifier = ref.id
 			}
 			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s",
@@ -739,7 +738,6 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 	}
 
 	if importFile != "" && listMode == "import" {
-		//fmt.Printf("%s\n", importData.String())
 		err = os.WriteFile(importFile, []byte(importData.String()), 0600)
 		if err != nil {
 			return nil, err

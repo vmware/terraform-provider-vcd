@@ -50,17 +50,15 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Description: "Time stamp of when the item was created",
 			},
 			"ova_path": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				//ExactlyOneOf: []string{"ova_path", "ovf_url"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "Absolute or relative path to OVA",
 			},
 			"ovf_url": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				//ExactlyOneOf: []string{"ova_path", "ovf_url"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "URL of OVF file",
 			},
 			"upload_piece_size": {

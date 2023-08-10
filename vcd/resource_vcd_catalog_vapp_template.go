@@ -68,17 +68,15 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "Set of VM names within the vApp template",
 			},
 			"ova_path": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				//ExactlyOneOf: []string{"ova_path", "ovf_url"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "Absolute or relative path to OVA",
 			},
 			"ovf_url": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				//ExactlyOneOf:  []string{"ova_path", "ovf_url"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
 				ConflictsWith: []string{"description"}, // This is to avoid the bug mentioned above.
 				Description:   "URL of OVF file",
 			},
