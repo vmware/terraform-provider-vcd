@@ -15,7 +15,7 @@ func TestAccVcdClonedVApp(t *testing.T) {
 	var vappFromTemplate = "TestAccClonedVAppFromTemplate"
 	var vappFromVapp = "TestAccClonedVAppFromVapp"
 	var vappDescription = "Test cloned vApp from Template"
-	vappTemplateName := "Test-small-3VM"
+	vappTemplateName := testConfig.VCD.Catalog.CatalogItemWithMultiVms
 	orgName := testConfig.VCD.Org
 	nsxtVdcName := testConfig.Nsxt.Vdc
 
@@ -127,14 +127,10 @@ data "vcd_catalog" "cat" {
  name = "{{.Catalog}}"
 }
 
-resource "vcd_catalog_vapp_template" "multi-vm-template" {
+data "vcd_catalog_vapp_template" "multi-vm-template" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.cat.id
-
-  name                 = "{{.VappTemplateName}}"
-  description          = "vApp template with multiple VMs"
-  ova_path             = "{{.OvaPath}}"
-  upload_piece_size    = 5
+  name       = "{{.VappTemplateName}}"
 }
 
 resource "vcd_cloned_vapp" "vapp_from_template" {
@@ -143,7 +139,7 @@ resource "vcd_cloned_vapp" "vapp_from_template" {
   name          = "{{.VappFromTemplateName}}"
   description   = "{{.VappDescription}}"
   power_on      = true
-  source_id     = vcd_catalog_vapp_template.multi-vm-template.id
+  source_id     = data.vcd_catalog_vapp_template.multi-vm-template.id
   source_type   = "template"
   delete_source = false
 }
