@@ -31,9 +31,9 @@ data "vcd_resource_list" "import_vapps" {
   list_mode        = "import"
   import_file_name = "import-vapps.tf"
   # We want to avoid creating import blocks for all the vApps in the VDC: thus we filter for names of the vApps just created.
-  name_regex       = "(ClonedVAppFromTemplate|ClonedVAppFromVapp)"
+  name_regex = "(ClonedVAppFromTemplate|ClonedVAppFromVapp)"
   # We need to force a dependency, as this data source should be able to find the recently created vApps
-  depends_on       = [vcd_cloned_vapp.vapp_from_vapp, vcd_cloned_vapp.vapp_from_template]
+  depends_on = [vcd_cloned_vapp.vapp_from_vapp, vcd_cloned_vapp.vapp_from_template]
 }
 
 # This data source creates the import blocks for the VMs in the first vApp
