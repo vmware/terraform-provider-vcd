@@ -205,51 +205,46 @@ Notice a few points in the above code:
 
 ### Required field not found
 
-Some resources require several properties to be filled. For example, when creating a VDC , we need to indicate
-what we want to happen when we attempt a deletion, using the fields `delete_force` and `delete_recursive`. Even though these
-fields won't be used until we try to delete the VDC, the resource schema demands that we indicate this choice even before
-creating.
+Some resources require several properties to be filled. For example, when creating a VDC group , we need to indicate
+which of the participating VDCs is the starting one.
 
-Let's try to import an existing VDC:
+Let's try to import an existing VDC group:
 
 ```hcl
 import {
-  to = vcd_org_vdc.vdc-datacloud
-  id = "datacloud.vdc-datacloud"
+  to = vcd_vdc_group.vdc-group-datacloud
+  id = "datacloud.vdc-group-datacloud"
 }
 ```
-In this file we are saying that we want to import the VDC `vdc-datacloud`, belonging to the organization `datacloud`.
+In this file we are saying that we want to import the VDC group `vdc-group-datacloud`, belonging to the organization `datacloud`.
 
 ```shell
 terraform plan -generate-config-out=generated_resources.tf
 ```
 ```
-vcd_org_vdc.vdc-datacloud: Preparing import... [id=datacloud.vdc-datacloud]
-vcd_org_vdc.vdc-datacloud: Refreshing state... [id=urn:vcloud:vdc:bcfc85be-1bac-49cb-a37d-af74a8124da5]
+data.vcd_resource_list.vdc-groups: Reading...
+vcd_vdc_group.vdc-group-datacloud: Preparing import... [id=datacloud.vdc-group-datacloud]
+data.vcd_resource_list.vdc-groups: Read complete after 2s [id=list-vdc-groups]
+vcd_vdc_group.vdc-group-datacloud: Refreshing state... [id=urn:vcloud:vdcGroup:db815539-c885-4d9b-9992-aac82dce89d0]
 
 Planning failed. Terraform encountered an error while generating this plan.
-╷
-│ Warning: Config generation is experimental
-│
-│ Generating configuration during import is currently experimental, and the generated configuration format may change in future versions.
+[...]
 ╷
 │ Error: Missing required argument
 │
-│   [...]
-│ The argument "delete_force" is required, but no definition was found.
+│   with vcd_vdc_group.vdc-group-datacloud,
+│   on generated_resources.tf line 8:
+│   (source code not available)
+│
+│ The argument "starting_vdc_id" is required, but no definition was found.
 ╵
-╷
-│ Error: Missing required argument
-│
-│   [...]
-│ The argument "delete_recursive" is required, but no definition was found.
 ```
 
-The Terraform interpreter signals that there are two missing properties. Since the current syntax of import blocks does
+The Terraform interpreter signals that there is one missing property. Since the current syntax of import blocks does
 not allow any adjustments, the only possible workaround is to update the generated HCL code. Fortunately, the above error
 does not prevent the generation of the code.
-If we edit the file `generated_resources.tf`, changing the value for both `delete_recursive` and `delete_force` from
-`null` to `false` (or `true`), the import will succeed.
+If we edit the file `generated_resources.tf`, changing the value for `starting_vdc_id` from
+`null` to the ID of the first VDC, the import will succeed.
 
 ### Phantom updates
 
