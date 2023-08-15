@@ -1015,6 +1015,8 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = externalNetworkList(d, meta)
 	case "vcd_org_vdc", "vdc", "vdcs":
 		list, err = vdcList(d, meta, "vcd_org_vdc")
+	case "vcd_vdc_group":
+		list, err = getVdcGroups(d, meta)
 	case "vcd_org_vdc_access_control":
 		list, err = vdcList(d, meta, "vcd_org_vdc_access_control")
 	case "vcd_catalog", "catalog", "catalogs", "vcd_subscribed_catalog":
