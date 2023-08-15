@@ -103,7 +103,7 @@ func datasourceVcdResourceList() *schema.Resource {
 	}
 }
 
-func getOrgList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func getOrgList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	orgList, err := client.VCDClient.GetOrgList()
@@ -120,7 +120,7 @@ func getOrgList(d *schema.ResourceData, meta interface{}) (list []string, err er
 			importId: false,
 		})
 	}
-	return genericResourceList(d, "vcd_org", nil, items)
+	return genericResourceList(d, resType, nil, items)
 }
 
 func getPvdcList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -133,14 +133,40 @@ func getPvdcList(d *schema.ResourceData, meta interface{}) (list []string, err e
 	var items []resourceRef
 	for _, pvdc := range pvdcList {
 		items = append(items, resourceRef{
-			name:     pvdc.Name,
-			id:       "urn:vcloud:providervdc:" + extractUuid(pvdc.HREF),
-			href:     pvdc.HREF,
-			parent:   "",
-			importId: false,
+			name:         pvdc.Name,
+			id:           "urn:vcloud:providervdc:" + extractUuid(pvdc.HREF),
+			href:         pvdc.HREF,
+			parent:       "",
+			importId:     false,
+			resourceType: "vcd_provider_vdc",
 		})
 	}
 	return genericResourceList(d, "vcd_provider_vdc", nil, items)
+}
+
+func getVdcGroups(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	org, err := client.GetAdminOrgByName(d.Get("org").(string))
+	if err != nil {
+		return list, err
+	}
+	vdcGroups, err := org.GetAllVdcGroups(nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, vdcg := range vdcGroups {
+		items = append(items, resourceRef{
+			name:         vdcg.VdcGroup.Name,
+			id:           vdcg.VdcGroup.Id,
+			href:         "",
+			parent:       org.AdminOrg.Name,
+			importId:     false,
+			resourceType: "vcd_vdc_group",
+		})
+	}
+	return genericResourceList(d, "vcd_vdc_group", []string{org.AdminOrg.Name}, items)
 }
 
 func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -303,7 +329,7 @@ func rightsBundlesList(d *schema.ResourceData, meta interface{}) (list []string,
 	return genericResourceList(d, "vcd_rights_bundle", nil, items)
 }
 
-func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func catalogList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	org, err := client.GetAdminOrg(d.Get("org").(string))
@@ -324,7 +350,7 @@ func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			href: catalog.Catalog.HREF,
 		})
 	}
-	return genericResourceList(d, "vcd_catalog", []string{org.AdminOrg.Name}, items)
+	return genericResourceList(d, resType, []string{org.AdminOrg.Name}, items)
 }
 
 // catalogItemList finds either catalogItem or mediaItem
@@ -410,7 +436,7 @@ func vappTemplateList(d *schema.ResourceData, meta interface{}) (list []string, 
 	return genericResourceList(d, "vcd_catalog_vapp_template", []string{org.Org.Name, catalogName}, items)
 }
 
-func vdcList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func vdcList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	org, err := client.GetAdminOrg(d.Get("org").(string))
@@ -427,7 +453,7 @@ func vdcList(d *schema.ResourceData, meta interface{}) (list []string, err error
 			parent: org.AdminOrg.Name,
 		})
 	}
-	return genericResourceList(d, "vcd_org_vdc", []string{org.AdminOrg.Name}, items)
+	return genericResourceList(d, resType, []string{org.AdminOrg.Name}, items)
 }
 
 func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -552,7 +578,7 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 	return genericResourceList(d, resourceType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
@@ -578,7 +604,7 @@ func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, e
 			parent: vdc.Vdc.Name,
 		})
 	}
-	return genericResourceList(d, "vcd_edgegateway", []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList(d, resType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
@@ -606,7 +632,7 @@ func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []strin
 	return genericResourceList(d, "vcd_nsxt_edgegateway", []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func vappList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func vappList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
@@ -628,7 +654,7 @@ func vappList(d *schema.ResourceData, meta interface{}) (list []string, err erro
 			}
 		}
 	}
-	return genericResourceList(d, "vcd_vapp", []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList(d, resType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []string, err error) {
@@ -972,7 +998,7 @@ func getResourcesList() ([]string, error) {
 
 func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	requested := d.Get("resource_type")
+	requested := d.Get("resource_type").(string)
 	var err error
 	var list []string
 	switch requested {
@@ -980,23 +1006,31 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "resource", "resources":
 		list, err = getResourcesList()
 	case "vcd_org", "org", "orgs":
-		list, err = getOrgList(d, meta)
+		list, err = getOrgList(d, meta, "vcd_org")
+	case "vcd_org_ldap", "vcd_org_saml":
+		list, err = getOrgList(d, meta, requested)
 	case "vcd_provider_vdc", "provider_vdc":
 		list, err = getPvdcList(d, meta)
 	case "vcd_external_network", "external_network", "external_networks":
 		list, err = externalNetworkList(d, meta)
 	case "vcd_org_vdc", "vdc", "vdcs":
-		list, err = vdcList(d, meta)
-	case "vcd_catalog", "catalog", "catalogs":
-		list, err = catalogList(d, meta)
+		list, err = vdcList(d, meta, "vcd_org_vdc")
+	case "vcd_org_vdc_access_control":
+		list, err = vdcList(d, meta, "vcd_org_vdc_access_control")
+	case "vcd_catalog", "catalog", "catalogs", "vcd_subscribed_catalog":
+		list, err = catalogList(d, meta, "vcd_catalog")
+	case "vcd_catalog_access_control":
+		list, err = catalogList(d, meta, "vcd_catalog_access_control")
 	case "vcd_catalog_item", "catalog_item", "catalog_items", "catalogitem", "catalogitems":
 		list, err = catalogItemList(d, meta, false)
 	case "vcd_catalog_vapp_template", "vapp_template":
 		list, err = vappTemplateList(d, meta)
 	case "vcd_catalog_media", "catalog_media", "media_items", "mediaitems", "mediaitem":
 		list, err = catalogItemList(d, meta, true)
-	case "vcd_vapp", "vapp", "vapps":
-		list, err = vappList(d, meta)
+	case "vcd_vapp", "vapp", "vapps", "vcd_cloned_vapp":
+		list, err = vappList(d, meta, "vcd_vapp")
+	case "vcd_vapp_access_control":
+		list, err = vappList(d, meta, "vcd_vapp_access_control")
 	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
 		list, err = vmList(d, meta, vappVmType)
 	case "vcd_vm", "standalone_vm":
@@ -1006,7 +1040,9 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "vcd_org_user", "org_user", "user", "users":
 		list, err = orgUserList(d, meta)
 	case "vcd_edgegateway", "edge_gateway", "edge", "edgegateway":
-		list, err = edgeGatewayList(d, meta)
+		list, err = getEdgeGatewayList(d, meta, "vcd_edgegateway")
+	case "vcd_edgegateway_settings":
+		list, err = getEdgeGatewayList(d, meta, "vcd_edgegateway_settings")
 	case "vcd_nsxt_edgegateway", "nsxt_edge_gateway", "nsxt_edge", "nsxt_edgegateway":
 		list, err = nsxtEdgeGatewayList(d, meta)
 	case "vcd_lb_server_pool", "lb_server_pool":
