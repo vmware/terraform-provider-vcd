@@ -264,6 +264,38 @@ with the resource stored data. We won't be making any real changes in the VM: no
 make sure that the updates being proposed don't touch important data. If they do, we should probably edit the generated
 code and set the record straight.
 
+### Lack of dependency ties
+
+The code generation is good enough to put the resource information into Terraform state, but it won't write the HCL code
+the same way we would. Most importantly, the names or IDs of other resources will be placed verbatim into the resource
+definition, rather than using a reference.
+
+For example, when creating a vApp template, we may write the following:
+
+```hcl
+resource "vcd_catalog_vapp_template" "my_template" {
+  catalog_id  = vcd_catalog.mycatalog.id
+  name        = "my_template"
+  description = "my template"
+}
+```
+However, the corresponding generated code would be:
+
+```hcl
+resource "vcd_catalog_vapp_template" "my_template" {
+  catalog_id  = "urn:vcloud:catalog:59b15c74-8dea-4331-ae2c-4fc4217c4191"
+  name        = "my_template"
+  description = "my template"
+}
+```
+
+This code would work well when we use it to update the vApp template, but it may become a problem when we want to delete
+all the resources. The lack of dependency information will cause the removal to happen in a random order, and we may
+see "entity not found" errors during such operations. For example, if the catalog deletion happens before the vApp template
+deletion, the template will not exist by the time Terraform attempts to retrieve it for removal.
+
+There is no simple solution to this issue, other than manually editing the generated HCL code to add dependency instructions.
+
 ## Examples
 
 There are two complete examples of multiple resource imports in the [`terraform-provider-vcd` repository][examples].
