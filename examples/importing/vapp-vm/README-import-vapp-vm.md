@@ -19,7 +19,7 @@ This example shows how to import two vApps and their VMs
 
 ### Phase 3 - import
 
-At this stage, we can export the following files to a new directory, run the import, and deal with the newly imported
+At this stage, we can move the generated files to a new directory, run the import, and deal with the newly imported
 resources without fear of interference
 
 3.1. Make a directory `ops`
