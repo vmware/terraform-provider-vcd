@@ -608,6 +608,7 @@ resource "vcd_nsxt_alb_pool" "test" {
 
   ca_certificate_ids = [vcd_library_certificate.org-cert-1.id, vcd_library_certificate.org-cert-2.id]
   cn_check_enabled   = true
+  ssl_enabled        = true
 }
 `
 
@@ -639,6 +640,7 @@ resource "vcd_nsxt_alb_pool" "test" {
   ca_certificate_ids = [vcd_library_certificate.org-cert-1.id, vcd_library_certificate.org-cert-2.id]
   cn_check_enabled   = true
   domain_names       = ["domain1", "domain2"]
+  ssl_enabled        = true
 }
 `
 
