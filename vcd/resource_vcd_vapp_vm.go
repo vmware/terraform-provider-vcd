@@ -1244,7 +1244,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	if firmware, ok = d.GetOk("firmware"); !ok {
 		return nil, fmt.Errorf("`firmware` is required when creating empty VM")
 	}
-	log.Printf("[DEBUG] %v", firmware)
 
 	if !contains(os.SupportedFirmware, firmware.(string)) {
 		return nil, fmt.Errorf("provided `os_type` doesn't support provided firmware")
