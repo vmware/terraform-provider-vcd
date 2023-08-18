@@ -106,6 +106,7 @@ The following arguments are supported:
   values are `0` (immediate) and `-1` (infinite)
 * `passive_monitoring_enabled` (Optional) defines if client traffic should be used to check if pool member is up or down
   (default `true`)
+* `ssl_enabled` (Optional; *v3.11+*) Enables SSL - Necessary when CA certificates are used
 * `ca_certificate_ids` - (Optional) A set of CA Certificates to be used when validating certificates presented by the
   pool members. Can be looked up using
   [vcd_library_certificate](/providers/vmware/vcd/latest/docs/data-sources/library_certificate) data source
