@@ -1454,8 +1454,10 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
 					HardwareVersion: &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
 					VirtualCpuType:  virtualCpuType,
+					Firmware:        firmware.(string),
 				},
-				BootImage: bootImage,
+				BootImage:   bootImage,
+				BootOptions: bootOptions,
 			},
 		}
 
@@ -1839,8 +1841,22 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 					return diag.Errorf("the OS type doesn't support provided firmware")
 				}
 
-				if firmware != "efi" && d.Get("boot_options.0.efi_secure_boot").(bool) {
-					return diag.Errorf("error: EFI secure boot can only be used with EFI firmware")
+				// Additional check needs to be made in a scenario where EFI secure boot is
+				// disabled and firmware is set to 'bios' during update, as there would be a misconfiguration error
+				// because EFI secure boot can't be enabled when firmware is not efi and we can't do two things at once
+
+				efiSecureBoot := d.Get("boot_options.0.efi_secure_boot").(bool)
+				if firmware != "efi" && efiSecureBoot {
+					return diag.Errorf("error: EFI secure boot can only be enabled with firmware set to 'efi'")
+				}
+				if firmware != "efi" && !efiSecureBoot {
+					efiSecureBootOptions := &types.BootOptions{
+						EfiSecureBootEnabled: addrOf(efiSecureBoot),
+					}
+					vm, err = vm.UpdateBootOptions(efiSecureBootOptions)
+					if err != nil {
+						return diag.Errorf("error changing VM boot options: %s", err)
+					}
 				}
 
 				vmSpecSection.Firmware = firmware
