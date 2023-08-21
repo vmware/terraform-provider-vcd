@@ -161,7 +161,7 @@ func resourceVmInternalDiskCreate(ctx context.Context, d *schema.ResourceData, m
 		AdapterType:         internalDiskBusTypes[d.Get("bus_type").(string)],
 		ThinProvisioned:     &isThinProvisioned,
 		StorageProfile:      storageProfilePrt,
-		IopsAllocation:      &types.IopsResource{Reservation: iops},
+		IopsAllocation:      &types.IopsResource{Reservation: iops, SharesLevel: "NORMAL"},
 		VirtualQuantityUnit: "byte",
 		OverrideVmDefault:   overrideVmDefault,
 	}
