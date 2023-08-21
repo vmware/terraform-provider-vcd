@@ -28,12 +28,6 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	vmName := t.Name() + "VM"
 	vmName2 := t.Name() + "VM2"
 	catalogItemMultiVm := "template_name       = vcd_catalog_item.defaultOva.name"
-	if testConfig.VCD.Catalog.CatalogItemWithMultiVms != "" {
-		catalogItemMultiVm = "template_name  = \"" + testConfig.VCD.Catalog.CatalogItemWithMultiVms + "\""
-		t.Log("Test using `catalogItemWithMultiVms` variable from configuration")
-	} else {
-		t.Log("Test using `ovaVappMultiVmsPath` variable from configuration")
-	}
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
@@ -41,6 +35,7 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		"NetworkName":        "TestAccVcdVAppVmNet",
 		"Catalog":            testConfig.VCD.Catalog.Name,
 		"CatalogItemMultiVm": catalogItemMultiVm,
+		"VappTemplateName":   testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"VmNameInTemplate":   testConfig.VCD.Catalog.VmName1InMultiVmItem,
 		"VmNameInTemplate2":  testConfig.VCD.Catalog.VmName2InMultiVmItem,
 		"VappName":           vappName,
@@ -55,21 +50,13 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 
 	params["SkipNotice"] = "# skip-binary-test: removing networks from powered on vApp fail"
 	var configText string
-	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
-		configText = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
-	} else {
-		configText = templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
-	}
+	configText = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
 
 	var configText2 string
 	params["PowerOn"] = false
 	params["SkipNotice"] = "# skip-binary-test: removing networks from powered on vApp fail"
 	params["FuncName"] = t.Name() + "-step2"
-	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
-		configText2 = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
-	} else {
-		configText2 = templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
-	}
+	configText2 = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -121,8 +108,8 @@ resource "vcd_catalog_item" "defaultOva" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 
-  name                 = "TestAccVcdVAppMultiVmInTemplate"
-  ova_path             = "{{.OvaPath}}"
+  name     = "{{.VappTemplateName}}"
+  ova_path = "{{.OvaPath}}"
 }
 `
 
