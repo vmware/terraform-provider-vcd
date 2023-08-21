@@ -47,7 +47,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 	configText2 := templateFill(testAccCheckVcdVAppVmBootOptionsStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText2)
 
-	params["FuncName"] = t.Name() + "-step3"
+	params["FuncName"] = t.Name() + "-step2"
 	configText3 := templateFill(testAccCheckVcdVAppVmBootOptionsStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText3)
 
@@ -56,6 +56,8 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 		return
 	}
 
+	resourceName := "vcd_vapp_vm." + vmName
+	datasourceName := "data." + resourceName
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName),
@@ -65,40 +67,50 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
+					resource.TestCheckResourceAttr(resourceName, "name", vmName),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "cpus", "1"),
+					resource.TestCheckResourceAttr(resourceName, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr(resourceName, "hardware_version", "vmx-13"),
+					resource.TestCheckResourceAttr(resourceName, "firmware", "efi"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "os_type", "sles11_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "firmware", "efi"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.enter_bios_setup", "true"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_delay", "20"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_delay", "20"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.enter_bios_setup", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.efi_secure_boot", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_delay", "20"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_delay", "20"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr(datasourceName, "firmware", "efi"),
+
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.enter_bios_setup", "true"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_delay", "20"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_delay", "20"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_enabled", "true"),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
+					resource.TestCheckResourceAttr(resourceName, "name", vmName),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "cpus", "1"),
+					resource.TestCheckResourceAttr(resourceName, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr(resourceName, "hardware_version", "vmx-13"),
+					resource.TestCheckResourceAttr(resourceName, "firmware", "bios"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "os_type", "sles11_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "firmware", "bios"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.enter_bios_setup", "true"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_delay", "20"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_delay", "20"),
+					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.enter_bios_setup", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.efi_secure_boot", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_delay", "20"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_delay", "20"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr(datasourceName, "firmware", "bios"),
+
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.enter_bios_setup", "true"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_delay", "20"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_delay", "20"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_enabled", "true"),
 				),
 			},
 			{
@@ -106,9 +118,6 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
-
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "memory", "2048"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "cpus", "1"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "os_type", "sles11_64Guest"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "hardware_version", "vmx-13"),
@@ -119,6 +128,14 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_delay", "50"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_delay", "50"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_enabled", "true"),
+
+					resource.TestCheckResourceAttr(datasourceName, "firmware", "efi"),
+
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.enter_bios_setup", "false"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_delay", "50"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_delay", "50"),
+					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_enabled", "true"),
 				),
 			},
 		},
@@ -134,6 +151,13 @@ resource "vcd_vapp" "{{.VAppName}}" {
   name     = "{{.VAppName}}"
   power_on = true
 }
+
+data "vcd_vapp_vm" "{{.VMName}}" {
+  org       = vcd_vapp_vm.{{.VMName}}.org
+  vdc       = vcd_vapp_vm.{{.VMName}}.vdc
+  name      = vcd_vapp_vm.{{.VMName}}.name
+  vapp_name = vcd_vapp_vm.{{.VMName}}.vapp_name
+ }
 `
 
 const testAccCheckVcdVAppVmBootOptions = testSharedBootOptions + `
@@ -162,6 +186,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     enter_bios_setup = true
   }
  }
+
 `
 
 const testAccCheckVcdVAppVmBootOptionsStep1 = testSharedBootOptions + `
