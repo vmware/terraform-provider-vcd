@@ -49,14 +49,12 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	params["SkipNotice"] = "# skip-binary-test: removing networks from powered on vApp fail"
-	var configText string
-	configText = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	configText := templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
 
-	var configText2 string
 	params["PowerOn"] = false
 	params["SkipNotice"] = "# skip-binary-test: removing networks from powered on vApp fail"
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	configText2 := templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
