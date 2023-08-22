@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -55,7 +56,9 @@ func init() {
 	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
 	setBoolFlag(&skipLeftoversRemoval, "vcd-skip-leftovers-removal", "VCD_SKIP_LEFTOVERS_REMOVAL", "Do not attempt removal of leftovers at the end of the test suite")
 	setBoolFlag(&silentLeftoversRemoval, "vcd-silent-leftovers-removal", "VCD_SILENT_LEFTOVERS_REMOVAL", "Omit details during removal of leftovers")
-
+	setIntFlag(&numberOfPartitions, "vcd-partitions", "VCD_PARTITIONS", "")
+	setIntFlag(&partitionNode, "vcd-partition-node", "VCD_PARTITION_NODE", "")
+	setBoolFlag(&partitionDryRun, "vcd-partition-dry-run", "VCD_PARTITION_DRY_RUN", "Show which tests would run, without running them")
 }
 
 // Structure to get info from a config json file that the user specifies
@@ -1124,6 +1127,18 @@ func setStringFlag(varPointer *string, name, envVar, help string) {
 		*varPointer = os.Getenv(envVar)
 	}
 	flag.StringVar(varPointer, name, *varPointer, help)
+}
+
+func setIntFlag(varPointer *int, name, envVar, help string) {
+	if envVar != "" && os.Getenv(envVar) != "" {
+		var err error
+		value := os.Getenv(envVar)
+		*varPointer, err = strconv.Atoi(value)
+		if err != nil {
+			panic(fmt.Sprintf("error converting value '%s' to integer: %s", value, err))
+		}
+	}
+	flag.IntVar(varPointer, name, *varPointer, help)
 }
 
 type envHelper struct {
