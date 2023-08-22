@@ -141,13 +141,13 @@ func resourceVcdAlbPool() *schema.Resource {
 				Default:     true,
 				Description: "Monitors if the traffic is accepted by node (default true)",
 			},
+			// Read only information
 			"ssl_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
-				Description: "Enables SSL - Necessary when CA certificates are used",
+				Computed:    true,
+				Description: "Enables SSL - Must be on when CA certificates are used",
 			},
-			// Read only information
 			"associated_virtual_service_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -434,6 +434,9 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 	albPoolConfig.CaCertificateRefs = caCertificateRefs
 	albPoolConfig.CommonNameCheckEnabled = &commonNameCheckEnabled
 	albPoolConfig.DomainNames = domainNames
+	if len(caCertificateRefs) > 0 {
+		albPoolConfig.SslEnabled = addrOf(true)
+	}
 
 	return albPoolConfig, nil
 }
