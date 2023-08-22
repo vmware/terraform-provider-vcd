@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
+	preTestChecks(t)
 	vAppTemplateName := t.Name()
 	vAppTemplateDescription := vAppTemplateName + "Description"
 	vAppTemplateFromUrlName := t.Name() + "FromUrl"
@@ -321,6 +322,7 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
 
 // TestAccVcdCatalogVAppTemplateMetadata tests metadata CRUD on Catalog vApp Templates
 func TestAccVcdCatalogVAppTemplateMetadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogVAppTemplateMetadata, "vcd_catalog_vapp_template.test-catalog-vapp-template",
 		testAccCheckVcdCatalogVAppTemplateMetadataDatasource, "data.vcd_catalog_vapp_template.test-catalog-vapp-template-ds",
@@ -328,6 +330,7 @@ func TestAccVcdCatalogVAppTemplateMetadata(t *testing.T) {
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdCatalogVAppTemplateMetadata = `
@@ -354,6 +357,7 @@ data "vcd_catalog_vapp_template" "test-catalog-vapp-template-ds" {
 `
 
 func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -379,4 +383,5 @@ func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})
+	postTestChecks(t)
 }

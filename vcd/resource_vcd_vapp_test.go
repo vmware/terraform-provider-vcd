@@ -242,10 +242,12 @@ resource "vcd_vapp_vm" "test_vm1" {
 
 // TestAccVcdVAppMetadata tests metadata CRUD on vApps
 func TestAccVcdVAppMetadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdVAppMetadata, "vcd_vapp.test-vapp",
 		testAccCheckVcdVAppMetadataDatasource, "data.vcd_vapp.test-vapp-ds",
 		nil)
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppMetadata = `
@@ -266,6 +268,7 @@ data "vcd_vapp" "test-vapp-ds" {
 `
 
 func TestAccVcdVAppMetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -288,4 +291,5 @@ func TestAccVcdVAppMetadataIgnore(t *testing.T) {
 		testAccCheckVcdVAppMetadata, "vcd_vapp.test-vapp",
 		testAccCheckVcdVAppMetadataDatasource, "data.vcd_vapp.test-vapp-ds",
 		getObjectById, nil)
+	postTestChecks(t)
 }

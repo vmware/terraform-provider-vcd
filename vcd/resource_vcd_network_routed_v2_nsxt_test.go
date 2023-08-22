@@ -918,12 +918,14 @@ data "vcd_nsxt_edgegateway" "nsxt-edge" {
 
 // TestAccVcdRoutedNetworkV2Metadata tests metadata CRUD on a NSX-T routed network
 func TestAccVcdRoutedNetworkV2Metadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdRoutedNetworkV2Metadata, "vcd_network_routed_v2.test-network-routed-v2",
 		testAccCheckVcdRoutedNetworkV2MetadataDatasource, "data.vcd_network_routed_v2.test-network-routed-v2-ds",
 		StringMap{
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdRoutedNetworkV2Metadata = `
@@ -953,6 +955,7 @@ data "vcd_network_routed_v2" "test-network-routed-v2-ds" {
 `
 
 func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -977,4 +980,5 @@ func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
 		getObjectById, StringMap{
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		})
+	postTestChecks(t)
 }

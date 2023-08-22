@@ -1337,6 +1337,7 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
 
 // TestAccVcdDirectNetworkMetadata tests metadata CRUD on a NSX-V direct network
 func TestAccVcdDirectNetworkMetadata(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdDirectNetworkMetadata, "vcd_network_direct.test-network-direct",
@@ -1345,6 +1346,7 @@ func TestAccVcdDirectNetworkMetadata(t *testing.T) {
 			"ExternalNetwork": testConfig.Networking.ExternalNetwork,
 			"Vdc":             testConfig.VCD.Vdc,
 		})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdDirectNetworkMetadata = `
@@ -1366,6 +1368,7 @@ data "vcd_network_direct" "test-network-direct-ds" {
 `
 
 func TestAccVcdDirectNetworkMetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -1391,16 +1394,19 @@ func TestAccVcdDirectNetworkMetadataIgnore(t *testing.T) {
 			"ExternalNetwork": testConfig.Networking.ExternalNetwork,
 			"Vdc":             testConfig.VCD.Vdc,
 		})
+	postTestChecks(t)
 }
 
 // TestAccVcdIsolatedNetworkMetadata tests metadata CRUD on a NSX-V isolated network
 func TestAccVcdIsolatedNetworkMetadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdIsolatedNetworkMetadata, "vcd_network_isolated.test-network-isolated",
 		testAccCheckVcdIsolatedNetworkMetadataDatasource, "data.vcd_network_isolated.test-network-isolated-ds",
 		StringMap{
 			"Vdc": testConfig.VCD.Vdc,
 		})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdIsolatedNetworkMetadata = `
@@ -1422,6 +1428,7 @@ data "vcd_network_isolated" "test-network-isolated-ds" {
 `
 
 func TestAccVcdIsolatedNetworkMetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -1446,10 +1453,12 @@ func TestAccVcdIsolatedNetworkMetadataIgnore(t *testing.T) {
 		getObjectById, StringMap{
 			"Vdc": testConfig.VCD.Vdc,
 		})
+	postTestChecks(t)
 }
 
 // TestAccVcdRoutedNetworkMetadata tests metadata CRUD on a NSX-V routed network
 func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdRoutedNetworkMetadata, "vcd_network_routed.test-network-routed",
 		testAccCheckVcdRoutedNetworkMetadataDatasource, "data.vcd_network_routed.test-network-routed-ds",
@@ -1457,6 +1466,7 @@ func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
 			"Vdc":         testConfig.VCD.Vdc,
 			"EdgeGateway": testConfig.Networking.EdgeGateway,
 		})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdRoutedNetworkMetadata = `
@@ -1479,6 +1489,7 @@ data "vcd_network_routed" "test-network-routed-ds" {
 `
 
 func TestAccVcdRoutedNetworkMetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -1504,4 +1515,5 @@ func TestAccVcdRoutedNetworkMetadataIgnore(t *testing.T) {
 			"Vdc":         testConfig.VCD.Vdc,
 			"EdgeGateway": testConfig.Networking.EdgeGateway,
 		})
+	postTestChecks(t)
 }

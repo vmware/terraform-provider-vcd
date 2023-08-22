@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -46,6 +47,7 @@ func TestAccVcdDatasourceNsxtGatewayQosProfile(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdDatasourceNsxtGatewayQosProfile = `

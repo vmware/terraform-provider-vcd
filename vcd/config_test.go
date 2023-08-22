@@ -1391,6 +1391,7 @@ func timeStamp() string {
 //     contains a pattern that matches the test name.
 //  6. If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
 func preTestChecks(t *testing.T) {
+	handlePartitioning(t)
 	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
 	if !vcdPrePostChecks {
 		return

@@ -653,10 +653,12 @@ data "vcd_network_isolated_v2" "net1" {
 
 // TestAccVcdIsolatedNetworkV2Metadata tests metadata CRUD on a NSX-T isolated network
 func TestAccVcdIsolatedNetworkV2Metadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
 		nil)
+	postTestChecks(t)
 }
 
 const testAccCheckVcdIsolatedNetworkV2Metadata = `
@@ -684,6 +686,7 @@ data "vcd_network_isolated_v2" "test-network-isolated-v2-ds" {
 `
 
 func TestAccVcdIsolatedNetworkV2MetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -706,4 +709,5 @@ func TestAccVcdIsolatedNetworkV2MetadataIgnore(t *testing.T) {
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
 		getObjectById, nil)
+	postTestChecks(t)
 }

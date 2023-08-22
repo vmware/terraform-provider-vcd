@@ -948,10 +948,12 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 
 // TestAccVcdCatalogMetadata tests metadata CRUD on catalogs
 func TestAccVcdCatalogMetadata(t *testing.T) {
+	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
 		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
 		nil)
+	postTestChecks(t)
 }
 
 const testAccCheckVcdCatalogMetadata = `
@@ -972,6 +974,7 @@ data "vcd_catalog" "test-catalog-ds" {
 `
 
 func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -990,6 +993,7 @@ func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
 		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
 		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
 		getObjectById, nil)
+	postTestChecks(t)
 }
 
 func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {
