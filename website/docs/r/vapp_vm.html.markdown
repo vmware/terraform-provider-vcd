@@ -491,7 +491,7 @@ example for usage details.
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
 * `firmware` - (Optional; v3.11+, vCD 10.4.1+) Specify boot firmware of the VM. Can be `efi` or `bios`
-* boot_options - (Optional; v3.11+) A block to define boot options of the VM. See [Boot Options](#boot-options-block)
+* `boot_options` - (Optional; v3.11+) A block to define boot options of the VM. See [Boot Options](#boot-options-block)
 * `boot_image_id` - (Optional; *v3.8+*) Media URN to mount as boot image. You can fetch it using a [`vcd_catalog_media`](/providers/vmware/vcd/latest/docs/data-sources/catalog_media) data source.
   Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media). 
 * `cpu_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
