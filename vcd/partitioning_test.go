@@ -105,10 +105,10 @@ func handlePartitioning(t *testing.T) {
 	if partInfo.node == partitionNode {
 		fmt.Printf("[partitioning] [%d %s]\n", partInfo.index, testName)
 		if partitionDryRun {
-			t.Skip(fmt.Sprintf("[DRY-RUN] partition node %d: test number %d ", partitionNode, partInfo.index))
+			t.Skipf("[DRY-RUN] partition node %d: test number %d ", partitionNode, partInfo.index)
 		}
 		// no action: the test will run
 		return
 	}
-	t.Skip(fmt.Sprintf("not in partition %d : test '%s' number %d for node %d ", partitionNode, testName, partInfo.index, partInfo.node))
+	t.Skipf("not in partition %d : test '%s' number %d for node %d ", partitionNode, testName, partInfo.index, partInfo.node)
 }
