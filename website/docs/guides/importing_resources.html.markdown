@@ -18,7 +18,7 @@ Importing is the process of bringing a resource under Terraform control, in thos
 from a different agent, or a resource was created using Terraform, but some or all of its contents were not.
 
 When we create a resource using Terraform, the side effect of this action is that the resource is stored into [Terraform state][terraform-state],
-which allows us to further manipulating the resource, such as changing its contents or deleting it.
+which allows us to further manipulate the resource, such as changing its contents or deleting it.
 
 There are cases when we create a resource (for example, a cloned vApp) which has the effect of creating other resources
 (such as VMs) or making them available to another owner (for example, shared catalogs and their contents).
@@ -145,7 +145,7 @@ Here we see that the import is an operation that will happen during `apply`.
 Compared to full manual importing, the procedure of writing an *import block* instead of the full HCL *resource block* is
 a huge improvement. Even so, if we need to import all the vApp templates from a catalog, or the VMs from a vApp, this
 reduced task can still be time-consuming and error-prone.
-To reduce the manual effort and minimize errors, `terraform-provider-vcd` *v3.11+* offers a new functionality, embedded
+To reduce the manual effort and minimize errors, `terraform-provider-vcd` **v3.11+** offers a new functionality, embedded
 in [`vcd_resource_list`][vcd-resource-list].
 
 Let's suppose we want to import all VMs from a vApp *SampleClonedVapp*, wich was either created outside of Terraform,
