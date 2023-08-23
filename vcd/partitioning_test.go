@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -15,13 +16,26 @@ type partitionInfo struct {
 }
 
 var (
+	// numberOfPartitions is how many partitions we want to create
 	numberOfPartitions = 0
-	partitionNode      = 0
-	partitionDryRun    = false
-	//listofTests        = getListOfTests()
+
+	// partitionNode is the number of the current test runner
+	partitionNode = 0
+
+	// partitionDryRun will show what the partition would do, but won't run any tests
+	partitionDryRun = false
+
+	// mapOfTests is the list of tests, each with a sequential number and the node it is assigned to
 	mapOfTests = make(map[string]partitionInfo)
+
+	// partitionMx is a mutex used to guarantee that the map of tests is not accessed simultaneously
+	partitionMx sync.Mutex
+
+	// testMapMx is a mutex that controls the mapOfTests access
+	testMapMx sync.Mutex
 )
 
+// getListOfTests retrieves the list of tests from the current directory
 func getListOfTests() []string {
 	files, err := os.ReadDir(".")
 	if err != nil {
@@ -52,7 +66,22 @@ func getListOfTests() []string {
 	return testList
 }
 
+// getTestInfo retrieves test information in a thread-safe way
+func getTestInfo(name string) (partitionInfo, bool) {
+	testMapMx.Lock()
+	defer testMapMx.Unlock()
+	info, found := mapOfTests[name]
+	return info, found
+}
+
+// getMapOfTests collects the list of tests and assigns node info
 func getMapOfTests() map[string]partitionInfo {
+	partitionMx.Lock()
+	defer partitionMx.Unlock()
+	// If this was the second access from a parallel test, we don't need to repeat the reading
+	if len(mapOfTests) > 0 {
+		return mapOfTests
+	}
 	listOfTests := getListOfTests()
 	testNumber := 0
 
@@ -64,6 +93,8 @@ func getMapOfTests() map[string]partitionInfo {
 		}
 		// Every test gets assigned a number
 		testNumber++
+
+		// Rotate the node number
 		nodeNumber++
 		if nodeNumber > numberOfPartitions {
 			nodeNumber = 1
@@ -96,7 +127,11 @@ func handlePartitioning(t *testing.T) {
 	if len(mapOfTests) == 0 {
 		mapOfTests = getMapOfTests()
 	}
-	partInfo, found := mapOfTests[testName]
+	if len(mapOfTests) == 0 {
+		fmt.Printf("no tests found in thid directory")
+		os.Exit(1)
+	}
+	partInfo, found := getTestInfo(testName)
 	if !found {
 		fmt.Printf("test '%s' not found in the list of tests\n", testName)
 		os.Exit(1)
@@ -107,8 +142,9 @@ func handlePartitioning(t *testing.T) {
 		if partitionDryRun {
 			t.Skipf("[DRY-RUN] partition node %d: test number %d ", partitionNode, partInfo.index)
 		}
-		// no action: the test will run
+		// no action: the test belongs to the current node and will run
 		return
 	}
+	// The test belong to a different node: skipping
 	t.Skipf("not in partition %d : test '%s' number %d for node %d ", partitionNode, testName, partInfo.index, partInfo.node)
 }
