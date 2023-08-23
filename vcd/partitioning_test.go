@@ -134,7 +134,7 @@ func handlePartitioning(t *testing.T) {
 		mapOfTests = getMapOfTests()
 	}
 	if len(mapOfTests) == 0 {
-		fmt.Printf("no tests found in thid directory")
+		fmt.Printf("no tests found in this directory")
 		os.Exit(1)
 	}
 	partInfo, found := getTestInfo(testName)
