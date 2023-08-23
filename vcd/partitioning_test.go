@@ -43,11 +43,16 @@ func getListOfTests() []string {
 	}
 	var testList []string
 
+	// This regular expression finds every Test function declaration in the file
+	// (?m) means multi-line, i.e. the '^' symbol matches at the start of each line
+	// not only at the start of the text.
 	findTestName := regexp.MustCompile(`(?m)^func (Test\w+)`)
 	for _, f := range files {
+		// skips non-test files
 		if !strings.HasSuffix(f.Name(), "_test.go") {
 			continue
 		}
+		// skips unit test files
 		if strings.Contains(f.Name(), "_unit_test") {
 			continue
 		}
@@ -57,6 +62,7 @@ func getListOfTests() []string {
 		}
 		testNames := findTestName.FindAll(fileContent, -1)
 		for _, fn := range testNames {
+			// keeps only the test name
 			testName := strings.Replace(string(fn), "func ", "", 1)
 			testList = append(testList, testName)
 		}
