@@ -757,8 +757,12 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 			importData.WriteString(fmt.Sprintf("# import data for %s %s%s \n", resourceType, ancestorsText, ref.name))
 			importData.WriteString("import {\n")
 			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, ref.name, idTail(ref.id)))
-			importData.WriteString(fmt.Sprintf("  id = \"%s%s%s\"\n",
-				strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier))
+			if len(ancestors) > 0 {
+				importData.WriteString(fmt.Sprintf("  id = \"%s%s%s\"\n",
+					strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier))
+			} else {
+				importData.WriteString(fmt.Sprintf("  id = \"%s\"\n", identifier))
+			}
 			importData.WriteString("}\n\n")
 		}
 	}
