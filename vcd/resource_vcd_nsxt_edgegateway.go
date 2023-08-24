@@ -219,27 +219,17 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Boolean value that specifies that the Edge Gateway is using IP Spaces",
 			},
-			"external_network_manual": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				// Computed:      true,
+			"external_network": {
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Description: "",
-				Elem:        nsxtEdgeExternalNetworksManual,
-				// ConflictsWith: []string{"external_network_auto"},
+				Elem:        nsxtEdgeExternalNetworks,
 			},
-			// "external_network_auto": {
-			// 	Type:     schema.TypeSet,
-			// 	Optional: true,
-			// 	// Computed:      true,
-			// 	Description:   "",
-			// 	Elem:          nsxtEdgeExternalNetworksAuto,
-			// 	ConflictsWith: []string{"external_network_manual"},
-			// },
 		},
 	}
 }
 
-var nsxtEdgeExternalNetworksManual = &schema.Resource{
+var nsxtEdgeExternalNetworks = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"external_network_id": {
 			Type:        schema.TypeString,
@@ -266,42 +256,8 @@ var nsxtEdgeExternalNetworksManual = &schema.Resource{
 			Type:     schema.TypeInt,
 			Required: true,
 		},
-		// "start_address": {
-		// 	Type:     schema.TypeString,
-		// 	Required: true,
-		// },
-		// "end_address": {
-		// 	Type:     schema.TypeString,
-		// 	Required: true,
-		// },
 	},
 }
-
-// var nsxtEdgeExternalNetworksAuto = &schema.Resource{
-// 	Schema: map[string]*schema.Schema{
-// 		"external_network_id": {
-// 			Type:        schema.TypeString,
-// 			Required:    true,
-// 			Description: "Segment backed external network ID",
-// 		},
-// 		"gateway": {
-// 			Type:        schema.TypeInt,
-// 			Required:    true,
-// 			Description: "Gateway address for a subnet (e.g. 24)",
-// 		},
-// 		"prefix_length": {
-// 			Type:        schema.TypeInt,
-// 			Required:    true,
-// 			Description: "Prefix length for a subnet (e.g. 24)",
-// 		},
-// 		"prefix_count": {
-// 			Type:        schema.TypeString,
-// 			Optional:    true,
-// 			Computed:    true,
-// 			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
-// 		},
-// 	},
-// }
 
 func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T Edge Gateway creation initiated")
@@ -520,7 +476,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	edgeGatewayType.EdgeGatewayUplinks[0].Dedicated = d.Get("dedicate_external_network").(bool)
 
 	// Handle additional external networks if any were specified
-	_, manualNetOk := d.GetOk("external_network_manual")
+	_, manualNetOk := d.GetOk("external_network")
 	// _, autoNetOk := d.GetOk("external_network_auto")
 	if manualNetOk {
 		externalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplinkManual(d)
@@ -531,7 +487,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 }
 
 func getNsxtEdgeGatewayExternalNetworkUplinkManual(d *schema.ResourceData) []types.EdgeGatewayUplinks {
-	extNetworks := d.Get("external_network_manual").(*schema.Set).List()
+	extNetworks := d.Get("external_network").(*schema.Set).List()
 	resultUplinks := make([]types.EdgeGatewayUplinks, len(extNetworks))
 	// subnetSlice := make([]types.OpenAPIEdgeGatewaySubnetValue, len(extNetworks))
 
@@ -1134,8 +1090,8 @@ func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGa
 		attachedNetwork = append(attachedNetwork, ontAttachedNetwork)
 	}
 
-	attachedExernalNetworkSet := schema.NewSet(schema.HashResource(nsxtEdgeExternalNetworksManual), attachedNetwork)
-	err := d.Set("external_network_manual", attachedExernalNetworkSet)
+	attachedExernalNetworkSet := schema.NewSet(schema.HashResource(nsxtEdgeExternalNetworks), attachedNetwork)
+	err := d.Set("external_network", attachedExernalNetworkSet)
 	if err != nil {
 		return fmt.Errorf("error setting attached External Networks after read: %s", err)
 	}

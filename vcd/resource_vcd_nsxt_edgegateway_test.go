@@ -990,14 +990,14 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
      }
   }
 
-  external_network_manual {
+  external_network {
 	external_network_id = vcd_external_network_v2.segment-backed.id
 	gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
 	prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
 	allocated_ip_count  = 3
   }
 
-  external_network_manual {
+  external_network {
 	external_network_id = vcd_external_network_v2.segment-backed2.id
 	gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
 	prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
