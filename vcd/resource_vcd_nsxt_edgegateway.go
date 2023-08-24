@@ -219,9 +219,89 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Boolean value that specifies that the Edge Gateway is using IP Spaces",
 			},
+			"external_network_manual": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				// Computed:      true,
+				Description: "",
+				Elem:        nsxtEdgeExternalNetworksManual,
+				// ConflictsWith: []string{"external_network_auto"},
+			},
+			// "external_network_auto": {
+			// 	Type:     schema.TypeSet,
+			// 	Optional: true,
+			// 	// Computed:      true,
+			// 	Description:   "",
+			// 	Elem:          nsxtEdgeExternalNetworksAuto,
+			// 	ConflictsWith: []string{"external_network_manual"},
+			// },
 		},
 	}
 }
+
+var nsxtEdgeExternalNetworksManual = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"external_network_id": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Segment backed external network ID",
+		},
+		"gateway": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Gateway address for a subnet (e.g. 24)",
+		},
+		"prefix_length": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "Prefix length for a subnet (e.g. 24)",
+		},
+		"primary_ip": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
+		},
+		"allocated_ip_count": {
+			Type:     schema.TypeInt,
+			Required: true,
+		},
+		// "start_address": {
+		// 	Type:     schema.TypeString,
+		// 	Required: true,
+		// },
+		// "end_address": {
+		// 	Type:     schema.TypeString,
+		// 	Required: true,
+		// },
+	},
+}
+
+// var nsxtEdgeExternalNetworksAuto = &schema.Resource{
+// 	Schema: map[string]*schema.Schema{
+// 		"external_network_id": {
+// 			Type:        schema.TypeString,
+// 			Required:    true,
+// 			Description: "Segment backed external network ID",
+// 		},
+// 		"gateway": {
+// 			Type:        schema.TypeInt,
+// 			Required:    true,
+// 			Description: "Gateway address for a subnet (e.g. 24)",
+// 		},
+// 		"prefix_length": {
+// 			Type:        schema.TypeInt,
+// 			Required:    true,
+// 			Description: "Prefix length for a subnet (e.g. 24)",
+// 		},
+// 		"prefix_count": {
+// 			Type:        schema.TypeString,
+// 			Optional:    true,
+// 			Computed:    true,
+// 			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
+// 		},
+// 	},
+// }
 
 func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T Edge Gateway creation initiated")
@@ -439,7 +519,45 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	edgeGatewayType.EdgeGatewayUplinks[0].UplinkID = d.Get("external_network_id").(string)
 	edgeGatewayType.EdgeGatewayUplinks[0].Dedicated = d.Get("dedicate_external_network").(bool)
 
+	// Handle additional external networks if any were specified
+	_, manualNetOk := d.GetOk("external_network_manual")
+	// _, autoNetOk := d.GetOk("external_network_auto")
+	if manualNetOk {
+		externalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplinkManual(d)
+		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, externalNetworkUplinks...)
+	}
+
 	return &edgeGatewayType, nil
+}
+
+func getNsxtEdgeGatewayExternalNetworkUplinkManual(d *schema.ResourceData) []types.EdgeGatewayUplinks {
+	extNetworks := d.Get("external_network_manual").(*schema.Set).List()
+	resultUplinks := make([]types.EdgeGatewayUplinks, len(extNetworks))
+	// subnetSlice := make([]types.OpenAPIEdgeGatewaySubnetValue, len(extNetworks))
+
+	for index, singleUplink := range extNetworks {
+
+		uplinkMap := singleUplink.(map[string]interface{})
+		oneUplink := types.EdgeGatewayUplinks{
+			UplinkID: uplinkMap["external_network_id"].(string),
+			Subnets: types.OpenAPIEdgeGatewaySubnets{
+				Values: []types.OpenAPIEdgeGatewaySubnetValue{
+					{
+						Enabled:              true,
+						Gateway:              uplinkMap["gateway"].(string),
+						PrefixLength:         uplinkMap["prefix_length"].(int),
+						PrimaryIP:            uplinkMap["primary_ip"].(string),
+						AutoAllocateIPRanges: true, // VCD UI only allows this option for external network uplinks
+						TotalIPCount:         addrOf(uplinkMap["allocated_ip_count"].(int)),
+					},
+				},
+			},
+		}
+
+		resultUplinks[index] = oneUplink
+	}
+
+	return resultUplinks
 }
 
 // getNsxtEdgeGatewayUplinksTypeForCreate handles uplink structure in create only operations
@@ -849,22 +967,38 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	dSet(d, "owner_id", edgeGw.OwnerRef.ID)
 	dSet(d, "vdc", edgeGw.OwnerRef.Name)
 
-	// NSX-T Edge Gateways support only 1 uplink. Edge gateway can only be connected to one external network (in NSX-T terms
-	// Tier 1 gateway can only be connected to single Tier 0 gateway)
-	edgeUplink := edgeGw.EdgeGatewayUplinks[0]
+	// NSX-T Edge Gateway can have many uplinks of different types (they are differentiated by 'backingType' field):
+	// * MANDATORY - exactly 1 uplink to Tier0 Gateway (External network backed by NSX-T T0 Gateway) [backingType==NSXT_TIER0]
+	// * OPTIONAL - one or more External Network Uplinks (backed by NSX-T Segment backed External networks) [backingType==IMPORTED_T_LOGICAL_SWITCH]
+	// It is expected that the Tier0 gateway uplink is at index 0, but we have seen where VCD API shuffles response values therefore it
+	// is important to ensure that uplink with backingType==NSXT_TIER0 the element 0 in types.EdgeGatewayUplinks
+	// edgeGw.EdgeGatewayUplinks = reorderEdgeGatewayUplinks(edgeGw.EdgeGatewayUplinks)
+	err := edgeGateway.ReorderUplinks()
+	if err != nil {
+		return fmt.Errorf("error reordering NSX-T Edge Gateway Uplinks: %s", err)
+	}
 
-	dSet(d, "dedicate_external_network", edgeUplink.Dedicated)
-	dSet(d, "external_network_id", edgeUplink.UplinkID)
+	edgeT0BackedUplink := edgeGw.EdgeGatewayUplinks[0]
+	dSet(d, "dedicate_external_network", edgeT0BackedUplink.Dedicated)
+	dSet(d, "external_network_id", edgeT0BackedUplink.UplinkID)
 
 	// NSX-T Edge Gateway subnet and used/unused IP counts are only available and can be stored in
 	// state if it is not backed by IP Spaces
-	if edgeUplink.UsingIpSpace != nil && *edgeUplink.UsingIpSpace {
+	if edgeT0BackedUplink.UsingIpSpace != nil && *edgeT0BackedUplink.UsingIpSpace {
 		dSet(d, "use_ip_spaces", true)
 	} else {
 		dSet(d, "use_ip_spaces", false)
-		err := setNsxtEdgeGatewayUplinkData(edgeGateway, &edgeUplink, d)
+		err := setNsxtEdgeGatewayUplinkData(edgeGateway, &edgeT0BackedUplink, d)
 		if err != nil {
 			return fmt.Errorf("error storing uplink information: %s", err)
+		}
+	}
+
+	// store attached external network data, if any
+	if len(edgeGw.EdgeGatewayUplinks) > 1 {
+		err = setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
+		if err != nil {
+			return fmt.Errorf("error storing attached external network data: %s", err)
 		}
 	}
 
@@ -976,6 +1110,35 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 
 	dSet(d, "used_ip_count", len(usedIps))
 	dSet(d, "unused_ip_count", len(unusedIps))
+
+	return nil
+}
+
+func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.ResourceData) error {
+	// 'subnet' field
+	attachedNetwork := make([]interface{}, 1)
+	for _, singleAttachedNetwork := range edgeGateway.EdgeGateway.EdgeGatewayUplinks {
+
+		// External uplink networks are of BackingType "IMPORTED_T_LOGICAL_SWITCH" - not storing any other network
+		if singleAttachedNetwork.BackingType != nil && *singleAttachedNetwork.BackingType != "IMPORTED_T_LOGICAL_SWITCH" {
+			continue
+		}
+
+		ontAttachedNetwork := make(map[string]interface{})
+		ontAttachedNetwork["external_network_id"] = singleAttachedNetwork.UplinkID
+		ontAttachedNetwork["gateway"] = singleAttachedNetwork.Subnets.Values[0].Gateway
+		ontAttachedNetwork["prefix_length"] = singleAttachedNetwork.Subnets.Values[0].PrefixLength
+		ontAttachedNetwork["primary_ip"] = singleAttachedNetwork.Subnets.Values[0].PrimaryIP
+		ontAttachedNetwork["allocated_ip_count"] = *singleAttachedNetwork.Subnets.Values[0].TotalIPCount
+
+		attachedNetwork = append(attachedNetwork, ontAttachedNetwork)
+	}
+
+	attachedExernalNetworkSet := schema.NewSet(schema.HashResource(nsxtEdgeExternalNetworksManual), attachedNetwork)
+	err := d.Set("external_network_manual", attachedExernalNetworkSet)
+	if err != nil {
+		return fmt.Errorf("error setting attached External Networks after read: %s", err)
+	}
 
 	return nil
 }
