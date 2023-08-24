@@ -1,8 +1,10 @@
-//go:build catalog || ALL || functional
+//go:build network || ALL || functional
 
 package vcd
 
 import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -21,8 +23,7 @@ func TestAccVcdIpv6Support(t *testing.T) {
 		"TestName":            t.Name(),
 		"NsxtImportSegment":   testConfig.Nsxt.NsxtImportSegment,
 
-		"NetworkName": t.Name(),
-		"VdcName":     t.Name(),
+		"VdcName": t.Name(),
 
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
@@ -43,7 +44,7 @@ func TestAccVcdIpv6Support(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckCatalogDestroy,
+		CheckDestroy:      testAccCheckVcdDestroy(t.Name()),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -154,6 +155,21 @@ func TestAccVcdIpv6Support(t *testing.T) {
 		},
 	})
 	postTestChecks(t)
+}
+
+func testAccCheckVcdDestroy(vdcName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.GetOrg(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+		_, err = org.GetVDCByName(vdcName, true)
+		if err == nil {
+			return fmt.Errorf("VDC %s still exists", vdcName)
+		}
+		return nil
+	}
 }
 
 const testAccVcdIpv6Prerequisites = `

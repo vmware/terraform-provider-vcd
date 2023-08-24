@@ -370,12 +370,6 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupMigration(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	vcdClient := createTemporaryVCDConnection(false)
-
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                       testConfig.VCD.Org,

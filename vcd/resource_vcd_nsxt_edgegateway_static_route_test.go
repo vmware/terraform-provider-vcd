@@ -21,12 +21,7 @@ func TestAccVcdNsxtEdgeStaticRoute(t *testing.T) {
 	}
 
 	// Requires VCD 10.4.0+
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
-		t.Skipf(t.Name() + " requires a connection to set the tests")
-	}
-
-	if vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.0") {
 		t.Skipf("NSX-T Edge Gateway Static Routing requires VCD 10.4.0+ (API v37.0+)")
 	}
 

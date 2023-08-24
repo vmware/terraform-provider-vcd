@@ -6,7 +6,7 @@ description: |-
   The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware Cloud Director Provider 3.10
+# VMware Cloud Director Provider 3.11
 
 The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
@@ -22,7 +22,6 @@ When upgrading the provider please check for such labels for the resources you a
 
 The following Cloud Director versions are supported by this provider:
 
-* 10.3
 * 10.4
 * 10.5
 

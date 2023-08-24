@@ -14,15 +14,7 @@ import (
 
 func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 	preTestChecks(t)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can create Imported networks")
-	}
+	skipIfNotSysAdmin(t)
 
 	var vapp govcd.VApp
 
@@ -52,6 +44,10 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText2)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,

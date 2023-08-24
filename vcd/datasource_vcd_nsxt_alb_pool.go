@@ -186,6 +186,11 @@ func datasourceVcdAlbPool() *schema.Resource {
 				Default:     true,
 				Description: "Monitors if the traffic is accepted by node (default true)",
 			},
+			"ssl_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enables SSL - Necessary when CA certificates are used",
+			},
 			// Read only information
 			"associated_virtual_service_ids": {
 				Type:        schema.TypeSet,

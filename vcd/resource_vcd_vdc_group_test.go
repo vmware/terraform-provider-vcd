@@ -15,18 +15,13 @@ import (
 // TestAccVcdVdcGroupResource tests that VDC Group can be managed
 func TestAccVcdVdcGroupResource(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
-	}
-
-	vcdClient := createTemporaryVCDConnection(false)
-
-	if !vcdClient.Client.IsSysAdmin {
-		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.VCD.NsxtProviderVdc.Name == "" ||

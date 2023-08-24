@@ -574,8 +574,8 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 			}
 
 			// There have been real cases where these values were `nil` and caused panic of plugin.
-			if internalDisk.Iops != nil {
-				newValue["iops"] = int(*internalDisk.Iops)
+			if internalDisk.IopsAllocation != nil {
+				newValue["iops"] = int(internalDisk.IopsAllocation.Reservation)
 			}
 			if internalDisk.ThinProvisioned != nil {
 				newValue["thin_provisioned"] = *internalDisk.ThinProvisioned
@@ -636,7 +636,7 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 		// Update details of internal disk for disk existing in template
 		if value, ok := internalDiskProvidedConfig["iops"]; ok {
 			iops := int64(value.(int))
-			diskCreatedByTemplate.Iops = &iops
+			diskCreatedByTemplate.IopsAllocation.Reservation = iops
 		}
 
 		// value is required but not treated.

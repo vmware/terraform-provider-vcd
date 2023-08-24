@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script will connect to VCD using username and password,
 # and go through the steps to create/authorize/activate a service account.
 # Provider is the only one that can create and authorize service accounts, 

@@ -125,6 +125,7 @@ func datasourceVcdNsxtEdgeGatewayStaticRouteRead(ctx context.Context, d *schema.
 	}
 
 	if len(filteredByName) == 1 {
+		// #nosec G602 -- slice cannot be out of bounds
 		foundResult = filteredByName[0]
 	}
 
@@ -150,6 +151,7 @@ func datasourceVcdNsxtEdgeGatewayStaticRouteRead(ctx context.Context, d *schema.
 		}
 
 		// found exactly one value
+		// #nosec G602 -- when reaching this point, slice cannot be out of bounds
 		foundResult = filteredByNetworkCidr[0]
 	}
 
