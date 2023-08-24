@@ -161,7 +161,7 @@ func resourceVmInternalDiskCreate(ctx context.Context, d *schema.ResourceData, m
 		AdapterType:         internalDiskBusTypes[d.Get("bus_type").(string)],
 		ThinProvisioned:     &isThinProvisioned,
 		StorageProfile:      storageProfilePrt,
-		Iops:                &iops,
+		IopsAllocation:      &types.IopsResource{Reservation: iops, SharesLevel: "NORMAL"},
 		VirtualQuantityUnit: "byte",
 		OverrideVmDefault:   overrideVmDefault,
 	}
@@ -350,7 +350,7 @@ func resourceVmInternalDiskUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	diskSettingsToUpdate.Iops = &iops
+	diskSettingsToUpdate.IopsAllocation.Reservation = iops
 
 	_, err = vm.UpdateInternalDisks(vm.VM.VmSpecSection)
 	if err != nil {
@@ -397,7 +397,9 @@ func resourceVmInternalDiskRead(_ context.Context, d *schema.ResourceData, m int
 	if diskSettings.ThinProvisioned != nil {
 		dSet(d, "thin_provisioned", *diskSettings.ThinProvisioned)
 	}
-	dSet(d, "iops", diskSettings.Iops)
+	if diskSettings.IopsAllocation != nil {
+		dSet(d, "iops", diskSettings.IopsAllocation.Reservation)
+	}
 	dSet(d, "storage_profile", diskSettings.StorageProfile.Name)
 
 	return nil
@@ -488,7 +490,7 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
 		if disk.Disk == nil {
 			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", index+1, disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
-				disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
+				disk.StorageProfile.Name, disk.IopsAllocation.Reservation, *disk.ThinProvisioned)
 			if err != nil {
 				logForScreen("vcd_vm_internal_disk", fmt.Sprintf("error writing to buffer: %s", err))
 			}
