@@ -142,6 +142,12 @@ func resourceVcdAlbPool() *schema.Resource {
 				Description: "Monitors if the traffic is accepted by node (default true)",
 			},
 			// Read only information
+			"ssl_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Enables SSL - Must be on when CA certificates are used",
+			},
 			"associated_virtual_service_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -398,6 +404,7 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 		DefaultPort:              addrOf(d.Get("default_port").(int)),
 		GracefulTimeoutPeriod:    addrOf(d.Get("graceful_timeout_period").(int)),
 		PassiveMonitoringEnabled: addrOf(d.Get("passive_monitoring_enabled").(bool)),
+		SslEnabled:               addrOf(d.Get("ssl_enabled").(bool)),
 	}
 
 	poolMembers, err := getNsxtAlbPoolMembersType(d)
@@ -427,6 +434,9 @@ func getNsxtAlbPoolType(d *schema.ResourceData) (*types.NsxtAlbPool, error) {
 	albPoolConfig.CaCertificateRefs = caCertificateRefs
 	albPoolConfig.CommonNameCheckEnabled = &commonNameCheckEnabled
 	albPoolConfig.DomainNames = domainNames
+	if len(caCertificateRefs) > 0 {
+		albPoolConfig.SslEnabled = addrOf(true)
+	}
 
 	return albPoolConfig, nil
 }
@@ -442,6 +452,9 @@ func setNsxtAlbPoolData(d *schema.ResourceData, albPool *types.NsxtAlbPool) erro
 	dSet(d, "default_port", albPool.DefaultPort)
 	dSet(d, "graceful_timeout_period", albPool.GracefulTimeoutPeriod)
 	dSet(d, "passive_monitoring_enabled", albPool.PassiveMonitoringEnabled)
+	if albPool.SslEnabled != nil {
+		dSet(d, "ssl_enabled", *albPool.SslEnabled)
+	}
 
 	err := setNsxtAlbPoolMemberData(d, albPool.Members)
 	if err != nil {

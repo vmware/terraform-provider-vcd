@@ -16,12 +16,7 @@ func TestAccVcdApiToken(t *testing.T) {
 	preTestChecks(t)
 	skipTestForServiceAccountAndApiToken(t)
 
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient == nil {
-		t.Skipf(t.Name() + " requires a connection to set the tests")
-	}
-
-	if vcdClient.Client.APIVCDMaxVersionIs("< 36.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 36.1") {
 		t.Skipf("API tokens require VCD 10.3.1+ (API v36.1+)")
 	}
 
