@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -367,7 +366,6 @@ func TestAccVcdNsxtAlbPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "ca_certificate_ids.#", "2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "domain_names.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_pool.test", "cn_check_enabled", "true"),
-					sleepTester(5*time.Minute),
 				),
 			},
 			{

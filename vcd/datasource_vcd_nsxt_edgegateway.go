@@ -181,8 +181,43 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Boolean value that specifies that the Edge Gateway is using IP Spaces",
 			},
+			"external_network": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Additional NSX-T Segment Backed networks",
+				Elem:        nsxtEdgeExternalNetworksDS,
+			},
 		},
 	}
+}
+
+var nsxtEdgeExternalNetworksDS = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"external_network_id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Segment backed external network ID",
+		},
+		"gateway": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Gateway IP Address",
+		},
+		"prefix_length": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Prefix length for a subnet (e.g. 24)",
+		},
+		"primary_ip": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Primary IP address for the Edge Gateway - will be auto-assigned if not defined",
+		},
+		"allocated_ip_count": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+	},
 }
 
 func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

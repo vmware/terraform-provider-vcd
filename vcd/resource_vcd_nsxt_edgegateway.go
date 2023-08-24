@@ -222,7 +222,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 			"external_network": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "",
+				Description: "Additional NSX-T Segment Backed networks to attach",
 				Elem:        nsxtEdgeExternalNetworks,
 			},
 		},
@@ -239,7 +239,7 @@ var nsxtEdgeExternalNetworks = &schema.Resource{
 		"gateway": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Gateway address for a subnet (e.g. 24)",
+			Description: "Gateway IP Address",
 		},
 		"prefix_length": {
 			Type:        schema.TypeInt,
@@ -250,7 +250,7 @@ var nsxtEdgeExternalNetworks = &schema.Resource{
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
-			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
+			Description: "Primary IP address for the Edge Gateway - will be auto-assigned if not defined",
 		},
 		"allocated_ip_count": {
 			Type:     schema.TypeInt,
@@ -476,20 +476,18 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	edgeGatewayType.EdgeGatewayUplinks[0].Dedicated = d.Get("dedicate_external_network").(bool)
 
 	// Handle additional external networks if any were specified
-	_, manualNetOk := d.GetOk("external_network")
-	// _, autoNetOk := d.GetOk("external_network_auto")
-	if manualNetOk {
-		externalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplinkManual(d)
+	_, segmentExternalNetworksAttached := d.GetOk("external_network")
+	if segmentExternalNetworksAttached {
+		externalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplink(d)
 		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, externalNetworkUplinks...)
 	}
 
 	return &edgeGatewayType, nil
 }
 
-func getNsxtEdgeGatewayExternalNetworkUplinkManual(d *schema.ResourceData) []types.EdgeGatewayUplinks {
+func getNsxtEdgeGatewayExternalNetworkUplink(d *schema.ResourceData) []types.EdgeGatewayUplinks {
 	extNetworks := d.Get("external_network").(*schema.Set).List()
 	resultUplinks := make([]types.EdgeGatewayUplinks, len(extNetworks))
-	// subnetSlice := make([]types.OpenAPIEdgeGatewaySubnetValue, len(extNetworks))
 
 	for index, singleUplink := range extNetworks {
 
@@ -503,7 +501,7 @@ func getNsxtEdgeGatewayExternalNetworkUplinkManual(d *schema.ResourceData) []typ
 						Gateway:              uplinkMap["gateway"].(string),
 						PrefixLength:         uplinkMap["prefix_length"].(int),
 						PrimaryIP:            uplinkMap["primary_ip"].(string),
-						AutoAllocateIPRanges: true, // VCD UI only allows this option for external network uplinks
+						AutoAllocateIPRanges: true, // VCD UI (up to 10.5.0) only allows automatic IP allocation
 						TotalIPCount:         addrOf(uplinkMap["allocated_ip_count"].(int)),
 					},
 				},
