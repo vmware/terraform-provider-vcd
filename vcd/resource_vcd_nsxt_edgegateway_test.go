@@ -961,6 +961,10 @@ data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
 }
 
+data "vcd_org_vdc" "nsxt" {
+  name = "{{.NsxtVdc}}"
+}
+
 resource "vcd_external_network_v2" "segment-backed" {
   name = "{{.ExternalNetworkName}}"
 
@@ -1011,9 +1015,9 @@ data "vcd_external_network_v2" "existing-extnet" {
 
 const testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep1 = testAccVcdNsxtEdgeGatewayExternalNetworkUplinkShared + `
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  name = "{{.NsxtEdgeGatewayVcd}}"
+  org       = "{{.Org}}"
+  owner_id  = data.vcd_org_vdc.nsxt.id
+  name      = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
 
@@ -1047,9 +1051,9 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
 const testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep2 = testAccVcdNsxtEdgeGatewayExternalNetworkUplinkShared + `
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.NsxtVdc}}"
-  name                    = "{{.NsxtEdgeGatewayVcd}}"
+  org       = "{{.Org}}"
+  owner_id  = data.vcd_org_vdc.nsxt.id
+  name      = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
 
@@ -1083,9 +1087,9 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
 const testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep3 = testAccVcdNsxtEdgeGatewayExternalNetworkUplinkShared + `
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.NsxtVdc}}"
-  name                    = "{{.NsxtEdgeGatewayVcd}}"
+  org       = "{{.Org}}"
+  owner_id  = data.vcd_org_vdc.nsxt.id
+  name      = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
 

@@ -58,9 +58,9 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
 ```hcl
 resource "vcd_nsxt_edgegateway" "with-external-networks" {
-  org  = "my-org"
-  vdc  = "my-vdc"
-  name = "edge-with-segment-uplinks"
+  org      = "my-org"
+  owner_id = data.vcd_org_vdc.vdc1.id
+  name     = "edge-with-segment-uplinks"
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
 

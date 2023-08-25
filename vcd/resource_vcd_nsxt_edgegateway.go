@@ -319,6 +319,18 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway: %s", err)
 	}
 
+	// NSX-T Edge Gateway can have many uplinks of different types (they are differentiated by 'backingType' field):
+	// * MANDATORY - exactly 1 uplink to Tier0 Gateway (External network backed by NSX-T T0 Gateway) [backingType==NSXT_TIER0]
+	// * OPTIONAL - one or more External Network Uplinks (backed by NSX-T Segment backed External networks) [backingType==IMPORTED_T_LOGICAL_SWITCH]
+	// It is expected that the Tier0 gateway uplink is at index 0, but there have been cases where
+	// VCD API shuffles response values therefore it is important to ensure that uplink with
+	// backingType==NSXT_TIER0 the element 0 in types.EdgeGatewayUplinks edgeGw.EdgeGatewayUplinks =
+	// reorderEdgeGatewayUplinks(edgeGw.EdgeGatewayUplinks)
+	err = edge.ReorderUplinks()
+	if err != nil {
+		return diag.Errorf("error reordering NSX-T Edge Gateway Uplinks: %s", err)
+	}
+
 	allocatedIpCount, err := edge.GetAllocatedIpCount(false)
 	if err != nil {
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway allocated IP count: %s", err)
@@ -458,15 +470,18 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 		}
 	}
 
-	// Handle uplink and IP allocations for create and update in separate functions
 	switch {
 	case isCreateOperation:
-		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksTypeForCreate(d)
+		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksPrimaryTypeForCreate(d)
 		if err != nil {
 			return nil, err
 		}
 	case isUpdateOperation:
-		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksTypeForUpdate(d, allocatedIpCount, edgeGateway)
+		// Primary Uplink (backingType==NSXT_TIER0) functions rely on Edge Gateway structure containing
+		// __only__ Primary uplink data therefore it is safest to remove any other uplink (the ones with
+		// backingType==IMPORTED_T_LOGICAL_SWITCH) data as they are created from scratch below.
+		edgeGateway.EdgeGateway.EdgeGatewayUplinks = []types.EdgeGatewayUplinks{edgeGateway.EdgeGateway.EdgeGatewayUplinks[0]}
+		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksPrimaryTypeForUpdate(d, allocatedIpCount, edgeGateway)
 		if err != nil {
 			return nil, err
 		}
@@ -476,12 +491,17 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	edgeGatewayType.EdgeGatewayUplinks[0].UplinkID = d.Get("external_network_id").(string)
 	edgeGatewayType.EdgeGatewayUplinks[0].Dedicated = d.Get("dedicate_external_network").(bool)
 
-	// Handle additional external networks if any were specified
+	util.Logger.Printf("[TRACE] DAINIUS - uplink count after initial creation %d", len(edgeGatewayType.EdgeGatewayUplinks))
+
+	// Handle additional external networks (backingType==IMPORTED_T_LOGICAL_SWITCH) if any were specified
 	_, segmentExternalNetworksAttached := d.GetOk("external_network")
 	if segmentExternalNetworksAttached {
-		externalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplink(d)
-		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, externalNetworkUplinks...)
+		SegmentExternalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplink(d)
+		util.Logger.Printf("[TRACE] DAINIUS - returned segment uplink count %d", len(SegmentExternalNetworkUplinks))
+		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, SegmentExternalNetworkUplinks...)
 	}
+
+	util.Logger.Printf("[TRACE] DAINIUS - total uplink count %d", len(edgeGatewayType.EdgeGatewayUplinks))
 
 	return &edgeGatewayType, nil
 }
@@ -514,8 +534,8 @@ func getNsxtEdgeGatewayExternalNetworkUplink(d *schema.ResourceData) []types.Edg
 	return resultUplinks
 }
 
-// getNsxtEdgeGatewayUplinksTypeForCreate handles uplink structure in create only operations
-func getNsxtEdgeGatewayUplinksTypeForCreate(d *schema.ResourceData) ([]types.EdgeGatewayUplinks, error) {
+// getNsxtEdgeGatewayUplinksPrimaryTypeForCreate handles uplink structure in create only operations
+func getNsxtEdgeGatewayUplinksPrimaryTypeForCreate(d *schema.ResourceData) ([]types.EdgeGatewayUplinks, error) {
 	_, usingSubnetAllocation := d.GetOk("subnet")
 	_, usingAutoSubnetAllocation := d.GetOk("subnet_with_total_ip_count")
 	_, usingAutoAllocatedSubnetAllocation := d.GetOk("subnet_with_ip_count")
@@ -558,8 +578,8 @@ func getNsxtEdgeGatewayUplinksTypeForCreate(d *schema.ResourceData) ([]types.Edg
 	return []types.EdgeGatewayUplinks{{}}, nil
 }
 
-// getNsxtEdgeGatewayUplinksTypeForUpdate handles uplink structure in update only operations
-func getNsxtEdgeGatewayUplinksTypeForUpdate(d *schema.ResourceData, currentlyAllocatedIpCount *int, edgeGateway *govcd.NsxtEdgeGateway) ([]types.EdgeGatewayUplinks, error) {
+// getNsxtEdgeGatewayUplinksPrimaryTypeForUpdate handles uplink structure in update only operations
+func getNsxtEdgeGatewayUplinksPrimaryTypeForUpdate(d *schema.ResourceData, currentlyAllocatedIpCount *int, edgeGateway *govcd.NsxtEdgeGateway) ([]types.EdgeGatewayUplinks, error) {
 	if edgeGateway == nil {
 		return nil, fmt.Errorf("edge gateway cannot be nil")
 	}
@@ -607,10 +627,6 @@ func getNsxtEdgeGatewayUplinksTypeForUpdate(d *schema.ResourceData, currentlyAll
 			if ipBalance < 0 {
 				util.Logger.Printf("[TRACE] Edge Gateway Modifying structure to deallocate '%d' IPs", -ipBalance)
 				uplinks = edgeGateway.EdgeGateway.EdgeGatewayUplinks
-				// edgeGatewayStructure := &types.OpenAPIEdgeGateway{
-				// 	EdgeGatewayUplinks: uplinks,
-				// }
-
 				edgeGatewayStructure := &govcd.NsxtEdgeGateway{
 					EdgeGateway: &types.OpenAPIEdgeGateway{
 						EdgeGatewayUplinks: uplinks,
@@ -632,9 +648,9 @@ func getNsxtEdgeGatewayUplinksTypeForUpdate(d *schema.ResourceData, currentlyAll
 		return []types.EdgeGatewayUplinks{{Subnets: types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksTypeAutoAllocateSubnets(d)}}}, nil
 
 	// If no changes occur in the 'subnet', 'subnet_with_total_ip_count' or 'subnet_with_ip_count' fields during
-	// 'Update', then we pass back original values to the update request
+	// 'Update', then we pass back original values of primary uplink
 	default:
-		return edgeGateway.EdgeGateway.EdgeGatewayUplinks, nil
+		return []types.EdgeGatewayUplinks{edgeGateway.EdgeGateway.EdgeGatewayUplinks[0]}, nil
 	}
 }
 
