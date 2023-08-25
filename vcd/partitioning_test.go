@@ -1,4 +1,4 @@
-//go:build ALL
+//go:build functional || ALL
 
 package vcd
 
@@ -32,14 +32,13 @@ var (
 	// mapOfTests is the list of tests, each with a sequential number and the node it is assigned to
 	mapOfTests = make(map[string]partitionInfo)
 
-	// partitionMx is a mutex used to guarantee that the map of tests is not accessed simultaneously
-	partitionMx sync.Mutex
-
-	// testMapMx is a mutex that controls the mapOfTests access
-	testMapMx sync.Mutex
-
-	// testListMx is a mutex that controls access to the file of processed tests
-	testListMx sync.Mutex
+	// partitionMutexes is a set of mutexes used to guarantee that partitioning elements are thread safe
+	partitionMutexes = map[string]*sync.Mutex{
+		"list_creation":  &sync.Mutex{},
+		"map_access":     &sync.Mutex{},
+		"file_access":    &sync.Mutex{},
+		"progress_count": &sync.Mutex{},
+	}
 
 	// listOfTestForNode contains the tests for the current node
 	listOfTestForNode []string
@@ -55,8 +54,10 @@ var (
 		"TestProvider_impl",      // used to define provider
 		"TestCustomTemplates",    // used to fill binary tests
 		"TestAccClientUserAgent", // sets user agent
-		"TestAccVcdVAppRawMulti", // very old experimental test that should be removed
 	}
+
+	// progressiveCount marks the current test being processed by the node
+	progressiveCount int = 0
 )
 
 // getListOfTests retrieves the list of tests from the current directory
@@ -101,16 +102,16 @@ func getListOfTests() []string {
 
 // getTestInfo retrieves test information in a thread-safe way
 func getTestInfo(name string) (partitionInfo, bool) {
-	testMapMx.Lock()
-	defer testMapMx.Unlock()
+	partitionMutexes["map_access"].Lock()
+	defer partitionMutexes["map_access"].Unlock()
 	info, found := mapOfTests[name]
 	return info, found
 }
 
 // getMapOfTests collects the list of tests and assigns node info
 func getMapOfTests() map[string]partitionInfo {
-	partitionMx.Lock()
-	defer partitionMx.Unlock()
+	partitionMutexes["list_creation"].Lock()
+	defer partitionMutexes["list_creation"].Unlock()
 	// If this was the second access from a parallel test, we don't need to repeat the reading
 	if len(mapOfTests) > 0 {
 		return mapOfTests
@@ -153,8 +154,8 @@ func getMapOfTests() map[string]partitionInfo {
 }
 
 func writeProcessedTests(fileName, line string) {
-	testListMx.Lock()
-	defer testListMx.Unlock()
+	partitionMutexes["file_access"].Lock()
+	defer partitionMutexes["file_access"].Unlock()
 	var fileHandler *os.File
 	var err error
 	if fileExists(fileName) {
@@ -174,6 +175,12 @@ func writeProcessedTests(fileName, line string) {
 		os.Exit(1)
 	}
 	_ = w.Flush()
+}
+
+func progressCountIncrease() {
+	partitionMutexes["progress_count"].Lock()
+	defer partitionMutexes["progress_count"].Unlock()
+	progressiveCount++
 }
 
 func handlePartitioning(t *testing.T) {
@@ -225,12 +232,13 @@ func handlePartitioning(t *testing.T) {
 			writeProcessedTests(fileName, fmt.Sprintf("# version : %s", testConfig.Provider.VcdVersion))
 		}
 		if !contains(listOfProcessedTests, testName) {
+			progressCountIncrease()
 			writeProcessedTests(fileName, testName)
 			listOfProcessedTests = append(listOfProcessedTests, testName)
 		}
-		fmt.Printf("[partitioning] [%d %s (node %d)]\n", partInfo.index, testName, partitionNode)
+		fmt.Printf("[partitioning] [%s {%d of %d} (node %d)]\n", testName, progressiveCount, len(listOfTestForNode), partitionNode)
 		if partitionDryRun {
-			t.Skipf("[DRY-RUN] partition node %d: test number %d ", partitionNode, partInfo.index)
+			fmt.Printf("[DRY-RUN partitioning] [%s {%d of %d} (node %d)]\n", testName, progressiveCount, len(listOfTestForNode), partitionNode)
 		}
 		// no action: the test belongs to the current node and will run
 		return
