@@ -34,10 +34,10 @@ var (
 
 	// partitionMutexes is a set of mutexes used to guarantee that partitioning elements are thread safe
 	partitionMutexes = map[string]*sync.Mutex{
-		"list_creation":  &sync.Mutex{},
-		"map_access":     &sync.Mutex{},
-		"file_access":    &sync.Mutex{},
-		"progress_count": &sync.Mutex{},
+		"list_creation":  {},
+		"map_access":     {},
+		"file_access":    {},
+		"progress_count": {},
 	}
 
 	// listOfTestForNode contains the tests for the current node
