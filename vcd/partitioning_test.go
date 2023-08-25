@@ -1,4 +1,4 @@
-//go:build functional || ALL
+//go:build !unit
 
 package vcd
 
