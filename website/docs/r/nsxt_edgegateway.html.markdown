@@ -54,6 +54,46 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 }
 ```
 
+## Example Usage (NSX-T Segment backed External Networks attachment)
+
+```hcl
+resource "vcd_nsxt_edgegateway" "with-external-networks" {
+  org  = "my-org"
+  vdc  = "my-vdc"
+  name = "edge-with-segment-uplinks"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+
+  subnet {
+     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+
+  # NSX-T Segment backed uplink with Automatic Primary IP allocation
+  external_network {
+    external_network_id = data.vcd_external_network_v2.segment-backed.id
+    gateway             = tolist(data.vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
+    prefix_length       = tolist(data.vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
+    allocated_ip_count  = 4
+  }
+
+  # NSX-T Segment backed uplink with Primary IP
+  external_network {
+    external_network_id = data.vcd_external_network_v2.segment-backed2.id
+    gateway             = tolist(data.vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
+    prefix_length       = tolist(data.vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
+    allocated_ip_count  = 4
+    primary_ip          = "15.14.14.12"
+  }
+}
+```
+
 ## Example Usage (IP Space backed Provider Gateway)
 
 ```hcl
@@ -307,6 +347,9 @@ can be used to lookup ID by name.
   backed by *IP Spaces*. Read more in [IP allocation modes](#ip-allocation-modes) section.
 * `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `subnet_with_total_ip_count`. It is
   **read-only** attribute with other other allocation models `subnet` and `subnet_with_ip_count`.
+* `external_network` - (Optional, *v3.11+*) attaches NSX-T Segment backed External Networks with a
+  given [configuration block](#edgegateway-subnet-external-network)
+
 <a id="ip-allocation-modes"></a>
 
 ## IP allocation modes
@@ -373,6 +416,19 @@ added capability of automatically allocating a specific number of IPs from the b
 * `primary_ip` (Required) - Exactly one Primary IP is required for an Edge Gateway. It should be
   defined in any of the `subnet_with_ip_count` blocks
 * `allocated_ip_count` (Required) - Number of allocated IPs from that particular subnet
+
+<a id="edgegateway-subnet-external-network"></a>
+
+### NSX-T Segment backed network attachment using `external_network` block
+
+This option can attach NSX-T Segment backed External Networks
+
+* `external_network_id` - (Required) - ID of NSX-T Segment backed External Network
+* `gateway` - (Required) - Gateway for a subnet in external network
+* `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24)
+* `primary_ip` (Optional) - Exactly one Primary IP is required for an Edge Gateway. It should fall
+  in provided `gateway` and `prefix_length`
+* `allocated_ip_count` (Required) - Number of allocated IPs
 
 
 ## Attribute Reference

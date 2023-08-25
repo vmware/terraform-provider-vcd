@@ -134,7 +134,7 @@ func ifPossibleAddClusterId(t *testing.T, vcdClient *VCDClient, params StringMap
 
 const testAccNsxtEdgeGatewayDataSources = `
 data "vcd_external_network_v2" "existing-extnet" {
-	name = "{{.ExternalNetwork}}"
+  name = "{{.ExternalNetwork}}"
 }
 `
 
@@ -846,11 +846,6 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 	skipNoConfiguration(t, StringMap{"Nsxt.ExternalNetwork": testConfig.Nsxt.ExternalNetwork})
 	vcdClient := createTemporaryVCDConnection(false)
 
-	// nsxtExtNet, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, testConfig.Nsxt.ExternalNetwork)
-	// if err != nil {
-	// 	t.Skipf("%s - could not retrieve external network", t.Name())
-	// }
-
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
 		"NsxtVdc":             testConfig.Nsxt.Vdc,
@@ -887,14 +882,6 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 		return
 	}
 
-	// params["FuncName"] = t.Name() + "step1"
-	// configText1 := templateFill(testAccNsxtEdgeGatewayUpdate, params)
-	// if vcdShortTest {
-	// 	t.Skip(acceptanceTestsSkipped)
-	// 	return
-	// }
-
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
@@ -975,8 +962,7 @@ data "vcd_nsxt_manager" "main" {
 }
 
 resource "vcd_external_network_v2" "segment-backed" {
-  name        = "{{.ExternalNetworkName}}"
-  description = "{{.Description}}"
+  name = "{{.ExternalNetworkName}}"
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id
@@ -1000,8 +986,7 @@ resource "vcd_external_network_v2" "segment-backed" {
 }
 
 resource "vcd_external_network_v2" "segment-backed2" {
-  name        = "{{.ExternalNetworkName}}-2"
-  description = "{{.Description}}"
+  name = "{{.ExternalNetworkName}}-2"
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id
@@ -1025,11 +1010,10 @@ data "vcd_external_network_v2" "existing-extnet" {
 `
 
 const testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep1 = testAccVcdNsxtEdgeGatewayExternalNetworkUplinkShared + `
-
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org                     = "{{.Org}}"
-  vdc                     = "{{.NsxtVdc}}"
-  name                    = "{{.NsxtEdgeGatewayVcd}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "{{.NsxtEdgeGatewayVcd}}"
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
 
@@ -1045,18 +1029,18 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 
   external_network {
-	external_network_id = vcd_external_network_v2.segment-backed.id
-	gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
-	prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
-	allocated_ip_count  = 4
+    external_network_id = vcd_external_network_v2.segment-backed.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
+    allocated_ip_count  = 4
   }
 
   external_network {
-	external_network_id = vcd_external_network_v2.segment-backed2.id
-	gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
-	prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
-	allocated_ip_count  = 4
-	primary_ip          = "15.14.14.12"
+    external_network_id = vcd_external_network_v2.segment-backed2.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
+    allocated_ip_count  = 4
+    primary_ip          = "15.14.14.12"
   }
 }
 `
@@ -1072,8 +1056,8 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
      gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
      prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
-
      primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+
      allocated_ips {
        start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
        end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
@@ -1081,18 +1065,18 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 
   external_network {
-	external_network_id = vcd_external_network_v2.segment-backed.id
-	gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
-	prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
-	allocated_ip_count  = 2
+    external_network_id = vcd_external_network_v2.segment-backed.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
+    allocated_ip_count  = 2
   }
 
   external_network {
-	external_network_id = vcd_external_network_v2.segment-backed2.id
-	gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
-	prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
-	allocated_ip_count  = 8
-	primary_ip          = "15.14.14.12"
+    external_network_id = vcd_external_network_v2.segment-backed2.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
+    allocated_ip_count  = 8
+    primary_ip          = "15.14.14.12"
   }
 }
 `
@@ -1106,37 +1090,37 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
 
   subnet {
-     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
-     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+    gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+    prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
 
-     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-     allocated_ips {
-       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-     }
+    primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+    allocated_ips {
+      start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+      end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+    }
   }
 
   external_network {
-	external_network_id = vcd_external_network_v2.segment-backed.id
-	gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
-	prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
-	allocated_ip_count  = 1
+    external_network_id = vcd_external_network_v2.segment-backed.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
+    allocated_ip_count  = 1
   }
 
   external_network {
-	external_network_id = vcd_external_network_v2.segment-backed2.id
-	gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
-	prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
-	allocated_ip_count  = 1
-	primary_ip          = "15.14.14.12"
+    external_network_id = vcd_external_network_v2.segment-backed2.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
+    allocated_ip_count  = 1
+    primary_ip          = "15.14.14.12"
   }
 }
 `
 
 const testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep4DS = testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep3 + `
 data "vcd_nsxt_edgegateway" "nsxt-edge" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
-	name = vcd_nsxt_edgegateway.nsxt-edge.name
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = vcd_nsxt_edgegateway.nsxt-edge.name
 }
 `

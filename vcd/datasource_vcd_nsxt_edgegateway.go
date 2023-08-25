@@ -196,7 +196,7 @@ var nsxtEdgeExternalNetworksDS = &schema.Resource{
 		"external_network_id": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Segment backed external network ID",
+			Description: "NSX-T Segment backed External Network ID",
 		},
 		"gateway": {
 			Type:        schema.TypeString,
@@ -211,11 +211,12 @@ var nsxtEdgeExternalNetworksDS = &schema.Resource{
 		"primary_ip": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Primary IP address for the Edge Gateway - will be auto-assigned if not defined",
+			Description: "Primary IP address for the Edge Gateway",
 		},
 		"allocated_ip_count": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Number of allocated IPs",
 		},
 	},
 }
