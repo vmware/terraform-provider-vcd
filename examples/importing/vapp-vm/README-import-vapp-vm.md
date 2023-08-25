@@ -1,6 +1,6 @@
 # Importing cloned vApps with their VMs
 
-This example shows how to import two vApps and their VMs
+This example shows how to import two vApps and their VMs using [Terraform experimental import blocks](https://developer.hashicorp.com/terraform/language/import)
 
 
 ## Steps

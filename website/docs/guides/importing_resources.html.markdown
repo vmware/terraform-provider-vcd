@@ -8,7 +8,7 @@ description: |-
 
 # Importing resources
 
-Supported in provider *v3.11+* with Terraform *v1.5.x+* (tested with Terraform v1.5.4).
+Supported in provider *v3.11+* with Terraform *v1.5.x+*.
 
 -> Some parts of this document describe **EXPERIMENTAL** features.
 
@@ -24,21 +24,6 @@ There are cases when we create a resource (for example, a cloned vApp) which has
 (such as VMs) or making them available to another owner (for example, shared catalogs and their contents).
 When we are in such situation, we need to [import][terraform-import] the resource, so that we can handle it with our
 Terraform workflow.
-
-## Basic importing
-
-Up to Terraform 1.4.x, importing meant the conjunction of two operations:
-1. Writing the resource definition into an HCL script
-2. Running the command below, also known as "**the import command**"
-
-```
-terraform import vcd_resource_type.resource_definer path_to_resource
-```
-
-The effect of the above actions (which we can also perform in later versions of Terraform) is that the resource is
-imported into the [state][terraform-state].
-The drawback of this approach is that we need to write the HCL definition of the resource manually, which could result
-in a very time-consuming operation.
 
 ## Importing terminology
 
@@ -82,6 +67,21 @@ In the two snippets above:
 * All 5 lines of HCL code starting from `resource` are the **resource block**
 * The **Terraform state** (not visible in the above script) is collected in the file `terraform.tfstate`
 
+## Basic importing
+
+Up to Terraform 1.4.x, importing meant the conjunction of two operations:
+1. Writing the resource definition into an HCL script
+2. Running the command below, also known as "**the import command**"
+
+```
+terraform import vcd_resource_type.resource_definer path_to_resource
+```
+
+The effect of the above actions (which we can also perform in later versions of Terraform) is that the resource is
+imported into the [state][terraform-state].
+The drawback of this approach is that we need to write the HCL definition of the resource manually, which could result
+in a very time-consuming operation.
+
 ## Import mechanics
 
 When we run a `terraform import` command like the one in the previous section, Terraform will try to read all the
@@ -102,11 +102,11 @@ In fact, running `terraform plan` after the import, would result in an error.
 Which means that we need to edit the HCL script, and add all the necessary elements that are missing. We may use the
 data from the state file (`terraform.tfstate`) to supply the missing properties.
 
-## Semi-Automated import (Terraform 1.5+)
+## Semi-Automated import (Terraform v1.5+)
 
 ~> Terraform warns that this procedure is considered **experimental**.
 
-Terraform 1.5 introduces the concept of an [import block][terraform-import], which replaces the `import` command.
+Terraform v1.5 introduces the concept of an [import block][terraform-import], which replaces the `import` command.
 Instead of 
 
 ```shell
@@ -185,7 +185,7 @@ import {
 }
 ```
 
-If we adopt this workflow, we will end up at the same place described in [the previous section](#semi-automated-import-terraform-15),
+If we adopt this workflow, we will end up at the same place described in [the previous section](#semi-automated-import-terraform-v15),
 where we wrote the import blocks manually. Here we are ready to run the code generation command:
 
 ```shell

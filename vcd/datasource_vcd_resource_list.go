@@ -754,7 +754,7 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 			if len(ancestors) > 0 {
 				ancestorsText = strings.Join(ancestors, ImportSeparator) + ImportSeparator
 			}
-			importData.WriteString(fmt.Sprintf("# import data for %s %s%s \n", resourceType, ancestorsText, ref.name))
+			importData.WriteString(fmt.Sprintf("# Import directive for %s %s%s \n", resourceType, ancestorsText, ref.name))
 			importData.WriteString("import {\n")
 			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, ref.name, idTail(ref.id)))
 			if len(ancestors) > 0 {

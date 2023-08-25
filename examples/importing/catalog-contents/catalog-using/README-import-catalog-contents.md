@@ -1,6 +1,7 @@
 # Importing shared catalog items
 
-This example shows how to import a shared catalog and its contents.
+This example shows how to import a shared catalog and its contents using [Terraform experimental import blocks](https://developer.hashicorp.com/terraform/language/import)
+
 
 ## Steps
 
