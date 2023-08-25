@@ -966,12 +966,12 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	}
 
 	// store attached NSX-T Segment backed External Networks if any
-	if len(edgeGw.EdgeGatewayUplinks) > 1 {
-		err = setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
-		if err != nil {
-			return fmt.Errorf("error storing attached external network data: %s", err)
-		}
+	// if len(edgeGw.EdgeGatewayUplinks) > 1 {
+	err = setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
+	if err != nil {
+		return fmt.Errorf("error storing attached external network data: %s", err)
 	}
+	// }
 
 	return nil
 }
