@@ -1,9 +1,12 @@
+//go:build ALL
+
 package vcd
 
 import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -155,9 +158,9 @@ func writeProcessedTests(fileName, line string) {
 	var fileHandler *os.File
 	var err error
 	if fileExists(fileName) {
-		fileHandler, err = os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND, os.ModeAppend)
+		fileHandler, err = os.OpenFile(filepath.Clean(fileName), os.O_WRONLY|os.O_APPEND, os.ModeAppend)
 	} else {
-		fileHandler, err = os.Create(fileName)
+		fileHandler, err = os.Create(filepath.Clean(fileName))
 	}
 	if err != nil {
 		fmt.Printf("##### ERROR opening file %s : %s\n", fileName, err)
