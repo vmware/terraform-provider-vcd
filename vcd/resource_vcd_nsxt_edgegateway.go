@@ -491,7 +491,6 @@ func getNsxtEdgeGatewayExternalNetworkUplink(d *schema.ResourceData) []types.Edg
 	resultUplinks := make([]types.EdgeGatewayUplinks, len(extNetworks))
 
 	for index, singleUplink := range extNetworks {
-
 		uplinkMap := singleUplink.(map[string]interface{})
 		oneUplink := types.EdgeGatewayUplinks{
 			UplinkID: uplinkMap["external_network_id"].(string),
@@ -925,9 +924,10 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	// NSX-T Edge Gateway can have many uplinks of different types (they are differentiated by 'backingType' field):
 	// * MANDATORY - exactly 1 uplink to Tier0 Gateway (External network backed by NSX-T T0 Gateway) [backingType==NSXT_TIER0]
 	// * OPTIONAL - one or more External Network Uplinks (backed by NSX-T Segment backed External networks) [backingType==IMPORTED_T_LOGICAL_SWITCH]
-	// It is expected that the Tier0 gateway uplink is at index 0, but we have seen where VCD API shuffles response values therefore it
-	// is important to ensure that uplink with backingType==NSXT_TIER0 the element 0 in types.EdgeGatewayUplinks
-	// edgeGw.EdgeGatewayUplinks = reorderEdgeGatewayUplinks(edgeGw.EdgeGatewayUplinks)
+	// It is expected that the Tier0 gateway uplink is at index 0, but there have been cases where
+	// VCD API shuffles response values therefore it is important to ensure that uplink with
+	// backingType==NSXT_TIER0 the element 0 in types.EdgeGatewayUplinks edgeGw.EdgeGatewayUplinks =
+	// reorderEdgeGatewayUplinks(edgeGw.EdgeGatewayUplinks)
 	err := edgeGateway.ReorderUplinks()
 	if err != nil {
 		return fmt.Errorf("error reordering NSX-T Edge Gateway Uplinks: %s", err)
@@ -949,7 +949,7 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 		}
 	}
 
-	// store attached external network data, if any
+	// store attached NSX-T Segment backed External Networks if any
 	if len(edgeGw.EdgeGatewayUplinks) > 1 {
 		err = setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
 		if err != nil {
@@ -1070,8 +1070,7 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 }
 
 func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.ResourceData) error {
-	// 'subnet' field
-	attachedNetwork := make([]interface{}, 1)
+	attachedNetworks := make([]interface{}, 0)
 	for _, singleAttachedNetwork := range edgeGateway.EdgeGateway.EdgeGatewayUplinks {
 
 		// External uplink networks are of BackingType "IMPORTED_T_LOGICAL_SWITCH" - not storing any other network
@@ -1086,11 +1085,11 @@ func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGa
 		ontAttachedNetwork["primary_ip"] = singleAttachedNetwork.Subnets.Values[0].PrimaryIP
 		ontAttachedNetwork["allocated_ip_count"] = *singleAttachedNetwork.Subnets.Values[0].TotalIPCount
 
-		attachedNetwork = append(attachedNetwork, ontAttachedNetwork)
+		attachedNetworks = append(attachedNetworks, ontAttachedNetwork)
 	}
 
-	attachedExernalNetworkSet := schema.NewSet(schema.HashResource(nsxtEdgeExternalNetworks), attachedNetwork)
-	err := d.Set("external_network", attachedExernalNetworkSet)
+	attachedExternalNetworkSet := schema.NewSet(schema.HashResource(nsxtEdgeExternalNetworks), attachedNetworks)
+	err := d.Set("external_network", attachedExternalNetworkSet)
 	if err != nil {
 		return fmt.Errorf("error setting attached External Networks after read: %s", err)
 	}

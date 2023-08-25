@@ -430,7 +430,6 @@ This option can attach NSX-T Segment backed External Networks
   in provided `gateway` and `prefix_length`
 * `allocated_ip_count` (Required) - Number of allocated IPs
 
-
 ## Attribute Reference
 
 The following attributes are exported on this resource:
