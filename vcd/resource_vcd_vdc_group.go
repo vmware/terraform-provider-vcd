@@ -176,6 +176,12 @@ func resourceVdcGroup() *schema.Resource {
 				Description: "The list of organization VDCs that are participating in this group",
 				Elem:        participatingOrgVdcsResource,
 			},
+			"force_delete": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Forces deletion of VDC Group during destroy",
+			},
 		},
 	}
 }
@@ -244,6 +250,12 @@ func isInvalidPropertySetup(dfw_enabled, default_policy_status, remove_default_f
 // resourceVcdVdcGroupUpdate covers Update functionality for resource
 func resourceVcdVdcGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
+	// Return immediately if only 'force_delete' value was changed as it only affects delete
+	// operation, but one must be able to update it so that it can be changed for existing resource
+	if !d.HasChangeExcept("force_delete") {
+		return resourceVcdVdcGroupRead(ctx, d, meta)
+	}
 
 	diagErr := isInvalidPropertySetup(d.Get("dfw_enabled").(bool),
 		d.Get("default_policy_status").(bool),
@@ -452,7 +464,8 @@ func resourceVcdVdcGroupDelete(_ context.Context, d *schema.ResourceData, meta i
 		}
 	}
 
-	return diag.FromErr(vdcGroupToDelete.Delete())
+	forceDelete := d.Get("force_delete").(bool)
+	return diag.FromErr(vdcGroupToDelete.ForceDelete(forceDelete))
 }
 
 func resourceVdcGroupImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

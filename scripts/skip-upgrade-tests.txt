@@ -293,4 +293,5 @@ vcd.ResourceSchema-vcd_nsxt_network_dhcp_binding.tf v3.9.0 "Undocumented field n
 vcd.ResourceSchema-vcd_vm_placement_policy.tf v3.9.0 "'description' field changes"
 vcd.TestAccVcdVmPlacementPolicyWithoutDescription.tf v3.9.0 "Changed 'description' to Computed in 'vcd_vm_placement_policy'"
 vcd.TestAccVcdVmPlacementPolicy.tf v3.9.0 "Changed 'description' to Computed in 'vcd_vm_placement_policy'"
+vcd.ResourceSchema-vcd_vdc_group.tf v3.10.0 "Added new field 'force_delete'"
 vcd.ResourceSchema-vcd_nsxt_alb_pool.tf v3.10.0 "added field 'ssl_enabled'"
