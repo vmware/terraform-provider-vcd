@@ -50,8 +50,8 @@ The following arguments are supported:
 
 * `name` - (Required) Org name
 * `full_name` - (Required) Org full name
-* `delete_recursive` - (Optional, but recommended) Pass `delete_recursive=true` as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal.
-* `delete_force` - (Optional, but recommended) Pass `delete_force=true` and `delete_recursive=true` to remove an organization or VDC and any objects it contains, regardless of their state.
+* `delete_recursive` - (Optional, but recommended) Pass `delete_recursive=true` as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal. Default is `false`
+* `delete_force` - (Optional, but recommended) Pass `delete_force=true` and `delete_recursive=true` to remove an organization or VDC and any objects it contains, regardless of their state. Default is `false`
 * `is_enabled` - (Optional) True if this organization is enabled (allows login and all other operations). Default is `true`.
 * `description` - (Optional) Org description. Default is empty.
 * `deployed_vm_quota` - (Optional) Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. Default is unlimited (0)
