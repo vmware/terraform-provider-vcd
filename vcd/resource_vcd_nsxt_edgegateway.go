@@ -484,17 +484,12 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	edgeGatewayType.EdgeGatewayUplinks[0].UplinkID = d.Get("external_network_id").(string)
 	edgeGatewayType.EdgeGatewayUplinks[0].Dedicated = d.Get("dedicate_external_network").(bool)
 
-	util.Logger.Printf("[TRACE] DAINIUS - uplink count after initial creation %d", len(edgeGatewayType.EdgeGatewayUplinks))
-
 	// Handle additional external networks (backingType==IMPORTED_T_LOGICAL_SWITCH) if any were specified
 	_, segmentExternalNetworksAttached := d.GetOk("external_network")
 	if segmentExternalNetworksAttached {
 		SegmentExternalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplink(d)
-		util.Logger.Printf("[TRACE] DAINIUS - returned segment uplink count %d", len(SegmentExternalNetworkUplinks))
 		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, SegmentExternalNetworkUplinks...)
 	}
-
-	util.Logger.Printf("[TRACE] DAINIUS - total uplink count %d", len(edgeGatewayType.EdgeGatewayUplinks))
 
 	return &edgeGatewayType, nil
 }

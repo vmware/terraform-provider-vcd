@@ -348,8 +348,9 @@ can be used to lookup ID by name.
 * `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `subnet_with_total_ip_count`. It is
   **read-only** attribute with other other allocation models `subnet` and `subnet_with_ip_count`.
   **Note**. It sets or reports IP count *only for NSX-T Tier 0 backed External Network Uplink*.
-* `external_network` - (Optional, *v3.11+*) attaches NSX-T Segment backed External Networks with a
-  given [configuration block](#edgegateway-subnet-external-network)
+* `external_network` - (Optional,*VCD 10.4.1+*, *v3.11+*) attaches NSX-T Segment backed External Networks with a
+  given [configuration block](#edgegateway-subnet-external-network). It *does not support IP
+  Spaces*.
 
 <a id="ip-allocation-modes"></a>
 

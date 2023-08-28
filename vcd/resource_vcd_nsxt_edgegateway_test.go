@@ -843,6 +843,10 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("Segment Backed NSX-T Edge Gateway Uplinks require at least VCD 10.4.1+ (API v37.1+)")
+	}
+
 	skipNoConfiguration(t, StringMap{"Nsxt.ExternalNetwork": testConfig.Nsxt.ExternalNetwork})
 	vcdClient := createTemporaryVCDConnection(false)
 
@@ -851,7 +855,7 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 		"NsxtVdc":             testConfig.Nsxt.Vdc,
 		"NsxtManager":         testConfig.Nsxt.Manager,
 		"NsxtSegment":         testConfig.Nsxt.NsxtImportSegment,
-		"NsxtSegment2":        "Dummy segment",
+		"NsxtSegment2":        testConfig.Nsxt.NsxtImportSegment2,
 		"NsxtEdgeGatewayVcd":  t.Name(),
 		"ExternalNetwork":     testConfig.Nsxt.ExternalNetwork,
 		"ExternalNetworkName": t.Name() + "-segment-backed",
@@ -1124,5 +1128,145 @@ data "vcd_nsxt_edgegateway" "nsxt-edge" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
   name = vcd_nsxt_edgegateway.nsxt-edge.name
+}
+`
+
+func TestAccVcdNsxtEdgeGatewayVdcGroupExternalUplink(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("Segment Backed NSX-T Edge Gateway Uplinks require at least VCD 10.4.1+ (API v37.1+)")
+	}
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"Name":                      t.Name(),
+		"Description":               "myDescription",
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"NsxtManager":               testConfig.Nsxt.Manager,
+		"NsxtSegment":               testConfig.Nsxt.NsxtImportSegment,
+		"NsxtSegment2":              testConfig.Nsxt.NsxtImportSegment2,
+		"Dfw":                       "false",
+		"DefaultPolicy":             "false",
+		"TestName":                  t.Name(),
+
+		"NsxtEdgeGatewayVcd": t.Name() + "-edge",
+		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
+
+		"Tags": "vdcGroup gateway nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccVcdNsxtEdgeGatewayVdcGroupExternalUplink, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtEdgeGatewayVdcGroupExternalUplink = testAccVcdVdcGroupNew + `
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+resource "vcd_external_network_v2" "segment-backed" {
+  name = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "{{.NsxtSegment}}"
+  }
+
+  ip_scope {
+    gateway       = "14.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "14.14.14.10"
+      end_address   = "14.14.14.19"
+    }
+    
+    static_ip_pool {
+      start_address = "14.14.14.22"
+      end_address   = "14.14.14.29"
+    }
+  }
+}
+
+resource "vcd_external_network_v2" "segment-backed2" {
+  name = "{{.ExternalNetworkName}}-2"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "{{.NsxtSegment2}}"
+  }
+
+  ip_scope {
+    gateway       = "15.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "15.14.14.10"
+      end_address   = "15.14.14.19"
+    }
+  }
+}
+
+data "vcd_external_network_v2" "existing-extnet" {
+	name = "{{.ExternalNetwork}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org         = "{{.Org}}"
+  owner_id    = vcd_vdc_group.test1.id
+  name        = "{{.NsxtEdgeGatewayVcd}}"
+  description = "Description"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+
+  subnet {
+     gateway       = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+
+  external_network {
+    external_network_id = vcd_external_network_v2.segment-backed.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
+    allocated_ip_count  = 2
+  }
+
+  external_network {
+    external_network_id = vcd_external_network_v2.segment-backed2.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
+    allocated_ip_count  = 8
+    primary_ip          = "15.14.14.12"
+  }
 }
 `
