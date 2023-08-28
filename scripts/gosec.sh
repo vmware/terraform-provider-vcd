@@ -65,6 +65,7 @@ function get_gosec {
 function run_gosec {
     if [ -n "$gosec" ]
     then
+        go version
         $gosec -tests -tags ALL ./...
         exit_code=$?
         if [ "$exit_code" != "0" ]
