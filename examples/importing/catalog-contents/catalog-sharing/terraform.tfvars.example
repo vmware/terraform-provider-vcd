@@ -8,7 +8,7 @@ catalog      = "mycatalog"
 
 # where to find the .OVA and .ISO to create catalog contents.
 # The directory "./test-resources" is at the top of this repository
-ova_path     = "../../../test-resources/"
+ova_path     = "../../../../test-resources/"
 
 # organization administrator
 user         = "org-admin-user"
