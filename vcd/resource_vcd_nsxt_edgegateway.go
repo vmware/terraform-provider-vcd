@@ -930,20 +930,6 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	dSet(d, "owner_id", edgeGw.OwnerRef.ID)
 	dSet(d, "vdc", edgeGw.OwnerRef.Name)
 
-	// Used and unused IPs are reported for all Uplink (NSXT_TIER0 and IMPORTED_T_LOGICAL_SWITCH ones)
-	unusedIps, err := edgeGateway.GetAllUnusedExternalIPAddresses(false)
-	if err != nil {
-		return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
-	}
-
-	usedIps, err := edgeGateway.GetUsedIpAddressSlice(false)
-	if err != nil {
-		return fmt.Errorf("error getting NSX-T Edge Gateway used IPs after read: %s", err)
-	}
-
-	dSet(d, "used_ip_count", len(usedIps))
-	dSet(d, "unused_ip_count", len(unusedIps))
-
 	edgeT0BackedUplink := edgeGw.EdgeGatewayUplinks[0] // Using only Tier0 backed External network
 	dSet(d, "dedicate_external_network", edgeT0BackedUplink.Dedicated)
 	dSet(d, "external_network_id", edgeT0BackedUplink.UplinkID)
@@ -958,10 +944,24 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 		if err != nil {
 			return fmt.Errorf("error storing uplink information: %s", err)
 		}
+
+		// Used and unused IPs are reported for all Uplink (NSXT_TIER0 and IMPORTED_T_LOGICAL_SWITCH ones)
+		unusedIps, err := edgeGateway.GetAllUnusedExternalIPAddresses(false)
+		if err != nil {
+			return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
+		}
+
+		usedIps, err := edgeGateway.GetUsedIpAddressSlice(false)
+		if err != nil {
+			return fmt.Errorf("error getting NSX-T Edge Gateway used IPs after read: %s", err)
+		}
+
+		dSet(d, "used_ip_count", len(usedIps))
+		dSet(d, "unused_ip_count", len(unusedIps))
 	}
 
 	// store attached NSX-T Segment backed External Networks
-	err = setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
+	err := setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
 	if err != nil {
 		return fmt.Errorf("error storing attached external network data: %s", err)
 	}
