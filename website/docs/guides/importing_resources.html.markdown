@@ -301,4 +301,4 @@ They show how we can import multiple VMs, or multiple catalog items, with step-b
 [vcd-resource-list]:https://registry.terraform.io/providers/vmware/vcd/latest/docs/data-sources/resource_list
 [vcd-cloned-vapp]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/resources/cloned_vapp
 [accept-all-eulas]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/resources/vapp_vm#accept_all_eulas
-[examples]:https://github.com/dataclouder/terraform-provider-vcd/tree/import-compound-resources/examples/importing
+[examples]:https://github.com/vmware/terraform-provider-vcd/tree/import-compound-resources/examples/importing
