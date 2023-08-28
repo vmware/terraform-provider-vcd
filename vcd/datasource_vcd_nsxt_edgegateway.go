@@ -187,6 +187,11 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description: "Additional NSX-T Segment Backed networks",
 				Elem:        nsxtEdgeExternalNetworksDS,
 			},
+			"external_network_allocated_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Total number of IP addresses allocated for this gateway from Imported network uplinks",
+			},
 		},
 	}
 }

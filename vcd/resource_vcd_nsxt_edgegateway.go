@@ -163,7 +163,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:          schema.TypeInt,
 				Computed:      true,
 				Optional:      true,
-				Description:   "Total number of IP addresses allocated for this gateway. Can be set with 'subnet_with_total_ip_count' definitions only",
+				Description:   "Total number of IP addresses allocated for this gateway from Tier0 uplink. Can be set with 'subnet_with_total_ip_count' definitions only",
 				RequiredWith:  []string{"subnet_with_total_ip_count"},
 				ConflictsWith: []string{"subnet", "subnet_with_ip_count"},
 				ValidateFunc:  validation.IntAtLeast(1),
@@ -224,6 +224,11 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Optional:    true,
 				Description: "Additional NSX-T Segment Backed networks to attach",
 				Elem:        nsxtEdgeExternalNetworks,
+			},
+			"external_network_allocated_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Total number of IP addresses allocated for this gateway from Imported network uplinks",
 			},
 		},
 	}
@@ -317,18 +322,6 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 	edge, err := adminOrg.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway: %s", err)
-	}
-
-	// NSX-T Edge Gateway can have many uplinks of different types (they are differentiated by 'backingType' field):
-	// * MANDATORY - exactly 1 uplink to Tier0 Gateway (External network backed by NSX-T T0 Gateway) [backingType==NSXT_TIER0]
-	// * OPTIONAL - one or more External Network Uplinks (backed by NSX-T Segment backed External networks) [backingType==IMPORTED_T_LOGICAL_SWITCH]
-	// It is expected that the Tier0 gateway uplink is at index 0, but there have been cases where
-	// VCD API shuffles response values therefore it is important to ensure that uplink with
-	// backingType==NSXT_TIER0 the element 0 in types.EdgeGatewayUplinks edgeGw.EdgeGatewayUplinks =
-	// reorderEdgeGatewayUplinks(edgeGw.EdgeGatewayUplinks)
-	err = edge.ReorderUplinks()
-	if err != nil {
-		return diag.Errorf("error reordering NSX-T Edge Gateway Uplinks: %s", err)
 	}
 
 	allocatedIpCount, err := edge.GetAllocatedIpCount(false)
@@ -937,19 +930,21 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 	dSet(d, "owner_id", edgeGw.OwnerRef.ID)
 	dSet(d, "vdc", edgeGw.OwnerRef.Name)
 
-	// NSX-T Edge Gateway can have many uplinks of different types (they are differentiated by 'backingType' field):
-	// * MANDATORY - exactly 1 uplink to Tier0 Gateway (External network backed by NSX-T T0 Gateway) [backingType==NSXT_TIER0]
-	// * OPTIONAL - one or more External Network Uplinks (backed by NSX-T Segment backed External networks) [backingType==IMPORTED_T_LOGICAL_SWITCH]
-	// It is expected that the Tier0 gateway uplink is at index 0, but there have been cases where
-	// VCD API shuffles response values therefore it is important to ensure that uplink with
-	// backingType==NSXT_TIER0 the element 0 in types.EdgeGatewayUplinks edgeGw.EdgeGatewayUplinks =
-	// reorderEdgeGatewayUplinks(edgeGw.EdgeGatewayUplinks)
-	err := edgeGateway.ReorderUplinks()
+	// Used and unused IPs are reported for all Uplink (NSXT_TIER0 and IMPORTED_T_LOGICAL_SWITCH ones)
+	unusedIps, err := edgeGateway.GetAllUnusedExternalIPAddresses(false)
 	if err != nil {
-		return fmt.Errorf("error reordering NSX-T Edge Gateway Uplinks: %s", err)
+		return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
 	}
 
-	edgeT0BackedUplink := edgeGw.EdgeGatewayUplinks[0]
+	usedIps, err := edgeGateway.GetUsedIpAddressSlice(false)
+	if err != nil {
+		return fmt.Errorf("error getting NSX-T Edge Gateway used IPs after read: %s", err)
+	}
+
+	dSet(d, "used_ip_count", len(usedIps))
+	dSet(d, "unused_ip_count", len(unusedIps))
+
+	edgeT0BackedUplink := edgeGw.EdgeGatewayUplinks[0] // Using only Tier0 backed External network
 	dSet(d, "dedicate_external_network", edgeT0BackedUplink.Dedicated)
 	dSet(d, "external_network_id", edgeT0BackedUplink.UplinkID)
 
@@ -965,13 +960,11 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 		}
 	}
 
-	// store attached NSX-T Segment backed External Networks if any
-	// if len(edgeGw.EdgeGatewayUplinks) > 1 {
+	// store attached NSX-T Segment backed External Networks
 	err = setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
 	if err != nil {
 		return fmt.Errorf("error storing attached external network data: %s", err)
 	}
-	// }
 
 	return nil
 }
@@ -1023,14 +1016,14 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 	}
 	// End of 'subnet' field
 
-	// 'subnet_with_total_ip_count' and 'total_allocated_ip_count' fields
-	totalAllocatedIpCount, err := edgeGateway.GetAllocatedIpCount(false)
+	// 'subnet_with_total_ip_count' and 'total_allocated_ip_count' fields (IP Count reflects only T0 uplink)
+	totalAllocatedIpCount, err := edgeGateway.GetAllocatedIpCountByUplinkType(false, "NSXT_TIER0")
 	if err != nil {
-		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count: %s", err)
+		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count for Tier 0 Uplink: %s", err)
 	}
 	err = d.Set("total_allocated_ip_count", totalAllocatedIpCount)
 	if err != nil {
-		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count: %s", err)
+		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count for Tier 0 Uplink: %s", err)
 	}
 
 	autoSubnets := make([]interface{}, 1)
@@ -1069,19 +1062,6 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 	}
 	// End of 'subnet_with_ip_count' field
 
-	unusedIps, err := edgeGateway.GetAllUnusedExternalIPAddresses(false)
-	if err != nil {
-		return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
-	}
-
-	usedIps, err := edgeGateway.GetUsedIpAddressSlice(false)
-	if err != nil {
-		return fmt.Errorf("error getting NSX-T Edge Gateway used IPs after read: %s", err)
-	}
-
-	dSet(d, "used_ip_count", len(usedIps))
-	dSet(d, "unused_ip_count", len(unusedIps))
-
 	return nil
 }
 
@@ -1108,6 +1088,16 @@ func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGa
 	err := d.Set("external_network", attachedExternalNetworkSet)
 	if err != nil {
 		return fmt.Errorf("error setting attached External Networks after read: %s", err)
+	}
+
+	// Set an
+	totalAllocatedIpCount, err := edgeGateway.GetAllocatedIpCountByUplinkType(false, "IMPORTED_T_LOGICAL_SWITCH")
+	if err != nil {
+		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count for External Network Uplink: %s", err)
+	}
+	err = d.Set("external_network_allocated_ip_count", totalAllocatedIpCount)
+	if err != nil {
+		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count for External Network Uplink: %s", err)
 	}
 
 	return nil

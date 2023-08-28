@@ -890,7 +890,11 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					// This fields must reports counts for Tier0 gateway backed uplink, therefore it must not be impacted by additional uplinks
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "external_network_allocated_ip_count", "8"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ip_count", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "6"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "external_network.*", map[string]string{
 						"gateway":            "14.14.14.1",
 						"primary_ip":         "14.14.14.10",
@@ -910,7 +914,11 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					// This fields must reports counts for Tier0 gateway backed uplink, therefore it must not be impacted by additional uplinks
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "external_network_allocated_ip_count", "10"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ip_count", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "8"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "external_network.*", map[string]string{
 						"gateway":            "14.14.14.1",
 						"primary_ip":         "14.14.14.10",
@@ -929,16 +937,14 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					// This fields must reports counts for Tier0 gateway backed uplink, therefore it must not be impacted by additional uplinks
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "total_allocated_ip_count", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "external_network_allocated_ip_count", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ip_count", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "0"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "external_network.*", map[string]string{
 						"gateway":            "14.14.14.1",
 						"primary_ip":         "14.14.14.10",
-						"prefix_length":      "24",
-						"allocated_ip_count": "1",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "external_network.*", map[string]string{
-						"gateway":            "15.14.14.1",
-						"primary_ip":         "15.14.14.12",
 						"prefix_length":      "24",
 						"allocated_ip_count": "1",
 					}),
@@ -1109,14 +1115,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
     gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
     prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
     allocated_ip_count  = 1
-  }
-
-  external_network {
-    external_network_id = vcd_external_network_v2.segment-backed2.id
-    gateway             = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].gateway
-    prefix_length       = tolist(vcd_external_network_v2.segment-backed2.ip_scope)[0].prefix_length
-    allocated_ip_count  = 1
-    primary_ip          = "15.14.14.12"
   }
 }
 `
