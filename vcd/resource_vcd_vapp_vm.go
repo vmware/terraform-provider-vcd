@@ -1235,7 +1235,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("error getting hardware version: %s", err)
 	}
 
-	os, err := govcd.FindOsFromId(hwVersion, osType.(string))
+	os, err := vdc.FindOsFromId(hwVersion, osType.(string))
 	if err != nil {
 		return nil, fmt.Errorf("error finding given OS type: %s", err)
 	}
@@ -1832,7 +1832,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 					return diag.Errorf("error getting hardware version: %s", err)
 				}
 
-				os, err := govcd.FindOsFromId(hw, d.Get("os_type").(string))
+				os, err := vdc.FindOsFromId(hw, d.Get("os_type").(string))
 				if err != nil {
 					return diag.Errorf("error finding given OS type in the provided hardware version: %s", err)
 				}
