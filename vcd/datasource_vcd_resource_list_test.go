@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -16,50 +17,51 @@ type listDef struct {
 	name         string
 	resourceType string
 	parent       string
+	nameRegex    string
 	knownItem    string
 	vdc          string
+	listMode     string
+	importFile   bool
+	excludeItem  bool
 }
 
 func TestAccVcdDatasourceResourceList(t *testing.T) {
 	preTestChecks(t)
 
 	var lists = []listDef{
-		{"resources", "resources", "", "vcd_org", ""},
-		{"global_role", "vcd_global_role", "", "vApp Author", ""},
-		{"rights_bundle", "vcd_rights_bundle", "", "Default Rights Bundle", ""},
-		{"right", "vcd_right", "", "Catalog: Change Owner", ""},
+		{name: "resources", resourceType: "resources", knownItem: "vcd_org"},
+		{name: "global_role", resourceType: "vcd_global_role", knownItem: "vApp Author"},
+		{name: "rights_bundle", resourceType: "vcd_rights_bundle", knownItem: "Default Rights Bundle"},
+		{name: "right", resourceType: "vcd_right", knownItem: "Catalog: Change Owner"},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
-		{"user", "vcd_org_user", "", "", ""},
-
-		// test for VM requires a VApp as parent, which may not be guaranteed, as there is none in the config file
-		//{"vapp_vm", "vcd_vapp_vm", "TestVapp", ""},
+		{name: "user", resourceType: "vcd_org_user"},
 	}
 
 	if testConfig.VCD.Org != "" {
-		lists = append(lists, listDef{"orgs", "vcd_org", "", testConfig.VCD.Org, ""})
+		lists = append(lists, listDef{name: "orgs", resourceType: "vcd_org", knownItem: testConfig.VCD.Org})
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"user-parent", "vcd_org_user", testConfig.VCD.Org, "", ""})
-		lists = append(lists, listDef{"role-parent", "vcd_role", testConfig.VCD.Org, "vApp Author", ""})
+		lists = append(lists, listDef{name: "user-parent", resourceType: "vcd_org_user", parent: testConfig.VCD.Org})
+		lists = append(lists, listDef{name: "role-parent", resourceType: "vcd_role", parent: testConfig.VCD.Org, knownItem: "vApp Author"})
 		if testConfig.Networking.ExternalNetwork != "" {
-			lists = append(lists, listDef{"extnet-parent", "vcd_external_network", testConfig.VCD.Org, testConfig.Networking.ExternalNetwork, ""})
+			lists = append(lists, listDef{name: "extent-parent", resourceType: "vcd_external_network", parent: testConfig.VCD.Org, knownItem: testConfig.Networking.ExternalNetwork})
 		} else {
 			fmt.Print("`Networking.ExternalNetwork` value isn't configured, datasource test will be skipped\n")
 		}
 		if testConfig.VCD.Catalog.Name != "" {
 			// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 			// For each resource, we test with and without and explicit parent
-			lists = append(lists, listDef{"catalog-parent", "vcd_catalog", testConfig.VCD.Org, testConfig.VCD.Catalog.Name, ""})
+			lists = append(lists, listDef{name: "catalog-parent", resourceType: "vcd_catalog", parent: testConfig.VCD.Org, knownItem: testConfig.VCD.Catalog.Name})
 		} else {
 			fmt.Print("`VCD.Catalog.Name` value isn't configured, datasource test using this will be skipped\n")
 		}
 		if testConfig.Nsxt.Vdc != "" {
 			// entities belonging to a VDC don't require an explicit parent, as it is given from the VDC passed in the provider
 			// For each resource, we test with and without and explicit parent
-			lists = append(lists, listDef{"VDC-parent", "vcd_org_vdc", testConfig.VCD.Org, testConfig.Nsxt.Vdc, ""})
+			lists = append(lists, listDef{name: "VDC-parent", resourceType: "vcd_org_vdc", parent: testConfig.VCD.Org, knownItem: testConfig.Nsxt.Vdc})
 		} else {
 			fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 		}
@@ -70,25 +72,36 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	if testConfig.Networking.ExternalNetwork != "" {
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"extnet", "vcd_external_network", "", testConfig.Networking.ExternalNetwork, ""})
+		lists = append(lists, listDef{name: "extnet", resourceType: "vcd_external_network", knownItem: testConfig.Networking.ExternalNetwork})
 	} else {
 		fmt.Print("`Networking.ExternalNetwork` value isn't configured, datasource test using this will be skipped\n")
+	}
+	if testConfig.VCD.ProviderVdc.Name != "" {
+		lists = append(lists, listDef{name: "provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.ProviderVdc.Name})
+	} else {
+		fmt.Print("`VCD.ProviderVdc` value isn't configured, datasource test using this will be skipped\n")
+	}
+	if testConfig.VCD.NsxtProviderVdc.Name != "" {
+		lists = append(lists, listDef{name: "nsxt-provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.NsxtProviderVdc.Name})
+	} else {
+		fmt.Print("`VCD.NsxtProviderVdc` value isn't configured, datasource test using this will be skipped\n")
 	}
 
 	if testConfig.VCD.Catalog.Name != "" {
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"catalog", "vcd_catalog", "", testConfig.VCD.Catalog.Name, ""})
+		lists = append(lists, listDef{name: "catalog", resourceType: "vcd_catalog", knownItem: testConfig.VCD.Catalog.Name})
 
 		if testConfig.VCD.Catalog.CatalogItem != "" {
 			// tests in this last group always require an explicit parent
-			lists = append(lists, listDef{"catalog_item", "vcd_catalog_item", testConfig.VCD.Catalog.Name, testConfig.VCD.Catalog.CatalogItem, ""})
+			lists = append(lists, listDef{name: "catalog_item", resourceType: "vcd_catalog_item", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.VCD.Catalog.CatalogItem})
+			lists = append(lists, listDef{name: "catalog_vapp_template", resourceType: "vcd_catalog_vapp_template", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.VCD.Catalog.CatalogItem})
 		} else {
 			fmt.Print("`VCD.CatalogItem` value isn't configured, datasource test using this will be skipped\n")
 		}
 		if testConfig.Media.MediaName != "" {
 			// tests in this last group always require an explicit parent
-			lists = append(lists, listDef{"catalog_media", "vcd_catalog_media", testConfig.VCD.Catalog.Name, testConfig.Media.MediaName, ""})
+			lists = append(lists, listDef{name: "catalog_media", resourceType: "vcd_catalog_media", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.Media.MediaName})
 		} else {
 			fmt.Print("`Media.MediaName` value isn't configured, datasource test using this will be skipped\n")
 		}
@@ -99,21 +112,21 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	if testConfig.VCD.Vdc != "" {
 		// entities belonging to a VDC don't require an explicit parent, as it is given from the VDC passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"network-parent", "network", testConfig.VCD.Vdc, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"network_isolated-parent", "vcd_network_isolated", testConfig.VCD.Vdc, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"network_routed-parent", "vcd_network_routed", testConfig.VCD.Vdc, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"network_direct-parent", "vcd_network_direct", testConfig.VCD.Vdc, "", testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network-parent", resourceType: "network", parent: testConfig.VCD.Vdc, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network_isolated-parent", resourceType: "vcd_network_isolated", parent: testConfig.VCD.Vdc, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network_routed-parent", resourceType: "vcd_network_routed", parent: testConfig.VCD.Vdc, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network_direct-parent", resourceType: "vcd_network_direct", parent: testConfig.VCD.Vdc, vdc: testConfig.VCD.Vdc})
 
-		lists = append(lists, listDef{"network", "network", "", "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"network_isolated", "vcd_network_isolated", "", "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"network_routed", "vcd_network_routed", "", "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"network_direct", "vcd_network_direct", "", "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"ipset", "vcd_ipset", "", "", testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network", resourceType: "network", vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network_isolated", resourceType: "vcd_network_isolated", vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network_routed", resourceType: "vcd_network_routed", vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "network_direct", resourceType: "vcd_network_direct", vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "ipset", resourceType: "vcd_ipset", vdc: testConfig.VCD.Vdc})
 
 		if testConfig.Networking.EdgeGateway != "" {
 			// entities belonging to a VDC don't require an explicit parent, as it is given from the VDC passed in the provider
 			// For each resource, we test with and without and explicit parent
-			lists = append(lists, listDef{"edge_gateway-parent", "vcd_edgegateway", testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway, testConfig.VCD.Vdc})
+			lists = append(lists, listDef{name: "edge_gateway-parent", resourceType: "vcd_edgegateway", parent: testConfig.VCD.Vdc, knownItem: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
 		} else {
 			fmt.Print("`Networking.EdgeGateway` value isn't configured, datasource test using this will be skipped\n")
 		}
@@ -125,15 +138,15 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	if testConfig.Nsxt.Vdc != "" {
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"VDC", "vcd_org_vdc", "", testConfig.Nsxt.Vdc, ""})
+		lists = append(lists, listDef{name: "VDC", resourceType: "vcd_org_vdc", knownItem: testConfig.Nsxt.Vdc})
 		// entities belonging to a VDC don't require an explicit parent, as it is given from the VDC passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"vcd_network_routed_v2", "vcd_network_routed_v2", testConfig.Nsxt.Vdc, "", ""})
-		lists = append(lists, listDef{"vcd_network_isolated_v2", "vcd_network_isolated_v2", testConfig.Nsxt.Vdc, "", ""})
-		lists = append(lists, listDef{"vcd_nsxt_network_imported", "vcd_nsxt_network_imported", testConfig.Nsxt.Vdc, "", ""})
-		lists = append(lists, listDef{"vapp-parent", "vcd_vapp", testConfig.Nsxt.Vdc, "", ""})
+		lists = append(lists, listDef{name: "vcd_network_routed_v2", resourceType: "vcd_network_routed_v2", parent: testConfig.Nsxt.Vdc})
+		lists = append(lists, listDef{name: "vcd_network_isolated_v2", resourceType: "vcd_network_isolated_v2", parent: testConfig.Nsxt.Vdc})
+		lists = append(lists, listDef{name: "vcd_nsxt_network_imported", resourceType: "vcd_nsxt_network_imported", parent: testConfig.Nsxt.Vdc})
+		lists = append(lists, listDef{name: "vapp-parent", resourceType: "vcd_vapp", parent: testConfig.Nsxt.Vdc})
 
-		lists = append(lists, listDef{"vapp", "vcd_vapp", "", "", ""})
+		lists = append(lists, listDef{name: "vapp", resourceType: "vcd_vapp"})
 	} else {
 		fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 	}
@@ -141,24 +154,79 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	if testConfig.Networking.EdgeGateway != "" {
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
-		lists = append(lists, listDef{"edge_gateway", "vcd_edgegateway", "", testConfig.Networking.EdgeGateway, testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "edge_gateway", resourceType: "vcd_edgegateway", knownItem: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
 
 		// tests in this last group always require an explicit parent
-		lists = append(lists, listDef{"nsxv_dnat", "vcd_nsxv_dnat", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"nsxv_snat", "vcd_nsxv_snat", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"nsxv_firewall_rule", "vcd_nsxv_firewall_rule", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"lb_server_pool", "vcd_lb_server_pool", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"lb_service_monitor", "vcd_lb_service_monitor", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"lb_virtual_server", "vcd_lb_virtual_server", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"lb_app_profile", "vcd_lb_app_profile", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
-		lists = append(lists, listDef{"lb_app_rule", "vcd_lb_app_rule", testConfig.Networking.EdgeGateway, "", testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "nsxv_data", resourceType: "vcd_nsxv_dnat", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "nsxv_sat", resourceType: "vcd_nsxv_snat", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "nsxv_firewall_rule", resourceType: "vcd_nsxv_firewall_rule", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "lb_server_pool", resourceType: "vcd_lb_server_pool", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "lb_service_monitor", resourceType: "vcd_lb_service_monitor", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "lb_virtual_server", resourceType: "vcd_lb_virtual_server", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "lb_app_profile", resourceType: "vcd_lb_app_profile", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+		lists = append(lists, listDef{name: "lb_app_rule", resourceType: "vcd_lb_app_rule", parent: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
 
 	} else {
 		fmt.Print("`testConfig.Networking.EdgeGateway` value isn't configured, datasource test using this will be skipped\n")
 	}
 
-	lists = append(lists, listDef{"library_certificate", "vcd_library_certificate", "", "", ""})
+	lists = append(lists, listDef{name: "library_certificate", resourceType: "vcd_library_certificate"})
 
+	lists = append(lists,
+		// List with import
+		// Looking for TestVm inside TestVapp
+		// Expect to create an import file
+		listDef{
+			name:         "testVm",
+			resourceType: "vcd_vapp_vm",
+			parent:       "TestVapp",
+			knownItem:    "TestVm",
+			vdc:          testConfig.VCD.Vdc,
+			listMode:     "import",
+			importFile:   true,
+		},
+		// List with import
+		// Looking for standalone VM ldap-server
+		// Expect to create an import file
+		listDef{
+			name:         "ldap-server",
+			resourceType: "vcd_vm",
+			knownItem:    "ldap-server",
+			vdc:          testConfig.Nsxt.Vdc,
+			listMode:     "import",
+			importFile:   true,
+		},
+		// Filtering for regexp: "vApp"
+		// looking for "Catalog Author"
+		// Expect NOT to find it
+		listDef{
+			name:         "role-filter1",
+			resourceType: "vcd_role",
+			knownItem:    "Catalog Author",
+			nameRegex:    "vApp",
+			excludeItem:  true,
+		},
+		// Filtering for regexp: "Author"
+		// Looking for "Catalog Author"
+		// Expect to find it
+		listDef{
+			name:         "role-filter2",
+			resourceType: "vcd_role",
+			knownItem:    "Catalog Author",
+			nameRegex:    "Author",
+			excludeItem:  false,
+		},
+		// Filtering for regexp: ".*"
+		// Looking for "Catalog Author"
+		// Expect to find it
+		listDef{
+			name:         "role-filter3",
+			resourceType: "vcd_role",
+			knownItem:    "Catalog Author",
+			nameRegex:    ".*",
+			excludeItem:  false,
+		},
+	)
 	for _, def := range lists {
 		t.Run(def.name+"-"+def.resourceType, func(t *testing.T) { runResourceInfoTest(def, t) })
 	}
@@ -168,10 +236,20 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 func runResourceInfoTest(def listDef, t *testing.T) {
 
 	var data = StringMap{
-		"ResName":   def.name,
-		"ResType":   def.resourceType,
-		"ResParent": def.parent,
-		"FuncName":  fmt.Sprintf("ResourceList-%s", def.name+"-"+def.resourceType),
+		"ResName":    def.name,
+		"ResType":    def.resourceType,
+		"ResParent":  def.parent,
+		"ListMode":   "name",
+		"ImportFile": "",
+		"NameRegex":  def.nameRegex,
+		"FuncName":   fmt.Sprintf("ResourceList-%s", def.name+"-"+def.resourceType),
+	}
+	importFileName := fmt.Sprintf("import-%s.tf", def.resourceType)
+	if def.listMode != "" {
+		data["ListMode"] = def.listMode
+	}
+	if def.importFile {
+		data["ImportFile"] = importFileName
 	}
 	if def.vdc == "" {
 		data["Vdc"] = testConfig.Nsxt.Vdc
@@ -180,7 +258,11 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 	}
 	var configText string
 	if def.parent == "" {
-		configText = templateFill(testAccCheckVcdDatasourceInfoSimple, data)
+		if def.nameRegex != "" {
+			configText = templateFill(testAccCheckVcdDatasourceInfoWithFilter, data)
+		} else {
+			configText = templateFill(testAccCheckVcdDatasourceInfoSimple, data)
+		}
 	} else {
 		configText = templateFill(testAccCheckVcdDatasourceInfoWithParent, data)
 	}
@@ -210,19 +292,40 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			// We don't really check anything here, but we make sure we remove the import file, if it was created
+			if fileExists(importFileName) {
+				return os.Remove(importFileName)
+			}
+			return nil
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),
-					checkListForKnownItem(def.name, def.knownItem, true),
+					checkListForKnownItem(def.name, def.knownItem, !def.excludeItem, def.importFile),
+					checkImportFile(importFileName, def.importFile),
 				),
 			},
 		},
 	})
 }
 
-func checkListForKnownItem(resName, target string, isWanted bool) resource.TestCheckFunc {
+// checkImportFile returns an error if an import filename is expected (importing==true) but was not found.
+func checkImportFile(fileName string, importing bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if !importing {
+			return nil
+		}
+		if fileExists(fileName) {
+			return nil
+		}
+		return fmt.Errorf("file %s not found", fileName)
+	}
+}
+
+func checkListForKnownItem(resName, target string, isWanted, importing bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if target == "" {
 			return nil
@@ -244,7 +347,11 @@ func checkListForKnownItem(resName, target string, isWanted bool) resource.TestC
 		}
 
 		for _, item := range list {
-			if item == target {
+			found := item == target
+			if importing {
+				found = strings.Contains(item, target)
+			}
+			if found {
 				if isWanted {
 					return nil
 				} else {
@@ -262,16 +369,29 @@ func checkListForKnownItem(resName, target string, isWanted bool) resource.TestC
 
 const testAccCheckVcdDatasourceInfoSimple = `
 data "vcd_resource_list" "{{.ResName}}" {
-  vdc           = "{{.Vdc}}"
-  name          = "{{.ResName}}"
-  resource_type = "{{.ResType}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.ResName}}"
+  resource_type    = "{{.ResType}}"
+  import_file_name = "{{.ImportFile}}"
+  list_mode        = "{{.ListMode}}"
 }
 `
 const testAccCheckVcdDatasourceInfoWithParent = `
 data "vcd_resource_list" "{{.ResName}}" {
-  vdc           = "{{.Vdc}}"
-  name          = "{{.ResName}}"
-  resource_type = "{{.ResType}}"
-  parent        = "{{.ResParent}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.ResName}}"
+  resource_type    = "{{.ResType}}"
+  parent           = "{{.ResParent}}"
+  import_file_name = "{{.ImportFile}}"
+  list_mode        = "{{.ListMode}}"
+}
+`
+
+const testAccCheckVcdDatasourceInfoWithFilter = `
+data "vcd_resource_list" "{{.ResName}}" {
+  vdc              = "{{.Vdc}}"
+  name             = "{{.ResName}}"
+  resource_type    = "{{.ResType}}"
+  name_regex       = "{{.NameRegex}}"
 }
 `
