@@ -22,6 +22,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 	preTestChecks(t)
 	var vapp govcd.VApp
 	var vm govcd.VM
+	// #nosec G101 -- Not a credential, the combination of alphanumeric, symbols, and numbers notwithstanding
 	var diskResourceName = "TestAccVcdVAppVm_Basic_1"
 	var diskName = "TestAccVcdIndependentDiskBasic"
 

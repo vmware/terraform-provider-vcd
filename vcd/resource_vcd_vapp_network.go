@@ -449,7 +449,7 @@ func resourceVappNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta
 // Starting with VCD 10.4.1, a vApp network cannot be deleted from a powered on vApp. To avoid
 // inconvenience (especially in `terraform destroy` scenarios), there is a
 // 'reboot_vapp_on_removal=true' flag.
-// When the flag is set and vApp status is not POWERED_OFF, the vApp is powered off, the network is
+// When the flag is set and vApp status is not POWERED_OFF or RESOLVED, the vApp is powered off, the network is
 // deleted and the vApp powered on (if it was not powered off before).
 //
 // Note. This function is used for both resource `vcd_vapp_network` and `vcd_vapp_org_network`
@@ -489,7 +489,7 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 
 		util.Logger.Printf("[TRACE] reboot_vapp_on_removal=true, vApp '%s' status before network removal is '%s'",
 			vapp.VApp.Name, vappStatusBeforeOperation)
-		if vappStatusBeforeOperation != "POWERED_OFF" {
+		if vappStatusBeforeOperation != "POWERED_OFF" && vappStatusBeforeOperation != "RESOLVED" {
 			util.Logger.Println("[TRACE] reboot_vapp_on_removal=true, powering off vApp")
 			task, err := vapp.Undeploy() // UI Button "Power Off" calls undeploy API endpoint
 			if err != nil {
@@ -521,7 +521,7 @@ func resourceVappAndVappOrgNetworkDelete(_ context.Context, d *schema.ResourceDa
 	// again. The reason we check for vappStatusBeforeOperation != "POWERED_ON" is that a vApp could
 	// have had different states than "POWERED_OFF" and "POWERED_ON" (e.g. "PARTIALLY_POWERED_OFF"),
 	// but we cannot restore exactly such state. So we restore "POWERED_ON" state.
-	if rebootVAppOnRemoval && vappStatusBeforeOperation != "POWERED_OFF" {
+	if rebootVAppOnRemoval && vappStatusBeforeOperation != "POWERED_OFF" && vappStatusBeforeOperation != "RESOLVED" {
 		util.Logger.Printf("[TRACE] reboot_vapp_on_removal=true, restoring vApp '%s' power state, was '%s'",
 			vapp.VApp.Name, vappStatusBeforeOperation)
 		task, err := vapp.PowerOn()

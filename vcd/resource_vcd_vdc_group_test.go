@@ -3,11 +3,13 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // TestAccVcdVdcGroupResource tests that VDC Group can be managed
@@ -62,6 +64,104 @@ func TestAccVcdVdcGroupResource(t *testing.T) {
 
 	runVdcGroupTest(t, params)
 }
+
+func TestAccVcdVdcGroupForceDeletion(t *testing.T) {
+	preTestChecks(t)
+
+	// This test performs API calls therefore it cannot be executed as binary one
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createTemporaryVCDConnection(false)
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can run test of VDC Group")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":      testConfig.VCD.Org,
+		"VDC":      testConfig.Nsxt.Vdc,
+		"TestName": t.Name(),
+
+		"Tags": "vdc vdcGroup",
+	}
+
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdVdcGroupForceDeletion, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vdc_group.t1", "id"),
+				),
+			},
+			{
+				// The preconfig function will create an IP Set in VDC Group. This way, removing the
+				// VDC Group without `force_delete` would cause a failure. Creating it with
+				// Terraform configuration is not an option because `destroy` would cleanup
+				// everything in correct order
+				PreConfig: func() {
+					adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+					if err != nil {
+						panic(fmt.Sprintf("error retrieving Admin Org '%s': %s", testConfig.VCD.Org, err))
+					}
+
+					vdcGroup, err := adminOrg.GetVdcGroupByName(t.Name())
+					if err != nil {
+						panic(fmt.Sprintf("error retrieving VDC Group '%s': %s", t.Name(), err))
+					}
+
+					ipSetDefinition := &types.NsxtFirewallGroup{
+						Name:        t.Name(),
+						Type:        types.FirewallGroupTypeIpSet,
+						OwnerRef:    &types.OpenApiReference{ID: vdcGroup.VdcGroup.Id},
+						IpAddresses: []string{"12.12.12.1"},
+					}
+
+					_, err = vdcGroup.CreateNsxtFirewallGroup(ipSetDefinition)
+					if err != nil {
+						panic(fmt.Sprintf("error creating IP Set within VDC Group '%s': %s", t.Name(), err))
+					}
+
+				},
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_vdc_group.t1", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVdcGroupForceDeletion = `
+data "vcd_org_vdc" "startVdc" {
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
+}
+
+resource "vcd_vdc_group" "t1" {
+  org                   = "{{.Org}}"
+  name                  = "{{.TestName}}"
+  starting_vdc_id       = data.vcd_org_vdc.startVdc.id
+  participating_vdc_ids = [data.vcd_org_vdc.startVdc.id]
+  dfw_enabled           = true
+  default_policy_status = true
+  force_delete          = true
+}
+`
 
 // TestAccVcdVdcGroupResourceAsOrgUser tests that VDC Group can be managed by Org user
 func TestAccVcdVdcGroupResourceAsOrgUser(t *testing.T) {
@@ -303,7 +403,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 				Config: configText7,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(resourceAddressVdcGroup, "data.vcd_vdc_group.fetchCreated", []string{"participating_vdc_ids.#",
-						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status"}),
+						"starting_vdc_id", "%", "participating_vdc_ids.0", "default_policy_status", "force_delete"}),
 				),
 			},
 			{
@@ -311,7 +411,7 @@ func runVdcGroupTest(t *testing.T, params StringMap) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgObject(testConfig.VCD.Org, params["NameUpdated"].(string)),
-				ImportStateVerifyIgnore: []string{"starting_vdc_id"},
+				ImportStateVerifyIgnore: []string{"starting_vdc_id", "force_delete"},
 			},
 			// for clean destroy, otherwise randomly fail due choose wrong connection
 			{
