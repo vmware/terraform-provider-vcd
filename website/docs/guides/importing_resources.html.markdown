@@ -205,7 +205,7 @@ Notice a few points in the above code:
 
 ### Required field not found
 
-Some resources require several properties to be filled. For example, when creating a VDC group , we need to indicate
+Some resources require several properties to be filled. For example, when creating a VDC group, we need to indicate
 which of the participating VDCs is the starting one.
 
 Let's try to import an existing VDC group:
