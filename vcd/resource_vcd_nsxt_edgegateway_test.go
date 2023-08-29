@@ -839,7 +839,15 @@ data "vcd_nsxt_edgegateway" "nsxt-edge" {
 }
 `
 
-func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
+func TestAccVcdNsxtEdgeGatewayT0AndExternalNetworkUplink(t *testing.T) {
+	testAccVcdNsxtEdgeGatewayExternalNetworkUplink(t, testConfig.Nsxt.Tier0router)
+}
+
+func TestAccVcdNsxtEdgeGatewayT0VrfAndExternalNetworkUplink(t *testing.T) {
+	testAccVcdNsxtEdgeGatewayExternalNetworkUplink(t, testConfig.Nsxt.Tier0routerVrf)
+}
+
+func testAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T, t0GatewayName string) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -853,6 +861,8 @@ func TestAccVcdNsxtEdgeGatewayExternalNetworkUplink(t *testing.T) {
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
 		"NsxtVdc":             testConfig.Nsxt.Vdc,
+		"TestName":            t.Name(),
+		"T0Gateway":           t0GatewayName,
 		"NsxtManager":         testConfig.Nsxt.Manager,
 		"NsxtSegment":         testConfig.Nsxt.NsxtImportSegment,
 		"NsxtSegment2":        testConfig.Nsxt.NsxtImportSegment2,
@@ -971,6 +981,35 @@ data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
 }
 
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "{{.T0Gateway}}"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
+  name        = "{{.TestName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    gateway       = "54.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "54.14.14.10"
+      end_address   = "54.14.14.15"
+    }
+
+    static_ip_pool {
+      start_address = "54.14.14.20"
+      end_address   = "54.14.14.25"
+    }
+  }
+}
+
 data "vcd_org_vdc" "nsxt" {
   name = "{{.NsxtVdc}}"
 }
@@ -1017,10 +1056,6 @@ resource "vcd_external_network_v2" "segment-backed2" {
     }
   }
 }
-
-data "vcd_external_network_v2" "existing-extnet" {
-	name = "{{.ExternalNetwork}}"
-}
 `
 
 const testAccVcdNsxtEdgeGatewayExternalNetworkUplinkStep1 = testAccVcdNsxtEdgeGatewayExternalNetworkUplinkShared + `
@@ -1029,16 +1064,16 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   owner_id  = data.vcd_org_vdc.nsxt.id
   name      = "{{.NsxtEdgeGatewayVcd}}"
 
-  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+  external_network_id = vcd_external_network_v2.ext-net-nsxt-t0.id
 
   subnet {
-     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
-     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].gateway
+     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].prefix_length
+     primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
 
-     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
      allocated_ips {
-       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
      }
   }
 
@@ -1065,16 +1100,16 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   owner_id  = data.vcd_org_vdc.nsxt.id
   name      = "{{.NsxtEdgeGatewayVcd}}"
 
-  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+  external_network_id = vcd_external_network_v2.ext-net-nsxt-t0.id
 
   subnet {
-     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
-     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
-     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].gateway
+     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].prefix_length
+     primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
 
      allocated_ips {
-       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
      }
   }
 
@@ -1101,16 +1136,16 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   owner_id  = data.vcd_org_vdc.nsxt.id
   name      = "{{.NsxtEdgeGatewayVcd}}"
 
-  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+  external_network_id = vcd_external_network_v2.ext-net-nsxt-t0.id
 
   subnet {
-    gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
-    prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+    gateway       = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].gateway
+    prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].prefix_length
+    primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
 
-    primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
     allocated_ips {
-      start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-      end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+      start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
+      end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
     }
   }
 
@@ -1145,6 +1180,7 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupExternalUplink(t *testing.T) {
 		"Description":               "myDescription",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"T0Gateway":                 testConfig.Nsxt.Tier0router,
 		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"NsxtManager":               testConfig.Nsxt.Manager,
 		"NsxtSegment":               testConfig.Nsxt.NsxtImportSegment,
@@ -1186,6 +1222,35 @@ func TestAccVcdNsxtEdgeGatewayVdcGroupExternalUplink(t *testing.T) {
 const testAccVcdNsxtEdgeGatewayVdcGroupExternalUplink = testAccVcdVdcGroupNew + `
 data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
+}
+
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "{{.T0Gateway}}"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
+  name        = "{{.TestName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    gateway       = "54.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "54.14.14.10"
+      end_address   = "54.14.14.15"
+    }
+
+    static_ip_pool {
+      start_address = "54.14.14.20"
+      end_address   = "54.14.14.25"
+    }
+  }
 }
 
 resource "vcd_external_network_v2" "segment-backed" {
@@ -1241,16 +1306,16 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   name        = "{{.NsxtEdgeGatewayVcd}}"
   description = "Description"
 
-  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+  external_network_id = vcd_external_network_v2.ext-net-nsxt-t0.id
 
   subnet {
-     gateway       = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
-     prefix_length = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].gateway
+     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].prefix_length
 
-     primary_ip = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     primary_ip = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
      allocated_ips {
-       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
-       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt-t0.ip_scope)[0].static_ip_pool)[0].end_address
      }
   }
 
