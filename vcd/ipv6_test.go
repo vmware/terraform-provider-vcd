@@ -4,8 +4,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -22,6 +23,7 @@ func TestAccVcdIpv6Support(t *testing.T) {
 		"ExternalNetworkName": t.Name(),
 		"TestName":            t.Name(),
 		"NsxtImportSegment":   testConfig.Nsxt.NsxtImportSegment,
+		"NsxtImportSegment2":  testConfig.Nsxt.NsxtImportSegment2,
 
 		"VdcName": t.Name(),
 
@@ -34,20 +36,34 @@ func TestAccVcdIpv6Support(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccVcdIpv6, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	configTex1 := templateFill(testAccVcdIpv6Step1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTex1)
+
+	// Step 2 will test explicit 10.4.1+ feature - external network attachment for NSX-T Edge Gateway
+
+	var skipVersionLessThan string
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		skipVersionLessThan = "This test step requires VCD 10.4.1+ (API V37.1+) Skipping."
+		if vcdShortTest {
+			t.Skip(acceptanceTestsSkipped)
+			return
+		}
+	}
+
+	params["FuncName"] = t.Name() + "-step2"
+	configTex2 := templateFill(testAccVcdIpv6Step2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTex2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdDestroy(t.Name()),
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config: configTex1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_org_vdc.with-edge-cluster", "id"),
 					resource.TestCheckResourceAttrSet("vcd_external_network_v2.ext-net-nsxt", "id"),
@@ -152,6 +168,24 @@ func TestAccVcdIpv6Support(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_nsxt_ip_set.ipv6", "ip_addresses.*", "2002:0:0:1234:abcd:ffff:c0a8:120/124"),
 				),
 			},
+			{
+				Config: configTex2,
+				SkipFunc: func() (bool, error) {
+					if skipVersionLessThan != "" {
+						fmt.Println(skipVersionLessThan)
+						return true, nil
+					}
+					return false, nil
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "external_network.*", map[string]string{
+						"gateway":            "2002:0:0:1234:abcd:ffff:c0a6:121",
+						"prefix_length":      "124",
+						"primary_ip":         "2002:0:0:1234:abcd:ffff:c0a6:122",
+						"allocated_ip_count": "2",
+					}),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -220,7 +254,28 @@ resource "vcd_org_vdc" "with-edge-cluster" {
 }
 `
 
-const testAccVcdIpv6 = testAccVcdIpv6Prerequisites + `
+const testAccVcdIpv6EdgeGateway = `
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org         = "{{.Org}}"
+  owner_id    = vcd_org_vdc.with-edge-cluster.id
+  name        = "{{.TestName}}-edge-gateway"
+
+  external_network_id = vcd_external_network_v2.ext-net-nsxt.id
+
+  subnet {
+     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
+     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
+
+     primary_ip = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+`
+
+const testAccVcdIpv6networks = `
 data "vcd_nsxt_manager" "main" {
   name = "{{.NsxtManager}}"
 }
@@ -252,25 +307,6 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
       start_address = "2002:0:0:1234:abcd:ffff:c0a8:107"
       end_address   = "2002:0:0:1234:abcd:ffff:c0a8:109"
     }
-  }
-}
-
-resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org         = "{{.Org}}"
-  owner_id    = vcd_org_vdc.with-edge-cluster.id
-  name        = "{{.TestName}}-edge-gateway"
-
-  external_network_id = vcd_external_network_v2.ext-net-nsxt.id
-
-  subnet {
-     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
-     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
-
-     primary_ip = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
-     allocated_ips {
-       start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
-       end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
-     }
   }
 }
 
@@ -437,5 +473,55 @@ resource "vcd_nsxt_ip_set" "ipv6" {
     "2001:db6:0:0:0:0:0:0-2001:db6:0:ffff:ffff:ffff:ffff:ffff",
     "2002:0:0:1234:abcd:ffff:c0a8:120/124",
   ]
+}
+`
+
+const testAccVcdIpv6Step1 = testAccVcdIpv6Prerequisites + testAccVcdIpv6networks + testAccVcdIpv6EdgeGateway
+const testAccVcdIpv6Step2 = testAccVcdIpv6Prerequisites + testAccVcdIpv6networks + testAccVcdIpv6EdgeGatewayWithExternalNetworks
+
+const testAccVcdIpv6EdgeGatewayWithExternalNetworks = `
+resource "vcd_external_network_v2" "segment-backed" {
+  name = "{{.TestName}}-segment"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "{{.NsxtImportSegment2}}"
+  }
+
+  ip_scope {
+    gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
+    prefix_length = "124"
+
+    static_ip_pool {
+      start_address = "2002:0:0:1234:abcd:ffff:c0a6:122"
+      end_address   = "2002:0:0:1234:abcd:ffff:c0a6:124"
+    }
+  }
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org         = "{{.Org}}"
+  owner_id    = vcd_org_vdc.with-edge-cluster.id
+  name        = "{{.TestName}}-edge-gateway"
+
+  external_network_id = vcd_external_network_v2.ext-net-nsxt.id
+
+  subnet {
+     gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway
+     prefix_length = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].prefix_length
+     primary_ip    = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+
+     allocated_ips {
+       start_address = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+
+  external_network {
+    external_network_id = vcd_external_network_v2.segment-backed.id
+    gateway             = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].gateway
+    prefix_length       = tolist(vcd_external_network_v2.segment-backed.ip_scope)[0].prefix_length
+    allocated_ip_count  = 2
+  }
 }
 `
