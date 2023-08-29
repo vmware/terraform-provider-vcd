@@ -228,7 +228,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 			"external_network_allocated_ip_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Total number of IP addresses allocated for this gateway from Imported network uplinks",
+				Description: "Total number of IPs allocated for this Gateway from NSX-T Segment backed External Network uplinks",
 			},
 		},
 	}
@@ -509,13 +509,12 @@ func getNsxtEdgeGatewayExternalNetworkUplink(d *schema.ResourceData) []types.Edg
 						Gateway:              uplinkMap["gateway"].(string),
 						PrefixLength:         uplinkMap["prefix_length"].(int),
 						PrimaryIP:            uplinkMap["primary_ip"].(string),
-						AutoAllocateIPRanges: true, // VCD UI (up to 10.5.0) only allows automatic IP allocation
+						AutoAllocateIPRanges: true, // VCD UI (up to 10.5.0) only allows automatic IP allocation, no IP Space support
 						TotalIPCount:         addrOf(uplinkMap["allocated_ip_count"].(int)),
 					},
 				},
 			},
 		}
-
 		resultUplinks[index] = oneUplink
 	}
 
@@ -1063,7 +1062,6 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.ResourceData) error {
 	attachedNetworks := make([]interface{}, 0)
 	for _, singleAttachedNetwork := range edgeGateway.EdgeGateway.EdgeGatewayUplinks {
-
 		// External uplink networks are of BackingType "IMPORTED_T_LOGICAL_SWITCH" - not storing any other network
 		if singleAttachedNetwork.BackingType != nil && *singleAttachedNetwork.BackingType != "IMPORTED_T_LOGICAL_SWITCH" {
 			continue
@@ -1085,7 +1083,7 @@ func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGa
 		return fmt.Errorf("error setting attached External Networks after read: %s", err)
 	}
 
-	// Set an
+	// Store total allocated IP count explicitly for NSX-T Segment backed external networks
 	totalAllocatedIpCount, err := edgeGateway.GetAllocatedIpCountByUplinkType(false, "IMPORTED_T_LOGICAL_SWITCH")
 	if err != nil {
 		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count for External Network Uplink: %s", err)

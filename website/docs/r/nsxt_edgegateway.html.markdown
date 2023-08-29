@@ -437,11 +437,13 @@ This option can attach NSX-T Segment backed External Networks
 The following attributes are exported on this resource:
 
 * `primary_ip` - Primary IP address exposed for an easy access without nesting.
-* `used_ip_count` - Unused IP count in this Edge Gateway (for all uplinks). **Note**: it is not
+* `used_ip_count` - Used IP count in this Edge Gateway (for all uplinks). **Note**: it is not
   exposed when using IP Spaces.
-* `unused_ip_count` - Used IP count in this Edge Gateway (for all uplinks). **Note**: it is not
+* `unused_ip_count` - Unused IP count in this Edge Gateway (for all uplinks). **Note**: it is not
   exposed when using IP Spaces.
 * `use_ip_spaces` - Boolean value that hints if the NSX-T Edge Gateway uses IP Spaces
+* `external_network_allocated_ip_count` - Total allocated IP count in attached NSX-T Segment backed
+  External Networks
 
 ~> `primary_ip`, `used_ip_count` and `unused_ip_count` will not be populated when using **IP Spaces**
 
