@@ -1011,11 +1011,11 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 	// End of 'subnet' field
 
 	// 'subnet_with_total_ip_count' and 'total_allocated_ip_count' fields (IP Count reflects only T0 uplink)
-	totalAllocatedIpCount, err := edgeGateway.GetAllocatedIpCountByUplinkType(false, "NSXT_TIER0")
+	totalAllocatedIpCountT0, err := edgeGateway.GetAllocatedIpCountByUplinkType(false, *edgeUplink.BackingType)
 	if err != nil {
 		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count for Tier 0 Uplink: %s", err)
 	}
-	err = d.Set("total_allocated_ip_count", totalAllocatedIpCount)
+	err = d.Set("total_allocated_ip_count", totalAllocatedIpCountT0)
 	if err != nil {
 		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count for Tier 0 Uplink: %s", err)
 	}
