@@ -962,6 +962,12 @@ func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGat
 		if err != nil {
 			return fmt.Errorf("error storing attached external network data: %s", err)
 		}
+	} else {
+		attachedExternalNetworkSet := schema.NewSet(schema.HashResource(nsxtEdgeExternalNetworks), make([]interface{}, 0))
+		err := d.Set("external_network", attachedExternalNetworkSet)
+		if err != nil {
+			return fmt.Errorf("error setting empty External Networks after read: %s", err)
+		}
 	}
 
 	return nil
