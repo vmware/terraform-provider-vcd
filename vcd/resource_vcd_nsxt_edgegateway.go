@@ -364,7 +364,7 @@ func resourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("could not retrieve NSX-T Edge Gateway: %s", err)
 	}
 
-	err = setNsxtEdgeGatewayData(edge, d)
+	err = setNsxtEdgeGatewayData(vcdClient, edge, d)
 	if err != nil {
 		return diag.Errorf("error setting NSX-T Edge Gateway data: %s", err)
 	}
@@ -913,7 +913,7 @@ func getNsxtEdgeGatewayUplinkRangeTypes(subnetMap map[string]interface{}) []type
 }
 
 // setNsxtEdgeGatewayData stores Terraform schema from a read *types.OpenAPIEdgeGateway type
-func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.ResourceData) error {
+func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGateway, d *schema.ResourceData) error {
 	edgeGw := edgeGateway.EdgeGateway
 	dSet(d, "name", edgeGw.Name)
 	dSet(d, "description", edgeGw.Description)
@@ -955,10 +955,13 @@ func setNsxtEdgeGatewayData(edgeGateway *govcd.NsxtEdgeGateway, d *schema.Resour
 		dSet(d, "unused_ip_count", len(unusedIps))
 	}
 
-	// store attached NSX-T Segment backed External Networks
-	err := setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
-	if err != nil {
-		return fmt.Errorf("error storing attached external network data: %s", err)
+	// store attached NSX-T Segment backed External Networks only for VCD 10.4.1+ (some required
+	// fields are unavailable until that version)
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.1") {
+		err := setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway, d)
+		if err != nil {
+			return fmt.Errorf("error storing attached external network data: %s", err)
+		}
 	}
 
 	return nil
@@ -1012,7 +1015,6 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 	// End of 'subnet' field
 
 	// 'subnet_with_total_ip_count' and 'total_allocated_ip_count' fields (IP Count reflects only T0 uplink)
-
 	// Primary Uplink will be NSXT_TIER0 or NSXT_VRF_TIER0
 	totalAllocatedIpCountPrimaryUplink, err := edgeGateway.GetPrimaryNetworkAllocatedIpCount(false)
 	if err != nil {

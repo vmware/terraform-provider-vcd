@@ -267,7 +267,7 @@ func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("error looking up Edge Gateway - switch did not match any cases")
 	}
 
-	err = setNsxtEdgeGatewayData(edge, d)
+	err = setNsxtEdgeGatewayData(vcdClient, edge, d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error reading NSX-T Edge Gateway data: %s", err))
 	}
