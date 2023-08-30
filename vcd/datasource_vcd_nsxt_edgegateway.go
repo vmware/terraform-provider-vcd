@@ -183,7 +183,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			},
 			"external_network": {
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Computed:    true,
 				Description: "Additional NSX-T Segment Backed networks",
 				Elem:        nsxtEdgeExternalNetworksDS,
 			},
