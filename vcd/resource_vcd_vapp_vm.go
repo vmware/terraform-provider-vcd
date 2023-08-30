@@ -262,7 +262,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:     true,
 			Computed:     true,
 			ValidateFunc: validation.StringInSlice([]string{"efi", "bios"}, false),
-			Description:  "Firmware of the VM. Can be either EFI or BIOS, availability depending on the os_type argument. Can be changed only when the VM is turned off",
+			Description:  "Firmware of the VM. Can be either EFI or BIOS, availability depending on the os_type argument. Changing the value when `power_on` is set to true, will cause a reboot of the VM.",
 		},
 		"hardware_version": {
 			Type:        schema.TypeString,
@@ -1229,39 +1229,57 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	if hardWareVersion, ok = d.GetOk("hardware_version"); !ok {
 		return nil, fmt.Errorf("`hardware_version` is required when creating empty VM")
 	}
-	// Additional checks if the hardware version and OS support new Firmware and BootOptions fields (37.1+)
-	hwVersion, err := vdc.GetHardwareVersion(hardWareVersion.(string))
-	if err != nil {
-		return nil, fmt.Errorf("error getting hardware version: %s", err)
-	}
 
-	os, err := vdc.FindOsFromId(hwVersion, osType.(string))
-	if err != nil {
-		return nil, fmt.Errorf("error finding given OS type: %s", err)
-	}
+	// supportsFirmware is a helper variable to not repeat the same API checking calls
+	supportsFirmware := vcdClient.Client.APIVCDMaxVersionIs(">=37.1")
 
+	// There are four scenarios:
+	// 1. If firmware is set and VCD is 10.4.1 or newer, we keep the set value
+	// 2. If firmware is unset and VCD is 10.4.1 or newer, we set it to BIOS as it is required by the API
+	// 3. If firmware is set and VCD is 10.4.0 or older, we return an error
+	// 4. If firmware is unset and VCD is 10.4.0 or older, we pass
 	var firmware interface{}
-	if firmware, ok = d.GetOk("firmware"); !ok {
-		return nil, fmt.Errorf("`firmware` is required when creating empty VM")
+	if firmware, ok = d.GetOk("firmware"); ok {
+		if !supportsFirmware {
+			return nil, fmt.Errorf("firmware is supported in VCD 10.4.1+")
+		}
+	} else {
+		if supportsFirmware {
+			firmware = "bios"
+		}
 	}
 
-	if !contains(os.SupportedFirmware, firmware.(string)) {
-		return nil, fmt.Errorf("provided `os_type` doesn't support provided firmware")
+	// Additional checks if the hardware version and OS support new Firmware and BootOptions fields (37.1+)
+	if supportsFirmware {
+		hwVersion, err := vdc.GetHardwareVersion(hardWareVersion.(string))
+		if err != nil {
+			return nil, fmt.Errorf("error getting hardware version: %s", err)
+		}
+
+		os, err := vdc.FindOsFromId(hwVersion, osType.(string))
+		if err != nil {
+			return nil, fmt.Errorf("error finding given OS type: %s", err)
+		}
+
+		if !contains(os.SupportedFirmware, firmware.(string)) {
+			return nil, fmt.Errorf("provided `os_type` doesn't support provided firmware")
+		}
 	}
 
 	bootOptions := &types.BootOptions{}
 	if _, ok := d.GetOk("boot_options"); ok {
 		bootOptions.BootDelay = addrOf(d.Get("boot_options.0.boot_delay").(int))
 		bootOptions.EnterBiosSetup = addrOf(d.Get("boot_options.0.enter_bios_setup").(bool))
-		if vcdClient.Client.APIVCDMaxVersionIs(">=37.1") {
-			bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
-			bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
-			if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
-				if firmware != "efi" {
-					return nil, fmt.Errorf("error: EFI secure boot can only be used with EFI firmware")
-				}
-				bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+		bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
+		bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
+		if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+			if firmware != "efi" {
+				return nil, fmt.Errorf("error: EFI secure boot can only be used with EFI firmware")
 			}
+			bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+		}
+		if !supportsFirmware && (bootOptions.BootRetryDelay != nil || bootOptions.BootRetryEnabled != nil) {
+			return nil, fmt.Errorf("boot retry option is only available in VCD 10.4.1+")
 		}
 	}
 

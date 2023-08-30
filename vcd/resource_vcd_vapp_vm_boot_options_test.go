@@ -24,7 +24,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
+		"Vdc":         testConfig.Nsxt.Vdc,
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
