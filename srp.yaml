@@ -1,0 +1,36 @@
+---
+schema_id: '1.0'
+
+sources:
+  source:
+    typename: source_tree.git
+    path: $(env:source_path)
+
+input_templates:
+  source:
+    $(sources:source_uid):
+      is_components_source: true
+      incorporated: false
+      usages: ["testing", "building"]
+
+spdx_templates:
+  spdx:
+    package:
+      supplier: "Organization: VMware"
+      originator: "Organization: VMware"
+      license_declared: "MPL-2.0"
+      license_concluded: "MPL-2.0"
+      home_page: "https://github.com/vmware/terraform-provider-vcd"
+      short_summary: "Terraform VMware Cloud Director provider"
+      detailed_description: "Terraform VMware Cloud Director provider"
+
+outputs:
+  runway(instance='runway-ci-srp.eng.vmware.com',namespace='terraform-provider-vcd',pipeline='terraform-provider-vcd-provenance',job='provenance'):
+    merge_input_templates:
+      - source
+    merge_spdx_template: spdx
+    scanner_instances:
+      - scanner: srpcli-go
+        args: ["--go-mod=$(env:source_path)/go.mod", "--incorporated=false", "--usage=functionality", "--usage=testing"]
+      - scanner: srpcli-syft
+        args: ["--incorporated=true", "--usage=functionality" ]
