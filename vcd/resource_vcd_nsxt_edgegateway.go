@@ -470,9 +470,10 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 			return nil, err
 		}
 	case isUpdateOperation:
-		// Primary Uplink (backingType==NSXT_TIER0) functions rely on Edge Gateway structure containing
-		// __only__ Primary uplink data therefore it is safest to remove any other uplink (the ones with
-		// backingType==IMPORTED_T_LOGICAL_SWITCH) data as they are created from scratch below.
+		// Primary Uplink (backingType==NSXT_TIER0 or NSXT_VRF_TIER0) functions rely on Edge Gateway
+		// structure containing __only__ Primary uplink data therefore it is safest to remove any
+		// other uplink (the ones with backingType==IMPORTED_T_LOGICAL_SWITCH) data as they are
+		// created from scratch below.
 		edgeGateway.EdgeGateway.EdgeGatewayUplinks = []types.EdgeGatewayUplinks{edgeGateway.EdgeGateway.EdgeGatewayUplinks[0]}
 		edgeGatewayType.EdgeGatewayUplinks, err = getNsxtEdgeGatewayUplinksPrimaryTypeForUpdate(d, allocatedIpCount, edgeGateway)
 		if err != nil {
@@ -487,8 +488,8 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	// Handle additional external networks (backingType==IMPORTED_T_LOGICAL_SWITCH) if any were specified
 	_, segmentExternalNetworksAttached := d.GetOk("external_network")
 	if segmentExternalNetworksAttached {
-		SegmentExternalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplink(d)
-		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, SegmentExternalNetworkUplinks...)
+		segmentExternalNetworkUplinks := getNsxtEdgeGatewayExternalNetworkUplink(d)
+		edgeGatewayType.EdgeGatewayUplinks = append(edgeGatewayType.EdgeGatewayUplinks, segmentExternalNetworkUplinks...)
 	}
 
 	return &edgeGatewayType, nil
@@ -1011,11 +1012,14 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 	// End of 'subnet' field
 
 	// 'subnet_with_total_ip_count' and 'total_allocated_ip_count' fields (IP Count reflects only T0 uplink)
-	totalAllocatedIpCountT0, err := edgeGateway.GetAllocatedIpCountByUplinkType(false, *edgeUplink.BackingType)
+
+	// Primary Uplink will be NSXT_TIER0 or NSXT_VRF_TIER0
+	totalAllocatedIpCountPrimaryUplink, err := edgeGateway.GetPrimaryNetworkAllocatedIpCount(false)
 	if err != nil {
 		return fmt.Errorf("error getting NSX-T Edge Gateway total allocated IP count for Tier 0 Uplink: %s", err)
 	}
-	err = d.Set("total_allocated_ip_count", totalAllocatedIpCountT0)
+
+	err = d.Set("total_allocated_ip_count", totalAllocatedIpCountPrimaryUplink)
 	if err != nil {
 		return fmt.Errorf("error setting NSX-T Edge Gateway total allocated IP count for Tier 0 Uplink: %s", err)
 	}
