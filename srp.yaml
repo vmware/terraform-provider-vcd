@@ -8,7 +8,7 @@ sources:
 
 input_templates:
   source:
-    $(sources:SOURCE_UID):
+    $(sources:source_uid):
       is_components_source: true
       incorporated: false
       usages: ["testing", "building"]
