@@ -1875,6 +1875,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 					if err != nil {
 						return diag.Errorf("error changing VM boot options: %s", err)
 					}
+
+					err = vm.Refresh()
+					if err != nil {
+						return diag.Errorf("error refreshing VM: %s", err)
+					}
 				}
 
 				vmSpecSection.Firmware = firmware
