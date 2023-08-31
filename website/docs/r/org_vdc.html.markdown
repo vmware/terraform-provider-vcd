@@ -235,8 +235,8 @@ The following arguments are supported:
 * `enable_vm_discovery` - (Optional) If true, discovery of vCenter VMs is enabled for resource pools backing this VDC. If false, discovery is disabled. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
 * `elasticity` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should be elastic. Required with the Flex allocation model.
 * `include_vm_memory_overhead` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
-* `delete_force` - (Required) When destroying use `delete_force=true` to remove a VDC and any objects it contains, regardless of their state.
-* `delete_recursive` - (Required) When destroying use `delete_recursive=true` to remove the VDC and any objects it contains that are in a state that normally allows removal.
+* `delete_force` - (Optional, but recommended) When destroying use `delete_force=true` to remove a VDC and any objects it contains, regardless of their state. Default is `false`
+* `delete_recursive` - (Optional, but recommended) When destroying use `delete_recursive=true` to remove the VDC and any objects it contains that are in a state that normally allows removal. Default is `false`
 * `default_compute_policy_id` - (Optional, *v3.8+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy.
 * `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
 * `vm_sizing_policy_ids` - (Optional, *v3.0+*, *VCD 10.2+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
