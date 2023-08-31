@@ -1,0 +1,18 @@
+vcd_url  = "https://some-vcd.com"
+
+# existing organization where we create the vApp template and the vApps
+org      = "myorg"
+
+# existing VDC where we create the vApp
+vdc      = "myvdc"
+
+# existing catalog where we upload the OVA
+catalog  = "mycatalog"
+
+# system administrator
+user     = "administrator"
+password = "mypassword"
+
+# where to find the .OVA to create catalog contents.
+# The directory "./test-resources" is at the top of this repository
+ova_path = "../../../test-resources/"

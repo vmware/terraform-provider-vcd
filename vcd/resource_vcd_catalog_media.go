@@ -62,7 +62,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 			},
 			"media_path": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "absolute or relative path to Media file",
 			},
@@ -136,6 +136,10 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	var err error
 	catalogName := d.Get("catalog").(string)
 	catalogId := d.Get("catalog_id").(string)
+	mediaPath := d.Get("media_path").(string)
+	if mediaPath == "" {
+		return diag.Errorf("required attribute 'media_path' is missing")
+	}
 	if catalogId == "" {
 		var adminOrg *govcd.AdminOrg
 		adminOrg, err = vcdClient.GetAdminOrgFromResource(d)
@@ -153,7 +157,7 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	mediaName := d.Get("name").(string)
-	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), d.Get("media_path").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
 	if err != nil {
 		log.Printf("Error uploading new catalog media: %s", err)
 		return diag.Errorf("error uploading new catalog media: %s", err)

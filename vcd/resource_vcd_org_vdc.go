@@ -222,12 +222,12 @@ func resourceVcdOrgVdc() *schema.Resource {
 			},
 			"delete_force": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				Description: "When destroying use delete_force=True to remove a VDC and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				Description: "When destroying use delete_recursive=True to remove the VDC and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {

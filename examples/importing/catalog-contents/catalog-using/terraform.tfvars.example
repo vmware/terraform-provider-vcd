@@ -1,0 +1,11 @@
+vcd_url      = "https://some-vcd.com"
+
+# organization where we create the new catalog
+org          = "myorg"
+
+# name of the new catalog
+catalog      = "mycatalog"
+
+# user created in "../catalog-sharing"
+new_user     = "catalog-author-user"
+new_password = "TO_BE_DISCARDED"
