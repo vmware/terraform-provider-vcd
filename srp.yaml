@@ -4,11 +4,11 @@ schema_id: '1.0'
 sources:
   source:
     typename: source_tree.git
-    path: $(env:source_path)
+    path: $(env:SOURCE_PATH)
 
 input_templates:
   source:
-    $(sources:source_uid):
+    $(sources:SOURCE_UID):
       is_components_source: true
       incorporated: false
       usages: ["testing", "building"]
@@ -25,12 +25,12 @@ spdx_templates:
       detailed_description: "Terraform VMware Cloud Director provider"
 
 outputs:
-  file(org=terraform-provider-vcd.vcd.vmware.com,name=linux_amd64,version=$(env:version),build_id=$(env:build_id)):
+  file(org=terraform-provider-vcd.vcd.vmware.com,name=linux_amd64,version=$(env:VERSION),build_id=$(env:BUILD_ID)):
     merge_input_templates:
       - source
     merge_spdx_template: spdx
     scanner_instances:
       - scanner: srpcli-go
-        args: ["--go-mod=$(env:source_path)/go.mod", "--incorporated=false", "--usage=functionality", "--usage=testing"]
+        args: ["--go-mod=$(env:SOURCE_PATH)/go.mod", "--incorporated=false", "--usage=functionality", "--usage=testing"]
       - scanner: srpcli-syft
         args: ["--incorporated=true", "--usage=functionality" ]
