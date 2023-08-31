@@ -31,6 +31,6 @@ outputs:
     merge_spdx_template: spdx
     scanner_instances:
       - scanner: srpcli-go
-        args: ["--go-mod=$(env:SOURCE_PATH)/go.mod", "--incorporated=false", "--usage=functionality", "--usage=testing"]
+        args: ["--go-mod=$(env:SOURCE_PATH)/go.mod", "--incorporated=false", "--usage=testing"]
       - scanner: srpcli-syft
-        args: ["--incorporated=true", "--usage=functionality" ]
+        args: ["--scan-target=$(env:SOURCE_PATH)", "--incorporated=true", "--usage=functionality" ]
