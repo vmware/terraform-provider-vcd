@@ -25,7 +25,7 @@ spdx_templates:
       detailed_description: "Terraform VMware Cloud Director provider"
 
 outputs:
-  runway(instance='runway-ci-sfo.eng.vmware.com',namespace='terraform-provider-vcd',pipeline='terraform-provider-vcd-provenance',job='provenance'):
+  file(org=terraform-provider-vcd.vcd.vmware.com,name=linux_amd64,version=$(env:version),build_id=$(env:build_id)):
     merge_input_templates:
       - source
     merge_spdx_template: spdx
