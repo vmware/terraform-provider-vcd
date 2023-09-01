@@ -54,7 +54,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 }
 ```
 
-## Example Usage (NSX-T Segment backed External Networks attachment)
+## Example Usage (NSX-T Segment backed external networks attachment)
 
 ```hcl
 resource "vcd_nsxt_edgegateway" "with-external-networks" {
@@ -332,7 +332,7 @@ definition at provider level.
 * `external_network_id` - (Required) An external network ID. **Note:** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
 can be used to lookup ID by name.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
-* `dedicate_external_network` - (Optional) Dedicating the External Network will enable Route Advertisement for this Edge Gateway. Default `false`.
+* `dedicate_external_network` - (Optional) Dedicating the external network will enable Route Advertisement for this Edge Gateway. Default `false`.
 
 * `subnet` - (Optional) One or more [subnets](#edgegateway-subnet) defined for Edge Gateway. One of
   `subnet`, `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required unless** parent
@@ -347,10 +347,10 @@ can be used to lookup ID by name.
   backed by *IP Spaces*. Read more in [IP allocation modes](#ip-allocation-modes) section.
 * `total_allocated_ip_count` - (Optional, *v3.9+*) Required with `subnet_with_total_ip_count`. It is
   **read-only** attribute with other other allocation models `subnet` and `subnet_with_ip_count`.
-  **Note**. It sets or reports IP count *only for NSX-T Tier 0 backed External Network Uplink*.
-* `external_network` - (Optional,*VCD 10.4.1+*, *v3.11+*) attaches NSX-T Segment backed External Networks with a
-  given [configuration block](#edgegateway-subnet-external-network). It *does not support IP
-  Spaces*.
+  **Note**. It sets or reports IP count *only for NSX-T Tier 0 backed external network Uplink*.
+* `external_network` - (Optional, *VCD 10.4.1+*, *v3.11+*) attaches NSX-T Segment backed External
+  Networks with a given [configuration block](#edgegateway-subnet-external-network). It *does not
+  support IP Spaces*.
 
 <a id="ip-allocation-modes"></a>
 
@@ -423,9 +423,9 @@ added capability of automatically allocating a specific number of IPs from the b
 
 ### NSX-T Segment backed network attachment using `external_network` block
 
-This option can attach NSX-T Segment backed External Networks
+This option can attach NSX-T Segment backed external networks
 
-* `external_network_id` - (Required) - ID of NSX-T Segment backed External Network
+* `external_network_id` - (Required) - ID of NSX-T Segment backed external network
 * `gateway` - (Required) - Gateway for a subnet in external network
 * `prefix_length` - (Required) Prefix length of a subnet in external network (e.g. 24)
 * `primary_ip` (Optional) - Exactly one Primary IP is required for an Edge Gateway. It should fall
@@ -443,7 +443,7 @@ The following attributes are exported on this resource:
   exposed when using IP Spaces.
 * `use_ip_spaces` - Boolean value that hints if the NSX-T Edge Gateway uses IP Spaces
 * `external_network_allocated_ip_count` - Total allocated IP count in attached NSX-T Segment backed
-  External Networks
+  external networks
 
 ~> `primary_ip`, `used_ip_count` and `unused_ip_count` will not be populated when using **IP Spaces**
 
