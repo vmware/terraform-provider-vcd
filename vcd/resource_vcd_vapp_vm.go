@@ -819,6 +819,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting VM CPU/Memory HotAdd capabilities: %s", err)
 	}
 
+	// Explicit refresh after updating VM CPU and Memory Hot Add
+	err = vm.Refresh()
+	if err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
+	}
+
 	// Independent disk handling
 	// Such schema fields are processed:
 	// * disk
@@ -881,6 +887,11 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			if err != nil {
 				return diag.Errorf(errorCompletingTask, err)
 			}
+		}
+
+		err = vm.Refresh()
+		if err != nil {
+			return diag.Errorf("error refreshing VM: %s", err)
 		}
 
 		if enterBiosSetup, ok := d.Get("boot_options.0.enter_bios_setup").(bool); ok {
@@ -1964,6 +1975,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return diag.Errorf(errorCompletingTask, err)
+			}
+
+			err = vm.Refresh()
+			if err != nil {
+				return diag.Errorf("error refreshing VM: %s", err)
 			}
 
 			if enterBiosSetup, ok := d.Get("boot_options.0.enter_bios_setup").(bool); ok {
