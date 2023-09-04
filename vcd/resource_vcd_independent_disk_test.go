@@ -669,14 +669,12 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 // TestAccVcdIndependentDiskMetadata tests metadata CRUD on independent disks
 func TestAccVcdIndependentDiskMetadata(t *testing.T) {
-	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdIndependentDiskMetadata, "vcd_independent_disk.test-independent-disk",
 		testAccCheckVcdIndependentDiskMetadataDatasource, "data.vcd_independent_disk.test-independent-disk-ds",
 		StringMap{
 			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})
-	postTestChecks(t)
 }
 
 const testAccCheckVcdIndependentDiskMetadata = `

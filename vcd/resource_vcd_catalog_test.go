@@ -948,12 +948,10 @@ func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, 
 
 // TestAccVcdCatalogMetadata tests metadata CRUD on catalogs
 func TestAccVcdCatalogMetadata(t *testing.T) {
-	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
 		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
 		nil)
-	postTestChecks(t)
 }
 
 const testAccCheckVcdCatalogMetadata = `

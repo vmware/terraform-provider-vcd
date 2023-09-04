@@ -424,13 +424,11 @@ resource "vcd_org" "{{.OrgName}}" {
 
 // TestAccVcdOrgMetadata tests metadata CRUD on organizations
 func TestAccVcdOrgMetadata(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
 		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
 		nil)
-	postTestChecks(t)
 }
 
 const testAccCheckVcdOrgMetadata = `

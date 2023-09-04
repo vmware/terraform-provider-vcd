@@ -1459,7 +1459,6 @@ func TestAccVcdIsolatedNetworkMetadataIgnore(t *testing.T) {
 
 // TestAccVcdRoutedNetworkMetadata tests metadata CRUD on a NSX-V routed network
 func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
-	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdRoutedNetworkMetadata, "vcd_network_routed.test-network-routed",
 		testAccCheckVcdRoutedNetworkMetadataDatasource, "data.vcd_network_routed.test-network-routed-ds",
@@ -1467,7 +1466,6 @@ func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
 			"Vdc":         testConfig.VCD.Vdc,
 			"EdgeGateway": testConfig.Networking.EdgeGateway,
 		})
-	postTestChecks(t)
 }
 
 const testAccCheckVcdRoutedNetworkMetadata = `

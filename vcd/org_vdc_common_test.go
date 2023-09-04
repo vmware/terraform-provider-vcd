@@ -419,7 +419,6 @@ const additionalStorageProfile = `
 
 // TestAccVcdVdcMetadata tests metadata CRUD on VDCs
 func TestAccVcdVdcMetadata(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdVdcMetadata, "vcd_org_vdc.test-vdc",
@@ -428,7 +427,6 @@ func TestAccVcdVdcMetadata(t *testing.T) {
 			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})
-	postTestChecks(t)
 }
 
 const testAccCheckVcdVdcMetadata = `

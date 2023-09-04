@@ -322,7 +322,6 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
 
 // TestAccVcdCatalogVAppTemplateMetadata tests metadata CRUD on Catalog vApp Templates
 func TestAccVcdCatalogVAppTemplateMetadata(t *testing.T) {
-	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogVAppTemplateMetadata, "vcd_catalog_vapp_template.test-catalog-vapp-template",
 		testAccCheckVcdCatalogVAppTemplateMetadataDatasource, "data.vcd_catalog_vapp_template.test-catalog-vapp-template-ds",
@@ -330,7 +329,6 @@ func TestAccVcdCatalogVAppTemplateMetadata(t *testing.T) {
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})
-	postTestChecks(t)
 }
 
 const testAccCheckVcdCatalogVAppTemplateMetadata = `

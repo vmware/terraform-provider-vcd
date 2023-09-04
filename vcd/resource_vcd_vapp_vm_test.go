@@ -547,7 +547,6 @@ func TestAccVcdVAppVmMetadataIgnore(t *testing.T) {
 
 // TestAccVcdVmMetadata tests metadata CRUD on VMs
 func TestAccVcdVmMetadata(t *testing.T) {
-	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdVmMetadata, "vcd_vm.test-vm",
 		testAccCheckVcdVmMetadataDatasource, "data.vcd_vm.test-vm-ds",
@@ -555,7 +554,6 @@ func TestAccVcdVmMetadata(t *testing.T) {
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
 		})
-	postTestChecks(t)
 }
 
 const testAccCheckVcdVmMetadata = `

@@ -326,7 +326,6 @@ const testAccCheckVcdCatalogItemFromUrlUpdated = `
 
 // TestAccVcdCatalogItemMetadata tests metadata CRUD on catalog items
 func TestAccVcdCatalogItemMetadata(t *testing.T) {
-	preTestChecks(t)
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogItemMetadata, "vcd_catalog_item.test-catalog-item",
 		testAccCheckVcdCatalogItemMetadataDatasource, "data.vcd_catalog_item.test-catalog-item-ds",
@@ -334,7 +333,6 @@ func TestAccVcdCatalogItemMetadata(t *testing.T) {
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})
-	postTestChecks(t)
 }
 
 const testAccCheckVcdCatalogItemMetadata = `
