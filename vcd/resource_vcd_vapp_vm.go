@@ -894,7 +894,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			return diag.Errorf("error refreshing VM: %s", err)
 		}
 
-		if enterBiosSetup, ok := d.Get("boot_options.0.enter_bios_setup").(bool); ok {
+		if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
 			biosSetup := &types.BootOptions{
 				EnterBiosSetup: &enterBiosSetup}
 
@@ -1982,7 +1982,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 				return diag.Errorf("error refreshing VM: %s", err)
 			}
 
-			if enterBiosSetup, ok := d.Get("boot_options.0.enter_bios_setup").(bool); ok {
+			if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
 				biosSetup := &types.BootOptions{
 					EnterBiosSetup: &enterBiosSetup}
 

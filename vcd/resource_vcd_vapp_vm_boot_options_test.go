@@ -66,7 +66,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
+					testAccCheckVcdNsxtVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr(resourceName, "name", vmName),
 
 					resource.TestCheckResourceAttr(resourceName, "os_type", "sles11_64Guest"),
@@ -91,7 +91,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
+					testAccCheckVcdNsxtVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr(resourceName, "name", vmName),
 
 					resource.TestCheckResourceAttr(resourceName, "os_type", "sles11_64Guest"),
@@ -116,7 +116,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
+					testAccCheckVcdNsxtVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "os_type", "sles11_64Guest"),
