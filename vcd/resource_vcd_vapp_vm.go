@@ -1902,21 +1902,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 
-		if d.HasChange("boot_options.0") {
-			bootOptions := &types.BootOptions{
-				EfiSecureBootEnabled: addrOf(d.Get("boot_options.0.efi_secure_boot").(bool)),
-				BootDelay:            addrOf(d.Get("boot_options.0.boot_delay").(int)),
-				BootRetryDelay:       addrOf(d.Get("boot_options.0.boot_retry_delay").(int)),
-				BootRetryEnabled:     addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool)),
-				EnterBiosSetup:       addrOf(d.Get("boot_options.0.enter_bios_setup").(bool)),
-			}
-
-			vm, err = vm.UpdateBootOptions(bootOptions)
-			if err != nil {
-				return diag.Errorf("error changing VM boot options: %s", err)
-			}
-		}
-
 		if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
 			_, err := vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 			if err != nil {
@@ -1947,6 +1932,29 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			if err != nil {
 				return diag.Errorf("error: %#v", err)
 			}
+		}
+	}
+
+	if d.HasChange("boot_options.0") {
+		bootOptions := &types.BootOptions{}
+
+		if bootDelay, ok := d.GetOk("boot_options.0.boot_delay"); ok {
+			bootOptions.BootDelay = addrOf(bootDelay.(int))
+		}
+		if bootRetryDelay, ok := d.GetOk("boot_options.0.boot_retry_delay"); ok {
+			bootOptions.BootRetryDelay = addrOf(bootRetryDelay.(int))
+		}
+		if bootRetryEnabled, ok := d.GetOk("boot_options.0.boot_retry_enabled"); ok {
+			bootOptions.BootRetryEnabled = addrOf(bootRetryEnabled.(bool))
+		}
+		if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup"); ok {
+			bootOptions.EnterBiosSetup = addrOf(enterBiosSetup.(bool))
+		}
+
+		vm, err = vm.UpdateBootOptions(bootOptions)
+		util.Logger.Printf("[DEBUG] %v", bootOptions)
+		if err != nil {
+			return diag.Errorf("error changing VM boot options: %s", err)
 		}
 	}
 
