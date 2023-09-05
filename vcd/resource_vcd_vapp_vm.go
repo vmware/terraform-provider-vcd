@@ -1990,16 +1990,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 				return diag.Errorf("error refreshing VM: %s", err)
 			}
 
-			if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
-				biosSetup := &types.BootOptions{
-					EnterBiosSetup: &enterBiosSetup}
-
-				vm, err = vm.UpdateBootOptions(biosSetup)
-				if err != nil {
-					return diag.Errorf("error enabling BIOS setup: %s", err)
-				}
-			}
-
 		}
 
 		// When customization is requested VM must be un-deployed before starting it
@@ -2023,6 +2013,16 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			err = vm.PowerOnAndForceCustomization()
 			if err != nil {
 				return diag.Errorf("failed powering on with customization: %s", err)
+			}
+		}
+
+		if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
+			biosSetup := &types.BootOptions{
+				EnterBiosSetup: &enterBiosSetup}
+
+			_, err = vm.UpdateBootOptions(biosSetup)
+			if err != nil {
+				return diag.Errorf("error enabling BIOS setup: %s", err)
 			}
 		}
 	}
