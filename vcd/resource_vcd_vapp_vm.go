@@ -763,6 +763,36 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error refreshing VM: %s", err)
 	}
 
+	// supportsFirmware is a helper variable to not repeat the same API checking calls
+	supportsFirmware := vcdClient.Client.APIVCDMaxVersionIs(">=37.1")
+	firmware := vm.VM.VmSpecSection.Firmware
+
+	bootOptions := &types.BootOptions{}
+	if _, ok := d.GetOk("boot_options"); ok {
+		bootOptions.BootDelay = addrOf(d.Get("boot_options.0.boot_delay").(int))
+		bootOptions.EnterBiosSetup = addrOf(d.Get("boot_options.0.enter_bios_setup").(bool))
+		bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
+		bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
+		if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+			if firmware != "efi" {
+				return diag.Errorf("error: EFI secure boot can only be used with EFI firmware")
+			}
+			bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+		}
+		if !supportsFirmware && (bootOptions.BootRetryDelay != nil || bootOptions.BootRetryEnabled != nil) {
+			return diag.Errorf("boot retry option is only available in VCD 10.4.1+")
+		}
+	}
+	_, err = vm.UpdateBootOptions(bootOptions)
+	if err != nil {
+		return diag.Errorf("error updating boot options of a VM: %s", err)
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
+	}
+
 	// Handle Metadata
 	// Such schema fields are processed:
 	// * metadata
@@ -890,20 +920,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 		}
 
-		err = vm.Refresh()
-		if err != nil {
-			return diag.Errorf("error refreshing VM: %s", err)
-		}
-
-		if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
-			biosSetup := &types.BootOptions{
-				EnterBiosSetup: &enterBiosSetup}
-
-			_, err = vm.UpdateBootOptions(biosSetup)
-			if err != nil {
-				return diag.Errorf("error enabling BIOS setup: %s", err)
-			}
-		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// VM power on handling was the last step, no other VM adjustment operations should be performed
@@ -1278,23 +1294,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		}
 	}
 
-	bootOptions := &types.BootOptions{}
-	if _, ok := d.GetOk("boot_options"); ok {
-		bootOptions.BootDelay = addrOf(d.Get("boot_options.0.boot_delay").(int))
-		bootOptions.EnterBiosSetup = addrOf(d.Get("boot_options.0.enter_bios_setup").(bool))
-		bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
-		bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
-		if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
-			if firmware != "efi" {
-				return nil, fmt.Errorf("error: EFI secure boot can only be used with EFI firmware")
-			}
-			bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
-		}
-		if !supportsFirmware && (bootOptions.BootRetryDelay != nil || bootOptions.BootRetryEnabled != nil) {
-			return nil, fmt.Errorf("boot retry option is only available in VCD 10.4.1+")
-		}
-	}
-
 	var computerName interface{}
 	if computerName, ok = d.GetOk("computer_name"); !ok {
 		return nil, fmt.Errorf("`computer_name` is required when creating empty VM")
@@ -1436,7 +1435,6 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 				},
 				GuestCustomizationSection: customizationSection,
 				StorageProfile:            storageProfilePtr,
-				BootOptions:               bootOptions,
 			},
 			Media: mediaReference,
 		}
@@ -1486,8 +1484,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					VirtualCpuType:  virtualCpuType,
 					Firmware:        firmware.(string),
 				},
-				BootImage:   bootImage,
-				BootOptions: bootOptions,
+				BootImage: bootImage,
 			},
 		}
 
@@ -2009,21 +2006,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			err = vm.PowerOnAndForceCustomization()
 			if err != nil {
 				return diag.Errorf("failed powering on with customization: %s", err)
-			}
-		}
-
-		err = vm.Refresh()
-		if err != nil {
-			return diag.Errorf("error refreshing VM: %s", err)
-		}
-
-		if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
-			biosSetup := &types.BootOptions{
-				EnterBiosSetup: &enterBiosSetup}
-
-			_, err = vm.UpdateBootOptions(biosSetup)
-			if err != nil {
-				return diag.Errorf("error enabling BIOS setup: %s", err)
 			}
 		}
 	}
