@@ -262,7 +262,8 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:     true,
 			Computed:     true,
 			ValidateFunc: validation.StringInSlice([]string{"efi", "bios"}, false),
-			Description:  "Firmware of the VM. Can be either EFI or BIOS, availability depending on the os_type argument. Changing the value when `power_on` is set to true, will cause a reboot of the VM.",
+			Description: "Firmware of the VM. Can be either EFI or BIOS, availability" +
+				"depending on the os_type argument. If unset, is set to 'bios' by default. Changing the value when `power_on` is set to true, will cause a reboot of the VM.",
 		},
 		"hardware_version": {
 			Type:        schema.TypeString,
@@ -1985,11 +1986,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 				return diag.Errorf(errorCompletingTask, err)
 			}
 
-			err = vm.Refresh()
-			if err != nil {
-				return diag.Errorf("error refreshing VM: %s", err)
-			}
-
 		}
 
 		// When customization is requested VM must be un-deployed before starting it
@@ -2014,6 +2010,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			if err != nil {
 				return diag.Errorf("failed powering on with customization: %s", err)
 			}
+		}
+
+		err = vm.Refresh()
+		if err != nil {
+			return diag.Errorf("error refreshing VM: %s", err)
 		}
 
 		if enterBiosSetup := d.Get("boot_options.0.enter_bios_setup").(bool); enterBiosSetup {
