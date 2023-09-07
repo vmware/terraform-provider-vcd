@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE 4.0 installation, step 1:
+# CSE 4.1 installation, step 1:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as Providers will need to generate an API token for the created
@@ -15,12 +15,12 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.10.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.11.0 and configured with a System administrator account.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.10"
+      version = ">= 3.11"
     }
   }
 }
@@ -43,6 +43,14 @@ resource "vcd_rde_interface" "vcdkeconfig_interface" {
   nss     = "VCDKEConfig"
   version = "1.0.0"
   name    = "VCDKEConfig"
+}
+
+# This is the interface required to create the "CAPVCD" Runtime Defined Entity Type.
+resource "vcd_rde_interface" "cse_interface" {
+  vendor  = "cse"
+  nss     = "capvcd"
+  version = "1.0.0"
+  name    = "cseInterface"
 }
 
 # This resource will manage the "VCDKEConfig" RDE Type required to instantiate the CSE Server configuration.

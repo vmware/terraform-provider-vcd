@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Container Service Extension v4.0 installation"
-sidebar_current: "docs-vcd-guides-cse-4-0-install"
+page_title: "VMware Cloud Director: Container Service Extension v4.1 installation"
+sidebar_current: "docs-vcd-guides-cse-install"
 description: |-
-  Provides guidance on configuring VCD to be able to install and use Container Service Extension v4.0
+  Provides guidance on configuring VCD to be able to install and use Container Service Extension v4.1
 ---
 
-# Container Service Extension v4.0 installation
+# Container Service Extension v4.1 installation
 
 ## About
 
@@ -319,6 +319,21 @@ The most common issues are:
 
 - Cluster creation is failing:
   - Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
+
+## Update from CSE v4.0 to v4.1
+
+New [RDE Interface][rde_interface] needs to be created:
+
+```hcl
+resource "vcd_rde_interface" "cse_interface" {
+  vendor  = "cse"
+  nss     = "capvcd"
+  version = "1.0.0"
+  name    = "cseInterface"
+}
+```
+
+
 
 ## Update CSE Server
 
