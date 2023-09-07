@@ -111,7 +111,7 @@ func getTestInfo(name string) (partitionInfo, bool) {
 
 // getPreCompiledMapOfTests retrieves the list of tests from a file created by a third party
 func getPreCompiledMapOfTests() map[string]partitionInfo {
-	readFile, err := os.Open(testListFileName)
+	readFile, err := os.Open(filepath.Clean(testListFileName))
 	if err != nil {
 		fmt.Printf("error opening '%s': %s\n", testListFileName, err)
 		os.Exit(1)
@@ -129,6 +129,7 @@ func getPreCompiledMapOfTests() map[string]partitionInfo {
 			continue
 		}
 		index++
+		listOfTestForNode = append(listOfTestForNode, testName)
 		mapOfTests[testName] = partitionInfo{
 			index: index,
 			node:  partitionNode,
@@ -138,6 +139,7 @@ func getPreCompiledMapOfTests() map[string]partitionInfo {
 		fmt.Printf("no test names found in file '%s'\n", testListFileName)
 		os.Exit(1)
 	}
+	sort.Strings(listOfTestForNode)
 	return mapOfTests
 }
 
