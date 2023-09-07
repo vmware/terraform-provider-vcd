@@ -58,9 +58,9 @@ resource "vcd_rde_interface" "cse_interface" {
 resource "vcd_rde_type" "vcdkeconfig_type" {
   vendor        = "vmware"
   nss           = "VCDKEConfig"
-  version       = "1.0.0"
+  version       = "1.1.0"
   name          = "VCD-KE RDE Schema"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/vcdkeconfig-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema.json"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 

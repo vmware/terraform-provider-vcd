@@ -333,6 +333,33 @@ resource "vcd_rde_interface" "cse_interface" {
 }
 ```
 
+Create a new version of the [RDE Types][rde_type] that were used in v4.0. This will allow them to co-exist with the old ones,
+so we can perform a smooth upgrade.
+
+```hcl
+resource "vcd_rde_type" "vcdkeconfig_type_v110" {
+  # Same attributes as v4.0, except for:
+  version       = "1.1.0"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema.json"
+}
+
+resource "vcd_rde_type" "capvcdcluster_type_v110" {
+  vendor        = "vmware"
+  nss           = "capvcdCluster"
+  version       = var.capvcd_rde_version
+  name          = "CAPVCD Cluster"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
+  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
+}
+```
+
+
+urn:vcloud:type:vmware:capvcdCluster:1.2.0
+"interfaces": [
+"urn:vcloud:interface:vmware:k8s:1.0.0",
+"urn:vcloud:interface:cse:capvcd:1.0.0"
+],
+
 
 
 ## Update CSE Server
