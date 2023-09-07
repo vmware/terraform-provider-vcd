@@ -56,9 +56,9 @@ func init() {
 	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
 	setBoolFlag(&skipLeftoversRemoval, "vcd-skip-leftovers-removal", "VCD_SKIP_LEFTOVERS_REMOVAL", "Do not attempt removal of leftovers at the end of the test suite")
 	setBoolFlag(&silentLeftoversRemoval, "vcd-silent-leftovers-removal", "VCD_SILENT_LEFTOVERS_REMOVAL", "Omit details during removal of leftovers")
+	setStringFlag(&testListFileName, "vcd-partition-tests-file", "VCD_PARTITION_TESTS_FILE", "Name of the file containing the tests to run in the current partition node")
 	setIntFlag(&numberOfPartitions, "vcd-partitions", "VCD_PARTITIONS", "")
 	setIntFlag(&partitionNode, "vcd-partition-node", "VCD_PARTITION_NODE", "")
-	setBoolFlag(&partitionDryRun, "vcd-partition-dry-run", "VCD_PARTITION_DRY_RUN", "Show which tests would run, without running them")
 }
 
 // Structure to get info from a config json file that the user specifies
@@ -889,6 +889,13 @@ func TestMain(m *testing.M) {
 	// Runs all test functions
 	exitCode := m.Run()
 
+	if numberOfPartitions != 0 {
+		entTestFileName := getTestFileName("end", testConfig.Provider.VcdVersion)
+		err := os.WriteFile(entTestFileName, []byte(fmt.Sprintf("%d", exitCode)), 0600)
+		if err != nil {
+			fmt.Printf("error writing to file '%s': %s\n", entTestFileName, err)
+		}
+	}
 	if vcdShowCount {
 		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
 	}
@@ -1406,7 +1413,7 @@ func timeStamp() string {
 //     contains a pattern that matches the test name.
 //  6. If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
 func preTestChecks(t *testing.T) {
-	handlePartitioning(t)
+	handlePartitioning(testConfig.Provider.VcdVersion, testConfig.Provider.Url, t)
 	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
 	if !vcdPrePostChecks {
 		return
