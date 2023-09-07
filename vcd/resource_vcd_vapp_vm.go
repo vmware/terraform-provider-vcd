@@ -703,21 +703,25 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
-	err := genericResourceVmCreate(d, meta, vappVmType)
-	if err != nil {
-		return err
+	diags := genericResourceVmCreate(d, meta, vappVmType)
+	// We need to check if there were errors, as genericResourceVmCreate can also return a warning
+	for _, diagnostic := range diags {
+		if diagnostic.Severity == diag.Error {
+			return diags
+		}
 	}
 
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
-	return genericVcdVmRead(d, meta, "resource")
+	return append(diags, genericVcdVmRead(d, meta, "resource")...)
 }
 
 // genericResourceVmCreate does the following:
 // * Executes VM create functions based on the type of VM (standalone or vApp member)
 // * Runs additional customization functions which are common for all 4 types of VMs
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
+	diags := diag.Diagnostics{}
 	vcdClient := meta.(*VCDClient)
 
 	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
@@ -768,20 +772,33 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	firmware := vm.VM.VmSpecSection.Firmware
 
 	bootOptions := &types.BootOptions{}
-	if _, ok := d.GetOk("boot_options"); ok {
-		bootOptions.BootDelay = addrOf(d.Get("boot_options.0.boot_delay").(int))
-		bootOptions.EnterBiosSetup = addrOf(d.Get("boot_options.0.enter_bios_setup").(bool))
-		bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
-		bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
-		if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
-			if firmware != "efi" {
-				return diag.Errorf("error: EFI secure boot can only be used with EFI firmware")
-			}
-			bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+	if bootDelay, ok := d.GetOk("boot_options.0.boot_delay"); ok {
+		bootOptions.BootDelay = addrOf(bootDelay.(int))
+	}
+	if bootRetryDelay, ok := d.GetOk("boot_options.0.boot_retry_delay"); ok {
+		bootOptions.BootRetryDelay = addrOf(bootRetryDelay.(int))
+	}
+	if bootRetryEnabled, ok := d.GetOk("boot_options.0.boot_retry_enabled"); ok {
+		bootOptions.BootRetryEnabled = addrOf(bootRetryEnabled.(bool))
+	}
+	if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup"); ok {
+		bootOptions.EnterBiosSetup = addrOf(enterBiosSetup.(bool))
+		if enterBiosSetup.(bool) && d.Get("power_on").(bool) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup flag will be set"+
+					"back to false.", vm.VM.Name),
+			})
 		}
-		if !supportsFirmware && (bootOptions.BootRetryDelay != nil || bootOptions.BootRetryEnabled != nil) {
-			return diag.Errorf("boot retry option is only available in VCD 10.4.1+")
+	}
+	if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+		if firmware != "efi" {
+			return diag.Errorf("error: EFI secure boot can only be used with EFI firmware")
 		}
+		bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+	}
+	if !supportsFirmware && (bootOptions.BootRetryDelay != nil || bootOptions.BootRetryEnabled != nil) {
+		return diag.Errorf("boot retry option is only available in VCD 10.4.1+")
 	}
 	_, err = vm.UpdateBootOptions(bootOptions)
 	if err != nil {
@@ -927,7 +944,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	// Read function is called in wrapper functions `resourceVcdVAppVmCreate` and
 	// `resourceVcdStandaloneVmCreate`
-	return nil
+	return diags
 }
 
 // createVmFromTemplate is responsible for create VMs from template of two types:
@@ -1674,6 +1691,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 }
 
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm, computePolicy *types.VdcComputePolicy) diag.Diagnostics {
+	diags := diag.Diagnostics{}
 	log.Printf("[DEBUG] [VM update] started without lock")
 
 	_, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
@@ -1971,6 +1989,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			return diag.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 		}
 
+		if d.Get("boot_options.0.enter_bios_setup").(bool) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup flag will be set"+
+					"back to false.", vm.VM.Name),
+			})
+		}
+
 		// Simply power on if customization is not requested
 		if !customizationNeeded && vmStatus != "POWERED_ON" {
 			log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
@@ -2008,10 +2034,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 				return diag.Errorf("failed powering on with customization: %s", err)
 			}
 		}
+
 	}
 
 	log.Printf("[DEBUG] [VM update] finished")
-	return genericVcdVmRead(d, meta, "resource")
+	return append(diags, genericVcdVmRead(d, meta, "resource")...)
 }
 
 func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
