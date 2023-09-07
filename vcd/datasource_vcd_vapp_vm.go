@@ -294,7 +294,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 					Computed:    true,
 					Description: "If set to true, enables EFI Secure Boot for the VM. Can only be changed when the VM is powered off.",
 				},
-				"enter_bios_setup": {
+				"enter_bios_setup_on_next_boot": {
 					Type:        schema.TypeBool,
 					Computed:    true,
 					Description: "If set to true, the VM will enter BIOS setup on boot.",

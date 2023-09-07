@@ -600,7 +600,7 @@ Changes are ignored on update. This part isn't reread on refresh. To manage inte
 Allows to specify the boot options of a VM.
 
 * `efi_secure_boot` - (Optional, VCD 10.4.1+) Enable EFI Secure Boot on subsequent boots, requires `firmware` to be set to `efi`.
-* `enter_bios_setup` - (Optional) Enter BIOS setup on subsequent boots of the VM.
+* `enter_bios_setup_on_next_boot` - (Optional) Enter BIOS setup on subsequent boots of the VM.
 * `boot_delay` - (Optional) Delay between the power-on and boot of the VM in milliseconds.
 * `boot_retry_enabled` - (Optional, VCD 10.4.1+) If set to `true`, will attempt to reboot the VM after a failed boot.
 * `boot_retry_delay` - (Optional, VCD 10.4.1+) Delay before the VM is rebooted after a failed boot. Has no effect if `boot_retry_enabled` is set to `false`

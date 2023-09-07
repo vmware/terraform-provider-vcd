@@ -507,10 +507,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 					Computed:    true,
 					Description: "If set to true, enables EFI Secure Boot for the VM. Can only be changed when the VM is powered off.",
 				},
-				"enter_bios_setup": {
-					Type:        schema.TypeBool,
-					Optional:    true,
-					Description: "If set to true, the VM will enter BIOS setup on boot.",
+				"enter_bios_setup_on_next_boot": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Description: "If set to true, the VM will enter BIOS setup on next boot. " +
+						"If a VM was powered on, the field will be set to `false` in VCD and Terraform will return a non-empty plan",
 				},
 			},
 			},
@@ -781,12 +782,15 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	if bootRetryEnabled, ok := d.GetOk("boot_options.0.boot_retry_enabled"); ok {
 		bootOptions.BootRetryEnabled = addrOf(bootRetryEnabled.(bool))
 	}
-	if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup"); ok {
+	if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+		bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+	}
+	if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup_on_next_boot"); ok {
 		bootOptions.EnterBiosSetup = addrOf(enterBiosSetup.(bool))
 		if enterBiosSetup.(bool) && d.Get("power_on").(bool) {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup flag will be set"+
+				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup_on_next_boot flag will be set"+
 					"back to false.", vm.VM.Name),
 			})
 		}
@@ -1889,14 +1893,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 				// Additional check needs to be made in a scenario where EFI secure boot is
 				// disabled and firmware is set to 'bios' during update, as there would be a misconfiguration error
 				// because EFI secure boot can't be enabled when firmware is not efi and we can't do two things at once
-
-				efiSecureBoot := d.Get("boot_options.0.efi_secure_boot").(bool)
-				if firmware != "efi" && efiSecureBoot {
+				efiSecureBoot, _ := d.GetOk("boot_options.0.efi_secure_boot")
+				if firmware != "efi" && efiSecureBoot.(bool) {
 					return diag.Errorf("error: EFI secure boot can only be enabled with firmware set to 'efi'")
 				}
-				if firmware != "efi" && !efiSecureBoot {
+				if firmware != "efi" && !efiSecureBoot.(bool) {
 					efiSecureBootOptions := &types.BootOptions{
-						EfiSecureBootEnabled: addrOf(efiSecureBoot),
+						EfiSecureBootEnabled: addrOf(efiSecureBoot.(bool)),
 					}
 					vm, err = vm.UpdateBootOptions(efiSecureBootOptions)
 					if err != nil {
@@ -1963,8 +1966,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if bootRetryEnabled, ok := d.GetOk("boot_options.0.boot_retry_enabled"); ok {
 			bootOptions.BootRetryEnabled = addrOf(bootRetryEnabled.(bool))
 		}
-		if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup"); ok {
+		if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup_on_next_boot"); ok {
 			bootOptions.EnterBiosSetup = addrOf(enterBiosSetup.(bool))
+		}
+		if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+			bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
 		}
 
 		vm, err = vm.UpdateBootOptions(bootOptions)
@@ -1989,10 +1995,10 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			return diag.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 		}
 
-		if d.Get("boot_options.0.enter_bios_setup").(bool) {
+		if d.Get("boot_options.0.enter_bios_setup_on_next_boot").(bool) {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup flag will be set"+
+				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup_on_next_boot flag will be set"+
 					"back to false.", vm.VM.Name),
 			})
 		}
@@ -2176,7 +2182,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		bootOptionsBlockAttributes["boot_delay"] = bootOptions.BootDelay
 		bootOptionsBlockAttributes["boot_retry_delay"] = bootOptions.BootRetryDelay
 		bootOptionsBlockAttributes["boot_retry_enabled"] = bootOptions.BootRetryEnabled
-		bootOptionsBlockAttributes["enter_bios_setup"] = bootOptions.EnterBiosSetup
+		bootOptionsBlockAttributes["enter_bios_setup_on_next_boot"] = bootOptions.EnterBiosSetup
 
 		bootOptionsBlock[0] = bootOptionsBlockAttributes
 
