@@ -121,7 +121,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	tenantContext := govcd.TenantContext{}
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("could not create RDE with name '%s', error retrieving Org '%s': %s", name, d.Get("org").(string), err)
+		return diag.Errorf("could not create RDE with name '%s', error retrieving Org: %s", name, err)
 	}
 	tenantContext.OrgId = org.Org.ID
 	tenantContext.OrgName = org.Org.Name

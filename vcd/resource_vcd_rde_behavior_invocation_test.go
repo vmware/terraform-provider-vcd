@@ -13,16 +13,16 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"Nss":                   "nss1",
-		"Version":               "1.0.0",
-		"Vendor":                "vendor1",
-		"Name":                  t.Name(),
-		"Description":           t.Name(),
-		"SchemaPath":            getCurrentDir() + "/../test-resources/rde_type.json",
-		"ExecutionId":           "MyActivity",
-		"ExecutionType":         "noop",
-		"TypeAccessLevels":      "\"urn:vcloud:accessLevel:FullControl\"",
-		"InterfaceAccessLevels": "\"urn:vcloud:accessLevel:ReadOnly\", \"urn:vcloud:accessLevel:FullControl\"",
+		"Nss":           "nss",
+		"Version":       "1.0.0",
+		"Vendor":        "vendor",
+		"Name":          t.Name(),
+		"Description":   t.Name(),
+		"SchemaPath":    getCurrentDir() + "/../test-resources/rde_type.json",
+		"EntityPath":    getCurrentDir() + "/../test-resources/rde_instance.json",
+		"ExecutionId":   "MyActivity",
+		"ExecutionType": "noop",
+		"AccessLevels":  "\"urn:vcloud:accessLevel:FullControl\"",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -34,22 +34,16 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 		return
 	}
 
-	interfaceBehavior1 := "vcd_rde_interface_behavior.behavior1"
-	rdeTypeBehavior := "vcd_rde_type_behavior.behavior_override"
-	rdeType := "vcd_rde_type.type"
+	rdeName := "vcd_rde.rde"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckRdeTypesDestroy(rdeType), // If the RDE Type is destroyed, the Behavior is also destroyed.
+		CheckDestroy:      testAccCheckRdeDestroy(rdeName),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// RDE Type Behavior
-					resource.TestCheckResourceAttrPair(rdeTypeBehavior, "ref", interfaceBehavior1, "id"),
-					resource.TestCheckResourceAttr(rdeTypeBehavior, "name", t.Name()+"1"),
-					resource.TestCheckResourceAttr(rdeTypeBehavior, "description", t.Name()+"Override"),
-					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.id", "MyActivityOverride"),
-					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.type", "noop"),
+					resource.TestCheckResourceAttr(rdeName, "name", t.Name()),
 				),
 			},
 		},
@@ -65,9 +59,9 @@ resource "vcd_rde_interface" "interface" {
   name    = "{{.Name}}"
 }
 
-resource "vcd_rde_interface_behavior" "behavior1" {
+resource "vcd_rde_interface_behavior" "behavior" {
   rde_interface_id = vcd_rde_interface.interface.id
-  name             = "{{.Name}}1"
+  name             = "{{.Name}}"
   description      = "{{.Description}}"
   execution = {
     "id" : "{{.ExecutionId}}1"
@@ -86,8 +80,27 @@ resource "vcd_rde_type" "type" {
 
   # Behaviors can't be created after the RDE Interface is used by a RDE Type
   # so we need to depend on the Behaviors to wait for them to be created first.
-  depends_on = [vcd_rde_interface_behavior.behavior1, vcd_rde_interface_behavior.behavior2]
+  depends_on = [vcd_rde_interface_behavior.behavior]
 }
 
+resource "vcd_rde" "rde" {
+  org          = "System" # We use System org to avoid using right bundles
+  rde_type_id  = vcd_rde_type.type.id
+  name         = "{{.Name}}"
+  resolve      = true
+  input_entity = file("{{.EntityPath}}")
+}
 
+# Required Access Levels to invoke Behaviors
+resource "vcd_rde_type_behavior_acl" "interface_acl" {
+  rde_type_id = vcd_rde_type.type.id
+  behavior_id = vcd_rde_interface_behavior.behavior.id
+  access_level_ids = [{{.AccessLevels}}]
+}
+
+resource "vcd_rde_behavior_invocation" "invoke" {
+  rde_id                  = vcd_rde.rde.id
+  behavior_id             = vcd_rde_interface_behavior.behavior.id
+  invoke_on_every_refresh = false
+}
 `
