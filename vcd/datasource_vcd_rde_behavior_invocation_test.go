@@ -28,8 +28,8 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdRdeBehaviorInvocation, params)
-	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
+	configText := templateFill(testAccVcdRdeBehaviorInvocation, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -41,7 +41,7 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 		CheckDestroy:      testAccCheckRdeInterfaceDestroy("vcd_rde_interface.interface"), // If the interface is destroyed, everything is
 		Steps: []resource.TestStep{
 			{
-				Config: configText1,
+				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_rde.rde", "name", t.Name()),
 					// No-op operations return the original entity data, hence the RDE Type should appear:
