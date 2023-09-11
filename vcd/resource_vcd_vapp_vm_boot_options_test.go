@@ -209,7 +209,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     boot_retry_delay = 1
     boot_retry_enabled = true
     boot_delay = 1
-    enter_bios_setup_on_next_boot = true
+    enter_bios_setup_on_next_boot = false
   }
  }
 `
