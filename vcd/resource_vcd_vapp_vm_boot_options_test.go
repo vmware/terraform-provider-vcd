@@ -66,7 +66,12 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 	vmWithTemplate := "vcd_vm." + vmName + "-template"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdNsxtVAppVmDestroy(vappName),
+			testAccCheckVcdNsxtVAppVmDestroy(vappName+"-template"),
+			testAccCheckVcdStandaloneVmDestroy(vmName, testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+			testAccCheckVcdStandaloneVmDestroy(vmName+"-template", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+		),
 		Steps: []resource.TestStep{
 			// Step 0 - create
 			{
