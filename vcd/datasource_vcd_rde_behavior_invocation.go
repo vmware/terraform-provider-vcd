@@ -7,14 +7,10 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// This resource is quite special, as it represents an imperative call to a function (aka invoking a behavior)
-// in the declarative world of Terraform. It is not a data source to highlight the implications of invoking a behavior, which
-// can mutate RDEs. For that reason, we add the attribute "invoke_on_every_refresh", so users can decide whether to invoke the behavior on
-// every read operation (plan, refresh, apply), or just when the resource is created.
-//
-// To avoid unnecessary complexity, all arguments have ForceNew=true, this way we avoid the Update operation and the combination
-// Read+Update, which could lead to accidental double invocations.
-// Also, there's no Delete as there's nothing to delete.
+// This data source is quite special, as it represents an imperative call to a function (aka invoking a behavior)
+// in the declarative world of Terraform. Despite being a data source, whose goal is to perform Read-only operations, invocations
+// can mutate RDE contents. The nature of this one is similar to the built-in "http" provider, which is a data source
+// that can perform "PUT"/"POST"/"DELETE" operations.
 func datasourceVcdRdeBehaviorInvocation() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdRdeBehaviorInvocationRead,
