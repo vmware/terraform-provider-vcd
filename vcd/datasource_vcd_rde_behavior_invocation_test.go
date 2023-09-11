@@ -3,6 +3,8 @@
 package vcd
 
 import (
+	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -34,16 +36,17 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 		return
 	}
 
-	rdeName := "vcd_rde.rde"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckRdeDestroy(rdeName),
+		CheckDestroy:      testAccCheckRdeInterfaceDestroy("vcd_rde_interface.interface"), // If the interface is destroyed, everything is
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// RDE Type Behavior
-					resource.TestCheckResourceAttr(rdeName, "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_rde.rde", "name", t.Name()),
+					// No-op operations return the original entity data, hence the RDE Type should appear:
+					resource.TestMatchResourceAttr("data.vcd_rde_behavior_invocation.invoke", "result",
+						regexp.MustCompile(fmt.Sprintf("\"urn:vcloud:type:%s:%s:%s\"", params["Vendor"], params["Nss"], params["Version"]))),
 				),
 			},
 		},
@@ -98,9 +101,8 @@ resource "vcd_rde_type_behavior_acl" "interface_acl" {
   access_level_ids = [{{.AccessLevels}}]
 }
 
-resource "vcd_rde_behavior_invocation" "invoke" {
+data "vcd_rde_behavior_invocation" "invoke" {
   rde_id                  = vcd_rde.rde.id
   behavior_id             = vcd_rde_interface_behavior.behavior.id
-  invoke_on_every_refresh = false
 }
 `
