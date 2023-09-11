@@ -60,7 +60,7 @@ func datasourceVcdRdeBehaviorInvocationRead(_ context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.Errorf("[RDE Behavior Invocation] could not invoke the Behavior of the RDE with ID '%s': %s", rdeId, err)
 	}
-	d.SetId(rdeId + "|" + behaviorId)
+	d.SetId(rdeId + "|" + behaviorId) // Invocations are not real entities, so we make an artificial ID.
 	dSet(d, "result", result)
 	return nil
 }
