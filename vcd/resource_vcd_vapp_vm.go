@@ -1698,7 +1698,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	diags := diag.Diagnostics{}
 	log.Printf("[DEBUG] [VM update] started without lock")
 
-	_, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
+	vcd, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1957,20 +1957,26 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	if d.HasChange("boot_options.0") {
 		bootOptions := &types.BootOptions{}
 
-		if bootDelay, ok := d.GetOk("boot_options.0.boot_delay"); ok {
-			bootOptions.BootDelay = addrOf(bootDelay.(int))
-		}
-		if bootRetryDelay, ok := d.GetOk("boot_options.0.boot_retry_delay"); ok {
-			bootOptions.BootRetryDelay = addrOf(bootRetryDelay.(int))
-		}
-		if bootRetryEnabled, ok := d.GetOk("boot_options.0.boot_retry_enabled"); ok {
-			bootOptions.BootRetryEnabled = addrOf(bootRetryEnabled.(bool))
-		}
-		if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup_on_next_boot"); ok {
-			bootOptions.EnterBiosSetup = addrOf(enterBiosSetup.(bool))
-		}
-		if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
-			bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+		bootOptions.BootDelay = addrOf(d.Get("boot_options.0.boot_delay").(int))
+		bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
+		bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
+		bootOptions.EnterBiosSetup = addrOf(d.Get("boot_options.0.enter_bios_setup_on_next_boot").(bool))
+		bootOptions.EfiSecureBootEnabled = addrOf(d.Get("boot_options.0.efi_secure_boot").(bool))
+		// This if condition is needed, because Terraform schema provides
+		// zero values for the type e.g 0 for TypeInt, false for TypeBool
+		// when using d.Get, and when using d.GetOk, if the value is set
+		// to the zero value, the 'ok' variable is set to false which can cause
+		// not applying configuration in case e.g BootRetryDelay is changed 20 -> 0
+		if vcd.Client.APIVCDMaxVersionIs("<37.1") {
+			if bootOptions.BootRetryEnabled == addrOf(false) {
+				bootOptions.BootRetryEnabled = nil
+			}
+			if bootOptions.EfiSecureBootEnabled == addrOf(false) {
+				bootOptions.EfiSecureBootEnabled = nil
+			}
+			if bootOptions.BootRetryDelay == addrOf(0) {
+				bootOptions.BootRetryDelay = nil
+			}
 		}
 
 		vm, err = vm.UpdateBootOptions(bootOptions)
