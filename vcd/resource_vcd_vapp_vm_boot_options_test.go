@@ -15,7 +15,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 		vapp     govcd.VApp
 		vm       govcd.VM
 		vappName string = t.Name()
-		vmName   string = t.Name() + "VM"
+		vmName   string = t.Name() + "-vm"
 	)
 
 	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
@@ -23,14 +23,18 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.Nsxt.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VAppName":    vappName,
-		"VMName":      vmName,
-		"Tags":        "vapp vm",
+		"Org":                    testConfig.VCD.Org,
+		"Vdc":                    testConfig.Nsxt.Vdc,
+		"EdgeGateway":            testConfig.Networking.EdgeGateway,
+		"CatalogName":            testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"VappTemplateName":       testConfig.VCD.Catalog.CatalogItemWithEfiSupport,
+		"VAppName":               vappName,
+		"VAppNameWithTemplate":   vappName + "-template",
+		"VappVMName":             vappName,
+		"VappVMWithTemplateName": vappName + "-template",
+		"EmptyVMName":            vmName,
+		"VMWithTemplateName":     vmName + "-template",
+		"Tags":                   "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -56,8 +60,10 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 		t.Skip("Most boot options are only available since 37.1")
 	}
 
-	resourceName := "vcd_vapp_vm." + vmName
-	datasourceName := "data." + resourceName
+	emptyVapp := "vcd_vapp_vm." + vappName
+	vappVmWithTemplate := "vcd_vapp_vm." + vappName + "-template"
+	emptyVM := "vcd_vm." + vmName
+	vmWithTemplate := "vcd_vm." + vmName + "-template"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName),
@@ -68,71 +74,146 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 				Config:             configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdNsxtVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
-					resource.TestCheckResourceAttr(resourceName, "name", vmName),
+					testAccCheckVcdNsxtVAppVmExists(vappName+"-template", vappName+"-template", vappVmWithTemplate, &vapp, &vm),
+					testAccCheckVcdNsxtVAppVmExists(vappName, vappName, emptyVapp, &vapp, &vm),
+					testAccCheckVcdNsxtStandaloneVmExists(vmName+"-template", vmWithTemplate),
+					testAccCheckVcdNsxtStandaloneVmExists(vmName, emptyVM),
+					resource.TestCheckResourceAttr(emptyVapp, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr(emptyVapp, "hardware_version", "vmx-13"),
+					resource.TestCheckResourceAttr(emptyVapp, "firmware", "efi"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "firmware", "efi"),
+					resource.TestCheckResourceAttr(emptyVM, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr(emptyVM, "hardware_version", "vmx-13"),
+					resource.TestCheckResourceAttr(emptyVM, "firmware", "efi"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "firmware", "efi"),
 
-					resource.TestCheckResourceAttr(resourceName, "os_type", "sles11_64Guest"),
-					resource.TestCheckResourceAttr(resourceName, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr(resourceName, "firmware", "efi"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.efi_secure_boot", "true"),
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_delay", "2"),
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_delay", "2"),
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr(datasourceName, "firmware", "efi"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.efi_secure_boot", "true"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_delay", "2"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_delay", "2"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_delay", "2"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_retry_delay", "2"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdNsxtVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
-					resource.TestCheckResourceAttr(resourceName, "name", vmName),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "firmware", "bios"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr(resourceName, "os_type", "sles11_64Guest"),
-					resource.TestCheckResourceAttr(resourceName, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr(resourceName, "firmware", "bios"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "firmware", "bios"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.efi_secure_boot", "false"),
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_delay", "1"),
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_delay", "1"),
-					resource.TestCheckResourceAttr(resourceName, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "firmware", "bios"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_retry_enabled", "true"),
 
-					resource.TestCheckResourceAttr(datasourceName, "firmware", "bios"),
-
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.efi_secure_boot", "false"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_delay", "1"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_delay", "1"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "firmware", "bios"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.efi_secure_boot", "false"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_delay", "1"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_retry_delay", "1"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_retry_enabled", "true"),
 				),
 			},
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdNsxtVAppVmExists(vappName, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr(emptyVapp, "boot_options.0.boot_retry_enabled", "false"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr("data."+emptyVapp, "boot_options.0.boot_retry_enabled", "false"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "os_type", "sles11_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "firmware", "efi"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr(vappVmWithTemplate, "boot_options.0.boot_retry_enabled", "false"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr("data."+vappVmWithTemplate, "boot_options.0.boot_retry_enabled", "false"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.efi_secure_boot", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_delay", "0"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_delay", "0"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "boot_options.0.boot_retry_enabled", "false"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr(emptyVM, "boot_options.0.boot_retry_enabled", "false"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr("data."+emptyVM, "boot_options.0.boot_retry_enabled", "false"),
 
-					resource.TestCheckResourceAttr(datasourceName, "firmware", "efi"),
-
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.enter_bios_setup_on_next_boot", "false"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.efi_secure_boot", "true"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_delay", "0"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_delay", "0"),
-					resource.TestCheckResourceAttr(datasourceName, "boot_options.0.boot_retry_enabled", "false"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr(vmWithTemplate, "boot_options.0.boot_retry_enabled", "false"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "firmware", "efi"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.efi_secure_boot", "true"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_delay", "0"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_retry_delay", "0"),
+					resource.TestCheckResourceAttr("data."+vmWithTemplate, "boot_options.0.boot_retry_enabled", "false"),
 				),
 			},
 		},
@@ -141,6 +222,14 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 }
 
 const testSharedBootOptions = `
+resource "vcd_vapp" "{{.VAppNameWithTemplate}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name     = "{{.VAppNameWithTemplate}}"
+  power_on = true
+}
+
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -149,23 +238,100 @@ resource "vcd_vapp" "{{.VAppName}}" {
   power_on = true
 }
 
-data "vcd_vapp_vm" "{{.VMName}}" {
-  org       = vcd_vapp_vm.{{.VMName}}.org
-  vdc       = vcd_vapp_vm.{{.VMName}}.vdc
-  name      = vcd_vapp_vm.{{.VMName}}.name
-  vapp_name = vcd_vapp_vm.{{.VMName}}.vapp_name
- }
+data "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
+  org       = vcd_vapp_vm.{{.VappVMWithTemplateName}}.org
+  vdc       = vcd_vapp_vm.{{.VappVMWithTemplateName}}.vdc
+  name      = vcd_vapp_vm.{{.VappVMWithTemplateName}}.name
+  vapp_name = vcd_vapp_vm.{{.VappVMWithTemplateName}}.vapp_name
+}
+
+data "vcd_vapp_vm" "{{.VappVMName}}" {
+  org       = vcd_vapp_vm.{{.VappVMName}}.org
+  vdc       = vcd_vapp_vm.{{.VappVMName}}.vdc
+  name      = vcd_vapp_vm.{{.VappVMName}}.name
+  vapp_name = vcd_vapp_vm.{{.VappVMName}}.vapp_name
+}
+
+data "vcd_vm" "{{.EmptyVMName}}" {
+  org       = vcd_vm.{{.EmptyVMName}}.org
+  vdc       = vcd_vm.{{.EmptyVMName}}.vdc
+  name      = vcd_vm.{{.EmptyVMName}}.name
+}
+
+data "vcd_vm" "{{.VMWithTemplateName}}" {
+  org       = vcd_vm.{{.VMWithTemplateName}}.org
+  vdc       = vcd_vm.{{.VMWithTemplateName}}.vdc
+  name      = vcd_vm.{{.VMWithTemplateName}}.name
+}
+
+data "vcd_catalog" "{{.CatalogName}}" {
+  org  = "{{.Org}}"
+  name = "{{.CatalogName}}"
+}
+
+data "vcd_catalog_vapp_template" "{{.VappTemplateName}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.CatalogName}}.id
+  name       = "{{.VappTemplateName}}"
+}
 `
 
 const testAccCheckVcdVAppVmBootOptions = testSharedBootOptions + `
-resource "vcd_vapp_vm" "{{.VMName}}" {
+resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  vapp_name     = vcd_vapp.{{.VAppNameWithTemplate}}.name
+  name          = "{{.VappVMWithTemplateName}}"
+  computer_name = "compNameUp"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+
+  firmware = "efi"
+
+  boot_options {
+    efi_secure_boot = true
+    boot_retry_delay = 2
+    boot_retry_enabled = true
+    boot_delay = 2
+    enter_bios_setup_on_next_boot = true
+  }
+}
+
+resource "vcd_vapp_vm" "{{.VappVMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
   power_on = true
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}"
+  name          = "{{.VappVMName}}"
+  computer_name = "compNameUp"
+
+  os_type          = "sles11_64Guest"
+  firmware         = "efi"
+  hardware_version = "vmx-13"
+
+  memory        = 2048
+  cpus          = 1
+
+  boot_options {
+    efi_secure_boot = true
+    boot_retry_delay = 2
+    boot_retry_enabled = true
+    boot_delay = 2
+    enter_bios_setup_on_next_boot = true
+  }
+}
+
+resource "vcd_vm" "{{.EmptyVMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  name          = "{{.EmptyVMName}}"
   computer_name = "compNameUp"
 
   memory        = 2048
@@ -182,62 +348,210 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     boot_delay = 2
     enter_bios_setup_on_next_boot = true
   }
- }
+}
 
-`
-
-const testAccCheckVcdVAppVmBootOptionsStep1 = testSharedBootOptions + `
-resource "vcd_vapp_vm" "{{.VMName}}" {
+resource "vcd_vm" "{{.VMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  power_on = false
+  power_on = true
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}"
+  name          = "{{.VMWithTemplateName}}"
+  computer_name = "compNameUp"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+
+  firmware = "efi"
+
+  boot_options {
+    efi_secure_boot = true
+    boot_retry_delay = 2
+    boot_retry_enabled = true
+    boot_delay = 2
+    enter_bios_setup_on_next_boot = true
+  }
+}
+`
+
+const testAccCheckVcdVAppVmBootOptionsStep1 = testSharedBootOptions + `
+resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  vapp_name     = vcd_vapp.{{.VAppNameWithTemplate}}.name
+  name          = "{{.VappVMWithTemplateName}}"
   computer_name = "compNameUp"
 
-  memory        = 2048
-  cpus          = 1
-
-  os_type          = "sles11_64Guest"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
   firmware         = "bios"
-  hardware_version = "vmx-13"
 
   boot_options {
     efi_secure_boot = false
     boot_retry_delay = 1
-    boot_retry_enabled = true
     boot_delay = 1
-    enter_bios_setup_on_next_boot = false
+    boot_retry_enabled = true
   }
- }
-`
+}
 
-const testAccCheckVcdVAppVmBootOptionsStep2 = testSharedBootOptions + `
-resource "vcd_vapp_vm" "{{.VMName}}" {
+resource "vcd_vapp_vm" "{{.VappVMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
   power_on = true
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}"
+  name          = "{{.VappVMName}}"
   computer_name = "compNameUp"
 
   memory        = 2048
   cpus          = 1
 
   os_type          = "sles11_64Guest"
-  firmware         = "efi"
   hardware_version = "vmx-13"
+  firmware         = "bios"
+
+  boot_options {
+    efi_secure_boot = false
+    boot_retry_delay = 1
+    boot_delay = 1
+    boot_retry_enabled = true
+  }
+}
+
+resource "vcd_vm" "{{.EmptyVMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  name          = "{{.EmptyVMName}}"
+  computer_name = "compNameUp"
+
+  memory        = 2048
+  cpus          = 1
+
+  os_type          = "sles11_64Guest"
+  hardware_version = "vmx-13"
+  firmware         = "bios"
+
+  boot_options {
+    efi_secure_boot = false
+    boot_retry_delay = 1
+    boot_delay = 1
+    boot_retry_enabled = true
+  }
+}
+
+resource "vcd_vm" "{{.VMWithTemplateName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  name           = "{{.VMWithTemplateName}}"
+  computer_name  = "compNameUp"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+
+  firmware = "bios"
+
+  boot_options {
+    efi_secure_boot = false
+    boot_retry_delay = 1
+    boot_delay = 1
+    boot_retry_enabled = true
+  }
+}
+`
+
+const testAccCheckVcdVAppVmBootOptionsStep2 = testSharedBootOptions + `
+resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  vapp_name     = vcd_vapp.{{.VAppNameWithTemplate}}.name
+  name          = "{{.VappVMWithTemplateName}}"
+  computer_name = "compNameUp"
+
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+  firmware         = "efi"
 
   boot_options {
     efi_secure_boot = true
     boot_retry_delay = 0
-    boot_retry_enabled = false
     boot_delay = 0
-    enter_bios_setup_on_next_boot = false
+    boot_retry_enabled = false
   }
- }
+}
+
+resource "vcd_vapp_vm" "{{.VappVMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  name          = "{{.VappVMName}}"
+  computer_name = "compNameUp"
+
+  memory        = 2048
+  cpus          = 1
+
+  os_type          = "sles11_64Guest"
+  hardware_version = "vmx-13"
+  firmware         = "efi"
+
+  boot_options {
+    efi_secure_boot = true
+    boot_retry_delay = 0
+    boot_delay = 0
+    boot_retry_enabled = false
+  }
+}
+
+resource "vcd_vm" "{{.EmptyVMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  name          = "{{.EmptyVMName}}"
+  computer_name = "compNameUp"
+
+  memory        = 2048
+  cpus          = 1
+
+  os_type          = "sles11_64Guest"
+  hardware_version = "vmx-13"
+  firmware         = "efi"
+
+  boot_options {
+    efi_secure_boot = true
+    boot_retry_delay = 0
+    boot_delay = 0
+    boot_retry_enabled = false
+  }
+}
+
+resource "vcd_vm" "{{.VMWithTemplateName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  power_on = true
+
+  name          = "{{.VMWithTemplateName}}"
+  computer_name = "compNameUp"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+
+  firmware = "efi"
+
+  boot_options {
+    efi_secure_boot = true
+    boot_retry_delay = 0
+    boot_delay = 0
+    boot_retry_enabled = false
+  }
+}
 `

@@ -209,6 +209,10 @@ func testAccCheckVcdStandaloneVmExistsByVdc(vdcName, vmName, node string) resour
 	}
 }
 
+func testAccCheckVcdNsxtStandaloneVmExists(vmName, node string) resource.TestCheckFunc {
+	return testAccCheckVcdStandaloneVmExistsByVdc(testConfig.Nsxt.Vdc, vmName, node)
+}
+
 func testAccCheckVcdStandaloneVmDestroyByVdc(vdcName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)

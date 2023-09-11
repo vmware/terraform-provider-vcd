@@ -113,14 +113,15 @@ type TestConfig struct {
 			PlacementPolicyVmGroup string `json:"placementPolicyVmGroup"` // Name of the VM group to create VM Placement Policies
 		} `json:"nsxtProviderVdc"`
 		Catalog struct {
-			Name                     string `json:"name,omitempty"`
-			CatalogItem              string `json:"catalogItem,omitempty"`
-			CatalogItemWithMultiVms  string `json:"catalogItemWithMultiVms,omitempty"`
-			VmName1InMultiVmItem     string `json:"vmName1InMultiVmItem,omitempty"`
-			VmName2InMultiVmItem     string `json:"VmName2InMultiVmItem,omitempty"`
-			NsxtBackedCatalogName    string `json:"nsxtBackedCatalogName,omitempty"`
-			NsxtCatalogItem          string `json:"nsxtCatalogItem,omitempty"`
-			VSphereSubscribedCatalog string `json:"vSphereSubscribedCatalog,omitempty"`
+			Name                      string `json:"name,omitempty"`
+			CatalogItem               string `json:"catalogItem,omitempty"`
+			CatalogItemWithEfiSupport string `json:"catalogItemWithEfiSupport,omitempty"`
+			CatalogItemWithMultiVms   string `json:"catalogItemWithMultiVms,omitempty"`
+			VmName1InMultiVmItem      string `json:"vmName1InMultiVmItem,omitempty"`
+			VmName2InMultiVmItem      string `json:"VmName2InMultiVmItem,omitempty"`
+			NsxtBackedCatalogName     string `json:"nsxtBackedCatalogName,omitempty"`
+			NsxtCatalogItem           string `json:"nsxtCatalogItem,omitempty"`
+			VSphereSubscribedCatalog  string `json:"vSphereSubscribedCatalog,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
