@@ -511,7 +511,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Description: "If set to true, the VM will enter BIOS setup on next boot. " +
-						"If a VM was powered on, the field will be set to `false` in VCD and Terraform will return a non-empty plan",
+						"If a VM is powered on, the field will be set to `false` by VCD and Terraform will return a non-empty plan",
 				},
 			},
 			},
@@ -791,7 +791,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Warning,
 				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup_on_next_boot flag will be set"+
-					"back to false and cause an inconsistent plan.", vm.VM.Name),
+					"back to false by VCD and cause an inconsistent plan.", vm.VM.Name),
 			})
 		}
 	}
