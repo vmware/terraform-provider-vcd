@@ -634,7 +634,9 @@ This option should be selected for **Power on and Force re-customization to work
 * `change_sid` (Optional; *v2.7+*) Allows to change SID (security identifier). Only applicable for Windows operating systems.
 * `allow_local_admin_password` (Optional; *v2.7+*) Allow local administrator password.
 * `must_change_password_on_first_login` (Optional; *v2.7+*) Require Administrator to change password on first login.
-* `auto_generate_password` (Optional; *v2.7+*) Auto generate password.
+* `auto_generate_password` (Optional; *v2.7+*) Auto generate password. **Note:**
+  `allow_local_admin_password` must be enabled, otherwise next plan will be inconsistent and report
+  `auto_generate_password=false`
 * `admin_password` (Optional; *v2.7+*) Manually specify Administrator password.
 * `number_of_auto_logons` (Optional; *v2.7+*) Number of times to log on automatically. `0` means disabled.
 * `join_domain` (Optional; *v2.7+*) Enable this VM to join a domain.
