@@ -913,11 +913,11 @@ The following additional attributes are exported:
 These fields can be updated only when VM is **powered off** (provider automatically restarts the VM):
 
 `cpu_cores`, `power_on`, `disk`, `expose_hardware_virtualization`, `boot_image`, `hardware_version`, `os_type`,
-`description`, `cpu_hot_add_enabled`, `memory_hot_add_enabled`, `network`
+`description`, `cpu_hot_add_enabled`, `memory_hot_add_enabled`, `network`, `firmware`, `boot_options.efi_secure_boot`
 
 These fields can be updated when VM is **powered on**:
 
-`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id`
+`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id`, `boot_options (except efi_secure_boot)` 
 
 Notes about **removing** `network`:
 
