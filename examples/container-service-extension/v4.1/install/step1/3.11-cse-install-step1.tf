@@ -52,7 +52,7 @@ resource "vcd_rde_type" "vcdkeconfig_type" {
   nss           = "VCDKEConfig"
   version       = "1.1.0"
   name          = "VCD-KE RDE Schema"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 
@@ -89,7 +89,7 @@ resource "vcd_rde_type" "capvcdcluster_type" {
   nss           = "capvcdCluster"
   version       = var.capvcd_rde_version
   name          = "CAPVCD Cluster"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior] # Behaviors need to be created before any RDE Type
