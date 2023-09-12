@@ -53,12 +53,14 @@ func TestAccVcdRdeUpgrade(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_rde_type.rde_type1", "id", "vcd_rde.rde", "rde_type_id"),
 				),
 			},
+			// We update to a new type that differs only in the Version field
 			{
 				Config: step2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair("vcd_rde_type.rde_type2", "id", "vcd_rde.rde", "rde_type_id"),
 				),
 			},
+			// We update to a different type with a different "nss", this will fail
 			{
 				Config:      step3,
 				ExpectError: regexp.MustCompile("RDE_INVALID_TYPE_UPDATE"),
@@ -86,7 +88,7 @@ resource "vcd_rde_type" "rde_type2" {
 }
 
 resource "vcd_rde_type" "rde_type3" {
-  nss     = "NotCorrect"
+  nss     = "DifferentType"
   version = "1.2.0"
   vendor  = "{{.Vendor}}"
   name    = "{{.Name}}"
