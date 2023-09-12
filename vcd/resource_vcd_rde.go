@@ -40,7 +40,6 @@ func resourceVcdRde() *schema.Resource {
 			"rde_type_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The Runtime Defined Entity Type ID",
 			},
 			"external_id": {
@@ -121,7 +120,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	tenantContext := govcd.TenantContext{}
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("could not create RDE with name '%s', error retrieving Org '%s': %s", name, d.Get("org").(string), err)
+		return diag.Errorf("could not create RDE with name '%s', error retrieving Org: %s", name, err)
 	}
 	tenantContext.OrgId = org.Org.ID
 	tenantContext.OrgName = org.Org.Name
@@ -306,6 +305,7 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	err = rde.Update(types.DefinedEntity{
 		Name:       d.Get("name").(string),
+		EntityType: d.Get("rde_type_id").(string),
 		ExternalId: d.Get("external_id").(string),
 		Entity:     jsonEntity,
 	})
@@ -429,6 +429,9 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
+	if rde.DefinedEntity.Org != nil {
+		dSet(d, "org", rde.DefinedEntity.Org.Name)
+	}
 	dSet(d, "rde_type_id", rde.DefinedEntity.EntityType)
 
 	return []*schema.ResourceData{d}, nil
