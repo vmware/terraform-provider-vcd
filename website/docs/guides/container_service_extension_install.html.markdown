@@ -383,6 +383,11 @@ resource "vcd_rde_type" "capvcdcluster_type_v120" {
 }
 ```
 
+### Update Rights and Roles
+
+
+
+
 ## Update CSE Server
 
 ### Update Configuration

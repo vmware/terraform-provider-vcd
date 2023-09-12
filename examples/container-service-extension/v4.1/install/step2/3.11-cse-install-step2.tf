@@ -1,11 +1,11 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE 4.0 installation, step 2:
+# CSE 4.1 installation, step 2:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
 #
-# * Please apply "3.10-cse-4.0-install-step1.tf" first, located at
-#   https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
+# * Please apply "3.11-cse-install-step1.tf" first, located at
+#   https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install/step1
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
 #   For example, network settings such as firewall rules, network subnets, VDC allocation modes, ALB feature set, etc should be
@@ -21,7 +21,7 @@ terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.10"
+      version = ">= 3.11"
     }
     time = {
       source  = "hashicorp/time"
