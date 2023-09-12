@@ -2156,17 +2156,28 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		if vm.VM.VmSpecSection.MemoryResourceMb != nil {
 			dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
 			dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
-			dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
-			dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
-			dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
+			if vm.VM.VmSpecSection.MemoryResourceMb.Reservation != nil {
+				dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
+			}
+			if vm.VM.VmSpecSection.MemoryResourceMb.Limit != nil {
+				dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
+			}
+			if vm.VM.VmSpecSection.MemoryResourceMb.Shares != nil {
+				dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
+			}
 		}
-
 		dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
 		dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
 		if vm.VM.VmSpecSection.CpuResourceMhz != nil {
-			dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
-			dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
-			dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
+			if vm.VM.VmSpecSection.CpuResourceMhz.Reservation != nil {
+				dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
+			}
+			if vm.VM.VmSpecSection.CpuResourceMhz.Limit != nil {
+				dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
+			}
+			if vm.VM.VmSpecSection.CpuResourceMhz.Shares != nil {
+				dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
+			}
 			dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 		}
 
