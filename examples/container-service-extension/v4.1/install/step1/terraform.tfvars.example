@@ -1,6 +1,6 @@
 # Change configuration to your needs and rename to 'terraform.tfvars'
 # For more details about the variables specified here, please read the guide first:
-# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_install
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 
 # ------------------------------------------------
 # VCD Provider config
@@ -23,5 +23,5 @@ cse_admin_password = "change-me"
 # # CSE Runtime Defined Entities setup
 # ------------------------------------------------
 # Version that the CAPVCD Runtime Defined Entity Type will have when created.
-# For CSE v4.0 it should be 1.1.0
-capvcd_rde_version = "1.1.0"
+# For CSE v4.1 it should be 1.2.0
+capvcd_rde_version = "1.2.0"

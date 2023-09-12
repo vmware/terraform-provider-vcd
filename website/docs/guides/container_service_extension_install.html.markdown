@@ -322,7 +322,13 @@ The most common issues are:
 
 ## Update from CSE v4.0 to v4.1
 
-New [RDE Interface][rde_interface] needs to be created:
+In this section you can find the required steps to update from CSE v4.0 to v4.1.
+
+~> This section assumes that the CSE installation was done with Terraform by following the previous guide steps.
+
+### Create the new RDE elements
+
+A new [RDE Interface][rde_interface] needs to be created. This one is completely new, introduced in version v4.1:
 
 ```hcl
 resource "vcd_rde_interface" "cse_interface" {
@@ -333,34 +339,49 @@ resource "vcd_rde_interface" "cse_interface" {
 }
 ```
 
+CSE v4.1 also requires the usage of [RDE Interface Behaviors][rde_interface_behavior] and
+[RDE Behavior Access Controls][rde_type_behavior_acl], that can be created with the following snippets (these can
+also be found in the [proposed configuration][step1]):
+
+```hcl
+resource "vcd_rde_interface_behavior" "capvcd_behavior" {
+  rde_interface_id = vcd_rde_interface.cse_interface.id
+  name             = "getFullEntity"
+  execution = {
+    "type" : "noop"
+    "id" : "getFullEntity"
+  }
+}
+
+resource "vcd_rde_type_behavior_acl" "capvcd_behavior_acl" {
+  rde_type_id = vcd_rde_type.capvcdcluster_type_v120.id # This definition is below
+  behavior_id = vcd_rde_interface_behavior.capvcd_behavior.id
+  access_level_ids = ["urn:vcloud:accessLevel:FullControl"]
+}
+```
+
 Create a new version of the [RDE Types][rde_type] that were used in v4.0. This will allow them to co-exist with the old ones,
 so we can perform a smooth upgrade.
 
 ```hcl
 resource "vcd_rde_type" "vcdkeconfig_type_v110" {
   # Same attributes as v4.0, except for:
-  version       = "1.1.0"
+  version       = "1.1.0" # New version
+  # New schema:
   schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema.json"
 }
 
-resource "vcd_rde_type" "capvcdcluster_type_v110" {
-  vendor        = "vmware"
-  nss           = "capvcdCluster"
-  version       = var.capvcd_rde_version
-  name          = "CAPVCD Cluster"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
-  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
+resource "vcd_rde_type" "capvcdcluster_type_v120" {
+  # Same attributes as v4.0, except for:
+  version       = "1.2.0" # New version
+  # New schema:
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema.json"
+  # Notice that the new interface cse:capvcd:1.0.0 is used
+  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id, vcd_rde_interface.cse_interface.id ]
+  # Behaviors need to be created before any RDE Type
+  depends_on = [vcd_rde_interface_behavior.capvcd_behavior]
 }
 ```
-
-
-urn:vcloud:type:vmware:capvcdCluster:1.2.0
-"interfaces": [
-"urn:vcloud:interface:vmware:k8s:1.0.0",
-"urn:vcloud:interface:cse:capvcd:1.0.0"
-],
-
-
 
 ## Update CSE Server
 
@@ -453,11 +474,13 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [rde]: /providers/vmware/vcd/latest/docs/resources/rde
 [rde_interface]: /providers/vmware/vcd/latest/docs/resources/rde_interface
 [rde_type]: /providers/vmware/vcd/latest/docs/resources/rde_type
+[rde_interface_behavior]: /providers/vmware/vcd/latest/docs/resources/rde_interface_behavior
+[rde_type_behavior_acl]: /providers/vmware/vcd/latest/docs/resources/rde_type_behavior_acl
 [role]: /providers/vmware/vcd/latest/docs/resources/role
 [routed_network]: /providers/vmware/vcd/latest/docs/resources/network_routed_v2
 [sizing]: /providers/vmware/vcd/latest/docs/resources/vm_sizing_policy
-[step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step1
-[step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install/step2
+[step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install/step1
+[step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install/step2
 [tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
 [ui_plugin]: /providers/vmware/vcd/latest/docs/resources/ui_plugin

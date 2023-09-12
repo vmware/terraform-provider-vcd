@@ -45,14 +45,6 @@ resource "vcd_rde_interface" "vcdkeconfig_interface" {
   name    = "VCDKEConfig"
 }
 
-# This is the interface required to create the "CAPVCD" Runtime Defined Entity Type.
-resource "vcd_rde_interface" "cse_interface" {
-  vendor  = "cse"
-  nss     = "capvcd"
-  version = "1.0.0"
-  name    = "cseInterface"
-}
-
 # This resource will manage the "VCDKEConfig" RDE Type required to instantiate the CSE Server configuration.
 # The schema URL points to the JSON schema hosted in the terraform-provider-vcd repository.
 resource "vcd_rde_type" "vcdkeconfig_type" {
@@ -72,6 +64,24 @@ data "vcd_rde_interface" "kubernetes_interface" {
   version = "1.0.0"
 }
 
+# This is the interface required to create the "CAPVCD" Runtime Defined Entity Type.
+resource "vcd_rde_interface" "cse_interface" {
+  vendor  = "cse"
+  nss     = "capvcd"
+  version = "1.0.0"
+  name    = "cseInterface"
+}
+
+# This RDE Interface behavior is required to be able to obtain the Kubeconfig and other important information.
+resource "vcd_rde_interface_behavior" "capvcd_behavior" {
+  rde_interface_id = vcd_rde_interface.cse_interface.id
+  name             = "getFullEntity"
+  execution = {
+    "type" : "noop"
+    "id" : "getFullEntity"
+  }
+}
+
 # This RDE Interface will create the "capvcdCluster" RDE Type required to create Kubernetes clusters.
 # The schema URL points to the JSON schema hosted in the terraform-provider-vcd repository.
 resource "vcd_rde_type" "capvcdcluster_type" {
@@ -81,6 +91,15 @@ resource "vcd_rde_type" "capvcdcluster_type" {
   name          = "CAPVCD Cluster"
   schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension-4.0/schemas/capvcd-type-schema.json"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
+
+  depends_on = [vcd_rde_interface_behavior.capvcd_behavior] # Behaviors need to be created before any RDE Type
+}
+
+# Access Level for the CAPVCD Type Behavior
+resource "vcd_rde_type_behavior_acl" "capvcd_behavior_acl" {
+  rde_type_id = vcd_rde_type.capvcdcluster_type.id
+  behavior_id = vcd_rde_interface_behavior.capvcd_behavior.id
+  access_level_ids = ["urn:vcloud:accessLevel:FullControl"]
 }
 
 # This role is having only the minimum set of rights required for the CSE Server to function.
