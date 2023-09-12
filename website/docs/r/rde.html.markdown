@@ -88,12 +88,39 @@ resource "vcd_rde" "my-rde" {
 }
 ```
 
+## Example of Upgrade of the RDE Type Version
+
+```hcl
+data "vcd_rde_type" "my_type" {
+  vendor    = "bigcorp"
+  namespace = "tech1"
+  version   = "1.0.0"
+}
+
+data "vcd_rde_type" "my_updated_type" {
+  vendor    = "bigcorp"
+  namespace = "tech1"
+  version   = "1.1.0"
+}
+
+resource "vcd_rde" "my-rde" {
+  org         = "my-org"
+  # Update from 'data.vcd_rde_type.my_type.id' to 'data.vcd_rde_type.my_updated_type.id' to upgrade the RDE Type version
+  rde_type_id = data.vcd_rde_type.my_updated_type.id
+  name        = "My custom RDE"
+  resolve     = true # This will attempt to resolve after the version is updated
+  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
+}
+
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
-* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
+* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate. It supports
+  updating to a **newer** version of the **same** RDE Type.
 * `name` - (Required) The name of the Runtime Defined Entity. It can be non-unique.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be done either by an external component action or by an update. The Runtime Defined Entity can't be
