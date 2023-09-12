@@ -385,8 +385,8 @@ resource "vcd_rde_type" "capvcdcluster_type_v120" {
 
 ### Update Rights and Roles
 
-
-
+There are differences between the rights needed in v4.0 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
+`vcd_global_role.k8s_cluster_author` in the [proposed configuration][step2] to see the new required set of rights.
 
 ## Update CSE Server
 
