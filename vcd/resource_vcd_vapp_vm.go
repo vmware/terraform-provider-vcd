@@ -791,7 +791,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Warning,
 				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup_on_next_boot flag will be set"+
-					"back to false.", vm.VM.Name),
+					"back to false and cause an inconsistent plan.", vm.VM.Name),
 			})
 		}
 	}

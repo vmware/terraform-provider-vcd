@@ -600,7 +600,9 @@ Changes are ignored on update. This part isn't reread on refresh. To manage inte
 Allows to specify the boot options of a VM.
 
 * `efi_secure_boot` - (Optional, VCD 10.4.1+) Enable EFI Secure Boot on subsequent boots, requires `firmware` to be set to `efi`.
-* `enter_bios_setup_on_next_boot` - (Optional) Enter BIOS setup on subsequent boots of the VM.
+* `enter_bios_setup_on_next_boot` - (Optional) Enter BIOS setup on the next boot of the VM. After a VM is booted, the value is set back to false in VCD, because of that, 
+  Terraform will return an inconsistent plan and try to set this field back to `true`. **NOTE:** If there are any [cold changes](#hot-and-cold-update) on update that cause the VM to power-cycle with this field set to `true`,
+  the VM will boot straight into BIOS. For reducing side effects, one should set this field to `true` and `power_on` to `false`, then switch `power_on` to `true`.
 * `boot_delay` - (Optional) Delay between the power-on and boot of the VM in milliseconds.
 * `boot_retry_enabled` - (Optional, VCD 10.4.1+) If set to `true`, will attempt to reboot the VM after a failed boot.
 * `boot_retry_delay` - (Optional, VCD 10.4.1+) Delay before the VM is rebooted after a failed boot. Has no effect if `boot_retry_enabled` is set to `false`
