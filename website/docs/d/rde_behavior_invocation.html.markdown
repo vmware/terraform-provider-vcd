@@ -62,14 +62,14 @@ resource "vcd_rde" "rde" {
 
 # Required Access Levels to invoke Behaviors
 resource "vcd_rde_type_behavior_acl" "interface_acl" {
-  rde_type_id = vcd_rde_type.type.id
-  behavior_id = vcd_rde_interface_behavior.behavior.id
+  rde_type_id      = vcd_rde_type.type.id
+  behavior_id      = vcd_rde_interface_behavior.behavior.id
   access_level_ids = ["urn:vcloud:accessLevel:FullControl"]
 }
 
 data "vcd_rde_behavior_invocation" "invoke" {
-  rde_id                  = vcd_rde.rde.id
-  behavior_id             = vcd_rde_interface_behavior.behavior.id
+  rde_id      = vcd_rde.rde.id
+  behavior_id = vcd_rde_interface_behavior.behavior.id
 }
 
 output "rde_behavior_invocation_output" {
