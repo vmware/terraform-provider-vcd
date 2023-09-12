@@ -104,7 +104,7 @@ data "vcd_rde_type" "my_updated_type" {
 }
 
 resource "vcd_rde" "my-rde" {
-  org         = "my-org"
+  org = "my-org"
   # Update from 'data.vcd_rde_type.my_type.id' to 'data.vcd_rde_type.my_updated_type.id' to upgrade the RDE Type version
   rde_type_id = data.vcd_rde_type.my_updated_type.id
   name        = "My custom RDE"
