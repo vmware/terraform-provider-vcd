@@ -47,6 +47,8 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 					// No-op operations return the original entity data, hence the RDE Type should appear:
 					resource.TestMatchResourceAttr("data.vcd_rde_behavior_invocation.invoke", "result",
 						regexp.MustCompile(fmt.Sprintf("\"urn:vcloud:type:%s:%s:%s\"", params["Vendor"], params["Nss"], params["Version"]))),
+					resource.TestMatchResourceAttr("data.vcd_rde_behavior_invocation.invoke2", "result",
+						regexp.MustCompile(fmt.Sprintf("\"urn:vcloud:type:%s:%s:%s\"", params["Vendor"], params["Nss"], params["Version"]))),
 				),
 			},
 		},
@@ -104,5 +106,16 @@ resource "vcd_rde_type_behavior_acl" "interface_acl" {
 data "vcd_rde_behavior_invocation" "invoke" {
   rde_id                  = vcd_rde.rde.id
   behavior_id             = vcd_rde_interface_behavior.behavior.id
+}
+
+data "vcd_rde_behavior_invocation" "invoke2" {
+  rde_id                  = vcd_rde.rde.id
+  behavior_id             = vcd_rde_interface_behavior.behavior.id
+  arguments = {
+    "arg1" : "not_used"
+  }
+  metadata = {
+    "meta1" : "not_used"
+  }
 }
 `
