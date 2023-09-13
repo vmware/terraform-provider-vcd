@@ -1689,3 +1689,67 @@ func checkVersion(version, versionConstraint string) bool {
 	util.Logger.Printf("[TRACE-%s] version '%s' does not satisfy constraints '%s'\n", caller, checkVer, constraints)
 	return false
 }
+
+// testCheckCatalogAndItemsExist checks that a catalog exists, and optionally that it has as many items as expected
+// * checkItems defines whether we count the items or not
+// * expectedItems is the total number of catalog items (includes both vApp templates and media items)
+// * expectedTemplates is the number of vApp templates
+// expectedMedia is the number of Media
+func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems, minimalCheck bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if testAccProvider == nil || testAccProvider.Meta() == nil {
+			return fmt.Errorf("testAccProvider is not initialized")
+		}
+		conn := testAccProvider.Meta().(*VCDClient)
+		catalog, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
+		if err != nil {
+			return fmt.Errorf("error retrieving catalog %s/%s: %s", orgName, catalogName, err)
+		}
+		if !checkItems {
+			return nil
+		}
+
+		if catalog.AdminCatalog.Tasks != nil {
+			err = catalog.WaitForTasks()
+			if err != nil {
+				return err
+			}
+		}
+
+		items, err := catalog.QueryCatalogItemList()
+		if err != nil {
+			return fmt.Errorf("error retrieving catalog item list: %s", err)
+		}
+		vappTemplates, err := catalog.QueryVappTemplateList()
+		if err != nil {
+			return fmt.Errorf("error retrieving vApp templates list: %s", err)
+		}
+		mediaItems, err := catalog.QueryMediaList()
+		if err != nil {
+			return fmt.Errorf("error retrieving media items list: %s", err)
+		}
+		if minimalCheck {
+			// With minimal check, we only test that at least one item has been downloaded, rather than all ones
+			if len(items) == 0 && expectedItems > 0 {
+				return fmt.Errorf("catalog '%s' -expected at least 1 item - found 0", catalogName)
+			}
+			if len(vappTemplates) == 0 && expectedTemplates > 0 {
+				return fmt.Errorf("catalog '%s' -expected at lest 1 vApp template - found 0", catalogName)
+			}
+			if len(mediaItems) == 0 && expectedMedia > 0 {
+				return fmt.Errorf("catalog '%s' -expected at least 1 media item - found 0", catalogName)
+			}
+		} else {
+			if len(items) != expectedItems {
+				return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
+			}
+			if len(vappTemplates) != expectedTemplates {
+				return fmt.Errorf("catalog '%s' -expected %d vApp templates - found %d", catalogName, expectedTemplates, len(vappTemplates))
+			}
+			if len(mediaItems) != expectedMedia {
+				return fmt.Errorf("catalog '%s' -expected %d media items - found %d", catalogName, expectedMedia, len(mediaItems))
+			}
+		}
+		return nil
+	}
+}
