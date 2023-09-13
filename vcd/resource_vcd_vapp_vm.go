@@ -706,16 +706,17 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 
 	diags := genericResourceVmCreate(d, meta, vappVmType)
 	// We need to check if there were errors, as genericResourceVmCreate can also return a warning
-	for _, diagnostic := range diags {
-		if diagnostic.Severity == diag.Error {
-			return diags
-		}
+	if diags.HasError() {
+		return diags
 	}
 
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
-	return append(diags, genericVcdVmRead(d, meta, "resource")...)
+	if len(diags) == 0 {
+		return append(diags, genericVcdVmRead(d, meta, "resource")...)
+	}
+	return genericVcdVmRead(d, meta, "resource")
 }
 
 // genericResourceVmCreate does the following:
@@ -948,7 +949,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	// Read function is called in wrapper functions `resourceVcdVAppVmCreate` and
 	// `resourceVcdStandaloneVmCreate`
-	return diags
+	if len(diags) == 0 {
+		return diags
+	}
+	return nil
 }
 
 // createVmFromTemplate is responsible for create VMs from template of two types:
@@ -2050,7 +2054,10 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	}
 
 	log.Printf("[DEBUG] [VM update] finished")
-	return append(diags, genericVcdVmRead(d, meta, "resource")...)
+	if len(diags) == 0 {
+		return append(diags, genericVcdVmRead(d, meta, "resource")...)
+	}
+	return genericVcdVmRead(d, meta, "resource")
 }
 
 func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
