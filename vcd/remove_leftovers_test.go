@@ -246,6 +246,27 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 		// --------------------------------------------------------------
+		// VDC Groups
+		// --------------------------------------------------------------
+		adminOrg, err = govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
+		if err != nil {
+			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
+		}
+		vdcGroups, err := adminOrg.GetAllVdcGroups(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all VDC Groups: %s", err)
+		}
+
+		for _, vdcGroup := range vdcGroups {
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, vdcGroup.VdcGroup.Name, "vcd_vdc_group", 3, verbose)
+			if toBeDeleted {
+				err = vdcGroup.ForceDelete(true)
+				if err != nil {
+					return fmt.Errorf("error force deleting VDC Group '%s': %s", vdcGroup.VdcGroup.Name, err)
+				}
+			}
+		}
+		// --------------------------------------------------------------
 		// VDCs
 		// --------------------------------------------------------------
 		vdcs, err := org.QueryOrgVdcList()

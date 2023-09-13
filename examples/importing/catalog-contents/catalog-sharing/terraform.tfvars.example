@@ -1,0 +1,19 @@
+vcd_url      = "https://some-vcd.com"
+
+# organization where we create the new catalog
+org          = "myorg"
+
+# name of the new catalog
+catalog      = "mycatalog"
+
+# where to find the .OVA and .ISO to create catalog contents.
+# The directory "./test-resources" is at the top of this repository
+ova_path     = "../../../../test-resources/"
+
+# organization administrator
+user         = "org-admin-user"
+password     = "mypassword"
+
+# new user to be created
+new_user     = "catalog-author-user"
+new_password = "TO_BE_DISCARDED"

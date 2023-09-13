@@ -176,13 +176,13 @@ func resourceOrg() *schema.Resource {
 			},
 			"delete_force": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_force=True with delete_recursive=True to remove an org and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    false,
 				Description: "When destroying use delete_recursive=True to remove the org and any objects it contains that are in a state that normally allows removal.",
 			},

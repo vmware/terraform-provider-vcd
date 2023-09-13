@@ -121,13 +121,13 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 			{
 				Config: configTextCreate,
 				Check: resource.ComposeTestCheckFunc(
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog0, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog1, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog2, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog3, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog4, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog5, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog6, false, 0, 0, 0)),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog0, false, false, 0, 0, 0),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog1, false, false, 0, 0, 0),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog2, false, false, 0, 0, 0),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog3, false, false, 0, 0, 0),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog4, false, false, 0, 0, 0),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog5, false, false, 0, 0, 0),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog6, false, false, 0, 0, 0)),
 			},
 			// Test access
 			{

@@ -1,0 +1,1 @@
+* Drop support for VCD 10.3.x [GH-1108]

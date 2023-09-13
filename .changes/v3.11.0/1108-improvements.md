@@ -1,0 +1,1 @@
+* Add field `ssl_enabled` to resource and data source `vcd_nsxt_alb_pool` to set SSL support on demand [GH-1108]

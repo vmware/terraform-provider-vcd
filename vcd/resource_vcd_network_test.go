@@ -38,8 +38,9 @@ type networkDef struct {
 }
 
 const (
-	isolatedStaticNetwork1   string = "TestAccVcdNetworkIsoStatic1"
-	isolatedStaticNetwork2   string = "TestAccVcdNetworkIsoStatic2"
+	isolatedStaticNetwork1 string = "TestAccVcdNetworkIsoStatic1"
+	isolatedStaticNetwork2 string = "TestAccVcdNetworkIsoStatic2"
+	// #nosec G101 -- Not a credential
 	isolatedDhcpNetwork      string = "TestAccVcdNetworkIsoDhcp"
 	isolatedMixedNetwork1    string = "TestAccVcdNetworkIsoMixed1"
 	isolatedMixedNetwork2    string = "TestAccVcdNetworkIsoMixed2"
