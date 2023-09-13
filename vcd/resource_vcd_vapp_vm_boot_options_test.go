@@ -30,7 +30,6 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 	var params = StringMap{
 		"Org":                    testConfig.VCD.Org,
 		"Vdc":                    testConfig.Nsxt.Vdc,
-		"EdgeGateway":            testConfig.Networking.EdgeGateway,
 		"CatalogName":            testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"VappTemplateName":       testConfig.VCD.Catalog.CatalogItemWithEfiSupport,
 		"VAppName":               vappName,
@@ -291,9 +290,9 @@ resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   vapp_name     = vcd_vapp.{{.VAppNameWithTemplate}}.name
   name          = "{{.VappVMWithTemplateName}}"
   computer_name = "compNameUp"
-  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
 
-  firmware = "efi"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+  firmware         = "efi"
 
   boot_options {
     efi_secure_boot               = true
@@ -363,9 +362,9 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 
   name          = "{{.VMWithTemplateName}}"
   computer_name = "compNameUp"
-  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
 
-  firmware = "efi"
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
+  firmware         = "efi"
 
   boot_options {
     efi_secure_boot               = true

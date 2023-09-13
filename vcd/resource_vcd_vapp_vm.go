@@ -791,14 +791,14 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		if enterBiosSetup.(bool) && d.Get("power_on").(bool) {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup_on_next_boot flag will be set"+
+				Summary: fmt.Sprintf("%s: After the VM powers on, the enter_bios_setup_on_next_boot flag will be set"+
 					"back to false by VCD and cause an inconsistent plan.", vm.VM.Name),
 			})
 		}
 	}
 	if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
 		if firmware != "efi" {
-			return diag.Errorf("error: EFI secure boot can only be used with EFI firmware")
+			return diag.Errorf("error: EFI secure boot can only be used with EFI firmware (found %s)", firmware)
 		}
 		bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
 	}
