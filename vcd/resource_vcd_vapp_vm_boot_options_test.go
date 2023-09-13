@@ -22,6 +22,11 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
+	vcd := createTemporaryVCDConnection(false)
+	if vcd.Client.APIVCDMaxVersionIs("<37.1") {
+		t.Skip("Most boot options are only available since 37.1")
+	}
+
 	var params = StringMap{
 		"Org":                    testConfig.VCD.Org,
 		"Vdc":                    testConfig.Nsxt.Vdc,
@@ -53,11 +58,6 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
-	}
-
-	vcd := createTemporaryVCDConnection(false)
-	if vcd.Client.APIVCDMaxVersionIs("<37.1") {
-		t.Skip("Most boot options are only available since 37.1")
 	}
 
 	emptyVapp := "vcd_vapp_vm." + vappName
