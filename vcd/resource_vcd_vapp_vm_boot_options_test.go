@@ -296,10 +296,10 @@ resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   firmware = "efi"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 2
-    boot_retry_enabled = true
-    boot_delay = 2
+    efi_secure_boot               = true
+    boot_retry_delay              = 2
+    boot_retry_enabled            = true
+    boot_delay                    = 2
     enter_bios_setup_on_next_boot = true
   }
 }
@@ -322,10 +322,10 @@ resource "vcd_vapp_vm" "{{.VappVMName}}" {
   cpus          = 1
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 2
-    boot_retry_enabled = true
-    boot_delay = 2
+    efi_secure_boot               = true
+    boot_retry_delay              = 2
+    boot_retry_enabled            = true
+    boot_delay                    = 2
     enter_bios_setup_on_next_boot = true
   }
 }
@@ -347,10 +347,10 @@ resource "vcd_vm" "{{.EmptyVMName}}" {
   hardware_version = "vmx-13"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 2
-    boot_retry_enabled = true
-    boot_delay = 2
+    efi_secure_boot               = true
+    boot_retry_delay              = 2
+    boot_retry_enabled            = true
+    boot_delay                    = 2
     enter_bios_setup_on_next_boot = true
   }
 }
@@ -368,10 +368,10 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
   firmware = "efi"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 2
-    boot_retry_enabled = true
-    boot_delay = 2
+    efi_secure_boot               = true
+    boot_retry_delay              = 2
+    boot_retry_enabled            = true
+    boot_delay                    = 2
     enter_bios_setup_on_next_boot = true
   }
 }
@@ -392,9 +392,9 @@ resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   firmware         = "bios"
 
   boot_options {
-    efi_secure_boot = false
-    boot_retry_delay = 1
-    boot_delay = 1
+    efi_secure_boot    = false
+    boot_retry_delay   = 1
+    boot_delay         = 1
     boot_retry_enabled = true
   }
 }
@@ -417,9 +417,9 @@ resource "vcd_vapp_vm" "{{.VappVMName}}" {
   firmware         = "bios"
 
   boot_options {
-    efi_secure_boot = false
-    boot_retry_delay = 1
-    boot_delay = 1
+    efi_secure_boot    = false
+    boot_retry_delay   = 1
+    boot_delay         = 1
     boot_retry_enabled = true
   }
 }
@@ -441,9 +441,9 @@ resource "vcd_vm" "{{.EmptyVMName}}" {
   firmware         = "bios"
 
   boot_options {
-    efi_secure_boot = false
-    boot_retry_delay = 1
-    boot_delay = 1
+    efi_secure_boot    = false
+    boot_retry_delay   = 1
+    boot_delay         = 1
     boot_retry_enabled = true
   }
 }
@@ -454,16 +454,16 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 
   power_on = true
 
-  name           = "{{.VMWithTemplateName}}"
-  computer_name  = "compNameUp"
+  name             = "{{.VMWithTemplateName}}"
+  computer_name    = "compNameUp"
   vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
 
   firmware = "bios"
 
   boot_options {
-    efi_secure_boot = false
-    boot_retry_delay = 1
-    boot_delay = 1
+    efi_secure_boot    = false
+    boot_retry_delay   = 1
+    boot_delay         = 1
     boot_retry_enabled = true
   }
 }
@@ -484,9 +484,9 @@ resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   firmware         = "efi"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 0
-    boot_delay = 0
+    efi_secure_boot    = true
+    boot_retry_delay   = 0
+    boot_delay         = 0
     boot_retry_enabled = false
   }
 }
@@ -509,9 +509,9 @@ resource "vcd_vapp_vm" "{{.VappVMName}}" {
   firmware         = "efi"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 0
-    boot_delay = 0
+    efi_secure_boot    = true
+    boot_retry_delay   = 0
+    boot_delay         = 0
     boot_retry_enabled = false
   }
 }
@@ -533,9 +533,9 @@ resource "vcd_vm" "{{.EmptyVMName}}" {
   firmware         = "efi"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 0
-    boot_delay = 0
+    efi_secure_boot    = true
+    boot_retry_delay   = 0
+    boot_delay         = 0
     boot_retry_enabled = false
   }
 }
@@ -546,16 +546,16 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 
   power_on = true
 
-  name          = "{{.VMWithTemplateName}}"
-  computer_name = "compNameUp"
+  name             = "{{.VMWithTemplateName}}"
+  computer_name    = "compNameUp"
   vapp_template_id = data.vcd_catalog_vapp_template.{{.VappTemplateName}}.id
 
   firmware = "efi"
 
   boot_options {
-    efi_secure_boot = true
-    boot_retry_delay = 0
-    boot_delay = 0
+    efi_secure_boot    = true
+    boot_retry_delay   = 0
+    boot_delay         = 0
     boot_retry_enabled = false
   }
 }
