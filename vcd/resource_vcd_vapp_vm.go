@@ -713,7 +713,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
-	if len(diags) == 0 {
+	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "resource")...)
 	}
 	return genericVcdVmRead(d, meta, "resource")
@@ -949,7 +949,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	// Read function is called in wrapper functions `resourceVcdVAppVmCreate` and
 	// `resourceVcdStandaloneVmCreate`
-	if len(diags) == 0 {
+	if len(diags) != 0 {
 		return diags
 	}
 	return nil
@@ -2054,7 +2054,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	}
 
 	log.Printf("[DEBUG] [VM update] finished")
-	if len(diags) == 0 {
+	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "resource")...)
 	}
 	return genericVcdVmRead(d, meta, "resource")

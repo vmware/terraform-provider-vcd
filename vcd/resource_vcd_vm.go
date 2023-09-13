@@ -40,7 +40,7 @@ func resourceVcdStandaloneVmCreate(_ context.Context, d *schema.ResourceData, me
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished standalone VM creation [took %s ]", timeElapsed)
 
-	if len(diags) == 0 {
+	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "create")...)
 	}
 	return genericVcdVmRead(d, meta, "create")
