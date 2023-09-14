@@ -1,4 +1,4 @@
-//go:build (standaloneVm || vm || ALL || functional) && !skipStandaloneVm
+//go:build (vapp || standaloneVm || vm || ALL || functional) && !skipStandaloneVm
 
 package vcd
 
@@ -207,6 +207,10 @@ func testAccCheckVcdStandaloneVmExistsByVdc(vdcName, vmName, node string) resour
 
 		return err
 	}
+}
+
+func testAccCheckVcdNsxtStandaloneVmExists(vmName, node string) resource.TestCheckFunc {
+	return testAccCheckVcdStandaloneVmExistsByVdc(testConfig.Nsxt.Vdc, vmName, node)
 }
 
 func testAccCheckVcdStandaloneVmDestroyByVdc(vdcName string) resource.TestCheckFunc {
