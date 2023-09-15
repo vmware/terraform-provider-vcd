@@ -129,6 +129,11 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Operating System type.",
 		},
+		"firmware": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Firmware of the VM",
+		},
 		"hardware_version": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -263,6 +268,39 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 					Description: "Storage profile to override the VM default one",
 				},
 			}},
+		},
+		"boot_options": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "A block defining the boot options of a VM",
+			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+				"boot_delay": {
+					Type:        schema.TypeInt,
+					Computed:    true,
+					Description: "Number of milliseconds to wait between powering-on and booting the VM",
+				},
+				"boot_retry_delay": {
+					Type:        schema.TypeInt,
+					Computed:    true,
+					Description: "Delay in milliseconds before a boot retry. Only works if 'boot_retry_enabled' is set to true.",
+				},
+				"boot_retry_enabled": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "If set to true, a VM that fails to boot will try again after the 'boot_retry_delay' time period has expired",
+				},
+				"efi_secure_boot": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "If set to true, enables EFI Secure Boot for the VM. Can only be changed when the VM is powered off.",
+				},
+				"enter_bios_setup_on_next_boot": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "If set to true, the VM will enter BIOS setup on boot.",
+				},
+			},
+			},
 		},
 		"expose_hardware_virtualization": {
 			Type:        schema.TypeBool,
