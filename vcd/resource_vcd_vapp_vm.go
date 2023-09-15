@@ -257,6 +257,14 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Operating System type. Possible values can be found in documentation.",
 		},
+		"firmware": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			Computed:     true,
+			ValidateFunc: validation.StringInSlice([]string{"efi", "bios"}, false),
+			Description: "Firmware of the VM. Can be either EFI or BIOS, availability" +
+				"depending on the os_type argument. If unset, is set to 'bios' by default. Changing the value when `power_on` is set to true, will cause a reboot of the VM.",
+		},
 		"hardware_version": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -465,6 +473,49 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			}},
 		},
+		"boot_options": {
+			Type:        schema.TypeList,
+			MinItems:    1,
+			MaxItems:    1,
+			Optional:    true,
+			Computed:    true,
+			Description: "A block defining the boot options of a VM",
+			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+				"boot_delay": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					Computed:     true,
+					Description:  "Number of milliseconds to wait between powering-on and booting the VM",
+					ValidateFunc: validation.IntBetween(0, 10000),
+				},
+				"boot_retry_delay": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					Computed:     true,
+					Description:  "Delay in milliseconds before a boot retry. Only works if 'boot_retry_enabled' is set to true.",
+					ValidateFunc: validation.IntAtLeast(0),
+				},
+				"boot_retry_enabled": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "If set to true, a VM that fails to boot will try again after the 'boot_retry_delay' time period has expired",
+				},
+				"efi_secure_boot": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "If set to true, enables EFI Secure Boot for the VM. Can only be changed when the VM is powered off.",
+				},
+				"enter_bios_setup_on_next_boot": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Description: "If set to true, the VM will enter BIOS setup on next boot. " +
+						"If a VM is powered on, the field will be set to `false` by VCD and Terraform will return a non-empty plan",
+				},
+			},
+			},
+		},
 		"expose_hardware_virtualization": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -653,14 +704,18 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
-	err := genericResourceVmCreate(d, meta, vappVmType)
-	if err != nil {
-		return err
+	diags := genericResourceVmCreate(d, meta, vappVmType)
+	// We need to check if there were errors, as genericResourceVmCreate can also return a warning
+	if diags.HasError() {
+		return diags
 	}
 
 	timeElapsed := time.Since(startTime)
 	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
 
+	if len(diags) != 0 {
+		return append(diags, genericVcdVmRead(d, meta, "resource")...)
+	}
 	return genericVcdVmRead(d, meta, "resource")
 }
 
@@ -668,6 +723,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 // * Executes VM create functions based on the type of VM (standalone or vApp member)
 // * Runs additional customization functions which are common for all 4 types of VMs
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) diag.Diagnostics {
+	diags := diag.Diagnostics{}
 	vcdClient := meta.(*VCDClient)
 
 	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
@@ -710,6 +766,52 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	if err = vm.Refresh(); err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
+	}
+
+	// supportsFirmware is a helper variable to not repeat the same API checking calls
+	supportsFirmware := vcdClient.Client.APIVCDMaxVersionIs(">=37.1")
+	firmware := vm.VM.VmSpecSection.Firmware
+
+	bootOptions := &types.BootOptions{}
+	if bootDelay, ok := d.GetOk("boot_options.0.boot_delay"); ok {
+		bootOptions.BootDelay = addrOf(bootDelay.(int))
+	}
+	if bootRetryDelay, ok := d.GetOk("boot_options.0.boot_retry_delay"); ok {
+		bootOptions.BootRetryDelay = addrOf(bootRetryDelay.(int))
+	}
+	if bootRetryEnabled, ok := d.GetOk("boot_options.0.boot_retry_enabled"); ok {
+		bootOptions.BootRetryEnabled = addrOf(bootRetryEnabled.(bool))
+	}
+	if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+		bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+	}
+	if enterBiosSetup, ok := d.GetOk("boot_options.0.enter_bios_setup_on_next_boot"); ok {
+		bootOptions.EnterBiosSetup = addrOf(enterBiosSetup.(bool))
+		if enterBiosSetup.(bool) && d.Get("power_on").(bool) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary: fmt.Sprintf("%s: After the VM powers on, the enter_bios_setup_on_next_boot flag will be set"+
+					"back to false by VCD and cause an inconsistent plan.", vm.VM.Name),
+			})
+		}
+	}
+	if efiSecureBoot, ok := d.GetOk("boot_options.0.efi_secure_boot"); ok {
+		if firmware != "efi" {
+			return diag.Errorf("error: EFI secure boot can only be used with EFI firmware (found %s)", firmware)
+		}
+		bootOptions.EfiSecureBootEnabled = addrOf(efiSecureBoot.(bool))
+	}
+	if !supportsFirmware && (bootOptions.BootRetryDelay != nil || bootOptions.BootRetryEnabled != nil) {
+		return diag.Errorf("boot retry option is only available in VCD 10.4.1+")
+	}
+	_, err = vm.UpdateBootOptions(bootOptions)
+	if err != nil {
+		return diag.Errorf("error updating boot options of a VM: %s", err)
+	}
+
+	err = vm.Refresh()
+	if err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)
 	}
 
@@ -768,6 +870,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	_, err = vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 	if err != nil {
 		return diag.Errorf("error setting VM CPU/Memory HotAdd capabilities: %s", err)
+	}
+
+	// Explicit refresh after updating VM CPU and Memory Hot Add
+	err = vm.Refresh()
+	if err != nil {
+		return diag.Errorf("error refreshing VM: %s", err)
 	}
 
 	// Independent disk handling
@@ -841,6 +949,9 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	// Read function is called in wrapper functions `resourceVcdVAppVmCreate` and
 	// `resourceVcdStandaloneVmCreate`
+	if len(diags) != 0 {
+		return diags
+	}
 	return nil
 }
 
@@ -1172,6 +1283,42 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 		return nil, fmt.Errorf("`hardware_version` is required when creating empty VM")
 	}
 
+	// supportsFirmware is a helper variable to not repeat the same API checking calls
+	supportsFirmware := vcdClient.Client.APIVCDMaxVersionIs(">=37.1")
+
+	// There are four scenarios:
+	// 1. If firmware is set and VCD is 10.4.1 or newer, we keep the set value
+	// 2. If firmware is unset and VCD is 10.4.1 or newer, we set it to BIOS as it is required by the API
+	// 3. If firmware is set and VCD is 10.4.0 or older, we return an error
+	// 4. If firmware is unset and VCD is 10.4.0 or older, we pass
+	var firmware interface{}
+	if firmware, ok = d.GetOk("firmware"); ok {
+		if !supportsFirmware {
+			return nil, fmt.Errorf("firmware is supported in VCD 10.4.1+")
+		}
+	} else {
+		if supportsFirmware {
+			firmware = "bios"
+		}
+	}
+
+	// Additional checks if the hardware version and OS support new Firmware and BootOptions fields (37.1+)
+	if supportsFirmware {
+		hwVersion, err := vdc.GetHardwareVersion(hardWareVersion.(string))
+		if err != nil {
+			return nil, fmt.Errorf("error getting hardware version: %s", err)
+		}
+
+		os, err := vdc.FindOsFromId(hwVersion, osType.(string))
+		if err != nil {
+			return nil, fmt.Errorf("error finding given OS type: %s", err)
+		}
+
+		if !contains(os.SupportedFirmware, firmware.(string)) {
+			return nil, fmt.Errorf("provided `os_type` doesn't support provided firmware")
+		}
+	}
+
 	var computerName interface{}
 	if computerName, ok = d.GetOk("computer_name"); !ok {
 		return nil, fmt.Errorf("`computer_name` is required when creating empty VM")
@@ -1305,7 +1452,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					NumCpus:           cpuCores,
 					NumCoresPerSocket: cpuCoresPerSocket,
 					MemoryResourceMb:  memoryResourceMb,
-
+					Firmware:          firmware.(string),
 					// can be created with resource internal_disk
 					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
 					HardwareVersion: &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
@@ -1360,6 +1507,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 					DiskSection:     &types.DiskSection{DiskSettings: []*types.DiskSettings{}},
 					HardwareVersion: &types.HardwareVersion{Value: hardWareVersion.(string)}, // need support older version vCD
 					VirtualCpuType:  virtualCpuType,
+					Firmware:        firmware.(string),
 				},
 				BootImage: bootImage,
 			},
@@ -1551,9 +1699,10 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 }
 
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm, computePolicy *types.VdcComputePolicy) diag.Diagnostics {
+	diags := diag.Diagnostics{}
 	log.Printf("[DEBUG] [VM update] started without lock")
 
-	_, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
+	vcd, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1607,13 +1756,19 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	// this represents fields which have to be changed in cold (with VM power off)
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-		"memory_hot_add_enabled") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
+		"memory_hot_add_enabled", "firmware", "boot_options.0.efi_secure_boot") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
 
-		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), network(%t)",
-			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
-			d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
-			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("network"))
+		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
+			"power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
+			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t),"+
+			"cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), firmware(%t),"+
+			"efi_secure_boot(%t) network(%t)",
+			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"),
+			d.HasChange("power_on"), d.HasChange("disk"), d.HasChange("expose_hardware_virtualization"),
+			d.HasChange("boot_image"), d.HasChange("hardware_version"), d.HasChange("os_type"),
+			d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"),
+			d.HasChange("memory_hot_add_enabled"), d.HasChange("firmware"),
+			d.HasChange("boot_options.0.efi_secure_boot"), d.HasChange("network"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			if d.Get("prevent_update_power_off").(bool) && executionType == "update" {
@@ -1710,7 +1865,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		// updating fields of VM spec section
-		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
+		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") || d.HasChange("firmware") {
 			vmSpecSection := vm.VM.VmSpecSection
 			description := vm.VM.Description
 			if d.HasChange("hardware_version") {
@@ -1719,12 +1874,52 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			if d.HasChange("os_type") {
 				vmSpecSection.OsType = d.Get("os_type").(string)
 			}
-
 			if d.HasChange("description") {
 				description = d.Get("description").(string)
 			}
+			if d.HasChange("firmware") {
+				firmware := d.Get("firmware").(string)
 
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
+				hw, err := vdc.GetHardwareVersion(d.Get("hardware_version").(string))
+				if err != nil {
+					return diag.Errorf("error getting hardware version: %s", err)
+				}
+
+				os, err := vdc.FindOsFromId(hw, d.Get("os_type").(string))
+				if err != nil {
+					return diag.Errorf("error finding given OS type in the provided hardware version: %s", err)
+				}
+
+				if !contains(os.SupportedFirmware, firmware) {
+					return diag.Errorf("the OS type doesn't support provided firmware")
+				}
+
+				// Additional check needs to be made in a scenario where EFI secure boot is
+				// disabled and firmware is set to 'bios' during update, as there would be a misconfiguration error
+				// because EFI secure boot can't be enabled when firmware is not efi and we can't do two things at once
+				efiSecureBoot, _ := d.GetOk("boot_options.0.efi_secure_boot")
+				if firmware != "efi" && efiSecureBoot.(bool) {
+					return diag.Errorf("error: EFI secure boot can only be enabled with firmware set to 'efi'")
+				}
+				if firmware != "efi" && !efiSecureBoot.(bool) {
+					efiSecureBootOptions := &types.BootOptions{
+						EfiSecureBootEnabled: addrOf(efiSecureBoot.(bool)),
+					}
+					vm, err = vm.UpdateBootOptions(efiSecureBootOptions)
+					if err != nil {
+						return diag.Errorf("error changing VM boot options: %s", err)
+					}
+
+					err = vm.Refresh()
+					if err != nil {
+						return diag.Errorf("error refreshing VM: %s", err)
+					}
+				}
+
+				vmSpecSection.Firmware = firmware
+			}
+
+			vm, err = vm.UpdateVmSpecSection(vmSpecSection, description)
 			if err != nil {
 				return diag.Errorf("error changing VM spec section: %s", err)
 			}
@@ -1763,6 +1958,38 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 	}
 
+	if d.HasChange("boot_options.0") {
+		bootOptions := &types.BootOptions{}
+
+		bootOptions.BootDelay = addrOf(d.Get("boot_options.0.boot_delay").(int))
+		bootOptions.BootRetryDelay = addrOf(d.Get("boot_options.0.boot_retry_delay").(int))
+		bootOptions.BootRetryEnabled = addrOf(d.Get("boot_options.0.boot_retry_enabled").(bool))
+		bootOptions.EnterBiosSetup = addrOf(d.Get("boot_options.0.enter_bios_setup_on_next_boot").(bool))
+		bootOptions.EfiSecureBootEnabled = addrOf(d.Get("boot_options.0.efi_secure_boot").(bool))
+		// This if condition is needed, because Terraform schema provides
+		// zero values for the type e.g 0 for TypeInt, false for TypeBool
+		// when using d.Get, and when using d.GetOk, if the value is set
+		// to the zero value, the 'ok' variable is set to false which can cause
+		// not applying configuration in case e.g BootRetryDelay is changed 20 -> 0
+		if vcd.Client.APIVCDMaxVersionIs("<37.1") {
+			if bootOptions.BootRetryEnabled == addrOf(false) {
+				bootOptions.BootRetryEnabled = nil
+			}
+			if bootOptions.EfiSecureBootEnabled == addrOf(false) {
+				bootOptions.EfiSecureBootEnabled = nil
+			}
+			if bootOptions.BootRetryDelay == addrOf(0) {
+				bootOptions.BootRetryDelay = nil
+			}
+		}
+
+		vm, err = vm.UpdateBootOptions(bootOptions)
+		util.Logger.Printf("[DEBUG] %v", bootOptions)
+		if err != nil {
+			return diag.Errorf("error changing VM boot options: %s", err)
+		}
+	}
+
 	// Update the security tags
 	if d.HasChange("security_tags") {
 		err = createOrUpdateVmSecurityTags(d, vm)
@@ -1778,6 +2005,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			return diag.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 		}
 
+		if d.Get("boot_options.0.enter_bios_setup_on_next_boot").(bool) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary: fmt.Sprintf("%s: After VM Powers on, the enter_bios_setup_on_next_boot flag will be set"+
+					"back to false.", vm.VM.Name),
+			})
+		}
+
 		// Simply power on if customization is not requested
 		if !customizationNeeded && vmStatus != "POWERED_ON" {
 			log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
@@ -1789,6 +2024,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			if err != nil {
 				return diag.Errorf(errorCompletingTask, err)
 			}
+
 		}
 
 		// When customization is requested VM must be un-deployed before starting it
@@ -1814,9 +2050,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 				return diag.Errorf("failed powering on with customization: %s", err)
 			}
 		}
+
 	}
 
 	log.Printf("[DEBUG] [VM update] finished")
+	if len(diags) != 0 {
+		return append(diags, genericVcdVmRead(d, meta, "resource")...)
+	}
 	return genericVcdVmRead(d, meta, "resource")
 }
 
@@ -1830,7 +2070,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[VM read ]"+errorRetrievingOrgAndVdc, err)
+		return diag.Errorf("[VM read]"+errorRetrievingOrgAndVdc, err)
 	}
 
 	isStandalone := false
@@ -1919,32 +2159,61 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	dSet(d, "cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
 	dSet(d, "memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
-	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.MemoryResourceMb != nil {
-		dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
-		dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
-		if vm.VM.VmSpecSection.MemoryResourceMb.Reservation != nil {
-			dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
+	if vm.VM.VmSpecSection != nil {
+		if vm.VM.VmSpecSection.MemoryResourceMb != nil {
+			dSet(d, "memory", vm.VM.VmSpecSection.MemoryResourceMb.Configured)
+			dSet(d, "memory_priority", vm.VM.VmSpecSection.MemoryResourceMb.SharesLevel)
+			if vm.VM.VmSpecSection.MemoryResourceMb.Reservation != nil {
+				dSet(d, "memory_reservation", vm.VM.VmSpecSection.MemoryResourceMb.Reservation)
+			}
+			if vm.VM.VmSpecSection.MemoryResourceMb.Limit != nil {
+				dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
+			}
+			if vm.VM.VmSpecSection.MemoryResourceMb.Shares != nil {
+				dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
+			}
 		}
-		if vm.VM.VmSpecSection.MemoryResourceMb.Limit != nil {
-			dSet(d, "memory_limit", vm.VM.VmSpecSection.MemoryResourceMb.Limit)
+		dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
+		dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
+		if vm.VM.VmSpecSection.CpuResourceMhz != nil {
+			if vm.VM.VmSpecSection.CpuResourceMhz.Reservation != nil {
+				dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
+			}
+			if vm.VM.VmSpecSection.CpuResourceMhz.Limit != nil {
+				dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
+			}
+			if vm.VM.VmSpecSection.CpuResourceMhz.Shares != nil {
+				dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
+			}
+			dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 		}
-		if vm.VM.VmSpecSection.MemoryResourceMb.Shares != nil {
-			dSet(d, "memory_shares", vm.VM.VmSpecSection.MemoryResourceMb.Shares)
+
+		if vm.VM.VmSpecSection.HardwareVersion != nil {
+			dSet(d, "hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
 		}
+		if vm.VM.VmSpecSection.OsType != "" {
+			dSet(d, "os_type", vm.VM.VmSpecSection.OsType)
+		}
+
+		dSet(d, "firmware", vm.VM.VmSpecSection.Firmware)
 	}
-	dSet(d, "cpus", vm.VM.VmSpecSection.NumCpus)
-	dSet(d, "cpu_cores", vm.VM.VmSpecSection.NumCoresPerSocket)
-	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.CpuResourceMhz != nil {
-		if vm.VM.VmSpecSection.CpuResourceMhz.Reservation != nil {
-			dSet(d, "cpu_reservation", vm.VM.VmSpecSection.CpuResourceMhz.Reservation)
+
+	bootOptions := vm.VM.BootOptions
+	if bootOptions != nil {
+		bootOptionsBlock := make([]interface{}, 1)
+		bootOptionsBlockAttributes := make(map[string]interface{})
+		bootOptionsBlockAttributes["efi_secure_boot"] = bootOptions.EfiSecureBootEnabled
+		bootOptionsBlockAttributes["boot_delay"] = bootOptions.BootDelay
+		bootOptionsBlockAttributes["boot_retry_delay"] = bootOptions.BootRetryDelay
+		bootOptionsBlockAttributes["boot_retry_enabled"] = bootOptions.BootRetryEnabled
+		bootOptionsBlockAttributes["enter_bios_setup_on_next_boot"] = bootOptions.EnterBiosSetup
+
+		bootOptionsBlock[0] = bootOptionsBlockAttributes
+
+		err = d.Set("boot_options", bootOptionsBlock)
+		if err != nil {
+			return diag.Errorf("[VM read] unable to set boot options: %s", err)
 		}
-		if vm.VM.VmSpecSection.CpuResourceMhz.Limit != nil {
-			dSet(d, "cpu_limit", vm.VM.VmSpecSection.CpuResourceMhz.Limit)
-		}
-		if vm.VM.VmSpecSection.CpuResourceMhz.Shares != nil {
-			dSet(d, "cpu_shares", vm.VM.VmSpecSection.CpuResourceMhz.Shares)
-		}
-		dSet(d, "cpu_priority", vm.VM.VmSpecSection.CpuResourceMhz.SharesLevel)
 	}
 
 	if vm.VM.StorageProfile != nil {
@@ -1976,13 +2245,6 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 
 	if err := setGuestCustomizationData(d, vm); err != nil {
 		return diag.Errorf("error storing customization block: %s", err)
-	}
-
-	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil && vm.VM.VmSpecSection.HardwareVersion.Value != "" {
-		dSet(d, "hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
-	}
-	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.OsType != "" {
-		dSet(d, "os_type", vm.VM.VmSpecSection.OsType)
 	}
 
 	if vm.VM.ComputePolicy != nil {
