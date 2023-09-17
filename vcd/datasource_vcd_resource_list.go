@@ -382,13 +382,10 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantResource stri
 			switch wantResource {
 			case "vcd_catalog_item":
 				wanted = true
-				//resourceType = "vcd_catalog_item"
 			case "vcd_catalog_media":
 				wanted = catalogItem.CatalogItem.Entity.Type == types.MimeMediaItem
-				//resourceType = "vcd_catalog_media"
 			case "vcd_catalog_vapp_template":
 				wanted = catalogItem.CatalogItem.Entity.Type == types.MimeVAppTemplate
-				//resourceType = "vcd_catalog_media"
 			}
 			if wanted {
 				items = append(items, resourceRef{
