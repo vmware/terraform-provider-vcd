@@ -379,8 +379,15 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantResource stri
 			if err != nil {
 				return list, err
 			}
+			entity := types.Reference{
+				HREF: catalogItem.CatalogItem.Entity.HREF,
+				ID:   catalogItem.CatalogItem.Entity.ID,
+				Name: reference.Name,
+			}
 			switch wantResource {
 			case "vcd_catalog_item":
+				entity.HREF = catalogItem.CatalogItem.HREF
+				entity.ID = catalogItem.CatalogItem.ID
 				wanted = true
 			case "vcd_catalog_media":
 				wanted = catalogItem.CatalogItem.Entity.Type == types.MimeMediaItem
@@ -390,8 +397,8 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantResource stri
 			if wanted {
 				items = append(items, resourceRef{
 					name:         reference.Name,
-					id:           reference.ID,
-					href:         reference.HREF,
+					id:           entity.ID,
+					href:         entity.HREF,
 					parent:       catalogName,
 					importId:     false,
 					resourceType: resourceType,
