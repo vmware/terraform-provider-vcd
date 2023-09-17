@@ -354,7 +354,7 @@ func catalogList(d *schema.ResourceData, meta interface{}, resType string) (list
 }
 
 // catalogItemList finds either catalogItem or mediaItem
-func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (list []string, err error) {
+func catalogItemList(d *schema.ResourceData, meta interface{}, wantResource string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	org, err := client.GetAdminOrg(d.Get("org").(string))
@@ -373,17 +373,23 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (
 
 	for _, catalogItems := range catalog.Catalog.CatalogItems {
 		for _, reference := range catalogItems.CatalogItem {
-			resourceType := "vcd_catalog_vapp_template"
-			wanted := true
+			resourceType := wantResource
+			wanted := false
 			catalogItem, err := catalog.GetCatalogItemByHref(reference.HREF)
 			if err != nil {
 				return list, err
 			}
-			if catalogItem.CatalogItem.Entity.Type == "application/vnd.vmware.vcloud.media+xml" {
-				wanted = wantMedia
-				resourceType = "vcd_catalog_media"
+			switch wantResource {
+			case "vcd_catalog_item":
+				wanted = true
+				//resourceType = "vcd_catalog_item"
+			case "vcd_catalog_media":
+				wanted = catalogItem.CatalogItem.Entity.Type == types.MimeMediaItem
+				//resourceType = "vcd_catalog_media"
+			case "vcd_catalog_vapp_template":
+				wanted = catalogItem.CatalogItem.Entity.Type == types.MimeVAppTemplate
+				//resourceType = "vcd_catalog_media"
 			}
-
 			if wanted {
 				items = append(items, resourceRef{
 					name:         reference.Name,
@@ -394,7 +400,6 @@ func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (
 					resourceType: resourceType,
 				})
 			}
-
 		}
 	}
 	return genericResourceList(d, "vcd_catalog_item", []string{org.AdminOrg.Name, catalogName}, items)
@@ -1028,11 +1033,11 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "vcd_catalog_access_control":
 		list, err = catalogList(d, meta, "vcd_catalog_access_control")
 	case "vcd_catalog_item", "catalog_item", "catalog_items", "catalogitem", "catalogitems":
-		list, err = catalogItemList(d, meta, false)
+		list, err = catalogItemList(d, meta, "vcd_catalog_item")
 	case "vcd_catalog_vapp_template", "vapp_template":
 		list, err = vappTemplateList(d, meta)
 	case "vcd_catalog_media", "catalog_media", "media_items", "mediaitems", "mediaitem":
-		list, err = catalogItemList(d, meta, true)
+		list, err = catalogItemList(d, meta, "vcd_catalog_media")
 	case "vcd_vapp", "vapp", "vapps", "vcd_cloned_vapp":
 		list, err = vappList(d, meta, "vcd_vapp")
 	case "vcd_vapp_access_control":
