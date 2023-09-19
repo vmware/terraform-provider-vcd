@@ -125,7 +125,6 @@ provider "vcd" {
   user                 = vcd_org_user.cse_admin.name
   password             = vcd_org_user.cse_admin.password
   auth_type            = "integrated"
-  sysorg               = vcd_org_user.cse_admin.org
   org                  = vcd_org_user.cse_admin.org
   allow_unverified_ssl = var.insecure_login
   logging              = true
