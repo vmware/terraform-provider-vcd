@@ -54,10 +54,10 @@ container_registry_url = "projects.registry.vmware.com"
 
 # Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
 # For example, when pulling images from a container registry. (Copy and paste .cert file contents)
-k8s_cluster_certificates  = []
+k8s_cluster_certificates = []
 
 # Certificate(s) to allow clusters to authenticate with.
-For example, when pulling images from a container registry. (Copy and paste .cert file contents)
+# For example, when pulling images from a container registry. (Copy and paste .cert file contents)
 bootstrap_vm_certificates = []
 
 # ------------------------------------------------
@@ -80,8 +80,8 @@ solutions_nsxt_tier0_router_name                 = "change-me"    # The name of 
 solutions_provider_gateway_gateway_ip            = "10.20.30.250" # Gateway IP to use in the Solutions Provider Gateway
 solutions_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Solutions Provider Gateway
 solutions_provider_gateway_static_ip_ranges = [                   # IP ranges to use in the Solutions Provider Gateway
-  ["10.20.30.16", "10.20.30.16"], # Single IP
-  ["10.20.30.20", "10.20.30.25"], # Many IPs
+  ["10.20.30.16", "10.20.30.16"],                                 # Single IP
+  ["10.20.30.20", "10.20.30.25"],                                 # Many IPs
 ]
 
 # These are all required to create the Tenant Organization Provider Gateway.
@@ -90,8 +90,8 @@ tenant_nsxt_tier0_router_name                 = "change-me"    # The name of an 
 tenant_provider_gateway_gateway_ip            = "10.30.20.150" # Gateway IP to use in the Tenant Provider Gateway
 tenant_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Tenant Provider Gateway
 tenant_provider_gateway_static_ip_ranges = [                   # IP ranges to use in the Tenant Provider Gateway
-  ["10.30.20.14", "10.30.20.14"], # Single IP
-  ["10.30.20.30", "10.30.20.37"], # Many IPs
+  ["10.30.20.14", "10.30.20.14"],                              # Single IP
+  ["10.30.20.30", "10.30.20.37"],                              # Many IPs
 ]
 
 # These will configure the Routed network for the Solutions Organization VDC.
