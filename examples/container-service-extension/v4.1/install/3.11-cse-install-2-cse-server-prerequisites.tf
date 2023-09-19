@@ -123,7 +123,7 @@ provider "vcd" {
   alias                = "cse_admin"
   url                  = "${var.vcd_url}/api"
   user                 = vcd_org_user.cse_admin.name
-  password             = var.cse_admin_password
+  password             = vcd_org_user.cse_admin.password
   auth_type            = "integrated"
   sysorg               = vcd_org_user.cse_admin.org
   org                  = vcd_org_user.cse_admin.org
