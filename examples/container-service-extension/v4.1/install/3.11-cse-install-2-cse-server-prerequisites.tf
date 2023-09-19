@@ -130,6 +130,8 @@ provider "vcd" {
   allow_unverified_ssl = var.insecure_login
   logging              = true
   logging_file         = "cse_install_cse_admin.log"
+
+  depends_on = [vcd_org_user.cse_admin]
 }
 
 # Generates an API token for the CSE Admin user, that will be used to instantiate the CSE Server.
