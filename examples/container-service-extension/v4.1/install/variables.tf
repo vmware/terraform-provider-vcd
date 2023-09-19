@@ -159,7 +159,7 @@ variable "k8s_cluster_certificates" {
 }
 
 # ------------------------------------------------
-# VDC setup
+# Infrastructure
 # ------------------------------------------------
 
 variable "provider_vdc_name" {
@@ -176,34 +176,6 @@ variable "network_pool_name" {
   description = "The network pool to be used on VDC creation"
   type        = string
 }
-
-# ------------------------------------------------
-# Catalog and OVAs
-# ------------------------------------------------
-
-variable "tkgm_ova_folder" {
-  description = "Absolute path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
-  type        = string
-}
-
-variable "tkgm_ova_file" {
-  description = "TKGm OVA file name, with no path (Example: 'ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova')"
-  type        = string
-}
-
-variable "cse_ova_folder" {
-  description = "Absolute path to the CSE OVA file, with no file name (Example: '/home/bob/Downloads/cse')"
-  type        = string
-}
-
-variable "cse_ova_file" {
-  description = "CSE OVA file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
-  type        = string
-}
-
-# ------------------------------------------------
-# Networking
-# ------------------------------------------------
 
 variable "nsxt_manager_name" {
   description = "NSX-T manager name, required to create the Provider Gateways"
@@ -334,9 +306,6 @@ variable "tenant_routed_network_dns_suffix" {
   default     = ""
 }
 
-# ------------------------------------------------
-# ALB
-# ------------------------------------------------
 variable "alb_controller_username" {
   description = "The user to create an ALB Controller with"
   type        = string
@@ -354,6 +323,30 @@ variable "alb_controller_url" {
 
 variable "alb_importable_cloud_name" {
   description = "Name of an available importable cloud to be able to create an ALB NSX-T Cloud"
+  type        = string
+}
+
+# ------------------------------------------------
+# Catalog and OVAs
+# ------------------------------------------------
+
+variable "tkgm_ova_folder" {
+  description = "Absolute path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
+  type        = string
+}
+
+variable "tkgm_ova_file" {
+  description = "TKGm OVA file name, with no path (Example: 'ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova')"
+  type        = string
+}
+
+variable "cse_ova_folder" {
+  description = "Absolute path to the CSE OVA file, with no file name (Example: '/home/bob/Downloads/cse')"
+  type        = string
+}
+
+variable "cse_ova_file" {
+  description = "CSE OVA file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
   type        = string
 }
 

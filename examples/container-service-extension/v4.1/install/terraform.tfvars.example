@@ -5,6 +5,7 @@
 # ------------------------------------------------
 # VCD Provider config
 # ------------------------------------------------
+
 vcd_url                = "https://vcd.my-awesome-corp.com"
 administrator_user     = "administrator"
 administrator_password = "change-me"
@@ -14,6 +15,7 @@ insecure_login         = "false"
 # ------------------------------------------------
 # CSE Server Pre-requisites
 # ------------------------------------------------
+
 # This user will be created by the Terraform configuration, so you can
 # customise what its username and password will be.
 # This user will have an API token that must be consumed by the CSE Server.
@@ -24,6 +26,7 @@ cse_admin_api_token_file = "cse_admin_api_token.json"
 # ------------------------------------------------
 # CSE Server Settings
 # ------------------------------------------------
+
 # These are required to create the Runtime Defined Entity that will contain the CSE Server configuration (vcdKeConfig)
 # To know more about the specific versions, please refer to the CSE documentation.
 # The values set here correspond to CSE v4.1:
@@ -58,27 +61,15 @@ For example, when pulling images from a container registry. (Copy and paste .cer
 bootstrap_vm_certificates = []
 
 # ------------------------------------------------
-# NSX-T VDC setup
+# Infrastructure
 # ------------------------------------------------
+
 # These variables are required to create both the Solutions NSX-T VDC and Tenant NSX-T VDC
 # The values here need to exist already in your VCD appliance.
 provider_vdc_name      = "change-me" # Name of an existing PVDC that can be used to create VDCs
 nsxt_edge_cluster_name = "change-me" # Name of an existing NSX-T Edge Cluster that can be used to create VDCs
 network_pool_name      = "change-me" # Name of an existing network pool that can be used to create VDCs
 
-# ------------------------------------------------
-# Catalog and OVAs
-# ------------------------------------------------
-# These variables are required to upload the necessary OVAs to the Solutions Organization shared catalog.
-# You can find the download links in the guide referenced at the top of this file.
-tkgm_ova_folder = "/home/changeme/tkgm-folder"                                                   # An existing absolute path to a folder containing TKGm OVAs
-tkgm_ova_file   = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova" # An existing TKGm OVA
-cse_ova_folder  = "/home/changeme/cse-folder"                                                    # An existing absolute path to a folder containing CSE Server OVAs
-cse_ova_file    = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"                  # An existing CSE Server OVA
-
-# ------------------------------------------------
-# Values to create a basic networking setup
-# ------------------------------------------------
 # These variables are used to build a basic networking setup to run the CSE Server
 # and the TKGm clusters
 nsxt_manager_name = "change-me" # Name of an existing NSX-T manager, required to create the Provider Gateways
@@ -125,9 +116,6 @@ tenant_snat_internal_network_cidr           = "10.0.0.0/16"  # Required. It shou
 tenant_routed_network_dns                   = ""             # Optional, if you need DNS
 tenant_routed_network_dns_suffix            = ""             # Optional, if you need DNS
 
-# ------------------------------------------------
-# Values to create ALB setup
-# ------------------------------------------------
 # These are required to create a new ALB setup in VCD that will be used by TKGm clusters.
 # Your VCD should have an existing ALB deployment that will be imported, the values below must correspond to
 # the existing controller to be imported into VCD:
@@ -135,6 +123,17 @@ alb_controller_username   = "admin"                                # Username to
 alb_controller_password   = "change-me"                            # Password to access the ALB Controller
 alb_controller_url        = "https://alb-ctrl.my-awesome-corp.com" # URL of the ALB Controller
 alb_importable_cloud_name = "change-me"                            # Name of the Cloud to import to create a Service Engine Group
+
+# ------------------------------------------------
+# Catalog and OVAs
+# ------------------------------------------------
+
+# These variables are required to upload the necessary OVAs to the Solutions Organization shared catalog.
+# You can find the download links in the guide referenced at the top of this file.
+tkgm_ova_folder = "/home/changeme/tkgm-folder"                                                   # An existing absolute path to a folder containing TKGm OVAs
+tkgm_ova_file   = "ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova" # An existing TKGm OVA
+cse_ova_folder  = "/home/changeme/cse-folder"                                                    # An existing absolute path to a folder containing CSE Server OVAs
+cse_ova_file    = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"                  # An existing CSE Server OVA
 
 # ------------------------------------------------
 # Other configuration
