@@ -135,7 +135,7 @@ provider "vcd" {
 # Generates an API token for the CSE Admin user, that will be used to instantiate the CSE Server.
 # This should not be changed.
 resource "vcd_api_token" "cse_admin_token" {
-  provider         = "vcd.cse_admin"
+  provider         = vcd.cse_admin
   name             = "CSE Admin API Token"
   file_name        = var.cse_admin_api_token_file
   allow_token_file = true

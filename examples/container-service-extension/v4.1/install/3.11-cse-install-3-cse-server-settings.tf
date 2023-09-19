@@ -25,7 +25,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
     cpi_version                     = var.cpi_version
     csi_version                     = var.csi_version
     github_personal_access_token    = var.github_personal_access_token
-    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy, it can be changed.
+    bootstrap_vm_sizing_policy      = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy, it can be changed.
     no_proxy                        = var.no_proxy
     http_proxy                      = var.http_proxy
     https_proxy                     = var.https_proxy
