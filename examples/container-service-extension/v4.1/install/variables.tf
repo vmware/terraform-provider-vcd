@@ -139,7 +139,7 @@ variable "max_unhealthy_node_percentage" {
   description = "VCDKEConfig: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage. (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated)"
   default     = 100
   validation {
-    condition     = var.max_unhealthy_node_percentage < 0 || var.max_unhealthy_node_percentage > 100
+    condition     = var.max_unhealthy_node_percentage >= 0 && var.max_unhealthy_node_percentage <= 100
     error_message = "The value must be a percentage, hence between 0 and 100"
   }
 }
