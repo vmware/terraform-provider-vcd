@@ -59,7 +59,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     "cse.vAppOrg" = vcd_org.solutions_organization.name
 
     # CSE admin account's Access Token
-    "cse.vcdRefreshToken" = vcd_api_token.cse_admin_token
+    "cse.vcdRefreshToken" = jsondecode(file(vcd_api_token.cse_admin_token.file_name))["access_token"]
 
     # CSE admin account's username
     "cse.vcdUsername" = vcd_org_user.cse_admin
