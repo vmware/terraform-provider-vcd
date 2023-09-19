@@ -1,46 +1,13 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE 4.1 installation, step 2:
+# CSE v4.1 installation:
 #
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
 #
-# * Please apply "3.11-cse-install-step1.tf" first, located at
-#   https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install/step1
-#
-# * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
-#   For example, network settings such as firewall rules, network subnets, VDC allocation modes, ALB feature set, etc should be
-#   carefully reviewed.
-#
 # * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
+#   Other than that, this snippet should be applied as it is.
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
-
-# VCD Provider configuration. It must be at least v3.10.0 and configured with a System administrator account.
-# This is needed to build the minimum setup for CSE v4.0 to work, like Organizations, VDCs, Provider Gateways, etc.
-terraform {
-  required_providers {
-    vcd = {
-      source  = "vmware/vcd"
-      version = ">= 3.11"
-    }
-    time = {
-      source  = "hashicorp/time"
-      version = ">= 0.9"
-    }
-  }
-}
-
-provider "vcd" {
-  url                  = "${var.vcd_url}/api"
-  user                 = var.administrator_user
-  password             = var.administrator_password
-  auth_type            = "integrated"
-  sysorg               = var.administrator_org
-  org                  = var.administrator_org
-  allow_unverified_ssl = var.insecure_login
-  logging              = true
-  logging_file         = "cse_install_step2.log"
-}
 
 # The two resources below will create the two Organizations mentioned in the CSE documentation:
 # https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
@@ -88,52 +55,6 @@ resource "vcd_org" "tenant_organization" {
   vapp_template_lease {
     maximum_storage_lease_in_sec       = 0
     delete_on_storage_lease_expiration = false
-  }
-}
-
-# The VM Sizing Policies defined below MUST be created as they are specified in this HCL. These are the default
-# policies required by CSE to create TKGm clusters, hence nothing should be modified here.
-resource "vcd_vm_sizing_policy" "tkg_xl" {
-  name        = "TKG extra-large"
-  description = "Extra-large VM sizing policy for a Kubernetes cluster node (8 CPU, 32GB memory)"
-  cpu {
-    count = 8
-  }
-  memory {
-    size_in_mb = "32768"
-  }
-}
-
-resource "vcd_vm_sizing_policy" "tkg_l" {
-  name        = "TKG large"
-  description = "Large VM sizing policy for a Kubernetes cluster node (4 CPU, 16GB memory)"
-  cpu {
-    count = 4
-  }
-  memory {
-    size_in_mb = "16384"
-  }
-}
-
-resource "vcd_vm_sizing_policy" "tkg_m" {
-  name        = "TKG medium"
-  description = "Medium VM sizing policy for a Kubernetes cluster node (2 CPU, 8GB memory)"
-  cpu {
-    count = 2
-  }
-  memory {
-    size_in_mb = "8192"
-  }
-}
-
-resource "vcd_vm_sizing_policy" "tkg_s" {
-  name        = "TKG small"
-  description = "Small VM sizing policy for a Kubernetes cluster node (2 CPU, 4GB memory)"
-  cpu {
-    count = 2
-  }
-  memory {
-    size_in_mb = "4048"
   }
 }
 
@@ -297,124 +218,8 @@ resource "vcd_catalog_vapp_template" "cse_ova" {
   ova_path    = format("%s/%s", var.cse_ova_folder, var.cse_ova_file)
 }
 
-# Fetch the RDE Type created in 3.10-cse-4.0-install-step1.tf. This is required to be able to create the following
-# Rights Bundle.
-data "vcd_rde_type" "existing_capvcdcluster_type" {
-  vendor  = "vmware"
-  nss     = "capvcdCluster"
-  version = var.capvcd_rde_version
-}
 
-# This resource manages the Rights Bundle required by tenants to create and consume Kubernetes clusters.
-resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
-  name        = "Kubernetes Clusters Rights Bundle"
-  description = "Rights bundle with required rights for managing Kubernetes clusters"
-  rights = [
-    "API Tokens: Manage",
-    "Access All Organization VDCs",
-    "Catalog: View Published Catalogs",
-    "Certificate Library: Manage",
-    "Certificate Library: View",
-    "General: Administrator View",
-    "Organization vDC Gateway: Configure Load Balancer",
-    "Organization vDC Gateway: Configure NAT",
-    "Organization vDC Gateway: View Load Balancer",
-    "Organization vDC Gateway: View NAT",
-    "Organization vDC Gateway: View",
-    "Organization vDC Named Disk: Create",
-    "Organization vDC Named Disk: Edit Properties",
-    "Organization vDC Named Disk: View Properties",
-    "Organization vDC Shared Named Disk: Create",
-    "vApp: Allow All Extra Config",
-    "${data.vcd_rde_type.existing_vcdkeconfig_type.vendor}:${data.vcd_rde_type.existing_vcdkeconfig_type.nss}: View",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Administrator Full access",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Full Access",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Modify",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: View",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Administrator View",
-    "vmware:tkgcluster: Full Access",
-    "vmware:tkgcluster: Modify",
-    "vmware:tkgcluster: View",
-    "vmware:tkgcluster: Administrator View",
-    "vmware:tkgcluster: Administrator Full access",
-  ]
-  publish_to_all_tenants = true # This needs to be published to all the Organizations
-}
 
-# With the Rights Bundle specified above, we need also a new Role for tenant users who want to create and manage
-# Kubernetes clusters.
-resource "vcd_global_role" "k8s_cluster_author" {
-  name        = "Kubernetes Cluster Author"
-  description = "Role to create Kubernetes clusters"
-  rights = [
-    "API Tokens: Manage",
-    "Access All Organization VDCs",
-    "Catalog: Add vApp from My Cloud",
-    "Catalog: View Private and Shared Catalogs",
-    "Catalog: View Published Catalogs",
-    "Certificate Library: View",
-    "Organization vDC Compute Policy: View",
-    "Organization vDC Disk: View IOPS",
-    "Organization vDC Gateway: Configure Load Balancer",
-    "Organization vDC Gateway: Configure NAT",
-    "Organization vDC Gateway: View",
-    "Organization vDC Gateway: View Load Balancer",
-    "Organization vDC Gateway: View NAT",
-    "Organization vDC Named Disk: Create",
-    "Organization vDC Named Disk: Delete",
-    "Organization vDC Named Disk: Edit Properties",
-    "Organization vDC Named Disk: View Encryption Status",
-    "Organization vDC Named Disk: View Properties",
-    "Organization vDC Network: View Properties",
-    "Organization vDC Shared Named Disk: Create",
-    "Organization vDC: VM-VM Affinity Edit",
-    "Organization: View",
-    "UI Plugins: View",
-    "VAPP_VM_METADATA_TO_VCENTER",
-    "vApp Template / Media: Copy",
-    "vApp Template / Media: Edit",
-    "vApp Template / Media: View",
-    "vApp Template: Checkout",
-    "vApp: Allow All Extra Config",
-    "vApp: Copy",
-    "vApp: Create / Reconfigure",
-    "vApp: Delete",
-    "vApp: Download",
-    "vApp: Edit Properties",
-    "vApp: Edit VM CPU",
-    "vApp: Edit VM Compute Policy",
-    "vApp: Edit VM Hard Disk",
-    "vApp: Edit VM Memory",
-    "vApp: Edit VM Network",
-    "vApp: Edit VM Properties",
-    "vApp: Manage VM Password Settings",
-    "vApp: Power Operations",
-    "vApp: Sharing",
-    "vApp: Snapshot Operations",
-    "vApp: Upload",
-    "vApp: Use Console",
-    "vApp: VM Boot Options",
-    "vApp: View ACL",
-    "vApp: View VM and VM's Disks Encryption Status",
-    "vApp: View VM metrics",
-    "${data.vcd_rde_type.existing_vcdkeconfig_type.vendor}:${data.vcd_rde_type.existing_vcdkeconfig_type.nss}: View",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Administrator Full access",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Full Access",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Modify",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: View",
-    "${data.vcd_rde_type.existing_capvcdcluster_type.vendor}:${data.vcd_rde_type.existing_capvcdcluster_type.nss}: Administrator View",
-    "vmware:tkgcluster: Full Access",
-    "vmware:tkgcluster: Modify",
-    "vmware:tkgcluster: View",
-  ]
-
-  publish_to_all_tenants = true # This needs to be published to all the Organizations
-
-  # As we use rights created by the CAPVCD Type created previously, we need to depend on it
-  depends_on = [
-    vcd_rights_bundle.k8s_clusters_rights_bundle
-  ]
-}
 
 # The networking setup specified below will configure one Provider Gateway + Edge Gateway + Routed network per
 # organization. You can customise this section according to your needs.
@@ -690,33 +495,6 @@ resource "vcd_nsxt_firewall" "tenant_firewall" {
   }
 }
 
-# Fetch the RDE Type created in 3.10-cse-4.0-install-step1.tf, as we need to create the configuration instance.
-data "vcd_rde_type" "existing_vcdkeconfig_type" {
-  vendor  = "vmware"
-  nss     = "VCDKEConfig"
-  version = "1.0.0"
-}
-
-# This RDE should be applied as it is.
-resource "vcd_rde" "vcdkeconfig_instance" {
-  org         = var.administrator_org
-  name        = "vcdKeConfig"
-  rde_type_id = data.vcd_rde_type.existing_vcdkeconfig_type.id
-  resolve     = true
-  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
-    capvcd_version                  = var.capvcd_version
-    capvcd_rde_version              = var.capvcd_rde_version
-    cpi_version                     = var.cpi_version
-    csi_version                     = var.csi_version
-    github_personal_access_token    = var.github_personal_access_token
-    bootstrap_cluster_sizing_policy = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy
-    no_proxy                        = var.no_proxy
-    http_proxy                      = var.http_proxy
-    https_proxy                     = var.https_proxy
-    syslog_host                     = var.syslog_host
-    syslog_port                     = var.syslog_port
-  })
-}
 
 resource "vcd_vapp" "cse_server_vapp" {
   org  = vcd_org.solutions_organization.name
@@ -788,10 +566,10 @@ data "vcd_org" "system_org" {
   name = var.administrator_org
 }
 
-resource vcd_ui_plugin "k8s_container_clusters_ui_plugin" {
-  count = var.k8s_container_clusters_ui_plugin_path == "" ? 0 : 1
+resource "vcd_ui_plugin" "k8s_container_clusters_ui_plugin" {
+  count       = var.k8s_container_clusters_ui_plugin_path == "" ? 0 : 1
   plugin_path = var.k8s_container_clusters_ui_plugin_path
-  enabled = true
+  enabled     = true
   tenant_ids = [
     data.vcd_org.system_org.id,
     vcd_org.solutions_organization.id,

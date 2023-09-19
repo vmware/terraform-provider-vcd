@@ -28,12 +28,12 @@
                 ],
                 "mhc": {
                     "maxUnhealthyNodes": ${max_unhealthy_node_percentage},
-        "nodeStartupTimeout": "${node_startup_timeout}",
-        "nodeNotReadyTimeout": "${node_not_ready_timeout}",
-        "nodeUnknownTimeout": "${node_unknown_timeout}"
-        },
-        "rdeProjectorVersion": "${rde_projector_version}"
-        },
+                    "nodeStartupTimeout": "${node_startup_timeout}",
+                    "nodeNotReadyTimeout": "${node_not_ready_timeout}",
+                    "nodeUnknownTimeout": "${node_unknown_timeout}"
+                },
+                "rdeProjectorVersion": "0.6.0"
+            },
         "vcdConfig": {
             "sysLogger": {
                 "host": "${syslog_host}",
@@ -47,11 +47,11 @@
             "capiEcosystem": {
                 "infraProvider": {
                     "name": "capvcd",
-                    "version": "${capvcd_version}",
+                    "version": "v${capvcd_version}",
                     "capvcdRde": {
                         "nss": "capvcdCluster",
                         "vendor": "vmware",
-                        "version": "${capvcd_rde_version}"
+                        "version": "1.2.0"
                     }
                 },
                 "coreCapiVersion": "v1.4.0",
