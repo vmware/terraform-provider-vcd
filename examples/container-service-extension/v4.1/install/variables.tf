@@ -118,19 +118,19 @@ variable "syslog_port" {
 
 variable "node_startup_timeout" {
   type        = string
-  description = "VCDKEConfig: Node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout"
+  description = "VCDKEConfig: Node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds)"
   default     = "900"
 }
 
 variable "node_not_ready_timeout" {
   type        = string
-  description = "VCDKEConfig: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout"
+  description = "VCDKEConfig: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds)"
   default     = "300"
 }
 
 variable "node_unknown_timeout" {
   type        = string
-  description = "VCDKEConfig: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout"
+  description = "VCDKEConfig: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds)"
   default     = "300"
 }
 
@@ -138,10 +138,14 @@ variable "max_unhealthy_node_percentage" {
   type        = number
   description = "VCDKEConfig: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage. (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated)"
   default     = 100
+  validation {
+    condition     = var.max_unhealthy_node_percentage < 0 || var.max_unhealthy_node_percentage > 100
+    error_message = "The value must be a percentage, hence between 0 and 100"
+  }
 }
 
 variable "container_registry_url" {
-  type        = number
+  type        = string
   description = "VCDKEConfig: URL from where TKG clusters will fetch container images"
   default     = "projects.registry.vmware.com"
 }

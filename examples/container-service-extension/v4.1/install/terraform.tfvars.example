@@ -39,12 +39,12 @@ csi_version                   = "1.4.0"
 # Create this one in https://github.com/settings/tokens
 github_personal_access_token = ""
 
-# Node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout
-node_startup_timeout          = 900
-# A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout
-node_not_ready_timeout        = 300
-# A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout
-node_unknown_timeout          = 300
+# Node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds)
+node_startup_timeout = "900"
+# A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds)
+node_not_ready_timeout = "300"
+# A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds)
+node_unknown_timeout = "300"
 # Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
 # (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated)
 max_unhealthy_node_percentage = 100
