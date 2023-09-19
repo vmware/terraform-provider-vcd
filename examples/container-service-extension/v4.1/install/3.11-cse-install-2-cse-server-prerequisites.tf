@@ -138,8 +138,6 @@ resource "vcd_api_token" "cse_admin_token" {
   name             = "CSE Admin API Token"
   file_name        = var.cse_admin_api_token_file
   allow_token_file = true
-
-  depends_on = [vcd_org_user.cse_admin]
 }
 
 # This resource manages the Rights Bundle required by tenants to create and consume Kubernetes clusters.
