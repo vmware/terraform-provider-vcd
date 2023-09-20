@@ -3,9 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"os"
 	"regexp"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -138,6 +139,11 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         datasourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     datasourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
+	"vcd_nsxt_segment_ip_discovery_profile":         datasourceVcdNsxtIpDiscoveryProfile(),           // 3.11
+	"vcd_nsxt_segment_mac_discovery_profile":        datasourceVcdNsxtMacDiscoveryProfile(),          // 3.11
+	"vcd_nsxt_segment_spoof_guard_profile":          datasourceVcdNsxtSpoofGuardProfile(),            // 3.11
+	"vcd_nsxt_segment_qos_profile":                  datasourceVcdNsxtQosProfile(),                   // 3.11
+	"vcd_nsxt_segment_security_profile":             datasourceVcdNsxtSegmentSecurityProfile(),       // 3.11
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -239,6 +245,8 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface_behavior":                    resourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         resourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     resourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
+
+	"vcd_nsxt_segment_profile_template": resourceVcdSegmentProfileTemplate(), // 3.11
 }
 
 // Provider returns a terraform.ResourceProvider.
