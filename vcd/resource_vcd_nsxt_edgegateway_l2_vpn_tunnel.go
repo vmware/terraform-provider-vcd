@@ -2,19 +2,22 @@ package vcd
 
 import (
 	"context"
+	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdNsxtEdgegatewayL2VpnTunnelCreate,
-		UpdateContext: resourceVcdNsxtEdgegatewayDhcpForwardingUpdate,
-		ReadContext:   resourceVcdNsxtEdgegatewayDhcpForwardingRead,
-		DeleteContext: resourceVcdNsxtEdgegatewayDhcpForwardingDelete,
+		ReadContext:   resourceVcdNsxtEdgegatewayL2VpnTunnelRead,
+		UpdateContext: resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate,
+		DeleteContext: resourceVcdNsxtEdgegatewayL2VpnTunnelDestroy,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdNsxtEdgegatewayDhcpForwardingImport,
 		},
@@ -34,21 +37,20 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 				Description: "Edge gateway ID for the tunnel",
 			},
 			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				Description:  "Name of the L2 VPN Tunnel session",
-				ValidateFunc: validation.IsIPAddress,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the L2 VPN Tunnel session",
 			},
 			"description": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "Description of the L2 VPN Tunnel session",
-				ValidateFunc: validation.IsIPAddress,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the L2 VPN Tunnel session",
 			},
 			"session_mode": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"CLIENT", "SERVER"}, false),
+				ForceNew:     true,
 				Description:  "Mode of the tunnel session, must be CLIENT or SERVER",
 			},
 			"enabled": {
@@ -99,28 +101,32 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 					"so it is user's responsibility to secure it. Needs to be provided only on creation of" +
 					"`CLIENT` sessions",
 			},
-			"stretched_networks": {
+			"stretched_network": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				// DHCP forwarding supports up to 8 IP addresses
 				Description: "Org VDC networks that are attached to this L2 VPN tunnel",
-				Elem: map[string]*schema.Schema{
-					"network_id": {
-						Type:        schema.TypeString,
-						Required:    true,
-						Description: "ID of the Org VDC network",
-					},
-					"tunnel_id": {
-						Type:         schema.TypeInt,
-						Optional:     true,
-						Computed:     true,
-						Description:  "Tunnel ID of the network for the tunnel. Read-only for `SERVER` sessions.",
-						ValidateFunc: validation.IntBetween(1, 4093),
-					},
-				},
+				Elem:        stretchedNetwork,
 			},
 		},
 	}
+}
+
+var stretchedNetwork = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"network_id": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "ID of the Org VDC network",
+		},
+		"tunnel_id": {
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Tunnel ID of the network for the tunnel. Read-only for `SERVER` sessions.",
+			ValidateFunc: validation.IntBetween(1, 4093),
+		},
+	},
 }
 
 func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -140,6 +146,112 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel create] error retrieving Edge Gateway: %s", err)
 	}
+
+	tunnelConfig, err := readL2VpnTunnelFromSchema(d)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel create] %s", err)
+	}
+	tunnel, err := nsxtEdge.CreateL2VpnTunnel(tunnelConfig)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel create] error creating L2 VPN Tunnel: %s", err)
+	}
+	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
+
+	// As there may be warnings in the CreateUpdate function, we need to append them
+	// to the read function, as we don't want to exit the program if there is only
+	// a warning.
+	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
+}
+
+func resourceVcdNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	orgName := d.Get("org").(string)
+	edgeGatewayId := d.Get("edge_gateway_id").(string)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel read] error retrieving edge gateway: %s", err)
+	}
+
+	tunnelConfig, err := nsxtEdge.GetL2VpnTunnelById(d.Id())
+	if govcd.ContainsNotFound(err) {
+		d.SetId("")
+		log.Printf("[DEBUG] Edge gateway no longer exists. Removing from tfstate")
+		return nil
+	}
+	err = readL2VpnTunnelToSchema(tunnelConfig.NsxtL2VpnTunnel, d)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel read] error reading retrieved tunnel into schema: %s", err)
+	}
+
+	return nil
+}
+
+func resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	orgName := d.Get("org").(string)
+	edgeGatewayId := d.Get("edge_gateway_id").(string)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel update] error retrieving edge gateway: %s", err)
+	}
+
+	tunnel, err := nsxtEdge.GetL2VpnTunnelById(d.Id())
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel update] error retrieving L2 VPN Tunnel: %s", err)
+	}
+
+	tunnelUpdatedConfig, err := readL2VpnTunnelFromSchema(d)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel update] error reading L2 VPN Tunnel config from schema: %s", err)
+	}
+
+	_, err = tunnel.Update(tunnelUpdatedConfig)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel update] error updating L2 VPN Tunnel: %s", err)
+	}
+
+	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
+}
+
+func resourceVcdNsxtEdgegatewayL2VpnTunnelDestroy(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	orgName := d.Get("org").(string)
+	edgeGatewayId := d.Get("edge_gateway_id").(string)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel destroy] error retrieving edge gateway: %s", err)
+	}
+
+	tunnel, err := nsxtEdge.GetL2VpnTunnelById(d.Id())
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel destroy] error retrieving L2 VPN Tunnel: %s", err)
+	}
+
+	// There is an unexpected error in all versions of VCD up to 10.5.0, it happens
+	// when a L2 VPN Tunnel is created in CLIENT mode, has atleast one Org VDC
+	// network attached, and is updated in any way. After that, to delete the tunnel,
+	// one needs to send a DELETE request the amount of times the tunnel was updated
+	// or de-attach the Org Networks from the Tunnel and send the DELETE request
+	//
+	// De-attach all the networks and update the Tunnel
+	tunnel.NsxtL2VpnTunnel.StretchedNetworks = nil
+	updatedTunnel, err := tunnel.Update(tunnel.NsxtL2VpnTunnel)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel destroy] error de-attaching networks: %s", err)
+	}
+
+	err = updatedTunnel.Delete()
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel destroy] error deleting L2 VPN Tunnel: %s", err)
+	}
+
+	return nil
+}
+
+func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, error) {
 	name := d.Get("name").(string)
 	description := d.Get("description").(string)
 	sessionMode := d.Get("session_mode").(string)
@@ -148,27 +260,92 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	remoteEndpointIp := d.Get("remote_endpoint_ip").(string)
 	tunnelInterface := d.Get("tunnel_interface").(string)
 	connectorInitiationMode := d.Get("connector_initiation_mode").(string)
-	peerCode := d.Get("peer_code").(string)
 	preSharedKey := d.Get("pre_shared_key").(string)
-	attachedNetworks := d.Get("attached_networks")
-	l2VpnTunnel := &types.NsxtL2VpnTunnel{
-		Name:                    name,
-		Description:             description,
-		SessionMode:             sessionMode,
-		Enabled:                 enabled,
-		LocalEndpointIp:         localEndpointIp,
-		RemoteEndpointIp:        remoteEndpointIp,
-		TunnelInterface:         tunnelInterface,
-		ConnectorInitiationMode: connectorInitiationMode,
-		PeerCode:                peerCode,
-		PreSharedKey:            preSharedKey,
-		StretchedNetworks:       attachedNetworks.([]types.EdgeL2VpnStretchedNetwork),
+	peerCode := d.Get("peer_code").(string)
+	stretchedNetworksSet := d.Get("stretched_network").(*schema.Set)
+	stretchedNetworks := make([]types.EdgeL2VpnStretchedNetwork, len(stretchedNetworksSet.List()))
+	for rangeIndex, network := range stretchedNetworksSet.List() {
+		networkDefinition := network.(map[string]interface{})
+		oneNetwork := types.EdgeL2VpnStretchedNetwork{
+			NetworkRef: types.OpenApiReference{
+				ID: networkDefinition["network_id"].(string),
+			},
+		}
+		// SERVER sessions auto-assign tunnel IDs
+		if sessionMode == "CLIENT" && networkDefinition["tunnel_id"].(int) != 0 {
+			oneNetwork.TunnelID = networkDefinition["tunnel_id"].(int)
+		}
+		{
+		}
+		stretchedNetworks[rangeIndex] = oneNetwork
 	}
 
-	nsxtEdge.CreateL2VpnTunnel(l2VpnTunnel)
+	tunnel := &types.NsxtL2VpnTunnel{
+		Name:              name,
+		Description:       description,
+		SessionMode:       sessionMode,
+		Enabled:           enabled,
+		LocalEndpointIp:   localEndpointIp,
+		RemoteEndpointIp:  remoteEndpointIp,
+		StretchedNetworks: stretchedNetworks,
+	}
 
-	// As there may be warnings in the CreateUpdate function, we need to append them
-	// to the read function, as we don't want to exit the program if there is only
-	// a warning.
-	return resourceVcdNsxtEdgegatewayDhcpForwardingRead(ctx, d, meta)
+	// Server and Client tunnel sessions require and provide different parameters
+	if sessionMode == "SERVER" {
+		tunnel.TunnelInterface = tunnelInterface
+		if connectorInitiationMode == "" {
+			return nil, fmt.Errorf("connector initiation mode must be set for `SERVER` sessions")
+		}
+		tunnel.ConnectorInitiationMode = connectorInitiationMode
+		if preSharedKey == "" {
+			return nil, fmt.Errorf("pre-shared key must be set for `SERVER` sessions")
+		}
+		tunnel.PreSharedKey = preSharedKey
+	}
+
+	if sessionMode == "CLIENT" {
+		if peerCode == "" {
+			return nil, fmt.Errorf("peer code must be set for `CLIENT` sessions")
+		}
+		tunnel.PeerCode = peerCode
+
+		// Set peer_code of CLIENT Sessions only on CREATE/UPDATE
+		dSet(d, "peer_code", peerCode)
+	}
+
+	return tunnel, nil
+}
+
+func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceData) error {
+	d.SetId(tunnel.ID)
+	dSet(d, "name", tunnel.Name)
+	dSet(d, "description", tunnel.Description)
+	dSet(d, "session_mode", tunnel.SessionMode)
+	dSet(d, "enabled", tunnel.Enabled)
+	dSet(d, "local_endpoint_ip", tunnel.LocalEndpointIp)
+	dSet(d, "remote_endpoint_ip", tunnel.RemoteEndpointIp)
+
+	if tunnel.SessionMode == "SERVER" {
+		dSet(d, "tunnel_interface", tunnel.TunnelInterface)
+		dSet(d, "connector_initiation_mode", tunnel.ConnectorInitiationMode)
+		dSet(d, "peer_code", tunnel.PeerCode)
+		dSet(d, "pre_shared_key", tunnel.PreSharedKey)
+	}
+
+	stretchedNetworkSlice := make([]interface{}, len(tunnel.StretchedNetworks))
+	for rangeIndex, stretchedNetwork := range tunnel.StretchedNetworks {
+		stretchedNetworkMap := make(map[string]interface{})
+		stretchedNetworkMap["network_id"] = stretchedNetwork.NetworkRef.ID
+		stretchedNetworkMap["tunnel_id"] = stretchedNetwork.TunnelID
+
+		stretchedNetworkSlice[rangeIndex] = stretchedNetworkMap
+	}
+
+	// Hash and return stretched networks
+	err := d.Set("stretched_network", schema.NewSet(schema.HashResource(stretchedNetwork), stretchedNetworkSlice))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
