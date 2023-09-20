@@ -10,10 +10,10 @@ description: |-
 
 ## About
 
-This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v4.0, that
+This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v4.1, that
 will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using Terraform or the UI.
 
-To know more about CSE v4.0, you can visit [the documentation][cse_docs].
+To know more about CSE v4.1, you can visit [the documentation][cse_docs].
 
 ## Pre-requisites
 
@@ -21,47 +21,94 @@ To know more about CSE v4.0, you can visit [the documentation][cse_docs].
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE v4.0 is supported from VCD v10.4.0 or above, make sure your VCD appliance matches the criteria.
-* Terraform provider needs to be v3.10.0 or above.
+* CSE v4.1 is supported from VCD v10.4.2 or above, as specified in the [Product Interoperability Matrix](https://interopmatrix.vmware.com/Interoperability?col=659,&row=0).
+  Please check that the target VCD appliance matches the criteria.
+* Terraform provider needs to be v3.11.0 or above.
 * Both CSE Server and the Bootstrap clusters require outbound Internet connectivity.
-* CSE v4.0 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
+* CSE v4.1 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
 
 ## Installation process
 
--> To install CSE v4.0, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install).
+-> To install CSE v4.1, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
 The installation process is split in two independent steps that should be run separately:
 
-- The first step creates the [Runtime Defined Entity Interfaces][rde_interface] and [Types][rde_type] that are required for CSE to work, a new [Role][role]
-  and a CSE Administrator [User][user] that will be referenced later on in second step.
-- The second step will configure remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs][catalog], Networks and [VMs][vm].
+- The first step creates the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard, that is, installs the
+  [RDE Interfaces][rde_interface], [RDE Types][rde_type], [RDE Interface Behaviors][rde_interface_behavior] and the [RDE][rde] that
+  are required for the CSE Server to work, in addition to a new [Role][role], new [VM Sizing Policies][sizing] and a CSE Administrator [User][user] that will be
+  referenced later on in the second step.
+- The second step will configure remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks and the CSE Server [VM][vm].
 
-The reason for such as split is that Providers require to generate an [API token][api_token]
-for the CSE Administrator user. This operation needs to be done outside the Terraform realm for security reasons, and it's
-up to the Providers to decide the most ideal way to generate such a token for its CSE Administrator in their particular scenarios.
+The reason for such as split is that the CSE Administrator created during the first step is used to configure a new `provider` block in
+the second one, so it can provision a valid [API token][api_token]. This operation must be done separately as a `provider` block
+can't log in as a user created in the same run.
 
-### Step 1: Create RDEs and the CSE Administrator user
+### Step 1: Configure Settings for CSE Server
 
 -> This step of the installation refers to the Terraform configuration present [here][step1].
 
-In the [given configuration][step1] you can find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
-and change the values present there to the ones that fit with your needs.
+This step will create the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard. The subsections
+below can be helpful to understand all the building blocks that are described in the [proposed Terraform configuration][step1].
 
-This step will create the following:
+In this [configuration][step1] there is also a file named `terraform.tfvars.example`, which needs to be to renamed to `terraform.tfvars`
+and its values to be set to the correct ones. In general, for this specific step, the proposed HCL files (`.tf`) should not be
+modified and be applied as they are.
+
+### RDE Interfaces, Types and Behaviors
+
+CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
+In the [proposed configuration][step1] you can find the following:
 
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the CSE Server
-  configuration (called "VCDKEConfig") that will be instantiated in next step with a [RDE][rde].
-- The required `capvcdCluster` [RDE Type][rde_type]. Its version is specified by the `capvcd_rde_version` variable, that **must be "1.1.0" for CSE v4.0**.
-  This resource specifies the schema of the [TKGm clusters][tkgm_docs].
-- The **CSE Admin [Role][role]**, that specifies the required rights for the CSE Administrator to manage provider-side elements of VCD.
-- The **CSE Administrator [User][user]** that will administrate the CSE Server and other aspects of VCD that are directly related to CSE.
-  Feel free to add more attributes like `description` or `full_name` if needed.
+  configuration (called "VCDKEConfig") that will be instantiated with a [RDE][rde].
 
-Once reviewed and applied with `terraform apply`, one **must login with the created CSE Administrator user to
-generate an API token** that will be used in the next step. In UI, the API tokens can be generated in the CSE Administrator
-user preferences in the top right, then go to the API tokens section, add a new one.
-Or you can visit `/provider/administration/settings/user-preferences` at your VCD URL as CSE Administrator.
+- The required `capvcd` [RDE Interface][rde_interface] and `capvcdCluster` [RDE Type][rde_type].
+  These two resources specify the schema of the [TKGm clusters][tkgm_docs].
+
+- The required [RDE Interface Behaviors][rde_interface_behavior] used to retrieve critical information from the [TKGm clusters][tkgm_docs],
+  for example, the resulting **Kubeconfig**.
+
+### RDE (CSE Server configuration / VCDKEConfig)
+
+The CSE Server configuration lives in a [Runtime Defined Entity][rde] that uses the `VCDKEConfig` [RDE Type][rde_type].
+To customise it, the [configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
+
+- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents. It should be a JSON template, like
+  [the one used in the configuration](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template).
+  (Note: In `terraform.tfvars.example` the correct path is already provided).
+- `capvcd_version`: The version for CAPVCD. By default, is "1.1.0" for CSE v4.1. Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
+  which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable.
+- `cpi_version`: The version for CPI. By default, is "1.4.0" for CSE v4.1.
+- `csi_version`: The version for CSI. By default, is "1.4.0" for CSE v4.1.
+- `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
+  this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
+  some Kubernetes components from GitHub.
+  The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
+- `http_proxy` (Optional): Address of your HTTP proxy server.
+- `https_proxy` (Optional): Address of your HTTPS proxy server.
+- `no_proxy` (Optional): A list of comma-separated domains without spaces that indicate the targets that must not go through the configured proxy.
+- `syslog_host` (Optional): Domain where to send the system logs.
+- `syslog_port` (Optional): Port where to send the system logs.
+- `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900).
+- `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300).
+- `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300).
+- `max_unhealthy_node_percentage`: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
+  (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated)
+- `container_registry_url` (Optional): URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet.
+- `bootstrap_vm_certificates` (Optional): Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
+  For example, when pulling images from a container registry.
+- `k8s_cluster_certificates` (Optional): Certificate(s) to allow clusters to authenticate with.
+  For example, when pulling images from a container registry.
+
+### Rights, Roles and VM Sizing Policies
+
+CSE v4.1 requires a set of new [Rights Bundles][rights_bundle], [Roles][role] and [VM Sizing Policies][sizing] that are also created
+in this step of the [proposed configuration][step1]. Nothing should be customised here, except for the "CSE Administrator"
+account to be created, where you can provide a username of your choice (`cse_admin_username`) and its password (`cse_admin_password`).
+
+This account will be used to provision an [API Token][api_token] to deploy the CSE Server, in the next step. Once all variables are reviewed and set,
+you can start the installation with `terraform apply`. When it finishes successfully, you can continue with the **step 2**.
 
 ### Step 2: Install CSE
 
@@ -69,7 +116,7 @@ Or you can visit `/provider/administration/settings/user-preferences` at your VC
 
 ~> Be sure that previous step is successfully completed and the API token for the CSE Administrator user was created.
 
-This step will create all the remaining elements to install CSE v4.0 in VCD. You can read subsequent sections
+This step will create all the remaining elements to install CSE v4.1 in VCD. You can read subsequent sections
 to have a better understanding of the building blocks that are described in the [proposed Terraform configuration][step2].
 
 In this [configuration][step2] you can also find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
@@ -153,7 +200,7 @@ creates a new [Rights Bundle][rights_bundle] and publishes it to all the tenants
 
 ### Networking
 
-The [proposed configuration][step2] prepares a basic networking layout that will make CSE v4.0 work. However, it is
+The [proposed configuration][step2] prepares a basic networking layout that will make CSE v4.1 work. However, it is
 recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
 
 The configuration will create the following:
@@ -238,22 +285,6 @@ If you wish to have a different networking setup, please modify the [proposed co
 There is also a set of resources created by the [proposed configuration][step2] that correspond to the CSE Server vApp.
 The generated VM makes use of the uploaded CSE OVA and some required guest properties.
 
-In order to do so, the [configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
-
-- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents. It should be a JSON template, like
-  [the one used in the configuration](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/entities/vcdkeconfig-template.json).
-  (Note: In `terraform.tfvars.example` the correct path is already provided).
-- `capvcd_version`: The version for CAPVCD. It should be "1.0.0" for CSE v4.0.
-- `capvcd_rde_version`: The version for the CAPVCD [RDE Type][rde_type]. It should be the same version used in Step 1.
-- `cpi_version`: The version for CPI. It should be "1.2.0" for CSE v4.0.
-- `csi_version`: The version for CSI. It should be "1.3.0" for CSE v4.0.
-- `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
-  this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
-  some Kubernetes components from GitHub.
-  The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
-- `cse_admin_user`: This should reference the CSE Administrator [User][user] that was created in Step 1.
-- `cse_admin_api_token`: This should be the API token that you created for the CSE Administrator after Step 1.
-
 ### UI plugin installation
 
 The final resource created by the [proposed configuration][step2] is the [`vcd_ui_plugin`][ui_plugin] resource.
@@ -264,7 +295,7 @@ or if your tenant users are not familiar with Terraform, they will be still able
 with the UI.
 
 If you decide to install it, `k8s_container_clusters_ui_plugin_path` should point to the
-[Kubernetes Container Clusters UI plug-in v4.0][cse_docs] ZIP file that you can download in the [CSE documentation][cse_docs].
+[Kubernetes Container Clusters UI plug-in v4.1][cse_docs] ZIP file that you can download in the [CSE documentation][cse_docs].
 
 -> If the old CSE 3.x plugin is installed, you will need to remove it also.
 
@@ -320,9 +351,9 @@ The most common issues are:
 - Cluster creation is failing:
   - Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
-## Update from CSE v4.0 to v4.1
+## Update from CSE v4.1 to v4.1
 
-In this section you can find the required steps to update from CSE v4.0 to v4.1.
+In this section you can find the required steps to update from CSE v4.1 to v4.1.
 
 ~> This section assumes that the CSE installation was done with Terraform by following the previous guide steps.
 
@@ -360,19 +391,19 @@ resource "vcd_rde_type_behavior_acl" "capvcd_behavior_acl" {
 }
 ```
 
-Create a new version of the [RDE Types][rde_type] that were used in v4.0. This will allow them to co-exist with the old ones,
+Create a new version of the [RDE Types][rde_type] that were used in v4.1. This will allow them to co-exist with the old ones,
 so we can perform a smooth upgrade.
 
 ```hcl
 resource "vcd_rde_type" "vcdkeconfig_type_v110" {
-  # Same attributes as v4.0, except for:
+  # Same attributes as v4.1, except for:
   version       = "1.1.0" # New version
   # New schema:
   schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
 }
 
 resource "vcd_rde_type" "capvcdcluster_type_v120" {
-  # Same attributes as v4.0, except for:
+  # Same attributes as v4.1, except for:
   version       = "1.2.0" # New version
   # New schema:
   schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
@@ -385,7 +416,7 @@ resource "vcd_rde_type" "capvcdcluster_type_v120" {
 
 ### Update Rights and Roles
 
-There are differences between the rights needed in v4.0 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
+There are differences between the rights needed in v4.1 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
 `vcd_global_role.k8s_cluster_author` in the [proposed configuration][step2] to see the new required set of rights.
 
 ### Update CSE Server configuration
@@ -464,7 +495,7 @@ Please read the specific guide on that topic [here][cse_cluster_management_guide
 Once all clusters are removed in the background by CSE Server, you may destroy the remaining infrastructure with Terraform command.
 
 [alb]: /providers/vmware/vcd/latest/docs/guides/nsxt_alb
-[api_token]: https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html
+[api_token]: /providers/vmware/vcd/latest/docs/resources/api_token
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
 [cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
